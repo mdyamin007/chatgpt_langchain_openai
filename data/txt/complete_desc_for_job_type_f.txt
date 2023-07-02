@@ -1,0 +1,94 @@
+Complete description for job type f:
+
+After everything in a doc has been printed
+
+Not sure if group index is needed for that
+But we need to declare and produce afp for that afp
+and also generate index file that is pipe_delimited and contain 13 fields
+of which 6 fields is compulsory and other is not until mentioned
+
+
+2 types of writerecord for this 1 is ppe delimited another is fixed field
+
+
+Pick any example for that such as BFCULS1(for fixed field writerecord) 
+First you will need to define the output individual AFPs.
+  IF &JOB_TYPE=='f' ;
+  THEN ;
+    STMT_DATE_TMP = CHANGE(BILLING_DATE,'-', '') ;
+    IF $SYSTEM=='Windows' ;
+    THEN ;
+      OUTTEMP1 = 'c:\isis\afpds300\'!&PREFIX!'_'!STMT_DATE_TMP!'_'!
+       NUMPICTURE(ACCT_NUM,'#0')!'_'!&SEQ_NUM!'_'!&SEG_NUM!'.afp' ;
+    ELSE ;
+      OUTTEMP1 = '/'!&D_DIR!'/'!&CID!'/'!&PREFIX!'-indiv/'!&PREFIX!
+       '_'!STMT_DATE_TMP!'_'!NUMPICTURE(ACCT_NUM,'#0')!'_'!&SEQ_NUM!
+       '_'!&SEG_NUM!'.afp' ;(no dash in date,no leading zeros in account no, no space in seq_no)
+    ENDIF ;
+    DUMMY = CHANGEENV('OUTFILENAME',OUTTEMP1) ;
+    SELECTOUTPUT OUTFILENAME;
+  ENDIF ;
+
+  SEG_NUM will comes from environment
+ 
+  ENDGROUP ;
+  IF &JOB_TYPE=='f' ;
+  THEN ;
+    WRITERECORD  TO ZIPFILE ;
+      PUT &PREFIX!'_'!STMT_DATE_TMP!'_'!NUMPICTURE(ACCT_NUM,'#0')!'_'!
+         &SEQ_NUM!'_'!&SEG_NUM!'.afp'  START 1; (no dash in date, nospace in seq_num,no leading zeros in acct_num)
+      PUT NUMPICTURE(ACCT_NUM,'#0')!'|'  START *;(no leading zeros )
+      PUT BILLING_DATE!'|'  START *;(no dash)
+      PUT DUE_DATE!'|'  START *;(no dash)
+      PUT &TTL_PAGES!'|'  START *;
+      PUT ADDR[1]!'|'  START *;
+      PUT '|'  START *;
+      PUT '|'  START *;
+      PUT '|'  START *;
+      PUT '|'  START *;
+      PUT '|'  START *;
+      PUT '|'  START *;
+      PUT  ''  START *;
+    ENDIO;
+    CLOSE OUTFILENAME;
+  ENDIF ; 
+  
+1.       Create a condition for &JOB_TYPE == ‘f’ before you end your document. Make sure you have already called ‘End Group’.
+
+2.       Write the index file to ‘ZIPFILE’. Your name for the writerecord can be anything. Delimiter is | (see example below).
+
+3.       The first value is the same as the file name you defined in step 4 above.
+
+4.       The 2nd value is the account number
+
+5.       The 3rd value is the beginning date.
+
+6.       The 4th value is the ending date.
+
+7.       The 5th value is the image count.
+
+8.       The 6th value is the name.
+
+9.       All other values are optional. I don’t think you need anything else right now.
+
+
+BEFOREFIRST_DOC:  
+   IF ENVIRONMENT('ZIPFILE')<> '' AND ENVIRONMENT('ZIPFILE')<>
+   'ZIPFILE' ;
+  THEN ;
+    &D_DIR = SUBSTR(ENVIRONMENT('ZIPFILE'),2,1, '') ;
+  ELSE ;
+    IF ENVIRONMENT('AFPFILE')<> '' AND ENVIRONMENT('AFPFILE')<>
+     'AFPFILE' ;
+    THEN ;
+      &D_DIR = SUBSTR(ENVIRONMENT('AFPFILE'),2,1, '') ;
+    ELSE ;
+      &D_DIR = 'd' ;
+    ENDIF ;
+  ENDIF ; 
+  &JOB_TYPE = ENVIRONMENT('job_sel') ;
+  &PREFIX = ENVIRONMENT('prefix') ;
+  &CID = SUBSTR(&PREFIX,1,4, '') ;
+  &SEG_NUM = ENVIRONMENT('seg_num') ;
+
+  
