@@ -1,0 +1,3522 @@
+Papyrus preprocess quick information:
+************************** Error function get_app_no data is missing job_type table **********************
+from:	Terrence Tong <Terrence.Tong@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>,
+Le Tuan La <LeTuan.La@infoimageinc.com>
+
+rony/Le
+ 
+This is a new setup.  Therefore, you must define the job type in our database table.
+ 
+Le, can you add entry into test, parallel, and production table.
+ 
+SQL> desc job_type;
+Name                                      Null?    Type
+----------------------------------------- -------- -------------
+ID                                        NOT NULL NUMBER
+CID                                       NOT NULL VARCHAR2(4)
+TYPE                                      NOT NULL VARCHAR2(4)
+APP_NUM                                            VARCHAR2(10)
+VERSION                                            VARCHAR2(10)
+JOB_ID                                             VARCHAR2(50)
+ACTIVE                                    NOT NULL VARCHAR2(1)
+UPDATED_BY                                NOT NULL NUMBER
+UPDATED_TIME                              NOT NULL DATE
+GRP_ID                                             NUMBER(38)
+PROC_GRP                                  NOT NULL NUMBER(38)
+ 
+ 
+Terrence
+ 
+
+
+
+
+from:	Hossain Anwar <anwar.hossain@dsinnovators.com>
+to:	Le Tuan La <LeTuan.La@infoimageinc.com>
+date:	Thu, Jun 8, 2017 at 9:43 PM
+subject:	Re: CTCU visa statement process script
+
+Hi Le,
+
+I am getting this database error and couldn't solve it. Please take a look. 
+
+Processing zipsep...
+Total resolved foreign address: 0
+/home/test/master/isiszipsep_new.pl /z/ctcu/ctcumv1101 ctcumv1101 CTCU_Credit_Union STM duplex 10000 DUP1,ISISLI Visa_Statements ctcumv1 2DDD1IND 0
+* Generating new dpvs *
+Thu Jun  8 07:41:31 PDT 2017
+Error function get_app_no data is missing: app_no = 99999, app_version = 9999999, app_desc = no desc,
+ctcu, 01, Visa_Statements, 9999999,
+'dp180', 'DUP1,ISISLI', ctcumv1101, 'dp180', Not Available,
+2017-06-08 00:00:00, 2017-06-08 00:00:00, 2017-06-08 07:41:31, 2017-06-08 07:41:31,
+, 1, 128553, no desc,
+99999, 0, 1, mv1, 2017-04-01, s, ,
+rhs2,, '','',128553-C01.01-V21788, CA, STM;
+in QueryDataTRAC_ForPieceCode
+Thu Jun  8 07:41:31 PDT 2017
+Error: function insert_data()
+Error within program: dpvs_rpt.pl
+
+
+from:	Terrence Tong <Terrence.Tong@infoimageinc.com>
+to:	Hossain Anwar <anwar.hossain@dsinnovators.com>,
+Le Tuan La <LeTuan.La@infoimageinc.com>
+
+Hossain,
+ 
+That is because Le has not add an entry to the database table. Anytime we add a new application, we need to add an entry to the job_type table. 
+Here is an example for the DDA statement. You can see Visa is define yet.
+
+I will have Le add VISA to the database for all three environment (test, parallel, and production)
+
+Thanks
+
+
+
+************************** cover overlay heavy flag **********************
+from:	Diego Franco <Diego.Franco@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+date:	Thu, Jun 1, 2017 at 6:20 AM
+subject:	RE: COBZ DDA new setup - JEF #25425
+
+Hi Rony,
+ 
+I need an update to be made on the print step for COBZMS1 I believe its 2DDD1CHK.dfa to display the correct overlay for HVY cover page.
+ 
+Currently for heavy cover page we use overlay in control file called cover_ovl
+ 
+Since this job can have a different logo we must do this at the print step and not rely on the control file. First we must make a change to the 
+format dfa to add in a value into the paper index 381-400 is “filler” which can be used for this that will let us know which logo needs to be placed 
+for that account.
+ 
+You can test this by manually adding the hvy flag into position 416. Please see below for what should be coming from format(add item in red) 
+Accounts that use “Colorado” logo use COL “Arizona” use ARZ  for “Cobiz” logo us CBZ. In the print step we can read this field and change logo based on that. 
+Placement should be the same.
+ 
+ 
+801203955052 1    202180120                  3009962     4     BROADWAY ESTATES VETERINARY             JOE B TRIMBLE DVM                       C/O JOE B TRIMBLE DVM                   7405 S HOUSTOUN WARING CIR              LITTLETON CO 80120                                                                 8218           3                      z         3   3d                     COL                          00       242148
+ 
+ 
+Please let me know if you have any questions. This is for HVY only. You will clearly see in the DFA when it tried to call the heavy cover.
+ 
+ 
+Thanks,
+ 
+Diego
+
+
+
+[6/1/2017 11:43:28 PM] Diego Franco: in format step
+[6/1/2017 11:43:41 PM] Diego Franco: you already know which logo its using correct?
+[6/1/2017 11:43:49 PM] Rony Das: right
+[6/1/2017 11:43:50 PM] Diego Franco: this is based on some branch code
+[6/1/2017 11:44:01 PM] Rony Das: right
+[6/1/2017 11:44:10 PM] Diego Franco: okay so when you set the logo.. set a variable called like logo_type
+[6/1/2017 11:44:58 PM] Diego Franco: if the logo is Colorado one use logo_type=="COL" ... if Cobiz logo_type=="CBZ" ... if arizona logo_type =="ARZ"
+[6/1/2017 11:45:23 PM] Diego Franco: then in paper index just at PUT logo_type in the filler position i gave you
+[6/1/2017 11:45:31 PM] Diego Franco: 381-400
+[6/1/2017 11:45:33 PM] Rony Das: and use those variable in txt record in filler position
+[6/1/2017 11:45:34 PM] Rony Das: ok
+[6/1/2017 11:45:41 PM] Diego Franco: these spaces can be used for whatever we want
+[6/1/2017 11:45:48 PM] Rony Das: I got that
+[6/1/2017 11:45:54 PM] Diego Franco: thats it for format step
+[6/1/2017 11:45:58 PM] Rony Das: ok
+[6/1/2017 11:46:16 PM] Diego Franco: for print step.. you would add a read record command at the top where its reading each variable
+[6/1/2017 11:46:34 PM] Rony Das: I know
+[6/1/2017 11:46:58 PM] Rony Das: I just not sure what to call in place of this line
+[6/1/2017 11:47:07 PM] Diego Franco: so then when it call HVY cover you can hard code the pseg and the address you dont need to create overlay
+[6/1/2017 11:47:12 PM] Diego Franco: what do you mean in place?
+[6/1/2017 11:47:43 PM] Rony Das: o so just hard code the address and call the pseg
+[6/1/2017 11:47:52 PM] Rony Das: that's it
+[6/1/2017 11:48:01 PM] Diego Franco: so usually cover ovl are the whole page... in this case it will be empty and we can place it hard code for the house 10 envelope which i think is the same as the house #10 envelope
+[6/1/2017 11:48:07 PM] Diego Franco: yep
+[6/1/2017 11:48:29 PM] Diego Franco: you just need to know which logo to use but placement should be the easiest part
+[6/1/2017 11:48:44 PM] Diego Franco: you can test call a hvy cover by manually adding the flag to the index
+[6/1/2017 11:48:58 PM] Diego Franco: and make sure its only displaying logo at print step for the HVY
+[6/1/2017 11:49:17 PM] Rony Das: this is an extra
+[6/1/2017 11:49:26 PM] Rony Das: page
+[6/1/2017 11:49:29 PM] Diego Franco: we cannot use the cover_ovl flag for obvious reasons but this is the easiest work around
+[6/1/2017 11:49:54 PM] Rony Das: you see lots of segment are being called
+[6/1/2017 11:49:56 PM] Diego Franco: so yea in there you would add the new variable and put that in the paper index
+[6/1/2017 11:49:59 PM] Diego Franco: yes
+[6/1/2017 11:50:23 PM] Diego Franco: so for COBZCB in that same If statement set a variable called logo_type
+[6/1/2017 11:50:38 PM] Rony Das: under 's' option 3 psegs may occur
+[6/1/2017 11:50:45 PM] Rony Das: ok
+[6/1/2017 11:50:49 PM] Diego Franco: exactly why we need to do this rony
+[6/1/2017 11:50:58 PM] Diego Franco: if it was just 1 we could use the COVER_OvL flag
+[6/1/2017 11:51:09 PM] Rony Das: I got it
+[6/1/2017 11:51:25 PM] Diego Franco: thats literally the whole point is they have 3 different logos
+[6/1/2017 11:51:28 PM] Rony Das: why the  cover page is necessary
+[6/1/2017 11:51:34 PM] Rony Das: ?
+[6/1/2017 11:51:42 PM] Diego Franco: cover page is for standard jobs that dont have 3 logos
+[6/1/2017 11:52:02 PM] Rony Das: I mean generally why it is necessary
+[6/1/2017 11:52:04 PM] Rony Das: ?
+[6/1/2017 11:52:08 PM] Diego Franco: the COVER OVL is just a outline the size of a physical page with the logo and return address
+[6/1/2017 11:52:18 PM] Diego Franco: thats it
+[6/1/2017 11:52:52 PM] Diego Franco: since this job changes logo per account we cant just set 1 in the control file.. and there is no way for us in the control file which account should get what logo since they are all mixed together
+[6/1/2017 11:53:24 PM] Rony Das: normally script sets the hvy flag in txt record
+[6/1/2017 11:53:27 PM] Rony Das: right?
+[6/1/2017 11:53:48 PM] Rony Das: when we run the job in pilot or parallel
+[6/1/2017 11:54:02 PM] Rony Das: based on page count of a customer
+[6/1/2017 11:54:25 PM] Rony Das: just asking for some knowledge
+[6/1/2017 11:55:15 PM] Diego Franco: yes normall the core script handles this based onthe hvy_cnt flag in the control file it will check again actualy physical pages in account and add the flag when it routed to the hvy file
+[6/1/2017 11:55:38 PM] Diego Franco: this is why in testing on desktop we just need to add the '1' in that flag field
+[6/1/2017 11:55:46 PM] Rony Das: right
+[6/1/2017 11:56:39 PM] Rony Das: but why we need to handle those customer output differently if it's page count exceeds some limit
+[6/1/2017 11:57:09 PM] Rony Das: I mean why it is called heavy?
+[6/1/2017 11:58:31 PM] Diego Franco: because of the envelope size and thickness
+[6/1/2017 11:59:02 PM] Diego Franco: house #10 uses a "z" fold so its folded 3 times... the house #9 uses a half fold
+[6/1/2017 11:59:26 PM] Diego Franco: so imaging folding 10 pages in half .. thats the thickness of 20 pages right?
+[6/1/2017 11:59:37 PM | Edited 11:59:49 PM] Rony Das: right
+[6/1/2017 11:59:39 PM] Diego Franco: the envelopes would get very fat and possibly rip
+[6/1/2017 11:59:48 PM] Rony Das: right
+[12:00:05 AM] Diego Franco: so when it calls heavy it uses the big envelope
+[12:00:13 AM] Diego Franco: where they do not fold it at all
+[12:00:14 AM] Rony Das: but then why we need to add extra page
+[12:00:20 AM] Rony Das: I mean cover page
+[12:00:30 AM] Diego Franco: because the windows one the envelope are different
+[12:00:43 AM] Rony Das: o
+[12:02:12 AM] Rony Das: so the cover page prevents from displaying sensitive data of actual statement?
+[12:02:49 AM] Diego Franco: yes and again we need to have the address block show... but yes that too
+[12:03:48 AM] Rony Das: o right address block
+[12:03:56 AM] Rony Das: ok thanks Diego
+[12:04:09 AM] Rony Das: I didn't know these information
+[12:06:16 AM] Diego Franco: no problem
+[12:26:24 AM] Rony Das: o normally what is limit of that count that if a customer page exceeds we call it heavy
+[12:26:28 AM] Rony Das: is it 15
+[12:26:31 AM] Rony Das: ?
+[12:26:48 AM] Rony Das: or depends
+[12:27:32 AM] Diego Franco: depends on whether its a simplex duplex
+[12:27:38 AM] Rony Das: o
+[12:27:48 AM] Diego Franco: its either 7 or 15 images
+[12:27:56 AM] Rony Das: o
+[12:28:08 AM] Diego Franco: so the hvy count is against images not physical pages
+[12:28:17 AM] Rony Das: o
+[12:28:29 AM] Diego Franco: so 7 simplex pages is 7 physical so here 7 would produce heavy
+[12:28:40 AM] Rony Das: got it
+[12:28:54 AM] Rony Das: so 7 physical pages for both
+[12:28:54 AM] Diego Franco: 15 duplex images is 8 physical sheets ... thats kinda the thinking behind that
+[12:28:59 AM] Diego Franco: yep
+[12:29:05 AM] Rony Das: ok
+[12:29:07 AM] Rony Das: thanks
+
+************************** remittance return service requested **********************
+The remittance divider line needs to be in 7.33 inch. Because this is tri fold into envelope (11 inch/3 ).  
+Currently, it is in 7.5 inch (see below screenshot). This is mostly standard for all divider lines.
+
+Hi Hossain/Rony: Can you please update Chelsea’s request below on DFA? I attached the logo.  And also, when I add the remittance flag in control file,  
+I encountered the remittance(RETURN SERVICE REQUESTED) overlapping issue in print step (see below). Could you please hardcoded in format DFA? 
+So that I can remove the flag from control file.
+
+
+
+********************bad account , mail code report, backer, msg mgr *********************
+from:	Diego Franco <Diego.Franco@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+date:	Wed, Apr 19, 2017 at 6:50 AM
+subject:	RE: COBZ DDA Processing Script
+For example badaccount and mailcode report should only be producing in ‘s’ option.
+backer is not needed for message manager , &job_type<>’m’ and &job_type<>’d’ then display the backer.
+
+
+********************BRE business return envelope *********************
+For notices 023 and 024, the bottom portion of the notices was missed.  
+This portion will go in the remittance section on the bottom third of the notice; these notices will print on paper with a perforation 
+on the bottom third of the paper. The recipient will tear off  the bottom of the notice and return that portion in a 
+provided BRE (business return envelope).
+
+Therefore:
+ 
+INSERT_CODE should be equal to ‘1    ‘ for these notices.
+ 
+Start the bottom verbiage no higher than 7.8 Vertical.
+
+The Washington bank address on the bottom portion needs to be moved to a specific place so that it shows through the window on the BRE.  
+Position the address at Horizontal 4.56, with the first address line at 9 vertical.
+ 
+
+
+************************pre process server info*************************
+Hi DSI,
+ 
+We have set up your linux accounts.  They are ronyD, amirR, sayfullahR and mahbubS.  The password is ‘infoimage’ for all four accounts.  
+Please issue the ‘passwd’ command to change your password upon login.  Because of all the security compliance concerns, we have to limit 
+your access to production servers.  All scripts can be set up in your own account.  When you need to test, you have to execute a ssh command 
+to process the script remotely on rht.  You can only run /t/test_$LOGNAME.sh remotely on rht where $LOGNAME is your user name.  Please see the 
+attached sample shell: test_dsitest.sh where dsitest is the username.  When you run the shell, 
+you can do ‘ssh rht "sh -x /t/test_dsitest.sh" 2>&1|tee -a sscuml1.log’ to capture the screen output to a log file sscuml1.log. 
+IP:10.8.9.68
+
+The following env variables are set and exported in both servers:
+ 
+        export home_ins=/home/dsi                             	# /home variable for insert file
+        export home_master=/home/dsi                    		# /home variable for the master folder that contains all our scripts and programs
+        export d_dir="/t"                                       # folder to hold all data files generated during processing
+        export home_ctr="/home/dsi"                         	# /home variable for control file
+        export home_keep="/home/dsi"                    		# /home variable for keep folder where we store files that need to be saved and used multiple times
+        export home_env="/home/dsi"                       		# /home variable
+        export base_dir="/t/afp"                                # root folder for afp files
+        export keep_dir="keep"                                  # keep folder
+        export database="test"                                  # database assigned
+ 
+When setting up scripts, it is import that these variables are used to compose the file path instead of hardcoding so that the processing 
+server will find the paths.
+ 
+This might be a little confusing but should become clearer after you have looked at some of our scripts.  
+Please let me know if you have questions.
+ 
+Ernest
+
+ssh rht "sh -x /t/test_ronyD.sh" 2>&1|tee -a /t/rony/log/sacumv1.log
+
+***************2D report*******************
+reference - cobzms1
+
+
+***************check image directory*******************
+/z/prep/cobz/tiff/images/
+
+
+***************input directory*******************
+from:	Tun Aung <Tun.Aung@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+cc:	Habibur Rahman Firoz <habibur.rahman@dsinnovators.com>,
+Print team at InfoIMAGE <printprocess.infoimage@dsinnovators.com>,
+Terrence Tong <Terrence.Tong@infoimageinc.com>,
+Chelsea Cessna <Chelsea.Cessna@infoimageinc.com>,
+Saaji Sebastian <Saaji.Sebastian@infoimageinc.com>
+date:	Fri, Apr 1, 2016 at 6:37 AM
+subject:	RE: APCU - DF Mortgage Setup
+
+
+Thanks a lot, Rony! The output looks pretty good now. I will provide the first sample with this.
+ 
+For processing script, I attached the required script resources from apcuml1. You can use that as a reference and create apcuml2.
+ 
+Input directory can follow the SOW as below:  ${d_dir} /ftpbu/apcubu/mortgage/
+Working directory is : ${d_dir}/apcu/  ( please review the apcuml1 script).
+ 
+Thanks,
+Tun
+
+see the mail there is screenshot which displayed how to get the input directory from SOW
+
+
+
+from:	Le Tuan La <LeTuan.La@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+date:	Tue, Jul 26, 2016 at 6:54 PM
+subject:	RE: SANA - Monthly Statements - Extract File Rule -TISA - Update Part -2
+
+Hi DSI,
+ 
+	Please don’t remove files from /t/sana/ms1.
+	Just remove files  from /t/sana/ms1/data_files.
+	 
+	Normally for applications that are not daily letters, we only clear the data file folder.
+	This is because we want to keep the dpvs, log files, and txt files in the processing folder.
+	 
+	Can you update this and process ‘s’ and ‘f’ option again?
+ 
+Thanks.
+
+
+
+***************Working Directory*************
+${d_dir}/${cid}/
+
+****************get_md5_value**********************
+  system("$ENV{home_master}/master/get_md5_value.sh $infile sacu mv1");
+  it writes the md5 value of the infile into  ${cid}${jid}.datatrack.tmp file which we normally clear calling by get_segment
+  echo "MD5:$md5_value	${filename}" >> ${home_env}/${keep_dir}/${2}${3}.datatrack.tmp
+
+***************************client pick up address******************
+/d/infoftps3/Vend_DSI/client_pickup/print_process/
+
+**********************Ran File info********************
+   $data_mm1=`date +%m%d%Y`;
+   $data_mm1=~ s/^\s+|\s+$//g;
+   $data_mm2=`date +%k%M |tr ' ' '0'`;
+   $data_mm2=~ s/^\s+|\s+$//g;
+   $HostName = $ENV{HOSTNAME};
+   $LogName = $ENV{LOGNAME};
+   $ran_file="$ENV{home_env}/$ENV{keep_dir}/${cid}${jid}.ran";
+   open (RUNFILE, ">>${ran_file}"), or die "Can't open daily_process.log file $!\n";
+   print RUNFILE "$data_mm1 $data_mm2 $LogName $HostName $job_sel $infile\n";
+  
+***************************************************** n options ***********************************************
+I (Kevin) created something called n options to replace b options because b option is for both paper and e statement but job might one or 2 options 
+so using b is kind of not correct
+n options where you can run selectively for different job types( reference entcms1_process.sh):
+job_sel="n,s,f,e"
+n_opt_checker is used to checksum for multiple job type options
+
+**********************using b and n options******************************************
+from:	Tun Aung <Tun.Aung@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+cc:	Rony Das <rony.das@dsinnovators.com>,
+Habibur Rahman Firoz <habibur.rahman@dsinnovators.com>,
+Print team at InfoIMAGE <printprocess.infoimage@dsinnovators.com>,
+Terrence Tong <Terrence.Tong@infoimageinc.com>,
+Chelsea Cessna <Chelsea.Cessna@infoimageinc.com>,
+Saaji Sebastian <Saaji.Sebastian@infoimageinc.com>
+date:	Wed, Apr 6, 2016 at 10:22 PM
+subject:	RE: APCU - DF Mortgage Setup
+
+Hi Rahat,
+ 
+The purpose for “b” option and “n” option are pretty much the same. If DP wants to process all available options, then use one of those (“b” or “n”). 
+You can use anyone but need to specify in DP procedure file (.procs). I will suggest to use “b” because apcuml1_process.sh is using “b” option. 
+And this job(apcuml2) have same setup as apcuml1. That will be less coding and easier for research in future.
+ 
+Thanks,
+Tun
+
+***************************insert file exercise ***********************************
+
+From: Kevin H. Yang 
+Sent: Monday, February 29, 2016 2:15 PM
+To: Print team at InfoIMAGE (printprocess.infoimage@dsinnovators.com)
+Cc: William Kong; Ernest Wong; Kim Mawla
+Subject: DSI Training - Exercise 04 (insert file)
+
+DSI Team,
+ 
+The 4th exercise will be about the insert file.
+ 
+The insert file general looks something like this:
+ 
+DT_JOB_ID: A combination of the job number, the cycle, the segment and the version number in the format: “${job_no}-C${cycle_num}.${seg_num}-V${version_num}”. 
+The DT_JOB_ID is used primarily in the database to tie together components of a specific job. It is often used as a primary key.
+ 
+JOB_CYC: The job number and a date (I don’t think we use the date anymore). The job number should match the one in the DT_JOB_ID.
+ 
+ENV_PAP: The envelop weight followed by the paper weight of each tray. “${env_weight} ${paper_1} ${paper_2} ${paper_3} ${paper_4}”. 
+Paper’s 2 – 4 are required only if a job uses trays 2 – 4.
+ 
+ENV_HVY: Just contains the heavy envelop weight.
+ 
+INSERT1: Required but if not used set the value to 0. If used, must contain the weight of the insert and the zip range the insert is being sent to.
+
+INSERT2: Same as 1.
+ 
+INSERT3: Same as 1.
+ 
+INSERT4: Same as 1.
+ 
+INSERT5: Same as 1.
+ 
+MC_BY_ACCT: A file of the account numbers followed by the Mail Code associated with those account.
+ 
+QA_BY_ACCT: A list of account numbers that we will generate a qa.afp file for QA.
+ 
+ESUP_BY_ACCT: A file produced by estmt team containing accounts that will need to be suppressed by print because that account is electronic.
+ 
+INS_BY_ACCT: A list of accounts that will get an insert in the specific insert tray. Format is ${list} “I (as in ice-cream)” ${tray_num}
+ 
+PROC_DATE: 8 digit date following the format MMDDYYYY, in process script  cycle date or no extracted from this field
+ 
+See attached for examples.
+ 
+ 
+Exercise:
+ 
+Create me an insert file for demoms1 following these requirements.
+ 
+1.       Use the Job Number 999999.
+
+2.       Use the Version Number 11111.
+
+3.       Segment 1, Cycle 31.
+
+4.       Envelope weight is 0.220 for the normal envelopes and 0.555 for the heavy envelopes
+
+5.       All 4 trays are being used with the following weights: Paper 1 weighs 0.123; paper 2 weighs 0.222; paper 3 weighs 0.111; paper 4 weighs 0.234
+
+6.       There is a single insert in tray 1 and it weighs 0.111 going to the zip range 95000-99999.
+
+7.       The insert will be going to the accounts contained in the file /home/keep/demo_promotion_leaflet.txt
+
+8.       Apply ESUP to the file /d/ftpbu/demobu/paperless/demo_ms1_paperless.txt
+
+
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+date:	Wed, Jul 13, 2016 at 11:04 AM
+
+Please point the ESUP_BY_ACCT field to: /t/ftpbu/kycubu/paperless/kycu_paperless.7-13-2016.txt
+These are paperless files are produced by the ISD team to flag accounts as e-suppressed.
+${fn}e.sup and ${fn}e.sup2 where records from .txt file are printed for e_suppressed accounts
+ 
+${fn}e.sup  for mail_code 'e' - Estatement suppression from paperless file (e.sup)
+${fn}e.sup2  for mail_code 'd' - Estatement suppression from datafile (e.sup2)
+ 
+Please look for an example in the insert folder for reference.
+ 
+In isidisk there is a method estmt_suppress () which checks the insert file
+
+
+
+If a job has ESUP_BY_ACCT in insert file the job i.e. prefix needs to be mentioned in
+
+
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	Mahbub Bin Abdur Raquib Sakib <mahbub.sakib@dsinnovators.com>
+date:	Fri, Dec 2, 2016 at 5:25 AM
+subject:	RE: DSI Development - SANA Tax Setup
+
+
+If you need to change it to test with /t/ you can do it.
+Just make sure to change all /t/ to /d/ when passing the scripts back to me.
+
+***************************************mail code **********************************
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	"Print team at InfoIMAGE (printprocess.infoimage@dsinnovators.com)" <printprocess.infoimage@dsinnovators.com>
+date:	Fri, Nov 18, 2016 at 4:57 AM
+subject:	DSI Development - PRCU Daily Notice (Expedited Request)
+
+Setting MAIL_CODE to ‘A’ should produce a “${fn}.pdf1.afp” file after running isisdisk_daily.sh.
+
+ 
+*************************** isiszipsep_new, Exercise 05***********************************
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+cc:	Rony Das <rony.das@dsinnovators.com>,
+"Print team at InfoIMAGE (printprocess.infoimage@dsinnovators.com)" <printprocess.infoimage@dsinnovators.com>,
+William Kong <William.Kong@infoimageinc.com>,
+Ernest Wong <Ernest.Wong@infoimageinc.com>,
+Kim Mawla <Kim.Mawla@infoimageinc.com>,
+Terrence Tong <Terrence.Tong@infoimageinc.com>,
+Peter Dang <Peter.Dang@infoimageinc.com>
+date:	Tue, Mar 29, 2016 at 2:41 AM
+subject:	RE: DSI Training - Exercise 05 (processing jobs)
+
+Good job on the processing and on the identification of what happened.
+I think you meant to reply to the Exercise 05 topic, so I will respond using the Exercise 05 topic email subject.
+ 
+The error from Papyrus is fine.
+That error shows that we’re using a test version of Papyrus on the server you are processing on.
+ 
+All of the other files created in the working directory are from the separation step: isiszipsep_new.pl.
+You can find this script under (/home/dsi/master/isiszipsep_new.pl).
+We discussed this during the processing training lecture.
+ 
+For ‘s’ option, you don’t have to do any additional work. Since the print files are copied automatically to ${d_dir}/afpprint/
+You can also view the print files under ${d_dir}/afp/${cid}/
+ 
+For the ‘f’ option, files will be created under another directory and an index file will be created for posting.
+For setup, you may have to audit this index file.
+ 
+DFAs are kept under ${home_master}/isis/docdef/
+The location you specified is the development check-in location (to track changes and prevent syncing).
+ 
+Peter will go over the check-in procedures with you guys.
+ 
+Thanks,
+ 
+Kevin.
+
+
+
+************************************zipsep JPRI**********************************************************************
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+date:	Wed, Jun 22, 2016 at 3:43 AM
+subject:	RE: DSI Development - JPRI Automation Project
+
+Rony,
+ 
+I’m attaching 3 files: 2 TTL reports and the check report that is generated by the purple box you were confused about.
+ 
+I’m not entirely sure what the difference of ADP and ACCA is but they come as separate files.
+They are probably just different check files used by the institution.
+ 
+Here is the direction I want to provide to you:
+ 
+1.       Create a single script to handle the logic from both option 4 and 5. The arguments should include segment/[0|bypass], the job select as well as another argument that accepts either [‘day’ or ‘week’] to differentiate between ws5 and ws6. Please double check both options to see if there is anything else different between option 4 and option 5.
+
+ 
+
+2.       Replace the file prompt with a find command on the directory /d/ftpbu/jpribu/ to match the check file naming conventions.
+
+ 
+
+3.       You will have to update the insert file automatically as well.
+
+ 
+ 
+I am not sure what the purple box section does. Would be please give me idea about it.
+ 
+The purple box section goes through each of the files created by zipsep: 4.2o1, 5.2oz, etc. and takes out parts of the txt record to create the chk_rpt.
+JPRI has custom fields in the 400+ txt record.
+ 
+ 
+Thanks,
+ 
+Kevin.
+KevinH.Yang@infoimageinc.com
+
+************************************JPRI**********************************************************************
+from:	Rony Das <rony.das@dsinnovators.com>
+to:	"Kevin H. Yang" <KevinH.Yang@infoimageinc.com>
+date:	Tue, Jun 21, 2016 at 9:12 AM
+subject:	Re: DSI Development - JPRI Automation Project
+Hi Kevin,
+
+ I reviewed the code. Under condition 4 and 5 it determines the app by checking the filetyp by jpri_file_scan.pl.
+      Inline image 1
+
+
+The pri_file_scan.pl return value that indicate either file type is adp or acca or both or none.
+
+Inline image 2
+
+
+for each app it extracts the check amount and check total from jpri${cycleno}.ttl
+It would be helpful if I have some ttl files to review or if you give me some idea about it.
+
+
+
+Inline image 4
+
+
+After calling isisdisk it creates Check reports by calling  "perl ${home_master}/master/jpri_chk_rpt.pl "${cid}${app}" $infile"
+
+Inline image 5
+
+
+
+in jpri_chk_rpt.pl 
+
+it inserts the below fields:
+
+
+Inline image 1
+
+I am not sure what the purple box section does. Would be please give me idea about it.
+
+Then it calculate jpri_chk and jpri_amt either combining the amount from each app or any of the app based on filetyp  
+
+Inline image 2
+
+
+Then it calculates again total amount and total chk but from jpri.ttl and compare those with the values came from  jpri${cycleno}.ttl file
+and compare those values:
+
+Inline image 2
+
+
+Again would you please let me know about jpri.ttl file.
+
+
+Also some explanation about Acca and Adp would be helpful.
+
+
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+date:	Tue, Jun 21, 2016 at 10:37 AM
+subject:	RE: DSI Development - JPRI Automation Project
+
+Thank you Rony.
+ 
+I will try to find you a ttl file and I will find more background information about ADP/ACCA as I also don’t know about them.
+ 
+Let me know if you are unable to access any of the scripts you mentioned.
+ 
+I will provide you an update in a few hours.
+ 
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+date:	Tue, Jun 21, 2016 at 2:43 PM
+subject:	RE: DSI Development - JPRI Automation Project
+
+Rony,
+ 
+I’m attaching 3 files: 2 TTL reports and the check report that is generated by the purple box you were confused about.
+ 
+I’m not entirely sure what the difference of ADP and ACCA is but they come as separate files.
+They are probably just different check files used by the institution.
+ 
+Here is the direction I want to provide to you:
+ 
+1.       Create a single script to handle the logic from both option 4 and 5. The arguments should include segment/[0|bypass], the job select as well as another argument that accepts either [‘day’ or ‘week’] to differentiate between ws5 and ws6. Please double check both options to see if there is anything else different between option 4 and option 5.
+
+ 
+
+2.       Replace the file prompt with a find command on the directory /d/ftpbu/jpribu/ to match the check file naming conventions.
+
+ 
+
+3.       You will have to update the insert file automatically as well.
+
+ 
+ 
+I am not sure what the purple box section does. Would be please give me idea about it.
+ 
+The purple box section goes through each of the files created by zipsep: 4.2o1, 5.2oz, etc. and takes out parts of the txt record to create the chk_rpt.
+JPRI has custom fields in the 400+ txt record.
+ 
+ 
+Thanks,
+ 
+Kevin.
+KevinH.Yang@infoimageinc.com
+
+
+************************************JPRI NOCA insert_data() from dpvs issues insert file issue**********************************************************************
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+date:	Wed, Jun 29, 2016 at 6:17 PM
+subject:	RE: DSI Development - JPRI Automation Project
+
+Thank you Rony.
+ 
+I will review your code and let you know if there are any issues.
+ 
+The DP operators are manually comparing the values in the .cnt file with the values generated from the DPVS report through jpri_file_scan.pl.
+Can you let me know the effort in doing this comparison automatically?
+ 
+ 
+
+ 
+Ernest: Can you look at the NOCA issue below?
+ 
+I will take a look at the insert_data() from the dpvs_rpt.pl.
+Most likely this is due to missing/inaccurate data on the insert file. I might have to get you a test DT_JOB_ID.
+ 
+Btw should I change the isis.sh to call the script and check in the isis.sh again( just to be confirmed).
+If the user runs opt 4 or opt 5, call your new script and check exit status after the process script runs.
+We will update the procedure file (I will tell you how to do this) so that DP will not use isis.sh by default for this application.
+ 
+ 
+Thanks,
+ 
+Kevin.
+
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+date:	Thu, Jun 30, 2016 at 6:08 PM
+subject:	RE: DSI Development - JPRI Automation Project
+
+If you run the program again and you get the insert_data() error, can you check the insert file for the application (ws4, ws5, ws6 .ins)?
+Most likely one of the values is not correct.
+
+
+
+************************************cripple handling**********************************************************************
+from:	is_redmine@infoimageinc.com
+to:	
+date:	Fri, Oct 21, 2016 at 5:11 AM
+subject:	[Change Requests - JEF #23220] GCBK - DDA Set up
+
+For cripple handling, you can refer to 'eqbk_dda_process.sh". In case of GCBK DDA/SAV the cripple file is generated in processing 
+directory w/ name CRIPPLE.dat. Below are the action items:
+
+- For Paper (Job Sel 's') - Use the function cripple_checker from func_set2.sh
+- For E-statement (Job Sel 'f') - Extract the Percentage from 'CRIPPLE.dat', if the value is greater than 3%, send a internal notification 
+email (Please refer cripple_checker() function for email content) & export high_cripple_flag="y" so that E-statements are not posted.
+- For Archival (Job Sel 'e') - Extract the Percentage from 'CRIPPLE.dat', if the value is greater than 3%, DO NOT copy the deliverable to 
+client pickup folder & send a internal notification email (Please refer cripple_checker() function for email content).
+
+Make sure this functionality is implemented for all the individual job types & 'n' option.
+
+As requested, current SOW is attached for your reference.
+
+
+************************************control file issues**********************************************************************
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+date:	Thu, Jun 30, 2016 at 6:08 PM
+subject:	RE: DSI Development - JPRI Automation Project
+
+One thing I saw that in control file the value of dir is dir="${d_dir}/jpri/", I also declared working dir like that.
+That’s fine. The $dir in the control file is a general variable for isisdisk to locate the working directory of an application. It’s not related to the processing shell.
+ 
+One thought, I saw in many portions of codes use ${d_dir}/${cid}/ or ${d_dir}/${cid}/{$jid}   included when referencing files which match the dir value in control file. I think it would be better if we use the dir value in those case,  also when declaring working dir in in processing script we can reference the dir value instead of hard coding the path.
+The working directory in the shell script must match the $dir value in the control file.
+This acts as a bridge between the processing shell and isisdisk to locate all working files.
+Generally, I like to use ${d_dir}/${cid}/${jid}/ as using ${d_dir}/${cid}/ can get messy if there are many applications for 1 CID.
+However, if an existing job is already setup to use ${d_dir}/${cid}/ then you don’t have to change it since it’s out of the scope of the update.
+If you want to change it and test the changes, that’s fine too.
+
+
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+date:	Thu, Jul 28, 2016 at 3:36 PM
+subject:	RE: DSI Development - SACU Arial Reference Font Test
+
+Good catch Rahat.
+It is very good that you checked the control file.
+ 
+Here, SUCUMS11 dfa is used for "s" option and SACUMS18 dfa is used for "e" option. Should I also change SACUMS18 dfa's font to test this?
+ 
+Yes, you will need to change SACUMS18.dfa (sorry I did not notice that it is using a different DFA).
+ 
+Another question is, in which scenario I have to use one dfa for "s" option and another dfa for "e" option?
+ 
+I cannot think of a good reason why you will need 2 DFAs.
+You should only create 2 different DFAs if the ‘s’ option and ‘e’ option handles very differently and would be confusing to combine them.
+ 
+I cannot think of a good example to use a different DFA for ‘s’ option and ‘e’ option.
+I do not recommend doing this.
+
+
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	Chelsea Cessna <Chelsea.Cessna@infoimageinc.com>,
+Ron Davis <Ron.Davis@infoimageinc.com>,
+Mahbub Bin Abdur Raquib Sakib <mahbub.sakib@dsinnovators.com>
+date:	Wed, Aug 3, 2016 at 5:16 PM
+subject:	RE: DSI Development - SANA Mortgage OCR placement
+
+Thank you Ron, Chelsea and Sakib on your contributions.
+ 
+The endorsement type is misspelled in the control file.
+This was originally fixed but the changes were most likely lost due to constant code movement.
+ 
+I’ll will provide final set of print samples once I reprocess the job.
+ 
+ 
+Thanks,
+ 
+Kevin.
+KevinH.Yang@infoimageinc.com
+
+
+from move_afp_threads.sh
+If cripple rate is high then skip triggering to estatement
+otherwise check  e_automate from control file to trigger I3.socket
+if [ ${high_cripple_flag} -a ${high_cripple_flag} = "y" ]; then
+        echo -e "\nSkipping eStatement triggering because of high cripple rate"
+elif [ ${e_automate} -a ${e_automate} = "s" ]; then # Added by Tien 03.20.2008; Modified 10.10.08; Modified - 11.13.12 - Deleted everything except for 4 lines - KY
+	echo -e "\n$cid processed on Date: $mm1 Time: $mm2" >> ${d_dir}/daily/index_file.log
+       	echo -e "${indexFN}" >> ${d_dir}/daily/index_file.log
+       	echo -e "Running: ${home_master}/master/I3.socket.pl $cid ${indexFN} $acctCnt $imgCnt $jobsel"
+       	${home_master}/master/I3.socket.pl $cid ${indexFN} $acctCnt $imgCnt $jobsel
+        chk_exit_status $? I3.socket.pl
+fi
+otherwise check  e_automate from control file to trigger I3.socket
+if [ ${high_cripple_flag} -a ${high_cripple_flag} = "y" ]; then
+        echo -e "\nSkipping eStatement triggering because of high cripple rate"
+elif [ ${e_automate} -a ${e_automate} = "s" ]; then # Added by Tien 03.20.2008; Modified 10.10.08; Modified - 11.13.12 - Deleted everything except for 4 lines - KY
+	echo -e "\n$cid processed on Date: $mm1 Time: $mm2" >> ${d_dir}/daily/index_file.log
+       	echo -e "${indexFN}" >> ${d_dir}/daily/index_file.log
+       	echo -e "Running: ${home_master}/master/I3.socket.pl $cid ${indexFN} $acctCnt $imgCnt $jobsel"
+       	${home_master}/master/I3.socket.pl $cid ${indexFN} $acctCnt $imgCnt $jobsel
+        chk_exit_status $? I3.socket.pl
+fi
+
+
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+date:	Tue, Nov 1, 2016 at 5:53 AM
+subject:	RE: DSI Development - SANA IMF Billing Statements Phase 2
+Rahat,
+ 
+We have an update to automate the paperless posting and index posting.
+ 
+Can you add the following into the control file?
+
+e_paperless="y" to automate paperless posting
+e_automate="y" to index posting
+
+exposrt dir fn e_paperless e_automate
+
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+date:	Thu, Nov 3, 2016 at 12:04 AM
+subject:	RE: DSI Development - SANA IMF Billing Statements Phase 2
+
+“e_automate” is an automatic trigger to ISD to post the e-statement/eNotice index file to their system. 
+Without this flag, DP or ISD will have to post the index files manually.
+ 
+“e_paperless” is similar to e_automate but acts on the paperless file for jobs where e-suppression is defined by the data file. 
+This flag will trigger the file created by your script sana_paperless_creator.py.
+
+
+misc_delivery="manual"( from bfculs2.control ) 
+
+
+
+from:	Le Tuan La <LeTuan.La@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>,
+Ernest Wong <Ernest.Wong@infoimageinc.com>
+subject:	RE: MTCU daily letter infotrac setup upgrade
+
+Add this flag to the main control file:
+newDlStructure="y1"
+2016-12-05/03:07:33.058 0143/0817 AFPR0001E (2DSDDAILYN/3782) RN:1 Open error for file 'AFPPATHCIDdl006.afp';;
+2016-12-05/03:07:33.106 0143/0817 AFPR0001E (2DSDDAILYN/3782) RN:11 Open error for file 'AFPPATHCIDdl007.afp';;
+2016-12-05/03:07:33.112 0143/0817 AFPR0001E (2DSDDAILYN/3782) RN:21 Open error for file 'AFPPATHCIDdl008.afp';;
+2016-12-05/03:07:33.113 0143/0817 AFPR0001E (2DSDDAILYN/3782) RN:23 Open error for file 'AFPPATHCIDdl010.afp';;
+2016-12-05/03:07:33.114 0143/0817 AFPR0001E (2DSDDAILYN/3782) RN:25 Open error for file 'AFPPATHCIDdl015.afp';;
+2016-12-05/03:07:33.120 0143/0817 AFPR0001E (2DSDDAILYN/3782) RN:35 Open error for file 'AFPPATHCIDdl017.afp';;
+
+************************************dsi server check in steps**********************************************************************
+from:	Amir Ebrahim Rahat, Mohammad <amir.rahat@dsinnovators.com>
+to:	"Kevin H. Yang" <KevinH.Yang@infoimageinc.com>
+cc:	Print team at InfoIMAGE <printprocess.infoimage@dsinnovators.com>
+date:	Tue, Sep 6, 2016 at 9:24 PM
+subject:	Re: Help for archival
+
+Hi Kevin,
+
+I a question about control file. I need information about following variables.
+
+job_prf
+prf_p1_ovl
+prf_p2_ovl
+
+I know these variables define online proofing and if we have online proofing then we set "job_prf" to "y". But I am confused about "prf_p1_ovl" and "prf_p2_ovl". 
+Why we use these and what should be these variable's value?
+
+Thanks,
+Rahat
+
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+date:	Tue, Sep 6, 2016 at 11:14 PM
+subject:	RE: Help for archival
+
+prf_p1_ovl (page 1) and prf_p2_ovl (page 2) represent the overlay/logo that is pulled for online proofing when TRAY 1 (SHEET 1) or TRAY 2 (SHEET 2) resources are called in 
+the print step.
+ 
+prf_p1_ovl is the overlay you want to add to the page when tray 1 is used.
+prf_p2_ovl is the overlay you want to add to the page when tray 2 is used.
+ 
+This way we can control the type of logo used for online proofing (ie. color vs. black/white).
+ 
+ 
+Thanks,
+
+
+************************************dsi server check in steps**********************************************************************
+Since Peter will be on vacation for a couple of days, I will give you guys a quick overview on checking code into the development environment.
+ 
+The purpose of this is to move things into processing locations such as: /home/dsi/master/ or /home/dsi/control/ or /home/dsi/isis/docdef/ or etc.
+ 
+Please follow these steps:
+1. Move the code you want to check-in to development into your development check-in folder.
+The development check-in folder is /d/is/development/${LOGNAME}/
+If the folder does not exist, please create it and change the permission to 777 so that the testmain user can access it.
+ 
+
+It’s a good idea to do a diff to review the changes:
+ 
+2.       Change users to testmain.
+User = testmain
+PW = DSItestmain$
+ 
+
+3.       Run ssh -t rhs "/home/dsi/master/dsi_dev_checkin.pl ${LOGNAME}".
+ 
+The prompt will ask you to submit a new development or update an existing development.
+
+ 
+If you are modifying an existing development project, you will be asked for a Development ID.
+                If you are submitting a new development, you will be asked to enter a short description of the project.
+ 
+                To look up existing developments you can use dsi_dev_report.pl
+                This will let you search by user, file or ID.
+ 
+
+4.       After check-in please exit testmain.
+ 
+5.       The program will move the correct files into the correct folders. You will not have to worry about which programs are 
+moved to /home/dsi/master/ or /home/dsi/control/ etc.
+ 
+ 
+Please try this for the SACU DFAs.
+ 
+Let me know if you have any questions.
+ 
+
+Thanks,
+ 
+Kevin.
+KevinH.Yang@infoimageinc.com
+
+
+************************************dsi server check in parallel production steps**********************************************************************
+DSI Team,
+ 
+Our parallel environment is used to test working sets of file/programs on production servers.
+ 
+Other departments such as QA and DP will reference the parallel environment to do checks and balances.
+ 
+You must make sure your code is fully functional before moving from the development environment to the parallel environment.
+We may make exceptions for some cases but you should check with us first.
+ 
+1.       Run the development check-in script as normal but select option 4.
+
+You will be prompted to enter the Dev ID as normal and your file will be moved to /d/is/parallel/<< your user name >>/
+/home
+2. Run the parallel check-in script with a ssh to RHS.
+   ssh -t rhs "/home/master/parallel_checkin_new.pl <logname>"
+
+Enter a description and you will be provided with a Parallel ID (not to be confused with Development ID).
+
+3.  Similar to the development report, there is also a parallel report to look-up the parallels you have submitted.
+ 
+    ssh -t rhs "/home/master/parallel_report.pl"
+ 
+4.       Please try this with the AMAC Billing Statement files and let me know if there are any questions.
+
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+cc:	"Print team at InfoIMAGE (printprocess.infoimage@dsinnovators.com)" <printprocess.infoimage@dsinnovators.com>,
+Peter Dang <Peter.Dang@infoimageinc.com>,
+William Kong <William.Kong@infoimageinc.com>,
+Ernest Wong <Ernest.Wong@infoimageinc.com>
+date:	Fri, Apr 15, 2016 at 10:12 PM
+subject:	RE: DSI Training - Moving Files from Dev Environment to Parallel Environment
+
+You will also need to check in SACUME11.dfa.
+ 
+You will have to delete the current development that contains all 3 application’s DFA and recreate the other two.
+In the future, you may want to consider creating developments for individual applications because moving the development to parallel will move all files.
+ 
+This means keep: cidjid_process.sh, cidjid.control, PSEGs/OVL/OGL for that application and the DFA in one development. However if the jid is different, 
+make a new development.
+ 
+The blue box means that your project will be synced with production and removed from development. Your project is already in parallel so is no longer 
+needed in development.
+ 
+The red box in the 2nd image is ok.
+
+from:	Ernest Wong <Ernest.Wong@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+date:	Thu, May 26, 2016 at 10:39 PM
+subject:	RE: DSI server is down
+
+Hi Rahat,
+ 
+The su command is disabled on this server.  Please login as testmain when you need to check in or check out.  Please try checking in again,  
+I have provided write permission to the folder.
+ 
+Ernest
+
+
+
+
+from:	Ernest Wong <Ernest.Wong@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+date:	Tue, May 31, 2016 at 10:22 AM
+subject:	Re: DSI server is down
+
+
+You are supposed to run "ssh -t rht /home/dsi/master/dsi_dev_checkin.pl".  
+
+
+from:	Ernest Wong <Ernest.Wong@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+cc:	"Kevin H. Yang" <KevinH.Yang@infoimageinc.com>,
+Print team at InfoIMAGE <printprocess.infoimage@dsinnovators.com>,
+IS <IS@infoimageinc.com>,
+MCIT <MCIT@infoimageinc.com>
+date:	Wed, Jun 1, 2016 at 8:10 AM
+subject:	RE: DSI server is down
+
+Please use the following commands to do development check in and also to look at the development reports:
+ 
+ssh –t rht /home/master/dsi_dev_checkin.pl $LOGNAME where $LOGNAME is the user name
+  
+ssh –t rht /home/master/dsi_dev_report.pl
+
+************************************dsi server check in problem**********************************************************************
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+cc:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>,
+"Print team at InfoIMAGE (printprocess.infoimage@dsinnovators.com)" <printprocess.infoimage@dsinnovators.com>,
+William Kong <William.Kong@infoimageinc.com>,
+Ernest Wong <Ernest.Wong@infoimageinc.com>,
+Kim Mawla <Kim.Mawla@infoimageinc.com>,
+Terrence Tong <Terrence.Tong@infoimageinc.com>,
+Peter Dang <Peter.Dang@infoimageinc.com>
+date:	Wed, Mar 30, 2016 at 10:46 PM
+subject:	RE: DSI Development - SACU PDF Archival Migration
+
+If you get this error, check to make sure no one else is running dsi_dev_checkin.pl
+ 
+Then you can remove the lock file: "/home/dsi/keep/development/temp.lock"
+ 
+ 
+Thanks,
+ 
+Kevin.
+KevinH.Yang@infoimageinc.com
+
+************************************RE: DSI Training - Processing in Parallel Environment************************************
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+cc:	"Print team at InfoIMAGE (printprocess.infoimage@dsinnovators.com)" <printprocess.infoimage@dsinnovators.com>,
+Peter Dang <Peter.Dang@infoimageinc.com>,
+William Kong <William.Kong@infoimageinc.com>,
+Ernest Wong <Ernest.Wong@infoimageinc.com>
+date:	Fri, Jun 3, 2016 at 6:46 AM
+subject:	RE: DSI Training - Processing in Parallel Environment
+
+Rony & DSI Team,
+ 
+We will continue using SACU ME1 as the application for training and be picking back up on this topic.
+ 
+To process a job on the parallel environment, you will do a ssh to one of the production servers (instead of rht) when executing a job:
+Example: ssh rhs2 "sh -x /t/test_<<your username>>.sh" 2>&1 | tee sacume1.log
+ 
+Inside your shell script, include the script executing command as usual.
+ 
+sh -x $home_master/master/sacume1_process.sh "sacu" "me1" "e" 
+ 
+The data files will go into the folder: /d/test/ftpbu/sacubu/ instead of /t/ftpbu/sacubu/
+ 
+The insert file will go into the folder: /home/test/insert/ instead of /home/dsi/insert/
+ 
+The other directories will follow similar rules:
+Anything that was /home/dsi/ will be in /home/test/
+Anything that was in /t/ will be in /d/test/
+ 
+Please test with the SACUME1 process and debug any errors in the log file.
+Remember, the log file for the job will be in /d/test/sacu/
+ 
+Let me know if there are any questions.
+
+
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+date:	Sat, Jun 4, 2016 at 12:32 AM
+subject:	RE: DSI Training - Processing in Parallel Environment
+
+Rahat,
+ 
+Can you try reprocessing?
+ 
+I’ve requested Ernest to change /d/test/ to /z/.
+These are the same but generally we will refer to /z/ more.
+ 
+/d/ = production
+/z/ = parallel
+/t/ = DSI’s environment for dev.
+
+
+
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+date:	Tue, Jun 7, 2016 at 12:04 AM
+subject:	RE: DSI Training - Processing in Parallel Environment
+
+While processing jobs for testing, make sure you process all the options the job is set up for.
+ 
+You processed only for “s” when the job has both “s” and “e”. For this application, we were doing updates to the “e” option so it is crucial to test this option.
+
+Also, please make sure you check the log files inside the processing directory.
+The processing directory is specified in the control file with the following variable: dir="${d_dir}/sacu/"
+In this case, it would be /z/sacu/
+ 
+Also, please figure out why these errors are occurring:
+
+
+********************************* perl printing  issue flush *********************************************** 
+
+from:	Rony Das <rony.das@dsinnovators.com>
+to:	"Kevin H. Yang" <KevinH.Yang@infoimageinc.com>
+
+subject:	Re: DSI Development - SACU PDF Archival Migration
+
+Hi Kevin,
+ 
+I did some google search about it and what I understand is it may not forces a flush right away after every print on the currently output channel, 
+may be it buffers those if output is to the terminal, setting '$|=1' which forces flushing after every print command solved this issue.
+
+*********************DSI Training - Exercise 05 (AFP2WEB)**********************
+DSI Team,
+ 
+Please complete the following steps and answer the following questions below:
+ 
+Step 1:  Add this code into your processing shell: python /home/master/afp2pdf.py direct InputFilename=/t/afp2web_testing/input/entcls11168.afp OutputFilePath=/t/afp2web_testing/output/
+Your processing shell is the test_$LOGNAME.sh script you use to run processes (ie. test_ronyD.sh).
+ 
+Question 1: Take a look at the output folder in the OutputFilePath above. What do you see is outputted?
+ 
+Step 2:  Modify the above python script into this:
+python /home/master/afp2pdf.py index_parse InputFilename=/t/afp2web_testing/input/entcls11168.afp OutputFilePath=/t/afp2web_testing/output2/ prefix="entcls1"
+ 
+Question 2: Take a look at the output 2 folder. What differences do you see?
+ 
+Step 3:  Modify the above python script into this:
+                python /home/master/afp2pdf.py index_parse InputFilename=/t/afp2web_testing/input/entcls11168.afp OutputFilePath=/t/afp2web_testing/output3/ prefix="entcls1" keep_xml_after_parse="y"
+ 
+Question 3: What happened in output 3 that is different than output 2? What does the contents of the new files contain? Explain in detail how the files are able to get those values.
+
+Answers:
+see mail:
+rom:	Rony Das <rony.das@dsinnovators.com>
+to:	"Kevin H. Yang" <KevinH.Yang@infoimageinc.com>
+date:	Mon, Mar 14, 2016 at 8:34 PM
+subject:	Re: DSI Training - Exercise 06 (AFP2WEB)
+
+Step1:
+python /home/master/afp2pdf.py direct InputFilename=/t/afp2web_testing/input/entcls11168.afp OutputFilePath=/t/afp2web_testing/output/
+entcls11168.pdf was generated in /t/afp2web_testing/output/ directory
+
+Step2:
+    Many(445) individual pdfs  are generated
+python /home/master/afp2pdf.py index_parse InputFilename=/t/afp2web_testing/input/entcls11168.afp OutputFilePath=/t/afp2web_testing/output2/ prefix="entcls1"
+
+Step3:
+	This time individual xmls are generated for each pdf.  Those also generated for 2nd step  but if we missing from keep_xml_after_parse="y" arguments  then those index files  got removed.
+    python /home/master/afp2pdf.py index_parse InputFilename=/t/afp2web_testing/input/entcls11168.afp OutputFilePath=/t/afp2web_testing/output3/ prefix="entcls1" keep_xml_after_parse="y"
+
+		
+*********************DSI Training - Exercise 06 (AFP2WEB)**********************
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+date:	Mon, Mar 14, 2016 at 11:56 PM
+subject:	RE: DSI Training - Exercise 06 (AFP2WEB) part 2		
+Very good.
+Please complete Part 2 by tomorrow.
+There are some PDF jobs we would like to give you guys.
+ 
+ 
+Part 2:
+ 
+Now that you understand the basics of afp2pdf.py, let’s look at the index building feature.
+ 
+Step 1:
+ 
+Use the command:
+python /home/master/afp2pdf.py index_build InputFilename=/t/afp2web_testing/input/entcls11168.afp 
+OutputFilePath=/t/afp2web_testing/output4/ data_input_file=/t/entcls1_pdf.control
+ 
+Examine the contents of /t/entcls1_pdf.control.
+Please explain each field briefly.
+ 
+Step 2:
+ 
+Run the command.
+What difference do you see compared to the contents in output2?
+Please explain.
+ 
+Step 3:
+ 
+Now use the command:
+python /home/master/afp2pdf.py index_build InputFilename=/t/afp2web_testing/input/entcls11168.afp OutputFilePath=/t/afp2web_testing/output5/ 
+data_input_file=/t/entcls1_pdf2.control
+ 
+What is the difference between entcls1_pdf.control and entcls1_pdf2.control?
+What do you expect to see?
+ 
+Step 4:
+ 
+Run the command.
+What is the difference between output 5 and output 4?
+Please explain in details.
+ 
+ 
+Thanks,
+
+Answers:
+See mail:
+
+from:	Rony Das <rony.das@dsinnovators.com>
+to:	"Kevin H. Yang" <KevinH.Yang@infoimageinc.com>
+date:	Tue, Mar 15, 2016 at 7:35 PM
+subject:	Re: DSI Training - Exercise 06 (AFP2WEB) part 2
+
+Step1:
+
+prefix                      =  entcls1
+clear_output_path_files     =  y
+rename_idx_pdf_after_parse =   y
+index_parameter             =  START
+output_index_file           =  entc_cre_cfpb_idx.txt
+index_file_type             =  flatfile
+index_format                =  delimited
+index_delimiter             =  ,
+index_fields                =  filename|ACCOUNT_NUMBER|ACCOUNT_NAME|STMT_DATE|STMT_START|STMT_END|MEMBER_CLASS|FILE_TYPE
+index_parameter             =  END
+
+prefix – prefix is required for anything that is subclass of index parse
+rename_idx_pdf_after_parse – rename the pdfs according to PDF_FILE_NAME from index information at papyrus level in xml_file_iterator module in 
+afp2pdf_index_parser.py
+clear_output_path_files – clear the OutputFilePath in before_transformation module in afp2pdf_direct_call.py
+index_parameter – it dictates start and end of an index file, if there are multiple ’START’ and ‘END’ then that much of index file will be generated
+output_index_file – name of the output index file
+index_file_type – type of the output index file
+index_format – may be pipe delimited, may be fixed length
+index_delimiter – how the columns will be separated in index file
+index fields – Columns names for index file( | is used just for showing purpose actually the delimiter will be used in place of | in index file)
+
+Step2:
+446 pdfs are generated. One index file(entc_cre_cfpb_idx.txt) and others are pdfs
+
+Fig: entc_cre_cfpb_idx.txt
+
+In output2 individual pdfs were generated but no index file (like here : entc_cre_cfpb_idx.txt) is generated.  
+Also naming of pdfs are different because for output2 “rename_idx_pdf_after_parse” 
+was not used but for output4  “rename_idx_pdf_after_parse” used in entcls1_pdf.control file.
+
+The differences I see that the later one is fixed length (ACCOUNT_NUMBER->50,r means it will hold 50 char spaces and right align)
+
+Step 4:
+Individual pdfs
+entc_cre_cfpb_idx.txt  3 columns ACCOUNT_NUMBER, ACCOUNT_NAME, PDF_FILE_NAME all are right align as expected
+
+
+
+*********************PDF Archival - afp2pdf_index_parse**********************
+it generates individual pdf with an xml file for each pdf from group index information  for job type 'e'
+'prefix' must be an argument for index parse or child of it like index build
+not sure about it's affect 
+There is a check in afp2pdf_index_parser.py with prefix
+    def check_files(self):
+        if (not 'prefix' in self.data.keys()):
+            sys.stderr.write("ERROR: key value 'prefix' must be declared when calling afp2pdf.py with 'index' option !!! \n")
+            sys.stderr.write("This value has cid as the 1st 4 digits and jid as the next 3 digits \n")
+            sys.exit(1)
+        DirectConversion.check_files(self)
+
+
+*********************PDF Archival - afp2pdf_index_file_build index_build**********************
+it generates individual pdf with an xml file for each pdf from group index information  for job type 'e'
+also an index file which contain information for pdf and generated according to configuration given as argument
+'prefix' must be an argument and index configuration is must argument either by direct command line input or by an configuration file which is also command line 
+input
+
+These below fields are must( not the right side ) for index build
+prefix                      =  entcls1
+index_parameter             =  START
+output_index_file           =  entc_cre_cfpb_idx.txt
+index_file_type             =  flatfile
+index_format                =  delimited
+index_delimiter             =  ,
+index_fields                =  ACCOUNT_NUMBER|ACCOUNT_NAME|PDF_FILE_NAME
+index_parameter             =  END
+ 
+if in configuration file there are more than one configuration(START,END) then for each configuration individual pdf file will be generated  
+ 
+*************************afp2pdf************************************
+python ${home_master}/master/afp2pdf.py index_build InputFilename="/t/afp2web_testing/input/entcls11168.afp" OutputFilePath="/t/afp2web_testing/output/" 
+python ${home_master}/master/afp2pdf.py index_build InputFilename="/t/afp2web_testing/input/entcls11168.afp" OutputFilePath="/t/afp2web_testing/output4/" data_input_file="/t/entcls1_pdf.control"
+        chk_exit_status $? afp2pdf.py
+
+
+ 
+************************pdf.control file **************************************
+reference - sacumv1_pdf.control
+can get the index_fields from zip_pdf_arch.pl see line where $clientid eq 'sacu' this condition is written also see below mail
+
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	"Print team at InfoIMAGE (printprocess.infoimage@dsinnovators.com)" <printprocess.infoimage@dsinnovators.com>
+cc:	William Kong <William.Kong@infoimageinc.com>,
+Ernest Wong <Ernest.Wong@infoimageinc.com>,
+Kim Mawla <Kim.Mawla@infoimageinc.com>,
+Terrence Tong <Terrence.Tong@infoimageinc.com>
+date:	Wed, Mar 16, 2016 at 5:24 AM
+subject:	DSI Development - SACU PDF Archival Migration
+mailing list:	printprocess.infoimage.dsinnovators.com Filter messages from this mailing list
+signed-by:	dsinnovators-com.20150623.gappssmtp.com
+:	Important mainly because of the people in the conversation.
+DSI Team,
+ 
+Please apply what you have learned in the PDF training and Exercise 06 for this project.
+ 
+You will be assisting in a PDF migration project to move code out from the script zip_pdf_arch.pl into job specific processing scripts.
+We will start with SACU since Sakib originally helped move the process out of isis.sh.
+ 
+SACU has 3 applications:
+SACUMS1 = Statements
+SACUMV1 = VISA
+SACUME1 = HELOC
+ 
+After processing isisdisk.sh, make a call to a function that will handle the output from the ‘e’ option.
+Please use ENTC’s archival function as reference.
+ 
+The AFP should be generated in the working directory under the name ${cid}${jid}${segment}${cycle}8.afp
+Copy the file to the common AFP directory ${d_dir}/pdf_afp/${cid}/${cid}${jid}/afp/ and use the common output 
+directory ${d_dir}/pdf_afp/${cid}/${cid}${jid}/pdf/
+ 
+Generate individual PDF files but do not rename them.
+ 
+These applications will require an index file using the naming convention below:
+ 
+Reference zip_pdf_arch.pl for the field names defined in the DFA. These are parsed one by one in the program from the XML file and you can trace each 
+variable back to them.
+
+I don’t have a XML file reference for you but you can run the python script with the correct arguments to produce them.
+For $fn, use filename (lower case) reference bbbbyla_pdf.control.
+ 
+I have placed an AFP file: sacume1108.afp inside /t/ for you guys to test with.
+ 
+The index file will need to be renamed to: ${prefix}_${proc_date}.txt after the afp2pdf.py process.
+Use a dummy name for the afp2pdf.py process since you don’t have access to ${proc_date} .
+ 
+Example:
+ 
+Let me know if there are any questions. 
+
+
+
+rom:	Amir Ebrahim Rahat, Mohammad <amir.rahat@dsinnovators.com>
+to:	"Kevin H. Yang" <KevinH.Yang@infoimageinc.com>
+cc:	Print team at InfoIMAGE <printprocess.infoimage@dsinnovators.com>
+date:	Wed, Aug 31, 2016 at 9:03 PM
+subject:	Help for archival
+
+Hi Kevin,
+
+We need a help about $cid$jid_pdf.control file which is used for pdf archival. In this file we declare a variable called "index_fields". 
+Index file's values are created according to this variable's value.
+
+My question is how can I know the keywords used for this variable.
+
+Example:
+
+index_fields = filename|ACCOUNT_NUMBER|ACCOUNT_NAME|STMT_DATE|STMT_START|STMT_END|MEMBER_CLASS|FILE_TYPE
+
+
+In the above line how did It was assigned that "STMT_DATE" is going to give statement date or "ACCOUNT_NUMBER" is going to give account number? 
+If I want to create any other keyword like this what should I have to do?
+
+In SACU, we got these keywords from zip_pdf_arch.pl file. But we wanted to create archival for GCBK but zip_pdf_arch.pl does not contain any information 
+about GCBK.
+
+I hope I could make you understand about my question. I you already have trained us about it would you please give us a hint so that we can remember it.
+
+Thanks, 
+
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+cc:	Print team at InfoIMAGE <printprocess.infoimage@dsinnovators.com>
+
+The fields have to match whatever you assigned in the DFA GROUP_INDEX.
+ 
+These only apply when &JOB_TYPE == ‘e’.
+
+
+
+
+***************************afp archive file directions ***********************************
+The AFP should be generated in the working directory(${d_dir}/${cid}/) under the name ${cid}${jid}${segment}${cycle}8.afp
+Copy the file to the common AFP directory ${d_dir}/pdf_afp/${cid}/${cid}${jid}/afp/ and use the common output directory ${d_dir}/pdf_afp/${cid}/${cid}${jid}/pdf/
+
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+cc:	William Kong <William.Kong@infoimageinc.com>,
+"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>,
+"Print team at InfoIMAGE (printprocess.infoimage@dsinnovators.com)" <printprocess.infoimage@dsinnovators.com>,
+Ernest Wong <Ernest.Wong@infoimageinc.com>,
+Kim Mawla <Kim.Mawla@infoimageinc.com>,
+Terrence Tong <Terrence.Tong@infoimageinc.com>,
+Peter Dang <Peter.Dang@infoimageinc.com>
+date:	Wed, Apr 6, 2016 at 5:35 AM
+subject:	RE: DSI Development - SACU PDF Archival Migration
+
+Specify the output format to include index generation:
+  TLE YES
+  ACIFINDEX YES
+  
+Also, make sure the input path is using ${d_dir}/pdf_afp/${cid}/${prefix}/afp/.
+ 
+Do not use ${d_dir}/${cid}/ as it will not work in production. In production, this is a local directory and not visible on the server that does the conversion.  
+
+
+***********************************move_afp,_pdfidx.txt**************************
+
+
+_pdfidx.txt it is the index file generated in working dir under 'f' options
+
+from move_afp_threads.sh
+if [ $is_xml_index == "y" ]
+then
+	closing_date=`grep -i "<ClosingDate>" ${path3}${jid}_pdfidx.txt | cut -d">" -f2 | cut -d"<" -f1 | head -1`
+else
+	closing_date=`sed -n "1,1p" ${path3}${jid}_pdfidx.txt | cut -c 9-16`
+fi
+
+the above code get the closing date from afp name( 1st field in the index file ) from 9th position like from clcumv2_04302016_0000000427_0.afp get 04302016
+
+
+***********************************move_afp**************************
+This is for mainly 'f' option individual afps
+
+from move_afp_threads.sh
+
+ls -1 ${path3}${prefix}-indiv/ > ${d_dir}/${cid}/${prefix}_move.list
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Calling afp_zip_mover_threads.pl
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+I added enhancement to move_afp_threads.sh to work it for both statement and letter
+add 5th argument('S' or 'L') to determine for which case it will run
+add 6th argument to (new_e_index) to determine updated timestamp(YYYYMMDD)
+
+In control file new_e_index have to be one for that
+
+
+new_move_afp needs to be 1 in control file to call move_afp_threads.sh
+afp_split_count in control file determines how many afp files in a single zip
+
+path1="${base_dir}/I3/process-files/${cid}/"
+path2="${base_dir}/indiv_afp/${cid}/afp-archive/${prefix}-${closing_date}/"
+
+paths for txt file and afp file to ISD for 'f' option
+
+zip_naming="${prefix}_${cycleno}_${seg_num}_${mm1}_${mm2}"
+
+the ${d_dir}/${cid}/${prefix}_move.list contains afp list that needs to move to ISD I think
+Also zip name is set in this shell move_afp_threads.sh
+
+get_DT_JOB_ID  gets the DT_JOB_ID from insert file if doesn’t exist it exits the program as this is related to ISD we need DT_JOB_IT
+ 
+indexFN="${jid}_${closing_date}_${seg_num}_${mm1}_${mm2}_${cid}.txt"
+
+index file location for 'f' options
+# AFP for ISD to QC is moved after print is done processing
+if [ "$job_type_flag" == 'S' ]
+then
+    cp ${path3}${jid}_pdfidx.txt ${path1}${indexFN}
+    echo -e "Copying ${cid}_pdfidx.txt to ${path1}${indexFN}"
+else
+    cp ${fn}_enotices_pdfidx.txt ${path1}${indexFN}
+    echo -e "Copying ${fn}_enotices_pdfidx.txt to ${path1}${indexFN}"
+fi
+
+
+from move_afp_threads.sh
+If cripple rate is high then skip triggering to estatement
+otherwise check  e_automate from control file to trigger I3.socket
+if [ ${high_cripple_flag} -a ${high_cripple_flag} = "y" ]; then
+        echo -e "\nSkipping eStatement triggering because of high cripple rate"
+elif [ ${e_automate} -a ${e_automate} = "s" ]; then # Added by Tien 03.20.2008; Modified 10.10.08; Modified - 11.13.12 - Deleted everything except for 4 lines - KY
+	echo -e "\n$cid processed on Date: $mm1 Time: $mm2" >> ${d_dir}/daily/index_file.log
+       	echo -e "${indexFN}" >> ${d_dir}/daily/index_file.log
+       	echo -e "Running: ${home_master}/master/I3.socket.pl $cid ${indexFN} $acctCnt $imgCnt $jobsel"
+       	${home_master}/master/I3.socket.pl $cid ${indexFN} $acctCnt $imgCnt $jobsel
+        chk_exit_status $? I3.socket.pl
+fi
+
+
+in isisdisk.sh
+$new_e_index $job_type_flag need to be declared in control file
+
+elif [ $new_e_index -eq 1 ]
+then
+		echo "seg_num:${seg_num}"
+		echo "in $0 calling ${home_master}/master/move_afp_threads.sh $cid $prefix $jid $jobsel $job_type_flag $new_e_index" 
+		${home_master}/master/move_afp_threads.sh $cid $prefix $jid $jobsel $job_type_flag $new_e_index
+		chk_exit_status $? move_afp_threads.sh                        
+
+elif [ $new_move_afp -eq 1 ] ## Kevin Testing
+then
+		echo "seg_num:${seg_num}"
+		${home_master}/master/move_afp_threads.sh $cid $prefix $jid $jobsel
+		chk_exit_status $? move_afp_threads.sh
+else
+		${home_master}/master/move_afp2.sh $cid $prefix $jid $jobsel
+		chk_exit_status $? move_afp2.sh
+fi 
+		
+
+		
+						
+***********************************bypass daily**************************
+if bypass 0 (CRON) then update insert, check sum for daily
+The processing script must update insert file dates if it is a daily job. Because we are using CRON automation for process. 
+For monthly/yearly jobs, normally DP (data processing dept.) process manually. So they will update insert manually. 
+But if the file name have a date, this is a good practice to have insert file update codes in script. BUT MUST HAVE AN OPTION FOR DP CAN UPDATE MANUALLY.
+
+
+from:	Le Tuan La <LeTuan.La@infoimageinc.com>
+to:	Mahbub Bin Abdur Raquib Sakib <mahbub.sakib@dsinnovators.com>,
+"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+date:	Thu, Aug 18, 2016 at 8:14 AM
+subject:	RE: SANA statement process script
+
+Since the process will be automated, please replace chk_sum2 with this so there will be an email alert if there is a duplicate file:
+ 
+do_cksum() {
+ 
+        ck_cksum=`md5sum $1 | cut -d " " -f1`
+        check_result=`grep ${ck_cksum}\|$2 ${home_env}/${keep_dir}/cksum_log/${cid}${app}_cksum.log`
+ 
+        if [ "${check_result}" -a "${check_result}" != "" ]; then
+                echo "Attempt to process an old file, $check_result."
+                echo "Attempt to process an old file, $check_result." >> ${working_dir}${cid}${app}_today.log
+ 
+                subject="$cid$app - Attempt to process an old file again"
+                mesg="Attempt to process an old file, $check_result."
+                perl ${home_master}/master/daily_mail2.pl 2 "$subject" "$mesg" "$maillist_internal"
+                exit 1
+        fi
+ 
+        echo "${ck_cksum}|$2, $1, `date `" >> ${home_env}/${keep_dir}/cksum_log/${cid}${app}_cksum.log
+}
+
+**********************************************segment bypass proc_arg_verify******************************************
+
+from:	Ya Mee Lee <YaMee.Lee@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+date:	Thu, Dec 8, 2016 at 6:47 AM
+subject:	RE: CSCU - Infotrac 3.0 Upgrade
+
+1.       All of the application indexes need to use the new index format.
+ 
+2.       MS1, ME1, MV1, LC1
+-Remove the “r” job_sel logic from the script
+-change the script to use “n” job_sel so that it can take in “s”, ”e”, and “f” job_sel instead of running “s” option for all 3.
+-Remove the bypass and segment arguments as they are only needed when running automation (cron).   So only take in job_sel as argument when running the script
+-Remove the proc_arg_verify.sh as it is only needed for automation as well
+-Remove the export of bypass, seg_num, and g_segment
+-Remove subfolders from input_dir (Ex. stmt, heloc, visa)
+ 
+3.       MS1 -Comment out the selective message section as they are using just message manager now.
+ 
+4.       LC1 - Remove the decryption, unzipping from csculc1_process.sh script as it is being done in lc1concat.pl
+ 
+5.       ME1, MV1 – update insert file to have “INSERT1: 0” as the DT_JOB_ID does not include insert, so when we process with insert, it will fail.
+
+
+
+from:	Clay Campbell <Clay.Campbell@infoimageinc.com>
+to:	Mahbub Bin Abdur Raquib Sakib <mahbub.sakib@dsinnovators.com>
+date:	Wed, May 31, 2017 at 5:07 AM
+subject:	RE: UCCU daily notice project
+
+In some cases the program is writing the account and suffix to the .txt file.  50894-42 in the example above. We were not generating e-notices,  therefore that information did not hurt anything.
+ 
+But now that we will be creating e-notices, we want to print only the account, without the dash and suffix, in positions 33-52 of the .txt file. E-notices will post using the account number. 
+
+But -- we do not want to omit the suffix from the notice output IF it was there before. Not all reports used the suffix in the notice output. 
+
+
+
+
+**********************************monthly/yearly jobs*********************
+ For monthly/yearly jobs, normally DP (data processing dept.) process manually. So they will update insert manually. 
+ But if the file name have a date, this is a good practice to have insert file update codes in script. BUT MUST HAVE AN OPTION FOR DP CAN UPDATE MANUALLY.
+
+**************************** Segment Bypass Updating the insert file ************************************************
+for statements updated_stmt_insert.sh for daily update_insert.sh. Both are for automated(CRON) jobs
+
+The processing script must update insert file dates if it is a daily job. Because we are using CRON automation for process. 
+For monthly/yearly jobs, normally DP (data processing dept.) process manually. So they will update insert manually. 
+But if the file name have a date, this is a good practice to have insert file update codes in script. BUT MUST HAVE AN OPTION FOR DP CAN UPDATE MANUALLY.
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+cc:	"Print team at InfoIMAGE (printprocess.infoimage@dsinnovators.com)" <printpr ocess.infoimage@dsinnovators.com>,
+Terrence Tong <Terrence.Tong@infoimageinc.com>,
+William Kong <William.Kong@infoimageinc.com>,
+Kim Mawla <Kim.Mawla@infoimageinc.com>
+date:	Tue, Mar 1, 2016 at 2:27 AM
+subject:	RE: DSI Development - KYCU Annual Statement Pre-Processing Script
+mailed-by:	infoimageinc.com
+:	Important mainly because it was sent directly to you.
+
+$g_segment/$seg_num comes from the command line input (not the control file [my mistake I mean insert file]).
+It may also come from the insert file from the DT_JOB_ID.
+ 
+This variable is used downstream in isisdisk.sh for various subprocesses within.
+ 
+The purpose of the segment number is to allow the process of 2 or more files that share the same cycle number but are processes separately.
+ 
+Some job specific items may specific for segment 1 perform an operation different from segment 2.
+ 
+Thanks,
+ 
+Kevin.
+KevinH.Yang@infoimageinc.com
+ 
+ 
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+date:	Tue, Apr 5, 2016 at 3:25 AM
+subject:	RE: DSI Development - SACU PDF Archival Migration
+mailed-by:	infoimageinc.com
+:	Important mainly because it was sent directly to you.
+ 
+Segment is used to differentiate 2 processes within a day (example: 1 file in the morning, 1 file in the afternoon).
+Usually it’s a good idea to ALWAYS give DP an ability to choose.
+Some old processes do not allow them to choose but it is ok (but NOT recommended since it doesn’t allow flexibility).
+ 
+Bypass is used to bypass InfoTRAC items downstream.
+It is also not recommended to leave this out but some old processes do not have them.
+ 
+Personally, I would recommend you add both to the command line argument list when doing new setups.
+It is also a requirement if you are automating your job (not relying on human processing).
+ 
+Updating the insert file automatically is generally a good idea since it removes manual editing (from a person in DP).
+It is not required for non-automated jobs) but I recommend it for all new setups.
+
+
+
+from:	Rony Das <rony.das@dsinnovators.com>
+to:	"Kevin H. Yang" <KevinH.Yang@infoimageinc.com>
+cc:	Print team at InfoIMAGE <printprocess.infoimage@dsinnovators.com>
+date:	Tue, Apr 26, 2016 at 5:36 AM
+subject:	Re: General info
+
+Hi Kevin,
+
+some general questions for preprocessing:
+
+ 1. For automated process( bypass=0) we need to update the insert file with data file date, right?
+ 
+ 2. What if bypass=0 and data file doesn't contain date in it's name? In that case should we need to update the inset file?
+
+ 3. When bypass=bypass the operator manually update the insert file before running the script, right?
+
+ 4. Are only the daily processes  run by CRON ? 
+
+
+Thanks
+
+1.       Yes. This is done through the script update_stmt_insert.pl or update_ins.pl
+
+ 
+
+2.       You will either have to ask the AC/client to include a date or use a date from inside the data file.
+
+ 
+3.       Yes. If you’re testing you are the operator.
+
+ 
+
+4.       No. CRON can be scheduled to trigger and ignore if no files are detected in the BU.
+
+
+
+
+
+
+********************************* .npm file create, .nop, misc invalid address handling ********************************************************************************
+rom:	Tun Aung <Tun.Aung@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+cc:	Mahbub Bin Abdur Raquib Sakib <mahbub.sakib@dsinnovators.com>,
+Terrence Tong <Terrence.Tong@infoimageinc.com>,
+"Sayfullah Al Noman Ranak, Mohammad" <sayfullah.ranak@dsinnovators.com>,
+Print team at InfoIMAGE <printprocess.infoimage@dsinnovators.com>,
+"Kevin H. Yang" <KevinH.Yang@infoimageinc.com>
+date:	Thu, Mar 10, 2016 at 11:38 PM
+subject:	RE: KYCU Annual Statement
+Hi Rony,
+ 
+I don’t know you guys already have our file id standardization document.  I attached for you.
+ 
+Basically, you will get print files (.afp) after you process a job. The print files can categorize by the file extensions. 
+For regular print file names are (*4.2o1.afp, *4.2o2.afp etc.). And the process generate other special print files with different extension.  
+You can review the attached document.
+ 
+So for your question,
+- *5.nop.afp file is one of the non-print file. When you set Mail_code=’z’ in your Papyrus format DFA, those accounts are rerouted to 5.nop.afp file. 
+(again, you can see in attached document).
+- *5.npm.afp  file is one of the misc. file. Normally, invalid address accounts are rerouted to .misc.afp files. But we can re-categorize .misc.afp  
+files for different handling instruction by adding “misc_type” flag in control file. In this case, I added  misc_type="npm" in kycuys1.control.  
+(again, you can see in attached document for re-categorize J  ).
+ 
+ 
+I hope this is make sense. Please feel free to let me know you have question.  J
+ 
+Thanks,
+Tun
+
+
+How to create .npm file? Previously we ran the entcls1_process file but it did not create any .npm file. So, where should we change to create this .npm file?
+
+-          As I explained before. “.npm” files are just changing the extension for “.misc” file. “.misc” files are generated by postal software for invalid 
+addresses. You just need to add misc_type="npm" in the control file for changing extension (from .misc to .npm).
+
+
+see apcuml1 or 2 for invalid address (pipe delimited print)
+see kycuys1 for do not mail or invalid address
+
+
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	Saaji Sebastian <Saaji.Sebastian@infoimageinc.com>,
+"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+date:	Tue, Aug 9, 2016 at 8:09 AM
+subject:	RE: DSI Development - PRCU Daily Notices
+
+Rahat,
+ 
+I’ve attached an updated SOW from Phoebe with green highlighted changes.
+ 
+Please set the $misc_type to “pdf” in the control file.
+Also, please follow Saaji’s instructions regarding your previous question.
+
+from:	Rony Das <rony.das@dsinnovators.com>
+to:	Tien Tran <Tien.Tran@infoimageinc.com>
+date:	Sat, Nov 12, 2016 at 12:26 AM
+subject:	Re: EXBK STMT Processing Script
+
+Hi Rahat,
+ 
+The default invalid address should ${fn}5.mis file unless the misc_type flag is "npm", which makes the report become ${fn}5.npm.
+ 
+If the cripple > 3%, stop production (exit) and inform us and client. I am not sure how you set up this app and how high_cripple_flag variable is used. 
+But if you follow GCBK to set this up as well, then you can try following that model.
+ 
+Thanks
+Tien
+
+
+
+**************************** texas ***************************
+We have two facilities in US for printing. California (Menlo Park)  and Texas.  Texas flag is to differentiate where we need to print the job.  
+If SOW mentioned TX, then the flag needs to be on.
+
+
+**************************** infotrac ********************************
+
+from:	Shailendra Rathore <Shailendra.Rathore@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+date:	Tue, Jul 25, 2017 at 4:55 AM
+subject:	RE: [Change Requests - JEF #28495] OFCU InfoTrac 3.0 Upgrade
+
+Hi Rony,
+ 
+For ms1 & mv1, can you please set all the INSERT to 0 in the insert file & try to reprocess? E.g.
+ 
+INSERT1: 0
+INSERT2: 0
+INSERT3: 0
+INSERT4: 0
+INSERT5: 0
+ 
+For daily application, it seems there was a server issue. When Peter & I ran ‘trigger_tracking_by_rec.pl’ on command line it worked as expected. You might want to reprocess & check.
+ 
+Let me know if you run into any other issues.
+
+
+
+
+
+from:	Clay Campbell <Clay.Campbell@infoimageinc.com>
+to:	Mahbub Bin Abdur Raquib Sakib <mahbub.sakib@dsinnovators.com>
+date:	Tue, Jun 6, 2017 at 8:24 AM
+subject:	RE: UCCU daily notice project
+
+It looks like the job did not run successfully in parallel. 
+ 
+The presence of a file named like this (and this is not a wildcard list, this is a file name)…
+ 
+/z/daily/uccudl/uccud*.print
+ 
+…usually means that there is some sort of problem and the job probably failed somewhere around the start of the print step.  
+The /z/daily/uccudl/ directory does not contain any print step files.  Also, I notice the aggregate .txt file is named  /z/daily/uccudl/uccud25.txt  
+which was fine for the old style file names, but the more up-to-date names of the aggregate files should be something like uccudla125.txt, when 1 is the segment
+number and 25 is the cycle.  You can see this in directories such as /z/daily/banb/  /z/daily/kycu/  /z/daily/apcu/
+
+
+
+
+For Infotrack in one line at page 4 of SOW it says "InfoTRAC: 3.0 Note: No Activity Trac required – if inserts not used frequently" and another 
+line at page 9 says "Client will be provided with InfoTRAC (a web access system) to access job reporting information.". 
+We are not sure what will be the value of "infotrac" and "track_by_rec" variables.
+
+infotrac" and "track_by_rec" variables are for web process tracking system. The client can view which file/when/status etc. 
+You might not have access for those yet. Please just add those for now. Please note that, normally, you will get error when you 
+testing with modified data files and infotrac flag is on. You need to comment out   #infotrac="m", when you are testing.
+
+from:	Diego Franco <Diego.Franco@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+cc:	"printprocess.infoimage@dsinnovators.com" <printprocess.infoimage@dsinnovators.com>,
+Peter Dang <Peter.Dang@infoimageinc.com>
+date:	Fri, Apr 29, 2016 at 11:01 PM
+subject:	RE: TFCU - Monthly and Business Msg Mgr
+
+In regard to infotrac isis.sh is a script that will kick off some jobs. Not all jobs are set up to run on isis.sh. 
+If you look into it you will see it just helps you kick off the main processing script most of time. 
+Some are setup on cron and some are setup in isis.sh and some are just run manually from the command line. 
+you will need to look inside of /home/procs/$cid$jid.procs this file will give you instructions on how to process specific jobs.
+
+
+from:	Diego Franco <Diego.Franco@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+cc:	"printprocess.infoimage@dsinnovators.com" <printprocess.infoimage@dsinnovators.com>,
+Peter Dang <Peter.Dang@infoimageinc.com>
+date:	Fri, Apr 29, 2016 at 5:17 AM
+subject:	RE: TFCU - Monthly and Business Msg Mgr
+
+For the tracking i believe you should have some sort of document to explain this. 
+This is what Peter went over initially during the beginning of the meeting. 
+If the dfa are correctly setup we should just need to add a couple of flags to the control file and test the actual process. 
+From there if there is any issues we may need to look into the paper indexs that are being produced for each application. 
+Please let me know if you do not have something like that.
+
+from:	Amir Ebrahim Rahat, Mohammad <amir.rahat@dsinnovators.com>
+to:	Clay Campbell <Clay.Campbell@infoimageinc.com>
+date:	Tue, Aug 9, 2016 at 9:24 PM
+subject:	Re: updated projects for MTRO LOC and MTRO Billing Statement
+There is one other error about infotrac. The error is:
+
+Error: trigger_tracking_by_rec.pl Cannot get http://pd-dev2.infoimage.com:8880/indexFileProcess/trigger?host=10.8.9.60&username=pdev1&pwd=infoimage&path=/z/isd_share/mtro/print_fileid/&filename=mtrome120160809080210.txt -- , HTTP::Response=HASH(0x28c0bf8)->status_line
+
+
+Please advise what should I do about these errors. Log files are attached.
+
+
+From isisdisk.sh
+ if [ ${bypass} = 0 ]; then
+	  if [ ! -n "$4" ]; then
+		   echo -e "Error: Infotrac requires automated job must have segment. Please check with I.S."
+		   exit 1
+  else
+	   segment_num=$4
+	  fi
+ fi
+
+ 
+ 
+ 
+perl /home/dsi/master/chk_file_id.pl 'prod' gdcu ms1
+:i_cid, gdcu
+:o_file_name, 
+:i_md5, f8d7da121f72cd720eeb2a27990310a4
+:o_File_id, 
+:o_arrival_time, 
+:o_file_size, 
+file id:-1 file_name:GDCU_120116.ZIP.pgp o_file_name: o_file_size: o_arrival_time:
+Error: /home/dsi/master/chk_file_id.pl missing file_size
+gdcu ms1 : /home/dsi/master/get_infotrac.pl  - Error in chk_file_id.pl program. 
+
+
+
+
+from:	Clay Campbell <Clay.Campbell@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+date:	Fri, Jun 9, 2017 at 8:36 AM
+subject:	RE: UCCU daily notice project
+Hi Mahbub and Rony,
+ 
+I attached another version of the control file. There could be some values in there that will help with the processing.  
+Save your current version and then try with this one.
+ 
+ 
+## newDlStructure               ##  I think this is necessary with the numeric notice types (001, 002, 003…)  and 2DSDDAILY7.dfa as print dfa
+## e_automate="e4"          ##  I think this is used for enotices when using 2DSDDAILY7.dfa as print dfa  
+
+Clay
+ 
+ 
+ 
+diff  uccudla.control /home/test/control/
+29,31d28
+< newDlStructure="y1"
+< e_automate="e4"
+< 
+50,59c47,55
+<      if [ $2 ]; then
+<           cycleno=dla${2}`grep PROC_DATE: ${home_ins}/insert/${cid}${jid}.ins | cut -d " " -f2 | cut -c3-4`
+<      else
+<           cycleno=dla`grep PROC_DATE: ${home_ins}/insert/${cid}${jid}.ins | cut -d " " -f2 | cut -c3-4`
+<      fi
+< 
+<      fn="$dir$cid$cycleno"
+<      prefix="$cid$cycleno"
+<      sam_jid="dl"
+<      supprefix="${cid}$cycleno"
+---
+>     if [ $2 ]; then
+>         cycleno=${2}`grep PROC_DATE: ${home_ins}/insert/${cid}dla.ins | cut -d " " -f2 | cut -c3-4`
+>     else
+>         cycleno=`grep PROC_DATE: ${home_ins}/insert/${cid}dla.ins | cut -d " " -f2 | cut -c3-4`
+>     fi
+> 
+>     fn="$dir$prefix$cycleno"
+>     prefix="$prefix$cycleno"
+>     sam_jid="dl"
+62,64c58
+< 
+< export dir prefix procdate fn sam_jid cover_ovl supprefix e_automate esup_ignore
+< 
+---
+> export dir prefix
+
+
+
+ 
+*********************************  get_infotrac.pl *********************************************** 
+
+
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+cc:	"Print team at InfoIMAGE (printprocess.infoimage@dsinnovators.com)" <printprocess.infoimage@dsinnovators.com>,
+William Kong <William.Kong@infoimageinc.com>,
+Ernest Wong <Ernest.Wong@infoimageinc.com>
+date:	Wed, Jun 8, 2016 at 9:59 PM
+subject:	RE: DSI Training - Processing in Parallel Environment
+
+Thank you for fixing the DEFAULTOUTPUT. Please make sure you check this into parallel.
+ 
+I have changed the permission for the /z/pdf_afp/sacu/sacume1/ folder. You should be able to generate PDFs now.
+ 
+To bypass the get_infotrac.pl, you will need the environment variable “bypass” exported.
+The current process script is not set up to do this and will need to be changed.
+ 
+Replace the usage from $0 $cid $app $job_sel
+To $0 $segnum $bypass $ job_sel.
+ 
+You will have to change the cid/app/jid to be hardcoded in the following 3 lines.
+
+from:	Tien Tran <Tien.Tran@infoimageinc.com>
+to:	Peter Dang <Peter.Dang@infoimageinc.com>,
+Rony Das <rony.das@dsinnovators.com>,
+"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+cc:	Print team at InfoIMAGE <printprocess.infoimage@dsinnovators.com>,
+Ernest Wong <Ernest.Wong@infoimageinc.com>
+date:	Thu, Jun 9, 2016 at 4:19 AM
+
+
+Hi Rahat,
+ 
+Peter looked at it and it seems the issue happens when you rerun the job. It supposed to prompt you asking you the reason why you reran it. 
+But due to the nested shell calls, the message got suppressed and looked like it hang forever. When that happens, you just need to type in Y, enter, 11. 
+It should continue.
+ 
+Peter tested and it worked. So let us know if you still have issue.
+ 
+Thanks
+Tien
+
+
+from:	Peter Dang <Peter.Dang@infoimageinc.com>
+to:	Tien Tran <Tien.Tran@infoimageinc.com>,
+Rony Das <rony.das@dsinnovators.com>,
+"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+cc:	Print team at InfoIMAGE <printprocess.infoimage@dsinnovators.com>,
+Ernest Wong <Ernest.Wong@infoimageinc.com>
+date:	Thu, Jun 9, 2016 at 5:15 AM
+
+Due to the Oracle environment is pointing to incorrect path, you will need to source the daily control file prior executing the script. 
+i.e:  . /home/control/daily.control
+ 
+Peter
+
+from:	Amir Ebrahim Rahat, Mohammad <amir.rahat@dsinnovators.com>
+to:	Tien Tran <Tien.Tran@infoimageinc.com>
+date:	Wed, Jul 13, 2016 at 7:40 AM
+subject:	Re: CLCU - Error
+
+For dla, when daily.control is called it changes the ${d_dir} variable's value to /t. But in parallel server ${d_dir} should be /z. So, the input directory 
+changes form 
+/z/ftpbu/clcubu/dn to  /t/ftpbu/clcubu/dn. As a result processing script can not find the data file.
+
+from:	Tien Tran <Tien.Tran@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+date:	Wed, Jul 13, 2016 at 8:54 AM
+subject:	RE: CLCU - Error
+
+Hi Rahat,
+ 
+If you look at /home/test/keep/clcumv1.datatrack.tmp, there’s a file clcu0416.vis, which was not recorded as an original file sent by customer. 
+Therefore, it failed. If you can remove that file from recoding into the /home/test/keep/clcumv1.datatrack.tmp, then I think your process will work.
+ 
+Thanks
+Tien
+
+*********************************  daily.control*********************************************** 
+from:	Le Tuan La <LeTuan.La@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+subject:	RE: SANA - Monthly Statements - Extract File Rule -TISA - Update Part -2
+
+DSI,
+ 
+data_mm1=`date +%m%d%Y`
+You don’t have to define test mode again.
+That’s define in daily.control
+ 
+Can you remove the leading zeros and the asterisks from the check number?
+ 
+32572950|32572950|002312|04202016|46000|
+32572950|32572950|002314*|04272016|5375|
+32572950|32572950|002315|04202016|10000|
+32572950|32572950|002316|04212016|14636|
+32572950|32572950|002317|04192016|10000|
+32572950|32572950|002318|04212016|10000|
+
+The check index should only be created if job type is ‘f’ or ‘t’
+
+********************************************* check index , ck idx, ck_idx **********************************************************
+
+In the DFA, the program must output fnbkcn1_estmt_check_idx.txt as following.
+
+I will check with Tien tomorrow on the update.
+ 
+&CK_ACCT_NUM!'__'!CHANGE(&CK_DATE,'/', '')!'_'!
+       CHANGE(&CK_AMT,',', '')!'_'!&CK_NUMBER!'_'!&CK_NUM!'___'!
+       &LOOKUP_SEQ!'_'!TIFF_SIDE!'.tif|'!TIFFNAME1 ;
+ 
+Result would look like below
+ 
+100003201__12232016_100.00_290_631409501023900___1_F.tif|fnbk_100003201_10000_920_12232016_F.tif
+ 
+Execute the /home/master/copy_chk_img_to_isd.pl --cid ${cid} --jid ${app} --seg ${seg_num} --job-sel 'f' --tiff-dir ${tiff_dir} --fn-lookup ${working_dir}/${cid}${app}_estmt_check_idx.txt --exec-socket-cmd
+
+********************************************* TFCU - Infotrac Setup infotrac afp .sam.afp .c1bmcok**********************************************************
+from:	Amir Ebrahim Rahat, Mohammad <amir.rahat@dsinnovators.com>
+to:	Diego Franco <Diego.Franco@infoimageinc.com>
+date:	Fri, Jun 17, 2016 at 10:31 PM
+subject:	Re: TFCU - Infotrac Setup
+
+Hi Diego,
+
+Thank you for the data file. I have some general questions.
+
+After creating individual process scripts should I change the isis.sh?
+
+These processes ask data file's name in command prompt. Should I change it to take it from "$d_dir/ftpbu/tfcubu/" directory?
+
+After processing the data files should I move data files to download directory?
+
+Thanks,
+Rahat
+
+from:	Diego Franco <Diego.Franco@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+ge@dsinnovators.com>
+date:	Fri, Jun 17, 2016 at 10:46 PM
+subject:	RE: TFCU - Infotrac Setup
+
+Hello,
+
+I would say to keep it the way it is now in regards to taking the whole path instead of picking up from bu. In regards to changing isis.sh, 
+if you have consolidated that code into a separate script that's great I am taking the same route in regards to monthly and business where i 
+took the code in isis.sh and put the into tfcums1_process.sh which i will most likely add to isis.sh once testing is completed. This way you don't have 
+to go through the prompts on isis.sh when you are testing.In regards to moving the files to download I think that would be good. 
+
+The reason for not updating isis.sh besides ease of testing is that isis.sh is a core script which most likely will have more differences than just these new 
+tfcu updates, 
+so we would not be rolling out that version of isis.sh anyways quite yet.
+
+Please let me know what stage you are at.
+
+Thanks,
+Diego 
+
+from:	Amir Ebrahim Rahat, Mohammad <amir.rahat@dsinnovators.com>
+to:	Diego Franco <Diego.Franco@infoimageinc.com>
+date:	Mon, Jun 20, 2016 at 10:12 PM
+subject:	Re: TFCU - Infotrac Setup
+
+Hi Diego,
+
+I have created scripts for me1, me2, me3, me4 and lc1 with infotrac setup. 
+
+I don't have DT_JOB_ID for me4 (CLOC).
+
+I Tried to run me1 and me2 scripts for "s" option but getting same error from isisdisk.sh. It says:
+
+"cp: cannot stat `/t/tfcu/tfcume1.c1bmcok': No such file or directory"
+
+Even though /t/tfcu/tfcume1.c1bmcok file exists. Please take a look and suggest.
+
+Log files are attached.
+
+Thanks,
+Rahat
+
+
+********************************************* TFCU infotrac afp .sam.afp .c1bmcok**********************************************************
+from:	Amir Ebrahim Rahat, Mohammad <amir.rahat@dsinnovators.com>
+to:	Diego Franco <Diego.Franco@infoimageinc.com>
+cc:	Print team at InfoIMAGE <printprocess.infoimage@dsinnovators.com>
+date:	Wed, Jun 22, 2016 at 9:17 PM
+subject:	Re: TFCU - Infotrac Setup
+
+Hi Diego,
+
+Thank you for solving the problem for tfcume1. But I'm still getting the same error for tfcume2 and tfcume3. The error message is like before. 
+
+For tfcume2, error message is "cp: cannot stat `/t/tfcu/tfcume2.c1bmcok': No such file or directory" at 177 no. line of tfcume2_s_062216.log file.
+For tfcume3, error message is "cp: cannot stat `/t/tfcu/tfcume2.c1bmcok': No such file or directory" at 189 no. line of tfcume3_s_062216.log file.
+
+For tfcume1 "s" option, It is not generating any tfcume1120.sam.afp file at /t/afp/tfcu/ directory. And value for ${preprocessing_server_name} variable is not 
+set in rht server
+
+I ran the tfcume1 process for "f" option but did not see any changes in pilot site. 
+Should I see any changes in pilot site if I run the process for "f" option?
+
+Log files are attached.
+
+Thanks,
+Rahat
+
+On Wed, Jun 22, 2016 at 5:51 AM, Diego Franco <Diego.Franco@infoimageinc.com> wrote:
+Hello,
+
+I was able to find the scripts and was able to successfully process the job. 
+The reason you were getting this error is because there was an 'if' condition inside of isisdisk.sh that was hard coding to look for example 
+tfcume1.c1bmcok instead of using the new fn with the cycle and segment included. This is corrected on the parallel version but not on this version. 
+I have removed the condition and was able to process and post successfully. Please reprocess these jobs and let me know if you continue to see any errors. 
+All in all I do not believe any errors you will see would be based on your programming as i looked over tfcume1_process.h which was great. 
+
+One thing i did note is that at the end of the script for archival process we have the same kind of issue where it is looking for 
+cp $dir_afp${cid}me1.sam.afp  instead of using the cycle no like the fn is setup. Other than that looked great. Please make this update to all scripts 
+if necessary. I just noted tfcume1
+Please let me know if you have any other questions.
+
+You will see an entry on job status regarding tfcume1 so no need to test that portion just test the archival creation process.
+
+Thanks,
+
+Diego
+
+from:	Diego Franco <Diego.Franco@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+date:	Wed, Jun 22, 2016 at 10:31 PM
+subject:	RE: TFCU - Infotrac Setup
+
+Hello,
+
+I just realized i did not change what I said i was going to change in regard to the c1bmcok files. 
+I have made those changes now and you should be able to pass those errors.
+
+I will talk to Peter about the preprocessing server.
+
+Can you please ensure that the program is looking for fn.sam.afp even though it may not be there. I believe they have a list and maybe that list does not match 
+the account numbers in the data. I will be able to test this on my end once the change is made.
+
+This client does not have an e-side with us. We would not be running 'f' option. what we are trying to see on pilot infotrac is the job status for the 
+'s' option.
+
+Thanks,
+
+Diego 
+
+from:	Amir Ebrahim Rahat, Mohammad <amir.rahat@dsinnovators.com>
+to:	Diego Franco <Diego.Franco@infoimageinc.com>
+date:	Thu, Jun 23, 2016 at 10:18 PM
+subject:	Re: TFCU - Infotrac Setup
+
+Hi Diego,
+
+Thank you for your answer.
+
+I set the program to look for ${cid}${app}${seg_num}${cycleno}.sam.afp which is same as fn. 
+
+I could run the tfcume2 process successfully but could not see any update in pilot site. I also run the tfcume3 but also could not  see any update in pilot site.
+
+I need the DT_JOB_ID for tfcume4.
+
+Thanks,
+Rahat
+
+from:	Diego Franco <Diego.Franco@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+date:	Thu, Jun 23, 2016 at 10:50 PM
+subject:	RE: TFCU - Infotrac Setup
+
+Hello Rahat,
+
+I don't know if you are looking at the correct site but I can confirm that the two processes you ran look great on my end. 
+The pilot site I'm referring to is the Infotrac Pilot and you should see the process based on the JOB_ID in the insert file we processed with but like i 
+said they look good.
+
+Please verify any other items in the process to make sure we have not changed aside from adding the infotrac 3.0
+
+I just verified that tfcume4 has not been processed since 2011 which means its inactive. 
+
+Please provide update on the applications we have completed testing with. If testing is complete please attach new processes to this email so 
+i can submit to QA and 
+parallel testing.
+
+Thanks,
+
+Diego 
+
+from:	Amir Ebrahim Rahat, Mohammad <amir.rahat@dsinnovators.com>
+to:	Diego Franco <Diego.Franco@infoimageinc.com>
+date:	Fri, Jun 24, 2016 at 10:18 PM
+subject:	Re: TFCU - Infotrac Setup
+
+Hi Diego,
+
+Thank you for your answer. The existing process of tfculc1 expects a file that is not pgp. But the file you sent me for tfculc1 is pgp encrypted. 
+should I add this logic to tfculc1 processing script?
+
+The infotrac entries I am seeing is in the screenshot below:
+
+​
+Are you seeing the same entries? If so could you please point out which two changes you saw last day?
+If you are seeing something else would you please give me a screen shot of that?
+
+Should I give you the processes after completing all the processes or the processes that I just have done? If you want you can download it from /t/dsi/master/ directory.
+
+Thanks,
+Rahat
+
+
+********************************************* Verify Infotrac Setup **********************************************************
+from:	Peter Dang <Peter.Dang@infoimageinc.com>
+to:	IS <IS@infoimageinc.com>,
+Print team at InfoIMAGE <printprocess.infoimage@dsinnovators.com>
+date:	Fri, Jun 24, 2016 at 12:09 AM
+subject:	Verify Infotrac Setup
+
+
+Verify infotrac job.
+ 
+Search for trigger_track_by_rec.pl in the formatting job log
+i.e perl /home/dsi/master/trigger_tracking_by_rec.pl /z/isd_share/tfcu/print_fileid/tfcume220160623091319.txt
+Copy the highlighted TXT file
+Go to Pilot URL: http://pd-dev2.infoimage.com:8880/indexFileProcess/  
+Or
+Staging URL: http://webapp-stage01:8580/indexFileProcess/
+ 
+Click on View Process History.
+ 
+ 
+Machine generated alternative text:
+pd-dev2.infcimage. ccm:SSSO/indexFiIePrccessy 
+Most Visited Getting Stated My page - InfolMAGE . 
+http://etaboard.infoim... 
+Postage Report 
+ser Name: 
+assword: 
+eader File Folder: 
+eader File Filename: 
+lew Process History 
+lew Process History 
+lew Process History 
+page 
+- Development 
+InfoTRAC3.O & 
+Spent time - Report - 
+Trigger 
+Trigger a new job 
+find command using regex 
+Shared Documents Staging Index File Trig... 
+10.8.g.60 
+pdevl 
+infoimage 
+e_g_ /z/isd share/sscu/print fileid 
+e_g_ sscum1120140424130216.txt 
+RUN 
+Re-Scan Post Office Files 
+Re-Scan a Post Offce File 
+RUN 
+Re-Scan PSI Files 
+Re-Scan a PSI File 
+RUN 
+ 
+ 
+Enter the TXT file in the search box and check the status.
+ 
+Machine generated alternative text:
+Return to bgug_ugg 
+Show 10 
+entries 
+Tim e 
+2016-06-23 
+File Name 
+tfcume220160623091319 txt 
+CID 
+tfcu 
+Procld 
+372214 
+Status 
+Success 
+Search: ne220160623091319.bd 
+Operation 
+Remove 
+Previous Next 
+Shoxving I to 1 of 1 entries (filtered from 114 total entries) 
+Remove Expired Record 
+ 
+·         To re-trigger the job.
+Remove the job by click on Remove link
+Click on home page
+Enter folder path: /z/isd_share/tfcu/print_fileid
+Header file name: tfcume220160623091319.txt
+Note: These file path and name are specified from the parameter input of /home/dsi/master/trigger_tracking_by_rec.pl in the log file
+Machine generated alternative text:
+ser Name: 
+assword: 
+eader File Folder: 
+eader File Filename: 
+lew Process History 
+lew Process History 
+lew Process History 
+Trigger 
+Trigger a new job 
+10.8.g.60 
+pdevl 
+infoimage 
+/z/isd share/tfcu/print fileid 
+tfcume2201606230g131g.bd 
+RUN 
+Re-Scan Post Office Files 
+Re-Scan a Post Offce File 
+RUN 
+Re-Scan PSI Files 
+Re-Scan a PSI File 
+RUN 
+e_g_ /z/isd share/sscu/print fileid 
+e_g_ sscum1120140424130216.txt 
+  
+Peter Dang
+Engineering Manager
+InfoIMAGE, Inc. | Headquarters | 141 Jefferson Drive | Menlo Park, CA 94025
+peter.dang@infoimageinc.com | www.infoimageinc.com | 650.473.6315
+
+
+from:	Amir Ebrahim Rahat, Mohammad <amir.rahat@dsinnovators.com>
+to:	Peter Dang <Peter.Dang@infoimageinc.com>
+date:	Fri, Jun 24, 2016 at 2:38 PM
+subject:	Re: Verify Infotrac Setup
+
+Hi Peter,
+
+Thank you for the process description.
+
+We can not access any of the links you gave us. 
+
+From log file I could find the following line:
+
+trigger_tracking_by_rec.pl URL:
+http://pd-dev2.infoimage.com:8880/indexFileProcess/trigger?host=10.8.9.60&username=pdev1&pwd=infoimage&path=/z/isd_share/tfcu/print_fileid/&filename=tfcume220160623091319.txt
+
+I guess it is same as your example line.
+
+Thanks,
+Rahat
+
+
+from:	William Kong <William.Kong@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>,
+Peter Dang <Peter.Dang@infoimageinc.com>
+date:	Fri, Jun 24, 2016 at 8:22 PM
+subject:	Re: Verify Infotrac Setup
+
+Hi Rahat,
+ 
+Can you help us trouble shoot by typing the following command via your Windows command line window?  I want to make sure the internal IP is correct.
+ 
+ping pd-dev2.infoimage.com
+
+
+from:	William Kong <William.Kong@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+date:	Fri, Jun 24, 2016 at 8:58 PM
+subject:	Re: Verify Infotrac Setup
+
+The IP address is not correct.
+ 
+Please map pd-dev2.infoimage.com to the ip address of 10.8.9.58 in your local host entry file in your computer.
+ 
+e.g.
+C:\WINDOWS\SYSTEM32\DRIVERS\ETC\HOSTS
+
+from:	Amir Ebrahim Rahat, Mohammad <amir.rahat@dsinnovators.com>
+to:	Tanveer Hasan <tanveer@dsinnovators.com>
+cc:	Dipak Kumar Mondal <dipak.mondal@dsinnovators.com>,
+Mohammad Habib ur Rahman <habib.rahman@dsinnovators.com>,
+Nazmul Islam Naim <nazmul.islam@dsinnovators.com>,
+Print team at InfoIMAGE <printprocess.infoimage@dsinnovators.com>
+date:	Tue, Jul 12, 2016 at 8:49 PM
+subject:	Re: Verify Infotrac Setup
+
+Hi William,
+
+Now we can access the https://devapi.infoimageinc.com/indexFileProcess/ site and verify the infotrac setup.
+
+Thnks,
+Rahat 
+
+
+
+from:	Amir Ebrahim Rahat, Mohammad <amir.rahat@dsinnovators.com>
+to:	William Kong <William.Kong@infoimageinc.com>
+date:	Mon, Jul 18, 2016 at 9:32 PM
+subject:	Re: Verify Infotrac Setup
+
+Hi William,
+
+We could access the pilot site with help from Dipak. We now can use "https://devapi.infoimageinc.com/indexFileProcess/" site instead of 
+" http://pd-dev2.infoimage.com:8880/indexFileProcess/". We used 12.189.22.166 ip address for "https://devapi.infoimageinc.com/indexFileProcess/".
+
+But we can not access staging site which is "http://webapp-stage01:8580/indexFileProcess/". I think we need to bind the public ip address for webapp-stage01 
+server in our pc to acess it.Please give us the public ip address for webapp-stage01 server.
+
+Thanks,
+Rahat
+
+
+
+********************************************* CLCU - Infotrac Setup infotrac**********************************************************
+rom:	Amir Ebrahim Rahat, Mohammad <amir.rahat@dsinnovators.com>
+to:	Tien Tran <Tien.Tran@infoimageinc.com>
+date:	Thu, Jun 23, 2016 at 10:24 PM
+subject:	Re: CLCU - JEF #21742 - Infotrac Set up
+
+Hi Tien,
+
+thank you for setting up the CLCU at pilot site. I also could run the tfcuwla process sucessfully. Should I start running these processes in parallel server.
+
+At pilot site there are four entries for mail tracking. How did these came? 
+
+For clcudla and clcuwla infotrac setup was already there. But control file did not contain estmt_trac variable for clcudla and estmt_trac, trac_by_rec 
+variables for clcuwla.
+As these processes are only for "s" option, was it intentional to not include the variable?
+
+Thanks,
+Rahat
+
+from:	Tien Tran <Tien.Tran@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+date:	Thu, Jun 23, 2016 at 10:39 PM
+subject:	RE: CLCU - JEF #21742 - Infotrac Set up
+
+Hi Rahat,
+ 
+Those entries came from your previous tests. The first 3 look good. The last one (Welcome Loan Packet) has issue. Please reprocess it.
+ 
+Also, 2 apps are missing: Monthly Statement (clcums1) and Daily letter (clcudla). Please process these also. Once all look good, 
+you can proceed to running them on PR env.
+ 
+For clcudla and clcuwla infotrac setup was already there. But control file did not contain estmt_trac variable for clcudla and estmt_trac, 
+trac_by_rec variables for clcuwla.
+As these processes are only for "s" option, was it intentional to not include the variable?
+ 
+Please ensure these variables are there in order for the job tracking to work properly.
+ 
+Thanks
+Tien
+
+
+from:	Amir Ebrahim Rahat, Mohammad <amir.rahat@dsinnovators.com>
+to:	Tien Tran <Tien.Tran@infoimageinc.com>
+date:	Fri, Jun 24, 2016 at 8:38 PM
+subject:	Re: CLCU - JEF #21742 - Infotrac Set up
+
+Hi Tien,
+
+I have run the clcudla and clcuwla process again. There is entry created in pilot site for clcudla. Log file for these processes are attached. 
+How did you checked that clcuwla was not run correctly?
+
+clcumv1 had some problem and i notified you about that. You said it was a message manager problem.
+
+Thanks,
+Rahat 
+
+
+from:	Tien Tran <Tien.Tran@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+date:	Fri, Jun 24, 2016 at 9:42 PM
+subject:	RE: CLCU - JEF #21742 - Infotrac Set up
+
+Hi Rahat,
+ 
+The welcome letter and daily letter have issues. I couldn’t pull up pdf images. When I clicked on the numbers in blue in the screenshot below, 
+it shows no record. Normally it should show something like in the 2nd screenshot.
+ 
+I have asked our PC department to change the cycle number from 11 to 12. So the new DT_JOB_ID  are below:
+ 
+Daily Notices  - clcudla
+DEV: 122303-C12.01-V21764
+PR: 127649-C12.01-V21858
+Please update the insert with this new info and reprocess the welcome letter and daily letter. If failed again, I will test it here.
+ 
+Heloc, Visa and Visa Platinum look good.
+ 
+Thanks
+Tien
+
+
+********************************************* infotrac insert file **********************************************************
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+date:	Sat, Jun 25, 2016 at 3:42 AM
+subject:	RE: DSI Development - JPRI Automation Project
+
+Also no insert file has DT_JOB_ID. Is that ok?
+Add a dummy DT_JOB_ID.
+I don’t think this job has InfoTRAC but it’s becoming standard to use DT_JOB_ID.
+
+********************************************* online proofing, grouping eoc flag  **********************************************************
+
+set group_type="d1" to group the txt records by address and name or just address based on argument
+
+it is handled in /home/dsi/master/combine_daily_addr.pl
+
+in isisdisk:
+                        if [ -n "$group_type" ]; then
+                                echo -e "Found in control grouping type $group_type"
+                                case $group_type in
+                                        d1)     echo -e "Processing daily grouping d1"
+                                                ${home_master}/master/combine_daily_addr.pl ${fn} "1"
+                                                ;;
+                                        d2)     echo -e "Processing daily grouping d2"
+                                                ${home_master}/master/combine_daily_acct_new2.pl ${fn}.c1bmcok
+                                                ;;
+                                        d3)     echo -e "Processing daily grouping exclude d3"
+                                                if [ -z "$group_exclude" ]; then
+                                                        echo -e "Control variable group_exclude was not defined!"
+                                                        exit 1
+                                                fi
+                                                ${home_master}/master/combine_daily_acct_exclude.pl ${fn}.c1bmcok ${group_exclude}
+                                                ;;
+
+
+
+
+combine_daily_acct_new2.pl -  
+#!/usr/bin/perl -w
+# Program : combine_daily_acct_new.pl
+# Author  : Terrence Tong
+# Purpose : For account that has multiple records, the program will flag 
+#           position 332-334 for each record to '0' but flag position 
+#           332-334 to '1' for the last record.
+
+
+
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+date:	Mon, Jun 20, 2016 at 11:02 PM
+subject:	RE: DSI Development - Process Flow Update for Online Proofing Account Extraction (GLOBAL)
+Online Proofing:
+ 
+
+ 
+Online proofing is a feature on InfoTRAC that allows the client to audit the output for an application remotely.
+The client can approve or reject a sample depending on how the output is being displayed.
+The job will be held in all departments until the client approves that job if the job’s application has online proofing.
+ 
+
+In order to make sure that the proofing sample is diverse, accounts are selected from the top, middle and bottom of the txt record.
+These accounts are combined to create the proofing file that will be used to generate the proofing sample.
+The proofing sample is then displayed on InfoTRAC for the client to approve.
+ 
+ 
+Q & A:
+ 
+Why only top 10 records, a middle 10 and the bottom 10 records are needed?
+ 
+That was the most simplistic way to gather a mix variety of accounts from the record file.
+It is probably better to take 1 group from the top, 1 group from the bottom and 28 groups spread through the middle.
+ 
+Why we need to consider EOC flag, should we need to print only those records that has this flag 1 or we need to print 30 groups not records?
+ 
+We need 30 groups and not 30 records. You will changing the program to extract 30 groups. Each group, ends with the EOC flag == 1.
+A group represents a mail piece and should be presented completely in a proofing sample.
+If half a group is presented in the online proofing sample, the client may suspect that we are householding incorrectly.
+ 
+In the red box it check value of cid. Should we need to keep this project specific portion?   
+ 
+Keep all CID specific logic and do not apply the update to these CID specific portions.
+Generally, CID specific items are handled differently.
+ 
+The 2nd or purple box checks the value of cnt and if it is less than 10 the it selects the last 10 records of 1st 300 records. Why is that?
+ 
+I do not know why this logic exists. It is also very confusing to me.
+Maybe it’s a 2nd attempt to get 10 unique accounts?
+I’m going to ask around, we might not need this logic anymore if that’s the case.
+ 
+As the orange box if cnt is 10 then it selects 1st i records but the value of i may not be 10 at that time. So it means it prints 10 different groups not records.
+ 
+10 accounts might not be 10 groups.
+This logic is not a good way to find 10 groups. You guys will be replacing this with the EOC flag check to get 10 groups.
+ 
+According to the segment  It starts to select from $half+1 number records.  If previous acct doesn't match with current acct then it increments cnt and 
+print otherwise just print does not increment cnt. So looks like it tries to print records of 10 different groups. But if cid is bfcu then it always increment 
+cnt. Why is that?
+ 
+Account is not a good way to find 10 groups. Please modify the logic to check the EOC flag.
+ 
+I’m not sure why it’s incrementing specifically for BFCU. There must be some unique business rule; I would leave this alone for now.
+ 
+If cid is sscu the it prints last 10 records.if cnt is 10 then it prints last 40 records otherwise it print i records that is actually 10 different groups 
+differ by acct as it sorts the records by acct when it calculate the cnt.
+ 
+Ignore the SSCU specific logic and keep it the way it is.
+If the CID is BFCU then it prints the last 40 records, ignore this for now as well.
+ 
+Again modify the match by account to match by EOC.
+ 
+So my confusion is should we print 30 records or groups? If groups should I print all records of these groups or 
+just one record from each group or any number of records from each groups?
+ 
+30 groups.
+Print ALL records for a group.
+ 
+Should I keep the project specific code like bfcu,sccu checking code?
+ 
+Yes, keep it the way it is for now as I do not know the specific business rules for these clients.
+I do not recommend coding CID specific logic like what the programmer(s) have done with this program.
+It becomes hard to understand and make updates to as you have seen with this program.
+ 
+ 
+ 
+Thanks,
+ 
+Kevin.
+KevinH.Yang@infoimageinc.com
+
+some how txt file is finally sorted by acct no and from column 53 it has the paparless filename for suppression if the account need to be suppressed I think
+get_ms_sample.sh get .c1bmcok file generate .c1bmcok.ext by calling ${home_master}/master/extr_non_sup_prf.pl
+and generate ${fn}.tmp from ${fn}.c1bmcok.ext file and after that generate ${fn}.prf which contains 30 groups for online proofing
+
+After that in isidisk.sh in zipsep method it called ${home_master}/master/c1bmcok_validator.pl with the .c1bmcok file, before that it call( in the same zipsep 
+method ) ${home_master}/master/add_mail_acct_num.pl which checks the
+.c1bmcok file for update seq acct number for OUTBOUND Mail Confirm Jobs. It checks field 417-426(mail_conf_acct_seq) to set acct sequence I think .
+
+${home_master}/master/add_mail_acct_num.pl takes 2 arguments $mail_conf_acct_seq and ${fn}.c1bmcok
+ 
+The 'mail_conf_acct_seq' is set in get_full_service() method which is for:
+###############################################################################################
+# FULL SERVICE IMB for Netsort: increment mail_conf_acct_seq in txt record, field 417-426. 
+# print step dfa pickup this field and output to IMB.
+###############################################################################################
+
+It checks the mail_full_serv value from control file
+
+get_full_service()  called from line 4795–
+ # FULL SERVICE IMB for Netsort: increment mail_conf_acct_seq in txt record, field 417-426. 
+# print step dfa pickup this field and output to IMB.
+
+
+-	get_ms_sample is called from line 5173
+-	
+-	-zipsep method  is calling from line 5297 where ‘mail_conf_acct_seq’ is checked to call add_mail_acct_num.pl  also where the the c1bmcok.validator is 
+called 
+
+
+
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+date:	Fri, Jul 15, 2016 at 6:03 PM
+subject:	RE: DSI Development - Process Flow Update for Online Proofing Account Extraction (GLOBAL)
+
+1. The ace2.sh call in isisace2.sh creates the c1bmcok. This is done by a vendor software to add mail and zip information to the txt record.
+
+2.       This one I wasn’t too sure about either.
+
+The information is coming from queries made by the program: get_mail_seq.pl by passing in the mail_serv_code: ASE1
+ 
+The database will pull the full_serv_id mapping which is the ID used by the US Postal Service:
+ 
+The sequence is the 3rd value is a sequential counter.
+
+It comes from the database that keeps track of the counter for all jobs.
+ 
+The last value is the 3rd value + the number of lines in the txt file.
+
+
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+date:	Wed, Jul 20, 2016 at 5:35 PM
+subject:	RE: DSI Development - Process Flow Update for Online Proofing Account Extraction (GLOBAL)
+
+Ernest,
+ 
+Can you figure out why there’s a PDF Library Error: E086: PDF Library Error: when running:
+ 
+ssh -o BatchMode=yes oper1@preprocessing02 /home/afp2web/afp2web -ovp:/home/afp2web/isis/ovl300,/home/dsi/isis/ovl300/ -psp:/home/afp2web/isis/pseg/,
+/home/dsi/isis/pseg/,/home/dsi/isis/msgmgr/pseg/ -op:/home/afp2web/afp2web.ini -op:/home/dsi/isis/msgmgr/pseg/ -ALL 
+/home/dsi/isis/msgmgr/pseg/vwcums1130.prf.afp
+ 
+Running this with /home/test/ instead of /home/dsi/ works
+ 
+ssh -o BatchMode=yes oper1@preprocessing02 /home/afp2web/afp2web -ovp:/home/afp2web/isis/ovl300,/home/test/isis/ovl300/ -psp:/home/afp2web/isis/pseg/,/home/test/isis/pseg/,/home/test/isis/msgmgr/pseg/ -op:/home/afp2web/afp2web.ini -op:/home/test/isis/msgmgr/pseg/ -ALL /home/test/isis/msgmgr/pseg/vwcums1130.prf.afp
+ 
+ 
+Thanks,
+ 
+Kevin.
+KevinH.Yang@infoimageinc.com
+
+
+********************* DFA call from isisdisk****************************************************************************
+in format_step ()
+elif [ $cid = "sscu" ]
+then
+/isis/$pdel/pdel3 \
+/profile=$profile \
+/input=$1 \
+/output="${fn}.afp" \
+/docdef="$format_dfa" \
+/c \
+"\$BADACCTS=${fn}.bad" \
+"\$JOB_SEL=$jobsel" \
+"\$PREFIX=$prefix" \
+"\$XMLFILE=${fn}e.xml" \
+"\$ERRFILE=${fn}_badtypes.txt" \
+"\$ZIPFILE=${fn}.txt" >>${fn}.log
+
+in cd_format_step ()
+elif [ $cid = "pscu" ]
+then
+/isis/$pdel/pdel3 \
+/profile=$profile \
+/input=$cd_input \
+/output="${fn}3.afp" \
+/docdef="$cd_format_dfa" \
+/c \
+"\$BADACCTS=${fn}.bad" \
+"\$JOB_SEL=$jobsel" \
+"\$XMLFILE=/dev/null" \
+"\$PREFIX=$prefix" \
+"\$TYPE=$type_temp" \
+"\$FN=$fn" \
+"\$ZIPFILE=${fn}3.txt" >>${fn}3.log
+
+in estmt_format_step () 
+if [ $prefix = "prcums1" ]
+then
+	/isis/$pdel/pdel3 \
+	/profile=$profile \
+	/input=$1 \
+	/output="${fn}e.afp" \
+	/docdef="$estmt_format_dfa" \
+	/c \
+	"\$BADACCTS=${fn}.bad" \
+	"\$JOB_SEL=$jobsel" \
+	"\$XMLFILE=${fn}e.xml" \
+	"\$INFOFILE=${fn}e.info" \
+	"\$ZIPFILE=${fn}e.txt" >>${fn}e.log
+	
+
+in 	pdf_format_step () 
+elif [ $cid = "mwcu" -o $cid = "uhcu" ]
+then
+        /isis/$pdel/pdel3 \
+        /profile=$profile \
+        /input=$1 \
+        /output="${fn}8.afp" \
+        /docdef="$pdf_format_dfa" \
+        /c \
+        "\$BADACCTS=${fn}.bad" \
+        "\$JOB_SEL=$jobsel" \
+	"\$JID=$jid" \
+	"\$PREFIX=$prefix" \
+	"\$FN=$fn" \
+        "\$XMLFILE=/dev/null" \
+	"\$MSGFLG=$msgflg" \
+        "\$ZIPFILE=${fn}8.txt" >>${fn}8.log
+		
+in ind_pdf_format_step ()
+elif [ $prefix = "pscums1" -o $prefix = "pscums2" -o $prefix = "pscums3" -o $prefix = "pscums4" ]
+then
+        /isis/$pdel/pdel3 \
+        /profile=$profile \
+        /input=$1 \
+        /output="${fn}9.afp" \
+        /docdef="$ind_pdf_format_dfa" \
+        /c \
+	"\$BADACCTS=${fn}.bad" \
+	"\$JOB_SEL=$jobsel" \
+	"\$XMLFILE=/dev/null" \
+	"\$TYPE=$type_temp" \
+        "\$PREFIX=$prefix" \
+        "\$SEG_NUM=$2" \
+        "\$ZIPFILE=${dir}${jid}_pdfidx.txt" >>${fn}9.log
+
+
+in mess_format_step () 
+elif [ $cid = "nmwd" -o $cid = "pscu" ]
+then
+	/isis/$pdel/pdel3 \
+	/profile=$profile \
+	/input=$1 \
+	/output="${fn}m.afp" \
+	/docdef="$format_dfa" \
+	/c \
+	"\$BADACCTS=${fn}.bad" \
+	"\$JOB_SEL=$jobsel" \
+	"\$XMLFILE=/dev/null" \
+	"\$TYPE=$type_temp" \
+	"\$ZIPFILE=${fn}m.sam" >>${fn}m.log
+
+in fc_format_step () 
+	/isis/$pdel/pdel3 \
+	/profile=$profile \
+	/input=$1 \
+	/output="${fn}m.afp" \
+	/docdef="$fc_format_dfa" \
+	"\$PRINT_TYPE=$2" \
+	/c \
+	"\$ZIPFILE=${fn}${2}_${3}.fc" >>${fn}m.log
+	
+in pdf1_format_step () 
+/isis/$pdel/pdel3 \
+/profile=$profile \
+/input=$1 \
+/docdef="$format_dfa" \
+/c \
+"\$BADACCTS=${fn}_pdf1.bad" \
+"\$UPSLIST=${fn}_pdf1.upslist" \
+"\$JOB_SEL=$jobsel" \
+"\$PREFIX=$prefix" \
+"\$TIFFDIR=$tiffdir" \
+"\$LOOKUPFILE=$lookupfile" \
+"\$FONTSUB=$fontsubfile" \
+"\$PDF_PATH=${d_dir}/pdf_afp/${cid}/${prefix}/pdf/" \
+"\$PDF_CYCLE=$pdf_cycle" \
+"\$TYPE=$type_temp" \
+"\$XMLFILE=/dev/null" \
+"\$IMAGECOUNTFILE=${fn}_pdf_count.txt" \
+"\$ZIPFILE=${fn}_pdf1.txt" >>${fn}_pdf1.log \
+"\$PDFCOUNTFILE=${fn}_pdf1_count.txt" >>${fn}_pdf1.log \
+
+in pdfi_format_step ()
+if [ ${xml_flag} -a ${xml_flag} = "y" ]
+then
+/isis/$pdel/pdel3 \
+/profile=$profile \
+/output="${fn}_pdfi.afp" \
+/docdef="$format_dfa" \
+/c \
+"\$BADACCTS=${fn}_pdfi.bad" \
+"\$UPSLIST=${fn}_pdfi.upslist" \
+"\$JOB_SEL=$jobsel" \
+"\$PREFIX=$prefix" \
+"\$JID=$jid" \
+"\$TIFFDIR=$tiffdir" \
+"\$LOOKUPFILE=$lookupfile" \
+"\$LOOKUPFILE2=$lookupfile2" \
+"\$PDF_PATH=$my_pdf_path" \
+"\$PDF_CYCLE=$pdf_cycle" \
+"\$TYPE=$type_temp" \
+"\$XMLFILE=/dev/null" \
+"\$XMLFILENAME=$xmlfilename" \
+"\$FONTSUB=$fontsubfile" \
+"\$ZIPFILE=${fn}_pdfi.txt" >>${fn}_pdfi.log \
+"\$PDFCOUNTFILE=${fn}_pdfi_count.txt" >>${fn}_pdfi.log \
+"\$CPMCTTL=${fn}.ttl" \
+"\$MSGFLG=$msgflg" \
+"\$COLOR_FLAG=$color_flag" \
+"\$INFOFILE=${fn}_pdfi.info" \
+"\$IMAGEFILE=${fn}_pdfi.image_count"
+
+
+**********************************back up dir***************************************************
+add back up dir manually in dsi server
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+cc:	William Kong <William.Kong@infoimageinc.com>,
+"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>,
+"Print team at InfoIMAGE (printprocess.infoimage@dsinnovators.com)" <printprocess.infoimage@dsinnovators.com>,
+Ernest Wong <Ernest.Wong@infoimageinc.com>,
+Kim Mawla <Kim.Mawla@infoimageinc.com>,
+Terrence Tong <Terrence.Tong@infoimageinc.com>,
+Peter Dang <Peter.Dang@infoimageinc.com>
+date:	Sat, Apr 9, 2016 at 1:51 AM
+subject:	RE: DSI Development - SACU PDF Archival Migration
+	
+Yes, please add that directory in /t/.
+ 
+That directory does exist in our production environment.	
+
+
+***********************cron job*******************
+crontab -e to display the cron set ups
+
+**********************maillist****************
+mailists are in /${home_env}/${keep_dir}/maillist/${cid}${jid}_mail.lis
+
+
+
+
+
+**************************** to gpg **********************************
+reference kycuys1/apcuml1,2
+	echo "encrypting ${MISCFile} to ${client_pickup}/apcu_mortgage_InvalidAddress_${mmddyy}.txt.pgp"
+	gpg --always-trust -o ${client_pickup}/apcu_mortgage_InvalidAddress_${mmddyy}.txt.pgp -r "Affinity Plus FCU IT Department <itsystems@affinityplus.org>" -e --yes ${MISCFile}
+
+
+**************************** to zip **********************************
+reference, amacln2,kycuys1,apcuml2,sacume1,sacums1,sacumv1
+
+
+********************non print **************
+mail code z,y,x
+
+
+********************** archival info job type info ************************************
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com> availability 
+to:	Rony Das <rony.das@dsinnovators.com>
+date:	Fri, Apr 22, 2016 at 6:45 AM
+subject:	RE: General info
+Here is some more background knowledge relating to PDF conversion:
+ 
+1.       ISD will dynamically convert individual AFPs to PDFs whenever a customer clicks on the link (e.g. Customer 11111 clicks on 11111_12312016.afp; the AFP will be converted to PDF). 
+This process will also use AFP2WEB but through ISD’s script. After the conversion, the PDF is presented to the customer to view on the site.
+
+ 
+2.       Historically, IS has a “pdfi” process. There are clients who still use “pdfi” to convert directly to PDF instead of using “e” to create a big PDF. The “pdfi” requires licenses for each server that uses it. 
+We only have one license for the “pdfi” therefore all jobs processing with “pdfi” MUST run on RH2. This is one of the reasons why we want to move away from “pdfi” and to the “e” option.
+
+ 
+
+3.       We are using 2 versions of AFP2WEB. The older version 3.2 is a command line prompt that runs on Preprocessing02. The newer version 4.3 uses a web service HTTP request on Preprocessing03. 
+We want to set up all new jobs using the newer version and eventually migrate jobs away from Prepocessing02 since that is an older server.
+
+
+I’ve also made some grammatical corrections to your statements below (in red).
+
+Hi Kevin,
+ 
+     Sorry for late response.
+ 
+ Here are my answer based on my knowledge. Please suggest me if I say any unrelated or invalid information or miss any important information.
+ 
+ 
+We have processing shell scripts for every client (e.g. entcms1_process.sh ) that calls the main processing (this is more descriptive) shell script called isisdisk.sh. It includes necessary option like the job_type ('s' for paper, 'e' for archival 'f' for e-statement), the data file that contains 
+customer data, etc. In Isisdisk it calls the papyrus program with this data file, the related dfa( that contains logic for formatting we have already done for formatting ), job_type and all the necessary configurations to that run the dfa and produce afp(s).
+ 
+Now When isisdisk is called with the 's'(paper) option, it will produce a txt file and a big afp file that includes all the customer documents in it. The txt file contains information about the customer ( like the customer account number serial no of customer in the data file, the addresses of the customer, page count information (number of pages per statement) for customer like home many page this customer has in the afp, what is his start page no, tray information, etc ) in a standardised way following the paper process record layout. This information is useful for extracting ,printing, mailing each customer the output. 
+So job_type 's' means the customer wants hard a physical copy of the output.
+ 
+When called with 'f' option, which means the output will be for e-statement. The papyrus program produces individual afps for each customer, and one index file that that contains the fields needed by the ISD team in order to be able to post it on to their server. After the format dfa, meaning ( and generating the afps and the index file) there is a process that moves both index file and individual afps into the ISD NAS server so that they can post it to their system for the members to access these
+online page. We have program named  move_afp_threads.sh or and move_afp2.sh( used by older projects programs) that is responsible for moving the afps and index file to the ISD NAS server. The afps are put into a zip file or multiple zip files before moving transferring to ISD’s NAS server.
+ 
+ 
+When called with the 'e' option s (meaning s archival e) it produce an afp with be produced with index information embedded as meta data(like account no, customer name, the pdf file name, etc. for this customer).
+after that Further downstream, a program named afp2pdf.py alternatively makes a web service call to "AFP2WEB" to generate the pdf(s).
+ 
+Now Depending on what kinds of output is needed the business requirements for archival we call afp2pdf.py with different options that may create one big pdf,
+may be individual pdf and (with or without an index file), or searchable CD/DVD. for each afp or one index file contains data for all customer in a standardised way based on configuration etc. 
+ 
+After that Depending on the business requirements, we may zip them, FTP them or deliver them another way depending on the client’s needs
+
+
+
+******************** Procedure file *****************************************
+
+vi /home/dsi/procs/tfcums1.procs
+
+
+
+
+********************message manager, portal file  _mgr dyn_sam, msg mgr***********************************************
+
+message portal file generated in /d/cid/prefix/sample/
+also tiff files are generated there
+
+Hello,
+
+Have you been able to change the message portal to test the selective criteria for these new variables? we must now begin to unit test each of the criteria.
+
+You can manually change the msg portal in your desktop and add the product type line.Also you can create a new campaign with these new fields and it will generate a msg portal file in 
+/t/tfcu/tfcums1/sample/ from that campaign that you can then pull into your desktop.
+
+Please let me know. I will be doing some of this testing as well.
+
+cd /d/test/bbbb/bbbbds1 has dyn_sam and sample folder
+dyn_sam folder has resource for previewing like afp,...
+
+
+
+
+zipfile - /t/isd_input_dev/I3/mtcu/mtcu_ms1_09012016_09012016.zip
+/t/mtcu/mtcums1/mtcums1_msg_portal.txt
+
+
+
+
+/t/isd_input_dev/IS/MsgMgr/gdcu/201405/gdcums1.imp
+
+
+[12:33:41 AM] Diego Franco: well i see one in the log
+[12:33:55 AM] Diego Franco: so on rht if you go into /d/cobz/
+[12:34:07 AM] Diego Franco: there is a file called cobz_ms1_msgmgr2_preview_sam.log
+[12:34:16 AM] Rony Das: ok
+[12:34:30 AM] Diego Franco: inside there is a repetition of the same call
+[12:34:35 AM] Rony Das: o
+[12:34:41 AM] Diego Franco: /home/master/approve_sample_msgid.sh cobz ms1 1|cobz_ms1_02222017_03102017.zip 02222017 03102017 DDA 1
+[12:34:53 AM] Diego Franco: so this is the error message isd usually sends us
+[12:35:26 AM] Diego Franco: if you run that command it will return what the error is ... only difference is you need to put quotes around 2 items
+[12:35:36 AM] Diego Franco: like this
+[12:35:37 AM] Diego Franco: /home/master/approve_sample_msgid.sh cobz ms1 "1|cobz_ms1_02222017_03102017.zip" 02222017 03102017 DDA 1
+[12:35:58 AM] Diego Franco: if you run that we get returned 4|unable to tranfer pdf file
+[12:36:18 AM] Rony Das: ok
+[12:37:12 AM] Diego Franco: this error is what gives us insight into whats going on in the backend with ISD servers
+[12:37:28 AM] Diego Franco: in this case it looks the same as what i was running into which was a permissions issu e
+[12:38:07 AM] Diego Franco: you did your part i asked for in the last email which was to generate the error.
+[12:45:01 AM] Rony Das: + /home/master/approve_sample_msgid.sh cobz ms1 '1|cobz_ms1_03232017_03232017.zip' 03232017 03232017 DDA 1
+cp: cannot create regular file '/d/test/msgmgr/pseg/base_pseg_30123.icd': Permission denied
+bash: /d/test/msgmgr/pseg/base_pseg_30123.icd: Permission denied
+bash: /d/test/msgmgr/pseg/base_pseg_30123.icd: Permission denied
+cp: cannot create regular file '/d/test/msgmgr/pseg/base_pseg_30124.icd': Permission denied
+bash: /d/test/msgmgr/pseg/base_pseg_30124.icd: Permission denied
+bash: /d/test/msgmgr/pseg/base_pseg_30124.icd: Permission denied
+cp: cannot create regular file '/d/test/msgmgr/pseg/base_pseg_30122.icd': Permission denied
+bash: /d/test/msgmgr/pseg/base_pseg_30122.icd: Permission denied
+bash: /d/test/msgmgr/pseg/base_pseg_30122.icd: Permission denied
+[12:45:17 AM] Rony Das: I got this
+[12:47:37 AM] Diego Franco: ah your permissions on your own server are messing you up
+[12:47:42 AM] Diego Franco: thats a network issue
+[12:47:46 AM] Rony Das: o
+[12:48:14 AM] Diego Franco: so ISD just change the permissions and im generating the next step now
+
+
+
+*****************************message manager,msg_mgr ***************************************************
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+cc:	Rony Das <rony.das@dsinnovators.com>,
+date:	Sat, Mar 26, 2016 at 6:44 AM
+subject:	RE: DSI Development - SACU PDF Archival Migration
+
+Very good, this was exactly what I needed you to do.
+ 
+SACUMS1: Please ignore this for now, I need to follow up with a few people here to make sure Message Manager is supported for /t/. If you see any of those type of errors especially from get_msg_v2_cu_std_prod.pl 
+it is a message manager error.
+ 
+SACUME1 and SACUMV1: Please edit the attached DFAs to remove the renaming of the AFP when the JOB_TYPE == ‘e’. This renaming is causing the name mismatch issue.
+ 
+SACUMV1: Try to see if you can figure out why it’s hanging. Ideally all the stuff that is done in this external perl should be in the shell script. 
+If you want to replace everything that is done in sacumv1_decrypt.pl inside the shell you can but it is not required.
+
+
+
+
+Use of uninitialized value $color_jobs in concatenation (.) or string at /home/dsi/master/get_msg_v2_cu_std_prod.pl line 242.
+Use of uninitialized value $color_jobs in split at /home/dsi/master/get_msg_v2_cu_std_prod.pl line 244.
+url: http://10.8.8.222:9090/MsgServlet22?cid=kycu&apptype=ms1&cycledate=12312014
+1|\\10.8.9.155\input\I3\kycu\\kycu_ms1_12312014_12312014.zip
+Successfully grabbed zip file given code 1 and file \\10.8.9.155\input\I3\kycu\\kycu_ms1_12312014_12312014.zip
+Basename of the file to be grabbed is kycu_ms1_12312014_12312014.zip
+zipfile - /t/isd_input_dev/I3/kycu/kycu_ms1_12312014_12312014.zip
+rm: cannot remove `/t/kycu/kycums1/dyn_sam': Is a directory
+rm: cannot remove `/t/kycu/kycums1/sample': Is a directory
+/t/kycu/kycums1/kycums1_msg_portal.txt
+ 
+******************************message manager,msg_mgr*********************************************************************
+Hi Tien,
+
+I tried to run clcudla_process.sh. Just to notify you, this process script does not take any parameter for job_sel. It only runs the isisdisk_daily for "s" 
+option. 
+
+When I tried to run this script It encountered an error. It says 
+
+/home/master/check_files_in_zip.sh /t/daily/clcu/file/clcu_dn_051216_01.zip /home/dsi/keep/checklist/clcudla_checklist.txt ''
+Check list file, /home/dsi/keep/checklist/clcudla_checklist.txt, does not exist
+
+I think we need clcudla_checklist.txt file to verify the content of zip file. But we do not know what is this file's format.
+
+Log file is attached. Please take a look
+
+Thanks,
+Rahat
+
+
+Hi Rahat,
+ 
+Please see the check list attached.
+ 
+Thanks
+Tien
+
+from:	Amir Ebrahim Rahat, Mohammad <amir.rahat@dsinnovators.com>
+to:	Le Tuan La <LeTuan.La@infoimageinc.com>
+date:	Tue, Aug 9, 2016 at 9:18 PM
+subject:	Re: SANA - Monthly Statements - Extract File Rule -TISA - Update Part -2
+
+Hi Le,
+
+I have updated the processing files accordingly. I'm getting an message manager error. It says:
+
+Failed grabbing the zip file given code 22 (No Default Cycle Exists)
+Use of uninitialized value $zipfile in concatenation (.) or string at /home/dsi/master/get_msg_v2_cu_std_prod.pl line 162.
+Error within program: get_msg_v2_cu_std_prod.pl
+
+Please advice what should I do for this message manager error.
+
+*********************************message manager msg mgr failed *************************************************************
+from:	Le Tuan La <LeTuan.La@infoimageinc.com>
+to:	Mahbub Bin Abdur Raquib Sakib <mahbub.sakib@dsinnovators.com>
+date:	Sat, Aug 13, 2016 at 1:36 AM
+subject:	SANA statement process script
+
+DSI,
+Please make the following changes.
+I believe applications that are not daily should follow this structure but check with the individual programmers.
+It is failing message manager because the working directory folder is "${d_dir}/${cid}/${jid}/
+ 
+/d/sana/sanads1/sanads1_msg_portal.txt
+checking mm2 index file
+/d/sana/ds1/sanads1/sanads1_msg_portal.txt does not exist! Please inform IS!
+Error within program: ck_mm2_idx.sh
+Error within program: isisdisk.sh
+ 
+ 
+Control file:
+Change dir="${d_dir}/${cid}/${jid}/"
+To           dir="${d_dir}/${cid}/"
+ 
+Process script:
+Change   working_dir="${d_dir}/${cid}/${app}"
+To             working_dir="${d_dir}/${cid}"
+ 
+Change to
+ 
+    if [ ! -d "${working_dir}/data_files/" ]
+    then
+        mkdir -m 777 -p "${working_dir}/data_files/"
+    else
+        rm -rf "${working_dir}/data_files/*"
+    fi
+ 
+Change to
+ 
+    echo "cp ${ working_dir }/CK_IDX.dat ${isd_input_path}${app}_check_${closing_date}_${data_mm1}_${index_time_stamp}_${cid}.txt"
+    cp ${ working_dir }/CK_IDX.dat ${isd_input_path}${app}_check_${closing_date}_${data_mm1}_${index_time_stamp}_${cid}.txt
+ 
+Thanks.
+
+
+******************************sensitive issues*********************************************************************
+/home/dsi/keep folder is shared so be careful when update or deleting any file
+
+
+******************************pilot site credential.txt*********************************************************************
+Hi Rony,
+ 
+Below is the user and passwd for infotrac pilot site.
+ 
+ronyd
+sayfullahR
+mahbubS
+amirR
+ 
+password {username}123$!
+Please send me the email for naziaH and habiburR for me to add the user.
+
+https://infotrac-pilot.infoimageinc.com/login.do
+http://10.8.8.138:8091/login.do
+
+my username - ronyD
+passwd  - ronyd123$!
+
+Hi Rony,
+ 
+I added the users below.
+Also can check to see if you can login to staging URL. https://infotrac-stage.infoimageinc.com/login.do
+ 
+Peter
+
+
+
+********************************************* development, parallel , production server **********************************************************
+05/10/2016
+[12:01:16 AM] Kevin Yang: dev environment is the first env you should use to test
+[12:01:32 AM] Kevin Yang: it will use a server that is dedicated to testing
+[12:01:50 AM] Kevin Yang: parallel uses production servers but with a test flag
+[12:01:53 AM] Kevin Yang: testmode='y'
+[12:02:24 AM] Kevin Yang: also, our other departments have access to the parallel environment
+[12:02:28 AM] Kevin Yang: such as QA and DP
+[12:02:53 AM] Kevin Yang: they might give us trouble if they run into issue with new code in the parallel environment
+[12:03:15 AM] Kevin Yang: they expect code to be fully functional when we move it into parallel
+[12:03:34 AM] Kevin Yang: but RHT and the dev env is more free
+[12:04:56 AM] Rony Das: more free?
+[12:05:31 AM] Kevin Yang: I don't really want to say "you can do whatever you want" more it gives you more freedom to experiment
+[12:05:44 AM] Kevin Yang: to find a solution
+[12:05:44 AM] Rony Das: oh ok
+[12:06:21 AM] Kevin Yang: when you are working on a global update, chances are you won't know the results unless you run an entire job
+[12:06:35 AM] Rony Das: so in total there are two environment
+[12:06:39 AM] Rony Das: ?
+[12:06:46 AM] Kevin Yang: 3
+[12:06:53 AM] Kevin Yang: development, parallel and production
+[12:07:24 AM] Kevin Yang: production is when a job goes live
+[12:07:51 AM] Rony Das: so when using production server if testmode is not 'y' that means actual production not parallel
+[12:07:54 AM] Rony Das: rigth?
+[12:07:58 AM] Kevin Yang: yes
+[12:08:05 AM] Kevin Yang: so testmode='y' is important
+[12:08:08 AM] Rony Das: ok
+[12:08:21 AM] Kevin Yang: also, there are environment flags
+[12:08:30 AM] Kevin Yang: if you look at /home/dsi/master/pr_test.sh
+[12:08:43 AM] Kevin Yang: that is the script DP will run to set the env variables for parallel
+[12:09:19 AM] Kevin Yang: there's also a /home/test/master/ /home/test/control/ /home/test/keep/ etc
+[12:09:37 AM] Kevin Yang: all defined in env_init.sh
+[12:10:13 AM] Kevin Yang: I'll be back, I need to go help Tun with something
+[12:10:28 AM] Rony Das: sure thanks for your time
+[12:28:41 AM] Kevin Yang: please send me the DFA whenever available
+
+***************************************** visions back up *******************************************************************
+From: Amir Ebrahim Rahat, Mohammad [mailto:amir.rahat@dsinnovators.com] 
+Sent: Tuesday, June 21, 2016 7:30 AM
+To: Ernest Wong
+Subject: Re: DSI Development - SACU PDF Archival Migration
+
+Hi Kevin,
+ 
+I did not get "Host key verification failed."  message any more. But I got two different messages about permission. Those are:
+ 
+/home/test/master/cksum_afp.sh: line 38: /z/ftplogs/sacu_ftp.log: Permission denied
+ 
+scp: /z/Vision-s-backup//ac14a.job: Permission denied
+ 
+"/z/ftplogs/sacu_ftp.log" file or "/z/Vision-s-backup/" directory does not exists. 
+ 
+Thanks,
+Rahat
+to:	"Kevin H. Yang" <KevinH.Yang@infoimageinc.com>,
+"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+date:	Wed, Jun 22, 2016 at 12:02 AM
+subject:	RE: DSI Development - SACU PDF Archival Migration
+
+I don’t think those are system related.  Please check the applications.
+
+from:	Amir Ebrahim Rahat, Mohammad <amir.rahat@dsinnovators.com>
+to:	"Kevin H. Yang" <KevinH.Yang@infoimageinc.com>
+date:	Wed, Jun 22, 2016 at 9:18 PM
+subject:	Re: DSI Development - SACU PDF Archival Migration
+
+Hi,
+
+So, this file and directory is not important?
+
+Thanks,
+Rahat
+
+from:	Kevin H. Yang <KevinH.Yang@infoimageinc.com>
+to:	Ernest Wong <Ernest.Wong@infoimageinc.com>,
+"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>,
+Terrence Tong <Terrence.Tong@infoimageinc.com>
+date:	Thu, Jun 23, 2016 at 12:26 AM
+subject:	RE: DSI Development - SACU PDF Archival Migration
+
+Rahat,
+ 
+It is ok to ignore the ftplogs and vision-s-backup.
+ 
+Vision-s-backup does not exist in any testing environments because we only have a production vision-s server.
+Ftplogs does not exist in production and no one checks the folder.
+ 
+ 
+Thanks,
+ 
+Kevin.
+KevinH.Yang@infoimageinc.com
+
+
+From: Amir Ebrahim Rahat, Mohammad [mailto:amir.rahat@dsinnovators.com] 
+Sent: Tuesday, July 19, 2016 6:49 AM
+To: Tien Tran <Tien.Tran@infoimageinc.com>
+Cc: Print team at InfoIMAGE <printprocess.infoimage@dsinnovators.com>; Peter Dang <Peter.Dang@infoimageinc.com>
+Subject: Re: CLCU - Error
+
+
+Hi Tien,
+ 
+There are two permission error at 388 no line of clcumv1_s_P071816 file which I have attached in last email. The error is:
+ 
+scp: /z/Vision-s/in: Permission denied
+scp: /z/Vision-s/in: Permission denied
+ 
+Do you think this could create any issue? I do not know what /z/Vision-s/in directory is used for.
+ 
+Thanks,
+Rahat 
+
+
+from:	Tien Tran <Tien.Tran@infoimageinc.com>
+to:	"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+date:	Tue, Jul 19, 2016 at 3:10 PM
+subject:	RE: CLCU - Error
+
+Hi Rahat,
+ 
+That error might have caused it to fail.
+ 
+Hi Peter,
+ 
+Can you please confirm if this error below caused the job tracking on infotrac to fail?
+ 
+Thanks
+Tien
+
+
+from:	Peter Dang <Peter.Dang@infoimageinc.com>
+to:	Tien Tran <Tien.Tran@infoimageinc.com>,
+"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+date:	Wed, Jul 20, 2016 at 8:57 AM
+subject:	RE: CLCU - Error
+
+This could be error due to insert missing piece code.
+ 
+Dear PC Department,
+
+ 
+We have detected that the Piece ID Code was missing for DT_JOB_ID:122304-C16.01-V20491
+
+After you’ve updated the Piece ID Code, please click on the following link: 
+http://webapp-stage01:8580/indexFileProcess/trigger?host=10.8.9.60&username=pdev1&pwd=infoimage&path=/z/isd_share/clcu/print_fileid/&filename=clcumv220160713050702.txt
+
+If you don’t see the word “Success” in the browser, please immediately contact Product Development team to research this issue by clicking on reply-to-all and include a screen shot of what you are seeing in the browser.
+
+ 
+Thank You,
+
+
+
+
+***************************************** /t/share/job_files/ *******************************************************************
+from:	Amir Ebrahim Rahat, Mohammad <amir.rahat@dsinnovators.com>
+to:	Tien Tran <Tien.Tran@infoimageinc.com>
+date:	Tue, Jun 28, 2016 at 5:07 AM
+subject:	Re: CLCU - JEF #21742 - Infotrac Set up
+
+Hi Tien,
+
+I ran the processes with updated DT_JOB_ID but the issue did not solved. There is an error though. It is:
+
+
+mkdir: cannot create directory `/t/share/ncoa/rht/ncoaReports/06282016': Permission denied
+ 
+cp: cannot create regular file `/t/share/job_files/': Is a directory
+
+I don't know if this error matters and I cannot find any other errors.
+
+Log files attached.
+
+Thanks,
+Rahat
+
+***************************************** Please update the insert stock for these jobs PC infotrac *******************************************************************
+
+from:	Shailendra Rathore <Shailendra.Rathore@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+date:	Wed, Jul 26, 2017 at 3:30 AM
+subject:	RE: [Change Requests - JEF #28495] OFCU InfoTrac 3.0 Upgrade
+
+Rony – Generally for every insert there has to be corresponding pieceCode that PC has to enter in the database. Most of the time 
+when process fail with pieceCode error it is due to missing database entry.
+ 
+If the task is complete w/ testing  from your end please send me the DEV ID and I’ll roll over the code to PR env.
+
+Thanks,
+ 
+Best,
+Shail
+
+
+from:	Peter Dang <Peter.Dang@infoimageinc.com>
+to:	Tien Tran <Tien.Tran@infoimageinc.com>,
+"Amir Ebrahim Rahat, Mohammad" <amir.rahat@dsinnovators.com>
+date:	Wed, Jul 20, 2016 at 8:57 AM
+subject:	RE: CLCU - Error
+
+This could be error due to insert missing piece code.
+ 
+Dear PC Department,
+
+ 
+We have detected that the Piece ID Code was missing for DT_JOB_ID:122304-C16.01-V20491
+
+After you’ve updated the Piece ID Code, please click on the following link: 
+http://webapp-stage01:8580/indexFileProcess/trigger?host=10.8.9.60&username=pdev1&pwd=infoimage&path=/z/isd_share/clcu/print_fileid/&filename=clcumv220160713050702.txt
+
+If you don’t see the word “Success” in the browser, please immediately contact Product Development team to research this issue by clicking on reply-to-all and include a screen shot of what you are seeing in the browser.
+
+ 
+Thank You,
+
+from:	Peter Dang <Peter.Dang@infoimageinc.com>
+to:	PC <PC@infoimageinc.com>
+Tien Tran <Tien.Tran@infoimageinc.com>
+date:	Tue, Jun 28, 2016 at 8:37 AM
+subject:	Please update the insert stock for these jobs.
+
+Hi PC,
+ 
+Please include stock code for these jobs (attachment).
+ 
+Thanks,
+ 
+Peter
+
+
+---------- Forwarded message ----------
+From: datacenter1 <data_center@infoimageinc.com>
+To: Zhe Shi <Zhe.Shi@infoimageinc.com>
+Cc: IS <IS@infoimageinc.com>
+Date: Tue, 28 Jun 2016 09:20:28 +0000
+Subject: CLCU: Error Processing InfoTRAC Job Tracking – Missing PieceID Code - clcudla11220160628020414.txt [FAIL] 
+Dear PC Department,
+
+
+We have detected that the Piece ID Code was missing for DT_JOB_ID:122303-C12.01-V21764
+
+After you’ve updated the Piece ID Code, please click on the following link: 
+http://pd-dev2.infoimage.com:8880/indexFileProcess/trigger?host=10.8.9.60&username=pdev1&pwd=infoimage&path=/d/isd_share/clcu/print_fileid/&filename=clcudla11220160628020414.txt
+
+If you don’t see the word “Success” in the browser, please immediately contact Product Development team to research this issue by clicking on reply-to-all and include a screen shot of what you are seeing in the browser.
+
+
+Thank You,
+
+
+Product Development Team
+InfoIMAGE Inc.
+141 Jefferson Drive, Menlo Park, CA 94025 T. 650.473.6388 | F. 650.473.6300 | www.infoimageinc.com
+
+
+
+---------- Forwarded message ----------
+From: datacenter1 <data_center@infoimageinc.com>
+To: Zhe Shi <Zhe.Shi@infoimageinc.com>
+Cc: IS <IS@infoimageinc.com>
+Date: Tue, 28 Jun 2016 09:25:24 +0000
+Subject: CLCU: Error Processing InfoTRAC Job Tracking – Missing PieceID Code - clcuwla11120160628020911.txt [FAIL] 
+Dear PC Department,
+
+
+We have detected that the Piece ID Code was missing for DT_JOB_ID:122302-C12.01-V21748
+l
+After you’ve updated the Piece ID Code, please click on the following link: 
+http://pd-dev2.infoimage.com:8880/indexFileProcess/trigger?host=10.8.9.60&username=pdev1&pwd=infoimage&path=/d/isd_share/clcu/print_fileid/&filename=clcuwla11120160628020911.txt
+
+If you don’t see the word “Success” in the browser, please immediately contact Product Development team to research this issue by clicking on reply-to-all and include a screen shot of what you are seeing in the browser.
+
+
+Thank You,
+
+
+Product Development Team
+InfoIMAGE Inc.
+141 Jefferson Drive, Menlo Park, CA 94025 T. 650.473.6388 | F. 650.473.6300 | www.infoimageinc.com
+
+from:	Caroline Tsen <Caroline.Tsen@infoimageinc.com>
+to:	Peter Dang <Peter.Dang@infoimageinc.com>
+cc:	Print team at InfoIMAGE <printprocess.infoimage@dsinnovators.com>,
+Tien Tran <Tien.Tran@infoimageinc.com>,
+PC <PC@infoimageinc.com>
+date:	Tue, Jun 28, 2016 at 10:47 AM
+subject:	RE: Please update the insert stock for these jobs.
+
+Hi Peter,
+ 
+Piece codes are added, please check.
+ 
+Thank you,
+Caroline
+
+
+***************************************** disable start page validation *******************************************************************
+from:	Terrence Tong <Terrence.Tong@infoimageinc.com>
+to:	Rony Das <rony.das@dsinnovators.com>
+date:	Mon, Dec 19, 2016 at 11:47 PM
+subject:	RE: MSBK - 2016 Tax update (Data format Jack Henry)
+
+
+
+Rony,
+ 
+You will need to disable start page validation step. Add an entry (msbkyt1) to:
+ 
+Production:
+/home/keep/CheckStart/nonStandard_daily.list
+Parallel:
+/home/test/keep//CheckStart/nonStandard_daily.list
+Test: rht
+/home/keep/CheckStart/nonStandard_daily.list
+ 
+ 
+I am not sure you have access to the above files. So I added this  entry for you.
+ 
+Thanks
+ 
+Terrence
+

@@ -26,7 +26,7 @@ if PERSIST and os.path.exists("persist"):
   index = VectorStoreIndexWrapper(vectorstore=vectorstore)
 else:
   #loader = TextLoader("data/data.txt") # Use this line if you only need data.txt
-  loader = DirectoryLoader("kb/", silent_errors=True, show_progress=True)
+  loader = DirectoryLoader("data/", silent_errors=True, show_progress=True, use_multithreading=True)
   if PERSIST:
     index = VectorstoreIndexCreator(vectorstore_kwargs={"persist_directory":"persist"}).from_loaders([loader])
   else:
@@ -44,13 +44,13 @@ else:
 
 # Chatbot loop
 chat_history = []
-print("Welcome to the State of the Union chatbot! Type 'exit' to stop.")
+print("Welcome to the State of the ChatPP! Type 'exit' to stop.")
 while True:
     query = input("Please enter your question: ")
     if query == "exit":
         break
     chain = RetrievalQA.from_chain_type(
-      llm=ChatOpenAI(model="gpt-3.5-turbo", temperature=1),
+      llm=ChatOpenAI(model="gpt-3.5-turbo-16k", temperature=0.9),
       chain_type="stuff",
       retriever=index.vectorstore.as_retriever(search_kwargs={"k": 3}),
     )
