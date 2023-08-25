@@ -1,0 +1,25 @@
+title: Optional E-Selective Insert
+body:   
+
+## Preliminary High-level design across IS/ISD/PD teams:
+
+  1. Introduce a "bypass" flag on the InfoTRAC's Activity trac step 2 and 3
+    1. Meaning in addition to the eSelective Insert flag in DataTRAC (PC), need to introduce an additional flag on InfoTRAC side per job per insert to allow them to choose not to utilize e-Selective Insert if "bypass" checked.
+  2. Print process need to honor the additional bypass flag when query against the info trac database to get the piece-code.
+    1. If "bypass" flag raised, still need to pass on the piece code value over to eStmt processing, but put in a suffix/prefix to indicate such insert is by-passed.
+  3. eStmt process will need to handle the suffix/prefix added by print process. we still able to look back and re-enable the insert if necessary (e.g. client made mistake, need to change setting after fact)
+  4. InfoTrac need additional upload link in the link view to allow upload of pdf if campaign is already approved, but client chose to by-pass before, now change mind. That also means we need to allow on/off of the bypass flag in case if customer make mistakes after campaign approved
+  5. Full detail job tracking need to be updated to honor the by-pass flag also. The flag should be associated on the job level. Insert associations continue to be same across print & estmt. Just that InfoTRAC will depends on the flag to know whether the corresponding insert info should be displayed for eStmt Tracking info or not.
+  6. Accounting reports will get messed up if bypass flag need to be changed after print process started already. Hence it's critical to  **NOT**  allow any change after the print process is over.
+
+## Business Use-Cases & Limitations:
+
+  1. eSelective Insert flag in DataTRAC (PC) need to be turned on. This will enable the capability to post electronic inserts that mirror what insert is used in Print.
+  2. While they are setting up campaigns in InfoTRAC ActivityTRAC, if there is any insert that we don't have the corresponding PDF yet during step-2 and step-3, an 'upload' button will show up to ask for an electronic version of the insert.
+  3. If client  **do NOT want/have**  PDF for the corresponding insert, they can check the option of "by-pass electronic insert" of the corresponding insert. By doing so, upload of PDF is not required.
+  4. In the case if client make a mistake in first round of campaign setup (e.g. chose "bypass", but do want to utilize eSelective insert afterwards). We do have information collected in place to revive the electronic insert, but need to follow procedures below to do so: (because it's manual process, we just want to keep this as exception handling, don't want this to become frequent/normal requests)
+    1. client submit programming request to make this one-off change
+    2. AS/IM receive such request and access the special UI in InfoTRAC to upload the corresponding PDF and update the 'bypass' flag accordingly
+    3. ISD team to manually re-process corresponding insert info records to reflect the piece-code values properly
+
+

@@ -1,0 +1,236 @@
+title: Eclipse Setup
+body: * * *
+
+## Instructions
+
+### Download Java
+
+  1. Obtain Java JDK 6, 7, and 8 from \\\dell-2100\share\Isd\ISD software, or download from official website 
+    1. jdk-6u27-windows-x64.exe
+    2. jdk-7u79-windows-x64.exe
+    3. jdk-8u251-windows-x64.exe
+  2. Set the JAVA_HOME Variable
+    1. Find out where Java is installed. If you didn't change the path during installation, it will be something like this:  
+`C:\Program Files\Java\jdk1.8.0_251`
+
+    2. In Windows 10 go to  **Control Panel**  >  **System**  >  **Advanced System Settings**.
+    3. Click the  **Environment Variables**  button.
+    4. Under  **System Variables** , click  **New.**
+    5. In the  **Variable Name**  field, enter:
+      * `JAVA_HOME` if you installed the JDK (Java Development Kit)
+    6. In the  **Variable Value**  field, enter your JDK installation path, then click **OK**.
+
+    7. Under  **System Variables** , double click the **Path** variable, add click  **New**.
+      1. enter` %JAVA_HOME%\bin`
+    8. Click  **OK  **and  **Apply Changes**  as prompted.
+
+### Download Eclipse
+
+  * Obtain eclipse-jee-mars-2-win32-x86_64.zip or eclipse-jee-oxygen-R-win32-x86_64.zip from '\\\dell-2100\share\Isd\ISD software' or a later release from Eclipse.
+  * Unzip eclipse-jee-mars-2-win32-x86_64.zip or eclipse-jee-oxygen-R-win32-x86_64.zip to desired local directory. In this How-to, the Eclipse directory will be 'C:\Program Files\Eclipse\'.
+
+Keep in mind that there are compatibility issues between some versions of
+Eclipse Java EE IDE and SVN Team Provider Plugin. Oxygen may be the highest
+version that is compatible with SVN Team Provider Plugin.
+
+  
+
+### Eclipse Workspace
+
+Create a workspace for the each environment (Development, Pilot, Staging,
+Production). The term environment will be used to address a workspace when in
+context of Eclipse.
+
+  1. If Eclipse is:  
+
+    1. Not Open: open Eclipse
+    2. Open: Go to MENU: File > Switch Workspace > Other...
+  2. On the Eclipse IDE Launcher, browse to the desired local directory for workspaces.
+  3. Name the new workspace such that the Workspace address is C:/.../[ _workspace directory_ ]/[ _name of environment_ ].
+  4. Click  **Launch.**
+
+ **Be sure when checking out code that you are in the correct workspace before
+pulling files from the repository.**
+
+### Eclipse Project Explorer
+
+#### Hierarchical View
+
+  1. Select the 'View Menu' drop-down in the 'Project Explorer'. The drop-down icon looks like a caron symbol (v). 
+  2. DROP-DOWN > Package Presentation > Hierarchical
+
+#### Working Sets
+
+We can group projects into Resource folders called 'Working Sets'.
+
+For each environment:
+
+  1. DROP-DOWN > Select Working Set...
+  2. New > Resource
+  3. Create the following Sets.
+    1. Core Code: 
+    2. Dependencies
+    3. Client Code
+  4. Check the created working sets.
+  5. Select 'OK'. 
+  6. DROP-DOWN > Top Level Elements > Working Sets
+
+The sets are currently be empty, but we will pull code after setting up SVN.
+
+#### Unix-Format Preferences
+
+Since our applications are hosted primarily on Unix servers, we need to set
+the default preferences to have our files use unix-compatible text format.
+
+  1. Window -> Preferences -> Workspace
+  2. In the "Text file encoding" section, choose "Other" -> UTF-8
+  3. In the "New text file line delimiter", choose "Other" -> Unix
+
+### Setting up Eclipse SVN Tools
+
+#### Install Eclipse SVN Teams Plugins
+
+  1. Go to MENU: Help > Install New Software
+  2. Work with: Mars/ - _<https://download.eclipse.org/releases/mars>_[  
+O](https://download.eclipse.org/releases/mars)r Work with: Oxygen -
+_<http://download.eclipse.org/releases/oxygen>_
+
+  3. Open the 'Collaboration' Tab & Select
+    1. Subversive SVN Team Provider
+    2. Subversive SVN Team Provider Sources
+
+If you get the message " **The following solutions are not available:
+Subversive - SVN Team Provider . . .** " during installation, current Eclipse
+is not compatible with the plugin.  Get a different Eclipse.
+
+  
+
+#### Selecting a SVN Connector
+
+  1. Go to MENU: Window > Preferences > Team > SVN
+  2. Go to the 'SVN Connector" Tab. Select the latest SVNKit as the SVN Connector. 
+
+If Eclipse cannot find any connector, you need to contact MCIT for help.
+
+ **The SVN Connector must be SVNKit.**
+
+### Eclipse SVN Perspective and Loading Repository
+
+#### Connect to Repositories
+
+For each environment:
+
+  1. Go to MENU: Window > Perspective > Open Perspective > Other... > Select 'SVN Repository Exploring'
+  2. On the left-hand toolbar 'SVN Repositories', right click and Select 'New > Repository Location'
+  3. In the URL field, enter svn+ssh:// _username_ @ca-utils-pr-01.infoimageinc.com/srv/is_svn where  _username_ is your given username
+
+  4. Authenticate with given username and password
+  5. Check the field  'Save authentication'
+  6. Check the field 'Validate Repository Location on finish'
+  7. Select 'Finish'. Re-enter password if prompted.
+  8. Repeat step 2-7 with svn+ssh:// _username_ @ca-utils-pr-01.infoimageinc.com/srv/svn
+
+#### Checkout Code from Repositories
+
+For each environment:
+
+  1. Locate the item you want to pull
+  2. RIGHT CLICK > Find/Checkout As
+  3. Select 'Check out as a project with the name specified' if not already selected.
+  4. Depth = Recursively
+  5. Select 'Head Revision' if not already selected.
+  6. Select 'Next'
+  7. Use the 'Select working set' drop-down menu and select the working set to which you want to pull the code.
+
+##### Development Environment:
+
+  1. Checkout from the 'is_svn'. 
+    1. afp2pdf
+    2. dp
+    3. i3-core
+    4. infoimage-commons
+    5. processing-ui
+    6. resin-pro ( **always pull from trunk** )
+  2. Checkout from the 'svn' 
+    1. app-depend-libs/estmt2-depend-libs/trunk
+    2. estmt2/common/trunk
+
+##### Pilot/Staging/Production Environments:
+
+  1. Each of the pilot, staging, and production environment are in separate branches (all lowercase).
+  2. Files pulled from the 'svn' repository will remain the same.
+  3. Files pulled from the 'is_svn' repository will need to be selected from the respetive 'branch' environment (lowercase).
+  4.  **resin-pro is always pulled from is_svn trunk**
+
+Working Set Repos
+
+Core Code
+
+  * afp2pdf
+  * dp
+  * i3-core
+  * processing-ui
+
+Dependencies
+
+  * common
+  * estmt2-depend-libs
+  * infoimage-commons
+  * resin-pro
+
+ **Be sure when checking out code that you are in the correct workspace before
+pulling files from the repository.**
+
+### Building the Code
+
+#### Ant
+
+Apache Ant is a build tool used to create artifacts in an automated fashion.
+
+To build a project find the 'build.xml' in the project root directory. Right
+click on the file and select 'Run As -> Ant build'.
+
+##### Build Order
+
+Due to dependencies, we must build the projects in the following order
+
+  1. afp2pdf
+  2. i3-core
+  3. processing-ui
+  4. dp
+
+Artifacts are produced and stored in your workspace directory
+'\workspace\<development | pilot | staging |
+production>\\_jar_files_${environment}\'
+
+Where environment = 'dev', 'pilot', 'staging', or 'prod' based on build.xml.
+
+Eclipse Behaving As A Text Editor
+
+You may find that you are unable to Ctrl+Click in editor.  Follow these steps
+to fix it.
+
+  1. On project (eg. afp2pdf), RIGHT CLICK > Delete. Uncheck 'Delete project contents on disk' and click OK.
+  2. From Menu, File > New > Project > Java Project. Click Next.
+  3. Uncheck 'Use default location'. Browse and select the project folder you just deleted. Be extra careful to select the correct folder in the correct workspace.
+  4. Check 'Add project to working sets' if it is not already checked. Select the correct working set.
+  5. Click Finish.
+  6. If Eclipse asks you to open Java perspective, you may choose No.
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+

@@ -1,0 +1,289 @@
+title: Multi-Tier Org
+body: **Task:**  Infoimage Billing Engine Mapping
+
+ **Details:**  As part of Intuit's requirement, we need to accomodate
+Wholesaler information in the existing Schema. The scope of the requirement
+can possibly grow to a multi level hierarchy leading to a complex parent-child
+relationship as shown below.
+
+ **Requirement:**  DDLs and DMLs for the above structure
+
+ **How:**  The below queries needs to be applied on the exisiting Oracle
+Schema.
+
+    
+    
+    /* WSLR_ORG table 
+       NULL W_ID's would indicate either an Orphan or a ROOT node */
+    
+
+**CREATE**  TABLE  **WSLR_ORG**  
+(  
+ **W_ID**  NUMBER (22) DEFAULT NULL,  
+ **ORG_ID**  NUMBER (22) NOT NULL,  
+PRIMARY KEY (W_ID, ORG_ID),  
+CHECK (W_ID <> ORG_ID)  
+);
+
+    
+    
+    /* CONSTRAINTS FOR WSLR_ORG */
+
+  
+ **ALTER**  TABLE  **WSLR_ORG**  
+ADD CONSTRAINT  **F1_WSLR_ORG**  
+FOREIGN KEY (ORG_ID) REFERENCES  _ **ORGANIZATION (ORG_ID)**_  ;
+
+    
+    
+    /* Recursively visit all Orgs and get all the leaf nodes (orgs)*/
+    
+
+**ORACLE**
+
+    
+    
+    SELECT W_ID, ORG_ID, CONNECT_BY_ISLEAF "IsLeaf" FROM WSLR_ORG
+    CONNECT BY PRIOR ORG_ID= W_ID
+    START WITH W_ID = <root organization>
+    ORDER BY W_ID, ORG_ID
+    
+
+  
+
+**Output:**
+
+ **MYSQL**
+
+The below are some alternatives using adjacency list approach on MySQL.
+
+    
+    
+    /* To visit all the leaf nodes. */
+
+  
+
+    
+    
+    SELECT DISTINCT t1.ORG_ID FROM
+       WSLR_ORG AS t1 LEFT JOIN WSLR_ORG as t2
+       ON t1.ORG_ID = t2.W_ID
+       WHERE t2.ORG_ID IS NULL
+       ORDER BY t1.ORG_ID;
+    
+
+  
+**Output**  
+ORG_ID  
+1  
+2  
+3  
+4  
+5  
+6  
+7  
+8
+
+    
+    
+    /* Level based search to visit the children of a given parent ( this query can be improved ) */
+
+  
+
+    
+    
+    SELECT T1.ORG_ID AS LEV1, T2.ORG_ID AS LEV2, T3.ORG_ID AS LEV3, T4.ORG_ID AS LEV4
+       FROM WSLR_ORG AS T1
+       LEFT JOIN WSLR_ORG AS T2 ON T2.W_ID = T1.ORG_ID
+       LEFT JOIN WSLR_ORG AS T3 ON T3.W_ID = T2.ORG_ID
+       LEFT JOIN WSLR_ORG AS T4 ON T4.W_ID = T3.ORG_ID
+       WHERE T1.W_ID = <root node>;
+    
+
+**Output**
+
+    
+    
+    ORG_ID    ORG_ID    ORG_ID    ORG_ID
+    111    1    <null>    <null>
+    111    6    <null>    <null>
+    111    11    2    <null>
+    111    11    3    <null>
+    111    22    3    <null>
+    111    22    4    <null>
+    111    22    5    <null>
+    222    33    6    <null>
+    222    33    7    <null>
+    222    33    8    <null>
+    
+
+  
+
+**Where:**  E-statement Oracle DB
+
+ **Conclusion:**  There's no standard way to write recursive queries to derive
+relationships using Standard SQL syntax. Its pretty straight forward in Oracle
+using CONNECT BY PRIOR clause. Microsoft's SQLServer has Common Table
+Expressions (CTE) and MySQL has 'Session variables' to write
+recursive/hierarchical queries.  
+  
+
+# Queries used to retrieve the values
+
+ **getDINumbers**
+
+    
+    
+    SELECT ORG_ID AS COUNT, ORG_ID FROM ORGANIZATION WHERE UPPER(ORG_UNIQUENAME) IN ( <CSV of ORG_NAMES> ) ;
+    
+
+  
+**getNumberOfStmts**
+
+  
+
+    
+    
+    SELECT SUM(GOOD) + SUM(BAD) + SUM(WARNING) AS COUNT, ORG_NAME, ORG.ORG_ID, NAME FROM P_JOB_ALL PJ, ORGANIZATION ORG  
+                    WHERE CREATE_TIME>=? AND CREATE_TIME <=? AND UPPER(ORG_NAME) IN ( <CSV of ORG_NAMES> ) 
+                    AND NAME IN ( 'afp', 'xml' ) 
+                    AND ACTION IN ( 'exec', 'backup' ) 
+                    AND STATUS = 1  
+                    AND ORG.ORG_UNIQUENAME = PJ.ORG_NAME  
+                    GROUP BY ORG_NAME, ORG.ORG_ID, NAME;
+    
+
+  
+**getNumberOfPages**
+
+    
+    
+    SELECT SUM(PJ.GOOD) + SUM(PJ.BAD) + SUM(PJ.WARNING) + SUM(EC.IMG_COUNT) AS COUNT, ORG_NAME, ORG.ORG_ID, PJ.NAME as NAME FROM P_JOB_ALL PJ,P_ESTMT_COUNT_ALL EC, ORGANIZATION ORG WHERE PJ.P_JOB_ID=EC.P_JOB_ID  
+                    AND CREATE_TIME>=? AND CREATE_TIME <=? AND UPPER(PJ.ORG_NAME) IN ( <CSV of ORG_NAMES> ) 
+                    AND PJ.NAME IN ( 'afp', 'xml' ) 
+                    AND PJ.STATUS=1  
+                    AND NOT (COMMAND LIKE '%stmtType:enotice%' OR COMMAND LIKE'%stmtType:etax%')  
+                    AND ORG.ORG_UNIQUENAME = PJ.ORG_NAME  
+                    GROUP BY ORG_NAME, ORG.ORG_ID, NAME;
+    
+
+  
+**getNumberOfEnrolledAccounts**
+
+    
+    
+    SELECT COUNT(DISTINCT ACCT_ID) AS COUNT, ORG.ORG_ID FROM FIN_ACCOUNT_ALL FA, ORGANIZATION ORG  
+                    WHERE OPEN_DATE>=? AND OPEN_DATE <=? AND FA.ORG_ID IN ( SELECT ORG_ID FROM ORGANIZATION WHERE UPPER(ORG_UNIQUENAME) IN ( <CSV of ORG_NAMES> ) )   
+                    AND ORG.ORG_ID = FA.ORG_ID  
+                    GROUP BY FA.ORG_ID, ORG.ORG_ID;
+    
+
+  
+**getNumberOfExtendedArchival**
+
+    
+    
+    SELECT SUM(GOOD) + SUM(BAD) + SUM(WARNING) AS COUNT, ORG_NAME, ORG.ORG_ID, NAME FROM P_JOB_ALL PJ, ORGANIZATION ORG  
+                    WHERE CREATE_TIME>=? AND CREATE_TIME <=? AND UPPER(ORG_NAME) IN ( <CSV of ORG_NAMES> ) 
+                    AND NAME IN ( 'afp', 'xml' ) 
+                    AND ACTION IN ( 'exec', 'backup' ) 
+                    AND STATUS = 1  
+                    AND ORG.ORG_UNIQUENAME = PJ.ORG_NAME  
+                    GROUP BY ORG_NAME, ORG.ORG_ID, NAME;
+    
+
+  
+**getNumberOfEmailNotifications**
+
+    
+    
+    SELECT SUM(GOOD) + SUM(BAD) + SUM(WARNING) AS COUNT, ORG_NAME, ORG.ORG_ID, NAME FROM P_JOB_ALL PJ, ORGANIZATION ORG  
+                    WHERE CREATE_TIME>=? AND CREATE_TIME <=? AND UPPER(ORG_NAME) IN ( <CSV of ORG_NAMES> ) 
+                    AND NAME IN ( 'email', 'reminder', 'email2', 'email_bbbb', 'selective_email' ) 
+                    AND STATUS = 1  
+                    AND ORG.ORG_UNIQUENAME = PJ.ORG_NAME  
+                    GROUP BY ORG_NAME, ORG.ORG_ID, NAME;
+    
+
+  
+**getNumberOfENotices**
+
+    
+    
+    SELECT SUM(GOOD) + SUM(BAD) + SUM(WARNING) AS COUNT, ORG.ORG_ID, NAME FROM P_JOB_ALL PJ, ORGANIZATION ORG  
+                    WHERE CREATE_TIME>=? AND CREATE_TIME <=? AND UPPER(ORG_NAME) IN ( <CSV of ORG_NAMES> ) 
+                    AND NAME IN ( 'enotice', 'enotice2', 'enotice3', 'enotice4' ) 
+                    AND STATUS = 1  
+                    AND ORG.ORG_UNIQUENAME = PJ.ORG_NAME  
+                    GROUP BY ORG_NAME, ORG.ORG_ID, NAME;
+    
+
+  
+**getNumberOfETax**
+
+    
+    
+    SELECT SUM(GOOD) + SUM(BAD) + SUM(WARNING) AS COUNT, ORG.ORG_ID, NAME FROM P_JOB_ALL PJ, ORGANIZATION ORG  
+                    WHERE CREATE_TIME>=? AND CREATE_TIME <=? AND UPPER(ORG_NAME) IN ( <CSV of ORG_NAMES> ) 
+                    AND NAME IN ( 'etax' ) 
+                    AND ACTION IN ( 'exec', 'backup' ) 
+                    AND STATUS = 1  
+                    AND ORG.ORG_UNIQUENAME = PJ.ORG_NAME  
+                    GROUP BY ORG_NAME, ORG.ORG_ID, NAME;
+    
+
+  
+**getNumberOfWebStorage**
+
+    
+    
+    SELECT SUM(PJ.GOOD) + SUM(PJ.BAD) + SUM(PJ.WARNING) + SUM(EC.IMG_COUNT) AS COUNT, ORG_NAME, ORG.ORG_ID, PJ.NAME as NAME FROM P_JOB_ALL PJ,P_ESTMT_COUNT_ALL EC, ORGANIZATION ORG WHERE PJ.P_JOB_ID=EC.P_JOB_ID  
+                    AND CREATE_TIME>=? AND CREATE_TIME <=? AND UPPER(PJ.ORG_NAME) IN ( <CSV of ORG_NAMES> ) AND PJ.NAME IN ( 'afp', 'xml' ) 
+                    AND PJ.STATUS=1  
+                    AND NOT (COMMAND LIKE '%stmtType:enotice%' OR COMMAND LIKE'%stmtType:etax%')  
+                    AND ORG.ORG_UNIQUENAME = PJ.ORG_NAME  
+                    GROUP BY ORG_NAME, ORG.ORG_ID, NAME;
+    
+
+  
+**getNumberOfMessageManager**  
+Returns empty : not in scope
+
+ **getNumberOfInsertPresentment**
+
+    
+    
+    SELECT SUM(GOOD) + SUM(BAD) + SUM(WARNING) AS COUNT, ORG.ORG_ID, NAME FROM P_JOB_ALL PJ, ORGANIZATION ORG  
+                    WHERE UPPER(ORG_NAME) IN ( <CSV of ORG_NAMES> ) 
+                    AND NAME IN ( 'insert' ) 
+                    AND STATUS = 1  
+                    AND ORG.ORG_UNIQUENAME = PJ.ORG_NAME   
+                    GROUP BY ORG_NAME, ORG.ORG_ID;
+    
+
+  
+**getNumberOfESafetyBox**  
+Returns empty : not in scope
+
+  
+
+ **getOrgsForWholesaler**
+
+    
+    
+    SELECT W_ID, ORG_ID, CONNECT_BY_ISLEAF isleaf FROM WSLR_ORG  
+                    CONNECT BY PRIOR ORG_ID= W_ID  
+                    START WITH W_ID = ?  
+                    ORDER BY W_ID, ORG_ID ;
+    
+    
+
+  
+
+* * *
+
+  
+
+### Attachments
+
+

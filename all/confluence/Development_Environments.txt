@@ -1,0 +1,144 @@
+title: Development Environments
+body: ## Source Control Management
+
+  *   * {TODO} 
+  *   *   *   *   *   * 
+
+  
+  
+
+## Servers
+
+  
+  
+
+### Hardware Assignments {NEW}
+
+  *   *   *   *   * 
+
+  
+  
+
+### Infrastructure Server Setup
+
+  *   * 
+
+  
+  
+
+### App Server Setup
+
+  * Resin/Ubuntu Setup Procedures
+  *   *   *   * 
+
+  
+  
+
+### SSL Certificate related
+
+  *   *   *   * 
+
+  
+
+### Environment Setup w/ Offshore Team
+
+  *   *   *   * Access from external network
+    * SVN
+      * The specific port 422 is open for DSi team specifically (IP = 103.4.147.138) for ease of code check-in/merges  
+
+            
+                        nohup socat TCP-LISTEN:422,fork TCP:pd-tools.infoimage.com:22 &
+
+    * redmine: [develop.infoimage.com](http://develop.infoimage.com) and [track.infoimage.com](http://track.infoimage.com)
+      * The following domain names are proxy routed to our internal redmine, only enabled for Corporate Wifi and DSi team (IP = 103.4.147.138)
+      * [https://develop.infoimageinc.com](https://develop.infoimageinc.com/)
+      * [https://track.infoimageinc.com](https://track.infoimageinc.com/)
+
+  
+
+## Databases
+
+  
+
+### Database Scrumbling
+
+  * Scrambling script is available in SVN: svn+<ssh://pd-tools.infoimage.com/srv/svn/utils/dbscripts>
+  * Columns need to be scrambled:
+    * 
+
+  
+  
+
+### Database Migration from Oracle -> MySQL
+
+  *   *   * 
+
+  
+  
+
+### NoSQL Databases
+
+  *   * 
+
+## Local Environment Preparation
+
+  * 
+
+  
+
+## Local Oracle setup
+
+  * Download and install XE from <http://www.oracle.com/technetwork/database/database-technologies/express-edition/downloads/index.html>
+  * Open command prompt as Administrator.
+  * run sqlplus / as sysdba
+  * login with system and the password you chose
+  * a tablespace called I3DATA
+
+    
+    
+    create tablespace 
+       I3DATA
+    datafile   
+      '<ORACLEXE_HOME>/app/oracle/oradata/XE/I3DATA.DBF'
+    size 500M
+    uniform size 10M;
+
+  * ALTER DATABASE DATAFILE '<ORACLEXE_HOME>/app/oracle/oradata/XE/I3DATA.DBF' AUTOEXTEND ON;
+  * Import the dump.  
+impdp dev_cu/dev_cu schemas=dev_cu dumpfile=EXP_DEVCU_20140516.DMP
+logfile=log.txt
+
+  
+  
+
+## Environment & Databases Separations
+
+  
+
+### Current environment setup (as of 2013-08-09)
+
+  
+  
+
+  
+
+### Action Items from 2013-08-09
+
+  1. Create NEW set of Pre-Prod application/database instances under the Production (.9) subnet for eStmt pre-production runs.
+    * Reason being the pre-prod run on paper side are done within the production database (license limitation). Having the pre-prod of eStmt run within the same (.9) subnet will relief the limitation of application/databases access issues.
+    * Since it will be separate instances then production, even within (.9) subnet, data records are separated.
+  2. Create NEW Paper-processing database for Parallel runs under the Stage (.8) subnet.
+    * Utilize a Papyrus dev license so that new instance could be created without additional cost
+    * Once the paper-proc database within (.8) subnet, accessing paper-side data from eStmt/PUI process/InfoTRAC no longer need to go through the proxy services. This would eliminate issues that only surface in Production/Stage environments.
+  3. Create NEW DataTRAC clone for Stage environment, in addition to the Production DataTRAC and DataTRAC_IS database & UI.
+    * This would be used to support parallel runs to ensure test runs are isolated from production DataTRAC data.
+
+  
+
+###   Attachments
+
+  
+
+250
+
+

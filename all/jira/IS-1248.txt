@@ -1,0 +1,255 @@
+title: MVCU - [28427][pvt] Adjust Statement group
+description: Update tag tied to Regular Share account so not read each share/loan and only read the Share Regular for the statement group. So if share regular is set to No Statement then regardless of any additional shares a statement in this case would not produce to the member.
+
+
+
+Programming hr: 2hr
+
+Turnover Date: 06/16/2022
+
+Sample Date: 06/22/2022
+
+Sample Approval date: 06/27/2022
+
+Live Date: 07/04/2022
+
+
+author: mahbubs
+comment: Hi [~Kbittmann],
+
+In SOW I can see there are instructions to look for another verbiage "Bad Address" along with "No Statement" in statementMailGroupDescription tag.
+
+!https://app.na3.teamsupport.com/dc/1888578/images/e95dad93-c0e2-4084-9603-117590d5ed53.png!
+
+
+
+And in production code this verbiage also being checked for suppression.
+
+
+
+!https://app.na3.teamsupport.com/dc/1888578/images/503e8775-8c54-431c-888e-0548bee08380.png!
+
+
+
+Please confirm with client if we have to check both "Bad Address" and "No Statement" in that tag.
+
+In theamsupport client didn't mention about the"Bad Address" verbiage.
+
+Thanks
+
+
+author: mahbubs
+comment: Hi[~Kbittmann],
+
+The ms3 data is too big. It's taking too long to find the suppression scenario in the data.
+
+Hopefully tomorrow we can provide an update.
+
+Thanks
+
+
+author: mahbubs
+comment: Hi [~Kbittmann],
+
+Updates are done in the program.
+
+I created a small data file with the suppression scenario of this task.
+
+I ran the process using that data. I kept only one customer in that data which will get suppressed due to the "No Statement".
+
+That customer data is populated in np1 index file (/z/mvcu/mvcums31235.np1).
+
+Thanks
+
+
+author: JIRAUSER10911
+comment: [~mahbubS] [~TunA] 
+
+
+
+Please confirm this is done for the client to verify update or the update has been rolled out to production. If the update is ready for client to verify how are they to verify update?
+
+
+author: mahbubs
+comment: Hi [~Kbittmann],
+
+I couldn't manage to run the process today in pilot with updated resources.
+
+Tomorrow I will provide an update on how client can verify the update.
+
+Thanks
+
+
+author: JIRAUSER10911
+comment: [~mahbubS]
+
+Ok. The client confirmed we need to check both "Bad Address" and "No Statement" in that tag.
+
+
+author: mahbubs
+comment: Hi [~Kbittmann],
+
+I checked in updated resources for pilot environment. I hope CU have access to pilot infotrac site.
+
+I ran the process for pilot.
+
+Before running:
+
+  1. I have disable the message manager feature because it was causing issue to run the process.
+
+  2. Then I had to disable the paperless suppression because, the short data file that I used, the customer in that data are getting suppressed by ESUP. But those customer data has the "No Statement" suppression scenario.
+
+Now client can check the pilot site "Job Status" like in below screenshot.
+
+!image-2022-06-28-18-21-34-244.png!
+
+I attached the short xml data file.[^mvcu_stmt_062322_1.xml]
+
+The customer name "Benjamin Garrett" in this data has the "No Statement" suppression scenario.
+
+In the above screenshot in Non-Print column you can see there is value 1. Total customer is 4. The Non-Print (suppressed) customer is "Benjamin Garrett". On clicking the Non-Print column value client can see details of the suppressed statement.
+
+I hope this should be easy for customer to review/verify the update.
+
+Let me know if anything is confusing to you. Or we can have a call.
+
+Thanks
+
+
+author: JIRAUSER10911
+comment: [~mahbubS]
+
+Samples are approved.
+
+
+author: JIRAUSER10911
+comment: [~mahbubS]
+
+Please confirm this will go live 7/5.
+
+
+author: mahbubs
+comment: Hi [~Igor.Khosid],
+
+Please start QA on this.
+
+Project is in qa folder:/d/iss/qa/MVCU/MVCUMS31.zip
+
+Parallel id:20211028094919
+
+DPVS attached.[^mvcums3123.print]
+
+The task is to check if the suppression is working correctly.
+
+If the suppression requirement fulfills, the account should go to np1 index file (/z/mvcu/mvcums3<segment><cycle>5.np1).
+
+You can also check in stage infotrac site in job status tab for NON-PRINT.
+
+I hope print range is not needed for this.
+
+Let me know if anything more needed.
+
+Thanks
+
+
+author: igor.khosid
+comment: [~mahbubS] [~Kbittmann] [~rony]
+PR ID: 20211028094919 report doesn't contain any data. 
+*BT-37* bug created. Please see and confirm
+
+
+author: mahbubs
+comment: Extremely sorry [~Igor.Khosid]
+
+Use below ID:
+
+Parallel ID:20220623025706
+
+Thanks
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220623025706
+   Currently in parallel: Yes
+   User: mahbubS
+   Description: IS-1248 MVCU - [28427][pvt] Adjust Statement group
+   Date Submitted: 2022-06-23 02:57:23
+   Date Last Updated: 2022-06-23 02:57:23
+   Files:
+      1) MVCUMS31.dfa
+
+
+author: igor.khosid
+comment: [~Andrey.Kutsenko] - please review and confirm
+
+
+author: JIRAUSER11104
+comment: Hi [~Kbittmann] please attach SOW.
+Thx.
+
+
+author: JIRAUSER11104
+comment: Hi [~mahbubS] please post the index file on pui-stage. And then I'll check InfoTRAC, Admin and SSO E-Site.
+
+
+author: JIRAUSER11104
+comment: Test "Set flags for suppression" - Passed.
+txt file >>>  [^mvcums31.txt] 
+project data file >>>  [^mvcums3_062322.dat] 
+Checked logic in production code:
+ !scr_mvcu_papyrus.png|thumbnail! 
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+[~mahbubS] please attach IS checklist.
+
+
+author: mahbubs
+comment: Hi [~Andrey.Kutsenko],
+
+IS-checklist is attached.[^IS Checklist#IS-1248.docx]
+
+Thanks
+
+
+author: mahbubs
+comment: Hi [~Kbittmann],
+
+I hope no parallel form needed for this task.
+
+[~TunA]please release code.
+
+I did cvs checkin.
+
+Transfer form attached.[^IS_PROGRAM_TRANSFER_FORM-2.doc]
+
+Thanks
+
+
+author: JIRAUSER11104
+comment: IS checklist >>>  [^IS-1248_MVCU_CheckList.pdf] 
+
+
+author: tuna
+comment: Hi [~mahbubS],
+
+Following code has been released.
+
+Thanks,
+
+Tun
+
+
+
+20220706084932 07/06/2022 mahbubS IS-1248 MVCU - [28427][pvt] Adjust Statement group
+
+[main@rhs ~]$ ll /d/is/cvs/xfer/mahbubS/
+total 664
+-rwxrwxrwx 1 mahbubS DSI 387641 Jul 6 02:21 MVCUMS31.dfa
+
+
+
+
+
+[~Kbittmann]

@@ -1,0 +1,80 @@
+title: DR Testing - Texas Server
+body: ## Server IP/Hostnames
+
+ **IP Address**|  **Purpose**  
+---|---  
+10.9.1.25| DataTRAC Database server (TX)  
+10.8.8.28| DataTRAC Database server (CA)  
+  
+  
+  
+
+## Setting a new payebill host eg. HUHS
+
+ **Resin setup**
+
+  1. Get HUHS host code from cvs_production\vhost\huhs branch.
+  2. Copy this folder to \\\10.9.2.8\d$\hosts
+  3. Resin would have got backed up by estatements backup procedures  
+Modify \\\10.9.2.8\d$\resin-pro-4.0.20\conf\resin.xml and include your host in
+the estmt cluster  
+
+    
+           <host id="huhs" root-directory="d:/hosts/huhs">
+          <host-alias-regexp>.*:11861</host-alias-regexp>
+          <host-alias>12.189.22.66</host-alias>
+          <host-alias>howard.estatemnt.com</host-alias>       
+          <web-app id="/" document-directory="ROOT">
+            <access-log path="../log/access.log" rollover-period="1D"/>
+            <stdout-log path="../log/stdout.log" rollover-period="1D" timestamp="[%m/%d/%y %H:%M:%S] "/>
+            <stderr-log path="../log/stderr.log" rollover-period="1D" timestamp="[%m/%d/%y %H:%M:%S] "/>
+          </web-app>
+          <web-app id="/msm" document-directory="msm">
+            <access-log path="../log-msm/access.log" rollover-period="1D"/>
+            <stdout-log path="../log-msm/stdout.log" rollover-period="1D" timestamp="[%m/%d/%y %H:%M:%S] "/>
+            <stderr-log path="../log-msm/stderr.log" rollover-period="1D" timestamp="[%m/%d/%y %H:%M:%S] "/>
+          </web-app>      
+        </host>    
+    
+
+  4. Bounce the resin server
+
+ **IIS Setup**
+
+  1. on the IIS server go to the host-static folder - huhs folder was already there.  
+
+    
+          In case it's not there create huhs folder in host-static.
+      Create two folders msm and ROOT in huhs.
+      From production vhost copy the following files and folder to huhs/msm folder:dtd,error,images,scripts,styles and index.html
+      From production vhost copy the following files and folder to huhs/ROOT dso,dtd,images,javascripts,styles,*.pdf,*.html,web.config file
+      Modify web_config file so that it points to only one resin
+      "  <add key="resin.servers" value="resin:6800" />" 
+    
+
+  2. Create the site  
+Go to IIS server adminitration
+
+    * Add User Site  
+> Use "cid-port #" for the Site Name.  
+> Set the physical path to be "D:\hosts-static\CID\ROOT\"  
+> Under the Binding section, switch the type to be "https"  
+> Change the port number to your CID's port number  
+> Select the SSL certificate for your CID
+> "*.[infoimageinc.com](http://infoimageinc.com)"
+    * Add Virtual Directory for AI site  
+> Right click on your CID's site and select "Add Virtual Directory"  
+> In the popup dialog, enter "msm" for the Alias  
+> Set the physical path to be "D:\hosts-static\CID\msm\"  
+Start the site
+
+ **Database tables**  
+Database should have been restored from it's backup
+
+ **Open the website**  
+Member Site: https:// 10.9.4.12:11861/login.jsp  
+Ai Site: https:// 10.9.4.12:11861/msm/login.jsp
+
+ **Test sit**
+
+

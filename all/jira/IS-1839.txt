@@ -1,0 +1,60 @@
+title: TKCU - [35478][pvt] Notice Modifications
+description: IS Assessment
+=============
+Hours for development: 16 IS hours + (ISD hours may require)
+
+Turnover Date: 11/28/22
+Sample to qa Date: 12/12/22
+Sample to client Date: 12/15/22
+approval Date: 12/20/22
+Live Date: 12/29/22
+
+Engineering resource: Zhuoxin
+
+
+
+Assessment Details (IS):
+- Parallel required: (Yes)
+
+- Formatting update:
+info_ltr|dfa|client_notice_id
+ 026 |008 |0009
+ 027 |009 |0010
+ 045 |019 |0020
+ 093 |040 |0043
+ 096 |042 |0048A
+ 097 |042 |0048B
+ 098 |042 |0048C
+ 099 |042 |0048D
+ 100 |042 |0048E
+
+- Suppression logic for ltr_code:093 => dfa:040 => notice_id: 0043
+
+- ESUP_IGNORE needed for 093 in control file.
+II.SH.ADVERSEACTION.MMDDYYYY    Decline share adverse Action  093 040   0043
+
+- add these logics in TKCUDL040.DFA to handle the suppression.
+
+If Field 19 = 0 and not enrolled in Paperless, then Paper only
+
+=> Esup_ignore makes it always print.
+
+  Read paperless list to DFA and not match the account number.
+  If not match and field 19 == 0, then mail_code == 'z' 345. no enotice
+
+If Field 19 = 0 and is enrolled in Paperless, then enotice only
+
+=> Esup_ignore makes it always print.
+  Read paperless list and match account. then mail_code == 'e' at 53, no paper.
+
+If Field 19 = 1 and not enrolled in Paperless, then Paper only
+
+=> Esup_ignore makes it always print.
+  Read paperless list to DFA and not match the account number.
+  if not match and field 19 == 1, then mail_code == 'z' at 345. no enotice.
+
+
+
+If Field 19 = 1 and is enrolled in Paperless, then BOTH Paper and enotice
+
+=> Esup_ignore makes it always print. DO NOT set the mail_code == 'z' at 345, both paper and enotice

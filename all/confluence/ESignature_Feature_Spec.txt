@@ -1,0 +1,110 @@
+title: ESignature Feature Spec
+body: # Static Demo that show case the workflow:
+
+  
+
+Admin - Package Creation flow: <http://salesdemo.infoimage.com/AI/esign-
+create-pkg.html> * Signer - Package Signing flow:
+<http://salesdemo.infoimage.com/eSafetyBox_sign.html>
+
+  
+
+## Limitation:
+
+  1. e-signlive do NOT offer a customized UI on the package-creation interfaces # It's difficult for e-signlive to integrate with us seamlessly on authentication especially as a multi-tenant fashion # Iframe requires a secondary login to e-signlive again # We've built pretty much all the UI portion of signature field/position widget in salesdemo already
+
+  
+  
+
+## Proof-Of-Concept implementation with Static Demo:
+
+  
+
+### Admin-facing side:
+
+  1. Keep what we have in the salesdemo. i.e. :
+    1. <http://salesdemo.infoimage.com/AI/esign-create-pkg.html>
+    2. <http://salesdemo.infoimage.com/AI/esign-doc-pkg.html>
+    3. <http://salesdemo.infoimage.com/AI/esign-doc-edit.html>
+  2. The UI specified in #1 above should be responsible to gather all information needed for the SDK call. i.e. package info, signer info, signature field/position infoetc. You shouldn't need to interact with the API/SDK(i.e. <http://docs.e-signlive.com/doku.php?id=esl:e-signlive_guide_fields-and-signatures>) at all until you've gathered all these info in #1. Only until ready to 'save' or 'send' the package, then call the API/SDK to create such package on e-signlive side in one shot.
+
+  
+  
+
+### Signer-facing side:
+
+  1. Keep what we have here:
+    1. <http://salesdemo.infoimage.com/eSafetyBox_home.html>
+  2. Upon clicking of the 'sign' button, transform this view: <http://salesdemo.infoimage.com/eSafetyBox_sign.html> to include an iframe from e-signlive with corresponding signer's authentication/credentials. Only the document signing portion should be inside iframe, the header and menu bar should stay outside of iframe.
+
+  
+
+## Sample application code to fetch document package reference info:
+
+The code sample below shows how to
+
+  1. fetch a specific document from a package knowing the package's id and the document's id
+  2. fetch the evidence summary document, which I think is what you were specifically looking for
+  3. fetch all documents in the package as a single zip file
+  4. fetch the audit trail events as separate data elements
+
+    
+    
+    package com.silanis.esl.sdk.examples;
+    
+    import com.silanis.esl.sdk.Audit;
+    import com.silanis.esl.sdk.EslClient;
+    import com.silanis.esl.sdk.PackageId;
+    import com.silanis.esl.sdk.io.Files;
+    
+    import java.util.List;
+    import java.util.Properties;
+    
+    /**
+     * Downloads a document, the evidence summary, and the documents zip file
+     */
+
+package com.silanis.esl.sdk.examples;
+
+    
+    
+      
+      
+    import com.silanis.esl.sdk.Audit;  
+    import com.silanis.esl.sdk.EslClient;  
+    import com.silanis.esl.sdk.PackageId;  
+    import [com.silanis.esl.sdk.io](http://com.silanis.esl.sdk.io).Files;  
+      
+    import java.util.List;  
+    import java.util.Properties;  
+      
+    /**  
+     * Downloads a document, the evidence summary, and the documents zip file  
+     */  
+    public class DownloadDocumentsEvidenceAndAuditExample {  
+      
+        private static final Properties props = Props.get();  
+        public static final String API_KEY = props.getProperty( "api.key" );  
+        public static final String API_URL = props.getProperty( "api.url" );  
+      
+        public static void main( String... args ) {  
+            EslClient esl = new EslClient( API_KEY, API_URL );  
+      
+            PackageId packageId = new PackageId("your package id");  
+            byte[] documentContent = esl.downloadDocument(packageId, "your document id");  
+      
+            Files.saveTo(documentContent, "downloaded.pdf");  
+      
+            byte[] evidenceContent = esl.downloadEvidenceSummary(packageId);  
+            Files.saveTo(evidenceContent, "evidence.pdf");  
+      
+            byte[] zip = esl.downloadZippedDocuments(packageId);  
+            Files.saveTo(zip, "package.zip");  
+      
+            List<Audit> auditList = esl.getAuditService().getAudit( packageId );  
+      
+            System.out.println();  
+        }  
+    }
+
+

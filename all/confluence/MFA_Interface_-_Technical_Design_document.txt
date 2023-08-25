@@ -1,0 +1,752 @@
+title: MFA Interface - Technical Design document
+body:   
+
+# 1\. Introduction
+
+  
+  
+
+## 1.1. Purpose/Objective Summary
+
+    
+    
+    << Required: Fill in brief description of what this project/feature/enhancement is about >>
+
+eStatement web-application is in a process of implementing the two-
+factor/multi-factor authentication (MFA) process as a part of the higher level
+of authentication assurance and security.
+
+Multi-Factor Authentication (MFA) provides an extra level of security to the
+eStatement web-site. During the user sign-in process to the website, it will
+prompt for the user-id/password (the first factor - what they know), and
+second-level verification step for an authentication code received from MFA
+device (the second factor - what they have). Taken together, these multiple
+factors will provide increased level of security for the eStatement account
+settings and resources.
+
+Using multiple factors as opposed to one factor delivers a higher level of
+authentication assurance and security.
+
+>  **Multi-factor Authentication (MFA)**  
+>  As name implies, it's the use of two or more different authentication
+> factors to verify the identity of the user. Two-factor authentication is the
+> best known implementation, involving exactly two factors. The classic
+> example of two-factor authentication is the ATM card and PIN number
+> combination. It uses "something you have" (the card) and "something you
+> know" (the PIN number). It's important to note that the factors used must be
+> independent from one another to be considered "true" multi-factor
+> authentication.  
+> Two Factor authentication can be achieved using a combination of the
+> following factors:
+>
+>   * Something you know - password or PIN
+>     * One-factor authentication - this is "something a user knows." The most
+> recognized type of one-factor authentication method is the password.
+>   * Something you have - token or smart card (Multi-factor/two-factor
+> authentication)
+>     * Two-factor authentication - in addition to the first factor, the
+> second factor is "something a user has." Examples of something a user has
+> are a fob that generates a pre-determined code, a signed digital certificate
+> or even a biometric such as a fingerprint. The most recognized form of two-
+> factor authentication is the ubiquitous RSA SecurID fob.
+>
+
+>
+>  
+>
+
+  
+  
+
+## 1.2. Scope
+
+    
+    
+    << Required: List out the itemized features of what's inside/outside of the scope of current project/phase >>
+
+There is a requirement to build the Mule-ESB Interface for the verification
+code (security token) generation and validation for the eStatement web-
+application. The web-application will make a call to the Mule-ESB REST API in
+order to consume the service.  
+Mule-ESB Interface for MFA:
+
+  * To generate the verification code and send it to the client thru SMS or Email.
+  * To validate the verification code (sent thru SMS/Email) as a part of the MFA step.
+
+  
+
+Given below section describes in-scope and out-of-scope requirements for the
+Mule-ESB MFA implementation.  
+  
+
+### 1.2.1. In-Scope
+
+  *  **Feature-1:**  To generate the verification code (security token) for the given user-id and deliver the code thru SMS or Email.
+  *  **Feature-2:**  To validate the verification code (security token) against the user-id. The verification code will be 6-digit number and have validity period. The verification process will perform time check as well (considering 1-hr expiry period) against the token.
+
+  
+  
+
+### 1.2.2. Out-of-Scope
+
+  *  **Feature-1:**  Mule-ESB will not store user-id/password credentials for the eStatement web-application.
+  *  **Feature-2:**  Mule-ESB will not perform first level of authentication (i.e. using user-id/password) for the eStatement application.
+    * Mule will help in second level authentication (MFA) by validating the security token.
+    * eStatement web-application will be responsible to take ultimate decision for user authentication with or without MFA.
+
+  
+  
+
+## 1.3. Assumptions
+
+    
+    
+    << (If Applicable)* List out assumptions made during this design.    
+        IMPORTANT: All assumptions need to be confirmed with corresponding stake-holder during design review.    
+        Assumptions would likely become Dependencies upon confirmation/design-review >>
+
+Given below section describes key assumptions for the Mule-ESB MFA
+implementation.
+
+  1.  **Assumption-1:**  It is assumed that eStatement web-application will make a call to the Mule-ESB service after performing the first-level of authentication.
+  2.  **Assumption-2:**  eStatement web-application will make the REST/JSON call to Mule-ESB - to generate a new or verify the existing code (i.e. security token ). Two independent REST API calls with defined client_id and secret_token, which will help to track the originating request.
+  3.  **Assumption-3:**  eStatement web-application will manage web-sessions for the logged-in user in order to kick-off the MFA process. Also, it will manage secured login process with or without second level MFA validation step.
+  4.  **Assumption-4:**  eStatement web-application will send the request along with mode of delivery like SMS or Email to the Mule-ESB. In case of incomplete request details, Mule will return error with message "Incomplete Request"/"Invalid Request".
+    * As a part of the REST web-service call, Mule will return the response with Transaction-id (UUID), which can be used by the web-application for tracking purpose.
+    * Mule-ESB application will not share the verification code (security token) with the web-application or any other application. The verification code (security token) will be stored in encrypted format into Mule Transaction DB table, so that DBA user can not use & interpret it (only REST API can read and parse the token).
+    * Mule-ESB application will not store the user-profile details like user-id, name, SSN, address, email-id, cell-phone number and service provider.
+    * Mule-ESB application will store the transactional data for certain period of time (30-days) and keep taking backup or purge historical data as per the Backup & Archival data policy.
+
+  
+  
+
+## 1.4. Dependencies
+
+    
+    
+    << (If Applicable) List out all dependency component/service/library needed for this design >>
+
+Given below section describes dependencies related to the MFA implementation.
+
+  1.  **Dependency-1:**  SMS sending to client's cell-phone: The 3rd party service providers may be required to build & implement the SMS delivery.  
+Alternatively, Cell-provider's email feature can be used to send the SMS using
+email message. In this case, web-application will provide the service-
+providers name along with the phone-number for verification code delivery.
+
+  2.  **Dependency-2:**  eStatement web-application will be responsible to maintain & provide unique-id (user-id or email-id) to Mule-ESB REST API call in order to process the request.
+
+* * *
+
+  
+  
+
+# 2\. Requirements
+
+  
+  
+
+## 2.1. Business Requirements & Use Cases
+
+    
+    
+    << (Required) List out all needs/requirement from business/end-user perspective.    
+          Assign an ID for each requirement/use-case item for easier reference in future >>
+
+ID| Title| Details| ScreenMock| Importance  
+---|---|---|---|---  
+BRQ-01| To generate verification code (security token)|  
+ **Requirement:**  To generate the verification code (secure token) for a
+given user-id and deliver it thru SMS or Email.  
+eStatement web-application will submit a request to Mule-ESB, which will
+generate & deliver the verification code (secure token) to the client.  
+ **Use Case:**  User login to eStatement web-application by using user-
+id/password. The web-site performs first level of authentication and performs
+a check MFA need (2nd level of authentication). In case, MFA verification
+required, it will ask for the cell-phone number & mode-of-delivery for the
+verification code (secure token). Application will make a call to the Mule-ESB
+REST/JSON service for the verification code (secure token).| <attach file>|
+P0:Show Stopper  
+BRQ-02| To validate verification code (security token)|  
+ **Requirement:**  To validate the verification code (security token) for a
+given user-id, which will be delivered to client thru SMS or Email.  
+eStatement web-application will submit a request to Mule-ESB, which will
+validate the verification code (secure token) and return result as true/false.
+Based on the result, web-application will perform the next step.  
+ **Use Case:**  User login to eStatement web-application by using user-
+id/password (or already logged-in and session is on after first level of
+authentication), the screen will prompt for the verification code (as a part
+of the MFA process - 2nd level of authentication). Web-application will make a
+call to the Mule-ESB EST/JSON service for the verification code (secure token)
+validation check. Mule will return the response as passed/fail (true/false).|
+<attach file>| P0:Show Stopper  
+  
+Table 1: Business Requirements & Use cases  
+  
+
+## 2.2. Functional Requirements & Use Cases
+
+    
+    
+    << Required: List out all needs/requirement from engineering/functional perspective.   
+         Associate them with an ID for easier reference >>
+
+ID| Title| Details| Bus. Req. Ref.| Importance  
+---|---|---|---|---  
+FRQ-01| Generate verification-code| Same as described in above table| <attach
+file>| P0:Show Stopper  
+FRQ-02| Validate secure-token (verification-code)| Same as described in above
+table| <attach file>| P0:Show Stopper  
+  
+Table 2: Functional Requirements & Use cases  
+  
+
+## 2.3. Performance & Scalability Requirements (SLA)
+
+    
+    
+    << Required: List out all needs/requirement from Performance perspective. Associate them with an ID for easier reference >>
+
+ID| Title| Details| Importance  
+---|---|---|---  
+PRQ-01| Generate secure-token (verification code)|  
+ **Requirement:**  to generate the secure-token (verification-code) should
+return results within xxxms.  
+ **Use Case:**  <enter if applicable>| P1:High  
+PRQ-02| Validate secure-token (verification code)|  
+ **Requirement:**  To validate the secure-token (verification-code) should
+return results within xxxms.  
+ **Use Case:**  <enter if applicable>| P1:High  
+PRQ-03| ToDo: Need to discuss with web-application team in order to finalize
+the SLAs| TBD ...| TBD ...  
+  
+Table 3: Performance & SLAs  
+  
+
+## 2.4. QA/Test Requirements
+
+    
+    
+    << Required: List out all needs/requirement from QA/Testing perspective. Associate them with an ID for easier reference >>
+
+ID| Title| Details| Importance  
+---|---|---|---  
+TRQ-01| Generate verification-code, delivery thru SMS|  
+ **Requirement:**  To generate the verification-code (secure-token) for the
+given user-id and send it thru  **SMS**.  
+eStatement web-application will submit a request to Mule-ESB, which will
+generate & deliver the secure-token to the client.  
+ **Use Case:**  User login to eStatement web-application by using user-
+id/password. The web-site performs first level of authentication and performs
+a check MFA need (2nd level of authentication). In case, MFA verification
+required, it will ask for the cell-phone number & mode-of-delivery for the
+verification-code (secure-token). Application will make a call to the Mule-ESB
+REST/JSON service for the secure-token.| P0:Show Stopper  
+TRQ-02| Generate verification-code, and delivery thru Email|  
+ **Requirement:**  To generate the verification-code (secure-token) for the
+given user-id and send it thru  **Email**.  
+eStatement web-application will submit a request to Mule-ESB, which will
+generate & deliver the secure-token to the client.  
+ **Use Case:**  User login to eStatement web-application by using user-
+id/password. The web-site performs first level of authentication and performs
+a check MFA need (2nd level of authentication). In case, MFA verification
+required, it will ask for the cell-phone number & mode-of-delivery for the
+verification-code (secure-token). Application will make a call to the Mule-ESB
+REST/JSON service for the secure-token.| P0:Show Stopper  
+TRQ-03| Validate secure-token (verification-code), delivered thru SMS|  
+ **Requirement:**  To validate the verification-code (secure-token) for the
+given user-id, which is sent to client thru  **SMS**.  
+eStatement web-application will submit a request to Mule-ESB, which will
+validate the secure-token and return result as true/false. Based on the
+result, web-application will perform the next step.  
+ **Use Case:**  User login to eStatement web-application by using user-
+id/password (or already logged-in and session is on after first level of
+authentication), the screen will prompt for the verification-code (as a part
+of the MFA process - 2nd level of authentication). Web-application will make a
+call to the Mule-ESB EST/JSON service for the secure-token validation check.
+Mule will return the response as passed/fail (true/false).| P0:Show Stopper  
+TRQ-04| Validate secure-token (verification-code), delivered thru Email|  
+ **Requirement:**  To validate the verification-code (secure-token) for the
+given user-id, which is sent to client thru  **Email**.  
+eStatement web-application will submit a request to Mule-ESB, which will
+validate the secure-token and return result as true/false. Based on the
+result, web-application will perform the next step.  
+ **Use Case:**  User login to eStatement web-application by using user-
+id/password (or already logged-in and session is on after first level of
+authentication), the screen will prompt for the verification-code (as a part
+of the MFA process - 2nd level of authentication). Web-application will make a
+call to the Mule-ESB EST/JSON service for the secure-token validation check.
+Mule will return the response as passed/fail (true/false).| P0:Show Stopper  
+  
+|  
+| Negative Testing|  
+  
+TRQ-05| Validate secure-token for length !=6| eStatement web-application will
+submit a request to Mule-ESB with secure-token code length is not equal to six
+(6). The Mule REST API must return as 'Invalid request' to the web-
+application.| P0:Show Stopper  
+TRQ-06| Validate secure-token for expiry period| eStatement web-application
+will submit a request to Mule-ESB with secure-token after 2-hr. The Mule REST
+API must return the result as "false" or "invalid" (because token expired & no
+longer valid) to the client web-application.| P0:Show Stopper  
+  
+Table 4: Test Requirements
+
+* * *
+
+  
+  
+
+# 3\. Design
+
+  
+  
+
+## 3.1. Architecture & Workflow Diagram
+
+    
+    
+    (Required for medium/large feature)* Draft a diagram to show how various functional component work with each other,   
+     also how data flow from one component to another.
+
+MFA Process: Web-application mock-up pages  
+  
+
+#### a) Web-Application Login Page
+
+  
+  
+
+#### b) MFA - Header
+
+  
+  
+
+#### c) MFA - Generate Verification Code (Security
+Token)[](https://i3dev.easyredmine.com/projects/integration/wiki/MFA_Interface_-
+_Design_document#c-MFA-Generate-Verification-Code-Security-Token)
+
+  
+  
+
+#### d) MFA - Validate Verification Code (Security
+Token)[](https://i3dev.easyredmine.com/projects/integration/wiki/MFA_Interface_-
+_Design_document#d-MFA-Validate-Verification-Code-Security-Token)
+
+  
+  
+
+## 3.2. Data Model changes (ER diagram & ddl.sql)
+
+    
+    
+    (Required if involve LARGE schema change)* Draft a ER diagram of the existing AND new data-model design.    
+      Highlight the entity/relationship that is added/changed.
+
+This is a new development work, therefore, it will not bring any changes to
+the existing application. It will require one new database table to store the
+MFA transaction details.
+
+    
+    
+    (Required if involve schema change)* Include a ddl.sql file that could be executed against old schema in   
+     order to create/change table/columns, as well as handling the corresponding data-migration if applicable.
+
+  
+  
+
+#### 3.2.1 DB Table: mule_mfa_user_dbscript.sql
+
+    
+    
+    ------------------------------------------------------
+    -- Table structure for table `mfa_user_transaction`
+    ------------------------------------------------------
+    CREATE TABLE IF NOT EXISTS `mfa_user_transaction` (
+      `id` bigint(30) NOT NULL AUTO_INCREMENT,             // auto generate unique id number
+      `user_id` varchar(50) NOT NULL unique,               // user-id (unique id to identify the user in web-application
+      `org_id` varchar(10) DEFAULT NULL,                   // Organization-id (unique id along with user-id to identify the user)
+      `email_id` varchar(255),                             // Email-id, optional field (required, if code delivery is email)
+      `phone_number` varchar(10),                          // 10-digit phone number (without spaces, - or .)
+      `provider_id` varchar(3),                            // 3-char code for service providers like ATT=AT&T, VER=Verizon.
+                                                           //    This is required, if token delivery is thru SMS.
+      `delivery_mode`  varchar(1) DEFAULT 'S',             // mode of delivery (S/M: SMS/Mail, default: S for SMS 
+      `transaction_status` varchar(3),                     // SMS or Mail processing result code (similar to HTTP status code)
+      `security_token` varchar(10) NOT NULL unique,        // 6-digit verification code, i.e. one time, single use security token
+      `expiry_period` int(3) DEFAULT '120',                // expiry-period (minutes).                                                                  
+      `token_expiry_dt` timestamp NOT NULL                 // expiry date/time for the token. default created_on + 2hrs
+                        DEFAULT '0000-00-00 00:00:00',
+      `sender_mail_id` varchar(255) DEFAULT NULL,          // Sender's email-id, which will be used for the email sending
+      `transaction_id` varchar(40) NOT NULL,               // UUID for each transaction, returns to web-application
+                                                           // as REST response to track the request.
+      `created_on` timestamp NOT NULL                      // system generated value - server timestamp
+                   DEFAULT '0000-00-00 00:00:00',          // date-timestamp value assigned during record creation
+      `updated_on` timestamp NOT NULL                      // system generated value - server timestamp
+                   DEFAULT '0000-00-00 00:00:00'           // date-timestamp value assigned during record update operation
+                   on update CURRENT_TIMESTAMP,            
+    
+       PRIMARY KEY (`id`),
+       UNIQUE KEY `transaction_id_uniqkey` (`transaction_id`)
+    )
+    
+
+  
+  
+
+## 3.3. Application component functional details
+
+    
+    
+    Required if involve big architectural change)* List out the key class/method created/changed for this project.    
+    Highlight the changed portion (e.g. additional param for a method)
+    
+    
+    Provide an overview of what changes if not already illustrated in the Architecture diagram above
+
+  
+  
+
+### 3.3.1. Overview:
+
+There is a requirement to develop two (2) Interfaces using REST/JSON (JAX-
+RS/Jersey) to generate and validate the verification code (security token).  
+Since, this is a new development work, it will not require any changes to the
+Mule-ESB application. However, eStatement web-application may need to plug-in
+the MFA functionality with the existing authentication process.
+
+Component| Class| Method| Params| Comments  
+---|---|---|---|---  
+REST Web-service API| REST+JSON| POST| {"userId", "orgId", "deliveryType",
+"cellProviderCode", "phoneNumber", "emailId", "expiryPeriod", "senderMailId"}|
+Request to generate the security token and deliver it thru SMS/Email. REST API
+will accept the POST request with JSON payload to process the request. Payload
+type= "application/json"  
+REST Web-service API| REST+JSON| GET|
+/orgId/{orgId}/userId/{userId}/tokenId/{tokenId}| Request to validate the
+security token and return the result to web-app with valid/invalid status.
+REST API will accept the GET request with input as a part of the URL to
+process the request.  
+  
+Table 5: REST APIs
+
+ **REST/JSON APIs**  
+  
+
+### 3.3.2. REST API - Generate Secure-token API
+
+a) Request: Input to be supplied by eStatement web-application to the Mule-ESB
+Service (REST/JSON API call):
+
+tip. Methods=POST  
+header: Content-Type=application/json  
+URL Syntax: http://{server}:{port}/{api-name}/{version}/{resource}  
+URL= <http://localhost:10303/membersvc/v1/mfa>
+
+    
+    
+    {
+      "userId": "john.doe@mycompany.com"        //string(255) Unique-end-user-login-id to identify the member-client.
+      "orgId": "55010",                         //string (10) Organization/Group-Id.
+      "deliveryType": "M"                       //string(1) Mandatory, M/S: Mail/SMS delivery mode. 
+      "cellProviderCode": "XYZ",                //string(3) Service Provider's code. optional, in case of delivery mode=M (Mail).
+      "phoneNumber": "4088827365",              //string(10) 10-digit cell-phone number o deliver the SMS. No space/dots in-side.
+      "emailId": "user-mail-id",                //string(255) optional, in case of delivery mode=S (SMS).
+      "expiryPeriod": 30,                       //numeric(3) expiry-period in minute. optional, in case other than 2-hrs. 
+      "senderMailId": "myemail@credit-test.com" //string(255) Email-id to send the mail/sms using this id.
+    }
+    
+
+  * The request will generate the 6-digit verification code (security-token) and send it to the user-supplied phone-number (or thru email) and return the response back to the web-application.
+  * Mule-ESB will generate the verification code (security-token) and send it to client thru designated channel (SMS/Email) and store into the Mule DB Transaction table along with Transaction-id, which will be used later for validation purpose.
+  * Mule-ESB API call returns response back to the web-application along with the Transaction-id (web-application may ignore the trans-id or store it for future reference, if any required)
+
+  
+  
+
+####  **I. REQUEST DATA**
+
+Name| Data Type| Data Length| Business Description| Required  
+---|---|---|---|---  
+userId| String| 255| User login-id, which is used for the web-application
+login purpose. It identifies unique user.| Y  
+orgId| String| 10| User Org-Id/group-id, which is used by the web-application.
+It identifies unique user.| Y  
+deliveryType| String| 1| M/S for Email/SMS delivery| Y  
+phoneNumber| Numeric| 10| User Cell-phone number, which will be used for SMS
+delivery.| Y {See Note-1}  
+cellProviderCode| String| 3| User Cell-phone service provider's name. This is
+required in case SMS delivery is using Email.| Y{See Note-1}  
+emailId| String| 255| User Email-id, which will be used as an alternate mode
+(instead of SMS) of security token delivery.| Y{See Note-2}  
+expiryPeriod| Numeric| 3| Expiry period in minutes. By default, 120-min
+(2-hrs)| N  
+senderMailId| String| 255| Sender's Email-id for the mail/sms delivery
+purpose.| N  
+  
+Table 6: REST API - Request Input Data
+
+notice.  **Note:**
+
+  1. "phoneNumber" and "cellProviderCode" is mandatory when "deliveryType" = "S" for SMS delivery. When "deliveryType" = "M" for Email delivery - This is optional.
+  2. Opposite to above condition.  
+"emailId" is mandatory when "deliveryType" = "M" for Email delivery. When
+"deliveryType" = "S" for SMS delivery - This is optional.
+
+b) Response: Output from Mule-ESB REST/JSON API call:
+
+HTTP Header:
+
+    
+    
+    HTTP/1.1 200 OK
+    X-Powered-By: Servlet/2.5
+    Server: Example/v3
+    Content-Type: application/json
+    Content-Length: 1234
+    Date: Thu, 04 Jun 2009 02:51:59 GMT
+    
+
+  
+
+HTTP Body - JSON Response :
+
+    
+    
+    {
+      "message": "OK",                                                          //Message. Error description in case of error.
+      "data": "{\"transactionId\": \"e3701876-60cf-4ce4-ac26-c8faaa8c8cd6\"}",  //UUID value to identify each transaction.
+      "httpStatus": 200                                                         //Status Code (similar to HTTP message code) 
+    }
+    
+
+Examples:
+
+  * "data" \- JSON String - key/value pairs - it will have  _" transactionId"_ :  _" 8ae84afd-7aac-46d1-a4a1-72bb74a3f7f3"_
+  * "message" \- String - will have error/success (OK/NOK) message text.
+  * "httpStatus" \- Numeric (3) - will have status code like 401/500/501/200 for Bad Input data, Server Error, Not supported, Success respectively.
+
+HTTP response codes and exceptions:
+
+Code| Description  
+---|---  
+200| OK  
+400| BAD_REQUEST : Check the error message and correct the request syntax.  
+503| INTERNAL_SERVER_ERROR : Server busy and service unavailable.  
+501| NOT_IMPLEMENTED : Method not supported.  
+503| SERVICE_UNAVAILABLE: Service not available. Try later!  
+  
+Table 7: HTTP Status Code  
+  
+
+####  **II. RESPONSE DATA**
+
+Name| Data Type| Data Length| Business Description| Required  
+---|---|---|---|---  
+message| String| 255| Message text. Success or Error description in case of
+error.| Y  
+data| JSON String| 255| Input/output data fields: key/value pairs. In case of
+bad input, it will return the data-sets. In case of success, it will return
+the TransactionId for the request accepted & processed. UUID value to identify
+unique record in transaction table.| Y  
+httpStatus| Numeric| 3| http Status (similar to HTTP Status code like 401,
+500, 501, 200 for Bad Input data, Server Error, Not supported, Success
+respectively)| Y  
+  
+Table 8: REST API - Response Output Data  
+  
+
+### 3.3.3. REST API - Validate Secure-token
+
+a) Request: Input Request by web-application to the Mule-ESB (REST/JSON API
+call):
+
+tip. Methods=GET  
+URL:
+[http://localhost:10303/membersvc/v1/mfa/orgId/{orgId}/userid/{userId}/tokenId/{tokenId](http://localhost:10303/membersvc/v1/mfa/orgId/%7BorgId%7D/userid/%7BuserId%7D/tokenId/%7BtokenId)}  
+header: None
+
+    
+    
+    URL Syntax: http://{server}:{port}/{api-name}membersvc/{version}/{resource}/orgId/{orgId}/userid/{userId}/tokenId/{tokenId}
+    where:
+           {api-name} = membersvc  
+           {version} = v1
+           {resource} = mfa
+       afterwards, key/value pairs input-data for the user-id and token-id in the format of
+         "orgId/{orgId}/userid/{userId}/token/{tokenId}" 
+            {orgId } = FI's OrgId/GroupId/CID - Unique-login-id e.g. john.doe@mycompany.com
+            {userId} = Member client ID / Unique-login-id e.g. john.doe@mycompany.com
+            {tokenId}  = 6-digit-number (fixed length)
+    
+
+  * The request will submit the 6-digit secure-token along with user-id to validate the token status.
+  * Mule-ESB will validate the secure-token against the transaction database table with token expiry period (default= 2-hour/120-min) check.
+
+####  **I. REQUEST DATA**
+
+Name| Data Type| Data Length| Business Description| Required  
+---|---|---|---|---  
+orgId| String| 10| User org-id, which is used by the web-application. It
+identifies unique user.| Y  
+userId| String| 255| User login-id, which is used for the web-application
+login purpose. It identifies unique user.| Y  
+tokenId| Numeric| 6| Token Id (AKA Verification Code) User entered
+verification code to the web GUI, which will be validated against the
+transaction db with time-bound check (keeping in view of 1-hr validity
+period). This verification code was sent to user thru SMS/Email. Now, it's
+being validated as a part of the MFA.| Y  
+  
+Table 9: REST API - Request Input Data
+
+b) Response: Output Response from Mule-ESB :  
+For passed/matched token value:
+
+HTTP Header:
+
+    
+    
+    HTTP/1.1 200 OK
+    X-Powered-By: Servlet/2.5
+    Server: Example/v3
+    Content-Type: application/json
+    Content-Length: 1234
+    Date: Thu, 04 Jun 2009 02:51:59 GMT
+    
+
+  
+
+HTTP Body - JSON Object:
+
+    
+    
+    {
+      "message": "OK",                        // OK or NOK (Not OK?)
+      "data": "{\"Status\": \"valid\"}",      // Status - Valid or Invalid (not matched)?
+      "httpStatus": 200                       // http status code.
+    }
+    
+
+For failed/unmatched token value:
+
+    
+    
+    {
+      "message": "NOK",                           // OK or NOK (Not OK?)
+      "data": "{\"Status\": \"Not found\"}",      // Status - Valid or Invalid when no match found for given token-id.
+      "httpStatus": 200                           // http status code.
+    }
+    
+
+  
+  
+
+#### **II. RESPONSE DATA**
+
+Name| Data Type| Data Length| Business Description| Required  
+---|---|---|---|---  
+message| String| 255| Message text. Success or Error description in case of
+error.| Y  
+data| JSON String| 255| Input/output data. In case of bad input, it will
+return the data-sets. In case of success, it will return the Transaction-id
+for the request accepted & processed. UUID value to identify unique record in
+transaction table.| Y  
+httpStatus| Numeric| 3| http Status (similar to HTTP Status code like 401,
+500, 501, 200 for Bad Input data, Server Error, Not supported, Success
+respectively)| Y  
+  
+Table 10: REST API - Response Output Data
+
+Note:
+
+  * "data" \- JSON String - key/value pairs - it will have "transactionId"_ :  _" 8ae84afd-7aac-46d1-a4a1-72bb74a3f7f3"_
+  * "message" \- will have error/success (OK/NOK) message text.
+  * "httpStatus" \- will have status code like 401, 500, 501, 200 for Bad Input data, Server Error, Not supported, Success respectively.
+
+Refer:  _< Table-7>_ having HTTP Status Codes for the HTTP response codes and
+exceptions.  
+  
+
+## 3.4. Integration Points & Interface
+
+    
+    
+    (If Applicable) List out Integration Points and corresponding interface
+
+From Component| To Component| Details| Error Handling  
+---|---|---|---  
+eStatement web-application| Mule-ESB| eStatement web-application makes a call
+to the Mule-ESB REST/JSON API in order to  **generate**  the verification code
+(security token) and deliver to the client via SMS or email.| If phone-number
+for SMS or email-id for mail-delivery found missing (i.e. null), Mule will
+return the error status to the web-application.  
+eStatement web-application| Mule-ESB| eStatement web-application makes a call
+to the Mule-ESB REST/JSON API to  **validate**  the verification code
+(security token), which was sent to client using SMS or email.| If
+verification code (security token) is not a six (6) digit number, OR null OR
+alphanumeric number, Mule will return the error status to the web-application.  
+  
+Table 11: Interface - Integration touch-points
+
+* * *
+
+  
+  
+
+# 4\. Summarized Change Log
+
+Date| Version| Author| Reviewer| Changes to Design Doc  
+---|---|---|---|---  
+04/03/2013| 1.0| Niraj T| Ben C, David T and Will K| Initial Draft  
+05/09/2013| 2.0| Niraj T| Ben C, David T and Will K| Changes made as per
+internal review comments.  
+  
+Table 12: Revision History
+
+* * *
+
+  
+  
+
+# 5\. Sign-Off
+
+Department/Team| Date| Sign-off By| Remarks  
+---|---|---|---  
+Product Manager (Business)| mm/dd/yyyy|  
+|  
+  
+Account Service (AS)| mm/dd/yyyy|  
+|  
+  
+Dev./Impl. Manager (Technical)| mm/dd/yyyy|  
+|  
+  
+Production Control (PC)| mm/dd/yyyy|  
+|  
+  
+Data Processing (DP)| mm/dd/yyyy|  
+|  
+  
+Accounting/Invoicing| mm/dd/yyyy|  
+|  
+  
+  
+Table 13: Sign-off Approvals  
+  
+
+# 6\. Appendix
+
+  
+  
+
+## 6.1. Resources
+
+    
+    
+    << Any external/internal references >>
+
+* * *
+
+Attachments:
+
+### Attachments
+
+

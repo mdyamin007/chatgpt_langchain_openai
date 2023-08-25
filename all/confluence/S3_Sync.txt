@@ -1,0 +1,227 @@
+title: S3 Sync
+body: This script performs basic operations like upload, download & deleting files
+from and to the s3 bucket.
+
+## Actions
+
+Name| Params| Description  
+---|---|---  
+      
+    
+    upload
+
+|
+
+    
+    
+    local_file_path remote_file_name
+
+| Upload a file to an s3 bucket  
+      
+    
+    download
+
+|
+
+    
+    
+    remote_file_name local_path
+
+| Download a file from s3 bucket  
+      
+    
+    list
+
+|
+
+    
+    
+    -l --long
+
+| Will show details with a list of files in a bucket otherwise only filename
+is shown. Takes more time  
+  
+|
+
+    
+    
+    -p --prefix
+
+| Filter files with given prefix  
+  
+|
+
+    
+    
+    no params
+
+| Will show just file names  
+      
+    
+    delete
+
+|
+
+    
+    
+    prefix
+
+| Deletes all files matching then, prefix. It can be a file name too  
+  
+## truesquare
+
+## Parameters
+
+ **NOTE:** control_file can contain all or some of the parameters.  
+If you don't provide, all of the parameters need to be provided as command-
+line arguments.
+
+Also, command-line parameters have **higher** priority.
+
+Name|  
+| Description  
+---|---|---  
+      
+    
+    control_file
+
+| optional| a property file containing the below parameters  
+      
+    
+    aws_access_key_id
+
+| mandatory| AWS Access Key (length varies from 16 to 128 char)  
+      
+    
+    aws_secret_access_key
+
+| mandatory| AWS Key's Secret  
+      
+    
+    aws_s3_bucket_name
+
+| mandatory| AWS S3 Bucket name or path (without "s3://" prefix)  
+      
+    
+    aws_s3_chunk_size
+
+| optional| Chunk size for faster download & upload speed. (Size in MB)
+(default: 8 MB)  
+      
+    
+    aws_s3_sse
+
+| optional| `AES256` or `aws:kms`. Only Use this if you configured server-side
+encryption on your s3 bucket.  
+      
+    
+    v/ verbose
+
+| optional| Shows debug log  
+  
+## Implementation Details
+
+  1. `upload` & `download` actions don't support working with multiple files
+  2. `upload` & `download` action will always use the multipart way to transfer files. By default, it will create **10** TCP/IP connections with a chunk size of **8MB** (the user can specify this). So if the file size is 100MB, it will upload the file with 10 parts. File's content doesn't change.
+  3. A single TCP/IP connection usually doesn't saturate a network and causes slower upload & download speed. That's why multipart is default with this script.
+  4. This script doesn't check file hash after uploading. This is handled by the `boto3` SDK for the individual chunks. See [GitHub Comment](https://github.com/boto/boto3/issues/1830#issuecomment-452400981)
+  5. The script will add a key named `md5sum` with the file hash in the metadata for future use.
+  6. S3 doesn't have a folder concept. If you upload a file with the name `test/sub_folder/test1.zip`, the whole thing will be treated as the file name. Not an issue, just FYI.
+  7. If you have enabled server-side encryption, specifying `aws_s3_sse`param becomes mandatory. Otherwise, the script will fail.
+
+## Examples
+
+### Control File
+
+textFadeToGreytrue
+
+### Upload
+
+    
+    
+    python s3_sync.py --control_file ./suru.control upload test/50mb.zip 50mb.zip
+     
+
+textFadeToGreytrue
+
+    
+    
+      
+    Download
+    
+    
+    python s3_sync.py --control_file ./suru.control download 50mb.zip test/downloaded_50mb.zip    
+    
+    
+
+textFadeToGreytrue
+
+    
+    
+      
+    List
+
+With long list
+
+    
+    
+    python s3_sync.py --control_file ./suru.control list -l    
+    
+    
+
+textFadeToGreytrue
+
+    
+    
+      
+    With just file names
+    
+    
+    python s3_sync.py --control_file ./suru.control list
+    
+    
+
+textFadeToGreytrue
+
+    
+    
+      
+    Delete
+
+Deleting files with a prefix
+
+    
+    
+    python s3_sync.py --control_file ./suru.control delete test   
+    
+    
+
+textFadeToGreytrue
+
+    
+    
+        
+    python s3_sync.py --control_file ./suru.control delete test_1.zip  
+    
+    
+
+textFadeToGreytrue
+
+### Others
+
+Overriding bucket name
+
+    
+    
+    python s3_sync.py --control_file ./suru.control --aws_s3_bucket_name some_other_bucket list  
+    
+    
+
+Uploading 1GB file with 100MB chunk size
+
+    
+    
+    python s3_sync.py --control_file ./suru.control --aws_s3_bucket_name some_other_bucket --aws_s3_chunk_size 100 upload test_1gb.zip some_other_name.zip
+    
+
+

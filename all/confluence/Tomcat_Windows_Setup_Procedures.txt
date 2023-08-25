@@ -1,0 +1,144 @@
+title: Tomcat/Windows Setup Procedures
+body: To install tomcat, download core binary zip file from
+<http://tomcat.apache.org/download-70.cgi> (windows 32/64 bit).
+
+2\. Expand the .zip file under desired folder.
+
+  * Example: C:/tomcat/
+
+3\. To start the tomcat server: go to command prompt and navigate to the bin
+folder of the tomcat and run command 'catalina.bat run'.
+
+4\. Test if tomcat is in fact started, visit
+
+    
+    
+    http://<host>:<port>/
+
+(e.g. <http://localhost:8080/>).
+
+  
+
+  * The default port is 8080, but if your port 8080 is already occupied for other service/processes, you will need to change it in server.xml * Default path is ../tomcat/conf/server.xml * Look for the corresponding <Connector tag and update the port value to your choice (e.g. <http://localhost:7080/>).
+
+5\. Configure it to use SSL
+
+  * Include the jks (if already provided). * Update the <Connector> as follow
+
+    
+    
+            <Connector port="9880" protocol="org.apache.coyote.http11.Http11Protocol" sslProtocol="TLS" clientAuth="false" 
+            keystorePass="infoimage"   keystoreFile="c:/lib/certs/tomcat.jks" secure="true" scheme="https" SSLEnabled="true" maxThreads="150"/> 
+    
+
+6\. Update the /tomcat/bin/setenv.bat as follows:
+
+  * set "CATALINA_OPTS=%CATALINA_OPTS% -Xms2048m -Xmx2048m -XX:PermSize=256m -XX:MaxPermSize=128m" * set "JAVA_OPTS=%JAVA_OPTS% -Dcom.infoimage.configfile=C:/apache-tomcat-7.0.59-windows-x64/tomcat7/i3webapps/system.prop"
+
+7\. Pull the dependent libraries from SVN for your Web-application (if
+applicable) and store them on your system. * Example:
+C:/Users/local/workspace/eStatement * svn co svn+<ssh://pd-
+tools.infoimage.com/srv/svn/app-depend-libs/estmt2/trunk>
+
+8\. Update conf/catalina.properties
+
+  * To include the dependent libraries: find key shared.loader and add corresponding path. * Example: shared.loader=C:/lib/estmt2/*.jar
+
+# Setup Virtual Host for needed application
+
+1\. Update the server.xml to add/update below block of config for any virtual
+host needed
+
+    
+    
+            <Host name="bkcu.localhost" autoDeploy="true" unpackWARs="true" appBase="i3webapps/bkcu">
+            <Context reloadable="true" path="/ROOT">
+            <ResourceLink type="oracle.jdbc.pool.OracleConnectionPoolDataSource" name="jdbc/default" global="jdbc/default"/></Context>
+            <Context reloadable="true" path="/msm" docBase="msm">
+            <ResourceLink type="oracle.jdbc.pool.OracleConnectionPoolDataSource" name="jdbc/default" global="jdbc/default"/></Context>
+            <Valve className="org.apache.catalina.valves.AccessLogValve" pattern="%h %l %u %t "%r" %s %b" suffix=".txt" prefix="bkcu-pilot.infoimageinc.com_access_log." 
+            directory="logs"/></Host>
+    
+            <Host name="sscu.localhost" autoDeploy="true" unpackWARs="true" appBase="i3webapps/sscu">
+            <Context reloadable="true" path="/ROOT">
+            <ResourceLink type="oracle.jdbc.pool.OracleConnectionPoolDataSource" name="jdbc/default" global="jdbc/default"/></Context>
+            <Context reloadable="true" path="/msm" docBase="msm"><ResourceLink type="oracle.jdbc.pool.OracleConnectionPoolDataSource" name="jdbc/default" global="jdbc/default"/>
+            </Context>
+            <Valve className="org.apache.catalina.valves.AccessLogValve" pattern="%h %l %u %t "%r" %s %b" suffix=".txt" prefix="bkcu-pilot.infoimageinc.com_access_log." 
+            directory="logs"/></Host> 
+    
+
+2\. The name value need to match to whatever incoming URL host expected. If
+necessary, can add <Alias> tag to handle multiple URL host expected for the
+same application.
+
+3\. The appBase holds the path value of where the corresponding web-
+application's ROOT folder is located. It should be a relative path to the
+CATALINA_HOME.  
+(e.g. C:/tomcat/i3webapps/sscu)
+
+4\. Create the folder of where appBase specified if not already.
+
+5\. Pull the SVN code to the web application folder.  
+  
+
+# Update web.xml paths (if applicable)
+
+  * Update the CID/ROOT/WEB-INF/web.xml path values. * Update the CID/msm/WEB-INF/web.xml path values.
+
+  
+
+# Update application specific configurations
+
+1\. Modify the server.xml to add following block within the
+<GlobalNamingResources> block
+
+    
+    
+            <Resource factory="oracle.jdbc.pool.OracleDataSourceFactory" type="oracle.jdbc.pool.OracleConnectionPoolDataSource" auth="Container" name="jdbc/default" 
+            url="jdbc:oracle:thin:@//10.8.8.215:1521/wodb.edata" driverClassName="oracle.jdbc.OracleDriver" password="dev_cu" user="dev_cu" testWhileIdle="true" 
+            testOnReturn="false" testOnCreate="false" testOnBorrow="true" validationInterval="34" validationQuery="SELECT 1 FROM DUAL" minEvictableIdleTimeMillis="30000" 
+            timeBetweenEvictionRunsMillis="30000" maxWaitMillis="3000" maxTotal="16" minIdle="10" maxIdle="50" maxActive="100" initialSize="50" lifo="false" logAbandoned="true"  
+            removeAbandonedTimeout="60" removeAbandoned="true"/>
+    
+
+2\. Add the following line inside the context.xml <Context> block
+
+    
+    
+    &lt;ResourceLink global="jdbc/default" name="jdbc/default" type="oracle.jdbc.pool.OracleDataSource"/&gt;
+
+3\. While setting up more clients from the same schema add below configuration
+in the client's web.xml file  
+e.g. (sscu client)
+
+    
+    
+            <context-param><param-name>webAppRootKey</param-name><param-value>sscu</param-value></context-param> 
+    
+
+  
+Place the system.prop (legacy properties file) in tomcat/i3webapps or wherever
+specified by the JAVA_OPTS above
+
+4\. Inside the system.prop, ensure the following keys are updated accordingly.
+Use the $CATALINA_HOME variable as-is to avoid hardcoded paths
+
+    
+    
+    webserver.root= ../tomcat/  
+            webserver.config= ../tomcat/conf  
+            webapps.root= ../tomcat/i3webapps
+
+5\. Place the logging.conf (CID specific) inside the CID folder in
+../tomcat/conf folder so that it gets picked up by the SystemProperties class.
+
+6\. Make sure the CID value inside the logging.conf is spelled correctly!
+
+7\. Place CID specific .properties files in /tomcat/i3webapps/CID/ROOT/WEB-
+INF/classes for ROOT and /tomcat/i3webapps/CID/msm/WEB-INF/classes for msm.  
+  
+
+# Deploy the web application
+
+

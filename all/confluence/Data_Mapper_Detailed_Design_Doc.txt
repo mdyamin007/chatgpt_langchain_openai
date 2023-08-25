@@ -1,0 +1,345 @@
+title: Data Mapper Detailed Design Doc
+body: # Introduction
+
+  
+
+## Purpose/Objective Summary
+
+  1. Provide calculation service of billable items.
+
+  
+  
+
+## Scope
+
+### In-Scope
+
+  1. Divide so many Billable items into small groups.
+  2. Use a mapperClass for each group, each group of billable items using the samilar query.
+  3. Use a meta data hanle the difference between queries.
+  4. MapperClass and Billable Item is a 1-many relationship.
+
+### Out-of-Scope
+
+  
+  
+
+## Assumptions
+
+ **IMPORTANT:**  All assumptions need to be confirmed with corresponding
+stake-holder during design review. Assumptions would likely become
+Dependencies upon confirmation/design-review.
+
+  1. Use Mongo to store mapper data(mapper class name and other extra data).
+  2. Deploy as a web service.
+
+  
+  
+
+## Dependencies
+
+  * mongo-2.10.1.jar
+
+  
+  
+
+# Requirements
+
+  
+
+## Business Requirements & Use Cases
+
+ **TODO:**   **(Required)**  List out all needs/requirement from business/end-
+user perspective. Assign an ID for each requirement/use-case item for easier
+reference in future
+
+ID| Title| Details| ScreenMock| Importance  
+---|---|---|---|---  
+BRQ-01| Retrieve quantity of billable item|  
+ **Requirement:**  Allow user to retrieve quantity of a specific item..  
+ **Use Case 1** : Retrieve quantity by CID, AppId, statDate, endDate,
+dateType, biCode, metaData.| <attach file>| one of following:  
+P0-Show Stopper  
+ **P1-High**  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+BRQ-02| Tax Calculation|  
+ **Requirement:**  Retrieve Tax.  
+ **Use Case 1** : Retrieve tax by state.| <attach file>| one of following:  
+P0-Show Stopper  
+ **P1-High**  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+  
+  
+  
+
+## QA/Test Requirements
+
+ **TODO:**   **(Required)**  List out all needs/requirement from QA/Testing
+perspective. Associate them with an ID for easier reference
+
+ID| Title| Details| Importance  
+---|---|---|---  
+TRQ-01| Selectable Search Box element| (example)  
+ **Requirement:**  The search textbox AND the 'Search' button need to tagged
+with 'id' value so that Selenium could select it for entering value and
+subsequent submit  
+ **Use Case:**  Rely on Selenium to submit random search terms and capture
+response time as well as validation search results| one of following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+TRQ-02| ...| ...| ...  
+  
+  
+  
+
+# Design  
+
+  
+
+## Architecture & Workflow Diagram  
+
+###  _ **Generic SQL Mapper class design**_
+
+ **Input param expected:**
+
+    
+    
+      cid
+      app_id
+      start_dt
+      end_dt
+      date_type
+      bicode
+      meta (map or json)
+        sql : ...........
+        dbsrc : JNDI name provided from MapperManager
+    
+
+**getQty Actions:**
+
+    
+    
+    01. (specific mapperClass) based on app_id, start_dt, and end_dt, find corresponding {proc_ids} 
+    02. (specific mapperClass) depends on the value of "uom", evaluate to different things for each mapper class
+    03. (abstract mapper) use the combination of {target_qty}, {proc_ids}, {file_ids} => compile and construct the actual SQL needed
+    04. (abstract mapper) execute the SQL from #03 against the specified "dbsrc" 
+    
+
+  
+  
+
+### _**Examples**_
+
+    
+    
+    Input param for Daily Notices Computer Process (bicode = 2003- 001):
+        - cid = TKCU
+        - app_id = Daily Notices
+        - start_dt = 2014-07-01
+        - end_dt = 2014-07-31
+        - date_type = cycleDate
+        - bicode = 2003-001
+        - uom = "per mail set" 
+        - meta = {
+            "sql" : {
+                1 => { 
+                    key = "proc_ids",
+                    sql = "select proc_id from someOraTable where vid={app_id} and cycleDate >= {start_dt} and cycleDate <= {end_dt}" 
+                },
+                2 => {
+                    key = "FINAL_RESULT",
+                    sql = "select totalaccount from tblRTWO_DPVS where proc_id in ({proc_ids}) and fileid in ({file_ids})" 
+                }
+            },
+            "proc_ids" : 432413,4321412,431241       // evaluated by doing another query based on start/end date
+            "file_ids" : "4.2o1-4.2oq, 5.2oz, 5.fgn, 5.hvy, 5.mis, 5.pm1-5.pm5, 5.sm1-5.sm5, 5.rtm, 5.sfm, 5.rt1-5.rt5, 5.sf1-5.sf9"                // directly from meta data based on bicode
+            "dbsrc" : "DataTracMSSQL"                // directly from meta data based on bicode
+        }
+    
+    
+    
+    Input param for Visa Computer Process (bicode = 2002- 001):
+        - cid = TKCU
+        - app_id = Visa
+        - start_dt = 2014-07-01
+        - end_dt = 2014-07-31
+        - date_type = cycleDate
+        - bicode = 2002-001
+        - uom = "per page" 
+        - meta : {
+            "queries" : [
+                {  // sql #1
+                    key = "proc_ids",
+                    sql = "select proc_id from someOraTable where vid={app_id} and cycleDate >= {start_dt} and cycleDate <= {end_dt}" 
+                },
+                {  // sql #2
+                    key = "FINAL_RESULT",
+                    sql = "select {target_col} from tblRTWO_DPVS where proc_id in ({proc_ids}) and fileid in ({file_ids})" 
+                }
+            ],
+            "uom_map" : {                            // directly from meta data based on bicode (mongo/oracle)
+                "per image"   : "totalimage",
+                "per page"    : "totalpage",
+                "per account" : "totalaccount" 
+            },
+            "target_col" : getValByKey({uom}, {uom_map}),             // this string is from meta-data directly, but based on the keyword 'getValByKey' prefix, evaluated from UOM param value and "uom_map" 
+                                // upon evaluation, "target_col" will carry string value of "totalpage".
+            "proc_ids" : 431251,43243,43214         // evaluated by doing another query based on start/end date
+            "file_ids" : "4.2o1-4.2oq, 5.2oz, 5.fgn, 5.hvy, 5.mis, 5.pm1-5.pm5, 5.sm1-5.sm5, 5.rtm, 5.sfm, 5.rt1-5.rt5, 5.sf1-5.sf9"                // directly from meta data based on bicode
+            "dbsrc" : "DataTracMSSQL"                // directly from meta data based on bicode (mongo/oracle)
+        }
+    
+    
+    
+    Input param for DDA Computer Process (bicode = 2001- 001):
+        - cid = TKCU
+        - app_id = DDA
+        - start_dt = 2014-07-01
+        - end_dt = 2014-07-31
+        - date_type = cycleDate
+        - bicode = 2001-001
+        - uom = "per image" 
+        - meta = {
+            "sql" : "select {target_col} from tblRTWO_DPVS where proc_id in ({proc_ids}) and fileid in ({file_ids})",
+            "target_col" : "totalimage",             // evaluated from UOM param value
+            "proc_ids" : 432413,4321412,431241       // evaluated by doing another query based on start/end date
+            "file_ids" : "4.2o1-4.2oq, 5.2oz, 5.fgn, 5.hvy, 5.mis, 5.pm1-5.pm5, 5.sm1-5.sm5, 5.rtm, 5.sfm, 5.rt1-5.rt5, 5.sf1-5.sf9"                // directly from meta data based on bicode
+            "dbsrc" : "DataTracMSSQL"                // directly from meta data based on bicode
+        }
+    
+
+**Sequence of events:**
+
+    
+    
+    a) receive entire param + meta from manager
+    b) traverse through all key/value from 'meta' hash
+    c) during traversal, if there is any value carry prefix 'getValByKey' (or other methods in future), evaluate it accordingly and replace with actual string value first.  Example:
+        1) BEFORE: "target_col" : getValByKey({uom}, {uom_map})
+        2) AFTER:  "target_col" : "totalpage" 
+    d) loop through 'queries' array
+        1) 'sql' string value will contain variables inside (i.e. wrapped with curly brackets)  e.g. {start_dt}
+        2) these variables need to be replaced by values from 'meta' before executing
+    e) while looping through 'queries', if 'key' != FINAL_RESULT, store returned value and set into 'key' as part of 'meta'.  Example:
+        1) BEFORE: "meta"->"proc_ids" variable DO NOT EXISTS
+        2) AFTER:  "meta"->"proc_ids" = "431251,43243,43214" 
+    f) while looping through 'queries', if 'key' == FINAL_RESULT, return value back out to manager.
+    
+
+  
+  
+
+### _**Class Diagram**_
+
+  
+  
+
+###  _ **Sequence: Get Billable Item Quantity**_
+
+  
+  
+
+## Data Model changes (ER diagram & ddl.sql)
+
+ **TODO:**   **(Required if involve LARGE schema change)**  Draft a ER diagram
+of the existing AND new data-model design. Highlight the entity/relationship
+that is added/changed.
+
+ **TODO:**   **(Required if involve schema change)**  Include a ddl.sql file
+that could be executed against old schema in order to create/change
+table/columns, as well as handling the corresponding data-migration if
+applicable.  
+  
+
+## Application component functional details
+
+ **TODO:**   **(Required if involve big architectural change)**  List out the
+key class/method created/changed for this project. Highlight the changed
+portion (e.g. additional param for a method)
+
+ **Overview:**   **TODO:**  Provide an overview of what changes if not already
+illustrated in the Architecture diagram above
+
+Component| Class| Method| Params| Comments  
+---|---|---|---|---  
+...| ...| ...| ...| ...  
+  
+  
+  
+
+## Integration Points & Interface
+
+ **TODO: (If Applicable)**  List out Integration Points and corresponding
+interface
+
+From Component| To Component| Details| Error Handling  
+---|---|---|---  
+InfoTRAC| PUI| DT_JOB_ID need to be synchronized by...| If DT_JOB_ID during
+PUI processing is not found in ...  
+  
+* * *
+
+  
+  
+
+# Q & A
+
+  
+
+##  **Get Quantity**
+
+ **Q: What are the input values?**  
+A: CID, AppId, statDate, endDate, dateType, biCode, metaData.  
+  
+
+# Summarized Change Log
+
+Date| Who| Changes to Design Doc  
+---|---|---  
+8/22/2014| Zhe S| Initial Draft  
+  
+  
+
+# Sign-Off
+
+Group| Date| Who| Comment  
+---|---|---|---  
+Product Manager (Business)|  
+|  
+|  
+  
+Account Service (AS)|  
+|  
+|  
+  
+Dev./Impl. Manager (Technical)|  
+|  
+|  
+  
+Production Control (PC)|  
+|  
+|  
+  
+Data Processing (DP)|  
+|  
+|  
+  
+Accounting/Invoicing|  
+|  
+|  
+  
+  
+  
+
+###  Attachments
+
+  
+
+

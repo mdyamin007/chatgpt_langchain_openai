@@ -1,0 +1,1346 @@
+title: ca-isis-pr-##:  How to install New Papyrus Processing Server
+body: At the time of writing this document, I'm using CentOS Linux release 7.9.2009
+(Core) operating system.   These are instruction details all the steps
+required to setup a new processing server contain all the Papyrus software,
+database drivers, python & perl modules and other miscellaneous utillities.
+
+ **WARNING:   **If you copy & paste any of the content of into the putty/ssh
+terminal screen, please be careful as the space may not be actual space
+characters.  It my be null bytes.  So you may need to manually type the
+commands below
+
+## Step-by-step guide:  CentOS Linux release 7.9.2009 (Core)
+
+  
+
+ **Verify the version of OS Network Team installed by running the following:**
+
+    
+    
+    cat /etc/redhat-release
+
+If should output:
+
+Rocky Linux release 8.5 (Green Obsidian)
+
+  
+
+################################  
+# Update the packages  
+################################
+
+    
+    
+    sudo yum update
+    
+    
+      
+    ################################  
+    # Disable SELinux for Centos  
+    ################################  
+    sudo setenforce 0  
+      
+    #above command will disable SELinux temporarily so that you can continue installation below;  It will reactivate after reboot unless you perform the following
+
+Edit the file `/etc/sysconfig/selinux and update the following to`
+
+`SELINUX=disabled`
+
+    
+    
+      
+      
+      
+    ################################  
+    # Disable Firewall for Centos  
+    ################################  
+    systemctl disable firewalld  
+      
+    ################################  
+    # Miscellaneous yum install utilities  
+    ################################  
+    sudo yum install -y epel-release  
+    sudo yum install -y vim-X11 vim-common vim-enhanced vim-minimal  
+    sudo yum install -y rsync  
+    sudo yum install -y wget  
+    sudo yum install -y gcc  
+    sudo yum install -y gcc-c++  # ROCKY CANNOT FIND THIS PACKAGE!!!! However, use the following command instead:  
+    sudo dnf -y install gcc-c++  
+    sudo yum install -y kernel-devel  
+    sudo yum install -y openssl-devel  
+    sudo yum install -y libnsl  
+    sudo yum install -y htop  
+    #sudo yum install -y glibc32  
+    sudo yum install -y glibc.i686
+    
+    
+    sudo yum install -y cvs  
+    sudo yum install -y enscript  
+    sudo yum install -y ftp  
+    sudo yum install -y lsof  
+    sudo yum install -y net-tools  
+    sudo yum install -y traceroute  
+    sudo yum install -y strace  
+    sudo yum install -y libtiff-tools    # ROCKY 8 CANNOT FIND THIS PACKAGE!!!!  However, use the following command instead:  
+    sudo dnf --enablerepo=powertools install -y libtiff-tools  
+    sudo yum install -y unzip  
+    sudo yum install -y libpng12.x86_64  # ROCKY CANNOT FIND THIS PACKAGE!!!!  
+    sudo yum install -y autofs  
+    sudo yum install -y cifs-utils  
+    sudo yum install -y nfs-utils  
+    sudo systemctl start nfs-server  
+    sudo systemctl enable nfs-server  
+    sudo yum install -y tar  
+    sudo yum install -y libjpeg-turbo-devel  
+    sudo yum install -y libpng-devel  
+    sudo yum install -y libtiff-devel  
+    sudo yum install -y parallel  
+    sudo yum install -y samba  
+    sudo yum install -y samba-client  
+    sudo yum install -y samba-common  
+    sudo systemctl enable chronyd      #enable chronyd ntp services  
+      
+    
+    
+    
+    ################################  
+    # Installin AutoFS  
+    ################################  
+      
+    sudo mkdir -m777 /d  
+    sudo mkdir -m777 /z  
+      
+    #  
+    # Update the /etc/auto.master file:  
+    #  
+    # WARNING:  If you copy and paste the following from confluence to the linux server, you will need to manually  
+    #           replace the space characters.  There are some hidden null characters that are not really spaces  
+    #           If you don't do so, the autofs may error out.  Worse case, manually type the configuration to   
+    #           /etc/auto.master  
+    # WARNING:  If you are mounting folders to a remote file partition (i.e. not a local OS partition but a remote  
+    #           file system partition), then autofs will not automatically create folders.  You will need to create  
+    #           directories manually.
+    
+    
+    sudo echo "" >> /etc/auto.master  
+    sudo echo "#/home directory" >> /etc/auto.master  
+    sudo echo "/-                        /etc/autofs.prod.home_dir  --timeout=60 --ghost" >> /etc/auto.master  
+    sudo echo "" >> /etc/auto.master  
+    sudo echo "#/ directory" >> /etc/auto.master  
+    sudo echo "/-                        /etc/autofs.prod.root_dir --timeout=60 --ghost" >> /etc/auto.master  
+    sudo echo "" >> /etc/auto.master  
+    sudo echo "#/home/test/stage directory" >> /etc/auto.master  
+    sudo echo "/-                        /etc/autofs.stage.home_dir --timeout=60 --ghost" >> /etc/auto.master  
+    sudo echo "" >> /etc/auto.master  
+    sudo echo "#/home/dsi directory" >> /etc/auto.master  
+    sudo echo "/-                        /etc/autofs.dsi.home_dir   --timeout=60 --ghost" >> /etc/auto.master  
+    sudo echo "" >> /etc/auto.master  
+    sudo echo "#/z directory" >> /etc/auto.master  
+    sudo echo "/-                        /etc/autofs.stage.z_dir    --timeout=60 --ghost" >> /etc/auto.master  
+    sudo echo "" >> /etc/auto.master  
+    sudo echo "#/d directory" >> /etc/auto.master  
+    sudo echo "/-                        /etc/autofs.prod.d_dir     --timeout=60 --ghost" >> /etc/auto.master  
+    sudo echo "" >> /etc/auto.master  
+    sudo echo "#/t directory" >> /etc/auto.master  
+    sudo echo "/-                        /etc/autofs.dsi.t_dir      --timeout=60 --ghost" >> /etc/auto.master  
+    sudo echo "" >> /etc/auto.master  
+    sudo echo "#/opt directory" >> /etc/auto.master  
+    sudo echo "/-                        /etc/autofs.prod.opt_dir    --timeout=60 --ghost" >> /etc/auto.master  
+    sudo echo "" >> /etc/auto.master  
+      
+    # For all the /etc/autofs.***.*** configuration files mentioned above, you will need to create them and define  
+    # the directory paths.  Please copy these files from existing ca-isis-pr-## server /etc/ path to this new server  
+    # In addition, please make sure all the nfs target servers have their /etc/exports updated to allow NFS access  
+    # OR  
+    # you can download the autofs_config.zip listed below and copy it over.  Make sure permission is all 644.  
+      
+      
+      
+    150
+    
+    
+      
+    
+    
+    
+      
+      
+    
+
+#  
+# Copy all the password file to /root/fstab_DO_NOT_DELETE/  
+# This password file contains the windows 'rh1login' username & password  
+# change permission of all the txt files to chmod 400
+/root/fstab_DO_NOT_DELETE/*  
+#
+
+    
+    
+    sudo mkdir -m755 /root/fstab_DO_NOT_DELETE/  
+    # Place the 'rh1login.txt' & 'rh1login_ver2.txt' (rh1login_ver2.txt may not be needed) inside /root/fstab_DO_NOT_DELETE/ folder.  Try to get the contents of these two files  
+    # from an existing ca-isis-pr-## server.  
+    sudo chmod -R 400 /root/fstab_DO_NOT_DELETE/
+
+  
+
+  
+
+# Final step is to restart the autofs service and make sure all the mounted
+directories are accessible
+
+#  Make sure all /etc/exports file are updated in servers like ca-rhstore-
+pr-01, ca-rhstore-sg-01, ca-preproc-pr-03, etc....
+
+#  Also, make sure Network team provides port access well, otherwise, autofs
+will crash and not startup properly
+
+    
+    
+    sudo service autofs restart  
+    sudo systemctl enable autofs.service
+    
+    
+      
+    
+
+  
+
+  
+
+# For /z dir (i.e. autofs.stage.z_dir), Network team mounted /z using a remote
+file system instead of a local partition.  Because of this  
+# autofs cannot automatically create directories using remote file system
+(e..g df -h | grep '/z\|Filesystem')  
+  
+
+    
+    
+      
+      
+    
+
+  
+
+ **################################**  
+ **# Add Comments to /etc/profile & /etc/environment**  
+ **################################**  
+echo '' | tee --append /etc/profile /etc/environment  
+echo '#######################################' | tee --append /etc/profile
+/etc/environment  
+echo '#  Added by InfoIMAGE ' | tee --append /etc/profile /etc/environment  
+echo '#######################################' | tee --append /etc/profile
+/etc/environment  
+echo '' | tee --append /etc/profile /etc/environment  
+# The following only applies to /etc/profile ONLY. (I'm not appending to
+/etc/enviornment)  
+echo '# Refer to /etc/profile.d/infoimage_env.sh for all the InfoIMAGE related
+environment variable' | tee --append /etc/profile  
+  
+Copy the existing production server /etc/profile.d/infoimage_env.sh to get the
+latest updated version.  If you absolutely cannot, here is a working version
+as of 10/3/2022 (md5: 401d395616194db30b6d2eac2b42f8d7)
+
+150
+
+ **Make sure you source the /etc/profile.d/infoimage_env.sh before you
+continue on the next steps (i.e. source /etc/profile.d/infoimage_env.sh)   or
+at least start a _new_ ssh session so that ALL then environment variables are
+defined**
+
+  
+
+ **################################**  
+ **# Setup User Accounts**  
+ **################################**
+
+# Before setting up accounts, please ensure the system you are working on is
+mapped to /home/keep/ folder;  The customized create_new_linux.sh  
+# script relies on accessing the shared gpg-key directory  
+#  
+# Modify /etc/group user account from 100 to 101 & the /etc/passwd gid id 100
+to 101  
+# For IS Dept. group id 100 belongs to isgroup and not 'users' so change users
+to 101 on a Centos system and 200 on a Ubuntu system  
+#
+
+    
+    
+    vim /etc/group  
+    vim /etc/passwd
+
+  
+
+# Create root .ssh keys first
+
+    
+    
+    sudo ssh-keygen -t rsa -N "" -f /root/.ssh/id_rsa  
+    sudo touch /root/.ssh/authorized_keys  
+    sudo chmod 600 /root/.ssh/authorized_keys
+
+  
+
+# Let's copy the create_centos_users custom script from ca-rhstore-
+pr-01:/root/scripts/create_centos_users/ to this new server so that you can
+setup the new users
+
+    
+    
+    sudo mkdir -p /root/scripts/create_centos_users/  
+    sudo scp -p ca-rhstore-pr-01:/root/scripts/create_centos_users/* /root/scripts/create_centos_users/
+
+  
+# Let's switch to root user so that you can execute the customer user
+installation scripts
+
+    
+    
+    sudo su -   
+      
+    
+
+# Run the groupadd.sh that I created (Please ensure that gid inside
+groupadd.sh does not currently exist in /etc/group first!
+
+    
+    
+    sudo ./groupadd.sh
+
+  
+
+# Now run the other customized bash scripts
+
+    
+    
+    sudo ./batch_create_user_is_dept.sh  
+    sudo ./batch_create_user_dp_dept.sh  
+    sudo ./batch_create_user_qa_dept.sh  
+    sudo ./batch_create_user_dsi_dept.sh
+
+  
+
+# When you run the batch_create_user_share.sh batch script, please type 'no'
+when prompted to overwrite the ssh key for the 'main' and 'ipds' users.  You
+do NOT want to overwrite these two user accounts.
+
+sudo ./batch_create_user_shared.sh
+
+  
+
+ **################################**  
+ **# Give sudoer permission**  
+ **################################**
+
+#  Replace the username with the user you want to give sudoer permission
+
+    
+    
+    usermod -aG wheel username 
+
+  
+
+ **################################**  
+ **# Installing Oracle Client:**  
+ **################################**
+
+  
+
+# If you need the original package and don't want to download via internet,
+then go to an existing ca-isis-pr-04 server:/root/install/oracle folder to
+look for the packages.  I usually keep a copy of it there
+
+    
+    
+    sudo mkdir -m755 /opt/oracle  
+      
+    scp source/oracle/instantclient-basic-linux.x64-21.1.0.0.0.zip   /opt/oracle/  
+    scp source/oracle/instantclient-sdk-linux.x64-21.1.0.0.0.zip     /opt/oracle/  
+    scp source/oracle/instantclient-sqlplus-linux.x64-21.1.0.0.0.zip /opt/oracle/  
+      
+    unzip /opt/oracle/instantclient-basic-linux.x64-21.1.0.0.0.zip   -d /opt/oracle/  
+    unzip /opt/oracle/instantclient-sdk-linux.x64-21.1.0.0.0.zip     -d /opt/oracle/  
+    unzip /opt/oracle/instantclient-sqlplus-linux.x64-21.1.0.0.0.zip -d /opt/oracle/  
+    ln -s /opt/oracle/instantclient_21_1 /opt/oracle/instantclient  
+      
+    
+    
+    
+      
+    # Copy tnsnames.ora to $ORACLE_HOME/network/admin  
+    export ORACLE_HOME=/opt/oracle/instantclient  
+      
+      
+      
+      
+    sudo chmod 644 $ORACLE_HOME/network/admin/tnsnames.ora  
+    sudo chown root:root $ORACLE_HOME/network/admin/tnsnames.ora
+
+150
+
+    
+    
+      
+      
+    # The following is inserted into /etc/enviornment file so that jobs running on crontab can see these environment variables;  /etc/profile is not used in crontab daemon  
+      
+    echo '#Oracle Database System Variables' | tee --append /etc/environment  
+    echo 'export ORACLE_HOME=/opt/oracle/instantclient' | tee --append /etc/environment  
+    echo "export PATH=$[PATH:/opt/oracle/instantclient](http://PATH/opt/oracle/instantclient)" | tee --append /etc/environment  
+    echo "export LD_LIBRARY_PATH=/opt/oracle/instantclient:$LD_LIBRARY_PATH" | tee --append /etc/environment  
+      
+    
+
+# After oracle drivers installed, you will need to either restart server or
+source /etc/profile in order for the settings to take place:
+
+    
+    
+    source /etc/profile
+
+  
+
+ **################################**  
+ **# Installing Postgre Drivers**  
+ **################################**
+
+    
+    
+    yum install -y postgresql-odbc.x86_64      #ROCKY COMPLAINED INSTALL THIS, BUT IF USING yum install -y postgresql-odbc it works.  
+    yum install -y postgresql-devel  
+    yum install -y postgresql.x86_64  
+    yum install -y postgresql-jdbc.noarch  
+    yum install -y postgresql-libs
+
+  
+
+ **################################**  
+ **# Install OBDC Drivers**  
+ **################################**
+
+curl <https://packages.microsoft.com/config/rhel/7/prod.repo> >
+/etc/yum.repos.d/mssql-release.repo  
+sudo ACCEPT_EULA=Y yum install -y msodbcsql17  
+sudo yum install -y unixODBC-devel  
+sudo yum install -y unixODBC #ROCKY HAS ERROR INSTALLING unixODBC-devel  
+sudo yum install -y freetds  
+sudo yum install -y freetds-devel  
+#sudo cpan install DBD::ODBC  
+  
+
+    
+    
+    # installs the 'sqlcmd' client to connect to Microsoft SQL DB  
+    sudo yum install -y mssql-tools
+    
+    
+    # Note:  If you don't want to use sqlcmd, you can use tsql since freetds is installed:  
+    # e.g. of datatrac dev sql connection:   tsql  -S ca-msgps-pr-01 -U oper1 -D datatrac_is
+
+  
+
+#  
+# Modify /etc/odbcinst.ini  
+# Make sure MS SQL Driver looks something like as follows;  Usually Just
+change [FreeTDS] to [ms-sql]:  
+#
+
+    
+    
+    sudo echo '' >> /etc/odbcinst.ini  
+    sudo echo '# Added by InfoIMAGE' >> /etc/odbcinst.ini  
+    sudo echo '[ms-sql]' >> /etc/odbcinst.ini  
+    sudo echo 'Description=Freetds v 1.1.20' >> /etc/odbcinst.ini  
+    sudo echo 'Driver=/lib64/[libtdsodbc.so](http://libtdsodbc.so).0' >> /etc/odbcinst.ini  
+    sudo echo '' >> /etc/odbcinst.ini
+    
+    
+      
+      
+     **#   Note:  You don't have to define the environment variables since it is already in /etc/profile.d/infoimage_env.sh**  
+    #echo '' | tee --append /etc/profile /etc/environment  
+    #echo '#sqlcmd Microsoft SQL DB Client' | tee --append /etc/profile  
+    #echo 'export PATH="$[PATH:/opt/mssql-tools/bin](http://PATH/opt/mssql-tools/bin)"' | tee --append /etc/profile   
+      
+    
+
+  
+
+**################################**  
+ **# Installing Python Modules**  
+ **################################**
+
+    
+    
+    sudo yum install -y python3  
+    sudo yum install -y python3-devel  
+    sudo yum install -y python2               #ROCKY NO LONGER INCLUDES PYTHON 2  
+    sudo yum install -y python2-devel  
+    sudo yum install -y python-pip
+
+  
+
+ **#Note on Rocky 8, you will need to create default python/pip symbolic link
+to reference Python version 2**
+
+    
+    
+    ln -s /usr/bin/pip2.7 /usr/bin/pip  
+    ln -s /usr/bin/python2.7 /usr/bin/python
+
+  
+
+ **#Note on Rocky 9, python2 is not included.   You will need to compile
+manually**
+
+    
+    
+    mkdir -p /root/install/python2.7.18  
+    cd /root/install/python2.7.18  
+    wget <https://www.python.org/ftp/python/2.7.18/Python-2.7.18.tgz>  
+    tar xvf Python-2.7.18.tgz  
+    cd Python-2.7.18  
+    ./configure --prefix=/usr/local --enable-unicode=ucs4 --enable-shared --with-ensurepip=yes  
+    make  
+    make altinstall  
+      
+    # Change default python & pip to python 2.7  
+    rm -f /usr/bin/python  
+    ln -s /usr/local/bin/python2.7 /usr/bin/python  
+    ln -s /usr/local/bin/pip2.7 /usr/bin/pip  
+      
+    
+
+  
+
+# Do not upgrade pip;  There is bug in CentOS Linux release 7.9.2009 (Core)  
+#sudo pip install --upgrade pip
+
+    
+    
+    # The following is for pycurl python library to compile when you install it  
+    sudo yum install -y curl-devel  
+    sudo yum install -y swig                   #ROCKY DOES NOT HAVE SWIG  
+    sudo yum install -y libxml2-devel  
+    sudo yum install -y libxslt-devel
+
+  
+
+# Make sure you have the requirements txt generated that list out all of the
+python packages and versioning  
+# Note:  I'm using the python package versions from rhs2 ONLY;  I'm not going
+to refer to rhs or rh2
+
+    
+    
+    sudo pip install -r requirements_rhs2.txt
+
+250
+
+  
+
+  
+
+ **################################**  
+ **# Installing Perl Modules**  
+ **################################**
+
+# Need to install the following module in order to build most of the CPAN
+modules.  
+# module 'open' is not installed by defaut so please run the following command
+before  
+# installing any Perl Modules
+
+    
+    
+    sudo su -  
+    yum install -y perl-open
+
+  
+# The following as well for the DBD::Oracle module
+
+    
+    
+      
+    yum install -y perl-Devel-Peek  
+    yum -y install perl-Net-SSLeay openssl perl-IO-Socket-SSL  
+    yum -y install expat-devel
+
+  
+
+# Execute CPAN executable
+
+    
+    
+    # Define where perl module to install  
+      
+    export PERL_MM_OPT=/usr/local/share/
+
+  
+# Setup cpan non-interactively and enable default settings
+
+    
+    
+    export PERL_MM_USE_DEFAULT=1  
+    yum install -y cpan  
+    cpan
+
+  
+# run the cpan_install.sh script customized to install the rest of the other
+perl modules.  
+# You will need to install each of these modules manually or try the batch
+cpan_install.sh custom shell script (sudo ./cpan_install.sh )  (md5:
+ce9e64a6b700079f2f77cebbb14f7033)
+
+150
+
+  
+
+## # The following as well for the ImageMagick  
+## yum install ImageMagick  
+## yum install ImageMagick-perl
+
+# Download the latest ImageMagick perl packages from
+<https://imagemagick.org/script/perl-magick.php>  
+# ImageMagick-6.9.11-29.tar.xz  
+# Use ImageMagick version 6 as version 7 is TOO SLOW when generating images
+files
+
+  
+
+wget <https://imagemagick.org/archive/releases/ImageMagick-6.9.11-29.tar.xz>
+
+tar xvf ImageMagick-6.9.11-29.tar.xz
+
+  
+
+    
+    
+      
+    cd ./ImageMagick-6.9.11-29/  
+    ./configure --with-perl --with-tiff --with-png --with-jpeg --with-jp2
+    
+    
+      
+    make  
+    make install
+
+  
+
+#Note:  I listed all the perl modules in a different file called
+infoimage_perl_module.lis  
+# I also created a 2 test script to check if there are any missing perl
+modules that is supposed to be installed:  
+# perl
+[verify_installed_perl_modules_part1.pl](http://verify_installed_perl_modules_part1.pl)
+#This one will throw warning message: "Missing @INC" messages;  If so, please
+ensure /home/test/master programs exist and PERL5LIB is defined and as 'oper1'
+user, PERL5LIB is defined as /home/master.  This is PERL5LIB is defined in
+/home/master/env_init.sh  
+# perl
+[verify_installed_perl_modules_part2.pl](http://verify_installed_perl_modules_part2.pl)
+
+150150
+
+  
+
+################################  
+# Other Unix utilities  
+################################
+
+    
+    
+    sudo yum install -y poppler-utils  
+    sudo yum install -y -q p7zip p7zip-plugins  
+    sudo yum install -y dos2unix  
+    sudo yum install -y java java-devel  
+    sudo yum install -y lftp
+
+  
+
+ **################################**  
+ **# opttechsort software installation**  
+ **################################**
+
+  
+
+    
+    
+    sudo mkdir -p /opt/opttechsort/
+
+# copy all of the file into opt/opttechsort/ & /usr/local/bin/opttechsort
+executable or download the following tar gzip file and extract to
+/opt/opttechsort/ and to /usr/local/bin (for the opttechsort executable)
+
+150
+
+  
+
+sudo tar zxvf opttechsort.tar.gz
+
+sudo mv opt/opttechsort/* /opt/opttechsort/
+
+sudo mv usr/local/bin/opttechsort /usr/local/bin/
+
+    
+    
+    sudo chown -R root:root /opt/opttechsort/*  
+    sudo chmod 755 /opt/opttechsort/*  
+    sudo chown -R root:root /usr/local/bin/opttechsort  
+    sudo chmod 755 /usr/local/bin/opttechsort
+    
+    
+      
+    # Type 'opttechsort' utility command to make sure it starts up without errors.
+
+opttechsort
+
+  
+
+ **################################**  
+ **# /etc/samba/smb.conf**  
+ **################################**
+
+    
+    
+      
+      
+     # Added the following contents to /etc/samba/smb.conf
+
+  
+
+# Follow these instructions if you are install the Development ca-isis-dv-##
+(i.e. RHT like servers).  
+# Added the following contents to /etc/samba/smb.conf
+
+    
+    
+    [ftpbu_dev]  
+           comment = /d/ftpbu (i.e. /z/ftpbu for dev environment)  
+           path = /d/ftpbu  
+           public = no  
+           writable = yes  
+           guest ok = yes  
+           valid users = isdshare oper1 @opers script rh1login @isgroup  
+           read only = no  
+           directory mask = 0777  
+           browseable = yes  
+           case sensitive = no  
+      
+    [infoftp_int_dev]  
+           comment = /d/infoftp_int (i.e. /d/infoftp_int for dev environment)  
+           path = /d/infoftp_int  
+           public = no  
+           writable = yes  
+           guest ok = yes  
+           valid users = isdshare oper1 @opers script rh1login @isgroup  
+           read only = no  
+           directory mask = 0777  
+           browseable = yes  
+      
+      
+    
+
+# Follow these instructions if you are install the Development ca-rhstore-
+pr-## (i.e. rhstore file storage like servers).  
+# Added the following contents to /etc/samba/smb.conf
+
+    
+    
+      
+    [rhstore_OPS]  
+            comment = /d/ops from rhstore for usps files  
+            path = /d/ops  
+            public = no  
+            writable = yes  
+            guest ok = yes  
+            valid users = oper1 ernest shipper @opers  
+            read only = no  
+            create mask = 0777  
+            directory mask = 0777  
+            browseable = yes
+
+  
+# run the following command to add shipper user  
+smbpasswd -a shipper
+
+  
+
+ **################################**  
+ **#  Papyrus Install**  
+ **################################**
+
+# The following steps assumes that you have installed Papyrus Software in
+rhstore file server so that this processing server can mount /isis/pdel#### to
+rhstore file server.  If not, you can refer to [Papyrus DocEXEC Software &
+AFPCompare
+Installation](https://confluence.infoimageinc.com/pages/viewpage.action?pageId=114002597)
+guidelines in confluence to install the software.
+
+  
+
+ **#Note:   Create a symbolic link from /isiscomm to the default version of
+/isiscomm_####.  The version we are using the point of this documentation is
+isiscomm_6772**
+
+    
+    
+    ln -s /isiscomm_6772 /isiscomm
+
+  
+
+ **#Note:   change to /d for production, /x for dev environment.  The example
+below is using /d for installing a production environment with /z for parallel
+along with /d**
+
+    
+    
+    sudo mkdir -m777 /d/temp  
+    sudo mkdir -m777 /z/temp
+
+  
+
+ **#   Note:  You don't have to define the environment variables since it is
+already in /etc/profile.d/infoimage_env.sh; However, you will need it for
+/etc/environment in order for the cron programs to get the environment
+variables defined**
+
+    
+    
+    sudo su -  
+    echo '' | tee --append /etc/environment  
+    echo '# Processing Server Environment Variables' | tee --append /etc/environment  
+    echo 'export codebase="/home/master"' | tee --append /etc/environment  
+      
+    #Note:  change d_dir variable to /d for production, /x for dev environment.  The example below is using $d_dir=/d for installing a production environment  
+      
+    export d_dir="/d"   #Change d_dir if needed on this line to /x for dev systems  
+    echo 'export d_dir="/d"' | tee --append /etc/environment  
+    echo 'export home_master="/home"' | tee --append /etc/environment  
+    echo 'export home_ins="/home"' | tee --append /etc/environment  
+    echo 'export home_ctr="/home"' | tee --append /etc/environment  
+    echo 'export home_keep="/home"' | tee --append /etc/environment  
+    echo 'export home_env="/home"' | tee --append /etc/environment  
+    echo 'export home_var="/home"' | tee --append /etc/environment  
+    echo 'export keep_dir="keep"' | tee --append /etc/environment  
+      
+    #Note:  change database variable to prod for production, and test for dev environment.  
+    echo 'export database="prod"' | tee --append /etc/environment  
+      
+    # Only applies to /etc/environment ONLY  
+    echo "export barrsource=\"${d_dir}/barr\"" | tee --append /etc/environment  
+    echo "export barrtarget=\"${d_dir}/barrprint/spool\"" | tee --append /etc/environment  
+    echo "export base_dir=\"${d_dir}/afp\"" | tee --append /etc/environment  
+      
+    echo '' | tee --append /etc/profile /etc/environment  
+    echo '# Papyrus Specific Environment Variables' | tee --append /etc/environment  
+    echo 'export ISIS_KEY_MODE=ALL' | tee --append /etc/environment  
+    echo 'export ISIS_OMS_DOMAIN=ca-ipas-pr-02 #ipas auth server' | tee --append /etc/environment  
+    echo 'export ISIS_OMS_PORT=9091' | tee --append /etc/environment  
+    echo 'export ISIS_COMMON=/isiscomm' | tee --append /etc/environment  
+    echo 'export TMP=${d_dir}/temp' | tee --append /etc/environment  
+      
+    # Only applies to /etc/environment ONLY  
+    echo "export LD_LIBRARY_PATH=/isiscomm/l6/[lib:/usr/local/lib:/usr/lib:$LD_LIBRARY_PATH](http://lib/usr/local/lib:/usr/lib:$LD_LIBRARY_PATH)" | tee --append /etc/environment  
+      
+    
+    
+    
+      
+    
+    
+    
+      
+    
+
+  
+
+#  
+# Need to create /usr/local/etc/freetds.conf file since this script needs it  
+# /home/master/env_init.sh:export FREETDSCONF=/usr/local/etc/freetds.conf  
+#  
+# If you have the freetds.conf locally available, you can run something
+similar to the following:  
+# My example belows asssumes that you have a local
+/root/install/freetds/freetds.conf file, if not, download the following or
+copy from  
+# another existing ca-isis-pr-##: /usr/local/etc/freetds.conf file  
+#
+
+    
+    
+    150
+    
+    
+      
+      
+    
+
+ **# Note:   Rocky OS freetds is located in /etc/freetds.conf**
+
+    
+    
+    sudo cp -p /etc/freetds.conf /etc/freetds.conf.orig  
+    sudo cp -p /root/install/freetds/freetds.conf /etc/freetds.conf  
+      
+     **# Make a copy of the odbc.ini to /etc/odbc.ini**
+    
+    
+    sudo cp -p /etc/odbc.ini /etc/odbc.ini.orig  
+    sudo cp -p /root/install/freetds/odbc.ini /etc/odbc.ini  
+    sudo chmod 744 /etc/odbc.ini  
+    sudo chmod 744 $FREETDSCONF
+
+  
+
+150
+
+  
+
+################################  
+# First Logic ACE Software Install  
+################################
+
+#  The software is located in ca-rhstore-pr-01:/opt/postware directory.  As
+long as you mount the /opt/postware during the  
+# autofs setup instructions above, then you are fine.  If you want to test, go
+to the [ca-isis-pr-03: How to update Firstlogic / ACE Annual License
+Key](https://confluence.infoimageinc.com/x/O4TLBg)  
+# documentation and refer to the testing instructions.
+
+  
+
+    
+    
+      
+      
+    
+
+ **################################**  
+ **# Installing 7zz zip/unzip utility**  
+ **################################**
+
+    
+    
+    # This is a new version of 7za that does a much better job in zipping & unzipping for LZMA high compression by utiltizing all the CPU cores vs one core w/ 7za  
+      
+    # Go to [7-Zip - Browse /7-Zip/22.01 at SourceForge.net](https://sourceforge.net/projects/sevenzip/files/7-Zip/22.01/) site and download version 22.01 or higher (e.g.:  7z2201-linux-x64.tar.xz)
+    
+    
+    tar xvf 7z2201-linux-x64.tar.xz  
+    cp 7zz /usr/local/bin/  
+      
+      
+      
+    
+
+ **################################**  
+ **# Installing the Printers**  
+ **################################**  
+sudo yum install -y cups
+
+  
+
+#  Download the generic Canon Print driver "Canon-LBP8780-Postscript-
+Canon.ppd". This works for Canon Model  8175
+
+150
+
+# Save this Canon-LBP8780-Postscript-Canon.ppd file into
+/usr/share/cups/model/ folder.
+
+  
+# The following are the instructions for installing the print driver for the
+California Printers:  
+lpadmin -p ca_dp -E -v <socket://10.4.44.28:9100> -m Canon-LBP8780-Postscript-
+Canon.ppd -L "California: DP Department"  
+lpadmin -p ca_pc -E -v <socket://10.4.44.29:9100> -m Canon-LBP8780-Postscript-
+Canon.ppd -L "California: PC Department"
+
+  
+
+# The following are the instructions for installing the print driver for the
+Texas Printers that you also need to install as well:  
+lpadmin -p tx_dp -E -v <socket://10.9.1.28:9100> -m Canon-LBP8780-Postscript-
+Canon.ppd -L "Texas: DP Department"  
+lpadmin -p tx_pc -E -v <socket://10.9.1.29:9100> -m Canon-LBP8780-Postscript-
+Canon.ppd -L "Texas: PC Department"
+
+  
+
+# Canon Print Installation (Model  8175 & ___):  
+# install their software first **(OPTIONAL** **STEP:** If you don't want to
+use the lpadmin command above)
+
+## sh canon-brightq-2.5.10-linux-2020-02-20.run
+
+  
+
+## # Following the command line instructions from the installation PDF
+documentation  
+## codehost-config -c ca_dp /usr/local/brightq/ppd/C/generic.ppd -U
+<socket://10.4.44.28:9100>  
+## codehost-config -c ca_pc /usr/local/brightq/ppd/C/generic.ppd -U
+<socket://10.4.44.29:9100>
+
+## codehost-config -c tx_dp /usr/local/brightq/ppd/C/generic.ppd -U
+<socket://10.9.1.28:9100>  
+## codehost-config -c tx_pc /usr/local/brightq/ppd/C/generic.ppd -U
+<socket://10.9.1.29:9100>  
+## codehost-config -c tx_fo /usr/local/brightq/ppd/C/generic.ppd -U
+<socket://10.9.1.26:9100>
+
+  
+
+# To test print, do:  
+lpr -P tx_pc /root/your_text_file.txt
+
+# Review the print queue:  
+lpq -P  
+
+  
+
+# Note:  If you need to update existing printer ip address:  
+#lpadmin -p <printer name> -v <new uri>  
+# e.g.  
+#lpadmin -p ca_dp -v <socket://10.4.44.21>
+
+# To set default printer for ALL users:  
+sudo lpadmin -d ca_dp
+
+# Make sure and confirm that default printer is assigned by executing the
+following command to verify:  
+lpstat -d  
+# you may need to check /etc/cups/lpoptions to confirm that your default
+printer is set and matches above.  If not, modify this file.  e.g.  Default
+ca_dp
+
+# To check if printer is accepting jobs:  
+lpstat -a
+
+# To check status of the printer(s):  
+lpstat -v
+
+# The printer configuration file is located in /etc/cups/printers.conf
+
+# To delete printer, run:  
+lpadmin -x printer_name_alias (e.g.  lpadmin -x tx_dp)
+
+  
+
+################################  
+# Add Comments to /etc/environment towards the end of file  
+# The following is for the environment variables are related to InfoTRAC ISD
+Index File Processor API URL  
+################################  
+  
+
+    
+    
+    echo '' | tee --append /etc/environment  
+    echo '# Papyrus Specific Environment Variables' | tee --append /etc/environment  
+    echo '# The following params are ISD API server name for InfoTRAC Extended Job Tracking Processing'  | tee --append /etc/environment  
+    echo 'export INDEX_FILE_PROCESS_API=ca-jobtrack-pi-01.infoimageinc.com:8980' | tee --append /etc/environment  
+    echo 'export INDEX_FILE_PROCESS_PARALLEL_API=ca-jobtrack-st-01.infoimageinc.com:8980' | tee --append /etc/environment  
+    echo 'export INDEX_FILE_PROCESS_DEV_API=ca-jobtrack-dv-01.infoimageinc.com:8980' | tee --append /etc/environment  
+      
+    ####  
+    #  NOTE:  Change the URL according to the correct environment.  If it is dev/pilot, then use:  
+    #         http://notifyservice-common-pilot.infoimageinc.com:8580  
+    #         If it is Texas, then use:  
+    #         "http://pd-dev2.infoimageinc.com:9880",  
+    ####  
+    echo '' | tee --append /etc/profile /etc/environment  
+    echo '# The following is the ISD NOTIFY SERVICE API URL' | tee --append /etc/profile /etc/environment  
+    echo 'export NOTIFY_SERVICE_API=http://ca-infotrac-pr-01.infoimageinc.com:8080' | tee --append /etc/profile /etc/environment  
+    echo 'export NOTIFY_SERVICE_PARALLEL_API=http://notifyservice-common-stage.infoimageinc.com:8580' | tee --append /etc/profile /etc/environment  
+      
+      
+    
+
+################################  
+# Add Comments to /etc/profile towards the end of file  
+# The following is for the environment variables are related to IS InfoSYNC
+API URL  
+################################  
+echo '' | tee --append /etc/environment  
+echo '# The following is the IS INFOSYNC API URL' | tee --append
+/etc/environment  
+echo 'export INFOSYNC_API=is-apps-prod.infoimage.com' | tee --append
+/etc/environment  
+echo 'export INFOSYNC_PARALLEL_API=is-apps-stage.infoimage.com' | tee --append
+/etc/environment  
+  
+################################  
+# Add Comments to /etc/profile towards the end of file  
+# The following defines the DataCenter on where this server resides  
+# CA for California and TX for Texas (Please update accordingly)  
+################################  
+  
+
+    
+    
+    echo '' | tee --append /etc/profile /etc/environment  
+    echo '# The following is the DataCenter location on where this server is running' | tee --append /etc/environment  
+    export 'DATA_CENTER=CA' | tee --append /etc/environment  
+      
+    ################################  
+    #  Modify /etc/hosts  
+    #  There is still some custom local DNS names being used  
+    ################################
+
+sudo sh -c "echo ''
+>> /etc/hosts"  
+sudo sh -c "echo '#'
+>> /etc/hosts"  
+sudo sh -c "echo '# Brisbane Server IP Address;  Overloaded Permanently
+Locally on this server'       >> /etc/hosts"  
+sudo sh -c "echo '#'
+>> /etc/hosts"  
+sudo sh -c "echo '10.4.20.31          rhs'
+>> /etc/hosts"  
+sudo sh -c "echo '10.4.20.34          rh2'
+>> /etc/hosts"  
+sudo sh -c "echo '10.4.20.40          rhs2'
+>> /etc/hosts"  
+#sudo sh -c "echo '10.5.20.39          rht'
+>> /etc/hosts"  
+sudo sh -c "echo '10.4.20.22          preprocessing02'
+>> /etc/hosts"  
+sudo sh -c "echo '10.4.20.23          preprocessing03'
+>> /etc/hosts"  
+sudo sh -c "echo '10.5.20.38          dsi'
+>> /etc/hosts"  
+sudo sh -c "echo ''
+>> /etc/hosts"  
+sudo sh -c "echo '#'
+>> /etc/hosts"  
+sudo sh -c "echo '# Texas Servers'
+>> /etc/hosts"  
+sudo sh -c "echo '#'
+>> /etc/hosts"  
+#sudo sh -c "echo '10.9.1.15       vpn-txs'
+>> /etc/hosts"  
+sudo sh -c "echo '10.9.2.15       texas'
+>> /etc/hosts"  
+sudo sh -c "echo '10.9.2.16       rh2_tx'
+>> /etc/hosts"  
+sudo sh -c "echo '10.9.2.17       preprocessing-01tx      pre-processingtx'
+>> /etc/hosts"  
+#sudo sh -c "echo '10.9.1.52       mail_server_tx'
+>> /etc/hosts"  
+sudo sh -c "echo ''
+>> /etc/hosts"
+
+  
+
+################################  
+# Installin nmon  
+################################
+
+sudo yum install -y nmon
+
+mkdir -m777 /var/log/nmon
+
+chown nobody:nobody /var/log/nmon
+
+# Create the following script (nmon-script) and chmod 755 /usr/local/bin/nmon-
+script
+
+150
+
+  
+
+  
+
+# Create the following nmon-daily-cron and place it into /etc/cron.d/
+directory and run chmod 644 /etc/cron.d/nmon-daily-cron
+
+150
+
+  
+
+  
+
+# Create another file call nmon-script-cfg in /etc/sysconfig/ and run chmod
+644 /etc/sysconfig/nmon-script-cfg
+
+150
+
+  
+
+  
+
+  
+
+  
+
+#####  
+# Custom Miscellaneous  
+#####
+
+# Define the AFP2WEB server value to use.  Please make sure you define the
+right server based  
+# on the environment
+
+    
+    
+    #PROD  
+      
+    echo '' | tee --append /etc/environment  
+    echo "# Set default AFP2WEB Server" | tee --append /etc/environment  
+    echo "export AFP2WEB_SERVER=ca-preproc-pr-03" | tee --append /etc/environment
+
+  
+
+#PARALLEL is n/a;  the /home/master/afp2pdf.py has hard coded value for ca-
+preproc-sg-01 if testmode='y';  
+#                  is defined in the /etc/profile and /etc/bashrc
+
+    
+    
+    #DEV:   
+    #echo '' | tee --append /etc/environment  
+    #echo "# Set default AFP2WEB Server" | tee --append /etc/environment  
+    #echo "export AFP2WEB_SERVER=ca-preproc-sg-01" | tee --append /etc/environment  
+      
+      
+    
+
+# 1. Copy vcp to /usr/bin/ folder;   This is vcp and NOT vcp2.sh.  vcp is the
+same as vcp2.sh but the exit commands are flipped around  
+#    diff /usr/bin/vcp /home/master/vcp2.sh  
+#    45c45  
+#    <                exit 0  
+#    \---  
+#    >                exit 1  
+#    77c77  
+#    <                exit 0  
+#    \---  
+#    >                exit 1  
+#     At the time of writing this documentation, here is the checksum:  
+#     md5sum /usr/local/bin/vcp  
+#     ea363eaba020c13f575c84f15e6cae08  /usr/local/bin/vcp
+
+  
+
+cp ~/install/usr_local_bin/vcp /usr/local/bin/
+
+150
+
+  
+
+  
+
+################  
+# Custom lp  
+##################  
+  
+copy the customized /usr/local/bin/lp from old production server to
+/usr/local/bin/lp
+
+    
+    
+    cp ~/install/usr_local_bin/lp /usr/local/bin/lp.infoimage  
+    # Changes the default lp to /usr/local/bin/lp command instead  
+    update-alternatives --install /usr/local/bin/lp lp /usr/local/bin/lp.infoimage 40
+
+  
+
+  
+
+#####  
+# Docker Installation  
+#####
+
+sudo dnf check-update
+
+sudo dnf config-manager --add-repo
+<https://download.docker.com/linux/centos/docker-ce.repo>
+
+sudo dnf install docker-ce docker-ce-cli [containerd.io](http://containerd.io)
+\--allowerasing
+
+    
+    
+    sudo groupadd docker
+    
+    
+    sudo systemctl start docker  
+    sudo systemctl enable docker  
+      
+    # REMEMBER TO ADD USERS TO docker group  
+      
+    
+
+  
+
+#####  
+# Miscellaneous  
+#####  
+# This folder is needed for the
+/home/master/[isiszipsep_new.pl](http://isiszipsep_new.pl) (ACE related)
+[Please use /d /z /x /t depending on your d_dir enviornment  
+mkdir -m777 /d/labels  
+mkdir -m777 /d/custdata
+
+# If RHT ONLY, please use the following  
+mkdir -m777 /x/infoftps3 /x/infoftps4 /x/infoftps5 /x/infoftp_int  
+mkdir -m777 /x/is /x/is/CVS /d/is/development
+
+  
+
+#Uselful Commands:  
+# The following command list all installed cpan modules  
+cpan -l
+
+  
+
+###############  
+# NOTE/TODO:  
+###############  
+# Refer to /etc/profile for anything else that was not configured as well#  
+#  
+# Research LogRotate to cleanup & rotate the /var/log/nmon folder to so that
+it does not grow indefinitely.  Should keep as least 1 year of logging
+
+  
+
+ **#**  
+ **# PLEASE NOTE:  The /home/control/daily_control OVERRIDES the
+LD_LIBRARY_PATH & ORACLE_HOME variables.**  
+ **#               You may need to look into it.**  
+ **#  **
+
+  
+
+## Related articles
+
+Related articles appear here based on the labels you select. Click to edit the
+macro and add or change labels.
+
+false5IPSMKBfalsemodifiedtruepagelabel = "kb-how-to-article" and type = "page"
+and space = "IPSMKB"kb-how-to-article
+
+  
+
+true
+
+  
+
+Related issues|  
+  
+---|---  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+

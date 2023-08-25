@@ -1,0 +1,20 @@
+Below is count verification process that Andy designed for DNA. Let review and let me know if you have any questions.
+To enable validate count logic for a job prefix
+(1) Add one entry of that prefix into validate count table
+/home/keep/validate_count/validate_count.list
+#prefix:active:data_core:paper:estmt:archival:pdfi:action:func_ptr:option
+demoms1:0:symitar1:1:1:0:0:report:f1:0
+gcbkms1:1:dna1:2:2:2:0:0:0:0
+Currently we have support for dna data core.
+(2) Calling external VALIDATE_COUNT_001 in AFTERLASTDOC
+DOCFORMAT $_AFTERLASTDOC;
+IF &JOB_TYPE==s ;
+THEN
+USE
+FORMAT VALIDATE_COUNT_001 EXTERNAL ;
+ENDIF ;
+Overwrite global variable &JOB_TYPE_COUNT = Statement count if necessary.
+From isisdisk.sh validate_data_count.sh get called.
+Call VALIDATE_COUNT_001 in afterlastdoc (&seq_no should be calculated precisely)
+provide entry in /home/keep/validate_count/validate_count.list
+if data_core column value is f1 or f2 or f3 in previous step you need to provide _data_count in get_data_count.(sh|pl|py)

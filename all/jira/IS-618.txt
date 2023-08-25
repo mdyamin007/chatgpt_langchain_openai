@@ -1,0 +1,207 @@
+title: SANA - [24266][pvt] Tax Archival Index Update /  Non-Billable
+description: SANA - Tax Archival Index Update
+Description:modify the Tax Forms Archival Index file contents to include the member's SSN
+App: Taxes
+
+*IS Assessment*
+=============
+Hours for development: 2 IS hours + ISD not hours required
+Turnover Date : 12/06/2021
+Sample to QA Date: 12/09/2021
+Sample Approval Date: 12/13/2021
+Go live date : 01/05/2022 (revised)
+
+Assessment Details (IS):
+- Parallel required: (no)
+-modify the Tax Forms Archival Index file contents to include the member's SSN
+-"Account number|SSN|Account Name|DOC Type|Tax YEAR|Scan date|Destroy Date|Pdf File name.img"
+-/d/tax/prep/sana/sana_spec_handle.pl -> /home/master/sana_customized_archival.pl
+
+
+author: william.kong
+comment: [~thomasY]: Here's the 3rd project as of today that is also due in December. Please get started as well.
+
+
+author: barnetts
+comment: Hi [~thomasY],
+
+Can you please advise on status?
+
+Thanks, Barnett 
+
+
+author: thomasy
+comment: Parallel:20211209112156
+
+Sample index:[^SANA_Tax_index_5498_120921_1.txt]
+
+
+author: igor.khosid
+comment: Parallel ID: 20211209112156
+ Currently in parallel: Yes
+ User: thomasY
+ Description: 618
+ Date Submitted: 2021-12-09 11:21:59
+ Date Last Updated: 2021-12-09 11:21:59
+ Files:
+ 1) sana_customized_archival.pl
+
+
+author: igor.khosid
+comment: QA first round sample result: Pass and Samples ready for Customer review
+
+Script updated to include SSN
+ # Parallel report
+
+Currently in parallel: Yes
+User: thomasY
+Description: 618
+Date Submitted: 2021-12-09 11:21:59
+Date Last Updated: 2021-12-09 11:21:59
+Files:
+1) sana_customized_archival.pl
+
+2. Difference prod vs test
+
+< $country_code) = &getGroupIndex($f); # reading information from Papyrus Group Index files
+> $country_code, $tax_ssn) = &getGroupIndex($f); # reading information from Papyrus Group Index files
+< #index file format -- #Accout Number|Account Name|Doc Type|Tax YEAR|Scan Date|Destroy Date|Pdf File name.img
+---
+> #index file format -- #Accout Number|SSN|Account Name|Doc Type|Tax YEAR|Scan Date|Destroy Date|Pdf File name.img
+< my $sana_index_data_string = "${my_acct_num}|${acct_name}|${app_type}|${tax_year}|${scan_date}|${destroy_date}|${sana_new_pdf_name}";
+> my $sana_index_data_string = "${my_acct_num}|${acct_soc_no}|${acct_name}|${app_type}|${tax_year}|${scan_date}|${destroy_date}|${sana_new_pdf_name}";
+< $country_code)
+> $country_code, $tax_ssn);
+< $country_code = "";
+--
+> $country_code = $tax_ssn = "";
+520c521,526
+---
+> elsif ($lines =~ m/>TAX_SSN</)
+> $lines = <INFILE>;
+> $tax_ssn = &rem_tags($lines);
+< $country_code);
+---
+> $country_code, $tax_ssn);
+
+3. Attached txt file validated
+
+
+author: barnetts
+comment: Hi [~Igor.Khosid],
+
+Please be advised that since this a tax update, there is no SOW to update. 
+
+Thanks ,Barnett 
+
+
+author: barnetts
+comment: [~thomasY],
+
+Pending SANA feedback
+
+
+author: william.kong
+comment: [~barnetts]: Just a courtesy reminder. Approvals are due today. Please ensure it is not late.
+
+
+author: william.kong
+comment: [~barnetts]: Project live date is today and we have not received approvals. This project will have to be delayed until next year if we cannot rush and get everything completed before EOD. If we do not go live by EOD, I will change project status to be on "Hold". When client is ready, we can schedule a revised live date next year.
+
+
+author: barnetts
+comment: [~thomasY],
+
+SANA is wanting the pdfs samples along with the Index. Can you please advise is this is possible? 
+
+Thanks, Barnett
+
+
+author: william.kong
+comment: [~barnetts]: This project is past due. I will ask [~thomasY]to share the PDF samples along with the index file. Please bear in mind, between now and until end of January, we will not be able to promptly respond to this project. Live date will need to be revisit for February 2022.
+
+
+
+[~thomasY]: Per our conversation, please assist with above. I will change the live date later today to sometime in Feb 2022.
+
+
+author: barnetts
+comment: Thanks [~William.Kong]/[~thomasY]
+
+
+author: thomasy
+comment: [~barnetts]Full zip file has been copied to their client pikcup:*SANA_Tax_Archival_5498_120921_1.zip.pgp*
+
+
+author: barnetts
+comment: Thank you [~thomasY]
+
+
+author: william.kong
+comment: *BARNETT:* As stated above, the live date is missed. Target live date is in February timeframe, but I will mark it for 1/24*+tentatively+* for project management purposes. If his tax workload is not as high, then we will get this project out earlier. However, if the Tax support is significantly high, we will reschedule for sometime in Feb 2022.
+
+
+
+Also, please keep the communication going with this project so we are not at a complete stop. If there is any wiggle room we will respond, but not as fast as we normally do.
+
+
+author: barnetts
+comment: [~thomasY],
+
+Can you please resend the archival file? SANA is unable to find them.
+SANA_Tax_Archival_5498_120921_1.zip.pgp
+
+Thanks, Barnett 
+
+
+author: william.kong
+comment: Hi [~barnetts],
+
+[~thomasY]is OOO until January 3. I checked our parallel environment. The last modified timestamp is 12/9/2021:
+
+
+
+-rw-rw-rw- 1 oper1 opers 139M Dec 9 11:43 SANA_Tax_Archival_5498_120921_1.zip.pgp
+ -rw-rw-rw- 1 oper1 opers 35M Dec 9 11:43 SANA_Tax_Archival_5498_120921_2.zip.pgp
+
+If these are the files, then I've recopied them to their client_pickup/test folder.
+
+They have only 5 days to download.
+
+
+
+Thanks!
+
+
+
+ Will
+
+
+
+
+
+
+
+
+author: barnetts
+comment: Thank you [~William.Kong]
+
+
+author: barnetts
+comment: Hi [~thomasY],
+
+The samples are approved. Since no parallel is required. Can you please release code?
+
+Thanks, Barnett 
+
+
+author: thomasy
+comment: [~barnetts]I'll release it tomorrow.
+
+
+author: barnetts
+comment: Thank you [~thomasY]
+
+
+author: thomasy
+comment: This has been released

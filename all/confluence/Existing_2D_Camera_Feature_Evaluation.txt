@@ -1,0 +1,68 @@
+title: Existing 2D Camera Feature Evaluation
+body: The 'Camera' link on ETA board support the 2D camera image feature. It
+comprised of mainly 3 steps outlined below.  
+  
+
+## Query Form (dds_report.php)
+
+  * It's a static form that expose a few params for generating query in next step
+  * It support ajax capability to show search results within same window
+  * Date range is limited to 35 days, but most probably because of the query in next step is not constructed optimally in Query 1 & 2\. Combining the queries should raise this limitation significantly (need testing).
+
+  
+  
+
+## Search operation (dds_reporting.php)
+
+  * It's performing queries on the oracle/mssql database. Queries as follows:
+  * Query 1: (Oracle)  
+Find all the 'pieceid' based on the search param.  
+
+    
+        select pieceid, acct_num, name, code_2d 
+    from dds_images 
+    where <corresponding params from Query Form>
+
+  * Query 2: (Oracle)  
+Find the corresponding CID/Cycle..etc info based on the 'code_2d' value from
+Query 1. Could've combine Query 1 & 2 together as an inner join.  
+
+    
+        select cid, cycle, prefix, job_name, site 
+    from dds_jobs 
+    where code_2d = :code_2d
+
+  
+  
+
+## Show Captured Image with HTML form/links (load_dds_image2.php)
+
+  * Query 3: (MSSQL, different DB instance between Menlo vs Texas)  
+Fetch the 'timestamp' only of the captured image. Manual DB Sharding done via
+table name of carrying first 5 digit of 'pieceid' to be table-name-suffix
+(i.e. $barid)  
+
+    
+        select TimeStamp 
+    from dp_jobid_$barid 
+    where pieceid = $pieceid
+
+  
+  
+
+## Fetching actual image content for <img src="image_path"> rendered in
+load_dds_image2.php
+(get_dds_image2.php)[](https://i3dev.easyredmine.com/projects/etaboard/wiki/Existing_2D_Camera_Feature_Evaluation#Fetching-
+actual-image-content-for-ltimg-srcimage_pathgt-rendered-in-load_dds_image2php-
+get_dds_image2php)
+
+  * Query 4: (MSSQL, different DB instance between Menlo vs Texas)  
+Actual image blob is stored in follow table. Could've done together with Query
+3 above.  
+
+    
+        select roi 
+    from dp_jobid_$barid 
+    where pieceid = $pieceid
+
+

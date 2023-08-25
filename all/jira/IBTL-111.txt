@@ -1,0 +1,275 @@
+title: RHS-Parallel: Errors while processing CAMB, FCSB, and GCBK
+description: Errors I received when trying to reprocess on rhs parallel without commenting out infotrac and message manager. Not sure which errors actually need to be looked into.
+
+Today I got errors on CAMB and FCSB message manager whereas yesterday I did not.
+
+!image-2020-10-07-19-33-28-601.png|width=1064,height=145!
+
+These are some errors I got yesterday:
+
+-GCBKEA failed I3 socket.
+
+!image-2020-10-07-19-36-19-548.png|width=668,height=125!
+
+-CAMB, GCBK EA, and FCSB all have the /z/Vision-s/ permission denied.
+
+!image-2020-10-07-19-37-38-459.png|width=631,height=74!
+
+-CAMB and FCSB have error with Database destination host unreachable
+
+!image-2020-10-07-19-38-53-271.png|width=1074,height=68!
+
+-CAMB have trigger_tracking_by_rec.pl
+
+!image-2020-10-07-19-35-10-008.png|width=1038,height=310!
+
+
+
+
+author: william.kong
+comment: [~yameelee]: I fixed the permission issue on /z/Vision-s/
+
+!image-2020-10-07-19-37-38-459.png|width=631,height=74!
+
+!image-2020-10-07-21-46-10-626.png!
+
+
+
+
+author: william.kong
+comment: [~yameelee]: This following issue is fixed:
+
+
+
+-CAMB have trigger_tracking_by_rec.pl
+
+!image-2020-10-07-19-35-10-008.png|width=1038,height=310!
+
+
+
+The ca-oracle-dv-01 was not working. I had to modify the docker-compose.yml file and alias ca-oracle-dv-01 to use the ca-oracle-pr-01 IP address temporarily since it is one physical server. Both prod, dev & stage are sharing this box.
+
+
+
+!image-2020-10-07-22-22-15-910.png!
+
+
+author: william.kong
+comment: [~yameelee]: We just fixed the Message Manager issue this morning https://jira.infoimageinc.com/browse/IBTL-107
+
+So this should take care of the error you reported below:
+
+
+
+Today I got errors on CAMB and FCSB message manager whereas yesterday I did not.
+
+!image-2020-10-07-19-33-28-601.png|width=1064,height=145!
+
+
+author: william.kong
+comment: [~yameelee]: All the issues are resolved including the one below. Can you confirm all the resolution is working:
+
+
+
+These are some errors I got yesterday:
+
+-GCBKEA failed I3 socket.
+
+!image-2020-10-07-19-36-19-548.png|width=668,height=125!
+
+
+author: yameelee
+comment: Today's processing error with CAMB trigger_tracking_by_rec.pl still:
+
+!image-2020-10-09-14-48-42-807.png|width=961,height=128!
+
+FCSB got invalid username/pw error !image-2020-10-09-15-20-02-536.png|width=974,height=61!
+
+Reviewed the print AFPs and they are good.
+
+
+author: william.kong
+comment: [~yameelee]: The following item is fixed. But i need time to work on the second issue and may need to reach out to you to get more details in order to research:
+
+Today's processing error with CAMB trigger_tracking_by_rec.pl still:
+
+!image-2020-10-09-14-48-42-807.png|width=961,height=128!
+
+
+
+Here's my testing results:
+
+oper1@rhs ~> curl -X GET http://ca-jobtrack-st-02.infoimageinc.com:8980/indexFileProcess/trigger?host=ca-preproc-pr-02&username=pdev1&pwd=infoimage&path=/z/isd_share/camb/print_fileid/&filename=cambms120201009142529.txt
+
+!image-2020-10-12-14-00-23-897.png!
+
+
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~yameelee]: Thanks for the email. This is the screenshot you sent me in regards to the 2nd reported issue above:
+
+!image-2020-10-12-17-53-49-774.png!
+
+
+author: william.kong
+comment: [~shailendrar]: Can you review this issue? YaMee was testing fcsb and got the error above. I noticed "http://sqlalche.me" which leads me to believe that this is related to ca-isapps-sg-01 InfoSYNC API. Can you confirm my assessment is correct.
+
+
+author: shailendrar
+comment: [~William.Kong] - olp_handler.sh is still pointing to old is-apps server:
+
+
+
+set_online_proofing_base_url(){
+
+# online_proofing_url="http://is-apps-dev.infoimage.com/infosync/v1"
+
+if [ "${HOSTNAME}" = "rht" -o "${HOSTNAME}" = "rht.infoimage" -o "${database}" = "test" ]
+ then
+ online_proofing_url="http://is-apps-dev.infoimage.com/infosync/v1"
+
+elif [ "${testmode}" = "y" -a "${HOSTNAME}" != "rht" ]
+ then
+ online_proofing_url="http://is-apps-stage.infoimage.com/infosync/v1"
+ else
+ online_proofing_url="http://is-apps-prod.infoimage.com/infosync/v1"
+ fi
+
+echo "new online proofing url is $online_proofing_url"
+
+}
+
+
+author: william.kong
+comment: [~shailendrar]:
+
+
+
+On the brisbane RHS server, i have the /etc/hosts files to have these URL points to brisbane infosync system:
+
+!image-2020-10-13-14-29-12-361.png!
+
+
+
+Is the error message coming from Brisbane infosync server or rhs server?  If the error message is invoked within InfoSYNC servers, then I need to add the /etc/hosts records to the docker container.
+
+
+
+Thanks!
+
+
+
+ Will
+
+
+
+
+
+
+
+
+
+
+
+
+author: shailendrar
+comment: [~William.Kong] The error is from Brisbane RHS server. Let me research more as the issue is not related to URL.
+
+
+author: shailendrar
+comment: [~William.Kong] - Assigning back to you as Brisbane RHS system is not available for Papyrus testing due to license switch. [~yameelee] will re-run the jobs when RHS is available.
+
+Per the initial analysis; issue could be related to https://jira.infoimageinc.com/browse/IBTL-112.
+
+
+
+
+author: william.kong
+comment: [~shailendrar]: Thanks for the update. I will demote this ticket for now until we can re-active RHS server testing.
+
+
+author: william.kong
+comment: [~yameelee]: 
+
+
+
+Please re-test this in*parallel.* Once completed please update Parallel smartsheet:
+
+[https://app.smartsheet.com/sheets/Gxwc79WFwW3wxqc2QJPvrp22CQrgf3Qgjv4R7pF1]
+
+
+
+
+
+
+author: william.kong
+comment: *Per YaMee:*
+
+
+
+CAMB and GCBK are good.
+
+
+
+FCSB stopped (see below).
+
+!image-2020-11-12-16-30-36-902.png!
+
+
+
+
+
+[~ernestw]: Can you please review this parallel run issue?
+
+
+
+
+
+
+author: ernestw
+comment: [~yameelee]: The Out of memory error was not from ISIS. Can we try processing again?
+
+
+author: william.kong
+comment: [~yameelee]: After you re-test, please report your findings into this ticket.
+
+
+author: yameelee
+comment: Still got the same error of "Out of memory"
+
+
+author: ernestw
+comment: [~yameelee]
+
+Would you let me know how to run that job?
+
+
+
+
+author: yameelee
+comment: /home/test/master/fcsb_dda_process.sh 1 bypass
+
+
+
+I already removed checksum and files are in test BU
+
+
+author: yameelee
+comment: Will,
+
+Ernest and I were unable to process FCSB due to error on DT_JOB_ID and esup bin. Do I need to request PC to create new DT_JOB_ID for all 4 applications to retest? Not really sure what happened as I was able to process them in October with just the oracle message error before. I tried using old DT_JOB_ID and the 999999 but both gave same error.
+
+
+
+!image-2020-11-16-14-18-28-940.png|width=484,height=407!
+
+
+author: william.kong
+comment: [~yameelee]: We are going to need to post this next week and might re-test with a valid DT_JOB_ID.

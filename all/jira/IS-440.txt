@@ -1,0 +1,550 @@
+title: PFCU - Tax Setup for Print and Electronic
+description: http://sharepoint-svr/AS/Shared%20Documents/SOW%20Directory/PFCU%20-%20Pittsford%20Federal%20Credit%20Union/SOW/PFCU%20Tax%20SOW.docx
+
+
+author: william.kong
+comment: [~thomasY]: I going to assign this project ahead of time. [~diegof]& [~phoebe.george]& [~TunA]are working out the final specs for this project but I hope next week or so we can get started with coding this project.
+
+
+author: thomasy
+comment: [~kericapote]I attached some samples but since the test data is for the 2020 tax year, some of the fields may not be correct (name is missing). I've already brought this up to Diego.
+
+
+
+[^1099igen.pdf]
+
+[^1098gen.pdf]
+
+
+author: kericapote
+comment: [~thomasY] so then what are we checking? Just if the IRS format works?
+
+
+author: thomasy
+comment: I placed some archival samples into their client pickup. The zip name isn't finalized:
+
+*pfcu_tax_1098_1_20211223.zip.pgp*
+*pfcu_tax_1099I_1_20211223_1.zip.pgp*
+*pfcu_tax_1099I_1_20211223_2.zip.pgp*
+*pfcu_tax_1099I_1_20211223_3.zip.pgp*
+
+
+author: kericapote
+comment: [~thomasY] PFCU says:
+
+_+1098+_
+
+- Index file is not in a tagged formatted file
+
+- Two digit appl-code is missing from the file name, should be just before the account number and could be separated with an underscore i.e. IRS1098_00_000000012345_20201231.pdf
+
+
+
+_+1099INT+_
+
+- Two digit appl-code is missing from the file name, should be just before the account number and could be separated with an underscore i.e. IRS1099INT_00_000000012345_20201231.pdf
+
+- Should only be one index file total when there are multiple zip files and that index file should be located in the last zip file (similar to what is done with the EOM Account statements with multiple zip files). We can go up to 500mb for a zip file so you could possibly use fewer, but larger zip files too if desired.
+
+I see they were able to add multiple ACCTNUM tags for a given form in the index file, cool, thanks!
+
+
+author: kericapote
+comment: [~thomasY] and here is feedback for the tax form 2020 samples:
+|Hi Keri, thanks for the samples! I will see if we can generate a test file for 2021, it is a bit challenging on our system, but might be possible early next week. Did the IRS move the member name to a different field in 2021 in the IRSTAP file or is there some other process suppressing the name because it is an older year? If so, can we just change the 2020 with 2021 in the IRSTAP file?
+ As for the sorting, that may be an issue and will generate several forms for members that should have been aggregated. We are going to review our options here to see if we can resort the file based on TIN instead of appl-code/account number.
+ Here are the results from my review and you can ignore the member name findings:
+ _+1098+_
+ - Member Name is missing in the mailing address block and the PAYERS NAME box on the form
+ - SSN needs to be masked to show just the last 4
+ - Box 8 has the address lines on one line and each address field should be presented on separate lines
+ - Slide data up within the boxes: Recipients TIN, Payers TIN, Account number
+ - Increase font size of each data value for readability if possible
+ - Any way to show the applcode from col25-26 and account number from col27-38 separated by a hyphen?
+  i.e. [applCode]-[accountNumber] such as: 00-123456
+ 
+ 
+ _+1099+_
+ - Member Name is missing in the mailing address block and the RECIPIENTS NAME box on the form
+ - SSN needs to be masked to show just the last 4
+ - Account numbers in the account detail seem to be including two extra digits such as '36'. Account number should be derived from col27-38 in the IRSTAP file and not the two extra digits. The 1098 forms seem to have this part resolved and the problem is only happening on the 1099INT forms.
+ Have a Merry Christmas!
+ Dan|
+
+
+author: kericapote
+comment: [~thomasY] per the TS ticket add in a sequence number to the end of name ...date_sequence#.pdf so that it will never overwrite.
+
+
+author: moshiur.rahman
+comment: [~thomasY]
+Do you have any ETA for the sample file? Because we'll have to process it and make sure that p-ui setup from our end is ok and from customer site, etaxes are showing properly.
+
+Thanks,
+Moshiur
+
+
+author: william.kong
+comment: [~eric.yan]: Can you help with just the processing of creating the eTaxes on pilot?
+
+
+
+[~diegof]: FYI.
+
+
+author: eric.yan
+comment: [~moshiur.rahman],
+
+I've created the etax index file for 1098 and 1099INT.
+
+/z/isd_input_dev/I3/process-files/pfcu/etax_1098_12312020_311_12292021_112621_pfcu.txt
+
+/z/isd_input_dev/I3/process-files/pfcu/etax_1099int_12312020_311_12292021_112822_pfcu.txt
+
+
+
+[~thomasY]
+
+The only modification I have is added "PFCU|E" to the etax.control
+
+
+author: thomasy
+comment: [~kericapote]
+ * Member Name is missing because IRS moved the field to a different location, but I think they already provided new files?
+ * Regarding[applCode]-[accountNumber], this will only work if the accountNumber displays the leading zeros. Are they okay with that? Are we doing this with the 1099Int as well?
+ * Are we displaying the applCode in the archival index file as well?
+
+
+
+
+
+
+author: diegof
+comment: # there is new files in the bu
+ # i told them this wasnt possible to begin with and i let them know again it wasnt possible. for the 1099i though it looks like we arent cutting off those 2 digits at the end like '36'
+ # they are okay with not having the appl code in the name of the pdf file name as long as we add the sequence number to the end of that pdf filename.
+
+
+author: kericapote
+comment: [~thomasY] please provide new samples asap. Thanks!
+
+
+author: william.kong
+comment: [~thomasY]: Per our discussion, please provide revised samples as requested.
+
+
+author: thomasy
+comment: [~kericapote]New samples are attached:[^1098gen_0106.pdf][^1099igen_0106.pdf]
+
+
+author: thomasy
+comment: Archival samples have been placed in client pickup as well.
+
+*PFCU_1098_311_2021.zip.pgp*
+
+*PFCU_1099I_311_2021_1.zip.pgp*
+
+*PFCU_1099I_311_2021_2.zip.pgp*
+
+
+author: kericapote
+comment: [~thomasY] please get ISD whatever they need to post to pilot as pilot was due 1/7.
+
+Thanks!
+
+
+author: thomasy
+comment: [~moshiur.rahman]E-Index files are:
+
+etax_1098_12312021_311_01102022_114613_pfcu.txt
+etax_1099int_12312021_311_01102022_114756_pfcu.txt
+
+
+author: kericapote
+comment: [~thomasY] here is the feedback from ticket 23426 that we discussed on the phone:
+
+1098 Forms
+
+- Box 8 - Member address is formatted incorrectly: city, state and zip should be together on one line under street address
+
+- this was correct on the samples from 0106, but incorrect on archive statement
+
+- TIN boxes - slide TIN data up slightly so it is not nearly touching the bottom of the boxes (pg 51 on sample). Can we move it down just a little?
+
+
+
+1099 Forms
+
+- For the Interest Income Account Detail box
+
+- Slide the outlined box to the right so that the left and right edges of the box aligns up with the actual form above. Do not move the actual content within that box though.
+
+- Extend the bottom of the outlined box down one line to give a little more bottom margin for the forms that have enough accounts to fill up the entire box
+ * Right align the 'Page 1 of 1' with the right edge of the actual form (and right edge of the new location of the Interest Income Account Detail box)
+ * - Multi-page forms have a long (maybe legal sized) blank second page and the third page has a break in the Interest Income Detail box. Can the second page be eliminated and the break in the box line on the subsequent pages be removed? See account 30320.
+ * There are some accounts where the person has moved states and as a result has 2 line items of interest (one from each state). Can we put a state code after each line so the member can understand why there are 2 lines? See account 2007710 OLGA XENAKIS as an example.
+
+
+author: kericapote
+comment: [~thomasY] how long it will take to create the mockup? is it as long as doing the programming,
+
+
+author: thomasy
+comment: [~kericapote]Samples with new files:
+
+[^1098gen_0114.pdf]
+
+[^1099igen_0114.pdf]
+
+
+
+[~moshiur.rahman]New index files for pilot:
+
+etax_1098_12312021_311_01142022_091521_pfcu.txt
+
+etax_1099int_12312021_311_01142022_091619_pfcu.txt
+
+
+author: kericapote
+comment: [~thomasY] PFCU says:
+
+ Here are a couple items to note on the 1099INT:
+ 1) 1099INT - SSN needs to be masked similar to the 1098s
+ 2) 1098 - phone number 585-624-7474 should be displayed under the CU address blocks similar to the 1099INT forms
+ Is there an example of a multi-page statement to see if the other issues are resolved?
+
+
+author: thomasy
+comment: [~kericapote][^1098gen_0114_2.pdf][^1099igen_0114_2.pdf]
+
+
+author: kericapote
+comment: [~thomasY] PFCU is asking - Our old forms used to show TAXES PAID: with the amount in Box 10, is that feasible?
+
+
+author: thomasy
+comment: [~kericapote] [^1098gen_0114_3.pdf]
+
+
+author: thomasy
+comment: [~moshiur.rahman]Can you post these updated index files:
+
+etax_1099int_12312021_311_01142022_132347_pfcu.txt
+
+etax_1098_12312021_311_01142022_132131_pfcu.txt
+
+
+author: kericapote
+comment: [~thomasY] 1098 and 1099i samples approved! Can you provide a dpvs for print samples?
+
+Let me know when archival is ready.
+
+
+
+
+author: thomasy
+comment: [~kericapote]DPVS are attached. Print a few from the 4.2o1 files..
+
+[^pfcu098131.print]
+
+[^pfcu99i131.print]
+
+
+author: thomasy
+comment: [~moshiur.rahman]Can you post this index file:?
+
+etax_1098_12312021_311_01172022_144508_pfcu.txt
+
+
+author: moshiur.rahman
+comment: [~thomasY] 
+etax_1098_12312021_311_01172022_144508_pfcu.txt is posted on pilot.
+
+Thanks
+Moshiur
+
+
+author: kericapote
+comment: [~thomasY] PFCU Feedback-
+
+* 1098 and 1099INT - The year in the file name of the PDF is still 2020 and should be 2021
+
+- i.e. IRS1098_[acctNumber]_20201231_[seq].pdf should be IRS1098_[acctNumber]_20211231_[seq].pdf
+
+
+
+* 1099INT - Index file does not include all account numbers [ACCTNUM] on a form (i.e. see form with 30320)
+
+* 1099INT - PDF layout does not match what was online for multipage accounts where the second page is a blank extra legal size page and the Interest Income Account Detail data is split across pages 3 and 4 (i.e. see form with 30320)
+
+* ACCTNUM: 10525810 has EMPCODE: U but there is a matching record in the pfcu_tax_xref_20220111.txt file
+1098 - Increase the font size of the box 10 value: TAXES PAID: $0.00 to match the size of the data in the other boxes
+* Can the font size of the new TAXES PAID: label and data be increased to match that of the data in the other boxes?
+* When printing the 1098 form from the e-version, the right edge of the form text is getting slightly cut-off.
+
+
+author: thomasy
+comment: [~kericapote]Sample with font size change[^pfcu_1098.pdf]
+
+
+author: kericapote
+comment: [~thomasY] archival and above sample approved! Please provide updated DPVS for print samples and send to QA. Thanks!
+
+
+author: thomasy
+comment: Parallel:20211223131453
+
+
+author: igor.khosid
+comment:    Parallel ID: 20211223131453
+   Currently in parallel: Yes
+   User: thomasY
+   Description: IS-440
+   Date Submitted: 2021-12-23 13:14:59
+   Date Last Updated: 2021-12-23 13:14:59
+   Files:
+      1) pfcu_customized_archival.sh
+      2) pfcutax_pdf.control
+      3) pfcu_spec_handle.pl
+      4) pfcutax_pdf_template.control
+
+
+
+author: igor.khosid
+comment: [~thomasY]
+Could you please provide index file I can post on Stage?
+
+
+author: igor.khosid
+comment: [~kericapote]
+Please attach SOW and approved samples
+
+
+author: kericapote
+comment: [~Igor.Khosid] approved samples attached. I have a call to review the SOW with the client and I will attach after that.
+
+
+author: igor.khosid
+comment: [~thomasY] [~kericapote] [~phoebe.george] [~gthillaivel]
+
+Thomas
+2nd request. Could you please provide index file I can post on Stage ASAP?
+Also - attach IS checklist
+
+
+author: igor.khosid
+comment: [~gthillaivel]
+Please, proceed with testing - expected to finish it ASAP - by tomorrow 01.25.2022
+
+
+author: igor.khosid
+comment: [~gthillaivel]
+Print samples -  attached as per Jose email - tap test passed
+>>>  [^IS-440_PFCU_1098_Print samples 01242022.pdf] 
+>>>  [^IS-440_PFCU_1099I_Print samples 01242022.pdf] 
+
+
+author: thomasy
+comment: [~Igor.Khosid]
+
+Index files:
+
+etax_1098_12312021_311_01172022_144508_pfcu.txt
+
+etax_1099int_12312021_311_01172022_144608_pfcu.txt
+
+
+
+Checklist:
+
+[^pfcutax_checklist.pdf]
+
+
+author: igor.khosid
+comment: [~thomasY] thank you
+
+[~gthillaivel] - please proceed
+
+
+author: gthillaivel
+comment: [~thomasY][~TunA]
+1. 1098 Form update looks good as expected
+2. Compared the approved "1099 int"samples with the samples in the share drive a tabular column "Interest income account detail is missing.Attached is the screenshot
+ !sample_mismatch_qa.PNG|thumbnail! 
+
+
+author: gthillaivel
+comment: [~thomasY][~TunA]
+Posted latest index file in PUI stage.Both of them unable to post.Attached is the error screeshot
+Index files:
+
+etax_1098_12312021_311_01172022_144508_pfcu.txt
+
+etax_1099int_12312021_311_01172022_144608_pfcu.txt
+ !1098_qa_pui.PNG|thumbnail!  !1099int_qa_pui.PNG|thumbnail! 
+
+
+author: thomasy
+comment: [~gthillaivel]Please reimport project to see the backer.
+
+
+
+I recreated the index files. If it still fails to post please ask [~moshiur.rahman]/ ISD for assistance:
+
+etax_1099int_12312021_311_01242022_141501_pfcu.txt
+
+etax_1098_12312021_311_01242022_141350_pfcu.txt
+
+
+author: gthillaivel
+comment: [~thomasY][~TunA][~moshiur.rahman]
+Posted index file in stage ,failed.Attached is the screenshot
+etax_1099int_12312021_311_01242022_141501_pfcu.txt
+etax_1098_12312021_311_01242022_141350_pfcu.txt
+ !1098_qa1_pui.PNG|thumbnail!  !1099int_qa1_pui.PNG|thumbnail! 
+
+
+author: tuna
+comment: Hi [~gthillaivel],
+
+I just spoke to [~Igor.Khosid]about 1099INT interest combined box at the bottom of the page.
+
+You will see that interest combined summary box, if the client requested for 1099INT aggregate feature. If the client is not requested for for 1099INT aggregate feature, you won't see that box.
+
+1099INT aggregate basically mean, the program combined the 1099INT accounts together for same SSN and/or same addresses in the data file. So we won't send multiple mails for each account separately.
+
+Thanks,
+
+Tun
+
+
+
+[~thomasY]
+
+
+
+
+
+
+author: gthillaivel
+comment: [~TunA]
+Thanks Tun for above information.
+Paper-1098 and 1099 int -Passed
+Esite-Index files are failing.Waiting for DSI to provide new files
+
+
+author: igor.khosid
+comment: [~moshiur.rahman] [~kericapote] [~phoebe.george]
+
+Please review the issue with the processing index file on stage, reported by Gnana. Let us know when fixed.
+
+
+author: azad
+comment: [~Igor.Khosid] [~gthillaivel] [~kericapote] [~phoebe.george]
+
+I've re-run the following index files reported by Gnanambal.
+
+etax_1099int_12312021_311_01242022_141501_pfcu.txt (pid:191411)
+ etax_1098_12312021_311_01242022_141350_pfcu.txt (pid:191413)
+
+The issue was those files were processed in non-test mode. They have to be processed on test mode.
+
+Also there weresome warnings for_etax_1099int_12312021_311_01242022_141501_pfcu.txt_ . The issue was there were some accounts on the index files that were not present on the database i.e. new accounts. The PFCU business expects that always existing account should be processed on the Processing-UI. For that reason, etaxes were not processed. We have to process an auth for those accounts first.
+
+We will process the latest auth from production PUI to the stage and will re-run the 1099int again.
+
+Thanks
+
+Azad
+
+
+author: gthillaivel
+comment: [~Azad][~TunA][~thomasY][~kericapote][~phoebe.george]
+ !1099int_qa_Infotrac.PNG|thumbnail! 
+
+Etax tab is missing in admin site-Infotrac stage.Attached is the screenshot
+1099int-10101
+
+
+author: gthillaivel
+comment: 1098--acct#101118
+ !1098_qa_Infotrac.PNG|thumbnail! 
+
+
+author: moshiur.rahman
+comment: [~Igor.Khosid] [~gthillaivel] [~kericapote] [~phoebe.george] 
+etax_1099int_12312021_311_01242022_141501_pfcu.txt file is also processed on stage. I took the latest auth file(_pfcu_cif_01242022.dly_) from production and processed it on stage to make those missing accounts available.
+
+Thanks,
+Moshiur
+
+
+author: azad
+comment: 
+
+Hi [~gthillaivel],
+
+The account #10101 is a new account (see the warning for account not found). PFCU etax process will not create account if not found. An AUTH file needs to be processed first for those accounts before processing any etaxes. That's why no etax have been processed for this account.
+
+The account #101118 actually has an etax showing on the Etax tab. Just click the "Tax Forms" tab to view etaxes.
+
+Thanks!
+
+!Screenshot from 2022-01-25 23-17-05.png!
+
+
+
+
+author: gthillaivel
+comment: [~Azad][~kericapote][~TunA][~thomasY]
+
+Verified the tax forms in e-site it's posted and statement is available now
+ !1098_qa1_Infotrac.PNG|thumbnail!  !1099int_qa1_Infotrac.PNG|thumbnail! 
+
+
+author: igor.khosid
+comment: [~gthillaivel] [~Azad] [~kericapote] [~phoebe.george]
+
+Thank you, Azar
+
+Gnana - please review above comments and proceed.
+We need to expedite the testing
+
+
+author: gthillaivel
+comment: @Igor, [~Azad][~kericapote][~phoebe.george]-
+
+Igor-Please read the above comment .I have already completed testing.Working with keri already on this
+
+
+author: igor.khosid
+comment: [~gthillaivel] [~kericapote]
+I wonder why you moved the status to "Waiting for approval"?
+This one is an implementation project, and if you complete the testing, please change the status to "Qa Passed."
+
+
+author: kericapote
+comment: [~gthillaivel]Per Phoebe the AUTH file is already set up for PFCU. Please provide account numbers that won't post so I can let PFCU know they need to add them to the AUTH file. Thx!
+
+
+author: gthillaivel
+comment: [~kericapote]
+The account #10101 is a new account (see the warning for account not found). PFCU etax process will not create account if not found. An AUTH file needs to be processed first for those accounts before processing any etaxes. That's why no etax have been processed for this account. 
+
+I can't verify all the accounts, I picked randomly to verify the statement.One such account was 1099int-acct#10101
+
+
+author: igor.khosid
+comment: Thank you, [~gthillaivel]
+Please sign and attach IS checklist
+
+[~kericapote]
+Please initiate MPT
+
+
+author: gthillaivel
+comment:  [^pfcutax_checklist.pdf] 
+
+
+author: william.kong
+comment: [~thomasY]: per our discussion, please close this ticket out.

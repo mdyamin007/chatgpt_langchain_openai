@@ -1,0 +1,319 @@
+title: OFCU - [24352][pvt] Index file format Update for HELCO/BLOC
+description: Update OFCU'sXML index file for the pdf statements rather than the comma delimiter text file, for their Monthly Statements, HELCO/BLOC, Visa
+ *App: HELOC/BLOC*
+
+IS Assessment =============
+ Hours for development: 15 IS hours ( 5 hours for each application x 3 applications)
+ * Turnover Date: 02/07/2022 
+ * Sample to QA Date: 02/15/2022 
+ * Sample Approval Date: 02/18/2022 
+ * Go live date: 03/08/2022
+
+Assessment Details (IS):
+ - Parallel required: (Yes) ONLY FOR ARCHIVAL PROCESS (no paper and e-stmt parallel required)
+ - ChangeXML index file for the pdf statements rather than the comma delimiter text file, for
+
+ * HELOC/BLOC (OFCUME1)
+
+ - follow XML index format in TS 24352 Comment #19
+ - UseDOC Date can be configured for the statement date.
+ *-*The index file naming convention will remain the same forboth the Zip file and the PDFs.
+
+===================XML SAMPLE FOR HELOC/BLOC Statements ===============
+ *************************************************************************************
+ <?xml version="1.0" encoding="utf-8"?>
+ <FilingJob>
+  <Batch SeqNum="1">
+  <FileRoom>MID-OREGON FEDERAL CREDIT UNION</FileRoom>
+  <DeleteFiles>true</DeleteFiles>
+  <Document SeqNum="1">
+  <DocName> HELOC/BLOC Statements </DocName>
+  <Cabinet> STATEMENTS </Cabinet>
+  <Type> HELOC/BLOC Statements </Type>
+  <Institution>73</Institution>
+  <Indexes>
+  <Index Name="ACCOUNT NUMBER">012345</Index>
+  <Index Name="NAME">First M Last</Index>
+  <Index Name="DOC DATE">12/31/2021</Index>
+  </Indexes>
+  <Pages>
+  <Page SeqNum="1">statement.pdf</Page>
+  </Pages>
+  </Document>
+   </Batch>
+  </FillingJob>
+
+
+author: JIRAUSER10906
+comment: QA
+
+This update to the archival process to produce an XML index file instead of a comma-delimited index file is ready for sample review.
+ * Exported updated project file to shared drive: /d/iss/qa/OFCU/OFCUME11.zip
+ * Attached XML index file produced from running archival 'e' option[^Heloc.ofcu_archival_index.idx]
+
+****************************************************
+ Parallel ID: 20220211111220
+ Currently in parallel: Yes
+ User: samV
+ Description: IS-797 OFCU XML idx for pdf archival
+ Date Submitted: 2022-02-11 11:13:21
+ Date Last Updated: 2022-02-11 15:01:23
+ Files:
+ 1) ofcume1_pdf_template.control
+ 2) ofcume1_pdf.control
+ 3) OFCUME11.dfa
+ 4) ofcume1_pdf_template_header.control
+ 5) ofcume1_pdf_template_footer.control
+****************************************************
+
+
+author: JIRAUSER10906
+comment: [~Andrey.Kutsenko]
+
+Attached old index file (comma-delimited format) taken from production[^Heloc.ofcu_archival_index_OLD.idx]
+
+Also, here is the location of the archival files on staging: _/z/pdf_afp/ofcu/ofcume1_
+
+
+author: igor.khosid
+comment: [~SamV2021]
+Thank you, Sam
+
+
+author: JIRAUSER11104
+comment: [~barnetts] [~SamV2021]
+
+Please provide an updated SOW.
+
+
+
+
+author: JIRAUSER11104
+comment: 1.The logic for creating a name in an index-file and pdf-files has not changed:
+
+output_index_file = Heloc.ofcu_archival_index.idx
+ PDF_FILENAME = ACCT_NUM!'.'!PERIOD_END_IDX!'.'!&SEQ_NUM!'.pdf' ;
+
+2.+Statements+ generated in Papyrus based on the project (/d/iss/qa/OFCU/OFCUME11.zip) are similar to those on the Production server and are +Ready for Customer Review+.
+
+3.Note for file index by XML structure.
+ The <Index> tag with the Name='NAME' parameter must be shifted according to the other parameters for the <Indexes> tag.
+ See screenshot:
+
+ !image-2022-02-11-17-49-09-830.png!
+
+
+author: JIRAUSER10906
+comment: [~barnetts]
+
+Please provide the attached sample XML index file[^Heloc.ofcu_archival_index.idx] to the client for approval.
+
+Per Andrey's comment, shifted <Index> tag to line up with the other tags. Then, reprocessed in parallel environment.
+
+Thanks!
+
+
+author: barnetts
+comment: SOW is attached. 
+
+
+author: barnetts
+comment: Pending OFCU approval of sample
+
+
+author: barnetts
+comment: Hi [~SamV2021], 
+
+Please see OFCU response below about the HELOC XML. 
+The index file you attached is an IDX formatted file. We need the XML and some HELOC statement samples. 
+Can you please advise?
+
+Thanks, Barnett 
+
+
+author: JIRAUSER10906
+comment: [~barnetts]
+
+_ofcume1_01312022.zip_ has been placed in client pickup. The zip contains the XML index file along with the pdf statements.
+
+*Note:* _ofcume1_process.sh_ has been updated in staging to use _INDEX_PATTERN:"^Heloc.ofcu_archival_index.xml$"_ instead of_INDEX_PATTERN:"^Heloc.ofcu_archival_index.idx$"_ so that pdf archival count verification passes.
+ ****************************************************
+ Parallel ID: 20220211111220
+ Currently in parallel: Yes
+ User: samV
+ Description: IS-797 OFCU XML idx for pdf archival
+ Date Submitted: 2022-02-11 11:13:21
+ Date Last Updated: 2022-02-15 15:22:49
+ Files:
+ 1) ofcume1_pdf_template.control
+ 2) ofcume1_pdf.control
+ 3) OFCUME11.dfa
+ 4) ofcume1_pdf_template_header.control
+ 5) ofcume1_pdf_template_footer.control
+ 6) ofcume1_process.sh
+ ****************************************************
+
+
+author: JIRAUSER11104
+comment: [~barnetts]
+
+Please update SOW for three document types (Monthly statements, HELCO/BLOC, Visa):
+ - change index file extension from ".idx" to ".xml"
+ - add structure description file index in XML format
+
+FYI:
+ [~SamV2021]
+ [~jira_naru]
+ [~andyp]
+
+
+
+
+author: barnetts
+comment: [~Andrey.Kutsenko], Th [^OFCU HELOC Statement SOW_Print.docx] e SOW is updated 
+
+
+author: JIRAUSER11104
+comment: Thanks, [~barnetts] [~SamV2021] for the quick changes.
+
+
+author: barnetts
+comment: Hi [~SamV2021],
+
+OFCU wants a XML statement for every 100 PDF statements for each batch of statements?
+There were some issues with some statements not processing and this would cause the batch to fail. They found that some business names contained special characters which XML does not allow. Could you use Escape Sequence code when these special characters are found?
+Symbol (name) -> Escape Sequence
+& (ampersand) -> &
+' (apostrophe or single quote) -> '
+
+Thanks, Barnett 
+
+
+author: barnetts
+comment: Hi [~SamV2021],
+
+I am following up with OFCU for more details.
+
+Thanks, Barnett 
+
+
+author: barnetts
+comment: Hi [~SamV2021]
+
+For creating an XML index file for every 100 PDF statements in a given batch, OFCU wants One zip file containing all the PDF statements (as is currently), along with all the split XML index files.
+
+Thanks, Barnett 
+
+
+author: JIRAUSER10906
+comment: Thanks [~barnetts]
+
+We are currently working on a solution.
+
+
+author: barnetts
+comment: Thank you [~SamV2021]
+
+
+author: barnetts
+comment: Hi [~SamV2021],
+
+I wanted to follow up with you about this. We are close to live date. 
+
+Thanks, Barnett 
+
+
+author: JIRAUSER10906
+comment: [~barnetts]
+
+Hi Barnett, I believe Andy is done working on changes during the format step to utilize the escape sequence codes for the unsupported XML characters. However, I still need to apply these changes to my application (OFCUME1).
+
+As for the other request to create XML index files for every 100 PDF statements, it is still a work-in-progress.
+
+The live date would definitely need to be changed. Please check with Andy regarding an expected timeline.
+
+Thanks,
+Sam
+
+
+author: barnetts
+comment: Hi [~SamV2021],
+
+OFCU says that the XML index files for every 100 PDF statements can be changed to 500 statements if this will speed things up.
+
+Thanks, Barnett 
+
+
+author: william.kong
+comment: [~barnetts]: As discussed via Zoom. There is a last minute scope change communicated an hour ago. Please consult with [~Peter.Dang] and [~yameelee] to discuss with Same to provide revised timeline due to last minute spec change. They will be able to better provide a better revised timeline since original timeline is missed and there is a last minute spec change.
+
+
+author: barnetts
+comment: Hi [~SamV2021],
+
+It looks like Andy made updates on his end.
+
+Thanks, Barnett
+
+
+author: JIRAUSER10906
+comment: [~barnetts]
+
+Hi Barnett, I have copied over_ofcume1_02282022.zip_to client pickup. The zip contains all the pdf statements, along with the split XML index files (which each contain 100 accounts). The split XML index files now also contain the special escape characters.
+
+Thanks!
+
+
+author: barnetts
+comment: Thank you [~SamV2021]
+
+
+author: JIRAUSER10906
+comment: [~Andrey.Kutsenko]
+
+IS checklist attached[^ofcume1_is-797_check_list.pdf]
+
+[~barnetts]
+
+Please initiate parallel testing for this. As stated of the JEF, parallel is required to test the archival process.
+
+Thanks!
+
+
+author: JIRAUSER11104
+comment: IS Checklist attached >>>[^IS-797_OFCU_IS_Checklist.pdf]
+
+
+author: barnetts
+comment: [~SamV2021]/ [~Andrey.Kutsenko],
+
+MPT # 27261 created. Sam please find out MPT#27261.
+
+Thanks ,Barnett 
+
+
+author: barnetts
+comment: Hi [~SamV2021],
+
+The parallel passed however we are still wafting for the parallel for Visa to pass. Can you please advise if this can be released or does it need the Visa to pass parallel? 
+
+Thanks, Barnett 
+
+
+author: JIRAUSER10906
+comment: [~barnetts]
+
+Hi Barnett, we don't need to wait for the Visa parallel. I am releasing now.
+
+Thanks,
+Sam
+
+
+author: JIRAUSER10906
+comment: Code has been released to production.
+
+Backup ID:20220309152800
+
+
+author: barnetts
+comment: Thank you [~SamV2021]

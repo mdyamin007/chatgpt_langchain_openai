@@ -1,0 +1,88 @@
+title: BBBB - [26719][pvt][in-house] No Image on Recent Statements
+description: update bbbbds1_process.sh
+
+export g_max_cripple_num=3
+
+export g_cripple_report="${d_dir}/${cid}/${cid}${app}${seg_num}${cycleno}.bad"
+
+
+
+Run through test to ensure it does not autotrigger e-autopost.
+
+Estimate 4 hours.
+
+Turnover to IS: 03/01/2022
+
+QA: 03/09/2022
+
+Live: 03/14/2022
+
+*parallel test is not required.
+
+
+author: JIRAUSER10906
+comment: * Modified bbbbds1_process.sh to export g_max_cripple_num and g_cripple_report instead of exporting _high_cripple_flag_ because _high_cripple_flag_ is not being set and exported by the time _move_afp_threads.sh_ is called (as it is called by _isisdisk.sh_, which runs earlier in the processing script). Note that cripple information cannot be retrieved until_isisdisk.sh_ finishes running. With this solution, _move_afp_threads.sh_ executes the already written _cripple_checker_, using exported variables g_max_cripple_num and g_cripple_report.
+ * Processed on RHS2 with high cripple rate, verified that eStatement is not auto-posted.
+
+
+author: JIRAUSER10906
+comment: QA
+
+This update to prevent autotrigger of estatement posting while there is high cripple rate (3% or more) is ready for review.
+
+Note: I verified that there's no estmt auto-posting by checking that no entry exists in /z/daily/index_file.log for the most recent run of the job, indicating that /home/test/master/I3.socket.pl was not called and so processing of estmt was not initiated.
+
+****************************************************
+ Parallel ID: 20220302152419
+ Currently in parallel: Yes
+ User: samV
+ Description: IS-864 BBBB High Cripple No E-Autopost
+ Date Submitted: 2022-03-02 15:29:32
+ Date Last Updated: 2022-03-07 11:09:51
+ Files:
+ 1) bbbbds1_process.sh
+****************************************************
+
+
+author: igor.khosid
+comment: QA - completed
+
+
+ # Parallel report
+
+Parallel ID: 20220302152419
+Currently in parallel: Yes
+User: samV
+Description:IS-864BBBB High Cripple No E-Autopost
+Date Submitted: 2022-03-02 15:29:32
+Date Last Updated: 2022-03-07 11:09:51
+Files:
+1) bbbbds1_process.sh
+
+2. Diff prod vs test
+
+---
+> # Exporting $g_cripple_report and $g_max_cripple_num so that move_afp_threads executes cripple_checker
+> cycleno=`grep PROC_DATE: ${home_ins}/insert/${cid}${app}.ins | cut -d " " -f2 | cut -c3-4`
+> export g_max_cripple_num=3
+> export g_cripple_report="${d_dir}/${cid}/${cid}${app}${seg_num}${cycleno}.bad"
+> cripple_file="${d_dir}/${cid}/${cid}${app}${seg_num}${cycleno}.bad"
+
+< cycleno=`grep PROC_DATE: ${home_ins}/insert/${cid}${app}.ins | cut -d " " -f2 | cut -c3-4`
+< cripple_file="${d_dir}/${cid}/${cid}${app}${seg_num}${cycleno}.bad"
+---
+> #cycleno=`grep PROC_DATE: ${home_ins}/insert/${cid}${app}.ins | cut -d " " -f2 | cut -c3-4`
+> #cripple_file="${d_dir}/${cid}/${cid}${app}${seg_num}${cycleno}.bad"
+210c217,218
+< if [ $crp_percent -ge "3" ] ; then
+---
+> if [ $crp_percent -ge "3" ]; then
+> echo "Inside high cripple block of bbbbds1_process.sh"
+
+3. No entry exists in /z/daily/index_file.log f
+
+
+author: JIRAUSER10906
+comment: Code has been released to production.
+
+Backup ID: 20220309153328

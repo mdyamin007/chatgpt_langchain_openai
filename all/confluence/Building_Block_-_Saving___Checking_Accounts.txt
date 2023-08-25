@@ -1,0 +1,212 @@
+title: Building Block - Saving / Checking Accounts
+body:   
+  
+
+## What does this block hold?
+
+Mainly Transactions & details of corresponding Savings/Checking Accounts.
+Since the data between Savings and Checking are relative similar to each
+other, hence grouped together under same schema.  
+  
+
+## Cores evaluated
+
+  1. Symitar
+  2. Ultradata
+  3. OSI (DNA)
+
+  
+  
+
+## Attribute Structure
+
+  1.  **Section Header Label**  (e.g. "Savings", "Premier Savings", "Free Checking")
+  2.  **Accounts**
+    1. Array of  **Account**
+      1.  **Name**  (e.g. Primary Savings Account, Money Market Account)
+      2.  **Major Code**  (Code values to indicate type of account: share, loan, cd.)
+      3.  **Minor Code**  (Symitar use minor code with the actual values populated into this 'Minor Code'. OSI use combination of major and minor code)
+      4.  **Account Number**
+      5.  **Share Description**
+      6. Array of  **Account Owner Names**  (multiple names when it's a joint account)
+        1.  **Full Name**  (!) Data are coming in as full name string only, if possible, should break this down into First/Middle/Last Names
+      7.  **Summary**
+        1.  **Start Date**
+        2.  **Start Balance**
+        3.  **End Date**
+        4.  **End Balance**
+        5. Array of  **Item**
+          1.  **Item Name**  (Dividend / Penalty / Withholding Federal / Withholding State / Deposits / Withdrawal / IRA Contribution / APY() / Service Charge($) / Interest( $) / Average Daily Balance ($) / Minimum Balance / Overdraft Fee / Return Item Fee )
+          2.  **Current Period Amount**  (dollar amount value)
+          3.  **Current Period Non-Taxable Amount**
+          4.  **YTD Amount**
+          5.  **Last Year Amount**
+          6.  **Rate**  (percentage value)
+          7.  **Count**
+          8.  **Start Date**  (if different from above)
+          9.  **End Date**  (if different from above)
+      8.  **Transactions**
+        1. Array of  **Transaction**
+          1.  **Transaction Date**
+          2.  **Effective Date**
+          3.  **Description**
+          4.  **Deposit/Credit**
+          5.  **Withdrawal/Debit**  {FIXME} Tien: change this
+          6.  **Balance**
+          7. Array of  **Item**
+            1.  **Item Name**  ( Comment / APYE / DebitCard )
+            2.  **Value**  (text value, used for Comment)
+            3.  **Rate**  (percentage value)
+            4.  **Average Daily Balance**
+            5.  **Transaction Date**  (applicable to APYE)
+            6.  **Effective Date**  (applicable to APYE)
+            7.  **Start Date**  (applicable to APYE)
+            8.  **End Date**  (applicable to APYE)
+            9.  **Merchant Name**  (applicable to DebitCard)
+            10.  **Merchant Posting Date**  (applicable to DebitCard)
+            11.  **Credit Card Reference**  (applicable to DebitCard)
+      9.  **Checks Cleared**
+        1.  **Count of Checks**
+        2.  **Sub-total of all checks**
+        3. Array of  **Check**
+          1.  **Check Number**
+          2.  **Date**
+          3.  **Amount**
+          4.  **eCheck**  (1/not present)
+          5.  **Check Number Out of Sequence**  (1/not present)
+      10.  **Reg DD**  : data points to exposed per regulations
+        1. Array of  **Field**
+          1.  **Field Name**
+          2.  **Current Period Amount**
+          3.  **YTD Amount**
+
+  
+  
+
+## Suggested Sample XML
+
+    
+    
+      
+    
+    
+    
+      <section label="PREMIER SAVINGS" />
+      <accounts>
+        <account name="Savings" major_code="400" minor_code="123">
+          <account_num>4378291-8734</account_num>
+          <share_desc>Premier Savings Account</share_desc>
+          <account_owners>
+            <name fullname="John Smith" />
+            <name fullname="Jame Smith" />
+          </account_owners>
+          <summary start_date="2013-07-01" start_bal="5143.43" end_date="2013-07-31" end_bal="6342.64">
+            <item name="dividend"        curr_period_amt="234.12"    ytd_amt="1894.43" last_yr_amt="1641.54" curr_period_non_tax_amt="98.12" />
+            <item name="penalty"         curr_period_amt="12.23"     ytd_amt="23.43"   last_yr_amt="45.22" />
+            <item name="withhold_fed"    curr_period_amt="45.53"     ytd_amt="123.43"  last_yr_amt="211.22" />
+            <item name="withhold_state"  curr_period_amt="15.53"     ytd_amt="83.43"   last_yr_amt="189.22" />
+            <item name="deposit"         curr_period_amt="2354.54"   count="7" />
+            <item name="withdrawal"      curr_period_amt="1155.33"   count="3" />
+            <item name="ira_contrib"     curr_period_amt="15.53"     ytd_amt="83.43" />
+            <item name="apy"             rate="15.534300" ytd_amt="83.433700" start_date="2013-07-05" end_date="2013-07-31" />
+            <item name="svc_charge"      curr_period_amt="43.62" />
+            <item name="interest"        curr_period_amt="32.32"     rate="1.2943" />
+            <item name="avg_daily_bal"   curr_period_amt="431.48" />
+            <item name="min_bal"         curr_period_amt="1500.00"   end_date="2013-07-31" />
+            <item name="overdraft_fee"   curr_period_amt="25.00"     ytd_amt="75.00" />
+            <item name="return_item_fee" curr_period_amt="15.00"     ytd_amt="15.00" />
+          </summary>
+          <transactions>
+            <transaction trn_date="2013-07-04" post_date="2013-07-06" desc="Starbucks @ happy street in the city" withdrawal="10.78" balance="5249.49">
+              <item name="debitcard" show="1" merchant_name="Starbucks 888-2438470 CA" merchant_post_date="2013-07-03" cardref="126184653855045272 5499" />
+            </transaction>
+            <transaction trn_date="2013-07-05" post_date="2013-07-08" desc="ATM deposit at #57892"                deposit="1410.43"  balance="6222.49">
+              <item name="comment" show="1" value="Westfield Mall" />
+              <item name="comment" value="San Francisco, CA 46372" />
+            </transaction>
+            <transaction trn_date="2013-07-11" post_date="2013-07-11" desc="ATM Withdrawal from #5632"            withdrawal="300.00"  balance="5900.49" />
+            <transaction trn_date="2013-07-11" post_date="2013-07-11" desc="Check #546"    check_num="349"        withdrawal="14.54"   balance="5600.49" />
+            <transaction trn_date="2013-07-11" post_date="2013-07-11" desc="Deposit Dividend 0.200% (Index Rt)"   deposit=""           balance="5601.49">
+              <item name="apye" trn_date="2013-07-11" post_date="2013-07-11" rate="0.36" start_date="2013-07-01" end_date="2013-07-31" avg_daily_bal="5500.32" />
+            </transaction>
+            <transaction ... />
+            ...
+          </transactions>
+          <checks_cleared check_count="6" sub_total="5735.24">
+            <check check_num="342" date="2013-07-23" amt="4321.54" echeck="1" />
+            <check check_num="343" date="2013-07-24" amt="631.54"  />
+            <check check_num="344" date="2013-07-24" amt="421.54"  />
+            <check check_num="345" date="2013-07-24" amt="34.54"   echeck="1" />
+            <check check_num="349" date="2013-07-25" amt="14.54"   out_of_seq="1" echeck="1" />
+            <check check_num="350" date="2013-07-27" amt="311.54"  />
+          </checks_cleared>
+          <reg_dd>
+            <field name="Overdraft Fees"   curr_period_amt="43.54"  ytd_amt="43.54" />
+            <field name="Return Item Fees" curr_period_amt="143.54" ytd_amt="143.54" />
+          </reg_dd>
+        </account>
+        <account name="Auto Loan" major_code="500" minor_code="523" >
+        ...
+        <account name="Certificate/IRA" major_code="601" minor_code="632" >
+      </accounts>
+    
+        
+    
+    
+    
+      
+    
+
+## Statement Variations
+
+  
+  
+
+### Savings
+
+* * *
+
+* * *
+
+* * *
+
+* * *
+
+* * *
+
+* * *
+
+* * *
+
+* * *
+
+* * *
+
+  
+[Edit this
+section](https://i3dev.easyredmine.com/projects/datanormalize/wiki/SavingChecking/edit?section=8)
+
+###
+Checking[](https://i3dev.easyredmine.com/projects/datanormalize/wiki/SavingChecking#Checking)
+
+* * *
+
+* * *
+
+* * *
+
+* * *
+
+* * *
+
+* * *
+
+* * *
+
+### Attachments
+
+  
+
+  
+
+

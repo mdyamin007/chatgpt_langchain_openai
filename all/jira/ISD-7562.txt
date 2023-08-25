@@ -1,0 +1,97 @@
+title: PUI - Accumulative OptOut Report Threshold
+description: Update Accumulative OptOut Report to send out email alert if the number of records in the generated file is more than the configured amount for a CID. This is to address an issue for SSCU, but it can be used for other CID's if needed. If no threshold set, then no alert will be sent. The email recipient can be configured per CID. 
+
+
+author: azad
+comment: [~Tin.Chak]
+
+I have a few queries regarding this task.
+ # My understanding is that the alert email will be send internally. Should I send the alert email to "isd-staff@infoimageinc.com" for all environments?
+ # I am using a new flag in cid.conf to define the threshold value (_accumulativeOptOutReport.recordThreshold_). What will be the value for this flag? Also, please give your feedback about the name of the flag.
+ # If the total number of records in the generated file is more than the threshold value, should we stop the report generation proces beside sending the alert email?
+
+[~rifat.mahmud]fyi.
+
+Thanks
+
+Azad
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~Azad] 
+1. The email can be send externally. Use any email for testing in the lower environment. Use digital.banking@safecu.org for prod.
+2. The name is fine. Set it to 200.
+3. Only alert is enough.
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: Use this content for now. I'm going to review this with the client facing team, but make sure that the variable used in this content can be inserted.
+
+From:
+InfoIMAGE Inc. <data_center@infoimageinc.com>
+
+Subject:
+Please Review - Accumulative Opt-Out Report Records Exceeded Threshold
+
+Content:
+Dear Valued Customer,
+
+The new Accumulative Opt-Out Report ({$File Name}) has {$Number of records in report} records exceeded pre-defined threshold of {$Threshold Number}. Please download the report from the client_pickup directory and review its content.
+
+Thank you,
+Data Center
+InfoIMAGE Inc.
+650.473.6388
+data_center@infoimageinc.com
+
+
+
+author: azad
+comment: To QA,
+
+Please test this task by running an Accumulative OptOut report for SSCU.
+
+If the report has more records than the threshold (configured in the cid.conf file), pre-defined recipient(s) will get an email. Checkout Sean's comment for email content.
+
+Threshold configured: 200 (If report has more records than 200, email will be sent)
+
+Email sender configured in conf file: [data_center@infoimageinc.com|mailto:data_center@infoimageinc.com]
+
+Email recipients configured in conf file: [andrey.kutsenko@infoimageinc.com|mailto:andrey.kutsenko@infoimageinc.com](If QA assignee is different, then the recipient should be changed, so that he/she will get the email).
+
+[~Tin.Chak] [~rifat.mahmud]fyi
+
+Thanks
+
+Azad
+
+
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+Test result - PASSED.
+1. Launched Accumulative OptOut Report at the PUI stage >> Job ID:[195713]
+log file: /usr/local/processing-ui/station/logs/sscu/accumulativeOptOutReport/08222022_0507046.log
+!scr_report.png|thumbnail! 
+2. Checking email notification - Verified.
+ !scr_email_notification.png|thumbnail! 
+
+
+author: JIRAUSER11104
+comment: Hi [~Azad], [~Tin.Chak]
+please provide the checklist if needed and update the status of this story based to SOP.
+
+
+author: azad
+comment: [~Tin.Chak] Deployed to Prod.
+
+[~Andrey.Kutsenko] Ticket is moved to done and please check release note for changes.
+
+[~rifat.mahmud]fyi
+
+
+
+Thanks
+
+Azad

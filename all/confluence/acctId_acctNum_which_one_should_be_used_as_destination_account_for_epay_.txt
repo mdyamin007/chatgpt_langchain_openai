@@ -1,0 +1,155 @@
+title: acctId/acctNum which one should be used as destination account for epay?
+body: Ok. That's the transaction report still. So, you are correct that it needs to
+be accountNum + accountType + stmtType to uniquely identify a particular epay
+account.  
+Either that, or the ExternalAccountNumber that we capture from client. (Alok,
+please confirm we are getting this stored per prior discussion).
+
+That being said, the ACCT_ID in data-model do NOT change. It should continue
+to stay. And it has no direct effect on none of following:  
+1\. how we add meta info to EPX transaction  
+2\. how these meta info show up in transaction reports (from EPX to InfoIMAGE)  
+3\. how these meta info show up in transaction reports (from InfoIMAGE to
+client) for balancing
+
+To avoid future confusion among both sides, All of the above need to be
+captured in wiki as business requirements.
+
+Thanks.
+
+Ben Chan | Director: E Products & Solutions  
+Direct 650-473-6318  
+InfoIMAGE, Inc. | 141 Jefferson Drive | Menlo Park, CA 94025  
+[ben.chan@infoimageinc.com](mailto:ben.chan@infoimageinc.com) |
+[www.infoimageinc.com](http://www.infoimageinc.com/)  
+From: Nazmul Islam Naim
+[[nazmul.islam@dsinnovators.com](mailto:nazmul.islam@dsinnovators.com)]  
+Sent: Thursday, December 08, 2016 1:30 PM  
+To: Ben Chan  
+Cc: [amjad.hossain@dsinnovators.com](mailto:amjad.hossain@dsinnovators.com);
+Alok Verma; Dipak
+([dipak.mondal@dsinnovators.com](mailto:dipak.mondal@dsinnovators.com));
+[mohammad.imran@dsinnovators.com](mailto:mohammad.imran@dsinnovators.com)  
+Subject: Re: acctId/acctNum? which one should be used as destination account
+for epay.
+
+Hello Ben,
+
+We were talking about the data that merchant will get from EPX, that this
+account has a payment with X amount.
+
+As Amjad mentioned one more thing,
+
+Statement type (account type) is required with account number to make a unique
+account information for merchant. As we know multiple account have same
+account number under same CID but there will be different account type like:
+NA, DD, SV, LN etc.
+
+If we use acctNum as destination account for epay then should not we need to
+pass statementType along with acctNum to EPX?
+
+Thanks
+
+On Fri, Dec 9, 2016 at 2:34 AM, Ben Chan
+<[Ben.Chan@infoimageinc.com](mailto:Ben.Chan@infoimageinc.com)> wrote:
+
+    
+    
+    I'm confused......
+    
+    
+    I believe this email thread is about the Transaction Report file being passed between InfoIMAGE and client, right?  
+        If so, then I agree with Alok that AccountID definitely should NOT be used because client would have no idea what the value of AccountID represents.
+    
+    
+    The feedback I provided to use ACCT_ID are all for the data-modeling in our databases.  It doesn't have any direct impact on what you need to produced on the report.
+    
+    
+    Help me understand if I'm not following.
+    
+    
+    Thanks.
+    
+    
+    Ben Chan | Director: E Products & Solutions  
+        Direct 650-473-6318  
+        InfoIMAGE, Inc. | 141 Jefferson Drive | Menlo Park, CA 94025  
+        [ben.chan@infoimageinc.com](mailto:ben.chan@infoimageinc.com) | [www.infoimageinc.com](http://www.infoimageinc.com/)
+    
+    
+    ___ ___ ____________________________  
+        From: [amjad.hossain@dsinnovators.com](mailto:amjad.hossain@dsinnovators.com) [[amjad.hossain@dsinnovators.com](mailto:amjad.hossain@dsinnovators.com)]  
+        Sent: Thursday, December 08, 2016 4:52 AM  
+        To: Alok Verma; Ben Chan  
+        Cc: Nazmul Islam Naim; Dipak ([dipak.mondal@dsinnovators.com](mailto:dipak.mondal@dsinnovators.com)); [mohammad.imran@dsinnovators.com](mailto:mohammad.imran@dsinnovators.com)  
+        Subject: Re: acctId/acctNum? which one should be used as destination account for epay.
+    
+    
+    Hi Alok,
+    
+    
+    We got the email. The payment db design has been changed several time.  
+        ACCT_ID is suggested to use by Ben. Please take a look on the attach email.
+    
+    
+    Thanks
+    
+    
+    --amjad
+
+accountid is definitely not to forwarded to epx i.e obvious & logical.
+
+Yes we will pass the accoutnum & statement type(correct naming & not
+accounttype).
+
+I was looking for you to find out what are we doing in the code currently.
+Accountid for sure should not be used. But there must be some logic about
+account id, If storage is per accountid based then front end needs to pull the
+account number against account id before sending to the APIs. I thnk the APIs
+to fetch account number has not been used correctly. But I will wait for you
+guys to give the findings.
+
+Thanks  
+Alok  
+___ ___ ____________________________  
+From: [amjad.hossain@dsinnovators.com](mailto:amjad.hossain@dsinnovators.com)
+[[amjad.hossain@dsinnovators.com](mailto:amjad.hossain@dsinnovators.com)]  
+Sent: Wednesday, December 07, 2016 6:31 AM  
+To: Ben Chan; Alok Verma  
+Cc: Nazmul Islam Naim; Dipak
+([dipak.mondal@dsinnovators.com](mailto:dipak.mondal@dsinnovators.com));
+[mohammad.imran@dsinnovators.com](mailto:mohammad.imran@dsinnovators.com)  
+Subject: acctId/acctNum? which one should be used as destination account for
+epay.
+
+Hi Ben & Alok,
+
+    
+    
+    From our discussion we found the following items. Please correct if we  
+    do wrong.
+
+First item.
+
+1\. acctNum is not unique to merchant.
+
+2\. acctType is required with acctNum to make it unique to merchant.
+
+If we use acctNum as destination account for epay then we have to pass  
+acctType along with acctNum to EPX.
+
+Second item.
+
+3\. acctId is unique but it is only for infoImage. We are not sure is the  
+Merchant aware about acctId?
+
+If we use acctId as destination account for epay then we are not sure  
+how merchant will do mapping the payment with destination account.
+
+Please advise which one is the right option for us.
+
+Thanks
+
+-amjad
+
+

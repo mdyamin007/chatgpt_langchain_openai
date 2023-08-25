@@ -1,0 +1,67 @@
+title: Generic setup and configuration guideline for SAML based Identity Provider
+body: This technical documentation shall provide the required knowledge for setting
+up and configuring an Identity Provider for Infotrac SSO. However, note that
+this document is written in a generic style. No specific identity provider
+service was not covered here. In the " **Identity Provider Setup Demonstration
+" **section, we have used the Keycloak service as an example. The UI,
+workflow, and additional settings might vary depending on the application.
+
+To configure an Identity Provider service other than Microsoft ADFS, the
+primary condition is that the identity provider must have support for SAML
+protocol. Because for Infoauth SSO, the infrastructure is built on top of
+SAML, and therefore it is only possible to allow SAML-based identity
+providers.
+
+##  **Required SAML Attributes**
+
+These are the SAML attributes that are required as claims by the Service
+Provider (Infotrac SSO) from the Identity Provider:
+
+  1. Name ID
+    * Name ID has to be present as part of the Subject in the Response message from the identity provider.
+    *  _Name ID format_ : **urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress**
+  2. E-mail Address
+    * The E-mail Address of the user that shall be used for the account must be sent with the response from the identity provider as "E-mail Address".
+    *  _SAML Attribute Name:_ <http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress>
+  3. Given Name
+    * The first name of the user shall be sent as "Given Name" claim with the response from the identity provider.
+    *  _SAML Attribute Name:_ <http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname>
+  4. Surname
+    * The last name of the user shall be sent as "Surname" claim with the response from the identity provider.
+    *  _SAML Attribute Name:_ <http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname>
+
+  
+
+## **SAML Metadata File**
+
+An identity provider that supports the SAML standard protocol shall provide a
+metadata file in XML format. The file is required for configuring the identity
+provider in the service provider service application. In the case of MS ADFS
+(as Infotrac SSO uses MS ADFS) the metadata file will be used to set up the
+identity provider as the "Claim Provider Trust".
+
+As for example, If the identity provider service uses ADFS, the metadata URL
+shall be: **https:// < hostname
+>/federationmetadata/2007-06/federationmetadata.** **xml,** for keycloak as
+the identity provider, the metadata URL shall be:  **https://
+<hostname>/auth/realms/<realm-name>/protocol/saml/descriptor**
+
+  * To know more in detail: <https://en.wikipedia.org/wiki/SAML_metadata>
+  * Here is an example metadata file in XML format: <https://en.wikipedia.org/wiki/SAML_metadata#SAML_metadata_examples>
+  * Service Provider's metadata file URL: <https://accounts-pilot.i3adfs.com/FederationMetadata/2007-06/FederationMetadata.xml>
+
+## **Identity Provider Setup Demonstration**
+
+Here is the demonstration of configuring an Identity Provider for Infotrac SSO
+using the Keycloak service. Note that, this just serves as an example. The
+user interface, flow, and settings might differ from other services.
+
+  * Start the Identity Provider application and login into it using the administrator credentials. In keycloak UI, we have to go to the **'Clients'  **section from the left sidebar and then click on  **'Create'.**
+
+  *  At first, the service provider must need to be configured. To do so, the metadata file of Infotrac SSO needs to be provided. It can be retrieved from this URL: <https://accounts-pilot.i3adfs.com/FederationMetadata/2007-06/FederationMetadata.xml>. In the keycloak interface we have click on ' **Select'** button right beside the ' **Import'** and select the downloaded metadata file. Then click on ' **Save** ' button.
+
+  * Now it is time to configure the added service provider. In Keycloak we added the service provider as clients. Most of the settings and configurations are retrieved automatically from the metadata file. But any additional required changes can be made if necessary. Note that there can be application-specific settings. For example, as Infotract SSO uses MS ADFS, " **SAML Signature Key Name " **is set to " **CERT_SUBJECT ".**
+
+  * After adding and making the necessary configurations, the required SAML attributes that are needed to be sent by the identity provider shall be configured. The details are mentioned above in the " **Required SAML Attributes " **section of this page. In keycloak it is done from the " **Mappers "** tab of the respective client.
+
+

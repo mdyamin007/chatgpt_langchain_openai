@@ -1,0 +1,56 @@
+title: cut -c0 incompatibility issue on Preprocessing02/03 RHS, RHS2 servers
+description: Nar reported a cut -0 incompatibility issue; Only RH2 server works with cut -c0. We should be using cut -c1 instead of cut -c0.
+
+Nar will fix the apcuml4_process.sh script. However, the other following script needs to be updated:
+
+
+{noformat}
+flcu_dl_process.pl
+wecudla_process.sh
+wecudlb_process.sh
+nvcums1_process.sh
+{noformat}
+!image-2020-09-03-10-43-34-910.png!
+
+
+author: william.kong
+comment: [~Terrence.Tong]: Not sure why no one reported this issue today in current Menlo Park data center, but there are some programs that we are currently running that error out but no one reported. Please assign team to update and get it corrected. 
+
+
+
+We can have DSi correct it if you like to ensure that after the correction it does not cause any regression issue since by fixing the parameter, it will capture the data.
+
+
+author: terrence.tong
+comment: Nar,
+
+I don't see update to any of the script that mentioned. Can you make syntax update. 
+
+
+author: terrence.tong
+comment: The first position for cut command is "1" not "0". You should just fix the syntax and release the code.
+
+
+author: jira_naru
+comment: Will:
+
+I am not sure why you want to make changes to:
+
+flcu_dl_process.pl   run on rhs
+wecudla_process.sh run on rhs
+wecudlb_process.sh run on rhs
+nvcums1_process.sh run on rh2
+
+
+
+On rhs and rh2, cut -c0 works as expected, only rhs2 cut -c0 will not work, base indexing for cut command is 1 and not 0.
+
+Unless you are planning to move the processing from these current server to rhs2, do we still need to make the change?
+
+
+author: william.kong
+comment: [~jira_naru]: yes the plan is to move rh2 client over to rhs2 and then rhs client to the 'new updated' linux servers so these cut commands will not be compatible. 
+
+
+
+I will create an in-house JEF and ask Tun to assign to complete no later than June 30, 2021 target live date.

@@ -1,0 +1,171 @@
+title: KYCU - StmtPDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133584-C01.01-V21725
+
+Processing Scripts to modify:
+ kycums1_process.sh
+
+Data Files to use:
+ KYCU_MonthEnd_<SEG>_06302022.pgp
+
+
+author: mahbubs
+comment: Hi [~William.Kong],
+
+Updates are done in parallel.
+
+Ran the process today using dataKYCU_MonthEnd_1_05312022.pgp
+
+You can review sample at:/z/pdf_afp/kycu/kycums1/zip/KYCU_STMT_Archival_05312022_1.zip
+
+Final sample generated in:/z/infoftps3/kycu/client_pickup/KYCU_STMT_Archival_05312022_1.zip.pgp
+
+Thanks
+
+
+author: william.kong
+comment: [~mahbubS]: Sorry to do this! But I do need a copy of the production file so I can compare accurately. Can you re-run the job with cycle 6/30/2022? I backed up a copy of the production file. I will update the description now to reference 6/30 instead of 5/31.
+
+
+author: mahbubs
+comment: Hi [~William.Kong],
+
+Generated sample today using cycle 0630.
+
+Archival sample is at:/z/pdf_afp/kycu/kycums1/zip/KYCU_STMT_Archival_06302022_1.zip
+
+Final sample:/z/infoftps3/kycu/client_pickup/KYCU_STMT_Archival_06302022_1.zip.pgp
+
+Thanks
+
+
+author: william.kong
+comment: [~mahbubS]: Results looks good for doing PDF comparison is good! Please submit to QAand update status on this ticket and smartsheet as well
+
+
+
+[~Igor.Khosid]: This program runs on RHS2. I ran pdf_compare.pl. Since there were no completed PDFi projects this morning, I increased the number of documents to check from 6000 to 15,000 document. pdf_compare.pl did NOT report a single difference.
+
+Please wait for [~mahbubS]to submit to QA. In the meantime, here are the testing results:
+
+
+
+ca-isis-pr-04:/d/pdf_compare/
+
+/d/pdf_compare/result_kycums1/pdf_compare_rpt.txt
+
+
+
+Total PDF Files Scanned: 15000
+ allowedDifferenceInPercentPerPage: 5:
+ Thread Count: 32
+
+Total PDF Files with Differences: 0
+ WARNING: We did not compare ALL the pdfs!
+ pdf_compare.pl will only process the first 15000 pdf files out of the total 47091 pdfs
+ Start Time: Tue Jul 26 12:32:07 PDT 2022
+ Finish Time: Tue Jul 26 16:25:16 PDT 2022
+
+
+
+
+
+
+
+
+author: mahbubs
+comment: Hi [~Igor.Khosid],
+
+Please start qa on this.
+
+Project is in qa folder: /d/iss/qa/KYCU/KYCUMS11.zip
+
+Parallel id:20220721115655
+
+Paper and estatement sample is given using 2nd segment data and archival sample is given using segment 1. The 1st segment is big and 2nd segment is small data. *The prime purpose is to qa archival*. As the data file is big, so i ran the paper and estatemt using 2nd segment to save time.
+
+DPVS attached.[^kycums1231.print]
+
+Afp file name:/z/afp/kycu/kycums12314.2o1.afp
+
+Print range: 1- 10, 10000-10010,22201-22214
+
+ISD index file name:ms1_06302022_2_07272022_0543_kycu.txt
+
+*Archival sample*:/z/pdf_afp/kycu/kycums1/zip/KYCU_STMT_Archival_06302022_1.zip
+
+Thanks
+
+
+author: william.kong
+comment: [~Igor.Khosid]/[~Andrey.Kutsenko]: Are we on schedule to get this completed today (8/10) or do we need to reschedule this for 8/16? Please advise so that we can plan accordingly.
+
+
+author: JIRAUSER11104
+comment: QA test - *PASSED*
+
+Ran script:
+{code:sh}
+[andreyK@ca-isis-pr-04 pdf_compare]$ perl pdf_compare.pl kycums1_prod/ kycums1_parallel/ result_kycums1 -pixels 5 -threads 32 -regex '[0-9]+_<SEQ>.pdf'{code}
+Report:
+{code:sh}
+[andreyK@ca-isis-pr-04 pdf_compare]$ cat /d/pdf_compare/result_kycums1/pdf_compare_rpt.txt
+Total PDF Files Scanned: 6000
+allowedDifferenceInPercentPerPage: 5:
+Thread Count: 32
+
+Total PDF Files with Differences: 0
+WARNING:  We did not compare ALL the pdfs!
+          pdf_compare.pl will only process the first 6000 pdf files out of the total 47091 pdfs
+Start Time: Thu Aug 11 13:03:35 PDT 2022
+Finish Time: Thu Aug 11 14:37:11 PDT 2022{code}
+
+
+author: william.kong
+comment: [~mahbubS]:Can you please prepare the File Transfer form and have this released on Monday, August 22, 2022? Once completed, please alert me or email[dp@infoimageinc.com|mailto:dp@infoimageinc.com]because we need to advise DP that they need to start running this program via RHS server moving forward.
+
+
+author: mahbubs
+comment: Hi [~TunA],
+
+Please release this.
+
+Transfer form attached.[^IS_PROGRAM_TRANSFER_FORM_Rev 07132016.doc]
+
+I did cvs checkin.
+
+Thanks
+
+
+author: tuna
+comment: Hi [~mahbubS]
+
+Following codes have been released.
+
+Thanks,
+
+Tun
+
+
+
+20220819091830 08/19/2022 mahbubS IS-1216 KYCU - StmtPDFi Conversion to AFP2PDF Python [InHse]
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/mahbubS/
+total 816
+-rwxrwxrwx 1 mahbubS DSI 321165 Aug 19 02:08 KYCUMS11.dfa
+-rwxrwxrwx 1 mahbubS DSI 1368 Aug 19 02:08 kycums1.control
+-rwxrwxrwx 1 mahbubS DSI 504 Aug 19 02:08 kycums1_pdf.control
+-rwxrwxrwx 1 mahbubS DSI 14781 Aug 19 02:08 kycums1_process.sh
+-rwxrwxrwx 1 mahbubS DSI 2837 Aug 19 02:08 kycums1.procs

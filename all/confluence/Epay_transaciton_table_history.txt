@@ -1,0 +1,76 @@
+title: Epay transaciton table history
+body: 
+    Meeting word: 
+    Alok:
+    1. The table name is incorrect because its not an audit table, its should be a history table. 
+    2. We have to keep each field of epay_transaction in the history table, may be it will be required in future. 
+    
+    Amjad: 
+    The latest table schema looks like
+    
+    CREATE TABLE epx_transaction_history
+    (
+        id number(19,0) not null,
+        txn_id number(19,0) not null,
+        acct_id varchar2(255 char),
+        amount double precision,
+        bill_id varchar2(255 char),
+        card_type varchar2(255 char),
+        comments varchar2(255 char),
+        created_on timestamp,
+        epx_txn_num varchar2(255 char),
+        org_id varchar2(255 char),
+        pay_from_acct_suffix varchar2(255 char),
+        source_type varchar2(255 char),
+        status varchar2(255 char),
+        transaction_type varchar2(255 char),
+        user_id varchar2(255 char),
+        payment_source_id number(19,0),
+        payment_recurring_id number(19,0),
+        modified_on timestamp,
+        primary key (id)
+    );
+    
+    
+
+  
+
+    
+    
+    Hi Alok,
+    
+    If a transaction is done successfully then the transaction status will be updated only two times, during the settlement report(from EPX) parsing and datafile(from cid) parsing. The design of epay_transaction audit is following.
+    
+    To hold the audit trail of epay_transaction in the epay_transaction_audit table, I think we can use database trigger mechanism. Meaning whenever any record is inserted/updated in epay_transaction table then a database trigger will be happened and a record will be inserted into epay_transaction_audit table.
+    
+    What do you think?
+    
+    CREATE TABLE epay_transaction_audit
+    (
+        id number(19,0) not null,
+        status varchar2(255 char),
+        epx_txn_num varchar2(255 char),
+        modified_on timestamp,
+        primary key (id)
+    );
+    
+    We can use same thing to store FIN_ACCT_BILL_EXT_AUDIT table
+    
+    CREATE TABLE "ESTMTDEV_OFFSHORE"."FIN_ACCT_BILL_EXT_AUDIT" 
+    (
+    
+        "ID" NUMBER NOT NULL ENABLE,
+        "STATEMENT_DATE" DATE,
+        "AMOUNT_DUE" FLOAT(126),
+        "BALANCE" FLOAT(126),
+        "GUARANTOR_ACCT_NUMBER" VARCHAR2(100 BYTE),
+        "DISPOSITION" VARCHAR2(20 BYTE),
+        "COMBINED_MIN" CHAR(1 BYTE),
+        "modified_on" timestamp,   
+        PRIMARY KEY ("ID")
+    );
+    
+    Thanks
+    --amjad
+
+

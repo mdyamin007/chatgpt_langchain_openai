@@ -1,0 +1,70 @@
+title: General Project Setup
+body:   1. Make sure you have maven installed
+  2. pom.xml,maven folder(containing batch script) and thirdPartyLib folder should reside in the  **same level as build.xml**
+  3. POM.xml contains all dependencies - internal and external (common repository) ** all internal dependencies were placed in thirdPartyLib folder within the project ** all external dependencies were automatically download to .m2 repository (default for maven) eg. C:\Users\jchacko\\.m2)
+  4.  **Maven command line**  
+Open cmd in Admin Mode  
+Navigate to 13-core folder in your workspace ( remember to refresh to get new
+changes)
+
+> mvn clean  
+> mvn compile  
+> mvn install OR mvn -Denv=local install (local profile is used by default if
+> not provided)  
+> mvn _Denv=dev install (currently this profile has been configured
+> completely)
+
+  1. /i3-core-dev/i3-core/maven/*ServiceCmd.bat* is invoked in the install phase (refer to pom.xml)  
+This batch job currently takes 5 parameters these values are set in the
+corresponding profile.  
+All what the batch job does is stops corresponding service, restarts it and
+creates a link to the new jar.
+
+5 parameters are :  
+arg 1 > estatment service environment  
+arg 2 > service name  
+arg 3 > resin jar location  
+arg 4 > location where all maven created artifacts(jars) get copied to  
+arg 5 > newly created artifact name
+
+\-------------------------------------------------------------------------------------------------------------  
+\---  **MATERIAL BELOW IS OUT DATED BUT WANT TO HOLD ON TO IT FOR SOME TIME**
+\----
+
+1) Created Maven Project, moved  **I3-core**  to it in the respective maven
+folder  
+%{color:red} - we need a way to overide the default location %  
+2) Updated POM.xml with all dependencies - internal and external (common
+repository) ** all internal dependencies were placed in thirdPartyLib folder
+within the project ** all external dependencies were automatically download to
+.m2 repository (default for maven) eg. C:\Users\jchacko\\.m2)  
+3) Tested Resin with jar created by Maven. Did a quick test of Payebill Member
+and AI site  
+4) Symlink created for infoimage.jar in C:\resin-pro-4.0.20\ext-lib-estmt\\.
+That way for different versions of the jar we can create different symlinks.
+Main purpose we don't have to touch resin lib directory.
+
+> mklink C:\resin-pro-4.0.20\ext-lib-estmt\infoimage.jar
+> C:\history_lib\infoimage-1.0.jar
+
+5) Using profiles ( you will see the jar gets copied to two different
+locations depending property value being passed
+
+> mvn -Denv=local install  
+> mvn -Denv=dev install
+
+6) Command line commands to start and stop resin services on windows  
+net stop service-name eg. net stop _Resin-estmt  
+net start service-name eg. net start _Resin-estmt
+
+> net stop _Resin-estmt  
+> net stop processingwrapper (pui)  
+> net stop processingstationwrapper (pui)
+
+> net start _Resin-estmt  
+> net start processingwrapper  
+> net start processingstationwrapper
+
+> runas /user:script "C:\apache-maven-3.0.4\bin\mvn install"
+
+

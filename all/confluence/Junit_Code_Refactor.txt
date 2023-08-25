@@ -1,0 +1,86 @@
+title: Junit Code Refactor
+body: ### **What Code is Testable**
+
+The purpose of a unit test is to test a single method. For this reason, not
+all code can be tested via unit testing. Certain areas of code rely on
+multiple dependencies such as connection to a database, which cannot be tested
+with a unit test. Integration testing is needed to test integrated systems.
+However, there are things we can do to refactor our code so that a lot of the
+code can be unit tested. They are: separating codes into layers, applying
+Single Responsibility Principle, and ensuring that most functions return some
+value/class that can be validated in this manner: f(x) = y.
+
+###  **Separation into Different Code Layers**
+
+Certain types of codes are difficult to test, or require a specific way of
+testing that is not conducive to unit testing. When identified, all code of a
+certain type should be separated into a layer that can be validated in its own
+set of tests.
+
+One example is code that require database connection. All data access objects
+should be separated into their own layer of code, and validated in a different
+suite of tests. The data access objects should only read/write data to the
+databases and perform no other operations. We technically already have this in
+the form of the i3-core classes. These classes should not need to be changed
+significantly, but it is a good idea to review each class individually and
+refactor them, too.
+
+###  **Single Responsibility Principle**
+
+Single responsibility principle is typically applied to classes. It is my
+opinion that it can also be applied to functions. One function should
+accomplish one single purpose. That way, it is less likely that the function
+will need to be changed. The less changes we make to existing functions, the
+less likely we are to make errors. As our code base grow, changing existing
+functions will become more and more complex as more and more of our code will
+be using the specific function. Additionally, if the function has multiple
+responsibilities, we would have to be careful and analyze that we do not break
+any of the different responsibiltiies that the function has. If the function
+has only one purpose, then we would only need to analyze that single purpose.
+
+Functions with single responsibility are also easier to explain, and as a
+result, easier to maintain.
+
+  
+
+\---
+
+### Example
+
+#### DAO Layer
+
+FinanceAccountBean
+
+FinanceAccountDBAccess
+
+#### Business Logic Layer
+
+createAccount - create a FinAccount object and return that object; the
+function MUST NOT insert the object into the database
+
+  * The returned FinAccount object can be validated.
+  * There is one single responsibility and that is to create the FinAccount. Inserting the record into the database should be done in a separate function.
+
+#### Processing Layer
+
+A complex processing function, may then do this:
+
+  1. account = BusinessLogic.createAccount()
+  2. DAO.store(account)
+
+With this setup, we can test the createAccount function independent of the
+need to connect to a database. We can validate that given a set of input, the
+FinanceAccountBean being returned will have the correct information. We assume
+that the DAO are valid and will do the correct insertion/update, given that
+the objects we pass to the DAO have the correct information.
+
+Ideally, the Processing Layer should not have its own logic, and should only
+be using functions from other layers. There are certain functionalities like
+sending emails, etc. but those could also be refactored into using common
+code. If the Processing Layer needs its own logic, the responsibilities should
+be encapsulated into separate classes with Single Responsibility so that they
+can also be easily unit tested.
+
+  
+
+

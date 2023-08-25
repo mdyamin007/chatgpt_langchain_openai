@@ -1,0 +1,186 @@
+title: TKCU - Mortgage PDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+
+Processing Scripts to modify:
+/home/master/tkcuml_process.sh
+
+Data Files to use:
+
+
+
+*NOTE*: This job runs on RH2. Since we are migrating from RHS to RH2, we should test all options so that we can do afpcompare and also ensure there is no errors in the processing logs.
+
+
+
+*Additional Note:*
+
+Looks like the DFA code is invoking PDFi generation if my research is correct.
+
+/home/isis/docdef/TKCUML11.dfa
+
+!image-2022-08-18-08-45-25-716.png!
+
+/home/isis/docdef/TKCUML31.dfa
+
+!image-2022-08-18-08-44-35-254.png!
+
+
+
+
+
+
+author: william.kong
+comment: Glen's testing notated the following error message so in reviewing DFA, I believe it is using PDFi. Please see the attached log files for the error message in parallel when running via RHS server:
+
+
+
+tkcuml18.log
+
+tkcuml38.log
+
+
+author: william.kong
+comment: [~anwarh]: How is this project coming along? As discussed last week, we need to prioritized this to get completed earlier so that we can release both tkcums1 and this tkcuml1 project. Please let me know when time permits. Thanks!
+
+
+author: anwarh
+comment: [~William.Kong],
+
+My initial assessment can be wrong. Even though this has pdfi and generates, it doesn't do anything with those pdfs.
+
+!image-2022-09-21-21-20-51-963.png|width=615,height=270!
+
+archival script tkcums1_burn_dvd.pl program is commented out.
+
+Are there any special instructions for DP to run it manually? Couldn't find anything in the procs file or any zip in the production.
+
+
+
+Probably there is no archival going on for this. If that's true, we need to turn off this code, otherwise this section of the will throughout errors if you move it to RHS.
+
+
+
+Thanks,
+
+Anwar
+
+
+author: anwarh
+comment: last time script changed was in 2019
+
+
+author: william.kong
+comment: [~anwarh]: I reviewed with Neil just earlier. He is going to double check if we are zipping the PDF files manually. I did a code revision history research on this coding and to find out that that the tkcu_burn_cd.pl was commented for years. If indeed it is not being used, I will let you know and I will cancel this ticket plus personally take over to remove all the lines of code as it is wasting system resources generating PDFs that is not be used.
+
+
+
+
+
+
+author: william.kong
+comment: [~anwarh]: Per Neil's confirmation via tkcuml1.procs, it mentions that they are not live with PDF Archival:
+
+
+
+!image-2022-09-22-08-02-14-574.png!
+
+
+
+Can you confirm if there other logic outside of PDF archival that requires PDFi. If not, I can take over and remove the code and ask DP to re-test.
+
+
+
+Please advise at your earliest convenience.
+
+
+author: william.kong
+comment: [~anwarh]: Per our code review, I will take over and remove the unused PDF archival logic that invokes PDFi and will ask DP to test this one.
+
+
+author: william.kong
+comment: [~anwarh]: For sure I see TKCUML31.dfa is using PDFi; Unfortunately, I will need help to work on this. As for TKCUML1, Glenn tested and saw error message as well; Can you review those errors show below:
+
+
+{quote}*[(tx_dp) glennG@rhs /z/tkcu]$ ge tkcuml*log** 
+
+tkcuml18.log:2022-10-12;07:40:57;AFPR0010E;"(TKCUML11/218) RN:2 Open error for output file '/z/tkcu/tkcuml1-indiv/tkcuml1_10012022_7871792_1.afp'";;
+
+tkcuml18.log:2022-10-12;07:40:57;PPDE7138F;"(TKCUML11/218) RN:2 Error in an output generator. Job aborted";;
+
+tkcuml38.log:2022-10-12;07:40:57;AFPR0010E;"(TKCUML31/545) RN:10 Open error for output file '/z/tkcu/tkcuml1-indiv/tkcuml3_10012022_7310336_1.afp'";;
+
+tkcuml38.log:2022-10-12;07:40:57;PPDE7138F;"(TKCUML31/545) RN:10 Error in an output generator. Job aborted";;
+
+tkcuml38.log:2022-10-12;07:40:57;PPCO9804I;"(DE) Converter Module ended with Error 16!";;
+
+*[(tx_dp) glennG@rhs /z/tkcu]$ gv tkcuml*log** 
+
+tkcuml1.log:2022-10-12;07:24:30;PPDE7101W;"(TKCUML11/323) RN:4405 Variable 'INV_CSV' used without declaration (rep:0,index:-1)";;
+
+*[(tx_dp) glennG@rhs /z/tkcu]$ ga tkcuml*log** 
+
+tkcuml18.log:2022-10-12;07:40:57;PPDE7138F;"(TKCUML11/218) RN:2 Error in an output generator. Job aborted";;
+
+tkcuml18.log:2022-10-12;07:40:57;PPDE7195F;"(*/0) RN:2 Job aborted due to operator action";;
+
+tkcuml38.log:2022-10-12;07:40:57;PPDE7138F;"(TKCUML31/545) RN:10 Error in an output generator. Job aborted";;
+
+tkcuml38.log:2022-10-12;07:40:57;PPDE7195F;"(*/0) RN:10 Job aborted due to operator action";;
+{quote}
+
+
+I did modify the /home/test/master/tkcuml_process.sh script (parallel id:20221011143142) to remove PDF archival code. This code update will need to be released together.
+
+
+
+
+
+
+
+
+author: JIRAUSER11702
+comment: Anwar,
+
+Nar and I reviewed the above errors. Based on the individual pdf location, the error appears to be individual pdf for estatement not archival. the problem is that this job was ran in rh2 before. Now that rh2 is gone, we need to create this folder "/z//tkcu/tkcuml1-indiv/" and/d/tkcu/tkcuml1-indiv/ for estatement which I created on 10/13 at 3:07 PM.
+
+The processing script handles ml1, ml2, and ml3. Ml1 and ml2 are for RedTitan. Ml3 handles flat data file. Therefore, you are correct, the work need to be perform is in both TKCUML11.dfa and TKCIML31.dfa.
+
+For the DVD archival logic, you can leave it alone, sincetkcums1_burn_dvd.pl is commented out.
+
+Keep in mind, at the end, the individual afp files for ml1, ml2, and ml3 goes to/d/pdf_afp/tkcu/tkcuml1/ or/z/pdf_afp/tkcu/tkcuml1/. I am not sure DP will manually create the DVD.
+
+No need to test again, not until you do the conversion work for TKCUML11.dfa, TKCUML31.dfa.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+author: anwarh
+comment: [~William.Kong], I was able to run ml3 by modifying the script temporarily. Don't see any error.  Please check. Thanks
+
+
+author: william.kong
+comment: Code is released to remove the dvd archival logic b/c client never went live with this solution.

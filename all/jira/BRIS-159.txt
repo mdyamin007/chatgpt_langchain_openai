@@ -1,0 +1,338 @@
+title: ISD URL Request
+description: Hi David,
+
+
+
+I need the URLs to update our coding for the following scripts:
+
+
+
+/home/master/infosync_job_monitoring.py: return "http://pd-pilot1.infoimageinc.com:8580/indexFileProcess/trigger?host=10.8.9.60&username=pdev1&pwd=infoimage&path=/z/isd_share/%s/print_fileid/&filename=%s" % (cid, file_name)
+ /home/master/infosync_job_monitoring.py: return "http://webapp-stage01:8580/indexFileProcess/trigger?host=10.8.9.60&username=pdev1&pwd=infoimage&path=/z/isd_share/%s/print_fileid/&filename=%s" % (cid, file_name)
+ /home/master/infosync_job_monitoring.py: return "http://webapp-prod22:8080/indexFileProcess/trigger?host=10.8.9.60&username=pdev1&pwd=infoimage&path=/d/isd_share/%s/print_fileid/&filename=%s" % (cid, file_name)
+
+
+
+/home/master/olp_handler.sh: local step3="Step 3 - Only after successful response from Step 2; Click on:\n\nhttp://${index_file_processor_addr}/indexFileProcess/trigger?host=10.8.9.60&username=pdev1&pwd=infoimage&path=${isd_share_fileid_folder}&filename=${fileid_idx}"
+ /home/master/olp_handler.sh: local step1="Step 1 - Invoke Index File Processor by clicking on:\n\nhttp://${index_file_processor_addr}/indexFileProcess/trigger?host=10.8.9.60&username=pdev1&pwd=infoimage&path=${isd_share_fileid_folder}&filename=${fileid_idx}\n\nIf you don't see the word \"Success\" in the browser, please immediately contact IS to research this issue by clicking on reply-to-all and include a screen shot of what you are seeing in the browser."
+
+/home/master/sefc_get_acct_addr_info.pl: $mongoHost = "10.8.14.55,10.8.9.187";
+ /home/master/sefc_get_acct_addr_info.pl: $mongoHost = "10.8.14.55,10.8.9.187";
+
+
+
+/home/master/trigger_tracking_by_rec.pl:my $host="10.8.9.60";
+ /home/master/trigger_tracking_by_rec.pl:host=10.8.9.60&username=pdev1&pwd=infoimage&path=/z/isd_share/sscu/print_fileid&filename=sscums120140320111736.txt
+
+my $url = "http:\/\/${addr}\/indexFileProcess\/trigger?host=${host}&username=${username}&pwd=${pwd}&path=${path}&filename=${filename}";
+
+
+
++*In Summary, this are the IPs/URLs that I will need for Brisbane and that we can use to test.*+
+
+MongoDB: 10.8.4.55, 10.8.9.187
+
+pd-pilot1.infoimageinc.com:8580
+
+webapp-stage01:8580
+
+webapp-prod22:8080
+
+
+
++*We need to coordinate code release for the following:*+
+
+For our infosync_job_monitoring.py, olp_handler.sh, and trigger_tracking_by_rec.pl scripts, we will need to change the IP address from 10.8.9.60 to 'ca-preproc-pr-02';  BOTH Menlo and Brisbane code will be released at the same time. This means you will need to update the Menlo Server IP /etc/hosts or C:\windows\system32\driver\etc\jhosts to reference ca-preproc-pr-02 to 10.8.9.60.  But for Brisbane system, there is no changes needed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+author: anil.dasa
+comment: Production mongo for jobtrack are below. We use cluster of below 3 databases.
+
+ca-mongojob-pr-01.infoimageinc.com:27017,
+ca-mongojob-pr-02.infoimageinc.com:27017,
+ca-mysql-pr-02.infoimageinc.com:27017
+
+
+
+Production job track url is
+
+http://ca-jobtrack-pr-01.infoimageinc.com:8980/
+
+
+
+
+
+
+author: william.kong
+comment: [~anil.dasa]: What about
+
+pd-pilot1.infoimageinc.com:8580
+
+webapp-stage01:8580
+
+
+
+
+
+By the way, I don't believe we are using any mysql on your side so I won't be updating it.
+
+
+author: anil.dasa
+comment: Mysql is just arbitar. Should be ok with out including that. Let me give pilot and stage urls.
+
+
+author: anil.dasa
+comment: [~William.Kong]
+
+Can you use below url for production?
+
+http://indexfileprocessor-common.infoimageinc.com/
+
+
+author: william.kong
+comment: [~anil.dasa]: Yes I can use indexfileprocessor-common.infoimageinc.com . Just to be clear, I will ignore you comment above and will +*not*+use [http://ca-jobtrack-pr-01.infoimageinc.com:8980.]
+
+
+
+What will the pilot and stage urls be? Can you provide that as well.
+
+
+
+Bear in mind, I will need to update the code on BOTH Menlo & Brisbane together.  On the Menlo server, I will update my system /etc/hosts to reference indexfileprocessor-common.infoimageinc.com to point to IP address10.8.9.162. On Brisbane data center, i don't have to do anything since the DNS forindexfileprocessor-common.infoimageinc.com is pointing to 10.4.16.91.
+
+
+
+[http://indexfileprocessor-common.infoimageinc.com/]indexFileProcess/trigger?host=*{color:#de350b}ca-preproc-pr-02{color}*&username=pdev1&pwd=infoimage&path=/d/isd_share/%s/print_fileid/&filename=%s" % (cid, file_name)
+
+
+
+On the Menlo side, I update the url above (see red) from 10.8.9.60 to*ca-preproc-pr-02.* This means, your webapp-prod22, pd-pilot1.infoimageinc.com, and webapp-stage01 system, you need to update your /etc/hosts file to have ca-preproc-pr-02 point to 10.8.9.60. You don't have to do anything on the Brisbane side because the dns for ca-preproc-pr-02 references 10.4.20.22.**
+
+
+
+Please advise if you have any questions.
+
+
+
+-- Will
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~anil.dasa]: Can I get an update on this? Please advise.
+
+
+author: anil.dasa
+comment: Below are urls and database values both in menlo and brisbane location. Pilot and stage brisbane sites and mongo instances are not up as of now. You can use ca-pre-proc-pr-03 for passing host name on all sites.
+
+
+
+/etc/hosts
+
+10.8.9.63 ca-preproc-pr-03 Menlo
+
+10.4.20.23 ca-preproc-pr-03  Brisbane
+
+
+webapp-prod22.infoimageinc.com:8080 -- Menlo Prod 
+ca-jobtrack-pr-01.infoimageinc.com:8980 -- Brisbane Prod
+
+Mongo menlo database
+pd-grid03.infoimage.com:27017
+mongo-prod02.infoimage.com:27017
+
+Mongo brisbane database
+ca-mongojob-pr-01.infoimageinc.com:27017
+ca-mongojob-pr-02.infoimageinc.com:27017
+
+
+webapp-stage01:8580 -- Menlo Stage 
+ca-jobtrack-st-02.infoimageinc.com:8980 -- Brisbane Stage
+
+Mongo menlo database
+10.8.9.187:27017
+10.8.14.55:27017
+
+Mongo brisbane database
+ca-mongojob-st-01.infoimageinc.com:27017
+ca-mongojob-st-02.infoimageinc.com:27017
+
+
+
+
+pd-pilot1.infoimageinc.com:8580 -- Menlo pilot 
+ca-jobtrack-pi-01.infoimageinc.com:8980 -- Brisbane pilot
+
+Mongo menlo database
+10.8.9.187:27017
+10.8.14.55:27017
+
+Mongo brisbane database
+ca-mongojob-pi-01.infoimageinc.com:27017
+ca-mongojob-pi-02.infoimageinc.com:27017
+
+
+author: william.kong
+comment: [~anil.dasa]: Just to confirm. Today, our code is using 10.8.9.60 which is preprocessing0*2* (ca-preproc-pr-02).  However, based on your comment above, you are stating preprocessing0*3.* Please confirm if we are change it to preprocessing0*3* (i.e. ca-preproc-pr-0*3*) instead of (ca-preproc-pr-0*2*)
+
+
+author: anil.dasa
+comment: [~William.Kong]
+
+Use ca-preproc-pr-02(10.8.9.60) as per our discussion. I will add this host file entry on menlo machines
+
+
+author: anil.dasa
+comment: I have added below host file entry in pilot,stage and prod menlo machines.
+
+10.8.9.60 ca-preproc-pr-02
+
+
+author: william.kong
+comment: [~anil.dasa]: Per our spark messages, we should keep preprocessing02 as this is currently how are scripts are being used for the "txt" processing feature. To summarize, here is the table I will ask the team to use for the TXT processing:
+|*TXT FileProcesing:*|
+|*Environment*|*Menlo*|*Brisbane*|
+|Pilot/Dev|pd-pilot1.infoimageinc.com:8580|ca-jobtrack-pi-01.infoimageinc.com:8980|
+|Stage|webapp-stage01:8580|ca-jobtrack-st-02.infoimageinc.com:8980|
+|Production|webapp-prod22.infoimageinc.com:8080|ca-jobtrack-pr-01.infoimageinc.com:8980|
+|ALL|10.8.9.60|ca-preproc-pr-02|
+||||
+|*IS Scripts:*|||
+|/home/test/master/infosync_job_monitoring.py|
+|/home/test/master/olp_handler.sh|
+|/home/test/master/trigger_tracking_by_rec.pl|
+
+
+
+
+
+For the bounce back and mongoDB:
+|*MongoDB/Bounceback Email*|
+|*Environment*|*Menlo*|*Brisbane*|
+|Pilot/Dev|10.8.9.187:27017|ca-mongojob-pi-01.infoimageinc.com:27017|
+|Pilot/Dev|10.8.14.55:27017|ca-mongojob-pi-02.infoimageinc.com:27017|
+|Stage|10.8.9.187:27017|ca-mongojob-st-01.infoimageinc.com:27017|
+|Stage|10.8.14.55:27017|ca-mongojob-st-02.infoimageinc.com:27017|
+|Production|pd-grid03.infoimage.com|ca-mongojob-pr-01.infoimageinc.com:27017|
+|Production|mongo-prod02.infoimage.com|ca-mongojob-pr-02.infoimageinc.com:27017|
+||||
+|*IS Scripts:*|||
+|/home/master/sefc_get_acct_addr_info.pl:|
+
+
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~anil.dasa]: I missed *two* URLs.
+
+
+
+
+
++*Item #1:*+
+
+
+
+Script Name: trigger_tracking_by_rec.pl
+
+What is the brisbane URL for:pd-dev2.infoimage.com
+
+We use this address for the following URL:
+
+my $url = "http://pd-dev2.infoimage.com/indexFileProcess/trigger?host=${host}&username=${username}&pwd=${pwd}&path=${path}&filename=${filename}";
+
+
+
++*Item #2:*+
+
+Script Name: isisdisk.sh &olp_handler.sh
+
+
+
+What is the brisbane URL for
+
+pd-dev7.infoimage.com:8580 (Menlo)
+
+pd-dev2.infoimage.com:8880(Texas)
+
+
+
+[http://$|http://$/]{index_file_processor_addr}/indexFileProcess/trigger?host=10.8.9.60&username=pdev1&pwd=infoimage&path=${isd_share_fileid_folder}&filename=${fileid_idx}
+
+
+
+
+
+
+
+
+
+
+author: anil.dasa
+comment: ca-jobtrack-dv-01.infoimageinc.com:8980 pd-dev7.infoimage.com:8580 (Menlo)
+
+We are not having separate texas instances. So pd-dev2 has no equivalent brisbane url.
+
+
+author: william.kong
+comment: [~anil.dasa]: Thanks Anil! I created tickets for my team to make the updates. I will ask them to coordinate testing via Menlo to make sure there is no surprises.
+
+Here's the updated tables:
+
+
+|*TXT FileProcesing:*
+
+|
+|*Environment*|*Menlo*|*Brisbane*|
+|Dev|pd-dev7.infoimage.com:8580|ca-jobtrack-dv-01.infoimageinc.com:8980|
+|Pilot|pd-pilot1.infoimageinc.com:8580|ca-jobtrack-pi-01.infoimageinc.com:8980|
+|Stage|webapp-stage01:8580|ca-jobtrack-st-02.infoimageinc.com:8980|
+|Production|webapp-prod22.infoimageinc.com:8080|ca-jobtrack-pr-01.infoimageinc.com:8980|
+|ALL|10.8.9.60|ca-preproc-pr-02|
+||||
+|*IS Scripts:*|||
+|/home/test/master/infosync_job_monitoring.py|
+|/home/test/master/olp_handler.sh|
+|/home/test/master/trigger_tracking_by_rec.pl|
+|/home/test/master/isisdisk.sh|
+|/home/test/master/olp_handler.sh|
+||||
+|*MongoDB/Bounceback Email*|
+|*Environment*|*Menlo*|*Brisbane*|
+|Pilot/Dev|10.8.9.187:27017|ca-mongojob-pi-01.infoimageinc.com:27017|
+|Pilot/Dev|10.8.14.55:27017|ca-mongojob-pi-02.infoimageinc.com:27017|
+|Stage|10.8.9.187:27017|ca-mongojob-st-01.infoimageinc.com:27017|
+|Stage|10.8.14.55:27017|ca-mongojob-st-02.infoimageinc.com:27017|
+|Production|pd-grid03.infoimage.com|ca-mongojob-pr-01.infoimageinc.com:27017|
+|Production|mongo-prod02.infoimage.com|ca-mongojob-pr-02.infoimageinc.com:27017|
+||||
+|*IS Scripts:*|||
+|/home/master/sefc_get_acct_addr_info.pl:|
+||||

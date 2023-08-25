@@ -1,0 +1,144 @@
+title: EQBK - [26277][pvt] Additional changes to Escrow Analysis statements
+description: We will fix the account number and make sure the "THIS IS A COPY..." verbiage is showing on the page it should be instead of page 1 only.
+
+
+
+Total 2hrs programming update (up to you guys if you want to waive it).
+
+
+
+Turnover to IS 1/31/22
+
+Sample to QA 2/7/22
+
+Sample to client 2/8/22
+
+Sample Approval 2/10/22
+
+LIVE 2/16/22
+
+
+author: yameelee
+comment: [~Igor.Khosid]: This is ready for QA. You can reference Ticket #25348 doc1.docx for issue. Attached PDF sample of account reported by client though affects all accounts.
+
+PR_ID:20220207163123
+
+No estmt.
+
+
+
+[~jharvey] DPVS attached for laser request. Can print .is file images 1-28.
+
+
+author: igor.khosid
+comment: Parallel ID: 20220207163123
+ Currently in parallel: Yes
+ User: yamee
+ Description: EQBK update acct number
+ Date Submitted: 2022-02-07 16:31:41
+ Date Last Updated: 2022-02-07 16:31:41
+ Files:
+ 1) EQBKYL21.dfa
+
+
+author: jharvey
+comment: Explanation of what we changed and what it looked like before:
+
+So each account has 3 separate statements - Account History, Last Year Projection, and Upcoming Projection.
+
+Each of these are for the same account number but with their own "Page 1"
+
+For every statement, we only get the address from first page and whatever that address is we print it on every page for the statement (as most of our statements do as there aren't addresses that changes from page to page).
+
+So previously when we use the "Page 1" as anchor each of these are printed as separate statement
+
+  That's why the Last Year Projection were suppressed because they have the word "HOLD" in the address block while the other two statements don't.
+
+  That's why the verbiage"THIS IS A COPY OF LAST YEAR'S PROJECTION" is on the first page of Last Year Projection statement only as mapping says to print on first page of the statement
+
+
+
+Since we are now not using the "Page 1" as anchor, all 3 statements now printed as 1 statement
+
+  All of the pages now use the same address from first page only (Account History Page 1) whether Last Year Projection has "HOLD" in address block or not..
+
+  Since all are 1 statement now, the verbiage"THIS IS A COPY OF LAST YEAR'S PROJECTION" is on the first page of Account History as it is the first page of the statement
+
+ 
+
+The ACCOUNT NUMBER verbiage shift is as I said, the program says
+
+  -for first page if this verbiage is on line 3 then it will get the account number from pos 64-78
+
+  -for all other pages if this verbiage is online 2 then it will get the account number from pos 64-78
+
+  -if other pages have this verbiage on line 3 then get account number from pos 66-78 (on mapping)
+
+
+
+Data file has each "Page 1" of the 3 statements ACCOUNT NUMBER verbiage start on line 3, but because we treated all as 1 statement now, those "Page 1" now falls under other pages in the program logic and since they are on line 3, then we get the verbiage from pos 66-78 instead of 64-78 therefore removing the first two chars
+
+
+
+to solve this, we will need to get the verbiage from pos 64-78 no matter what line number it falls under.
+
+
+
+to solve the"THIS IS A COPY OF LAST YEAR'S PROJECTION" we will not print this on page 1 anymore but look for it and print it on whatever page it is on.
+
+
+
+if client is ok with the address block being whatever is on the first page, then we are good on this. But if they want us to se the "HOLD" for Last Year Projection, if it's there, then we woudl have to recapture the address in every page and reprint them individual while we will have a logic to suppress print only if the first page has the word "HOLD" on address block.
+
+
+author: jharvey
+comment: Attached is a copy of the incorrect output so you can see what we are correcting.
+
+!image-2022-02-08-10-26-55-009.png!
+
+
+
+!image-2022-02-08-10-27-51-845.png!
+
+
+
+
+
+
+author: JIRAUSER11104
+comment: 1. Attached is a comparison of the old and new output forms made in Papyrus (with different dfa-file) >>>[^IS-775_EQBK_Output_Diff.pdf]
+
+2. Samples ready for Customer review.
+
+
+author: JIRAUSER11104
+comment: Please request the print samples after the sample will be approved by the customer.
+
+
+author: jharvey
+comment: [~Andrey.Kutsenko] [~Igor.Khosid]
+
+Client approved. I will request print samples.
+
+
+author: JIRAUSER11104
+comment: [~yameelee]
+Please - attach IS checklist.
+
+
+author: JIRAUSER11104
+comment: Print samples >>[^IS-775_EQBK_Print_Samples_02142022.pdf]
+
+
+author: JIRAUSER11104
+comment: [~yameelee]please provide IS checklist.
+
+
+author: igor.khosid
+comment: [~Peter.Dang]
+I know YaMee is OOO, Please attach IS checklist to the story
+[~Andrey.Kutsenko] asked for this a few times already
+
+
+author: peter.dang
+comment: [~jharvey]code has released.

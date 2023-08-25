@@ -1,0 +1,93 @@
+title: Core Business Logic
+body: To service our clients, there are several common core business logic that we
+have to handle on the processing side. These are:
+
+  1. User Management
+  2. Account Management
+  3. User-Account Relationship Management
+  4. Paperless Preferences Management
+  5. Email/SMS Management
+  6. Notification Delivery Preferences Management
+  7. Insert statement data
+  8. Email users
+  9. Generate reports
+
+  
+
+Items 7 and 8 happen only in their own respective singular process. Item 9
+occur in various report classes. Item 1-6 occur throughout the processing
+code.
+
+We can separate item 1-6 into its own layer of business layer code that
+interact with the DAO, and perform common functions that many processing jobs
+can call. That way, code is reusable, and business logic stays the same across
+multiple processes.
+
+# Design
+
+## Business Logic Layer
+
+### DAO Handlers
+
+#### Common Design
+
+  1. Handle the creation/modification of certain DAO objects.
+  2. Interact with the DAO layer so that the Processing Layer does not have to.
+  3. Perform all the necessary business logic code, so that the Processing Layer only need to chain the Business Logic actions together to achieve the desired operation. 
+  4. Exists so that the Processing Layer code does not need to directly interact with the DAO layer. This has the added benefit of allowing for an easy transition when we do want to change the DAO layer from i3-core to infoservice API.
+
+#### FinanceAccountHandler
+
+  * FinanceAccountBean
+
+#### UserDetailsHandler
+
+  * UserDetails.
+
+#### UserProfileHandler
+
+  * UserProfile.
+
+#### UserMappingHandler
+
+  * Create/Modify usr_mapping (these will probably be direct DAO calls with no intermediary objects).
+  * Or we create a new UserMapping object.
+
+#### UserFinanceAccountHandler
+
+  * UserFinanceAccountBean
+
+#### DeliveryPreferenceHandler
+
+  * Paperless
+
+#### NotificationPreferenceHandler
+
+  * NotificationPreference
+
+## Processing Layer
+
+### Data Handlers
+
+  1. Will parse data all the same way and produce a generic DataMap object (wrapper for a map of String to String)
+  2. A secondary class will convert the generic DataMap object to an object that will be handled by a specific Registrar
+  3. This allows for the DataMap to be passed around and converted to any necessary object (if possible), and ergo one Processing job can leverage multiple registrars.
+
+### Data Registrars
+
+  1. Registrars will perform a function instead of an entire processing operation.
+  2. This way processing job can use multiple registrars to perform a series of tasks.
+    1. For example, take an Auth Registrar, it can be broken down to these steps, some of which can be skipped if there are existing data:
+      1. UserRegistrar.createUser()
+      2. AccountRegistrar.createAccount()
+      3. UserRegistrar.linkUserToAccount()
+      4. Optionally, we can have AccountEnrollmentRegistrar.enrollAccount() and UserEnrollmentRegistrar.enrollUser()
+  3. Conditional logic can be wrapped around Criteria classes. This way clients can have different criteria for certain operations.
+    1. For example, if (AccountEnrollmentCriteria.shouldEnroll()) AccountEnrollmentRegistrar.enrollAccount();
+    2. Or if (!PaperlessEnrollmentCriteria.passes()) AccountEnrollmentRegistrar.unenrollAccount();
+
+### Data Aggregators  **(for later)**
+
+  1. Sometimes, data can be aggregated. For example, multiple auth file lines can be for the same user, but linking to different accounts. Instead of processing them all individually, we can aggregate them into one batch, where the user is processed once, and then all the accounts can be processed and linked. 
+
+

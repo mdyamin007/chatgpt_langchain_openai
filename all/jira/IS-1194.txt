@@ -1,0 +1,191 @@
+title: FRST - Stmt - (XAA) Account AnalysisPDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133605-C00.01-V21594
+
+Processing Scripts to modify:
+ frstls1.sh
+
+*CUSTOM:*
+
+Per Anwar's feedback, he noticed a afp logic issue with the bad afp file. Per internal email review between Yamee, Anwar and myself, let's proceed with YaMee's suggestion to get the code fixed her comment below:
+{quote}"I think Anwar can just add condition if &JOB_TYPE==s before calling the docformat PROCESS_BADACCTS."
+{quote}
+
+
+*NOTE*: This job runs on RH2. Since we are migrating from RHS to RH2, we should test all options so that we can do afpcompare and also ensure there is no errors in the processing logs.
+
+
+author: anwarh
+comment: Hi [~William.Kong], 
+
+Parallel ID: 20220919033213
+production cycle: 08/31
+
+Data files: 
+/z/dsi_pdfi_testing/frstls1/data/FRST_AA_08312022_1.TXT
+/z/dsi_pdfi_testing/frstls1/data/FRST_AA_COL_08312022_1.TXT
+/z/dsi_pdfi_testing/frstls1/data/FRST_AA_NOPRINT_08312022_1.TXT
+
+old zips: /z/dsi_pdfi_testing/frstls1/old
+new zips: /z/dsi_pdfi_testing/frstls1/new
+
+Notes: For some reason, for this job afp2pdf produces 2x size. 
+
+Thanks,
+Anwar
+
+
+author: anwarh
+comment: [~William.Kong], 
+
+Not sure if this is a production bug or not. 
+In the SOW, the bank wants us to send a report if we find any bad accounts (parent-child account number mismatch). They don't say we need to send those accounts printed or archived in way. 
+
+But the program tries to divert those accounts from our standard afp file to another afp file. That wouldn't be an issue if it was closed immediately. Instead after that "one" bad account, all subsequent accounts are diverted into the 2nd afp file instead of the main afp file.
+
+From last production logs: /d/frst/frstls1231.log
+there should be
+total accounts: 28304 (also in the /d/frst/frstls1231.txt writerecord)
+total pages: 301782
+
+But if you open the last production afp file: /d/frst/frstls1231.afp, you'll see there is no page/account after page: 233420 which is 10543th account.
+10544th account is the bad one. 
+
+This doesn't cause any issue in the production archival as the pdf is a separate file in itself for pdf.
+But the count mismatch occurred when I tried to run afp2pdf and it complained about the count mismatch.
+
+My assessment can be wrong, Please check in the production if it ok there. 
+
+Also, the report it generates has an issue, it concats multiple lines into one. I have fixed it.
+/d/frst/FRST_LS1_non_match_9162022.txt
+
+Thanks,
+
+
+author: william.kong
+comment: [~anwarh]: Per my email response, please proceed with Yamee's recommendation below:
+
+
+
+Per Anwar's feedback, he noticed a afp logic issue with the bad afp file. Per internal email review between Yamee, Anwar and myself, let's proceed with YaMee's suggestion to get the code fixed her comment below:
+{quote}"I think Anwar can just add condition if &JOB_TYPE==s before calling the docformat PROCESS_BADACCTS.
+{quote}
+
+
+Please update status to "QA Request" when you are ready with the updates.
+
+
+author: anwarh
+comment: [~William.Kong], I just removed that portion, If I put '<> s', program will never execute that. 
+Archival output is already generated with the fix. Do you want me to regenerate again? 
+I'm just running for 's' now.
+Thanks
+
+
+
+author: william.kong
+comment: [~anwarh]: Yes, please re-generate files so that we can start QA.
+
+
+author: anwarh
+comment: [~William.Kong], this is ready for QA. Note that pdfs names won't match as the date comes from the System's month and year. Thanks
+
+
+author: igor.khosid
+comment: [~Andrey.Kutsenko] -when you have a chance for the regression testing
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+ Ran script:
+{code:sh}
+[andreyK@ca-unittest-pr-02 ~]$ export parallelProcessing=false; perl pdf_compare.pl frstls1_prod frstls1_parallel result_frstls1 -pixels 5 -threads 16 -regex '[0-9]+_<CUSTOM=[0-9]+_[0-9]+>.pdf' -exclusions frstls1.json{code}
+Hi [~William.Kong] please take a look test result:
+{quote}Total PDF Files Scanned: 6000
+ allowedDifferenceInPercentPerPage: 5:
+ Thread Count: 16
+
+Total PDF Files with Differences: 280
+ Please review the directory in /d/pdf_compare/result_frstls1 directory & /d/pdf_compare/result_frstls1/pdf_compare_rpt.txt report to see all the PDF differences
+ WARNING: We did not compare ALL the pdfs!
+ pdf_compare.pl will only process the first 6000 pdf files out of the total 28304 pdfs
+ Start Time: Mon Oct 3 15:53:40 PDT 2022
+ Finish Time: Tue Oct 4 04:04:49 PDT 2022
+{quote}
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: I noticed a lot of hs_error_pid.log from this last night all the way into 3am this morning which indicated that pdfcompare utility crashed and did not complete. Out of the 280 errors, only 16 diff pdfs were detected.
+
+I'm going to run this QA one more time with 8 threads instead of 16 to see if it will reduce the situation from happening again.
+
+Thanks!
+
+-- Will
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: I think this is good to pass. Even with 8 threads, I still get memory crash issue, but a lot less difference; From 280 down to 32 alerts. But in reality, I only got one diff pdf returned b/c of 31 threads crashed.
+{quote}export parallelProcessing=false; perl pdf_compare.pl frstls1_prod frstls1_parallel result_frstls1 -pixels 5 -threads 8 -regex '[0-9]+_<CUSTOM=[0-9]+_[0-9]+>.pdf' -exclusions frstls1.json
+
+
+
+Total PDF Files with Differences: 32
+Please review the directory in /d/pdf_compare/result_frstls1 directory & /d/pdf_compare/result_frstls1/pdf_compare_rpt.txt report to see all the PDF differences
+WARNING: We did not compare ALL the pdfs!
+ pdf_compare.pl will only process the first 6000 pdf files out of the total 28304 pdfs
+Start Time: Tue Oct 4 09:30:11 PDT 2022
+Finish Time: Tue Oct 4 22:01:45 PDT 2022
+{quote}
+
+
+If you agreed, please move forward updating status to "QA Completed". Thanks!
+
+
+
+
+
+
+author: JIRAUSER11104
+comment: Thanks[~William.Kong].
+QA is completed (based on your comment).
+
+
+author: william.kong
+comment: [~anwarh]: Please prep File Transfer form so that we can target a code release date of 10/10/2022. Please alert YaMee or Leo to release code.
+
+
+author: anwarh
+comment: Hi [~yameelee]/[~rodriguez],
+
+Transfer form:  [^IS-1194 FRST Transfer Form.doc] 
+
+Code is in:
+*/d/is/cvs/xfer/anwarH_backup/is-1194*
+
+Can you please move them into /d/is/cvs/xfer/anwarH/ and then release?
+
+Thanks,
+Anwar
+
+[~William.Kong]
+
+
+author: william.kong
+comment: [~yameelee]/ [~rodriguez]: Can you guys help release this code?
+
+
+author: yameelee
+comment: [~William.Kong] [~anwarh] code released. backup id:20221020142118

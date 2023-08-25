@@ -1,0 +1,588 @@
+Most of monthly statement projects include transactions with checks. In those projects we need to build and display check list , check image , check index ( for f option ), cripple report ( customer with missing checks ) etc. below is a document for all of those
+Reference: For check list and check Index please follow FNBKCM11.zip and for others follow check_image.zip
+BEFOREFIRSTDOC:
+   /*********************Check Image Variables*/
+  /*where the check images will be found usually defined in scripting side*/
+  &TIFFDIR = ENVIRONMENT('TIFFDIR') ;
+  /*the number of statements those have missing check images*/
+  &FN_CRIPPLE_STMT = 0 ;
+  /*total number of statements with check  Images( statement without check images will not be counted )*/
+  &FN_TOT_STMT = 0 ;
+  /*the threshold point if exceeds then goes to whole statemenets will be disqualified, might need to change  per project */
+  &MISSING_CHK_THRESHOLD = 1 ;
+  /*******************Check Image for check index*/
+  IF &JOB_TYPE=='f' ;
+  THEN ;
+    IF $SYSTEM=='Windows' ;
+    THEN ;
+      :LOCAL_DIRECTORY ;
+      CHECK_INDEX = 'C:\ISIS\afpds\CK_IDX.dat' ;
+    ELSE ;
+      :PRODUCTION_DIRECTORY ;
+      CHECK_INDEX = '/'!&D_DIR!'/&CID/CK_IDX.dat' ;
+    ENDIF ;
+    DUMMY = CHANGEENV('CK_IDX',CHECK_INDEX) ;
+  ENDIF ;
+  /*******************Check Image for cripple handling*/
+  IF &JOB_TYPE=='s' ;
+  THEN ;
+    IF $SYSTEM=='Windows' ;
+    THEN ;
+      :LOCAL_DIRECTORY ;
+      CRIPPLE_REPORT = 'C:\ISIS\afpds300\CRIPPLE.dat' ;
+      &ERROR_TIFF = 'c:\isis\tiff\9999999.TIF' ;
+    ELSE ;
+      :PRODUCTION_DIRECTORY ;
+      CRIPPLE_REPORT = '/'!&D_DIR!'/'!&CID!'/CRIPPLE.dat' ;
+      &ERROR_TIFF = '/home/isis/tiff/9999999.TIF' ;
+    ENDIF ;
+    DUMMY = CHANGEENV('CRIPPLE_RPT',CRIPPLE_REPORT) ;
+  /*change Bank or Credit Union description accordingly*/
+    WRITERECORD  TO CRIPPLE_RPT 
+      DELIMITER X'0D0A' ;
+      PUT '                                 CRIPPLE STATEMENT REPORT '
+  '                                     '  DELIMITED ;
+      PUT '                                   IDAHO CREDIT UNION     '
+  '                              '  DELIMITED ;
+      PUT '**********************************************************'
+  '****************************'  DELIMITED ;
+      PUT 'PROCESS DATE: '!$TIME  DELIMITED ;
+      PUT '**********************************************************'
+  '****************************'  DELIMITED ;
+      PUT 'Ck Acct No'  START * LENGTH 21;
+      PUT 'Chk No'  START * LENGTH 15;
+      PUT 'Chk Amt'  START * LENGTH 20;
+      PUT 'Chk Date'  START * LENGTH 21;
+      PUT 'Member No'  DELIMITED ;
+      PUT '**********************************************************'
+  '****************************'  START * LENGTH 100;
+    ENDIO;
+  ENDIF ;
+BEFOREDOC:
+  /*for check image***************************/
+  MR_TOP = 1.5 ;
+  MR_BOTTOM = 0.75 ;
+  MR_LEFT = 0.5 ;
+  MR_RIGHT = 0.5 ;
+  /* horizontal gap between check images */
+  &H_GUTTER = 0.125 ;
+  /* vertical gap between check images */
+  &V_GUTTER = 0.125 ;
+  COL_NUM = 2 ;
+  ROW_NUM = 6 ;
+  ACCOUNT_CHECKS = 0 ;
+  &CHK_IMAGE_CT = 0 ;
+  COUNTER_MISSING = 0 ;
+BUILD CHECK IMAGE ARRAY:
+DOCFORMAT BUILD_CHK_INDEX_3000;
+  /***********check image build check image array **********/
+  /***********main part is building CHECK_IMAGE_ARRAY with appropriate contents **********/
+  TYPE_OF_CHECK = SUBSTR(INPUT_REC,60,4, '') ;
+  /**** this echk check might not be   necessary ask client *****/
+  IF TYPE_OF_CHECK<>'ECHK' ;
+  THEN ;
+    VAR_TMP = SUBSTR(INPUT_REC,22,17, '') ;
+  /************* this is check account number not customer account number if check account number presents otherwise customer accoutnt number*/
+    CHK_ACCT_NUM = VAR_TMP*1 ;
+  /************no leading zeroes*/
+    CHK_NO = NOSPACE(SUBSTR(INPUT_REC,64,12, ''))*1 ;
+    IF CHK_NO== '' ;
+    THEN ;
+      CHK_NO = '0' ;
+    ENDIF ;
+  /***********no dash or slashes*/
+    CHK_DT = CHANGE(SUBSTR(INPUT_REC,39,10, ''),'-', '') ;
+  /***********no leading zeros decimal or comma*/
+    CHK_AM = SUBSTR(INPUT_REC,49,11, '')*1 ;
+    FORMATTED_VAR = CONVERT('cobol','picture',CHK_AM,2) ;
+    CHK_INFO = SUBSTR(CHK_DT,1,2, '')!'/'!SUBSTR(CHK_DT,3,2, '')!'/'!
+     SUBSTR(CHK_DT,5,4, '')!RIGHT('$'!NUMPICTURE(FORMATTED_VAR,'#,###'
+  ',###.00;-#,###,###.00;0.00'),27,' ')!RIGHT(CHK_NO*1,25,' ') ;
+  /*check file name = idcu_acctnum_mmddyyyy_amt_cknum_F or B.tif might be changed ask client*/
+    CHK_TIFF_NAME = CHK_ACCT_NUM*1!'_'!CHK_DT!'_'!CHK_AM!'_'!CHK_NO*1 
+     ;
+/*below logic might be changed currently it is  building  front  and back check image based on conditions which it might not be necessary*/
+    IF IMAGE_CODE=='Y' ;
+    THEN ;
+      &CHK_IMAGE_CT = &CHK_IMAGE_CT+1 ;
+      CHECK_IMAGE_ARRAY[&CHK_IMAGE_CT] = CHK_TIFF_NAME!'_F.tif|'!
+       CHK_ACCT_NUM!'|'!CHK_INFO!'|'!CHK_NO!'|'!CHK_AM*1!'|'!CHK_DT!''
+  '|F' ;
+      IF SIDE_CODE<>'F' ;
+      THEN ;
+        &CHK_IMAGE_CT = &CHK_IMAGE_CT+1 ;
+        CHECK_IMAGE_ARRAY[&CHK_IMAGE_CT] = CHK_TIFF_NAME!'_B.tif|'!
+         CHK_ACCT_NUM!'|'!CHK_INFO!'|'!CHK_NO!'|'!CHK_AM!'|'!CHK_DT!''
+  '|B' ;
+      ENDIF ;
+    ENDIF ;
+  ENDIF ;
+PRINT_DOC:
+Call external dfa to display check image:
+    /************check image*************/
+  IF &CHK_IMAGE_CT<>0 ;
+  THEN ;
+    USE
+      FORMATGROUP DUPLEX_CHK_PAGE
+      LOGICALPAGE 1  ;
+    USE
+      FORMAT PRINT_CHK_HZ_IDCU EXTERNAL ;
+  ENDIF ;
+External DFAs:
+PRINT_CHK_HZ_TEMPLATE.dfa (change the dfa name per project)
+MARGIN TOP 1.6 INCH  BOTTOM 0  LEFT 0.6 INCH  RIGHT 0.2 INCH ;
+SETUNITS LINESP 0.125 INCH ;
+:DEFAULT_IS_3X6 ;
+LOOP_CONTROL = 1 ;
+  /*This external module prints check images from left to right, top to bottom.*/
+  /*Default layout is 3x6*/
+IF COL_NUM>3 AND ROW_NUM>9 ;
+THEN ;
+  COL_NUM = 3 ;
+  ROW_NUM = 6 ;
+ENDIF ;
+IF &CHK_IMAGE_CT>0 ;
+THEN ;
+  START_CHK_LINE = 1 ;
+  END_CHK_LINE = 0 ;
+  CHECK_IMAGE_ARRAY[&CHK_IMAGE_CT+1] = ' ' ;
+  FOR C
+    REPEAT &CHK_IMAGE_CT ;
+    TEMP_ACCT_NUM = EXTRACT(CHECK_IMAGE_ARRAY[C],'|',2) ;
+    IF C==&CHK_IMAGE_CT ;
+    THEN ;
+      END_CHK_LINE = C ;
+    ENDIF ;
+    IF START_CHK_LINE<>0 AND END_CHK_LINE<>0 ;
+    THEN ;
+      :FOR_COMBINED_STMT_NEED_TO_EXPLICITLY_CALL_A_PAGE_FORMAT_GROUP ;
+      COUNTERTIFF = 0 ;
+      COUNTER_MISSING = 0 ;
+      TEXT_HEIGHT = 0.4 ;
+      TEXT_FONT2 = 'AR090' ;
+      TEXT_FONT1 = 'AR0A0' ;
+      IF COL_NUM==3 ;
+      THEN ;
+        TEXT_FONT1 = 'AR090' ;
+        TEXT_FONT2 = 'AR070' ;
+        TEXT_HEIGHT = 0.4 ;
+      ENDIF ;
+      MARGIN TOP INCH(MR_TOP)  BOTTOM INCH(MR_BOTTOM) 
+          LEFT INCH(MR_LEFT)  RIGHT INCH(MR_RIGHT) ;
+      IMG_WIDTH = (8.5-$MR_LEFT/1440-$MR_RIGHT/1440-(COL_NUM-1)*
+       &H_GUTTER)/COL_NUM ;
+      IMG_HEIGHT = (11-ROW_NUM*TEXT_HEIGHT-$MR_TOP/1440-$MR_BOTTOM/
+       1440-(ROW_NUM-1)*&V_GUTTER)/ROW_NUM ;
+      TEXT_VER = IMG_HEIGHT/2-0.05 ;
+      COL2_HOR_POS = IMG_WIDTH+&H_GUTTER ;
+      COL3_HOR_POS = IMG_WIDTH*2+&H_GUTTER*2 ;
+      ELSE_CASE_FLAG = 0 ;
+      COLUMN_FLAG = 'L' ;
+      I = 1 ;
+      J = 1 ;
+      FIRST_CHECK_VER_POS = LASTMAX ;
+      FOR KK
+        REPEAT END_CHK_LINE-START_CHK_LINE+1 ;
+        TIFFNAME1 = &TIFFDIR!EXTRACT(CHECK_IMAGE_ARRAY[START_CHK_LINE+
+         KK-1],'|',1) ;
+        CK_INFO = EXTRACT(CHECK_IMAGE_ARRAY[START_CHK_LINE+KK-1]
+         ,'|',3) ;
+        &CK_ACCT_NUM = EXTRACT(CHECK_IMAGE_ARRAY[START_CHK_LINE+KK-1]
+         ,'|',2) ;
+        &CK_NUM = EXTRACT(CHECK_IMAGE_ARRAY[START_CHK_LINE+KK-1]
+         ,'|',4) ;
+        &CK_AMT = EXTRACT(CHECK_IMAGE_ARRAY[START_CHK_LINE+KK-1]
+         ,'|',5) ;
+        &CK_DATE = EXTRACT(CHECK_IMAGE_ARRAY[START_CHK_LINE+KK-1]
+         ,'|',6) ;
+        &ERROR = 0 ;
+        IF J==1 ;
+        THEN ;
+          IF LOOP_CONTROL==1 ;
+          THEN ;
+           OUTLINE 
+            POSITION LEFT  (FIRST_CHECK_VER_POS) ;
+           ENDIO ;
+          ENDIF ;
+          OUTLINE 
+           POSITION LEFT  (LASTMAX+INCH(&V_GUTTER)) 
+           DIRECTION ACROSS;
+            :STORE_FIRST_IMAGE_VERTICAL_POS_FOR_REUSE ;
+            IF FIRST_TIME==0 ;
+            THEN ;
+             FIRST_CHECK_VER_POS = LASTMAX ;
+             FIRST_TIME = 1 ;
+            ENDIF ;
+            KEEP ON;
+            SEGMENT DUMMY INLINE
+              POSITION 0  0 
+             IMPORT TIFFG4,TIFFNAME1, ''
+             WIDTH INCH(IMG_WIDTH) 
+             HEIGHT INCH(IMG_HEIGHT) 
+             SCALE;
+            IF &ERROR<>0 ;
+            THEN ;
+             TEXT
+              POSITION LEFT  (INCH(TEXT_VER)) 
+              WIDTH (INCH(IMG_WIDTH)) 
+              FONT REFERENCE(TEXT_FONT1)
+              ALIGN CENTER
+              'Image not Available' ;
+             BOX
+              POSITION (LEFT-0.03)  0 
+              WIDTH INCH(IMG_WIDTH)+0.05 
+              HEIGHT INCH(IMG_HEIGHT)+0.05 
+              THICKNESS MEDIUM
+              TYPE SOLID;
+             TEXT
+              POSITION SAME  (LASTMAX+0.05) 
+              WIDTH (INCH(IMG_WIDTH)) 
+              FONT REFERENCE(TEXT_FONT2)
+              ALIGN CENTER
+              CK_INFO ;
+             COUNTER_MISSING = COUNTER_MISSING+1 ;
+             ARRAY_MISSING[COUNTER_MISSING] = &CK_ACCT_NUM!'|'!
+              &CK_NUM!'|'!&CK_AMT!'|'!&CK_DATE ;
+             :RESET_ERROR_CODE ;
+            ELSE ;
+             BOX
+              POSITION (LEFT-0.03)  0 
+              WIDTH INCH(IMG_WIDTH)+0.05 
+              HEIGHT INCH(IMG_HEIGHT)+0.05 
+              THICKNESS MEDIUM
+              TYPE SOLID;
+             TEXT
+              POSITION LEFT  (LASTMAX+0.05) 
+              WIDTH (INCH(IMG_WIDTH)) 
+              FONT REFERENCE(TEXT_FONT2)
+              ALIGN CENTER
+              CK_INFO ;
+             COUNTERTIFF = COUNTERTIFF+1 ;
+            ENDIF ;
+            KEEP OFF;
+            IF J==COL_NUM ;
+            THEN ;
+             J = 1 ;
+             I = I+1 ;
+            ELSE ;
+             J = J+1 ;
+            ENDIF ;
+            IF I>ROW_NUM ;
+            THEN ;
+             J = 1 ;
+             I = 1 ;
+             LOOP_CONTROL = 1 ;
+             IF COL_NUM==1 AND (KK+ROW_NUM)/ROW_NUM%2==0 ;
+             THEN ;
+              USE
+               LOGICALPAGE NEXT ;
+              IF KK<>&CHK_IMAGE_CT ;
+              THEN ;
+               MARGIN TOP INCH(MR_TOP)  BOTTOM INCH(MR_BOTTOM) 
+                  LEFT INCH(MR_LEFT)  RIGHT INCH(MR_RIGHT) ;
+              ENDIF ;
+             ENDIF ;
+            ELSE ;
+             LOOP_CONTROL = 0 ;
+            ENDIF ;
+          ENDIO ;
+        ELSE ;
+          IF J==2 ;
+          THEN ;
+           IF LOOP_CONTROL==1 ;
+           THEN ;
+            OUTLINE 
+             POSITION LEFT  (FIRST_CHECK_VER_POS) ;
+            ENDIO ;
+           ENDIF ;
+           OUTLINE 
+            POSITION (LEFT+INCH(COL2_HOR_POS))  SAME 
+            DIRECTION ACROSS;
+             :STORE_FIRST_IMAGE_VERTICAL_POS_FOR_REUSE ;
+             IF FIRST_TIME==0 ;
+             THEN ;
+              FIRST_CHECK_VER_POS = LASTMAX ;
+              FIRST_TIME = 1 ;
+             ENDIF ;
+             SEGMENT DUMMY INLINE
+               POSITION 0  0 
+              IMPORT TIFFG4,TIFFNAME1, ''
+              WIDTH INCH(IMG_WIDTH) 
+              HEIGHT INCH(IMG_HEIGHT) 
+              SCALE;
+             IF &ERROR<>0 ;
+             THEN ;
+              KEEP ON;
+              TEXT
+               POSITION LEFT  (INCH(TEXT_VER)) 
+               WIDTH (INCH(IMG_WIDTH)) 
+               FONT REFERENCE(TEXT_FONT1)
+               ALIGN CENTER
+               'Image not Available' ;
+              BOX
+               POSITION (LEFT-0.03)  0 
+               WIDTH INCH(IMG_WIDTH)+0.05 
+               HEIGHT INCH(IMG_HEIGHT)+0.05 
+               THICKNESS MEDIUM
+               TYPE SOLID;
+              TEXT
+               POSITION SAME  (LASTMAX+0.05) 
+               WIDTH (INCH(IMG_WIDTH)) 
+               FONT REFERENCE(TEXT_FONT2)
+               ALIGN CENTER
+               CK_INFO ;
+              KEEP OFF;
+              COUNTER_MISSING = COUNTER_MISSING+1 ;
+              ARRAY_MISSING[COUNTER_MISSING] = &CK_ACCT_NUM!'|'!
+               &CK_NUM!'|'!&CK_AMT!'|'!&CK_DATE ;
+              :RESET_ERROR_CODE ;
+             ELSE ;
+              KEEP ON;
+              BOX
+               POSITION (LEFT-0.03)  0 
+               WIDTH INCH(IMG_WIDTH)+0.05 
+               HEIGHT INCH(IMG_HEIGHT)+0.05 
+               THICKNESS MEDIUM
+               TYPE SOLID;
+              TEXT
+               POSITION LEFT  (LASTMAX+0.05) 
+               WIDTH (INCH(IMG_WIDTH)) 
+               FONT REFERENCE(TEXT_FONT2)
+               ALIGN CENTER
+               CK_INFO ;
+              KEEP OFF;
+              COUNTERTIFF = COUNTERTIFF+1 ;
+             ENDIF ;
+           ENDIO ;
+           IF J==COL_NUM ;
+           THEN ;
+            J = 1 ;
+            I = I+1 ;
+           ELSE ;
+            J = J+1 ;
+           ENDIF ;
+           IF I>ROW_NUM ;
+           THEN ;
+            I = 1 ;
+            J = 1 ;
+            LOOP_CONTROL = 1 ;
+            USE
+             LOGICALPAGE NEXT ;
+            IF KK<>&CHK_IMAGE_CT ;
+            THEN ;
+             MARGIN TOP INCH(MR_TOP)  BOTTOM INCH(MR_BOTTOM) 
+                LEFT INCH(MR_LEFT)  RIGHT INCH(MR_RIGHT) ;
+            ENDIF ;
+           ELSE ;
+            LOOP_CONTROL = 0 ;
+           ENDIF ;
+          ELSE ;
+           IF J==3 ;
+           THEN ;
+            IF LOOP_CONTROL==1 ;
+            THEN ;
+             OUTLINE 
+              POSITION LEFT  (FIRST_CHECK_VER_POS) ;
+             ENDIO ;
+            ENDIF ;
+            OUTLINE 
+             POSITION (LEFT+INCH(COL3_HOR_POS))  SAME 
+             DIRECTION ACROSS;
+              :STORE_FIRST_IMAGE_VERTICAL_POS_FOR_REUSE ;
+              IF FIRST_TIME==0 ;
+              THEN ;
+               FIRST_CHECK_VER_POS = LASTMAX ;
+               FIRST_TIME = 1 ;
+              ENDIF ;
+              KEEP ON;
+              SEGMENT DUMMY INLINE
+                POSITION 0  0 
+               IMPORT TIFFG4,TIFFNAME1, ''
+               WIDTH INCH(IMG_WIDTH) 
+               HEIGHT INCH(IMG_HEIGHT) 
+               SCALE;
+              IF &ERROR<>0 ;
+              THEN ;
+               TEXT
+                POSITION LEFT  (INCH(TEXT_VER)) 
+                WIDTH (INCH(IMG_WIDTH)) 
+                FONT REFERENCE(TEXT_FONT1)
+                ALIGN CENTER
+                'Image not Available' ;
+               BOX
+                POSITION (LEFT-0.03)  0 
+                WIDTH INCH(IMG_WIDTH)+0.05 
+                HEIGHT INCH(IMG_HEIGHT)+0.05 
+                THICKNESS MEDIUM
+                TYPE SOLID;
+               TEXT
+                POSITION SAME  (LASTMAX+0.05) 
+                WIDTH (INCH(IMG_WIDTH)) 
+                FONT REFERENCE(TEXT_FONT2)
+                ALIGN CENTER
+                CK_INFO ;
+               COUNTER_MISSING = COUNTER_MISSING+1 ;
+               ARRAY_MISSING[COUNTER_MISSING] = &CK_ACCT_NUM!'|'!
+                &CK_NUM!'|'!&CK_AMT!'|'!&CK_DATE ;
+              ELSE ;
+               BOX
+                POSITION (LEFT-0.03)  0 
+                WIDTH INCH(IMG_WIDTH)+0.05 
+                HEIGHT INCH(IMG_HEIGHT)+0.05 
+                THICKNESS MEDIUM
+                TYPE SOLID;
+               TEXT
+                POSITION LEFT  (LASTMAX+0.05) 
+                WIDTH (INCH(IMG_WIDTH)) 
+                FONT REFERENCE(TEXT_FONT2)
+                ALIGN CENTER
+                CK_INFO ;
+               COUNTERTIFF = COUNTERTIFF+1 ;
+              ENDIF ;
+              KEEP OFF;
+            ENDIO ;
+            IF J==COL_NUM ;
+            THEN ;
+             J = 1 ;
+             I = I+1 ;
+            ELSE ;
+             J = J+1 ;
+            ENDIF ;
+            IF I>ROW_NUM ;
+            THEN ;
+             I = 1 ;
+             J = 1 ;
+             LOOP_CONTROL = 1 ;
+             USE
+              LOGICALPAGE NEXT ;
+             IF KK<>&CHK_IMAGE_CT ;
+             THEN ;
+              MARGIN TOP INCH(MR_TOP)  BOTTOM INCH(MR_BOTTOM) 
+                 LEFT INCH(MR_LEFT)  RIGHT INCH(MR_RIGHT) ;
+             ENDIF ;
+            ELSE ;
+             LOOP_CONTROL = 0 ;
+            ENDIF ;
+           ENDIF ;
+          ENDIF ;
+        ENDIF ;
+      ENDFOR ;
+      START_CHK_LINE = END_CHK_LINE+1 ;
+      END_CHK_LINE = 0 ;
+    ENDIF ;
+  ENDFOR ;
+ENDIF ;
+Cripple report:
+The below code should be run for all check or the checks those are going to be displayed ( need to ask the client )
+AFTERDOC:
+DOCFORMAT $_AFTERDOC;
+  /************check image*************/
+  IF &JOB_TYPE=='s' ;
+  THEN ;
+    :CRIPPLE_REPORT ;
+  /********cripple report check image ***************/
+    IF COUNTER_MISSING<>0 ;
+    THEN ;
+      IF COUNTER_MISSING>=1 ;
+      THEN ;
+        &FN_CRIPPLE_STMT = &FN_CRIPPLE_STMT+1 ;
+      ENDIF ;
+      FOR C
+        REPEAT COUNTER_MISSING ;
+        CHECK_AMOUNT = EXTRACT(ARRAY_MISSING[C],'|',3) ;
+        FORMATTED_VAR = CONVERT('COBOL','PICTURE',CHECK_AMOUNT,2) ;
+        CHECK_TX_DATE = EXTRACT(ARRAY_MISSING[C],'|',4) ;
+        CHECK_TX_DATE = SUBSTR(CHECK_TX_DATE,1,2, '')!'/'!
+         SUBSTR(CHECK_TX_DATE,3,2, '')!'/'!SUBSTR(CHECK_TX_DATE,5,4,
+          '') ;
+        WRITERECORD  TO CRIPPLE_RPT ;
+          PUT EXTRACT(ARRAY_MISSING[C],'|',1)  START * LENGTH 21;
+          PUT LEFT(EXTRACT(ARRAY_MISSING[C],'|',2)*1,15,' ') 
+             START * LENGTH 15;
+          PUT NUMPICTURE(FORMATTED_VAR,'#,#,###,##0.00') 
+             START * LENGTH 20;
+          PUT CHECK_TX_DATE  START * LENGTH 15;
+          PUT RIGHT(NEW_MEM_NUM,15,' ')  START * LENGTH 20;
+        ENDIO;
+      ENDFOR ;
+    ENDIF ;
+  ENDIF ;
+AFTERLASTDOC
+DOCFORMAT $_AFTERLASTDOC;
+  IF &JOB_TYPE=='s' ;
+  THEN ;
+    &FN_CRIPPLE_PERCENT = &FN_CRIPPLE_STMT/&FN_TOT_STMT*100 ;
+    WRITERECORD  TO CRIPPLE_RPT 
+      DELIMITER X'0D0A' ;
+      PUT '**********************************************************'
+  '****************************'  DELIMITED ;
+      PUT 'CYCLE DATE:   '!&STMT_DATE  DELIMITED ;
+      PUT 'TOTAL NUMBER OF STATEMENT WITH CHECK IMAGES: '!
+         &FN_TOT_STMT  DELIMITED ;
+      PUT 'TOTAL NUMBER OF STATEMENT WITH 1 OR MORE MISSING CHECK ITE'
+  'MS: '!&FN_CRIPPLE_STMT  DELIMITED ;
+      PUT 'PERCENTAGE: '!&FN_CRIPPLE_PERCENT!'% - '!&FN_CRIPPLE_STMT!''
+  ' out of '!&FN_TOT_STMT  DELIMITED ;
+      PUT '**********************************************************'
+  '****************************'  DELIMITED ;
+    ENDIO;
+  ENDIF ;
+Check Index: 
+Please follow FNBKCM11
+this will be needed for isd team meaning for f option each line will have two part separated by | 2nd part is image name with date
+directory where to find the check image and 1st part is how the check image will be renamed when passing to isd team and it is
+PrimaryAcctNum_PrimaryAcctType_CheckingAccount_checkDate_checkAmount_checkNum_traceNum_branchNum_tellerID_seqNum_checkSide.tif
+    IF LINE_CODE==3000 ;
+    THEN ;
+      USE
+        FORMAT OSI_DNA_CREATE_CHECKING_ACCOUNT_CHECK_LIST_BLOCK_VARIABLES EXTERNAL ;
+      IF &JOB_TYPE=='f' ;
+      THEN ;
+  /*this is customer account number  no leading zeros*/
+        CURRENT_CHECK_PRIMARY_ACCOUNT_NUMBER = ACCOUNT_NUMBER*1 ;
+  /*this is check image account number not   customer account number no leading zeros */
+        CURRENT_CHECK_ACCOUNT_NUMBER = CHK_IMG_ACCOUNT_NUM ;
+  /*no slash or dash mmddyyyy*/
+        CURRENT_CHECK_DATE = CHK_IMG_DATE ;
+  /*no comma or decimal*/
+        CURRENT_CHECK_AMOUNT = CHK_IMG_AMT ;
+        FORMATTED_CHECK_AMOUNT = CONVERT('cobol','picture',
+         CHANGE(CURRENT_CHECK_AMOUNT,'-', ''),2) ;
+        FORMATTED_CHECK_AMOUNT = NUMPICTURE(FORMATTED_CHECK_AMOUNT,'#'
+  '##,##0.00;-###,##0.00;0.00') ;
+        IF POS('-',CURRENT_CHECK_AMOUNT,1) ;
+        THEN ;
+          FORMATTED_CHECK_AMOUNT = '-'!FORMATTED_CHECK_AMOUNT ;
+        ENDIF ;
+        CURRENT_CHECK_AMOUNT_DEC = CHANGE(FORMATTED_CHECK_AMOUNT,',',
+          '') ;
+     /* no leading zeros */
+        CURRENT_CHECK_NUMBER = CHK_IMG_NUM ;
+/*might be changed*/
+        TIFFNAME_F = 'fnbk_'!CURRENT_CHECK_ACCOUNT_NUMBER*1!'_'!
+         CURRENT_CHECK_AMOUNT!'_'!CURRENT_CHECK_NUMBER!'_'!
+         CURRENT_CHECK_DATE!'_F.tif' ;
+        TIFFNAME_B = 'fnbk_'!CURRENT_CHECK_ACCOUNT_NUMBER*1!'_'!
+         CURRENT_CHECK_AMOUNT!'_'!CURRENT_CHECK_NUMBER!'_'!
+         CURRENT_CHECK_DATE!'_B.tif' ;
+        WRITERECORD  TO CK_IDX ;
+          PUT CURRENT_CHECK_PRIMARY_ACCOUNT_NUMBER!'_'!
+            PRIMARY_ACCT_TYPE!'_'!CURRENT_CHECK_ACCOUNT_NUMBER*1!'_' 
+             START *;
+          PUT CURRENT_CHECK_DATE!'_'  START *;
+          PUT CURRENT_CHECK_AMOUNT_DEC!'_'  START *;
+          PUT CURRENT_CHECK_NUMBER!'____'!&SEQ_NUM!'_f.tif'!'|'!
+            CURRENT_CHECK_DATE!'/'!TIFFNAME_F  START *;
+        ENDIO;
+        WRITERECORD  TO CK_IDX ;
+          PUT CURRENT_CHECK_PRIMARY_ACCOUNT_NUMBER!'_'!
+            PRIMARY_ACCT_TYPE!'_'!CURRENT_CHECK_ACCOUNT_NUMBER*1!'_' 
+             START *;
+          PUT CURRENT_CHECK_DATE!'_'  START *;
+          PUT CURRENT_CHECK_AMOUNT_DEC!'_'  START *;
+          PUT CURRENT_CHECK_NUMBER!'____'!&SEQ_NUM!'_b.tif'!'|'!
+            CURRENT_CHECK_DATE!'/'!TIFFNAME_B  START *;
+        ENDIO;
+      ENDIF ;
+    ENDIF ;
+Tagged:Check Imagedfafnbkimplementation

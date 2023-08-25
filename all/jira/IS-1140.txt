@@ -1,0 +1,226 @@
+title: BANB - [27099][pvt] Escrow Analysis - Feasibility of adding escrow analysis statement as estmt 
+description: Setup new application tab and new statement type in Infotrac E-Notification. Escrow Analysis.
+
+
+
+Timeline
+
+Turnover to IS 8/1
+
+QA samples 8/15
+
+Client samples 8/17
+
+Client approval 8/24
+
+parallel 8/25
+
+LIVE 8/31
+
+
+
+IS assessment:
+
+Update BANBES1 DFA - 3hrs
+
+add estmt job option
+
+will output an information page for estmt (client to provide template) instead of check page
+
+put acct_type LN on txt START 347 LENGTH 2
+
+all other logic stays the same
+
+
+
+update script (/home/master/banbes1_chk_stmt_process.sh) - 3hr
+
+add job_sel arguments to take in s or f job option, if none passed in default to process both options
+
+if 's' or both options, process all 3 scripts as is currently
+
+if 'f' or both options, add ${home_master}/master/chk_stmt_process2.pl -c banb -j es1 -s f >> ${d_dir}/banb/banbes1_chk_stmt_process.log to process estmt
+
+
+
+
+author: JIRAUSER10906
+comment: [~Kbittmann]
+
+Has a template been provided by the client for the information page that replaces the check page (for e-statement)?
+
+Thanks,
+Sam
+
+
+author: JIRAUSER10906
+comment: [~Kbittmann]
+
+Any updates from the client?
+
+Thanks,
+Sam
+
+
+author: JIRAUSER10911
+comment: [~SamV2021]
+
+They are still working on the template.
+
+
+author: shun.kuwashima
+comment: [~SamV2021] [~Kbittmann] Are we still waiting on something from the client? Live date is still showing 8/31, can we push that out? 
+
+
+author: JIRAUSER10906
+comment: [~Shun.Kuwashima]
+
+Yes, we're still waiting on a template from the client.
+
+[~Kbittmann]
+
+Do we have an expected date from the client as to when they would be able to provide it?
+
+Thanks!
+
+
+author: JIRAUSER10911
+comment: [~SamV2021] [~Shun.Kuwashima]
+
+No new updates from the client on this. I will push out live date till end of October.
+
+
+author: JIRAUSER10911
+comment: [~SamV2021]
+
+Please see cover page and check language attached. Please provide an updated timeline.
+
+
+author: JIRAUSER10906
+comment: [~Kbittmann]
+
+Just a few things I would like to confirm before we proceed:
+ # This attachment[^Mortgage Escrow Overage Check Cover Letter eStatement clients final 8-18-22.docx]is to be a cover letter (i.e. displayed as 1st page), and is for e-statement only? Also, should it only be printed out for accounts with a check (that is, an escrow overage)?
+ # Should the escrow shortage/deficiency coupon be printed for e-statement? Please see attachment below:
+  !banbes11_shortage_coupon.PNG|thumbnail!
+ # The overage check verbiage provided[^Overage check language for Escrow Analysis eStatement final 8-18-22.docx] is to be used in place of the check and verbiage shown here?
+ !banbes11_check.PNG|thumbnail!
+
+Thanks,
+ Sam
+
+
+author: JIRAUSER10911
+comment: [~SamV2021]
+
+I am double checking with the client on your questions.
+
+
+author: billr
+comment: [~SamV2021] [~Kbittmann]
+
+Sam, client responded:
+
+!image-2022-10-07-10-09-38-280.png|width=725,height=358!
+
+
+author: JIRAUSER10906
+comment: [~billr] [~Kbittmann]
+
+The feedback for #1 and #2 is good. Regarding the last point though, I am confused. From my understanding, there are no changes to be made for physical print, only e-statement. I will attempt to fit all of the overage check verbiage on the check (on e-statement only).
+
+*New timeline:*
+Turnover to IS: 8/1
+
+QA samples: 10/17
+
+Client samples: 10/19
+
+Client approval: 10/26
+
+Parallel: 11/02 (Pushing until after EOM)
+
+LIVE: 11/09
+
+Thanks,
+Sam
+
+
+author: JIRAUSER10911
+comment: [~SamV2021]
+
+Per the client:
+
+I mean when the client has an e-statement and an escrow overage check, then this should go with the check.
+
+If the client doesn't have e-statements and we are mailing the whole thing then there is no change.
+
+
+author: JIRAUSER10911
+comment: [~SamV2021]
+
+Can you still provide samples today?
+
+
+author: JIRAUSER10906
+comment: [~Kbittmann]
+
+Hi Kris, I will provide samples to QA either by end of day today, or early tomorrow morning.
+
+Thanks,
+Sam
+
+
+author: JIRAUSER10906
+comment: [~Kbittmann]
+
+Hi Kris, I am currently running into programming issues. Sample date will be delayed a bit. I will update you later today when I have more details.
+
+Thanks,
+ Sam
+
+
+author: JIRAUSER10911
+comment: [~SamV2021]
+
+Any update on this item?
+
+
+author: JIRAUSER10906
+comment: [~Kbittmann]
+
+Hi Kris, I am still experiencing difficulty with making this update to produce e-statements. This is taking much longer than expected since the spec has changed to produce checks for e-statement. The assessment did not take this into account since it was thought that that checks would be replaced by the verbiage here:[^Overage check language for Escrow Analysis eStatement final 8-18-22.docx]
+
+For now, I have attached preliminary samples for one account: [^banb_20220516_41000757_4.pdf]so that the client can review specifically the cover letter to be attached for e-statement accounts with an overage check, as well as the verbiage on the overage check itself. I am not yet having QA review this since I have yet to properly produce e-statements.
+
+A new timeline will be needed.
+
+Thanks,
+ Sam
+
+
+author: JIRAUSER10911
+comment: [~SamV2021]
+
+Please see the below client feedback and provide updated samples.
+
+The message on the check is printing on the check itself, can we print it on the "stub" portion?
+
+
+author: JIRAUSER10906
+comment: [~Kbittmann]
+
+Hi Kris, can you please advise on where the stub portion would be?
+
+Couple options:
+ * Option 1: This would require be very programming intensive as we would have change a lot of the logic controlling this print image application. We would be inserting additional text that could overflow onto the following page, and as such, the following pages may be out of order with what is given in the data file. I would need to consult with a lead regarding feasibility and programming hours.
+
+!banbes1_check_stub_option1.JPG|thumbnail!
+ * Option 2: This would be simple.
+
+!banbes1_check_stub_option2.JPG|thumbnail!
+
+Thanks,
+Sam
+
+

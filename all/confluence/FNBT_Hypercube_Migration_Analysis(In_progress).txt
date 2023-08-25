@@ -1,0 +1,605 @@
+title: FNBT Hypercube Migration Analysis(In progress)
+body: ## Frontend:
+
+##  **Schema** : Default
+
+##  _ **ROOT**_
+
+  
+|  
+  
+---|---  
+ **Login Method**|
+
+diSSO (ROOT/IFSIBhblogin.jsp), SSO(SingleSignOnServlet), DSO  
+  
+ **Enrollment**|
+
+SSO: 3 steps  
+  
+ **Welcome Email**|  Yes  
+ **Menu**|
+
+  * E-Statements
+  * E-Notices
+  * E-Taxes
+  * Statement Reconcilement
+  * Profile 
+
+  
+ **Account Types**|  99,3A,CA,DD,LN,3B,CD,SV,SS,BX,IR,ML  
+ **Statement Types**|  default, enotice,etax  
+ **Archival Period**|  Default: 84, Enotice: 25 ,Etax: 84  
+ **Paperless Configuration**|  NonSelective  
+ **Unenrollment of DP change**|  False. If dp is changed from paperless to
+paper, users are redirected to opt out page to view statements of that account  
+ **Delivery Preference**|  Paper=B, Paperless=E  
+ **Notification Preference**|  Email  
+ **NP Link Type**|  byUsr  
+ **Batch Download**|  N/A  
+  
+###  **User-account Relation:**
+
+  * Many to Many
+
+### Login methods:
+
+  *  ** _diSSO:_**
+    * Mandatory fields: cif_num (leading zeros get removed), email, password, gmt, timeout
+    * Must provide an existing cif_number. If no user is found with that cif_number from the usr_mapping table, throws an error. Shows errorMessage: INVALID_USERINFO and return.
+    * Searches for user profile from usr_session. [usr, usr_fin_account, fin_accoutn, usr_session, usr_mapping] by the cif_number. If no user is found, creates a new user. sess_login_id = !usr_id, sso=null, dso=null. Insert into USR, USR_SESSION.
+    * If the user found and login status is "Invalid", show the error message "DISABLED_USER" and return. 
+    * If login status is "inactive", set status ="active" and sets loginName=!usr_id and save to usr_session table.
+  * #### SSO (SingleSignOnServlet): 
+
+    * Mandatory field: Data
+    * search user from usr_mapping by cif_number. If not found, return CIF_NOT_FOUND and redirect to error page.
+    * If user found searching by cif_number
+      * Search user profile by sess_login_id from usr_session. If user not found, create new user with loignName=!usrId, DSO=null, SSO=null , sets ssoKey and insert to usr_session.
+    * Searches user by ssoKey from usr_session. 
+      *  If user not found, redirect to error page and login failed.
+      * If user status is inactive, login failed and redirected to error page.
+
+For both diSSO and SSO,
+
+  * If DSO=null && SSO=null, go to enroll/test.jsp.
+  * If DSO != null && SSO= null [If user has enrolled via DSO already, and never login via SSO ]
+    * Set the current date as SSO and save to usr_session.
+    * Searches for ufa for that user. Mark every ufa as "update" and insert into log_record as event_type="update"
+  * If DSO = null && SSO != null && login status="pending", [ This user was created through web services with only a sso]
+    * Go to pending/test.jsp
+
+###  _Enrollment:_
+
+  * Step 1 of 3: pdf view
+  * Step 2 of 3: E-Statement Disclosure
+  * Step 3 of 3: Delivery preference, notification preference set. 
+    * 2 emails can be set. Emails fields are non-editable.
+    * Emails are pulled form np table. If no record is found on np table, email fields remain empty and therefore the user can't choose paperless as dp. 
+    * Account Number shows as masked.
+    * Email is updated only when the user has less than 2 emails.
+    * Emails are auto-checked if that entry is not listed in the RESTRICTION table. 
+    * Insert into log_record : eventType='update'
+    * If an email is checked and that email is previously listed on RESTRICTION table, delete it from RESTRICTION table. And insert into audit_log_fnbt [ location="ssoRgstr', event='restrict']
+    * If email is not checked and this email wasn't in restriction, insert this email into restriction table and insert to audit_log_fnbt [ location="ssoRgstr', event='restrict']
+    * Update ufa status="active", setRegDate=current date and save to UFA table.
+    * If paperless status which is passed from enrollment step 3 is different from db, update paperless status, insert into Paperless table. Insert into audit_log_fnbt [ location="ssoRgstr", event="paperless"]
+    * Insert into audit_log_fnbt [ location="site", event="enroll"]
+    * Send a welcome email after enrollment. Insert into welcome_email_log
+
+###  _Enrollment (status= pending)_
+
+  * For pending enrollment, If the user type is N, during enrollment step 2, shows commercial disclosure (commercial_disclosure_inc.jspf). For other types of users, shows as usual disclosure.
+
+###  _Homepage:_
+
+  * ###  _SSO_
+
+    * The first opt-out account of UFA i.e. paperless status is E or W, which is either DD or SV is displayed as selected in the e-Statement tab. UFA is ordered by acct_number.
+    * If the account status is "C", it shows a message. Your account has been closed for more than 13 months and you can no longer access it. No statements are displayed. 
+    * While selecting an account from account dropdown, If the paperless status is B or, status is E or W but no email, redirect to opt out page. If the user is of type "V", this user is redirected to the viewer's opt out page. 
+    * If the account type is SS, etax tab is auto-selected after landing on the homepage.
+    * If stmtType=default and acctType is neither DD nor SV, enotice tab is auto selected. [if etax is not present]
+    * If the User type is N, then show Authorized Viewers. Can create and assign viewers.
+    * If the paperless status is B, go to opt-out page. 
+    * System maintenance information is shown according to the data in the p_maintenance table.
+  *  _DSO_  
+
+    * No option for DSO enrollment.
+    * Only the Login and forget password feature is available.
+    * System maintenance information is shown on the login page according to the data in the p_maintenance table.
+    * If user status is "NEW", asks the user to reset the password
+    * If the password hint phrase is null, asks the user to reset the password hint
+    * If the paperless status is B, go to opt out page
+
+###  _E-Statements_
+
+  * Statement table has 3 columns (Statement Date, Status, Monthly Inserts)
+
+###  _E-Notices_
+
+  * Enotice table has 3 columns (Notice Date, Status, Description)
+
+###  _E-Taxes_
+
+  * ETax table has 2 columns (Tax Date, Description)
+
+###  _ **Statement Reconcilement:  **_
+
+  * Opens pdf in a new tab
+
+###  _Profile_
+
+  * ###  _SSO_
+
+    * Delivery Preference: 
+      * Shows masked account number
+      * Delivery Preference: Paperless(E), Paper(B). For delivery preference W, none can be selected, neither paperless nor paper.
+      * Email Address 1: not editable. Remains auto-checked if it's not listed in the RESTRICTION table.
+      * Email Address 2: not editable. Remains auto-checked if it's not listed in the RESTRICTION table.
+      * Viewers i.e. user type=V, can't change delivery preferences.
+      * Email addresses can be enabled or disabled for alerts using the checkmark boxes above. Shows a confirmation message after enabling/disabling any email address
+      *  **Authorized Viewers:**
+        * This part is visible only if the user type is N. If no viewer is created, Create viewer option is visible.
+        * Viewers Information:
+        * Name: not editable
+          * Email Address: not editable
+          * Edit Profile: Can edit viewer profile
+          * Remove Profile: Can remove this viewer
+      *   * ###  _DSO_
+
+    * User Information
+      * Company Name. Only visible for user type N and V
+      * E-mail Address: not editable
+      * Password: User can update password
+      * Security Phrase to Recover Forgotten Password: User can update this from select dropdown
+      * Security Hint to Recover Forgotten Password: User can update this via input field
+    * Delivery Prefernece:
+      * Account Number: shows masked account number
+      * Delivery Preference: 
+        * Paperless(E), Paper(B).  For delivery preference W, none can be selected, neither paperless nor paper.
+        * Email Address 1: not editable. Remains auto-checked if it's not listed in the RESTRICTION table.
+        * Email Address 2: not editable. Remains auto-checked if it's not listed in the RESTRICTION table.
+        * Viewers i.e. user type=V, can't change delivery preferences.
+    * Authorized Viewers: [This part is visible only if the user type is N]
+    * 
+
+##  _MSM_
+
+###  _ **Account Management:**_
+
+  * Search by account number, email address, Login name (sess_login_id) 
+    *  **Account Information:** Shows Bank, Account Type, SSN, Account Number, Application, Status, Name, Company Name, Register Status, Last Login Time, Last Statement, View Time, Employee ID
+    *  **Delivery Preference:**
+      * Status: Can change dp(paperless/paper/both) for user type P and N. Can only browse history of paperless status for user type V
+      * Email: Can enable/disable email addresses for user type P. Can update, enable and delete for user type V and N. 
+    * Batch Download
+    * E-Statements: 2 columns. Statement Date, Monthly Inserts
+    * E-Notices: 2 columns. Notice Date, Description
+    * E-Taxes: 2 columns. Tax Date, Description
+    * Can create authorized viewers for user type N
+  * E-Statement Account Creation: Can create two types of account
+    * Personal Account
+    * Commercial Account
+
+###  _ **E-mail Proofing:**_
+
+  *  **Bank selection:** A select dropdown. First National Bank of Texas, First Convenience Bank
+  *  **Statement Type selection:** E-Statements, E-Notices, E-Taxes, Welcome, Instant Enrollment Email, Email Change Notification
+
+###  ** _Insert Mgmt._ _(_** _Marketing Insert Management **)**_
+
+  * Insert Title
+  * File Location
+  * Stmt Type: E-Statements, E-Taxes
+  * Method: (radio button)
+    * Display this insert on the closing date.
+    * Display this insert within the day range.
+  * Closing Date
+
+###  _ **Marketing Promo E-Mail:**_
+
+  * Marketing promo email can be sent to the following users:
+    * All e-statement users of INFOIMAGE's database
+    * Emails listed on the ECL file provided by the admin. ECL file format is ACCOUNT #|FIRST NAME|LAST NAME|E-MAIL ADDRESS
+  * This marketing promo e-mail feature will not be supported by the Undeliverable e-mail feature.
+
+###  _ **Reports:**_
+
+  *  **Latest Stats:**  This report shows the current month's statistics for the number of Statements Viewed/Unviewed and the number of Notifications Sent/Failed.
+  *  **User Login Activity:**  This report shows how many users have logged into E-Statements during a specified time range, as well as showing peak periods of user activity.
+  *  **AI Login Activity:**  This report shows how many administrative users have logged into the AI (Administrative Interface) site.
+  *  **E-mail Address Collection:  **Downloadable as a .TXT file, this report lists all registered E-Statement users, as well as their account numbers and e-mail addresses.
+  *  **Paperless:  **This report states which users (and how many) have elected to opt-out of receiving paper statements. The report includes opt-in and opt-out users by month, and can be downloaded in .TXT or Excel file format, including account numbers.
+  *  **Registered Users:  **This report states the number of users who have signed up for E-Statement each month, as well as a cumulative list of registered users. This report can be downloaded in .TXT or Excel file format, including account numbers.
+  *  **Marketing Insert Report:  **This report states the number of times each marketing insert was viewed. This report can be downloaded in .TXT or Excel file format.
+
+###  _ **Profile:**_
+
+  * Shows privilege, usr id, first name, last name.
+  * Can update password
+
+###  _ **Administration:**_
+
+  
+
+  * This page allows users to create, view, modify, and remove other users who have lower privileges.
+
+  
+
+###  _ **Exit**_
+
+##  _ **Backend:**_
+
+##  _ **Processes:**_
+
+###  _ **Auth :**_
+
+  *  **Data Handler:  FcsbAuthHandler**
+    * Length must be 127
+    * Fileds:  Not separated with any kind of delimiters. Fields are extracted from data using substring. Substring ranges are given inside the parenthesis below with each field name.
+      * Bank code: Value must be **01**. Otherwise, a Data exception will be thrown. (0-2)
+      *  CIF: Leading zeroes get removed (2-16)
+      * Customer type (16-17)
+      * Tin (17-26)
+      * Tintype (28-29)
+      * Branch (29-32)
+      * First name (32-52)
+      * Last name (52-72)
+      * Date of Birth (72-80)
+      * Application (80-82)
+      * Account number: Leading zeros get removed (82-102)
+      * Account status (102-103)
+      * Product type (103-106) 
+      * Closed date (106-114)
+      * Employee code (114-115) 
+      * Maint: Possible values are F,A,D,U (115-116)
+      * Region (If maint=F, 115-118. Otherwise 115-119)
+      * Open date (119-127)
+  *  **Registrar: FcsbAuthRegistrar**
+    * If maint= "A" or "U",  save/update data. If maint= "D", remove UFA for viewers.  
+
+      * Search for a user by cif number. If not found, create a new user and attach CIF to this new user.
+      * Search for an account by account number. If not found, create a new account. No account can be open within the grace period. No grace period is defined in the conf file.
+      * Insert a new record /Update ACCT_ACCESS table by updating aa_min_level for an account.
+      * Search for a location by branch name. If not found, create a new location and insert it into the LOCATION table.
+      * Search for account location by acct_id. If not found, create a new one and insert it into the ACCT_LOCATION table.
+      * Create a new paperless record if not found.
+      * Updates UFAs for the user.
+      * Insert into AUDIT_LOG_FNBT. location="auth", event="add" or "update"
+      * For a valid tin number(not null or not empty or not 0)
+        * Create a account with type SS
+        * Create paperless for this account. setModifiedBy=2, new status=B, old status=N
+        * Create Ufa. status: pre_reg 
+        * Insert into AUDIT_LOG_FNBT. event_type="auto_reg", location="auth"
+    *  **Database changes:** USR, FIN_ACCOUNT, USR_MAPPING, USR_FIN_ACCOUNT, ACCT_ACCESS, LOCATION, ACCT_LOCATION, PAPERLESS, AUDIT_LOG_FNBT
+
+###  _Afp:_
+
+  *  **Data Handler:  AfpStatementData9**
+    * Columns are pipe delimeted. Length can be 12, 13, 14, 15
+    * Format: fileName|acctNum|beginDate|closingDate|numOfPages|acctName|SSN|appType|messageIds|hasCheck|insertId|regionCode|crippleFlag|zipFileName|outputFormat.
+  *  **Registrar: FcsbEstmtRegistrar**
+    * flags: 
+      * global.multipleDocType=false
+      * global.default.imageMessage=true
+      * afp.default.estmtselinsert=true
+    * Create an account if doesn't exist, otherwise, update the region. 
+    * multipleDocType is false. So, blindly insert to estmt_doc, estmt_file, and arch_file.
+    * imageMessage is true, so register message if message_ids are provided in the index file. 
+    * Insert into p_job_estmt table.
+    * estmtSelInsert is true, so register selective insert. 
+    *  **Database changes:** FIN_ACCOUNT, ESTMT_DOC, ESTMT_FILE, ARCH_FILE,  ESTMT_MSG, P_JOB_ESTMT, ESTMT_SEL_INSERT
+
+###  _Insert_range:  _
+
+  *  **Data Handler:  RangeInsertHandler**
+    * Format: fileName|title|stmtType|beginDate|endDate
+  *  **Registrar:** **InsertRegistrar**
+    * Updates EMAIL_ATTACH table
+    * Updates INSERT table.
+
+###  _Enotice4:_
+
+  *  **Data Handler: ENoticeData7**
+    * Value of the first field must be L.
+    * Post card flag value must be 0 or 1.
+    * Zip file name can't be empty.
+    * Format: L|acctNum|acctType|acctName|afpFileName|letterCode|closingDate|imageCount|postCardFlag|zipFileName|region
+  *  **Registrar: FcsbENoticeRegistrar**
+    * Create an account if doesn't exists. Sets acctNum, acctName, acctType, region, status=A.
+    * Always insert(if not present) or update(if present) region of the account.
+    * Insert enotice data to enotice table.
+    * Register the statement i.e. insert into ARCH_FILE table. 
+    * Insert into P_JOB_ENOTICE table.
+    *  **Database changes:** FIN_ACCOUNT, ENOTICE, P_JOB_ENOTICE, ARCH_FILE
+
+###  _Direct_Enrollment:_
+
+  *  **Data Handler: DefaultEnrollmentData**
+    * Columns are pipe delimited. Must have exactly 9 columns. So, all fields are mandatory.
+    * Format: cifNum|userType|acctNum|acctType|acctName|email|status|region|branch
+  *  **Registrar: FcsbEnrollmentRegistrar**
+    * Flags: 
+      * direct_enrollment.restrictEmail=true 
+      * direct_enrollment.userBasedNP=true
+    * Searches for an account by branch name LOCATION table.If not found, create a new location with branch name and orgId and insert it into LOCATION table.
+    * New account is created if not found. No account can be created within the grace period. No grace period is defined for FNBT in the conf file. 
+    * Searches for account location by acctId from LOCATION table. if not found, insert acctId and location_id.
+    * Searches for paperless status for the account. If not found, create a paperless data and insert into PAPERLESS table. If new status is given as E in index file, update the paperless table as new status E for that account.
+    * Removes restrictions for the emails provided in the index file. 
+    * Paperless status will be changed only if the account was not switched by the user themselves i.e. modifiedBy=2. If the old status was updated by the user i.e. modifiedBy=1, paperless status will not be updated.
+    * Searches for an user profile by cif number and user type. If not found, creates a new SSO user with !usrId as sess_login_id, permission=1, current date as SSO, status="active" and save to USR and USR_SESSION.
+    * Searches for UFAs of the user. As, userBasedNP is true, so creates/updates np for every account as byUsr. Updates the first np if email list exceeds maxNpPerUser which is 2. 
+    * Inserts remoteAddress="infoimage" and event="update" into AUDIT_LOG_FNBT table.
+    * event="enroll" and location="dir_enrll" is inserted into AUDIT_LOG_FNBT table.
+    *  **Database changes:** LOCATION, FIN_ACCOUNT, USR_FIN_ACCOUNT, PAPERLESS, USR, USR_SESSION, NOTIFICATION_PREFERENCE, RESTRICTION, AUDIT_LOG_FNBT
+
+###  _Etax_
+
+  *  **DataHandler: ETaxData3**
+    * etax.isZipped = true, so exactly 8 columns are needed.
+    * Format: **acctNum** | **type** | **afpFileName** | **date** |suffix|appType|ssn| **zipFileName  **[bold fields are mandatory]
+  *  **Registrar: ETaxRegistrar3**
+    * flags:
+      * etax.createAccount=false
+      * global.enableAccountType=true
+      * global.autoRegister=false
+    * createAccount is false, so no account creation if account not found.
+    * Inserts paperless. setModifiedby=1, newStatus="B", oldStatus="N".
+    * Register the statement. Insert into ARCH_FILE
+    * Insert into ETAX, P_JOB_ETAX
+    *  **Database changes:** PAPERLESS, ETAX, ARCH_FILE, P_JOB_ETAX
+
+###  _ECL_
+
+  *  **DataHandler: FnbtEclHandler**
+    * Format: **branch** | **cifNumber** |emails [bold fields are mandatory]
+  *  **ProcessingJob:**
+    * flags:
+      * global.email.storage=notifyPref
+      * ecl.emailType=user
+      * ecl.maxEmails=2
+      * ecl.purge=false
+      * ecl.multipleEmail=true
+    * Create, Update, Delete notification preference based on ecl file.
+    * If np is not found with the usrId, create an np with the email provided in ecl file as byUsr and insert it into the NOTIFICATION_PREFERENCE table. Create restriction for this newly created np i.e. insert usrId, restriction_type="np_id" into RESTRICTION table.
+    * If empty email is passed through ecl file, delete restriction of that usrId and restriction_type="np_id".
+    * Database changes: NOTIFICATION_PREFERENCE, RESTRICTION
+
+##  _ **Reports:**_
+
+  *  **Accounting Report**
+    * This report includes the following reports:
+      * Afp Report
+      * Email Notification Report
+      * ENotice Report
+      * ENoticeEmailNotification Report
+      * Insert Report
+      * Marketing Promo Email Notification Report
+  *  **Paperless Report**
+    * It generates a report from all the account that has been opted-out.
+    * It generates reports for 3 types of statements. 
+      * enotice
+      * DD (ms1)
+      * SV (ms2)
+  *  **FcsbPaperless Report**
+    * This report contains the following colomns:
+      * Cif number
+      * Account number
+      * Application
+      * Account owner name
+      * Paperless status
+      * Paperless modified date
+      * sess_login_id
+      * email
+      * email2
+      * Overall paperless status
+      * SSO date
+      * DSO date
+      * Email Preferences
+  *  **Daily Status Report:**
+    * This report contains the users who trigger any of the following events within the time range:
+      * A user views a statement or a notice
+      * A user changes the paperless status of an account
+      * A user is disabled by an admin user.
+  *  **Log Record Report**
+    * Data is shown in this report from Log record table
+    * This report contains cif number, user ssn and their activity in log record table
+
+###  **Data migration Logic:**
+
+  1. Uses user mapping
+  2. sess_logi_id is "!"usr_id
+  3. Uses Notification preference table
+
+so no migration is needed.
+
+##  _Analysis Summary(ROOT)_
+
+Scope| Feature| FNBT| Hypercube| Note  
+---|---|---|---|---  
+  
+ **Enrollment(SSO)**
+
+|  User enrollment|
+
+The user goes through enrollment based on the following 3 conditions.
+
+  1. If the user never logged in via SSO and DSO
+  2. If the user logged in via DSO but not SSO
+  3. If the user never logged in via DSO but SSO with status="pending" (Admin user creation inserts sso date, **CHECK WHY; CHECK THE REPORTS; CHECK IF WE REMOVE SSO DATE FROM HYPERCUBE DOES ANYTHING AFFECT** )  
+  
+DSO users can do SSO. After SSO, sess_login_id remains email.  
+  
+SSO users can't do DSO as their sess_login_id is "!"usr_id.
+
+|  48 incomplete Supported  49 complete Not Supported 127 incomplete Supported
+alternatively | In Hypercube, a user goes through enrollment if he/she never
+logged in via SSO  
+  
+  
+Enrollment Step 1| Pdf view|  50 complete Supported  51 incomplete Not
+Supported |  
+  
+Enrollment Step 2|
+
+E-Statement Disclosure
+
+For FNBT, During pending enrollment, for the N-type users, commercial
+disclosure is shown.
+
+|  52 incomplete Supported  53 incomplete Not Supported 128 complete Supported
+Alternatively | In Hypercube, The same disclosure is displayed for all types
+of users.  
+Enrollment Step 3 | Set Delivery Preference, Notification preference|  
+|  
+  
+Number of supported Emails: 2 emails are supported.  
+Email is updated from sso file if there are less than 2 emails in the
+notification_preference table.|  55 incomplete Supported  56 incomplete Not
+Supported 129 complete Supported Alternatively | Hypercube supports 1 email  
+Email Restrictions: Emails are auto-checked if that entry is not listed in the
+RESTRICTION table.  
+For FNBt, users can choose which email address they want to receive their
+emails. In the enrollment step, at least one emails must be checked to proceed
+further.  
+|  57 incomplete Supported  58 complete Not Supported 130 incomplete Supported
+Alternatively | Hypercube doesn't support restrictions for emails.  
+ **Homepage (SSO)**|  Selected account|
+
+On e-Statement tab, the selected account is determined based on the account
+type(DD or SV). The first opt-out account having type DD or SV, is auto
+selected while landing on e-Statement tab.
+
+|  59 complete Supported  60 incomplete Not Supported |  
+  
+Account Optout|
+
+If an account is selected from the selected dropdown, a user might be
+redirected to the opt-out page based on the following 2 conditions:
+
+  1. If the account is on Paper
+  2. If the account is on electronic but no emails are associated with this account. 
+
+|  61 incomplete Supported  62 incomplete Not Supported 136 complete Supported
+Alternatively |
+
+Hypercube doesn't support for going through opt-out page for electronic
+accounts with no emails. In hypercube, if any account is changed to Paper,
+either unenrolls the user and logs out the user, or it just normally switches
+to Paper without showing any kind of optout
+
+ **We will show a pop up with a verbiage(if that is configurable)**  
+  
+Account Optout for Viewers| The viewers are redirected to viewer's opt out
+page but can't enroll for electronic statements. Viewers only see this
+verbiage "We are sorry that you do not have access to this account because the
+account owner has not set up this account for E-Statements."|  63 incomplete
+Supported  64 complete Not Supported |  
+  
+Viewers creation| N-type users can create and assign viewers|  65 incomplete
+Supported  66 complete Not Supported |  
+  
+**Homepage (DSO)**|  Reset Password| Users are asked to reset password if the
+session active status is "NEW"|  67 incomplete Supported  68 complete Not
+Supported | Need to implement temporary password module.  
+Reset Password Hint| Users are asked to reset the password hint if not
+provided previously|  69 incomplete Supported  70 incomplete Not Supported 137
+incomplete   138 complete Supported Alternatively | Using token instead of
+password hint.  
+ **Profile (SSO)**|  Delivery Preference| Paperless(E), Paper(B). For delivery
+preference W, none can be selected, neither paperless nor paper.|  71
+incomplete Supported  72 complete Not Supported |  
+  
+Email Addresses| Email addressed remain checked/unchecked based on entry in
+RESTRICTION table. From profile page, user can know which email address is
+currently enabled for getting emails. User can enable/disable emails from
+profile page.|  73 incomplete Supported  74 complete Not Supported |  
+  
+Delivery Preference for Viewers|
+
+Viewers can't change delivery preferences.
+
+|  75 incomplete Supported  76 complete Not Supported |  
+Viewers module is not implemented in hypercube currently.  
+Authorized Viewers| This section is visible only for N type(Commercial)
+users.|  77 incomplete Supported  78 complete Not Supported  
+**Profile (DSO)**|  User Information| Some fields are visible/hidden based on
+User type|  79 incomplete Supported  80 complete Not Supported |  
+  
+**E-Statements**|  
+|  Statement Date, Status, Monthly Inserts|  81 complete Supported  82
+incomplete Not Supported |  
+  
+**E-Notices**|  
+|  Notice Date, Status, Description|  83 complete Supported  84 incomplete Not
+Supported |  
+  
+**E-Taxes**|  
+|  Tax Date, Description|  85 complete Supported  86 incomplete Not Supported
+|  
+  
+**Statement Reconcilement**|  
+|
+
+Opens pdf in a new tab
+
+|  87 complete Supported  88 incomplete Not Supported |  
+  
+  
+## _Analysis Summary (MSM)_
+
+Scope| Feature| FNBT| Infotrac| Note  
+---|---|---|---|---  
+ **Account Management**  
+  
+|  Account Search| Search by Account Number, Email Address, Login Name|  89
+incomplete Supported  90 incomplete Not Supported 132 complete Alternatively
+Supported | Infotrac doesn't support search by Login Name. Currently account
+can be searched via account number, email address and SSN.  
+Changing Delivery Preference| Admin can change delivery preferences for
+Personal(P) and Commercial(N) type users. Admin can only browse delivery
+preference history for viewers.|  91 complete Supported  92 incomplete Not
+Supported | Delivery preference is applicable on account level  
+Enable/Disable Emails| Admin can enable, disable np for Personal(P) type
+users. Can update, enable, disable emails for Viewers(V) and Commercial(N)|
+93 incomplete Supported  94 complete Not Supported |  
+  
+**E-Statement Account Creation**|  Personal and Commercial Account creation|
+From msm site, Personal(P) and Commercial(N) type users and new accounts can
+be created and accounts can be associated with the newly created users. The
+session active status of these users are set as "pending" so when they try to
+login, they go through enrollment.|  109 complete Supported  110 incomplete
+Not Supported | Check for the  **pending  **status  
+ **E-Mail Proofing**|  Bank Selection|
+
+Banks can be selected from a select dropdown. Options are First National Bank
+of Texas and First Convenience Bank
+
+|  111 incomplete Supported  112 complete Not Supported |  
+  
+**Insert Management**|  
+|  
+|  113 complete Supported  114 incomplete Not Supported |  
+  
+**Marketing Promo Email**|  
+|  
+|  115 complete Supported  116 incomplete Not Supported |  
+  
+**Reports**|  
+|  
+|  117 complete Supported  118 incomplete Not Supported |  
+  
+**Profile**|  
+|  
+|  119 complete Supported  120 incomplete Not Supported |  
+  
+**Administration**|  
+|  
+|  121 complete Supported  122 incomplete Not Supported |  
+  
+  
+  
+
+

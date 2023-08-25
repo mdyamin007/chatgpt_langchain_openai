@@ -1,0 +1,103 @@
+title: Bottomline BB SSO
+body: # Bottomline BB SSO
+
+## Init-params:
+
+All available int-params are given below:
+
+  * EmailUpdate (optional)
+  * hasAcctType (optional)
+  * isPrimaryCifRequired (optional)
+  * acctLogic (optional)
+
+## Description:
+
+  *  **EmailUpdate:**  true/false (  **default is "true"** )  
+true : If the email in DB and email from SSO are different than the system
+will update the email in DB  
+false : The system doesn't update the email in DB.
+
+  *  **hasAcctType:**  true/false (  **default is "true"** )  
+true: Account/s coming from SSO is/are expected to have acctType.  
+false: Account/s coming from SSO is/are not expected to have acctType.
+
+  *  **isPrimaryCifRequired:**  true/false (  **default is "true"** )  
+true: The primary CIF coming from SSO of the subuser must be present in our DB
+otherwise it will throw an exception.  
+false: If the primary CIF coming from SSO of the subuser is not present in DB
+then the system will create the primary user and let the subuser to the login.
+
+  *  **acctLogic:**  addAdd/addRemove/removeAdd/removeRemove (  **default is "removeRemove"** )  
+Values of the acctLogic has two part.  
+ **First part:**  Should the system create or ignore subuser's account which
+aren't in primary user's account set.  
+ **Second part:**  It is like the DI acctLogic config. By this part the system
+will know that the exiting UFA relation/s which is/are not come from SSO
+should be removed or kept.
+
+  
+  
+
+### Explanation of all possible values of acctLogic:
+
+1.  **addAdd:**  It will create the new account/s for subuser which aren't in primary user's account set and also doesn't unlink any existing UFA relation of the subuser.
+    
+    
+    Ex. Primary user has access to account 1,2,3 and one Sub-user comes in with accounts like of 2,3,4. 
+    Then the system will create the sub-user with account 2,3,4.
+    After that if the subuser again comes in with an account like of 2,4. 
+    Then the system doesn't remove the UFA of 3 account as the config has "addAdd" value.
+    
+
+  
+2.  **removeAdd:**  It won't add any new account for subuser and also doesn't unlink any existing UFA relation of the subuser.
+    
+    
+    Ex. Primary user has access to account 1,2,3 and one Sub-user comes in with accounts like of 2,3,4.
+    Then the system wont create the new account 4. So the subuser only have 2, 3 account. 
+    After that if the subuser again comes in with an account like of 1, 2. 
+    Then the system doesn't remove the UFA of 3 account as the config has "removeAdd" value.
+    
+
+  
+3.  **addRemove:**  It will add the new account/s for subuser which aren't in primary user's account set and unlink the existing UFA relation which aren't coming through SSO for the subuser.
+    
+    
+    Ex. Primary user has access to account 1,2,3 and one Sub-user comes in with accounts like of 2,3,4.
+    Then the system will create the new account 4 for subuser.
+    After that if the subuser again comes in with accounts like of  2, 3. 
+    Then the system will remove the UFA of 4 account as the config has "addRemove" value.
+    
+
+  
+4.  **removeRemove:**  It won't add any new account/s for subuser and also unlink the existing UFA relation/s which aren't coming through SSO for the subuser.
+    
+    
+    Ex. Primary user has access to account 1,2,3 and one Sub-user comes in with accounts like of 2,3,4.
+    Then the system wont create the new account 4 for the subuser. So the subuser only have 2, 3 account.
+    After that if the subuser again comes in with an account like of  1, 2.
+    Then the system will remove the UFA of 3 account as the config has "removeRemove" value. 
+    So after login the subuser will only have 1, 2 account. This behavior is the default one. 
+    
+
+  
+  
+
+## Note:
+
+If the isPrimaryCifRequired config is false and the acctLogic is
+"removeRmove"(default one) or "removeAdd" then the current system will throw a
+MISSING_UFA error  
+In that case both the primary user and subuser will be created but as the
+acctLogic's first part is "remove" so the system won't create any subuser's
+account and also can't pull from primary user's account set as the primary
+user is new and no account is linked to the primary user.  
+For that reason the current system will throw a MISSING_UFA error.
+
+### Attachments
+
+250
+
+  
+
+

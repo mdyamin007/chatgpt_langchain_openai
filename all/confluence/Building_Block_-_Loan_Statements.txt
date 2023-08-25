@@ -1,0 +1,168 @@
+title: Building Block - Loan Statements
+body:   
+  
+
+## What does this block hold?
+
+Mainly Transactions & details of corresponding Loan Accounts. There are open-
+end vs closed-end type of loan accounts. Even though there are different set
+of attributes for open-end vs closed-end types, but it doesn't make much
+difference in regard to data structure and statement generation. Hence group
+together as one schema.  
+  
+
+## Cores evaluated
+
+  1. Symitar, Ultradata.
+
+  
+  
+
+## Attribute Structure
+
+Using the Savings/Checking structure as foundation, putting Loan structure as
+a variation under 'Account' structure.
+
+  1.  **Section Header Label**  (e.g. "Auto Loan", "Mortgage")
+  2.  **Accounts**
+    1. Array of  **Account**
+      1.  **Name**  (e.g. Primary Savings Account, Money Market Account)
+      2.  **Major Code**  (Code values to indicate type of account: share, loan, cd.)
+      3.  **Minor Code**  (Symitar use minor code with the actual values populated into this 'Minor Code'. OSI use combination of major and minor code)
+      4.  **Account Number**
+      5.  **Share Description**
+      6. Array of  **Account Owner Names**  (multiple names when there is co-borrower)
+        1.  **Full Name**  (!) Data are coming in as full name string only, if possible, should break this down into First/Middle/Last Names
+      7.  **Summary**
+        1.  **Start Date**
+        2.  **Start Balance**
+        3.  **End Date**
+        4.  **End Balance**
+        5.  **Escrow Balance**  {FIXME} Tien: Need to add Credit Limit, Original Balance
+        6. Array of  **Item**
+          1.  **Item Name**  (Payment / Late Fee / Total / APR / Daily Periodic Rate / Interest Paid / Credit Limit / Available Credit)
+          2.  **Due Amount**
+          3.  **Current Period Amount**  (dollar amount values)
+          4.  **Current Period Non-Taxable Amount**
+          5.  **YTD Amount**
+          6.  **Last Year Amount**
+          7.  **Rate**  (percentage values)
+          8.  **Count**
+          9.  **Start Date**  (if different from above)
+          10.  **End Date**  (if different from above)
+          11.  **Due Date**
+      8.  **Transactions**
+        1. Array of  **Transaction**
+          1.  **Type**  (optional: specify value 'use_item_val' if special record needed to preserve where to show the data while values from Array of Items above)
+          2.  **ItemName**  (optional: only needed if  **Type**  == 'use_item_val' above. It should carry value like 'APYE' or 'APR')
+          3.  **Transaction Date**
+          4.  **Effective Date**
+          5.  **Description**
+          6.  **Principal**
+          7.  **Escrow**
+          8.  **Financial Charge**
+          9.  **Other Charge**
+          10.  **Deposit/Credit**
+          11.  **Withdrawal/Debit**  {FIXME} Tien: change this
+          12.  **Balance**
+      9.  **Fees**  (from Symitar record 530)
+        1.  **Sub-Total**
+        2. Array of  **Fee**
+          1.  **Date**
+          2.  **Description**
+          3.  **Amount**
+      10.  **Interest Charges**  (from Symitar record 530)
+        1.  **Sub-Total**
+        2. Array of  **Interest Charge**
+          1.  **Date**
+          2.  **Description**
+          3.  **Amount**
+  3.  **Summary**  Across Accounts (show after all accounts are listed) (i.e. REG_ZZ)
+    1.  **Year**
+    2. Array of  **Item**
+      1.  **Item Name**  (Total Fee / Billed Fee / Cash Advance Fee / Balance Transfer Fee / Total Interest / Total Dividend / Total Nontaxable Dividend / Total Penalty / Total Withholding / Total State Withholding / IRS Contribution / )
+      2.  **Amount**
+      3.  **YTD Amount**
+      4.  **Rate**  (percentage values)
+      5.  **Type**  (IRS Type)
+      6.  **Code**  (IRS Code)
+
+  
+  
+
+## Suggested Sample XML
+
+    
+    
+      
+    
+    
+    
+      <section label="Home Equity Loan" />
+      <accounts>
+        <account name="Equity Loan" major_code="500" minor_code="123">
+          <account_num>4378291-8734</account_num>
+          <share_desc>VIP Home Equity Loan Account</share_desc>
+          <account_owners>
+            <name fullname="John Smith" />
+            <name fullname="Jame Smith" />
+          </account_owners>
+          <summary start_date="2013-07-01" start_bal="5143.43" end_date="2013-07-31" end_bal="6342.64" escrow_bal="4252.54">
+            <item name="payment"             due_amt="200" />
+            <item name="late_fee"            due_amt="80.00"      due_date="2013-08-20" curr_period_amt="40.00"   ytd_amt="120.00" />
+            <item name="total_due"           curr_period_amt="45.53" />
+            <item name="apr"                 rate="15.53" />
+            <item name="apye"                curr_period_amt="372.25"       start_date="2012-04-01"    end_date="2012-06-30" />
+            <item name="daily_periodic_rate" rate="3.45" />
+            <item name="interest_paid"       curr_period_amt="155.33"      ytd_amt="240.50" />
+            <item name="credit_limit"        curr_period_amt="12000.00" />
+            <item name="ava_credit"          curr_period_amt="5348.42" />
+          </summary>
+          <transactions>
+            <transaction trn_date="2013-07-04" post_date="2013-07-06" desc="Beginning" principal="478329.78" escrow="1923.47" balance="5249.49" />
+            <transaction trn_date="2013-07-05" post_date="2013-07-08" desc="Payment"   principal="339.21"    escrow="3782.89" deposit="4173.34" balance="12222.49" />
+            <transaction type="use_item_val" itemname="apye" />
+            <transaction trn_date="2013-08-04" post_date="2013-08-04" desc="Ending"    principal="478000.57" escrow="5638.38" balance="9900.49" />
+            <transaction ... />
+            ...
+          </transactions>
+          <fees subtotal="54.00" >
+            <fee date="2013-08-04" desc="Billed Fee" amt="32.00" />
+            <fee date="2013-08-05" desc="Cash AdvanceFee" amt="2.00" />
+            <fee date="2013-08-06" desc="Balance Transfer Fee" amt="20.00" />
+          </fees>
+          <int_charges subtotal="54.00" >
+            <int_charge date="2013-08-04" desc="Financial Charge" amt="382.47" />
+            <int_charge date="2013-08-05" desc="Jumbo Loan Interest" amt="492.49" />
+          </int_charges>
+        </account>
+        <account name="Auto Loan" major_code="500" minor_code="523" >
+        ...
+        <account name="Certificate/IRA" major_code="601" minor_code="632" >
+      </accounts>
+      <summary year="2013">
+        <item name="total_fee" amt="314.53" />
+        <item name="billed_fee" amt="123.42" />
+        <item name="cash_adv_fee" amt="43.34" />
+        <item name="bal_trsf_fee" amt="87.43" />
+        <item name="total_int" desc="Total Interest YTD" ytd_amt="231.53" />
+        <item name="total_div" desc="Total Dividend YTD" ytd_amt="123.53" />
+        <item name="total_nontax_div" desc="Total Nontaxable Dividend YTD" ytd_amt="231.53" />
+        <item name="total_penalty" desc="Total Penalty YTD" ytd_amt="123.53" />
+        <item name="total_fed_withhold" desc="Total Withholding YTD" ytd_amt="123.53" />
+        <item name="total_state_withhold" desc="Total State Withholding YTD" ytd_amt="123.53" />
+        <item name="irs_contrib" desc="IRS Contribution" type="XX" code="YY" amt="423.32" />
+      </summary>
+    
+      
+    
+    
+      
+    
+
+  
+  
+
+## Statement Variations
+
+

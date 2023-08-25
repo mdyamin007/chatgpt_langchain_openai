@@ -1,0 +1,91 @@
+title: divert-submit
+body: # Divert Submit
+
+Request Type | Endpoint  
+---|---  
+`GET` | _`/submit/cid/<>/dt_job_id/<>`_  
+  
+## Steps
+
+  1. Lookup in `PROCESS_MAIN` table in `IS` Database, with following query
+
+Confluencepythontrue
+
+  * If not found, throw error `400` error
+
+  1. Lookup in `PROCESS_MAIN_OLP`, with following query
+
+Confluencepythontrue
+
+  * if not found, throw `400` error
+
+  1. Check if `divertPieces` is empty or not in the request 
+    1. If empty 
+      1. Get old divert pieces from `OLP_DIVERT_SUMMARY` table using `OLP_ID`
+      2. Delete those pieces from `OLP_DIVERT_SUMMARY`
+      3. Reset mail pieces in `DDS` database by 
+        1. Setting `PullFlag` to `0` of `DP_MASTER_<job_id>`
+        2. Setting `Pull_Description` to `''` of `DP_MASTER_<job_id>`
+      4. Set `TOTAL_DIVERT_PIECES` of `PROCESS_MAIN_OLP` table to `0`
+      5. If there is any exception between steps 3.1.1-3.1.5, set `MAIN_STATE` to `failed` in `PROCESS_MAIN_OLP` table
+      6. Call `InfoService` Service's `onlineproofing/updateMongo` API with these mail pieces and set `pull_status: unmark`
+    2. else 
+      1. Check if mail pieces are available in `DDS` database 
+        1. If found any missing pieces 
+          1. throw error
+        2. else 
+          1. Follow steps 3.1.1 - 3.1.5 to reset old divert pieces
+          2. Set `PullFlag` to `1` of `DP_MASTER_<job_id>`
+          3. Set `Pull_Description` to `divertDesc` of `DP_MASTER_<job_id>`
+          4. Insert new mail pieces in `OLP_DIVER_SUMMARY`
+          5. Update `TOTAL_DIVERT_PIECES` of `PROCESS_MAIN_OLP` with total number of mail pieces found
+          6. Call `InfoService` Service's `onlineproofing/updateMongo` API with these mail pieces and set `pull_status: success`
+          7. If there is any exception between steps 3.1.1-3.1.5, set `MAIN_STATE` to `failed` in `PROCESS_MAIN_OLP` table
+
+## Path Parameters
+
+Name | Description | Example  
+---|---|---  
+`cid` | 4 digit customer id | `afcu`  
+`dt_job_id` | dt job id | `122511-C13.01-V20327`  
+  
+## Request Body
+
+Name | Description | Example  
+---|---|---  
+`divertPieces` | list containing divert pieces | `["w7x5a00002","w7x4a00003"]`  
+`divertDesc` | Description | `Shred the document`  
+`infotrac_login_id` | InfoTRAC ID | `anwarH`  
+`billable` | boolean | `false`  
+`divert_by` | internal/external/both/none | `internal`  
+  
+## Response Code
+
+Code | Description  
+---|---  
+`200` | Success  
+`400` | Failed to submit divert pieces  
+  
+## Example Request
+
+Confluenceshelltrue
+
+## Example Response
+
+`200` OK
+
+Confluencejsontrue
+
+* * *
+
+`400` NOT FOUND
+
+Confluencejsontrue
+
+* * *
+
+`400` Unknown Exception
+
+Confluencejsontrue
+
+

@@ -1,0 +1,246 @@
+title: EWBB - Black Knight Mortgage Core Setup: eTaxes
+description: Program can capture account number, account name and statement date
+The quality of AFP output does not look good. We will try export to TIFF output.
+We don't have a good anchor here. Is it ok to capture the first line of recipient (bank) address?
+EAST WEST BANK, LOAN SERVICING DEPT
+
+Electronic only; no print/PDF archival
+
+
+author: phoebe.george
+comment: [~SamV2021] Additional tax test files attached to TS #22628, comment #59. Thanks!
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+Attached local samples produced from original test files:[^EWBB_1098_Local_Sample_Small.pdf][^EWBB_1099INT_Local_Sample_Small.pdf]
+
+
+author: phoebe.george
+comment: [~SamV2021] Samples are approved; please proceed with generating the eStmt index file for ISD to post to pilot site.
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+I have provided the estmt index files to ISD on the corresponding ISD Jira ticket.
+
+
+author: JIRAUSER10906
+comment: In parallel, updated /home/test/master/isisdisk.sh, and checked in additional files to /home/test/master:
+ * ewbbml5_etax_move.pl
+ * ewbbml6_etax_move.pl
+
+Made additional modifications to the format DFA used by these two etax applications: EWBBML41.dfa
+
+These two etax applications now follow the etax specs, in terms of index/zip file content and naming convention. *However, a couple differentiating elements are currently in place, and can be changed if needed.*
+
+*The zip file containing all individual afps is currently being stored* in _/z/isd_input/indiv_afp/ewbb/afp-archive_ instead of/_z/isd_input/indiv_afp/ewbb/etax/afp-archive_ in order to differentiate between the ewbbyt applications and these etaxes relating to mortgage loans.
+
+*One additional differentiating element that is currently implemented* is the naming of the individual afps, which can be found in the estmt index file and inside the zipped file. The naming of these individual afps for the mortgage loans is: _[cid][jid]_[form]_[closing_date]_[segment]_[sequence].afp_ instead of_[cid]_[form]_[closing_date]_[segment]_[sequence].afp_. For example,_ewbbml5_12312019_10035386_1441.afp_ instead of _ewbb_12312019_10035386_1441.afp_.
+
+*Another potential differentiating element that can be added* is in naming of the estmt index file. Both the ewbbyt applications and these mortgage loan etaxes follow the same index filename spec, _etax_[form]_[closing_date]_[segment]_[processed_date]_[processed_time]_[cid].txt_. As such, there is currently no difference between the estmt index filenames of the ewbbyt etaxes and the mortgage loan etaxes.
+
+
+author: william.kong
+comment: [~SamV2021]: As discussed, please cc'd [~tai.trinh]if you need immediate response confirm if index file is in the right location to be processed in their eStatement PUI.
+
+
+
+[~phoebe.george]: The ticket live date is set for 12/31. What should be the correct revised live date for this project so that we can plan the release we address the ISD index file posting.
+
+
+author: JIRAUSER10906
+comment: Discussed with Tai regarding why the zip file was unable to be found for estatement processing (wrong location). Per Tai, we may need to designate special segments to make the zip file folder names unique  will discuss this with Peter/Tun/Pheobe.
+
+In the meantime, I have manually copiedover the folders containing the zip files from /_z/isd_input/indiv_afp/ewbb/afp-archive/ to__/z/isd_input/indiv_afp/ewbb/etax/afp-archive/_. Requested DSI to try posting again.
+
+
+author: JIRAUSER10906
+comment: TS#26883: Issue came up with client trying to view PDF on pilot site.
+
+I have fixed an issue with the format step that was causing the individual AFP to have a fatal error. I have reprocessed all related applications (ewbbml4, ewbbml5, ewbbml6) with the changes in staging environment.
+
+Also, changed the naming of the individual afp within the estmt index file: e.g.ewbbml6_01272020_10001155_1887.afp->ewbb_01272020_10001155_1887.afp
+
+
+author: JIRAUSER10906
+comment: QA
+
+This new RedTitan PDF setup (e-only) has been approved by client and is ready for QA.
+ * Exported updated project files to shared drive: /d/iss/qa/EWBB/EWBBML51.zip and/d/iss/qa/EWBB/EWBBML61.zip
+ * DPVS[^ewbbml5113_dpvs.pdf][^ewbbml6113_dpvs.pdf]and IS/QA[^ewbbml5_ml6_is-600_check_list.pdf]form attached
+ * Index files for estmt already posted to pilot.
+ ** Latest index file posting for ewbbml5:etax_1098_12312019_1_02282022_123036_ewbb.txt
+ ** Latest index file posting for ewbbml6:etax_1099INT_01272020_1_02282022_123638_ewbb.txt
+
+Note: There are 2 separate parallels because the parallel involving isisdisk had to be removed at one point for another programmer to release their updates.
+
+****************************************************
+ Parallel ID: 20211214162912
+ Currently in parallel: Yes
+ User: samV
+ Description:IS-599/600 EWBB Mortgage Core PDFs
+ Date Submitted: 2021-12-14 16:29:22
+ Date Last Updated: 2022-03-07 13:36:04
+ Files:
+ 1) ewbbml5.control
+ 2) ewbbml5_redtitan.control
+ 3) ewbbml6.control
+ 4) ewbbml6_redtitan.control
+ 5) EWBBML41.dfa
+ 6) EWBBML41.prj
+ 7) ewbbml4_redtitan.control
+ 8) ewbbml4.control
+ 9) ewbbml5.procs
+ 10) ewbbml4.procs
+ 11) ewbbml6.procs
+ 12) EWBBML51.prj
+ 13) EWBBML51.dfa
+ 14) EWBBML61.prj
+ 15) EWBBML61.dfa
+ ****************************************************
+
+****************************************************
+ Parallel ID: 20220228110107
+ Currently in parallel: Yes
+ User: samV
+ Description: IS-600 EWBB Etax Proc Scripts
+ Date Submitted: 2022-02-28 11:01:32
+ Date Last Updated: 2022-02-28 12:23:29
+ Files:
+ 1) isisdisk.sh
+ 2) ewbbml5_etax_move.pl
+ 3) ewbbml6_etax_move.pl
+ ****************************************************
+
+
+author: nprimak
+comment: [~SamV2021] [~Igor.Khosid] 
+
+I verified taxes on pilot Admin site from both provided index files. I can open tax pdf statements without any issues.
+
+Is it correct that I see 2019 year on pdf statements or we need newer tax files?
+
+I think it should be year 2021, may be i need different index file for it?
+
+
+author: JIRAUSER10906
+comment: [~nprimak]
+
+These 2019 tax test files were the most recent provided by the client, and they should have the same layout as the 2021 tax test files, so this should be sufficient for testing for now until we initiate parallel. For parallel testing, we will use final test files (client has not yet provided a 2021 1099INT test file and provided a 2021 1098 test file that is formatted differently from what we have been given thus far).
+
+Please pause testing for now until we receive feedback from the client regarding their 2021 1098 test file.
+
+Thanks!
+
+
+author: JIRAUSER10906
+comment: [~nprimak]
+
+As the client has confirmed that their 2021 1098 test file will be formatted differently from what we have been given thus far, I will need to make a programming update according to this new format.
+
+The 1099 tax file will remain the same, so we can continue testing for that.
+
+Thanks!
+
+
+author: phoebe.george
+comment: [~SamV2021] I confirmed that EWBB would like to keep the EXISTING program for 1098 as is so that we can run the 2020 file to production based on the existing program. I'll have to submit a programming request for 2021 data changes that you identified from the last 2021 test data. We will move forward with this release with current program until we get any of the older cycles for 2020 completed. Please proceed with the segment # update to the file name though.
+
+[~nprimak] [~Igor.Khosid] FYI
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george] [~nprimak] [~Igor.Khosid]
+
+I have updated ewbbml5_redtitan.control and ewbbml6_redtitan.control in staging to accommodate the segment # at the end of the currently expected filename: (e.g._ewbb_ml_tax_1098_MMDDYYYY_01.pdf.pgp andewbb_ml_tax_1099I_MMDDYYYY_01.pdf.pgp_)
+
+As we are to proceed with the release of this current program, please continue testing with the 1098 and 1099INT index files. While the 2020 tax files are formatted the same way as the 2019 tax files (both 1098 and 1099INT), if you would like to look at the 2020 tax file for 1098, here is the index file (already posted in pilot):
+
+_etax_1098_01012021_1_03092022_160141_ewbb.txt_
+
+Thanks!
+
+
+author: phoebe.george
+comment: [~nprimak] [~Igor.Khosid] I have updated the SOW with the new file name to include the segment. Please confirm status of QA testing once you resume/complete. Thanks!
+
+
+author: nprimak
+comment: [~phoebe.george] [~SamV2021] [~Igor.Khosid] 
+
+I verified tax form from new provided index file, it is still not 2021 tax forms, it is 2020 tax forms, I found only 1098 form from this processing.
+
+1098 form from 2019 and form 2020 look differently, 2020 form has second page
+
+I don't see form 1099-INT in a new processing.
+
+Please confirm my next step, can I release it?
+
+
+author: phoebe.george
+comment: [~SamV2021] EWBB sent this 1099INT file today - can you confirm if we can use for QA to test as well - it was sent to the 'mortgage' sub-folder (as it will eventually be used for production too):
+
+ewbb_ml_tax__1099I_ 02192021_01.pdf.pgp
+
+[~nprimak] FYI
+
+
+
+
+author: JIRAUSER10906
+comment: [~nprimak] [~Igor.Khosid]
+
+The 2020 tax forms are good for now since the client's 2021 1098 tax forms are formatted differently, and they want us to proceed with the current release for the 2020 1098 data. As for the 1099 tax forms, their 2019 and onwards data should be formatted the same, so we can use the processing from 2020 1099INT for reference/testing.
+
+I have processed their 2020 1099INT tax test file ewbb_ml_tax_1099I_02192021_01.pdf.pgp, which is formatted the same way as the 2019 one. The index file is:etax_1099INT_01012021_1_03112022_132045_ewbb
+
+In regards to the 2019 1098 form and 2020 1098 form looking different, it seems like they did add additional pages  which in terms of processing it's good to go since the anchor designating a new account is still functional.
+
+[~phoebe.george]
+
+Can you confirm with the client whether these additional pages are intentional and whether they will be present in the production 1098 files?
+
+The 1098 test file processed with these additional pages is:ewbb_ml_tax_1098_12312020.pdf.pgp. These additional pages are anywhere from 2 to 4 extra pages for each account. An example of an account with 4 extra pages is attached:
+
+!ewbbml5_12312020_extrapage1.PNG|thumbnail! !ewbbml5_12312020_extrapage2.PNG|thumbnail!
+
+
+
+
+author: phoebe.george
+comment: [~SamV2021] thanks, EWBB confirmed these PMI pages are intentional. If program is able to handle, it's okay to include for posting within that PDF.
+
+[~nprimak] please continue with the 1099INT QA and confirm once completed and we can move forward with parallel. Thanks!
+
+[~Igor.Khosid] FYI
+
+
+author: nprimak
+comment: [~SamV2021] [~phoebe.george] [~Igor.Khosid] 
+
+Verified tax form 1099-INT on pilot Admin site, no issues.
+
+Phoebe please confirm I can release this story
+
+
+author: nprimak
+comment: [~SamV2021] [~phoebe.george] [~Igor.Khosid] 
+
+Releasing story, verified tax forms 1099-INT and 1098 on pilot Admin site
+
+
+author: phoebe.george
+comment: [~nprimak] [~SamV2021] Created parallel MPT #27503. Thanks!
+
+
+author: william.kong
+comment: [~Peter.Dang]/[~phoebe.george]/[~SamV2021]: Here's another one. What is the live date for this project? The due date in way past due 12/31/2021. Status is "Release Ready", but I don't know when it is schedule for code release. Please advise and update accordingly.
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+Code has been released to production.

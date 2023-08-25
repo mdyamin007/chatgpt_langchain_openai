@@ -1,0 +1,68 @@
+title: Continuous Deployment (CI/CD)
+body: # Continuous Deployment
+
+  * Continuous Deployment
+    * Build Docker Image:
+    * Deploy Docker Image:
+    * Automation
+
+Infosync has continuous deployment configured using GitLab's provided CI/CD
+solution.
+
+These configuration can be found in the file named `.gitlab-ci.yml` in root
+directory of this project.
+
+Jobs that are executed in the process:  
+1\. Build Docker Image  
+2\. Deploy Docker Image
+
+## Build Docker Image:
+
+To build the docker image, you need the image's tag name. This can be found in
+the default variable declared in the `.gitlab-ci.yml` file named
+`DEFAULT_IMAGE_TAG`.  
+This value can also be passed from the GitLab UI when creating a new
+**pipeline** by passing this as a environnement variable.
+
+You also need these three variables configured, `HARBOR_HOST`
+`HARBOR_USERNAME`, `HARBOR_PASSWORD`. Which will be use to log into harbor
+registry to upload and download docker image.
+
+## Deploy Docker Image:
+
+Right now, the gitlab runner configured to run as a ssh executor. That means
+whatever command that we run will run inside the host, specifically in our
+dev/pilot instance.
+
+In order to deploy in other environment, we need to ssh into that server and
+then do the necessary steps to download docker image and run it.
+
+SSH username and password also needs to be passed from the gitlab
+environments. This can project environments configured in the settings or by
+passing as environment variables when you create a new pipeline manually.
+
+Steps that are performed are as follows:
+
+  1. Log into the specified machine (dev/pilot/stage)
+  2. Log into Harbor registry
+  3. Replace the image tag with the new one in the `docker-compose.yml` file that can be found in the `/usr/local/infosync-{environment}`
+  4. Remove the previous container
+  5. Download the new docker image
+  6. Create new container of the new image as daemon mode
+
+## Automation
+
+Note that when anyone pushes any code in the GitLab repository, the dev
+instance will be automatically triggered. This means there will be new image
+created with the image already configured in the `.gitlab-ci.yml` file or from
+environment variable passed from GitLab UI. Also dev instance will have a new
+container running replacing the old one.
+
+But this wont update the pilot/stage instances. They needs to be manually
+triggered from GitLab UI.
+
+This can be achieved by going to the new created pipeline in the pipeline
+section. You will see jobs named `pilot`, `stage` with a gear icon. Click it
+and Click the button named 'Trigger manual job'.
+
+

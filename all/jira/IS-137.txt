@@ -1,0 +1,309 @@
+title: DP / FCSB (FHNB & FNBT) Daily Letter / Enhancement [18681][pvt][Summary]
+description: # Enhance Flexibility of the Following Applications:
+
+ # Enhance Daily Letter applications (DL apps) to be able to run as any segment, e.g. 2 or 3, etc. This would kick start processing in the event FCSB has a late file or catch up file. Currently, some DL apps are hardcoded with a specific segment.B.Enhance DL jobs to be able to run e-Notice option only.
+
+
+
+(Contact Neil or Jason for further clarification)
+
+
+
+IS Assessment
+ =============
+ Hours for development: 20 (IS hours) + ISD hours not required
+ Turnover Date : 06/24/2021
+ 1st Sample to QA: 07/08/2021
+ Sample Approval Date: 07/15/2021
+ Go live date : 07/19/2021
+
+Assessment Details (IS):
+ - Add additional argument "JID" to process fcsb_process.sh and remove logic for "JID" depends on segment number.
+ - Change to use "JID = dlb" to generate NCOA instead of using "job_no = 2" in (fcsb_process.pl -> ${job_no} == 2)
+ - Update fcsb_process.sh for not change current naming in "TRANSMISSION FILE NAME: " in DPVS.
+ Even if we process multiple segment numbers for DLA, the program will still use "DL1" in transmission file name.
+ But add time-stamp in zip file names for download folder.
+
+
+author: kdishroon
+comment: Thomas,
+
+
+
+Are you waiting on me or QA to approve?
+
+
+
+Thank-you,
+
+
+
+Keri
+
+
+author: thomasy
+comment: It is still being worked on.
+
+
+author: william.kong
+comment: HI [~kdishroon],
+
+
+
+Thomas is very booked on other projects that he needs to focus and get completed this month. I would like to see if we can move the in-house project to August 9, 2021. If this does not work, please let us know. In the meantime, I will update the Due Date to August 9, 2021. 
+
+
+
+[~thomasY]: FYI.
+
+
+
+Thanks!
+
+
+
+-- Will
+
+
+author: william.kong
+comment: [~kdishroon]: We are behind schedule on this in-house project.  I will work with Thomas later this week to provide another acceptable timeline.
+
+
+author: william.kong
+comment: [~kdishroon]: I just spoke with Thomas. the revised timeline we can commit to is Monday 8/23/2021. If his other project finishes earlier, we will 'try' to make it earlier, but if not, we will stick with 8/23/2021.
+
+
+author: tuna
+comment: Hi Keri,
+
+I spoke to Thomas, He got other clients projects. So could you please move live date to 09/23 for this enhancement project?
+
+Thanks
+
+Tun
+
+
+
+
+
+[~kdishroon]
+
+[~William.Kong]
+
+[~thomasY]
+
+
+author: william.kong
+comment: [~thomasY]: Per our conversation, you are resuming this project right now. If there are any questions for [~TunA], please reach out to him.
+
+
+
+
+author: tuna
+comment: Hey [~thomasY],
+
+Please get Pilot dt_job_id from PC for MICR Notices(DLD) and test process in rht/pilot environment. And please review infoTrac after that.
+
+We have "eStmt job is currently running" status in infoTrac (Ticket 21568 comment #1). I hope we will fix this issue once we separate the JIDs and Segment numbers.
+
+Thanks,
+
+Tun
+
+
+
+[~kdishroon], [~William.Kong]
+
+
+
+
+
+
+author: william.kong
+comment: [~kdishroon]: Please see comment above. I will need to extend this in-house project timeline in light of the issue we identified. Im going to+tentatively+ mark this to 10/7/2021 for now.
+
+
+author: thomasy
+comment: [~kdishroon] I attached a dpvs sample for them to review. The only thing that changed was the file name but we want to make sure that doesn't affect anything on their end.
+
+
+
+New filenames will now have dla, dlb, and dld in the name. Example:fnbtdla131.print
+
+Old filename only had a "d". Example: fnbtd131.print
+
+
+author: kdishroon
+comment: I have sent the DPVS to the client for approval.
+
+
+author: kdishroon
+comment: Will / Thomas,
+
+We may have an issue; FCSB did not indicate that they use this file name to pick-up the files, they only said they use the file transmission name at the bottom when I had informed them of this project.
+
+
+
+!image-2021-09-24-09-09-11-630.png!
+
+
+
+
+author: kdishroon
+comment: Please disregard my comment above, I confirmed with the client that this change will NOT affect them.
+
+
+author: william.kong
+comment: [~thomasY]: Need to test pilot for MICR job to see if this project also fixes and address TS# 18681
+
+
+
+[https://app.na3.teamsupport.com/?TicketNumber=18681]
+
+
+
+Please request PC to create a DT_JOB_ID to and make sure the job appears on the estmt job status.
+
+
+
+
+
+
+
+
+author: kdishroon
+comment: Hi Thomas / Will,
+
+Can you confirm the status of this project; do we need to move the live date again?
+
+Thank-you,
+
+Keri
+
+
+author: william.kong
+comment: [~kdishroon]: I assisted [~thomasY]to request for DT_JOB_ID for testing in Parallel to see if this issue is correct. They will inform both [~thomasY]& [~TunA]when this is done.
+
+
+author: tuna
+comment: Note: Still have "Estmt job is currently running" note in infoTrac, after DP process MICR DLD in parallel environment. I reopened ticket #21568 to research more.
+
+
+
+[~thomasY], [~kdishroon], [~William.Kong]
+
+
+
+
+author: william.kong
+comment: [~thomasY]/[~TunA]/[~kdishroon]:
+
+Let's coordinate a release date with Keri and FCSB on this release. Would like both FCSB & Keri to monitor the results in production. I'm suggesting may mid-next week, October 20, 2021 for the release date. For now, I will update the live date for 10/20/2021
+
+
+
+Here's the snapshot from Parallel/Stage InfoTRAC:
+
+
+
+!image-2021-10-14-11-34-36-437.png!
+
+
+author: kdishroon
+comment: Are we set to release code for this today?
+
+
+author: william.kong
+comment: [~kdishroon]: We forgot to update the ticket last week. Speaking with [~TunA]and [~thomasY]last week, we want to run a full blown parallel to make sure everything is ok since this is FCSB. Once Parallel passes, we need to inform FCSB of this change so both InfoIMAGE & FCSB can monitor.
+
+
+
+Can we request for a parallel to be initiated? We do not have to print. We need to test if processing is ok (i.e. DPVS looks good) and eStatement posting is showing up correctly without human intervention. The InfoTRAC screenshot above was 'manually' posted. We need to make sure it is automatically posted.
+
+
+author: william.kong
+comment: [~kdishroon]: Can we get a parallel initiated for this? Please see comment above.
+
+
+author: kdishroon
+comment: [~William.Kong]
+
+Parallel was initiated - it is pending Thomas:
+
+
+
+!image-2021-10-25-13-02-01-732.png!
+
+
+author: kdishroon
+comment: [~thomasY] - Does this need to go through QA first?
+
+
+author: igor.khosid
+comment: [~William.Kong] [~thomasY] [~kdishroon] [~TunA]
+
+*{color:#de350b}The story has never been QA'd, and because of that, I can't submit it for parallel testing.{color}*
+*{color:#de350b}Please be sure that this situation never happens again.{color}*
+{color:#de350b}Please provide:{color}
+{color:#de350b}PR ID, the Index file and dpvs{color}
+
+
+author: thomasy
+comment: Parallel:20211007120559
+
+dpvs already provided.
+
+
+author: igor.khosid
+comment: Parallel ID: 20211007120559
+ Currently in parallel: Yes
+ User: thomasY
+ Description: 137
+ Date Submitted: 2021-10-07 12:06:05
+ Date Last Updated: 2021-10-25 16:40:53
+ Files:
+ 1) fcsb_process.sh
+ 2) fcsbdlb.control
+ 3) fcsbdla.control
+ 4) fcsbdld.control
+ 5) fcsb_process.pl
+ 6) fnbtdld.control
+ 7) fhnbdld.control
+ 8) fnbtdlb.control
+ 9) fhnbdla.control
+ 10) fhnbdlb.control
+ 11) fnbtdla.control
+
+
+author: igor.khosid
+comment: [~thomasY] [~kdishroon]
+
+Thomas - please provide IS Checklist
+
+
+author: thomasy
+comment: [~Igor.Khosid]Attached[^fcsb_checklist.pdf]
+
+
+author: igor.khosid
+comment: IS Checklist - attached >>>[^IS-137_FCSB_IS checklist.pdf]
+
+
+author: igor.khosid
+comment: QA Completed
+
+
+author: kdishroon
+comment: Hi [~thomasY] - Parallel passed, please release code. Thanks! Keri
+
+
+author: william.kong
+comment: [~thomasY]: I just spoke with [~kdishroon]. We will release the code on Wednesday afternoon so that the new change will be applied to Thursday morning processing.
+
+
+
+[~kdishroon]: Please give FCSB a heads up on the release date.
+
+
+author: thomasy
+comment: Released

@@ -1,0 +1,102 @@
+title: Dynamic Variables
+body:   
+
+## Overview
+
+Currently the Message Manager v2.2 allows either text or pure image as the
+message content. To provide richer features for the message content, this
+enhancement is to allow more flexibility on how the message content could be
+programmed/provided.  
+  
+
+  
+
+## Key Use Cases
+
+  1. Allow user to specify text that will overlay on top of specified image
+  2. Allow user to specify variables within the text provided, so that the variables will be replaced with member specific values at statement generation time.
+  3. Allow user to preview message content before submitting it for job processing.
+
+## High Level Processing Logic
+
+  1. Clients provide the following files via the FTP drop-folder for each cycle (e.g. monthly):
+    1. Member data file : This is the regular data files that contains member account info, transaction data, ...etc. Basically all the main data required for generating the main statement.
+    2. Variable substitution list : This is a new file we need from clients in order to populate the variables inside message content. Format expected to be like following:  
+
+        
+                ${area_id}|${priority_id}|${type}|${acct_number}|${field_1}|......
+        Example: A1|P3|paper|987654321|Lisa Zhang|$100|.....  
+          
+        
+
+  2. Default Image/Text is  **REQUIRED**  for message areas. Default Image/Text is utilized in the case of:
+    1. any account that doesn't meet any criteria (priority) specified
+    2. met criteria  **but**  missing/incomplete values for the corresponding account in the substitution list
+  3. To support individual message preview, individual substitution entry need to be sent over along with corresponding image to PDF generation engine. Paper site need to generate one page PDF for the provided individual data only.
+
+  
+  
+
+## Detailed Design (w/ Estimates)
+
+  
+  
+
+### on InfoTrac (UI)
+
+  1. Message Manager views (~3 weeks)  **[to be implemented along w/ MM3.0]**
+    1. Introduce new view to allow user to specify both text and image in a single Message Area. This need to be implemented as a separate new view to avoid impacting existing clients since changes are done around the InfoTrac core. New view is only enabled for client explicitly opt-in for the feature. Building the new view involves:
+      1. UI elements (i.e. HTML/CSS/JS)
+      2. Backend logic to handle the additional data fields involved as well as the underlying database schema changes.
+      3. Backend configuration logic to allow optional enabling of this feature.
+  2. Text editor (~2 weeks)  **[to be implemented along w/ MM3.0]**
+    1. Utilize TinyMCE as foundation to build capability to allow user to enter text (w/ variables) for preview within the Web Interface
+    2. With the limitation of Papyrus only accept a finite set of colors, determine the list of all colors (or at least start with a few common ones) that Papyrus supports, and build a mapping between HTML RGB color code and Papyrus supported colors
+    3. Build additional plug-in/hooks on TinyMCE in order to handle the conversion needed:
+      1. HTML tags that hold RGB color codes to IMP formatted tags
+      2. Pre-defined variable syntax to IMP (Papyrus) recognized format
+  3. Preview Capabilities (~1 week)
+    1. Add mechanism to allow user to enter variable values manually to simulate variable substitution
+    2. Build hooks and interactive UI to allow web-based Message-Content rendition preview via AJAX calls (not PDF preview)
+      * Image preview will display the message without substitution, but with clean HTML.
+    3. Update the hooks to communicate with IS in order to generate the PDF preview (single page) with variables substituted.
+
+  
+  
+
+### on InfoTrac (Backend) (~2 weeks)
+
+  1. Substitution list
+    1. Define substitution list file schema and ftp drop folder requirements
+    2. Ensure these additional files are properly transported from drop-folder to locations that it can be picked up for downstream processing
+  2. Index files & IMP files
+    1. Additional IMP files will be generated out of this process. Ensure the additional files are associated/packaged with the main index files properly in order to allow Papyrus process smoothly.
+  3. Developer Interface Setup
+    1. Update to allow handling of the new Message Type (i.e. Text + Image)
+  4. eStatement PDF generation
+    1. Build a customized filter (should be configurable) to put a link on top of the PDF file only
+
+  
+  
+
+### on IS System (Papyrus) (~5 weeks)
+
+  1. Test the colors on Papyrus Software and AFP2WEB module and provide the list of colors to InfoTRAC (this task could be skipped if corresponding documentation is available from ISUS)
+  2. Predefine the format of Variable
+    * mm_custom_<field>: ftp the substitute list together with the data file
+    * mm_standard_<field>: substitute the values defined in the stmt data file
+  3. Client ftp substitution list requires certain format: `<msg_area>|<priority>|<stmt_type>|acct#|name|prodType|endBalance|...`
+    * preprocessing the substitution list to build the file structure `/d/$cid/$cid$jid/dynamiclis/<msg_area>_<priority>_<stmt_type>_acct#`, inside the file will contain values for variables such as `name|procType|endBalance|...`
+  4. 1-page PDF sample preview generation in real time (target level preview)
+    * Update the standard module to build the logic to substitute dynamical variables with sample values entered through infoTRAC
+    * handle both paper stmt sample and eStmt sample
+  5. Up to 5-page PDF sample preview generation in real time (campaign level preview)
+    * Update the standard module to show text message (reserve dynamic variables) on the top of image.
+    * handle both paper stmt sample and eStmt sample
+  6. Message in production
+    * Update the message portal file to compatible with the changes on the index file from InfoTRAC MM2.2
+    * Build the logic to check stmt data v.s. substitution list (see diagram below)
+
+  
+
+

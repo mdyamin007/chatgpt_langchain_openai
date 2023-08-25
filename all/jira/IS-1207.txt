@@ -1,0 +1,209 @@
+title: NECU - Invoice - Mortgage Loan BillsPDFi Conversion to AFP2PDF Python [InHse]
+description: -Update existing processing script to no longer use PDFi tool to create pdf.-
+ -Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.-
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133575-C30.01-V22359
+
+Processing Scripts to modify:
+ necuml1_process.sh
+
+Data Files to use:
+ 1449.0430.146408.LN_BLXTR.XML.pgp
+
+
+
+*UPDATE LOGIC NEEDED:*
+
+Current production program does not keep the zip file in the $d_dir/pdf_afp/necu/necuml1/zip folder. It just has the pgp file. Program needs to be updated to keep the zip file in this folder so that we can research the zip file if needed.
+
+
+author: thomasy
+comment: Parallel:20220713140314
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220713140314
+   Currently in parallel: Yes
+   User: thomasY
+   Description: 1207
+   Date Submitted: 2022-07-13 14:03:20
+   Date Last Updated: 2022-07-13 14:03:20
+   Files:
+      1) necuml1_process.sh
+      2) archival_process.sh
+      3) NECUML11.dfa
+
+
+author: tuna
+comment: Hi [~thomasY] ,
+
+This project is overdue. I updated the due date to 07/22. Please let me know if we should use other due date.
+
+Thanks!
+
+Tun
+
+P.S. I don't see AC in JIRA.
+
+
+author: william.kong
+comment: [~thomasY]: Sorry to ask, but can you re-run the parallel file using the following cycles:
+
+
+
+-rw-rw-rw- 1 oper1 opers 422182345 Jul 20 05:59 necu_ml1_archival_20220719_1_1.zip.pgp
+-rw-rw-rw- 1 oper1 opers 209969513 Jul 20 06:01 necu_ml1_archival_20220719_1_2.zip.pgp
+
+
+
+
+
+The above files are from production /d/pdf_afp/necu/necuml1/zip/ folder and I will need to run the comparison tool to compare between production and parallel. I've made a backup copy of the production files above. Just need your help to run this in parallel. Thanks!
+
+
+author: william.kong
+comment: [~thomasY]: Please let me know roughly when you can get the parallel processing done for the cycle I mentioned above. Thanks!
+
+
+author: thomasy
+comment: [~William.Kong]I can have it done before tomorrow.
+
+
+author: thomasy
+comment: [~William.Kong]I've finished processing the cycle. Files are at:
+
+/z/pdf_afp/necu/necuml1/zip
+
+
+author: william.kong
+comment: [~thomasY]: Thanks! I will review now
+
+
+author: william.kong
+comment: Sorry [~thomasY]! I did not realize production file was PGP and the current logic does not keep the .*.zip file in the $d_dir/pdf_afp/necu/necuml1/zip/ folder location.
+
+
+
+Can you update the logic to save the zip file in this folder.
+
+
+
+Please hang on recreating the file today. The production cycle 0721 is too small (only 1 account). I need to wait for a cycle with more accounts to do the comparison by saving the production pdf folder since there is no zip file. I will update the description of work now with this update.
+
+
+author: thomasy
+comment: [~William.Kong]I think you can still copy it from their infoftps4 folder.
+
+/d/infoftps4/necu/client_pickup/archival/Processed/
+
+
+author: william.kong
+comment: [~thomasY]: Unfortunately these files in Processed are also pgp. I cannot decrypt these file. So unfortunately, code needs to be updated to keep the zip files in zip folder under pdf_afp folders:
+
+
+
+Here's my attempt:
+
+!image-2022-07-22-12-49-54-832.png!
+
+
+author: thomasy
+comment: [~William.Kong]It's a little complicated since the zip is removed inside a script that other apps use. I'll have to check if those will be affected if the zips are kept.
+
+
+author: thomasy
+comment: [~William.Kong]I checked and not removing the zip files doesn't affect anything else. Should I release that update to production?
+
+
+author: william.kong
+comment: [~thomasY]: Let's release this fix along with the project so that we do not have two releases. In the meantime, I will monitor on Monday to see if the production cycle on Monday is larger. If so, will copy the production pdf folder to the server we will use to do comparison. I will then ask you which cycle to run in parallel using AFP2PDF.py.
+
+
+
+
+author: william.kong
+comment: [~thomasY]: In addition to my comment above, I think a larger cycle will be on the 30th based on seeing last months results. I will continue to monitor the production cycle daily. If I see a larger cycle, I will let you know so that you can run the same cycle in parallel in order to do the comparison. Thanks!
+
+
+author: william.kong
+comment: [~thomasY]: Sorry for the delay! I backed up the pdf archival files from cycle 7/31 from production. Can you please run the following data file in parallel so that we can complete the pdf_compare exercise and assign this back to QA. Please use the following file:
+
+
+
+{{[williamK@ca-isis-pr-04 necuml1_prod]$ perl /home/util/get_processed_filename.pl necu 2412924}}
+ {{cid: necu}}
+ {{jid: ml1}}
+ {{proc_id 2412924}}
+ {{file_name: 1449.0730.357107.LN_BLXTR.XML.pgp}}
+ {{md5 f69762184e6eaea632335e197a94cd3d}}
+
+
+
+I also copied this file to/z/infoftp_int/necu/loan_bills/ so that it can be scanned for your convenience. Please change the status back to "QA Request" when you are done.
+
+
+author: thomasy
+comment: [~William.Kong]Processing is finished for the archival.
+
+
+author: william.kong
+comment: [~thomasY]: How come I don't see the zip file in the /z/pdf_afp/necu/necuml1/zip folder? I thought the fix was in place in parallel environment. Please advise thanks!
+
+
+author: thomasy
+comment: [~William.Kong]The change was not in place in parallel. I reprocessed it with the change. The zip file should be there now.
+
+
+author: william.kong
+comment: [~Igor.Khosid]/[~Andrey.Kutsenko]: For this application, there is NO need to run pdfcompare. Thomas informed me that this program is already using afp2pdf.py program. However, he need to adjust the processing script to follow the standard folder structure to include zip file in the zip folder plus clean up the code to not reference pdfi any longer. I just did a code review of his/home/test/master/necuml1_process.sh and it looks good.
+
+
+
+[~thomasY]: Please go head and submit this to QA.
+
+
+author: JIRAUSER11104
+comment: QA is done*.
+ _Based on the above comment by [~William.Kong]_
+
+Note:
+ However, the script was running.
+ The following results have been obtained
+{quote}#ran script:
+ [andreyK@ca-isis-pr-04 pdf_compare]$ perl pdf_compare.pl necuml1_prod necuml1_parallel result_necuml1 -pixels 5 -threads 32
+ #report:
+ Total PDF Files Scanned: 53
+ allowedDifferenceInPercentPerPage: 5:
+ Thread Count: 32
+
+Total PDF Files with Differences: 53
+ Please review the directory in /d/pdf_compare/result_necuml1 directory & /d/pdf_compare/result_necuml1/pdf_compare_rpt.txt report to see all the PDF differences
+ Start Time: Thu Aug 11 11:36:49 PDT 2022
+ Finish Time: Thu Aug 11 11:38:49 PDT 2022
+{quote}
+
+
+author: william.kong
+comment: [~thomasY]: Please advise if you can schedule the code release today? I'll update due date for today in the meantime.
+
+
+author: thomasy
+comment: [~William.Kong]Yes, it will be released today.
+
+
+author: thomasy
+comment: [^IS-1207_Transfer.doc]
+
+
+author: thomasy
+comment: Released

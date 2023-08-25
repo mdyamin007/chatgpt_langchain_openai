@@ -1,0 +1,120 @@
+title: Hypercube - Q2 SSO Enhanced to use Lookup API
+description: Item #3 in [https://confluence.infoimageinc.com/display/IN/FCBT+-+External+Account+Mapping+for+Loans|https://confluence.infoimageinc.com/display/IN/FCBT+-+External+Account+Mapping+for+Loans.]
+
+
+ * Q2 will send Q2 internal numbers during SSO request.
+ * InfoIMAGE will map these Q2 numbers to an InfoIMAGE number using the Lookup API.
+ * Q2 numbers can map to the same internal number.
+ * One Q2 number can also map to multiple internal numbers.
+ * If the Q2 number has no mapping, we will use it as-is.
+
+
+
+Configuration should be:
+
+"externalAccountLookUp":
+
+{ "externalType":"ext_acct_num" }
+
+This is similar to SEFC, but instead of mapping the CIF, we map all the account numbers.
+
+Please make this code a function, so that if we need to enhance other SSO with the same logic, we can call the function instead of having to copy and paste a lot of code.
+
+
+author: tai.trinh
+comment: Example:
+|*Q2 Account*|*InfoIMAGE Account*|
+|463812|460694|
+|464852|460694|
+|466216|460694|
+|469454|460694|
+|473726|460694|
+|477719|460694|
+|478333|460694|
+|479273|460694|
+|479324|460694|
+
+
+
+Q2 would send all the accounts on the left column, but on our side, we will only display account460694. Now, let's say Q2 also send account 1234567, and we do not have a mapping for this. Then we will also send 1234567 to the Enrollment API.
+
+Likewise, if there is a mapping of:
+|*Q2 Account*|*InfoIMAGE Account*|
+|463812|460694|
+|463812|460693|
+
+Then we would send both accounts460694 and460693 to the Enrollment API.
+
+
+
+The lookup API is already capable of sending back multiple accounts (it does so for the cif so it will do so for the ext_acct_num).
+
+
+author: sadman anik
+comment: Hi [~tai.trinh],
+
+Can you please update the ticket and confluence page about the new changes of this task once the PUI update is done and there will be data in the DB? So that I can update and test the code.
+
+Thanks.
+
+
+author: tai.trinh
+comment: Hi [~sadman anik],
+
+There should already be some values in the ext_id_mapping for CAFC. It may not exactly be in the correct format, but you can update it to get the mapping you want.
+
+Thanks,
+
+Tai
+
+
+author: sadman anik
+comment: Hi [~tai.trinh],
+
+Should I enable\{ "externalType":"ext_acct_num" } for all the 14 FCBT clients on this code commit?
+
+Thanks,
+
+Sadman
+
+
+author: tai.trinh
+comment: Hi [~sadman anik],
+
+Yes. Also, please enable Account Description but disable obtaining it from the SSO request.
+
+Thanks,
+Tai
+
+
+
+
+author: sadman anik
+comment: HI [~tai.trinh],
+
+I have committed the code in the pilot. Take a look and let me know.
+
+Thanks,
+
+Sadman
+
+
+author: tai.trinh
+comment: [~sadman anik]
+
+FYI, I have developed the extAcctLookup API. It will take the accounts array and perform all the mapping and filtering and return an accounts array in the response that can be used directly. Hypercube would not need to read/filter this account array in order to save computation time on Hypercube end.
+
+Please review the code changes I have committed to trunk. I have tested and think it should be good, but I'd like you/Abdullah to review the code to make sure that edge cases are being considered, and there are no bugs (I'm not proficient with Javascript).
+
+Thanks,
+Tai
+
+
+author: sadman anik
+comment: Hi [~tai.trinh],
+
+I have reviewed your code and looks like it okay.
+
+Thanks,
+
+Sadman

@@ -1,0 +1,302 @@
+title: StandardEnrollmentHandler
+body: # Configurations
+
+* * *
+
+The name is the configuration name to be used in the pui configuration file.
+The Java Constant Name is the staticly defined String that contains the Name
+to prevent typographical errors while coding.
+
+Global
+
+  
+| Name| Java Constant Name| Value Type| Default Value| Description| Dependency  
+---|---|---|---|---|---|---  
+1| global.alphanumericAcctNum| ALPHANUMERIC_ACCTNUM_FLAG| boolean| false|
+Define whether the client uses alphanumeric account number.|  
+  
+2| global.acctnum.length| ACCTNUM_LENGTH_FLAG| Integer| N/A| Define a length
+the account number must conform to.|  
+  
+3| global.cif.length| CIF_LENGTH_FLAG| Integer| N/A| Define a length the cif
+must conform to.|  
+  
+4| global.enableAccountType| HAS_ACCT_TYPE_FLAG| boolean| false| Define
+whether the client uses account type.|  
+  
+5| global.hasCIF| HAS_CIF_FLAG| boolean| false| Define whether the client uses
+CIF.|  
+  
+6| global.hasFinAcctDesc| FIN_ACCT_DESC_FLAG| boolean| false| Define whether
+the finAcctDesc object from i3core is required to map the external type to the
+internal type.| global.enableAccountType  
+7| global.hasSubType| HAS_SUB_TYPE_FLAG| boolean| false| Define whether the
+client uses sub type. If true, TypeMap from i3core will be used to map the
+external type to the internal type.| global.enableAccountType  
+8| global.selectivePaperless| SELECTIVE_PAPERLESS_FLAG| boolean| false| Define
+whether the client uses selective paperless.|  
+  
+  
+## Processing
+
+  
+| Name| Java Constant Name| Value Type| Default Value| Description| Dependency  
+---|---|---|---|---|---|---  
+1| paperless.date.textFormat| DATE_TEXT_FORMAT_FLAG| boolean| false| Define
+whether the modified_date field will be provided in text format.|  
+  
+2| paperless.np.defaultValue| DEFAULT_NP_FLAG| String| email| Define what the
+default notification preference will be if it is not provided.|  
+  
+3| paperless.headers| HEADERS_FLAG| pipe-delimited String Array| N/A| Define
+what data columns are in the enrollment file, and the order each individual
+data must be in on each data row.|  
+  
+4| paperless.acctnum.truncate| TRUNCATE_ACCTNUM_FLAG| boolean| false| Define
+whether to truncate the account number.| global.acctnum.length  
+5| paperless.cif.truncate| TRUNCATE_CIF_FLAG| boolean| false| Define whether
+to truncate the CIF.| global.cif.length  
+6| paperless.useProcessTime| USE_PROCESS_TIME_FLAG| boolean| false| Define
+whether the process will use the process time as the modified_date for all
+entries instead of the value defined in the file.|  
+  
+7| paperless.usr.defaultValue| DEFAULT_USR_TYPE_FLAG| String| P| Define the
+default user type for newly created users.|  
+  
+8| paperless.validStatus| VALID_STATUS_FLAG| comma-delimited String Array|
+E,U| Define whether the list of valid paperless status for the clients.|  
+  
+  
+## Validation
+
+Non-boolean configurations are validated by the Handler when possible. If
+configurations are incorrectly defined, the Handler will throw an Exception.
+
+  
+| Configuration| Validation  
+---|---|---  
+1| global.acctnum.length| Value must be an integer  
+2| global.cif.length| Value must be an integer  
+3| paperless.np.defaultValue| Value must be  **email** ,  **sms** , or
+**attach**  
+4| paperless.headers| See **Headers** section  
+5| paperless.validStatus| Each value must be of length 1  
+  
+### Headers
+
+Listed are all the currently supported data columns.
+
+  
+| Name| Description| Required  
+---|---|---|---  
+1| acctname| The account owner name.| Always  
+2| acctnum| The account number.| Always  
+3| app| The account type.| When global.enableAccountType = true  
+4| attachpw| The password for pdf attachment delivery.| When the client wants
+to use  **attach** notification preference. This header column cannot be
+validated due to the  **attach** value only being a part of the data itself  
+5| cif| The cif number.| Always  
+6| mdate| The modified time.| When paperless.useProcessTime = false  
+7| email| The email address.| When sms column is not present  
+8| np| The notification preference|  
+  
+9| sms| The sms number.| When email column is not present  
+10| status| The paperless status to be changed to.| Always  
+11| stmttype| The statement type for paperless.| When the
+global.selectivePaperless = true  
+12| subuser| The secondary ID for subusers that is attached after the CIF,
+e.g. CIF = 123, subuser = A34 => 123|A34|  
+  
+13| usrtype| The user type of the | When the enrollment file does not only
+process for a specific user type.  
+  
+  
+
+Example of Valid Headers
+
+global.headers=acctnum|acctname|email|status  **but only if** global.hasCIF =
+false, global.enableAccountType = false, global.selectivePaperless = false,
+paperless.useProcessTime = true
+
+global.headers=cif|acctnum|acctname|email|status|mdate  **but only if
+**global.enableAccountType = false, global.selectivePaperless = false
+
+global.headers=acctnum|acctname|email|attachpw|status|mdate  **but only if
+**[paperless.np](http://paperless.np).defaultValue = attach
+
+  
+
+# Handler Logic
+
+* * *
+
+The handler will throw a DataException, rejecting the data line, when the
+constraints are not met.
+
+## Acctname
+
+### Constraints
+
+  * Must exist
+  * 0 < Length <= 100 (database constraint)
+
+### Handling
+
+  1. N/A
+
+## Acctnum
+
+### Constraints
+
+  * If global.alphanumericAcctNum is false, must be a numerical value
+
+### Handling
+
+  1. If paperless.acctnum.length is defined and the the account number length is less than the defined value,
+    1. Prepend "0" until the account number length equals the defined value.
+    2. Otherwise, do nothing.
+  2. If paperless.acctnum.truncate is true,
+    1. If paperless.acctnum.length is defined, 
+      1. Truncate to the last n digits, where n is the value defined by global.acctnum.length.
+    2. Otherwise, remove all leading zeroes.
+
+## App
+
+### Constraints
+
+  * If global.enableAccountType is true, must exist.
+  * If global.hasSubType is true or global.hasFinAcctDesc is true, the value must be able to be mapped to an internal value using the respective mapping object.
+  * Length <= 2 (database constraint)
+
+### Handling
+
+  1. If global.hasSubType is true,
+    1. The app value is stored in PaperlessData.subType
+    2. The app value is replaced by the internal type returned from TypeMap (ext_acct_type_mapping table in database)
+  2. If global.hasFinAcctDesc is true,
+    1. The app value is replaced by the internal type returned from the FinAcctDesc in i3core.
+
+## Attachpw
+
+### Constraints
+
+  * If np is  **attach** , must exist.
+  * 0 < Length <= 60 (database constraint)
+
+### Handling
+
+  1. N/A
+
+## Cif
+
+### Constraints
+
+  * Must exist
+  * 0 < Length <= 100 (database constraint)
+
+### Handling
+
+  1. If global.cif.length is defined,
+    1. Prepend "0" until the cif length equals the defined value.
+    2. Otherwise, do nothing.
+  2. If paperless.cif.truncate is true,
+    1. If global.cif.length is defined,
+      1. Truncate to the last m digits where m is the value defined by global.cif.length.
+    2. Otherwise, remove all leading zeroes.
+  3. If subuser data is provided, the CIF is concatenated with the subuser into CIF|subuser. This new value must fulfill the CIF constraints.
+    1. The PaperlessData is flagged as a subuser.
+
+## Email
+
+### Constraints
+
+  * If np is  **email** or  **attach** , must exist.
+  * 0 < Length <= 100 (database constraint).
+  * Must be valid email: match regex "^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$".
+
+### Handling
+
+  1. N/A
+
+## Mdate
+
+### Constraints
+
+  * If useProcessTime is false, must exist.
+  * If paperless.date.textFormat is true, must be in text format "MM/dd/yyyy HH:mm:ss z".
+  * If paperless.date.textFormat is false, must be in Unix Epoch Time. 
+
+### Handling
+
+  1. If useProcessTime is true,
+    1. The process_time, initialized at the creation of the handler, will be used to create PaperlessData.parseDate*.
+    2. Otherwise, PaperlessData.parseDate will be created from the information provided in the mdate column.
+
+*This is the Date object that will be used by the registrar to determine whether the paperless status or notification preference can be updated.
+
+## Np
+
+### Constraints
+
+  * If exists, value must be  **attach** ,  **email** , or  **sms**.
+
+### Handling
+
+  1. If does not exist, value is set to value defined by paperless.np.defaultValue.
+    1. If paperless.np.defaultValue is not defined, default to  **email**.
+
+## Sms
+
+### Constraints
+
+  * If np is  **sms** , must exist.
+  * Must be a numeric value of length 11 (include country code)
+
+### Handling
+
+  1. N/A
+
+## Status
+
+### Constraints
+
+  * Must exist.
+  * Must be valid status defined by paperless.validStatus (if not defined, default is E, P, and U). 
+
+### Handling
+
+  1. N/A
+
+## Stmttype
+
+### Constraints
+
+  1. If global.selectivePaperless is true, must exist.
+  2. Must be a valid statement type: defined in the statement_type table in the database.
+
+Handling
+
+  1. N/A
+
+## Subuser
+
+### Constraints
+
+  1. N/A
+
+Handling
+
+  1. See CIF.
+
+## Usrtype
+
+### Constraints
+
+  1. If exist, value must be:  **P** (personal),  **N  **(Business),  **F** (Foreign), **V** (Viewer).
+
+Handling
+
+  1. If does not exist, default to the value defined by paperless.usr.defaultValue.
+    1. If paperless.usr.defaultValue is not defined, default to  **P**.
+
+

@@ -1,0 +1,155 @@
+title: Document Index Meta File Specifications
+body:   
+
+  
+
+Table of Contents
+
+truenone
+
+  
+  
+  
+---  
+  
+  
+
+# Overview
+
+* * *
+
+This processing is used to process eStatement Data.
+
+ **Command**|  docMeta  
+---|---  
+ **Frequency**|  Per application per cycle  
+ **Completeness**|  Incremental  
+  
+  
+
+filenamespec
+
+# Index Filename Specification
+
+* * *
+
+Format:  _prefix_ _ _yyyy_ _mmdd_ _ _segid_ _ _yyyy_ _mmdd_ _ _hhmm_ _
+_CID_.txt
+
+Field
+
+Number
+
+| Field Name| Description  
+---|---|---  
+1| Application Prefix|
+
+msX = monthly statement where X ranges from 1 to 9
+
+meX = HELOC statement where X ranges from 1 to 9
+
+mvX = Visa where X ranges from 1 to 9
+
+mcX = Mastercard Statement where X ranges from 1 to 9
+
+...  
+  
+2| Closing Date|
+
+The Statement Closing Date: 2 digit month, 2 digit day, and 4 digit year
+(yyyymmdd)  
+  
+3| Segment ID|
+
+Segment ID (Default is 1); If there are multiple statement cycles in a given
+day, increment the segment number by 1.  
+  
+4| Processing Date|
+
+The Processing Date: 2 digit month, 2 digit day, and 4 digit year (yyyymmdd)  
+  
+5| Processed Time|
+
+The Processing Time (Military Time): 2 digit hour ranging between 1-24 and 2
+digit minute (hhmm)  
+  
+6| Client ID| 4 letter internal customer ID used by InfoIMAGE  
+  
+  
+
+Filename Examples
+
+    
+    
+    ms1_20090331_1_20090405_1658_demo.txt
+
+  
+
+# Index File Content Specification
+
+* * *
+
+  * Header row with Field Name are required.
+  * Each column must be pipe delimited.
+  * For fields that do not have a value or "Optional", please do not use blank space ASCII character, i.e. leave the field empty.
+  * Input rows must contain data for fields with a  in the  **Required  **column.
+
+### Data fields
+
+  
+
+Field
+
+Number
+
+| Field Name| Description| Required  
+---|---|---|---  
+1| JobType|
+
+Type of Job:
+
+"Tax" for Tax documents*.
+
+"Notice" for Daily Letters.
+
+"Statement" for Statement documents.
+
+|   
+2| DocumentCode|
+
+InfoIMAGE will provide document codes separately.
+
+For "Statement" job that do not require Statement Description, default to 001
+for all statements.
+
+|   
+3| DocumentEndDate| Closing date of the individual document (yyyymmdd).|   
+4| AccountNumber| The account number (no leading zeros; must consists of only
+numbers 0-9).|   
+5| AccountType| Account type, e.g. DD=Deposit Accounts; SV=Savings; LN=Loans;
+SB=Safe Deposit Box; CD=Certificate of Deposite; etc.).  
+Use NA if set up does not require account type.| Required for setup with
+Account Types  
+6| AccountName| The account holder's full name (maximum of 100 characters).|   
+7| SSN| 9 digits SSN used for tax documents| Required for eTax documents  
+  
+  
+
+Index File Content Examples
+
+  
+
+Header|
+
+JobType|DocumentCode|DocumentEndDate|AccountNumber|AccountType|AccountName|SSN  
+  
+---|---  
+Input|
+
+Statement|001|20171031|9999999|DD|John Doe|123456789  
+  
+  
+
+  
+
+

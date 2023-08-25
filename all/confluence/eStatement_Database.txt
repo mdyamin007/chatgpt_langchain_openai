@@ -1,0 +1,247 @@
+title: eStatement Database
+body: In order to serve eStatement to end users and provide ancilliary services,
+data need to be stored. The primary database used to store eStatement data is
+a SQL database.
+
+truenone  
+  
+---  
+  
+  
+
+# Oracle Database Schema
+
+* * *
+
+The eStatement database is divided into four working environments:
+Development, Pilot, Staging, and Production. Within each environment, there
+are three schemas: bank, cu, and default. As their names suggest, the bank
+database contains data for banks and the cu database contains data for credit
+unions. Default contains data for clients serviced before the differentiation
+between banks and credit unions.
+
+  
+
+  
+
+Table of Databases
+
+  
+
+Development| Pilot| Staging| Production  
+---|---|---|---  
+dev_bank| pilot_bank| stage_bank| prod_bank  
+dev_cu| pilot_cu| stage_cu| prod_cu  
+dev_default| pilot_default| stage_default| prod_default  
+  
+Note: The names given above to the databases are unofficial, and are written
+as such only to reflect the code environment and the client grouping.
+
+  
+
+# Individual Database Schema
+
+* * *
+
+Each Oracle database's schema is identical to each other except for the data
+that is stored. Below, the schema will be explained based on the functions
+that the data tables are being used for.
+
+## eStatement Core Service
+
+The core eStatement service is to serve Electronic Statements, usually in the
+form of PDFs, to the client. In order to do this, InfoIMAGE would need to know
+(1) who are all the users within a financial instituation (FI/client), (2)
+what accounts do these users have access to, and (3) what are the available
+electronic documents in each account.
+
+### ORGANIZATION
+
+The ORGANIZATION table define the FIs that InfoIMAGE service. The primary key
+is the ORG_ID, which is referred in various other tables to link data to a
+specific organization.
+
+There is a utility function getorgid(string cid) that can be used to query by
+the ORG_ID without joining with the ORGANIZATION table. For example, "SELECT *
+FROM ... WHERE ORG_ID = GETORGID('demo');"
+
+###  **USR**
+
+The USR table represents any given user across all clients. This table stores
+basic information such as the user name. The primary key is the USR_ID, which
+is referred in various other table that relates to the user or a user's
+action, such as making a change to a status.
+
+The USR table does not have a foreign key to the ORG_ID. In order to determine
+which FI the user belongs to, the table must be joined with the USR_MAPPING
+table. For older set up that does not use the USR_MAPPING table, the USR table
+can be joined to the USR_FIN_ACCOUNT and then to the FIN_ACCOUNT table, which
+will have the ORG_ID.
+
+### USR_MAPPING
+
+The USR_ID is an internal value, and as such, clients would not know what
+those values are. To define a user and sync data, an external Unique User
+Identifier (UUID) is kept.  The USR_MAPPING table stores this UUID and links
+it to the USR_ID. Therefore, when the client requests research for a
+particular user, they can provide the UUID. With the UUID, InfoIMAGE can query
+the USR_MAPPING table to obtain the USR_ID which is then used to query the
+other databases. The UUID is typically the SSN/TIN, the CIF (a special value
+in the FI vertical), or a unique value defined by the . This UUID is stored in
+the CIF_NUM column.
+
+### USR_SESSION
+
+The USR_SESSION table stores login information for the user on the eStatement
+Site. It contains information such as the username and password, which is
+relevant for Direct Sign-On; and when the user enrolls into SSO or DSO. This
+table has a foreign key to USR_ID.
+
+For older setup, the UUID can be stored in the VENDOR_USER_ID column in this
+table instead of the CIF_NUM in USR_MAPPING.
+
+### FIN_ACCOUNT
+
+The FIN_ACCOUNT table represent a financial account. The table has a foreign
+key to ORG_ID. This is how InfoIMAGE stores all the base account information,
+such as account number and account owner name, for a client.
+
+### USR_FIN_ACCOUNT
+
+The USR_FIN_ACCOUNT table is a linking table that refers to the USR_ID and
+ACCT_ID, and thus links USR_ID to ACCT_ID. This is how InfoIMAGE determines
+which user has access to which account. A row in the USR_FIN_ACCOUNT table is
+referred to coloquially as a user-account relationship.  
+
+### PAPERLESS, PAPERLESS2
+
+The PAPERLESS table stores the delivery preference of an account, whether the
+statements for the account should be delivered by Print, Electronic, or Both.
+This tables contains the entire history for each account, and as such, there
+may be more than one record per ACCT_ID, which is a foreign key. For certain
+setups, InfoIMAGE do not post eStatements when an account is not on Electronic
+or Both delivery. However, in most cases, InfoIMAGE will always post
+eStatements, so that there will be a history of documents once the user does
+opt into Electronic delivery.
+
+The PAPERLESS2 table contains the latest PAPERLESS record for each account.
+This can be used to quickly query the latest status.
+
+###  **ESTMT_DOC, ENOTICE, ETAX**
+
+Documents are split into three main types: eStatement, eNotice, and eTax. The
+ESTMT_DOC table stores data for eStatements. The ENOTICE table stores data for
+an eNotices. And the ETAX table stores data for etaxes.
+
+###  **ARCH_FILE**
+
+The ARCH_FILE contains information regarding where the actual statement file
+is stored, i.e. the storage path. This table can be joined directly with
+ENOTICE and ETAX via the ARCH_FILE_ID. For ESTMT_DOC, ARCH_FILE is linked
+through another table ESTMT_FILE.
+
+### ESTMT_FILE
+
+The ESTMT_FILE is a linking file for ESTMT_DOC and ARCH_FILE. ESTMT_DOC refers
+to ESTMT_FILE_ID to an ESTMT_FILE record that has the ARCH_FILE_ID.
+
+### AGE_OUT
+
+The AGE_OUT table defines the archival period for the electronic documents.
+For eStatement, it will define the longest archival period since it is not
+possible to define records by statement type.
+
+### DOC_DESC
+
+The DOC_DESC table stores the descriptions for documents by ORG_ID. ETaxes
+have shared descriptions across all clients, and so their descriptions are
+stored once with ORG_ID = null.
+
+## Processing Service
+
+The PUI is the primary application that processes various files provided by
+the client or the Print team to make changes to the eStatement Database for a
+majority of data that the eStatement Products need to provide service to the
+client. For example, statement data are inserted via the .
+
+### P_JOB
+
+The P_JOB table represents the processing jobs that are processed on the PUI.
+The P_JOB_ID is the primary key that will be referenced in other tables. This
+value is widely used to reference which job is being discussed. It is
+displayed as the Ref# on the PUI front-end.
+
+### P_JOB_ESTMT, P_JOB_ENOTICE, P_JOB_ETAX
+
+These tables are linking tables that link a particular processing job with all
+the statements that the job processed; eStmt, eNotice, eTax respectively by
+the table name.
+
+### P_ESTMT_COUNT, P_ENOTICE_COUNT, P_EMAIL_COUNT
+
+These three tables store meta data regarding the processing details for Stmt
+jobs, the eNotice jobs, and email jobs. The data is pre-computed to be queried
+by the Accounting Report, so that the calculation for thousands of records
+will only happen once.
+
+## Notification Service
+
+To comply with existing laws, in order to deliver a statement electronically,
+InfoIMAGE must notify the user that the statements are available for a given
+cycle. Depending on the setup, the user can be notified by email, sms, or
+both. With the email option, the client can also opt to have the statement be
+attached in the email.
+
+### PAPERLESS, PAPERLESS2
+
+Aforementioned, these tables store the delivery preference of the accounts.
+Notifications are sent only to accounts that do not have a status of "B",
+which represents Paper delivery.
+
+### NOTIFICATION_PREFERENCE
+
+Notification-related information is stored in the NOTIFICATION_PREFERENCE
+table, e.g. email address, phone number, encryption password for PDF
+attachment. This table has a foreign_key to USR_ID, ACCT_ID, and UFA_ID that
+can be used to linked to the corresponding user-account relationship. The
+standard is that notification_preference is stored by user by account.
+
+### NOTIFICATION_HISTORY
+
+NOTIFICATION_HISTORY is to NOTIFICATION_PREFERENCE as PAPERLESS is to
+PAPERLESS2. This table keeps record of the history of the notification record;
+the changes that were made overtime.
+
+### USR_FIN_ACCOUNT
+
+ _ **Deprecated.**_ For older setup, the email address can be stored in the
+USR_FIN_ACCOUNT table instead.
+
+### CONTACT_INFO
+
+ _ **Deprecated.**_ For older setup, notification info can be stored in the
+CONTACT_INFO table. The primary key CI_ID is referenced in the USR table.
+
+### EMAIL
+
+The EMAIL table store the email templates for clients not using
+Templateservice to store their email templates. This is typically clients who
+are still on Prism.
+
+### P_JOB_EMAIL
+
+The P_JOB_EMAIL table records the need for a processing job to have email
+notifications. If a job does not have email notification, it will not have a
+record in the P_JOB_EMAIL table. The table has a foreign key to P_JOB_ID. An
+email notification job can only be triggered manually if NEW = 1 and AUTOSEND
+= 0. If AUTOSEND = 1, then the email job will be triggered automatically at
+the scheduled automated email times.
+
+### P_ESTMT_EMAIL, P_ENOTICE_EMAIL, P_ETAX_EMAIL
+
+For emails that are sent, records are kept in these table corresponding to the
+document job. These records will prevent the same email from being sent out
+again. This is useful in cases where email jobs partially fail. It is possible
+to retrigger the email jobs without resending the successful emails again.
+
+

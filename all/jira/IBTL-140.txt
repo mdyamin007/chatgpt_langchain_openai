@@ -1,0 +1,174 @@
+title: RH2 - Prod: EQBK DDA EOM - Process exited
+description: [~William.Kong]
+
+
+
+Use of uninitialized value in concatenation (.) or string at /home/master/get_msg_v2_cu_std_prod.pl line 305.
+color flag is: in get_msg_v2_cu_std_prod.pl
+jobsel is : f
+Use of uninitialized value in split at /home/master/get_msg_v2_cu_std_prod.pl line 307.
+url: http://pui-prod.infoimageinc.com/MsgServlet22?cid=eqbk&apptype=ms1&cycledate=08312020&services=estmt
+1|eqbk_ms1_08312020_09292020.zip
+Successfully grabbed zip file given code 1 and file eqbk_ms1_08312020_09292020.zip
+Basename of the file to be grabbed is eqbk_ms1_08312020_09292020.zip
+zipfile - /d/isd_input/I3/IS/eqbk/eqbk_ms1_08312020_09292020.zip
+rm: cannot remove `/d/eqbk/eqbkms1/eqbkms1_data': Is a directory
+/d/eqbk/eqbkms1/eqbkms1_msg_portal.txt
+scp /home/isis/msgmgr/pseg_fs10/S1165907.300 to oper1@texas:/home/isis/msgmgr/pseg_fs10/
+scp /home/isis/msgmgr/pseg_fs10/S1165906.300 to oper1@texas:/home/isis/msgmgr/pseg_fs10/
+checking mm2 index file
+There is selective criteria for eqbkms1. Please inform IS to QA samples.
+Running ... /home/master/verify_estmt_captured.pl prod eqbk ms1 ms1 31 eqbkms1131
+estmt_combine_exception:Thu Oct 15 14:24:47 PDT 2020
+Warning Error: dt_job_id 161487-C31.01-V21719 rerun with different CID. Current CID: , New CID: eqbk. Please ensure DT_JOB_iD is correct for this rerun. Bad file descriptor /home/master/verify_estmt_captured.pl
+Error within program: verify_estmt_captured.pl
+Error within program: isisdisk.sh
+
+
+
+
+
+Error from log file "/d/eqbk/eqbkms1131.log"
+
+Copyright 2019 Firstlogic Solutions, LLC All rights reserved.
+
+
+Please wait while initializing...
+head: cannot open `/d/zip/eqbkms1131_ncoa1.c1bmcok' for reading: No such file or directory
+Use of uninitialized value in concatenation (.) or string at /home/master/get_coa_rec.pl line 155.
+Use of uninitialized value in concatenation (.) or string at /home/master/get_coa_rec.pl line 155.
+Use of uninitialized value in concatenation (.) or string at /home/master/get_coa_rec.pl line 155.
+acct data for eqbk, field 22 is Non-Billable
+fn is /d/eqbk/eqbkms1131
+Opttech Sort Version 2002b
+Copyright Opttech.com 2002
+^M
+Total records output = 0
+job started : Thu Oct 15 14:23:10 PDT 2020
+job ended : Thu Oct 15 14:24:36 PDT 2020
+ERROR: Line counts for .txt and .c1bmcok mismatch.
+
+
+
+
+
+
+author: william.kong
+comment: [~rodriguez]: Can you review this brisbane{color:#00875a}*production*{color} testing issue?
+
+
+author: rodriguez
+comment: [~William.Kong]: Looking into it
+
+
+author: rodriguez
+comment: [~William.Kong]: same issue as IBTL -138
+
+
+author: william.kong
+comment: [~rodriguez]: You are right. That ticket IBTL-138 is global issue on RH2.
+
+I did not create the zip directory correctly. RHS2:/d/zip local and not shared. RH2 & RHS /d/zip was shared. I fixed it now.
+
+
+
+[~Velasco]: Can you please retest?
+
+
+author: velasco
+comment: Reprocessing now.
+
+
+author: velasco
+comment: Looks like it went all the way through this time around with the exception of the high cripple.
+
+Everything is Ok
+My commercial CD Maillist = dp@infoimageinc.com
+comm_cd_clean_up_set4(): My CID = eqbk ; My JID = ms1
+/d/pdf_afp/eqbk/eqbkms1/eqbkms1_comm_cd_cripple_rpt.dat
+Cripple for CD is greater than 5%
+
+
+
+!image-2020-10-16-05-22-26-714.png!
+
+
+author: velasco
+comment: Unable to log in to view eStmt posting
+
+
+
+!image-2020-10-16-11-14-12-143.png!
+
+
+
+!image-2020-10-16-11-13-56-443.png!
+
+
+author: trang809
+comment: Neil,
+
+I just checked and confirm that EQBK's admin site are up now. Please continue with your testing.
+
+Thanks
+
+David
+
+
+author: william.kong
+comment: [~Velasco]: Can you confirm that site is accessible now? If so, please re-assign this ticket to me so that I can close it out.
+
+
+author: velasco
+comment: [~William.Kong]I am not able to view the pdf from the prod site. See below.
+
+
+
+!image-2020-10-27-09-12-02-556.png!
+
+
+author: trang809
+comment: Bryant,
+
+Can you work with Surekha on this. Look like there are 404 error in the tomcat log.
+
+
+author: surekhadani1
+comment: Bryant,
+
+      Looks like prism is calling the non-html version of the wrapper service. Is the updated code deployed on prism ? Please check wrapper service url in the api.props file and match it with what we have on production.
+
+
+
+Below is the request : We should not have /pdf in the url
+
+
+2204:10.4.16.80 - - [27/Oct/2020:09:10:41 -0700] "GET /wrapperservice/v1/document/eqbk/pdf?site=msm&operation=sync&environment=PROD&acctId=41238534&fileStoragePath=/d/PV-NAS/indiv_afp12&fileName=eqbkms1_08312020_1180_16.afp&stmtType=STMT&parentPath=20201016-08_41_48.142_3117973.zip&serviceName=BIBO HTTP/1.1" 404 1046
+
+
+
+Thanks,
+
+Surekha Dani
+
+
+author: 5ba31365b1a4b82e99864b78
+comment: Hi Surekha,
+
+The fix has been fixed. I built i3-core on prism-pr-02 since it was using code prior to the HTML document code. It looks good now.
+
+
+author: velasco
+comment: [~William.Kong] [~Bryant.Tran]
+
+I am now able to view PDF's
+
+
+
+!image-2020-10-27-12-25-07-012.png!
+
+!image-2020-10-27-12-25-56-400.png!
+
+
+author: william.kong
+comment: [~Velasco]: I will close the ticket now since all issues are resolved.  Please update smartsheet with your status. Thanks!

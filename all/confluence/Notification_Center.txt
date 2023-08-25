@@ -1,0 +1,291 @@
+title: Notification Center
+body: ## Data
+Model[](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center#Data-
+Model)
+
+ **NOTE:**  We are going to store data at MongoBD.
+
+ _ **Collection: message**_
+
+Property| Type| Description  
+---|---|---  
+id| ObjectId| Maintained by MongoDB  
+cId| String| Client ID  
+appId| String| Which app this conversation is belong to  
+messageId| String| Conversation unique identification UUID  
+conversationId| String| Which notification this conversation is belong to  
+jobId| String| If this is the beginning of a global notification then there
+should be a jobId  
+jobName| String| Job name given while creating the job  
+templateId| String| If this conversation has sent through a template  
+subject| String| Subject of the conversation  
+fromName| String| Sender Name  
+from| String| From email or mobile no  
+replyTo| String| If any reply to email or phone no is given  
+type| String| Conversation can be Email/SMS  
+to| String| Recipient email address or phone no  
+party| String| Concatenation of from and to number where smaller number is the
+1st part and bigger number is the 2nd part  
+body| String| Content of the conversation  
+usrId| String| If any user id has provided  
+accountNo| String| If any account no has provided  
+trackImpression| Boolean| For email only. To track  
+priority| int| For email only. To mark email priority  
+convType| String| Conversation can be private or global  
+nexmoMessageIds| List<String>| Only for sms, If SMS contains more the 160
+character then there will be multiple nexmo ID  
+nexmoDateTime| Date| Only for sms, Time provided by nexmo  
+career| String| Via which medium the notification will be send  
+status| String| Status of the notification  
+attachments| List<String>| If any attachment sent with email notification,
+attachment path  
+reason| String| Reason If notification failed to send  
+dateTime| Date| Request come to send Notification  
+createdDt| Date| create date of message  
+modifiedDt| Date| Last update time of the entity  
+timeToSend| Date| Future date to send notification message  
+  
+  
+[Edit this
+section](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center/edit?section=3)
+
+## Class
+Diagram[](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center#Class-
+Diagram)
+
+  
+[Edit this
+section](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center/edit?section=4)
+
+## API
+Specification[](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center#API-
+Specification)
+
+1.  
+[Edit this
+section](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center/edit?section=5)
+
+###
+URL[](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center#URL)
+
+GET /v1/conversation/callback  
+[Edit this
+section](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center/edit?section=6)
+
+###
+Param:[](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center#Param)
+
+name| Type| Requirement| Param type  
+---|---|---|---  
+msindn| String| required| query param  
+Description: Inbound SMS was sent from (replier's number)  
+to| String| required| query param  
+Description: The virtual number we need to buy  
+messageId| String| required| query param  
+Description: Nexmo message id by which we can fetch message later  
+Text (may need enq)| String| required| query param  
+Description: This param is the message body  
+type| String| required| query param  
+Description: SMS type  
+message-timestamp| String| required| query param  
+Description: Time of receiving sms  
+  
+This API will be called by nexmo, we have to provide this URL while
+registering a virtual number.
+
+  * RND : realtime conversation like meteor re-activeness *
+
+Workflow:
+
+1\. Get last message collection with msindn and to,  
+2\. Pick the latest datetime from message collection (msindn is to number and
+to is actualy from number of the collection). Then query to notification
+collection with party number and start date as perviously picked datetime, if
+no record found in collection then take nth number of past days.  
+3\. Insert all notification before that Take nexmo messageid from each object
+fetch sent message from nexmo api and insert it to message collection with
+notificationId and jobId befpre that pick the job and add it to
+conversation_job collection.  
+4\. Then insert reply SMS data with same conversationId.
+
+**So far my findings, we need to buy individual virtual number for each
+infoimage/client admin which will be used as him from number.
+
+2.  
+[Edit this
+section](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center/edit?section=7)
+
+###
+URL[](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center#URL-2)
+
+POST /v1/conversation/{cid}/  
+[Edit this
+section](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center/edit?section=8)
+
+###
+Param:[](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center#Param-2)
+
+name| Type| Requirement| Param type  
+---|---|---|---  
+cid| String| required| Path param  
+conversationWrapper| String| required| Post body  
+  
+ConversationWrapper details
+
+name| Type| Requirement  
+---|---|---  
+app| String| Yes  
+subject| String| No  
+fromName| String| No  
+from| String| Yes  
+replyTo| String| No  
+type| String| Yes  
+to| String| Yes  
+body| String| Yes  
+career| String| Yes  
+usrId| String| No  
+accNum| String| No  
+priority| int| No  
+vars| HashMap<String, String>| No  
+conversationId| String| No  
+convType| String| No  
+timeToSend| String| No  
+  
+Workflow:  
+Save notification add record to message collection with notification data.
+
+3.  
+[Edit this
+section](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center/edit?section=9)
+
+###
+URL[](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center#URL-3)
+
+GET /v1/conversation/{cid}/message  
+[Edit this
+section](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center/edit?section=10)
+
+###
+Parem:[](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center#Parem)
+
+No| name| Type| Requirement| Param type  
+---|---|---|---|---  
+1.| cid| String| required| path param| Description: This param is the Client
+ID  
+2.| conversationId| String| not required| query param| Search all message(s)
+related to that conversation  
+3.| typeOfConv| String| not required| query param| Conversation type can be
+global or private, fetch base on parameter  
+4.| messageId| String| not required| query param| Pick specific message with
+ID  
+5.| subject| String| not required| query param| Search all conversation
+subject carrying corresponding search keyword  
+6.| party| String| not required| query param| One or more phone numbers that
+involved in a conversation regardless of sender/receiver  
+7.| from| String| not required| query param| One phone number expected. filter
+on sender only  
+8.| to| String| not required| query param| One phone number expected. filter
+on sender only  
+9.| sort| String| not required| query param| Default sorting results by
+timestamp in descending order. i.e. show most recent ones  
+10.| count| int| not required| query param| Default to 30. for pagination use  
+11.| page| int| not required| query param| Default to 1. for pagination use  
+  
+Either you have to give conversationId or from to get data.
+
+Workflow:  
+Search message collection with conversationId /from. Use to, typeOfConv,
+messageId as filter
+
+Return:  
+Collection on message list as Conversation.
+
+4.  
+[Edit this
+section](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center/edit?section=11)
+
+###
+URL[](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center#URL-4)
+
+GET /v1/conversation/{cid}/job  
+[Edit this
+section](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center/edit?section=12)
+
+###
+Parem[](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center#Parem-2)
+
+No| name| Type| Requirement| Param type  
+---|---|---|---|---  
+1.| cid| String| required| path param  
+Description: This param is the Client ID  
+2.| jobId| String| not required| query param  
+Description: Job ID to fetch specific job  
+3.| detail| int| not required| query param  
+Ex: 1, return conversation list based on this param.  
+4.| subject| String| not required| query param  
+Search all conversation subject carrying corresponding search keyword  
+5.| party| String| not required| query param  
+One or more phone numbers that involved in a conversation regardless of
+sender/receiver  
+6.| from| String| not required| query param  
+One phone number expected. filter on sender only  
+7.| to| String| not required| query param  
+One phone number expected. filter on sender only  
+8.| sort| String| not required| query param  
+Default sorting results by timestamp in descending order. i.e. show most
+recent ones  
+9.| count| int| not required| query param  
+Default to 10. for pagination use  
+10.| page| int| not required| query param  
+Default to 1. for pagination use  
+  
+Workflow:  
+Search message collection with jobId, if jobId is not given then fetch with
+jobId not null and return group by of each jobId. Based on detail, fetch
+messages which contains jobId is not null and matched with given jobId.
+
+Return:  
+Job list which have reply based on detail return message list related with
+that Job  
+[Edit this
+section](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center/edit?section=13)
+
+## UI
+Workflow[](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center#UI-
+Workflow)
+
+  
+[Edit this
+section](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center/edit?section=14)
+
+### Global
+flow[](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center#Global-
+flow)
+
+  
+[Edit this
+section](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center/edit?section=15)
+
+### Private
+flow[](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center#Private-
+flow)
+
+  
+[Edit this
+section](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center/edit?section=16)
+
+### New
+Notification[](https://i3dev.easyredmine.com/projects/infotrac/wiki/Notification_Center#New-
+Notification)
+
+  
+
+### Attachments
+
+
+
+  
+
+  
+
+

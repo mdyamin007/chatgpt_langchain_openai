@@ -1,0 +1,213 @@
+title: TeamSupport Integration
+body: # Overview
+
+* * *
+
+  * TeamSupport creates and links the issue ticket with a new issue in Jira, including summary, description, project, and type. If the issue already exists in Jira, you can link the TeamSupport help desk ticket to it
+  * An issue in Jira can be linked with multiple TeamSupport tickets
+  * Any change to status, project, type, or any custom mappings in Jira will be automatically applied to any linked TeamSupport tickets
+  * Actions created in TeamSupport [help desk software](https://www.teamsupport.com/) will be created in the linked Jira issue
+  * Changes made in TeamSupport are not applied to the Jira issue, so your support team can still make updates without worrying about editing the Jira issue
+
+  
+
+# How it Works
+
+* * *
+
+Here is a simple diagram of how the Jira integration works:
+
+Additional details regarding the integration:
+
+  *  **Linking Tickets to Issues:**
+    * A single Issue in Jira can be linked with multiple Tickets in TeamSupport.
+    * An Issue in Jira cannot create a Ticket in TeamSupport.
+    * You may link a TeamSupport Ticket to a new or existing Jira Issue.
+    * Existing and new Jira Issues can be linked to Tickets via the [API](https://help.teamsupport.com/1/en/topic/automating-jira-using-api). This could allow you to automate the Issue/Ticket link.
+  *  **Initial "push" of [Custom Mapped Fields](https://help.teamsupport.com/1/en/topic/jira#fm):** When a New Issue is created, Default and Custom Mapped Fields are pushed from TeamSupport to Jira. This step does not happen when a Ticket is linked to a Existing Jira Issue. Future updates made within TeamSupport to Custom Mapped Fields are not sent to Jira.
+  *  **Issue updates "pushed" to Ticket:** Any changes made to the Default and Custom Mapped fields in a Jira Issue will also be changed in the linked TeamSupport Ticket.
+  *  **Actions and Comments are kept in-sync:**
+    * Comments created in the Jira Issue will also be created in the linked TeamSupport Ticket as Actions. Updates to existing Comments will not be updated in the Action. A Comment can be made "private" by associating it to a "Project Role" from within the full Issue edit mode (not the popup). This will prevent the Comment from being sync'd to TeamSupport and can be useful for comments/communication that may be relevant for Jira users, but not TeamSupport users:   
+[](https://manula.s3.amazonaws.com/user/1134/img/jira-private-comment.png)
+
+    * Actions created in the TeamSupport Ticket will also be created in the linked Jira Issue as Comments. Updates to existing Actions will not be updated in the Comment. You can push all TeamSupport Action types to Jira, or only one as defined in the [setup instructions](https://help.teamsupport.com/1/en/topic/jira#setup).
+  *  **[Product/Project Mapping](https://help.teamsupport.com/1/en/topic/jira#jiraproduct):** This section explains how Product/Project Mapping is achieved.
+
+# Setup
+
+* * *
+
+## Enable Issue Linking
+
+The user specified in this integration must have permission to link issues.
+These permissions are established at two different levels in Jira. Issue
+linking must be enabled globally. To do or verify this take the following
+steps:
+
+  * Log in as a user with the Jira Administrators [global permission](https://confluence.atlassian.com/display/JIRA/Managing+Global+Permissions).
+  * Choose > System. Select Issue Features > Issue Linking to open the Issue Linking page (Keyboard shortcut: g + g + start typing issue linking)
+  * Click the Activate button. The Issue Linking page reloads, stating that linking is enabled.
+
+Once issue linking is enabled globally it also needs to be enabled for the
+specific user. To do or verify this the following steps need to be taken:
+
+  * Log in as a user with the Jira Administrators [global permission](https://confluence.atlassian.com/display/JIRA/Managing+Global+Permissions).
+  * Choose > Issues. Select Permission Schemes to open the Permission Schemes page.  
+(tick)Keyboard shortcut: g + g + start typing permission schemes
+
+  * For each permission scheme necessary click the Permission Scheme name. (For all the relevant projects to get the permission)
+  * Look down for the Link Issues permission and add or verify the user, its group or its role.
+
+## Field Definitions
+
+Log into TeamSupport with an account that has Administrator rights and go to
+Admin->Integration->Jira
+
+[](https://manula.s3.amazonaws.com/user/1134/img/jira-top1_v3.png)  
+[](https://manula.s3.amazonaws.com/user/1134/img/jira-middle1_v2.png)  
+[](https://manula.s3.amazonaws.com/user/1134/img/jira-bottom1_v3.png)
+
+  *  **Instances:**  If you have multiple Jira servers which you need to connect to, you can sent them up each as a Jira Instance. Select a Jira Instance from the drop down menu, or click "Create" to create a new Jira Server instance. When using multiple Jira instances, a [Product](https://help.teamsupport.com/1/en/topic/jira#jiraproduct)association is required in order for the instance to be correctly associated to the ticket when linking the Jira Issue. This is accomplished by indicatinig a Jira Project Key and a Jira Instance on the Product in the Product Section, and then ensuring that this Product is associated to the ticket when [performing the sync](https://help.teamsupport.com/1/en/topic/jira-sync-on-tickets).  
+[](https://manula.s3.amazonaws.com/user/1134/img/jira-project-instance.png)
+
+  *  **Instance Name:**  Enter a name for this instance. This field is required. You may rename this field later, although the "Default" Jira instance cannot be renamed.
+  *  **Jira Host Name:**  Enter your full Jira Host Name, including the protocol (http or https) and the port number if required. e.g. "https://.[atlassian.net](http://atlassian.net)", "<http://in-house.domain.com:8080>"
+  *  **Jira User Name:**  Enter the Jira username that will be used for our integration to access your account and create new issues, issue links and comments. This user must be able to [create Issue Links](https://help.teamsupport.com/1/en/topic/jira#links).
+    *  **For Jira Server (self-hosted) systems:**  Be sure to use the username and not the email address. Although Google Users can log in their instance with their email addresses it is not possible to use a user's email address to authenticate via API.
+    *  **For Jira Cloud instances:**  Be sure to use the full email address for proper authentication.
+  *  **Jira  API Token/Confirm Jira API Token:** Required for Jira Cloud instances. Not Required for Jira Server (self-hosted) systems. An API token is used to authenticate your Jira Cloud account. The token is generated from your Jira account and is copied to these fields. Use [these](https://confluence.atlassian.com/cloud/api-tokens-938839638.html) instructions to generate your token.
+  *  **Default Project  KEY:** We sync the TeamSupport Product with the Jira Issue Project Key. When no product is assigned to a ticket and the ticket is linked with a New Issue, we use the Project Key specified in this field. Please notice that the match is made against the Project key instead of the Project Name.
+  *  **Action type to push to Jira as Comments:**  Select the "All Types" option if all actions needs to be sent to Jira, otherwise, select the an Action Type from the list.
+  *  **Update TeamSupport Ticket Status:**  If you need to update the TeamSupport ticket status whenever the Jira Issue Status is updated, check this option. It is very important that your Jira Status and TeamSupport Statuses are named the same, otherwise default values will be used. If this option is not checked an action in the TeamSupport ticket will be added whenever the Jira Issue Status gets updated.
+  *  **Synchronization Active:**  Sets the Jira Instance to active.
+  *  **Always Use Default Project Key:**  If you would like to always use the value you entered in the "Default Product Key" field, choose "Always Use Default Product Key". Otherwise, we will use the Project/Product match.
+  *  **Include Non-Required Fields on Issue Creation:**  If checked the mapped fields that are not required in Jira for the issue creation will be sent to Jira at initial sync (issue created from ticket). If unchecked, only the required fields will be used to create the issue and the rest of the mapped fields that are non required will not be sent.
+  *  **Use All Ticket Types:**  If you would like to allow all Ticket Types to be sync'd with Jira, leave "All Ticket Types" checked. If you would like to limit the Ticket Types, uncheck this box and the select only the Ticket Types that you would like to be allowed to sync with Jira. The Jira box will only show up on tickets that have the selected Ticket Types.
+  *  **[Custom Mappings](https://help.teamsupport.com/1/en/topic/jira#fm):** You may add custom mapping fields that you want to bring over from the Jira Issues into the TeamSupport tickets. These include [custom fields](https://help.teamsupport.com/1/en/topic/advanced-custom-fields) and [Ticket Types](https://help.teamsupport.com/1/en/topic/ticket-types) from within your TeamSupport account.
+  *  **Save:**  Click the save button to save your changes.
+
+# Field Mapping
+
+ _*_ As a best practice, it is advised that you align your status naming in
+TeamSupport with corresponding fields in Jira. If the Jira and TeamSupport
+fields are not named exactly the same, default values will be selected.
+
+## Default Field Mappings
+
+TeamSupport| Jira  
+---|---  
+Type| Type  
+Product| Project  
+Status| Status  
+  
+## Custom Field Mappings
+
+After you mark your synchronization as "Active", your Custom Field Mappings
+will appear to the right of your other settings. These will allow you to map
+additional Ticket fields other than the defaults including [Custom
+Fields](https://help.teamsupport.com/1/en/topic/advanced-custom-fields) and
+[Ticket Types](https://help.teamsupport.com/1/en/topic/ticket-types).
+
+[](https://manula.s3.amazonaws.com/user/1134/img/jira-custom-mapping.png)
+
+### Field Definitions
+
+  *  **Mapping Type:**  You may choose between "Ticket" and "Ticket Type".
+    * Choosing "Ticket" will allow you to map Standard and [Custom Ticket fields](https://help.teamsupport.com/1/en/topic/custom-fields-on-tickets) found within TeamSupport.
+    * Choosing "Ticket Type" will allow you to map your [Ticket Types](https://help.teamsupport.com/1/en/topic/ticket-types) from TeamSupport to your Issues Types in Jira. Mapping these fields will allow you to have the mapped relationship even if your Ticket Types and Issue Types are named differently.
+  *  **Jira Field:**  Enter the name for your Jira Field that you wish to map to the selected TeamSupport field.
+  *  **TeamSupport Field:**  Select the corresponding TeamSupport Field from the list
+  *  **Add Mapping Button:**  Click this button to add the mapping and the mappings will display below. The mapping can be deleted at any time by clicking the "x" to the right of the mapping as displayed in the image above.
+
+## Jira Team Project/Version Mapping
+
+The TeamSupport Product and/or Product Version maps to the Jira Project field.
+You may indicate a default Project KEY in the [field
+definitions](https://help.teamsupport.com/1/en/topic/jira#jirafields). You may
+also indicate a Project KEY in the [TeamSupport Product and/or
+Version.](https://help.teamsupport.com/1/en/topic/products-section) When using
+multiple Jira instances, a
+[Product](https://help.teamsupport.com/1/en/topic/jira#jiraproduct)
+association is required in order for the instance to be correctly associated
+to the ticket when linking the Jira Issue. This is accomplished by indicatinig
+a Jira Project Key and a Jira Instance on the Product in the Product Section,
+and then ensuring that this Product is associated to the ticket when
+[performing the sync](https://help.teamsupport.com/1/en/topic/jira-sync-on-
+tickets).  
+[](https://manula.s3.amazonaws.com/user/1134/img/jira-project-instance.png)
+
+### Project/Version Mapping Logic
+
+The Jira Project is mapped according to the following logic based on ticket
+fields/values:
+
+    1. If the field "Always Use Default Project Key" is defined, the "Default Project Key" value will be used in the Jira mapping for all tickets.
+    2. The ticket page has a field called "Reported Version". If a Version is selected for this field, and that Version has a Project Key value defined, that value will be used in the Jira mapping for that ticket.
+    3. If the ticket has a Product selection and that Product has a Jira Project Key value defined, that value will be used in the Jira mapping for that ticket.
+    4. If the ticket has a Product selection, but that Product does not have a Jira Project Key value defined, the Product name will be mapped to the Jira Project Key for the Jira mapping for that ticket.
+    5. Finally, if the ticket being sent to Jira does not have a Product, and there is a Default Project Key value assigned, this value will be used in the Jira mapping for that ticket.
+
+# Creating Jira links on Tickets
+
+Once Jira and Product setup are complete, the final step is creating a link on
+a ticket. Click [here](https://help.teamsupport.com/1/en/topic/jira-sync-on-
+tickets) for detailed instructions on how to link a ticket to Jira.
+
+# Logging and Troubleshooting
+
+If your tickets are not syncing, you may look for errors in the "CRM Sync
+Errors" report which can be found in the [Reporting
+Section](https://help.teamsupport.com/1/en/topic/reporting-metrics).
+Additionally, logging reports can be found in the CRM Sync Logs report.
+
+The first synchronization will start after 15 minutes. The next cycle will
+begin no sooner than 15 minutes. The timing of each subsequent cycle depends
+on it's place in the queue, which is affected by the number of other items
+that require processing. Typically the timing of the cycles range from 15 - 60
+minutes.
+
+Additionally, Jira errors may be logged in the Ticket History. Ticket History
+can be found on the Ticket Detail Page by clicking More -> Ticket History.
+However, errors will only be reported in the Ticket History if they are
+specific to the ticket. For example, if the ticket sync has failed due to an
+authentication issue, these errors can be found in the "CRM Sync Errors"
+report as described above.
+
+# API Example
+
+* * *
+
+TeamSupport offers an [API](https://help.teamsupport.com/1/en/topic/api) which
+allows customers to have access the their TeamSupport data from outside of
+TeamSupport. You may use the API to set an existing Jira ticket link, or to
+create a new one.
+
+The `<JiraKey>` element will be used to set or update the Ticket-Jira link. It
+is not case sensitive.
+
+The value for it can be either the existing Jira issue key to link to the
+ticket to or to create a new Jira issue from the ticket using the value
+"NewJiraIssue" (not case sensitive, without quotes).
+
+#### Existing ticket example
+
+PUT: `[API URL]\Tickets\1234`  
+Body: `<Ticket><JiraKey>TEST-12</JiraKey></Ticket>`
+
+This would set the link for ticket 1234 to a Jira issue with key TEST-12
+
+#### New ticket example
+
+PUT: `[API URL]\Tickets\5678`  
+Body: `<Ticket><JiraKey>newjiraissue</JiraKey></Ticket>`
+
+This would set the link for ticket 5678 to create a new jira issue.
+
+These commands would also work with the (POST) verb.
+
+These commands will work with both xml or json formats. It can be combined
+with the other Ticket elements like any other normal element.
+
+  
+
+

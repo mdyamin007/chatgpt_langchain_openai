@@ -1,0 +1,160 @@
+title: HTBK - Letter - DailyPDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133569-C30.01-V21562
+
+Processing Scripts to modify:
+ htbk_dl_process.pl
+
+Data Files to use:
+ htbk_dla_04302021_1.7z
+
+
+
+*NOTE*: This job runs on RH2 server. Since we are migrating from RH2 server to RHS, please test ALL job_sel options to ensure RHS can run with error messages in the processing log files.
+
+
+author: anwarh
+comment: Hi [~William.Kong]/[~Igor.Khosid]
+
+Parallel Id: 20220801120219
+
+Couldn't find the data file specified above, so used the following
+htbk_dla_07292022_1.7z (/z/dsi_pdfi_testing/htbkdla/data)
+
+pdfs are kept at: /z/dsi_pdfi_testing/htbkdla/new/
+
+Thanks,
+Anwar
+
+
+
+author: JIRAUSER11104
+comment: Hi [~anwarh] please provide a link to a pdfs in PROD that was generated on the same data.
+
+
+author: anwarh
+comment: Hi [~William.Kong], 
+
+Can you please help with this? 
+Data file I used is in /d/download/osiw/htbk/DL/htbk_dla_07292022_1.7z.
+
+Thanks,
+Anwar
+
+
+author: anwarh
+comment: [~William.Kong]/[~Andrey.Kutsenko]
+
+New output is in: /z/dsi_pdfi_testing/htbkdla/new
+
+Please check,
+Thanks
+
+
+author: JIRAUSER11104
+comment: [~anwarh] [~William.Kong] 
+ TEST RESULT - FAIL
+ *Total PDF count between the two directories don't match: htbkdla_prod(277) vs htbkdla_parallel(276)
+ !scr_parallel_pdf.png|thumbnail! 
+ !scr_prod_pdf.png|thumbnail!
+
+
+author: william.kong
+comment: [~anwarh]: The PDFi production version has this extra file:
+
+htbk_08012022__019_00001.pdf
+
+I've placed this file into/d/ac-secure-share/dsi_print/anwarH/htbk/is-1201/ for you to look at. Is it because Letter 19 does not have account number and the logic is to concatenate all letter 19 documents into one big pdfhtbk_08012022__019_00001.pdf?
+
+
+
+
+
+
+author: JIRAUSER11104
+comment: Hi, [~anwarh]any update?
+
+
+author: william.kong
+comment: [~anwarh]: Would you please provide an update on why the original programming has the extra PDF file as mentioned in the comment above compared to the new version. Please advise.
+
+
+author: anwarh
+comment: Hi [~William.Kong], [~Igor.Khosid],
+
+Not sure if this was intended or an issue with our setup.
+
+Whatever it is, I manually handled this scenario to behave exactly like the old script.
+
+Note that in a normal scenario, afp2pdf would have still generated multiple pdf without account numbers as the sequence number would have been different. Also, there would have multiple entries in the index file. where currently there is none.
+
+*New request for QA:*
+ Parallel ID:20220821144716
+ New data files:htbk_dla_08192022_1.7z (latest)
+ Production output: /z/dsi_pdfi_testing/htbkdla/old
+ afp2pdf output: /z/dsi_pdfi_testing/htbkdla/new
+
+Thanks,
+ Anwar
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: Would you be able to re-test? [~anwarh]made the correction to include the missing PDF issue that was caught during the previous QA.
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+ Test result - PASSED.
+ [andreyK@ca-isis-pr-04 pdf_compare]$ cat /d/pdf_compare/result_htbkdla/pdf_compare_rpt.txt
+{quote}Total PDF Files Scanned: 129
+ allowedDifferenceInPercentPerPage: 5:
+ Thread Count: 32
+
+Total PDF Files with Differences: 0
+ Start Time: Tue Aug 23 16:53:53 PDT 2022
+ Finish Time: Tue Aug 23 16:55:14 PDT 2022
+{quote}
+Ran script: 
+ [andreyK@ca-isis-pr-04 pdf_compare]$ ./htbkdla.sh
+{code:sh}
+#!/usr/bin/bash
+
+echo "Start (`date`)" > htbkdla.txt; perl pdf_compare.pl htbkdla_prod htbkdla_parallel result_htbkdla -pixels 5 -threads 32 -maxfiles 15000 -regex='htbk_[0-9]+_[0-9]*_[0-9]+_<SEQ>.pdf'; echo "Finish (`date`)" >> htbkdla.txt{code}
+
+
+author: william.kong
+comment: [~anwarh]: Can you please prepare the File Transfer form so that it can be released. Let's target tomorrow (Thursday) for code release.
+
+
+author: anwarh
+comment: Hi [~TunA],
+
+Transfer form:[^IS-1201 Transfer Form.docx]
+
+Code is in:
+*/d/is/cvs/xfer/anwarH_backup/is-1201*
+
+Can you please move them into /d/is/cvs/xfer/anwarH/ and then release?
+
+Thanks,
+Anwar
+
+
+author: william.kong
+comment: [~rodriguez]: Can you please help release this code when time permits today. Thanks!
+
+
+author: rodriguez
+comment: [~William.Kong] [~anwarh]code has been released, backup ID =20220831170758

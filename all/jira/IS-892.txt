@@ -1,0 +1,214 @@
+title: EWBB: Setup Keyword Search for Electronic Site
+description: Set-up Keyword Search for EWBB's customer electronic site for the following applications (as Phase 1):
+
+DDA/Savings eStatements
+ Account Analysis eStatements
+
+IS: Requires index file update - targeted to begin 3/15/22.
+
+ISD: Requires UI update and processing of updated index file - targeted to begin 3/1/22.
+
+Proposed live date = 4/29/22 (needs to be reviewed with IS/ISD)
+
+
+
+Here is a description of the index file updates from ISD:
+
+The new index file will be on standard Document process file format. The header will be like following:
+JobType|PresentmentType|DocumentCode|FileName|ZipFileName|DocumentBeginDate|DocumentEndDate|ImageCount|AccountNumber|AccountType|AccountSuffix|AccountName|SSN|MessageID|InsertID|RegionCode|CrippleFlag|PostcardFlag|Afp2webPM|Afp2webIni
+1. The cripple flag field name is "CrippleFlag". It will be in the 17th position.
+2. The insert flag field name is "InsertID". It will be in the 15th position.
+3. No other field changes are needed in respect with the keyword search.
+
+
+
+
+author: phoebe.george
+comment: [~Peter.Dang] [~rodriguez] I have added the description and list of updates for the index file that IS will be creating for this project. Please let me know if any questions and target sample date for the overall timeline once you have reviewed.
+
+
+author: phoebe.george
+comment: [~rodriguez] I wanted to check on the status of this, and if this is possible to provide the index file to ISD for testing, and/or target date to finalize timeline and discuss testing with customer.
+
+Let me know if we can use the most recent EOM file for testing, as this includes the most business accounts that would be using this feature on the customer e-site. Thanks!
+
+
+author: rodriguez
+comment: [~phoebe.george]I still need to discuss a few things with Peter regarding this project. In the meantime, I started coding for this yesterday. As soon as he gets back on Monday, I will clarify a few things regarding the cripple flag and insert id flag. The DDA app requires 3 dfa's to change and 1 for AA for a total of 4 dfa's to change. I will have an index for these by 4/8.
+
+
+author: rodriguez
+comment: [~phoebe.george]I just found that DDA is in parallel for IS - 349, I will need to wait until changes for that are released so I can merge my changes to it. I believe that goes live 4/4.
+
+
+author: phoebe.george
+comment: [~rodriguez] did the changes from IS-349 go live? thanks!
+
+
+author: rodriguez
+comment: [~phoebe.george]they have. I will pick this up again this week, I still need some development to do for this. I fell a bit behind due to some Guardian issues I needed to take care. I will try to have this ready for testing by end of this week.
+
+
+author: rodriguez
+comment: [~phoebe.george]I'm pretty much wrapped up with Account Analysis but before I run it for an index file, I had a quick question regarding two flags in the old index file. One flag is called HAS_CHECK_FLAG and the other is called BRANCH_FILED. HAS_CHECK_FLAG is hard coded as a '0' and BRANCH_FILED is hard coded as '00000' and they are currently placed in the old index at the 10th and 11th field. I can have an index file for this once we figure out what to do about those fields. ISD may know. I just need to know where these map out to the new index format or do we even need these.
+
+DDA is being worked on now. I can have an index file for this by end of day tomorrow.
+
+Thanks,
+
+Leo
+
+
+author: rodriguez
+comment: [~phoebe.george]Hi Phoebe I wrapped up the dfa code for DDA, however this app also has the HAS_CHECK_FLAG and BRANCH_FIELD, only difference is that DDA does NOT hardcode these fields. In DDA, HAS_CHECK_FLAG is set to 1 if the check image count is greater than zero, meaning a statement has check images. BRANCH_FIELD is picked up from data for DDA app. I was manually/locally testing with teh 4/20 file and the BRANCH_FIELD varies, at times it is '0008008' or '0008031'. These fields were in the old index and I need to know if these are needed for the new index, and if so, where do they map out to.
+
+
+author: phoebe.george
+comment: [~rodriguez] Thank you for the update!
+
+[~Azad] [~Tin.Chak] Can you review Leo's last comment here and confirm for the index file flag/field information?
+
+Thanks!
+Phoebe
+
+
+author: azad
+comment: Thank you [~phoebe.george].
+
+[~rodriguez]About the HAS_CHECK_FLAG, you don't have to map it with any field on Document index file. The BRANCH_FIELD will be mapped with the _*InsertID*_ field, which is the 15th column on the Document index file. You can find the Document index file header on the description of this ticket.
+
+FYI [~Tin.Chak]
+
+Thanks
+
+Azad
+
+
+author: rodriguez
+comment: [~Azad] [~Tin.Chak] [~phoebe.george] [~Peter.Dang]
+
+
+
+Hi Azad, I thought the *InsertID* is reserved for the *INSERT_CODE*. Currently we have *INSERT_CODE* mapped out to *InsertID*. Are we sure that *BRANCH_FIELD* goes there ? Where will the *INSERT_CODE* go if we map *BRANCH_FIELD* to the *InsertID*?
+
+
+
+[~Tin.Chak]Can you please confirm if this is correct ?
+
+
+author: rodriguez
+comment: [~phoebe.george] [~Azad]
+
+I have an Account Analysis index ready for testing. I will have the DDA index ready after testing for insert issue related to TS#28451 is completed.
+
+*ACCOUNT ANALYSIS INDEX FILES*:
+
+ms6_20220415_1_20220428_1051_ewbb.txt
+
+search_index_ms6_20220415_1_20220428_1051_ewbb.idx
+
+
+author: azad
+comment: Hi [~rodriguez]
+
+In EWBB Afp process, the BRANCH_FIELD value was saved as *InsertID*.
+
+From the code, here are the EWBB Afp file columns:
+
+_file_name|acct_num|start_date|closing_date|page_count|acct_owner_name|SSN|Application Type|Message IDs for Market Link|Has Check|*Branch*|Cripple Flag_
+
+The value that was passed on the*Branch* column will be saved as the *ESD_INSERT_ID* on the database.
+
+So from my understanding, the BRANCH_FIELD value should be mapped to InsertID.
+
+[~Tin.Chak]can you confirm?
+
+
+
+I have ran the file_ms6_20220415_1_20220428_1051_ewbb.txt_ on Pilot. The file ran without any error. Also, there were no CrippleFlag value were passed on any row.
+
+I am working on posting the search_index file for the doc job and facing some issues on contextual search API end. I will consult with the PD team on this issue.
+
+
+
+[~phoebe.george]FYI
+
+
+
+Thank you.
+
+Azad
+
+
+author: rodriguez
+comment: [~Azad] [~phoebe.george]
+
+Hi Azhar, just an FYI, ms6 app (Account Analysis) does not have a cripple flag since this app does not have check images.
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~Azad] [~rodriguez] No need to add the customized branch field. It will be replaced with the eSelective insert logic, which it should be already in the new index format.
+
+
+author: phoebe.george
+comment: [~rodriguez] Can you confirm the timing for the DDA index file? Thank you!
+
+
+author: rodriguez
+comment: [~phoebe.george]
+
+DDA Index File:ms1_20220428_1_20220513_0941_ewbb.txt
+
+DDA Search Index:search_index_ms1_20220428_1_20220513_0941_ewbb.idx
+
+
+author: phoebe.george
+comment: [~rodriguez] EWBB is in progress for testing the pilot site. They actually need to test business accounts as well. They let me know that there are business accounts in their EOM file. However, that file is very large, so would it be possible to use that for testing to create an index file for ISD posting? If so, can you provide to [~Azad] when ready? If not possible due to file size, please let me know. Thank you!
+
+
+author: phoebe.george
+comment: [~rodriguez] Also, updating live date to end of June as a placeholder. We still need to review internally though what is possible for a target live date.
+
+
+author: rodriguez
+comment: [~phoebe.george]we can just have DP run the last EOM file, just open up a ticket and provide DP with 3 DT JOB ID's: 1 for TX, 1 for CA, & 1 for Re-org.
+
+
+author: rodriguez
+comment: [~phoebe.george]Hi Phoebe, below are the index file and keyword search index for EWBB EOM
+
+ms1_20220430_1_20220613_2102_ewbb.txt
+
+search_index_ms1_20220430_1_20220613_2102_ewbb.idx
+
+
+author: phoebe.george
+comment: [~rodriguez] EWBB is looking to re-initate this project for a target 11/9/22 live date.
+
+I know there may have been code changes to the existing DDA setup, and so I wanted to confirm timing with you if it is possible to resume this project. And if so, what code 'syncing' you may need to do.
+
+EWBB is asking if we can post a more recent EOM file cycle as well to the pilot with the keyword so they can see how multiple eStatement cycles will appear when the keyword is queried. Right now, we just have the one cycle posted when the keyword is brought up.
+
+Please let me know if you would like me to schedule a call to discuss. Thank you!
+
+
+author: rodriguez
+comment: [~phoebe.george]I believe that target live date is very doable. As far as code syncing, all I need to do is turn the keyword search flag back on in the control file. I just need to know which cycles to run for them.
+
+
+author: phoebe.george
+comment: [~rodriguez] Great, thanks Leo! EWBB would like to run the latest EOM cycle, which is for 8/31 statements, rec'd 9/1/22:
+
+!image-2022-09-16-12-37-05-897.png!
+
+
+
+
+author: phoebe.george
+comment: [~rodriguez] Based on the index file you provided via zoom, ISD was not able to post and relayed the following feedback on the ISD story - can you check this?
+|I ran the doc file (ms1) on Pilot and it was not posted as the IS db did not have the corresponding id for this index file. This issue might be fixed by consulting with IS side.
+I'll look into it tomorrow to see what we can do.|
+
+
+author: rodriguez
+comment: [~phoebe.george]I just posted a new index file on pilot, I will post details on ISD story

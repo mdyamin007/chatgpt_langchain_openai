@@ -1,0 +1,376 @@
+title: Auth File Specifications Document
+body: # Overview
+
+* * *
+
+INLINE
+
+The primary purpose of the CIF file is to establish user-account relationships
+defining for InfoIMAGE who are the users and what accounts they have access
+to. Each record in the file can be understood as User, identified by the UUID,
+will have access to Account, identified by the account number and, if
+applicable, account type.
+
+  
+
+ **Command**|  auth, auth2  
+---|---  
+ **Frequency**|  Daily  
+ **Completeness**|  Incremental, or Full. When using a Full file, it is
+important to assess all areas where user-account relationships are created,
+and ensure that the Auth File does not purge incorrectly. New processes that
+affect user-account relationships will also need to take the Auth File into
+consideration.  
+  
+  
+
+# Filename Specifications
+
+* * *
+
+Format: _cid_ _auth_yyyymmdd.txt.pgp
+
+  
+
+Field
+
+Number
+
+|
+
+Field Name
+
+|
+
+Description  
+  
+---|---|---  
+1| Client ID| 4 letter internal customer ID used by InfoIMAGE.  
+2| Process| Constant "auth" to denote Auth File Processing.  
+3| Cycle Date|
+
+Date the file was generated, e.g. 20200306  
+  
+4| Text File Extension| Constant ".txt" to denote a text file.  
+5| Encrypted File Extension| Constant ".pgp" to denote a file encrypted with
+GPG.  
+  
+  
+
+Examples
+
+demo_auth_20200312.txt
+
+demo_auth_20200312.txt.pgp (if providing an encrypted file)
+
+  
+
+# Content Specifications
+
+* * *
+
+Fields are delimited by pipe ( | ). Core fields are always required. For each
+additional processing module needed, the columns defined under the module
+section will need to be included. Follow the required column to determine
+which column is necessary depending on setup. Note that once a column has been
+included, and it is denoted as  **Required** , an empty field in the record
+will most likely result in an error.
+
+## Core Fields
+
+Field
+
+Number
+
+|
+
+Field Name
+
+| Required| Type|  **Contraint**|
+
+Description  
+  
+---|---|---|---|---|---  
+1| UNIQUE  USER IDENTIFIER (UUID)| Y| ALPHANUMERIC| 100 max length| The user
+identifier. Typically the SSN/TIN, CIF, or a Unique Identifier from the Online
+Banking Vendor.  
+2| USER TYPE| Y| DEFINED VALUES| 1 max length| P/N, P = Consumer user, N =
+Business user  
+3| USER NAME| Y| ALPHANUMERIC| 100 max length| The full name of the user.  
+4| ACCOUNT NUMBER| Y| NUMERIC| 100 max length|
+
+The account number.  
+  
+5| ACCOUNT TYPE| N| DEFINED VALUES (ALPHANUMERIC)| 1-2 length|
+
+The account type. Values are defined by the client and InfoIMAGE, and must be
+consistent among all files, and the SSO request (if applicable). If values
+cannot be consistent, mapping(s) must be provided to InfoIMAGE so that
+InfoIMAGE can map all external values to internal values to maintain
+consistency.
+
+Not applicable for setups without account types.  
+  
+6| ACCOUNT NAME| Y| ALPHANUMERIC| 100 max length|
+
+The full name of the account.  
+  
+  
+
+Examples
+
+ **Consumer**
+
+UUID|USER TYPE|USER NAME|ACCOUNT NUMBER|ACCOUNT TYPE|ACCOUNT NAME
+
+123456789|P|John Doe|654321789|DD|John Doe
+
+234567890|P|Jane Doe|765432189|SV|Jane Doe
+
+123456789|P|John Doe|765432189|SV|Jane Doe
+
+345678901|P|Cain Doe|876543219|LN|Cain Doe
+
+ **Business**
+
+UUID|USER TYPE|USER NAME|ACCOUNT NUMBER|ACCOUNT TYPE|ACCOUNT NAME
+
+455555000|N|BUSINESS LLC|888888888|LN|BUSINESS LLC
+
+## Incremental File
+
+When the client wants to send only the updates, and not the full file every
+time, then a maintenance code is needed to let InfoIMAGE know what action to
+take. It is recommended that the maintenance code be the first column in the
+file, so the operation is easily identifiable.
+
+Field
+
+Number
+
+|
+
+Field Name
+
+| Required| Type|  **Contraint**|
+
+Description  
+  
+---|---|---|---|---|---  
+1| MAINTENANCE CODE| Y| DEFINED VALUES| 1 length|  **A** = Add or update the
+user-account relationship, and other related information.  
+ **D** = Delete the user-account relationship and related information. If
+after the action, the user no longer has access to any other accounts, the
+user will also be deactivated.  
+  
+  
+
+Examples
+
+MAINTCODE|UUID|USER TYPE|USER NAME|ACCOUNT NUMBER|ACCOUNT TYPE|ACCOUNT NAME
+
+A|123456789|P|John Doe|654321789|DD|John Doe
+
+D|123456789|P|John Doe|765432189|SV|Jane Doe
+
+## Business SSO Sub-User
+
+If the client and/or the OLB vendor can provide the subuser information, an
+additional column will need to be included. It is recommended that the SUID
+column follows the UUID, so the full ID can be easily determined.
+
+Field
+
+Number
+
+|
+
+Field Name
+
+| Required| Type|  **Contraint**|
+
+Description  
+  
+---|---|---|---|---|---  
+1| SUBUSER UNIQUE IDENTIFIER (SUID)| Y, for Sub-Users. If left empty, the user
+is assumed to be a Primary User.| ALPHANUMERIC| UUID length + SUID length + 1
+<= 100| The unique identifier for the Sub-User. This only needs to be unique
+within the business. For example, given that there are two Businesses with
+UUID ABC and DEF, the SUID ADMIN can exists for both business: ABC|ADMIN and
+DEF|ADMIN. Within the ABC UUID, of course, ADMIN cannot exist twice for two
+different users.  
+  
+This value can be arbitrarily defined by the client or the Online Banking
+Vendor.  
+  
+  
+
+Examples
+
+UUID|SUID|USER TYPE|USER NAME|ACCOUNT NUMBER|ACCOUNT TYPE|ACCOUNT NAME
+
+455555000|ADMIN|N|John Doe|888888888|LN|BUSINESS LLC
+
+455555000|ADMIN|N|John Doe|777777777|LN|BUSINESS INC
+
+455555000|NJOHNSON|N|Nick Johnson|777777777|LN|BUSINESS INC
+
+  
+
+The above example define a business that have two accounts 777777777 and
+888888888. The business belongs to John Doe, so he has access to all accounts.
+John Doe determine that his employee Nick should only have access to 777777777
+but not 888888888.
+
+DSO User
+
+If the auth file need to accomodate DSO users, then the following fields are
+necessary.
+
+Field
+
+Number
+
+|
+
+Field Name
+
+| Required| Type|  **Contraint**|
+
+Description  
+  
+---|---|---|---|---|---  
+1| SSN| Y| NUMERIC| 9 length| The user SSN. This is used for validation during
+sign-up. Even if the UUID is the SSN, this column must be included again.  
+2| DOB| O| DATE| N/A| The DOB of the user. This can be included as a validator
+in addition to the SSN during sign-up.  
+  
+  
+
+Examples
+
+UUID|USER TYPE|USER NAME|ACCOUNT NUMBER|ACCOUNT TYPE|ACCOUNT NAME|SSN|DOB
+
+123456789|P|John Doe|654321789|DD|John Doe|123456789|11/11/1990
+
+234567890|P|Jane Doe|765432189|SV|Jane Doe|123456789|
+
+123456789|P|John Doe|765432189|SV|Jane Doe|123456789|11/11/1990
+
+## Enrollment
+
+If the client need to pass enrollment information, then these fields will be
+necessary. When insufficient enrollment data is provided, the record will not
+fail completely. The process will proceed with the account link. The paperless
+status of the account will remain whatever it is currently.
+
+Field
+
+Number
+
+|
+
+Field Name
+
+| Required| Type|  **Contraint**|
+
+Description  
+  
+---|---|---|---|---|---  
+1| DELIVERY PREREFENCE| Y| DEFINED VALUES| 1 length|
+
+The delivery preference of the account.  
+ **E** = Electronic  
+ **P** / **B** = Paper  
+ **W** = Both  
+  
+2| NOTIFICATION PREFERENCE| Y| DEFINED VALUES| N/A| The notification
+preference for accounts that are on Electronic or Both delivery preference.  
+ **email**  = email notification  
+ **sms  **= text message notification  
+ **attach** = email notification with attached pdf  
+InfoIMAGE support a combination of notifications. To support both email and
+sms, simply pass "email,sms" into the field. Note that attach require email to
+be true, so to enable attach and sms, only "attach,sms" is necessary and not
+"email,attach,sms".  
+3| EMAIL ADDRESS| Y*| ALPHANUMERIC| Must be valid| This is required when email
+or attach is selected as the notification preference.  
+4| PHONE NUMBER| Y*| NUMERIC| 9 or 10 length| This is required when sms is
+selected as the notification preference.  
+5| ATTACHMENT PASSWORD| O| ALPHANUMERIC| 60 length| This is optional when
+attach is selected as the notification preference. The password is required
+for encrypted pdfs. Otherwise, the pdfs will be sent unencrypted.  
+  
+  
+
+Examples
+
+UUID|USER TYPE|USER NAME|ACCOUNT NUMBER|ACCOUNT TYPE|ACCOUNT NAME|DELIVERY
+PREFERENCE|NOTIFICATION PREFERENCE|EMAIL ADDRESS|PHONE NUMBER|ATTACHMENT
+PASSWORD
+
+ **Valid**
+
+123456789|P|John Doe|654321789|DD|John Doe|E|email|john.doe@email.com||
+
+234567890|P|Jane Doe|765432189|SV|Jane Doe|P|||||
+
+123456789|P|John Doe|765432189|SV|Jane Doe|E|email|john.doe@email.com||
+
+ **Invalid**
+
+123456789|P|John Doe|654321789|DD|John Doe|E|email|||
+
+ _Email preference but email address is not provided._
+
+123456789|P|John Doe|654321789|DD|John Doe|E|sms|john.doe@email.com||
+
+ _SMS preference but phone number is not provided._
+
+123456789|P|John Doe|654321789|DD|John Doe|E||john.doe@email.com||
+
+ _Electronic delivery but no notification method provided._
+
+123456789|P|John Doe|654321789|DD|John Doe|E|email,sms|john.doe@email.com||
+
+ _Both email and SMS preference but phone number is not provided._
+
+## Other
+
+Field
+
+Number
+
+|
+
+Field Name
+
+| Required| Type|  **Contraint**|
+
+Description  
+  
+---|---|---|---|---|---  
+1| RESTRICTED ACCESS| O| DEFINED VALUES| 1 length|
+
+This can be used for the Restricted Access feature, where on InfoTRAC,
+accounts can be flagged as Restricted so that only privileged users can access
+them.  
+ **1** = restricted  
+ **0** = not restricted  
+  
+  
+
+Examples
+
+UUID|USER TYPE|USER NAME|ACCOUNT NUMBER|ACCOUNT TYPE|ACCOUNT NAME|RESTRICTED
+ACCESS
+
+123456789|P|John Doe|654321789|DD|John Doe|1
+
+234567890|P|Jane Doe|765432189|SV|Jane Doe|0
+
+123456789|P|John Doe|765432189|SV|Jane Doe|0
+
+  
+
+

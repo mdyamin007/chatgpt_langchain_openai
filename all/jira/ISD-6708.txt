@@ -1,0 +1,116 @@
+title: SSCU - [26364][pvt] SSCU: Core Conversion Update for Electronic Statements for OLB Psuedo Numbers
+description: Set-up external mapping file for processing to handle the pseudo numbers that are being used for business accounts through NCR:
+
+
+
+This mapping file will need to be provided by the CU and will tell our system that when we see a particular account number in the SSO request that matches the mapping list, it will translate to and login as another member number in our system.
+
+
+
+This is the format of the file that we would request:
+
+Internal Member Number(Number Stored in InfoIMAGE DB)|External Account Number(Number Coming in From NCRs SSO request)
+
+
+
+Example:
+
+123|456
+
+When SSO request comes in with account number 456, the user will log into account 123.
+
+
+
+PLEASE NOTE:
+
+Multiple external account numbers can point to the same internal account number, but not vice versa. Based on the above example, account 123 will only have one profile no matter how many external account number ties to it. This means email addresses, delivery preference, and users name will be shared. For all the reports we sent back to the CU, it will also only have account 123 and not the external account number the user login as.
+Account 456 should not exist in our system. Any statement posted to that account will be inaccessible through the member site.
+
+
+TIMELINE:
+
+To: 3/24
+
+Pilot:4/8
+Approval: 4/14
+
+Live: 4/20
+
+
+author: phoebe.george
+comment: [~Tin.Chak] This update has a code start date of today - can you assign for starting this project? Thanks!
+
+
+author: phoebe.george
+comment: [~lina] [~Tin.Chak] SSCU is preparing the daily mapping file to be sent to InfoIMAGE - can you provide me with the following:
+ # File naming convention of file.
+ # Time of day to be sent (or can this be determined by the CU).
+ # Can this file be FTP'd to the SSCU root directory, or does it need to go to a sub-folder.
+
+
+
+Thank you,
+
+Phoebe
+
+
+author: JIRAUSER10914
+comment: Hi [~phoebe.george],
+
+1. Files should be named sscu_external_id_mapping_MMDDYYYY.txt.pgp
+2. Can be sent anytime.
+3. FTP to the root directory.
+
+We should test this out.  Can the client send another file?  It can be the same content as the test file but different file name to reflect the new date.
+
+Thanks.
+Lin
+
+
+author: phoebe.george
+comment: [~lina] SSCU has APPROVED the pilot site for the loaded mapping file. Please proceed with preparing for QA as soon as possible.
+
+As noted to [~Tin.Chak], SSCU is requesting to expedite the release of the mapping file code to be completed on 4/11. I will notify Igor first thing Monday morning to prep for QA.
+
+Also, SSCU has started sending the PRODUCTION mapping file as of today, 4/10 - the file naming convention is being received as noted. Let me know if you can setup the file arrival scanner to recognize the file, or I can create a team support ticket if needed.
+
+Thank you,
+
+Phoebe
+
+
+author: igor.khosid
+comment: [~lina] - please move code to stage and turn over the story to QA
+Testing instructions - would be nice
+
+[~nprimak] - this needs to be finished today, please expedite.
+If you have any questions, please reach to Lin or Shun
+
+[~phoebe.george] - FYI
+
+
+author: JIRAUSER10914
+comment: Hi [~Igor.Khosid],
+
+This is ready for QA.  We will perform the testing on the following external to internal mapping.
+
+120002978 (external) -> 100122981 (internal)
+
+1. http://client-test.infoimageinc.com:8070/sso/
+2. Enter SSCU and click on SSCU.  Click on Stage button.
+3. Enter 120002978 in user_fi_number and your email address in Email.  Click Submit.
+4. Copy the returned value and past it in ssoKey.  Click Submit.
+5. You will be accessing account 100122981.  It has two estatements dated 01-MAR-22 and 31-DEC-19.
+
+Regards.
+Lin
+
+
+author: nprimak
+comment: [~lina] [~phoebe.george] [~Igor.Khosid] 
+
+Verified changes on staging member site, no issues.
+
+Thank you,
+
+Natasha

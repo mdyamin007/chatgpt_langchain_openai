@@ -1,0 +1,164 @@
+title: Black Knight Auth Server
+body: # Overview
+
+The Black Knight Auth Server is an authorization server that gives out
+authentication token that can be used to access the . The application is built
+on Spring Boot, and utilize the spring-authorization-server library to
+implement the authentication server.
+
+truenone  
+  
+---  
+  
+* * *
+
+# Specs
+
+Grant Type| Client Credentials  
+---|---  
+Client Authentication| CLIENT_SECRET_BASIC  
+Token TTL| 600 seconds  
+  
+Black Knight will pass the required credentials as a Basic Auth header. If the
+credentials are valid, a JWT authentication token will be returned. The token
+will only provide the scope for the CID, and as such the token can only be
+used to access the Docs Service API for the respective CID.
+
+* * *
+
+# Endpoints
+
+The base URL is https://auth-{env}.infoimageinc.com, with env being: dev,
+pilot, stage, or prod.
+
+Endpoint| HttpMethod| Exposure| Security| Description  
+---|---|---|---|---  
+/oauth2/token| GET| External| Basic Auth| Used by Black Knight to obtain the
+OAuth2 token.  
+/healthcheck| GET| External| None| Used by upstream applications to check the
+health of the auth server.  
+/version| GET| Internal| None| Used by InfoConfig to retrieve the
+configuration versions saved by the auth server.  
+  
+* * *
+
+# Design
+
+This section will document why certain design choices were made at the time of
+implementation.
+
+## Non-sticky Session
+
+Due to the fact that all calls to the Auth Server will, at the current moment,
+come only from a single external vendor, sticky sessions will negatively
+impact load balancing. It is entirely possible that all requests will come
+from a single IP, leading to all requests going to a single server instance.
+That would defeat the purpose of a distributed system. Furthermore, there is
+known reason why sticky sessions is necessary.
+
+## Distributed Cluster
+
+For client-facing environments, the Auth Server will be set up in a cluster of
+at least two server instances to avoid a single point of failure and provide
+high availability.
+
+## Data Persistence in Oracle Database
+
+Due to this requirement, the application persist its authentication data in
+the default schema of the Oracle database. There are several reasons for this
+choice. One, the instance that provided the authentication may not be the same
+instance that will confirm the authentication when queried by the resource
+server. Therefore, without a central source of truth, the system would not
+work. The oracle database was chosen, because spring-authorization-server
+provided a default SQL implementation. Implementing a MongoDB authentication
+repository is most likely possible, but would take significant R&D time.
+
+Because the Auth Server is already using the Oracle Database, data used for
+service discovery and version validation, which are typically stored in
+MongoDB, are also saved in Oracle DB. This make it so that the Auth Server has
+less dependency on other services.
+
+* * *
+
+# Dependency
+
+## Oracle DB
+
+Table| Description  
+---|---  
+oauth2_registered_client|
+
+Stores the details on the registered clients that will be able to obtain an
+OAuth2 token. This table is automatically managed by the application, except
+for deletion. In the event that a client is no longer using the service, the
+record must be deleted manually.
+
+The PK is the ID column, in which is stored the CID.  
+      
+    
+    oauth2_authorization
+
+|
+
+Stores the details of a provided authentication. This table is managed solely
+by the application.
+
+ **TODO** : There should be a scheduled cleanup of this table, since there's
+no reason to keep expired authentication for a long time. This is currently
+not implemented.  
+  
+service_instance| Stores the details of a service that is registered with
+InfoConfig. The PK (ID) is used to fetch the configuration versions for the
+particular instance in the config_version table. For the Auth Server, it is
+unique in that all instances share the same set of config_version. The
+service_instance record for the Auth Server is the single record where "app_id
+= 'black-knight' and instance_name is null".  
+config_version| Stores the version of the config for a given CID.  
+  
+* * *
+
+# Testing
+
+The application cannot be deployed unless it passes all tests at the Unit
+Testing and Application-Level Integration Test levels. That said, when the
+application is enhanced or modified, existing tests should be reviewed to see
+if update or addition is necessary.
+
+## Unit Testing
+
+Most classes have a corresponding Unit Test that will test that all functions
+work as intended to specs. Certain classes and functions are difficult to unit
+test, and are deferred to other form of testings. For these classes, it is
+important to take care when making modifications, and whenever possible,
+introduce tests either at the unit testing level or other level of testing.
+Below are the list of classes/functions that currently do not have a unit
+test:
+
+  1. All Spring Configuration classes (com.infoimage.oauth2.config)
+  2. All JMS/ActiveMQ related things
+    1. com.infoimage.oauth2.async
+
+## Application-Level Integration Test
+
+The ApplicationIT will handle all self-contained application-level test.
+Currently, the test does not handle setting up a local ActiveMQ broker.
+
+ **Not Tested**
+
+  * ActiveMQ integration
+
+## Third Party Integration Test
+
+This is testing performed by Black Knight when the setup is deployed to Pilot.
+
+## Additional JMeter Test
+
+Additional JMeter should be developed to cover certain test cases that are not
+easily testable in Unit Testing or Application-Level Integration Testing. One
+suggested test would be for load testing.
+
+ **Not Yet Implemented**
+
+* * *
+
+

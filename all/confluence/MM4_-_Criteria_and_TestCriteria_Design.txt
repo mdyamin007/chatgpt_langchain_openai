@@ -1,0 +1,134 @@
+title: MM4 - Criteria and TestCriteria Design
+body:   * Criteria and TestCriteria should be the same, except with one exception: TestCriteria will also support a Composite value. This Composite value is known only to the internal programs. The end user will not see any "Composite" text displayed on the UI.
+  * Criteria and TestCriteria will be set up separately on the MM4 management module.
+
+  
+
+Minor update for Selection Criteria: Search for the datatable. This can be
+developed independently.
+
+# Definition
+
+  1. Composite: Composite, for our purposes, mean data values that are tightly coupled, and multiple combinations can be true for a person at the same time. The idea is not really about what criteria combinations, but more about what criteria, when given singularly may create uncertainty in the data.
+    1. Composite: Product Type + Balance. A product need to have a balance. For Credit Union, an account may have multiple products which have their own individual balance. Given, "Product Type A", "Product Type B", "Balance 1", it is impossible to determine whether "Balance 1" should apply to "Product A" or "Product B". Therefore, Product Type and Balance must be composite.
+    2. Not Composite: Zip Code + Product Type. Yes, this can be a combination of criterias, but we cannot have multiple combinations of these criterias to be true for a single person. A person can only be registered to a single Zip Code. Therefore Zip Code should not be combined with another criteria to be a Composite.
+
+  
+
+* * *
+
+# InfoTRAC SimulationCriteria Selection
+
+  * Select from a list consisting only of the Criteria selected for the specific message setup.
+  * Update automatically when a Criteria is deselected, i.e. all the SimulationCriteria that contains the Criteria will be removed for the application. (Maybe prompt the user)
+  * Choice of adding a Single SimulationCriteria (direct one-to-one link to a Criteria) or Group SimulationCriteria (a group of multiple Criterias, e.g. Product Type+Balance).
+  * A way to prevent multiple of the same group being defined for a single application. For example, if someone already define Product Type+Balance, and then try to add Product Type+Balance again, they shouldn't be able to do it. If they try to add Balance+Product Type, they also won't be able to do it.
+  * On MM4 Frontend, only the SimulationCriteria defined for the application should be available for selection during the Simulation step.
+
+  
+
+* * *
+
+# MM4 Frontend
+
+When a composite is selected, it will create a "superbox" that will contains
+all the lines for the individual criteria selected, and the user must input
+all values.
+
+  
+
+* * *
+
+# TestCriteria Data
+
+TestCriteria can be seen as an object that contains a list of Criterias. Most
+TestCriteria is just a list of size 1.
+
+  
+ **Suggestion for Database (more columns may be introduced as necessary)**
+
+TestCriteria: ID, Name
+
+TestCriteraJoinTable: TestCriteria.ID, Criteria.ID
+
+\----
+
+Example
+
+TestCriteria:
+
+1, AccountNumber
+
+JoinTable:
+
+1, 123
+
+Criteria:
+
+123,...,AccountNumber
+
+  
+
+\----
+
+TestCriteria:
+
+4, Product Type+Balance
+
+JoinTable:
+
+4, 444
+
+4, 555
+
+Criteria:
+
+444, ..., Product Type
+
+555, ..., Balance
+
+  
+
+* * *
+
+# IGNORE EVERYTHING BELOW
+
+#  ~~Create TestCriteria  ~~
+
+ ~~~~
+
+  
+
+ ~~~~
+
+  *  ~~The add from Global Pool will lead to a simple UI that allows for the selection of a list of all existing Test Criteria that does not have the CID label. After selection + save, then all those Test Criterias will have the CID label added.~~
+
+  
+
+  
+
+ ~~~~
+
+  *  ~~The pool of TestCriteria should be separate from Criteria, though, to create a TestCriteria, it is drawn from Criteria.~~
+  *  ~~The selection criteria is a list of the applicable criterias  ~~
+  *  ~~There will be a checkbox to determine whether the TestCriteria will be a Composite. If checked, at least two criteria must be selected. More can be added by a plus sign or an "Add Criteria" button.~~
+  *  ~~The name for the TestCriteria will always be the same as the name for the Selection Criteria. Composite will always be named like so (Selection Criteria 1)+(Selection Criteria 2), e.g. "Product Type+Balance". The expectation is that these composites should rarely have more than 2 criterias, and never have more than 3. ~~
+  *  ~~(Optional) Labels. The developer can add label to criteria to facilitate with searching. For example specific composite that are applicable only to a specific core can be labeled with that core name (dna), so that all other developers can search for existing defined criterias to prevent duplicates.~~
+
+##  ~~~~
+
+  
+
+##  ~~Without Labels~~
+
+ ~~If labels are too difficult to implement, then we will still need a way to
+tie the criterias to CIDs. A new table in the DB should suffice.~~
+
+##  ~~(Optional) Change Comparison~~
+
+ ~~When a TestCriteria is being edited, when the user go to save, the user
+should be led to a confirmation page of all the differences (similar to
+InfoConfig). This way the user can validate all the changes. We can reduce
+accidental change this way.~~
+
+

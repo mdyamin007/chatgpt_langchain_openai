@@ -1,0 +1,83 @@
+title: MSBK - [25472][pvt] DDA250 Set up
+description: Set up DDA250 and combine it with the DDA750 as Business Analysis Statement. DDA250 should be first page when exists with DDA750 as subsequent pages.
+
+
+
+15hrs for IS - ISD + 1 hr to test because this shd not change anything on Eside - so 1 hr to test anad make sure there is no change
+
+
+
+This is a midmonth job.
+
+
+
+Turnover Signed Work Order 5/9/22
+
+Sample to client 5/31/22
+
+Sample approval 6/3/22
+
+Go Live 6/10/22
+
+
+
+Estimate 15hrs to add DDA250 to Business Analysis Statement (BA1) - not sure if will need ISD hours since these should still be considered as 1 statement (ba1) and post together.
+
+
+
+Assessment for IS:
+Set up DDA250 and combine it with the DDA750 as Business Analysis Statement. DDA250 should be first page when exists with DDA750 as subsequent pages.
+
+ -There can be stand alone DDA750 statements.
+
+ -There CAN NOT be any DDA250 standalone. If there is any, output to a report and place in client pickup. --> should we do this at script level before going through isisdisk_daily.sh?
+
+
+
+*update to scripts: 4hrs*
+
+(because currently DDA750 is a single*statement*using isisdisk.sh, we have to update the script to use isisdisk_daily.sh to do combine (householding))
+
+1. add DDA250 to /home/master/msbkdl_split_data.pl to split to Business BU folder - 1hr
+
+2. update /home/master/msbk_ba1_process.sh - 3hr
+
+  -to add letter DDA250
+
+  -go through format_only.sh for each data file
+
+  -combine the data files and go through isisdisk_daily.sh instead of isisdis.sh
+
+
+
+*update control files: 2hr*
+
+1. add control file msbkba001.dfa
+
+2. add control file msbkba002.dfa
+
+3. update control file msbkba1.control to not include format dfa etc
+
+  -add group_type to for householding.
+
+
+
+*update to DFA: 6hrs*
+
+1. change MSBKBA11.dfa (DDA750) as a notice with letter code (ex. BA002.dfa) - 1hr
+
+  -remove estmt options as it should not generate estmt from here anymore
+
+2. set up new DDA250 as a new letter code (BA001.dfa) using mockup[new_MSBK DDA250- Mock up.docx|https://app.na3.teamsupport.com/dc/1/attachments/13230114] - 3hrs
+
+  - use BA001.dfa as this is supposed to be first page if combined with DDA750 so the letter code should come first
+
+3. update MSBKBA21.dfa to take in letter codes and combine them (check if DDA250 is stand alone then output to report - if not done so on script) - 2hr
+
+  -update MSBKBA21.dfa to generate estmt for combined Business Analysis as ba1
+
+
+
+*Testing and QA: 3hrs*
+
+ -need to test to make sure the householding is correct as well as formatting etc.

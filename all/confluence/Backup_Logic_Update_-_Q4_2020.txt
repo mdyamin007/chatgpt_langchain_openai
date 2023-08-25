@@ -1,0 +1,91 @@
+title: Backup Logic Update - Q4 2020
+body:   
+
+  
+
+Target release| Release name or number  
+---|---  
+Epic| Link to related Jira epic or feature  
+Document status|
+
+DRAFT  
+  
+Document owner|  
+  
+Designer|  
+Developers|  
+QA|  
+  
+  
+
+## Goals
+
+  * Update backup logic to set a new status in archival status. 
+
+## Background and strategic fit
+
+  * Remove conflict with process status when the backup step fail.
+  * Prevent backup failure from affecting accounting reports.
+
+## Assumptions
+
+  * All ProcessingJob that has backup callback that are not no-op will use the Backup Helper to backup the file and also update statuses.
+  * Sometimes, the Backup Helper is used only to move files, and does not update the job status (as part of the backup callback function). In these instances, no change is needed. 
+
+## Requirements
+
+  
+| Title| User Story| Importance| Notes|  **Pilot**|  Production  
+---|---|---|---|---|---|---  
+1| Backup Helper Status Update| As a Processing Job that needs to back up my
+index file, I would like to be able to use the Backup Helper to update the
+status of the job, so that in the future, when the backup logic needs to be
+changed, fewer places will need to be updated.|  _Must Have_|
+
+  * The two functions, updateStatusAfterSuccess and updateStatusAfterFailure are already writtenin the BackupHelper on Development.
+  * The BACKUP_FAILURE status is also already added to JobStatus.
+
+|  1 incomplete Assignee |  2 incomplete  
+2| PUI Processing Job| As a Processing Job that needs to back up my index
+file, I will only flag the Archival Status as failed instead of the main job
+status, so that a backup failure will not affect accounting reports.|  _Must
+Have_|
+
+The base backup function should be like so (additional logic maybe needed
+depending on the job):
+
+java
+
+  
+
+|  27 incomplete |  28 incomplete  
+3| PUI Front End| As the PUI, I would like to be able to display jobs with
+archival status of BACKUP_FAILURE with the red UI, so that developers will be
+aware of when backup is failing.|  _Must Have_|
+
+  * The condition to display the RED Error background in the Action column should now also include a check for BACKUP_FAILURE archival status.
+
+|  29 incomplete |
+
+30 incomplete  
+  
+## User interaction and design
+
+Include any mockups, diagrams or visual designs relating to these
+requirements.
+
+## Questions
+
+Below is a list of questions to be addressed as a result of this requirements
+document:
+
+Question| Outcome  
+---|---  
+(e.g. How we make users more aware of this feature?)| Communicate the decision
+reached  
+  
+## Not Doing
+
+  * List the features discussed which are out of scope or might be revisited in a later release.
+
+

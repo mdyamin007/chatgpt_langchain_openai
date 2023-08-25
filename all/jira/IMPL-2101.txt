@@ -1,0 +1,71 @@
+title: SEFC Mortgage Trans Code 175 and 745 Update
+description: SEFC Mortgage Trans Code 175 and 745 Update
+
+*Transaction code 175.*
+
+"Display transaction as up to 4 separate lines, if conditions met:
+1) Payment line
+IF (SUM (PRIN-PD (S,0044-0049) + INT-PD (S,0050-0054) + ESCROW-PD(S,0055-0059)) != 0 )
+THEN map:
+Amount from SUM (PRIN-PD (S,0044-0049) + INT-PD (S,0050-0054) + ESCROW-PD(S,0055-0059) (to Payments or Amount column)
+Date from PROC-DATE (S,0124-0129)
+Description from Transactions tab
+
+2) Partial Payment Unapplied line
+ IF ( SUSPENSE-AMT (S,0080-0084) != 0 )
+ THEN map:
+   Amount from SUSPENSE-AMT (S,0080-0084) (to Payments or Amount column)
+   Date from PROC-DATE (S,0124-0129)
+   Description Partial Payment Unapplied *
+
+
+3) Fee line
+ IF (FEE-PD (S,0060-0064) != 0)
+ THEN map Fee as a separate line on Statement
+   Date from PROC-DATE (S,0124-0129)
+   Amount from FEE-PD (S,0060-0064) (to Payments or Amount column)
+   Description:
+    IF (FEE-CODE (S,0123-0123) != NULL) AND (FEE-CODE (S,0123-0123) != * AND (FEE-CODE (S,0123-0123)value EQUALS value within "Fee Code" column in Fees Tab)
+    THEN map description from Fees tab based on value in FEE-CODE (S,0123-0123)
+    
+    IF (FEE-CODE (S,0123-0123) != NULL) AND (FEE-CODE (S,0123-0123) != * AND (FEE-CODE (S,0123-0123)value NOT EQUALS value within "Fee Code" column in Fees Tab)
+    THEN suppress STATEMENT and generate Exception Report
+
+    ELSE IF (FEE-CODE (S,0123-0123) = * AND (REC-CORP-ADV-REASON-CODE (S,0194-0197)value EQUALS value within "Corp Adv Reason Code" column in Corp Adv Reason Code tab)
+    THEN map description from Corp Adv Rsn Code Xref based on value in REC-CORP-ADV-REASON-CODE (S,0194-0197)"
+    
+    ELSE IF (FEE-CODE (S,0123-0123) = * AND (REC-CORP-ADV-REASON-CODE (S,0194-0197)value NOT EQUALS value within "Corp Adv Reason Code" column in Corp Adv Reason Code tab)
+    THEN suppress STATEMENT and generate Exception Report
+
+4) Payments to Deferred Balances line
+ IF PMTDEF-AMT (S,1018-1024) != 0
+ THEN map Payment to Deferred Balance as a separate line of Statement
+  Date from PROC-DATE (S,0124-0129)
+  Amount from PMTDEF-AMT (S,1018-1024) (to Payments or Amount column)
+  Description from Payment Deferral Types tab based on value in PMTDEF-TY (S,1016-1017) and TRAN
+
+*Tran Code 745*
+
+IF (TRAN = 745) AND (REC-CORP-ADV-REASON-CODE (S/W,0194-0197) != NULL) AND (REC-CORP-ADV-REASON-CODE (S/W,0194-0197) value EQUALS value within "Reason Code" column in Corp Adv Reason Code tab)
+THEN map
+
+ *Amount from SUM (TOTAL-RECD (S/W,0038-0043) + NET-DISB (S/W,0016-0021)) (Payments)
+ *Date from PROC-DATE (S/W,0124-0129)
+ *Description from (REC-CORP-ADV-REASON-CODE (S/W,0194-0197) cross-reference against Corp Adv Reason Code tab
+
+ELSE IF (TRAN = 745) AND (REC-CORP-ADV-REASON-CODE (S/W,0194-0197) != NULL) AND (REC-CORP-ADV-REASON-CODE (S/W,0194-0197) value NOT EQUALS value within "Reason Code" column in Corp Adv Reason Code tab)
+THEN supress STATEMENT and generate exception report
+
+ELSE IF
+
+ [(TRAN = 745) AND RECORD S AND (DISB-PROC-DATE (S,1006-1011) IN (05/02/22,*07/01/22*,07/02/22)]
+ OR
+ [(TRAN = 745) AND (REC-CORP-ADV-REASON-CODE (S/W,0194-0197) = NULL)]
+ OR
+ [(TRAN = 745) AND NET-DISB (S/W, 0016-0021) = 0 AND TOTAL-RECD (S/W, 038-0043) = 0)]
+
+THEN suppress TRANSACTION from statement
+
+Note from CU: In general, we want Tran Code 745 from both Record S and Record W to print to the statement.
+
+While we do have multiple scenarios where we are suppressing the transaction from the statement, we are looking to suppress Tran Code 745 from printing to the statement if it's in Record S and the DISB-PROC-DATE (S,1006-1011) is either 05/02/22,*07/01/22*or 07/02/22. The other two scenarios in which want to suppress Tran 745 from the statement apply to both Record S and Record W (when REC-CORP-ADV-REASON-CODE (S/W,0194-0197) is NULL; when NET-DISB (S/W, 0016-0021) and TOTAL-RECD (S/W, 038-0043) are both zero).

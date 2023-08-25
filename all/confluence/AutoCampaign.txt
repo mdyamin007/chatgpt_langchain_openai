@@ -1,0 +1,93 @@
+title: AutoCampaign
+body: **API Design:**
+
+ **API Path:**
+
+POST /notification/{cid}/autocampaign?csvDir={csvDir}
+
+ **Design Diagram:**
+
+ **Regarding API call:**
+
+> cid is client unique name like : ewbb, rwcu
+
+> csvDir(path) shoud be  **foldername-as-date**
+
+> Example:
+
+> > Let cid =  **rwcu**  and csvDir =  **20150323**
+
+> > API call whould be like : POST
+> /notification/rwcu/autocampaign?csvDir=20150323
+
+> > if we set  **notif.autocampaign.basefolder =
+> /mnt/files_from_print_processing/autocampaign_files**  in notify service
+> property file (notifyservice.properties)
+
+> > Then the API will try to find the csv file(s) generated from print-
+> processing in the
+> /mnt/files_from_print_processing/autocampaign_files/rwcu/20150323/*.csv
+
+That path should have read permission
+
+above mentioned path may contains CSV file(s) named like
+
+>   * Federal Home Loan Program Announced.csv
+>   * For Investors Who Hate Paying Commissions.CSV
+>   * Confidential to Corvette Owners.csv
+>   * What Every Investor Must Know about IBM.csv
+>
+
+ **Regarding CSV file** :
+
+Lets take  **Federal Home Loan Program Announced.csv**
+
+Assume  **TemplateService**  have a template, named "Federal Home Loan Program
+Announced" and id is 984. In the template 4 type of template variables has
+been used, those are followed -
+
+>   * udv_txt_form
+>   * udv_txt_userid
+>   * udv_txt_userfname
+>   * udv_txt_userlname
+>
+
+ **Regarding CSV file header:**
+
+to,toName,udv_txt_form,udv_txt_userid,udv_txt_userfname,udv_txt_userlname
+
+Lets take CSV file like -
+
+to,toName,udv_txt_form,udv_txt_userid,udv_txt_userfname,udv_txt_userlname  
+[ben.chan@infoimageinc.com](mailto:ben.chan@infoimageinc.com),Ben
+Chan,infoimage,1,Ben,Chan  
+[dharmendra.sarkar@infoimageinc.com](mailto:dharmendra.sarkar@infoimageinc.com),Dharmendra
+Sarkar,infoimage,2,Dharmendra,Sarkar
+
+ **API Workflow:**
+
+When we keep that example CSV file in a folder then run auto campaign with
+swagger UI of NotifyService first it will search template at TemplateService
+with the CSV file name, if any template has found with that name in
+TemplateService, the ID will be taken from the latest one. autocampaign api
+will automatically append templateId, type and app in the CSV file then save
+it to temporary directory. After successfully save the modified CSV file, it
+will send that CSV file to InfoScanner to get a file id. Then it creates a
+campaign at TemplateService and a job at NotifyService with that CSV file ID.
+After successfully done the operation API will start that job and update
+campaign status.
+
+In the temp directory we will find the modified CSV file. If we look into it
+CSV content should be like
+
+to,toName,udv_txt_form,udv_txt_userid,udv_txt_userfname,udv_txt_userlname,templateId,app,type  
+[ben.chan@infoimageinc.com](mailto:ben.chan@infoimageinc.com),Ben
+Chan,infoimage,1,Ben,Chan,984,marketing,email  
+[dharmendra.sarkar@infoimageinc.com](mailto:dharmendra.sarkar@infoimageinc.com),Dharmendra
+Sarkar,infoimage,2,Dharmendra,Sarkar,984,marketing,email
+
+  
+
+## Attachments
+
+

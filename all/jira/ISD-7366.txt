@@ -1,0 +1,55 @@
+title: Service Name update for prism(BIBO) and pui(FIFO) 
+description: None
+
+
+author: JIRAUSER11102
+comment: To QA,
+
+The purpose of this task is to applyserviceName BIBO for prism and FIFO for pui.
+
+*Previous implementation:*
+ * serviceName was by default BIBO for all.
+
+*Current requirement:*
+ * serviceName will be overridden with FIFO if the site is pui.
+
+*Test requirements:*
+
+**This change should not affect the normal behaviour of prism or pui. Although to be sure:
+ * Check if statements can be pulled in prism properly. Check with FHNB, FNBT, GCBK and some other clients. Check the tomcat log (location: /usr/local/tomcat/tomcat-default(or bank or cu)/logs/catalina-2022-07-06.out) in prism-stage server to see serviceName and site while pulling the statement. I have added logs there.
+ * Process index files to see whether all statements are posted correctly or not. Check with FHNB, FNBT, GCBK and some other clients. Check the wrapper.log (location: /usr/local/processing-ui/station/logs/wrapper.log) in pui-stage server to see serviceName and site while the process runs. I have added logs there.( wrapper will only be called from pui if the page count of the statement is greater than 200 for the afp process or page size (in MB) is greater than 200MB).
+
+
+author: igor.khosid
+comment: [~Andrey.Kutsenko]
+Please check w/Sean - on additional info
+
+[~Tin.Chak] - please add descriptions as discussed
+
+
+author: igor.khosid
+comment: As per [~jahid.hasan] - below are the index files:
+ds1_06302022_1_07012022_0850_bkfn.txt
+ms1_03012022_1_03022022_0717_fhnb.txt
+ms1_05022022_1_05032022_0719_fnbt.txt
+ms1_20220630_1_20220701_2135_gcbk.txt
+
+Those files available on 
+ca-pui-st-01 server
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+
+TEST RESULT:
+
+1.The above index files have been successfully posted to pui-stage with conf files pre-modified
+ *conf files >>> [^bkfn.conf] [^fhnb.conf] [^fnbt.conf] [^gcbk.conf] 
+ 2. Checked the wrapper log-file ( [^wrapper_testing_results.log] ) file on the *pui*-stage server -> serviceName FIFO 
+ !scr_wrapper.png|thumbnail!
+ 3. Checked statements on Admin e-site.
+ 4. Checked the tomcat log-file on *prism*-stage server -> serviceName BIBO
+ [^catalina-2022-07-08-default.out] - log is for the clients run on default schema
+ !scr_prism_client.png|thumbnail! 
+ [^catalina-2022-07-08-bank.out] - log is for the clients run on bank schema
+ !scr_prism_bank.png|thumbnail!

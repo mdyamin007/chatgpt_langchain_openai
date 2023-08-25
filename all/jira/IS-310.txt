@@ -1,0 +1,91 @@
+title: isisdisk_daily.sh enhancement to remove if condition for estmt_suppress & pdf_select [IN-HSE]
+description: In light of the CAREport issue TS# 17998, we believe it is unnecessary to have developer remember to add prefix to isisdisk_daily.sh for non daily statement program script. This will be a two phase approach project:
+
+
+
+*Part #1*: Add logic to monitor all the apps that does not meet the if condition.
+
+
+
+I would like to update the /home/master/isisdisk_daily.sh and add the following condition:
+
+
+
+else
+
+ # Output all the other $type_chk that does not fall in the if condition above.
+
+ # Would like to see which $cid $jid and check their insert file to see if they have estmt sup defined
+
+ # Based on TS# 17988, I want to remove the if condition for invoking estmt_suppress call. I would
+
+ # like program to always invoke estmt_suppress function call for ALL cids so we do not have to remember
+
+ # to update if conditions to add custom cid/jid for future apps that are not a daily app.
+
+ echo $type_chk >> /d/share/william/isisdisk_daily_type_chk.log
+
+fi
+
+
+
+
+
+Heres a screenshot of what I drafted (but unfortunately lost connection) when reviewing with Peter:
+
+
+
+*Part #2*: We will need to review the log file and see which apps went into the else condition. If we determine there is no risk, we will want to remove the if condition and else condition that was introduced above so that ALL program invokes the estmt_suppress and pdf_select function.
+
+
+author: william.kong
+comment: [~jira_naru]: After Part I is released, we will need to update the Due Date to Sept 16 for the part 2 release.
+
+
+author: jira_naru
+comment: Will:
+
+Attached is a sample of the log file.
+
+[^isisdisk_daily_type_chk.log]
+
+The prefixes in the log actually uses isisdisk.sh. However, to test the else logic, I took the TXT file for these prefixes and ran isisdisk_daily.sh on the command line with it.
+
+Also, parallel testing might be challenging, since isisdisk_daily.sh is currently check in for another update, id20210511040515.
+
+
+author: william.kong
+comment: [~jira_naru]: This is great.  Please proceed!
+
+
+author: jira_naru
+comment: Code release
+
+
+author: william.kong
+comment: [~jira_naru]: Updating this ticket due date for 9/15 so that we can complete part II of this project. I've changed the status from "Done" to "In Progress" so that we can monitor this project.
+
+
+
+[~William.Kong]: Note to myself: I need to review/d/share/william/isisdisk_daily_type_chk.log periodically.
+
+
+
+
+
+
+author: william.kong
+comment: As of 9/3/2021, I do not see the following file created. This is looking good. If there is still no activity by 9/15, then we will need to proceed with Phase II to remove the type_chk if condition:
+
+
+
+[williamK@rhs2 share]$ ls -l /d/share/william/isisdisk_daily_type_chk.log
+ls: cannot access /d/share/william/isisdisk_daily_type_chk.log: No such file or directory
+
+
+author: william.kong
+comment: [~jira_naru]: Let's plan on removing the if/else condition in the isisidisk_daily.sh today. Please change status once you have released the updated logic.
+
+
+author: jira_naru
+comment: Code release for part 2 completed.

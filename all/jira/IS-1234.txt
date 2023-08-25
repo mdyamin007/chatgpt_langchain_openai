@@ -1,0 +1,253 @@
+title: COMM - Stmt - Mortgage PDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133603-C30.01-V22306
+
+Processing Scripts to modify:
+ commml1_process.sh
+
+Data Files to use:
+COMM_mortgage_080922_1.zip.pgp
+
+
+
+*CUSTOM:*
+
+Please modify processing script for commml1 to+keep+ the zip file in $d_dir/comm/commml1/zip/ folder. Today, the program just keeps the pgp file in the zip folder but does ++notkeep the zip file. We need to save the original PDF archival zip file in the zip folder.
+
+
+
+Also, please use the+newer+ data file mentioned above. I'm going to save the production PDF folder so that we can do pdf_compare when you provide revised samples.
+
+{{[williamK@ca-isis-pr-04 commml1]$ perl /home/util/get_processed_filename.pl comm 2415269}}
+{{cid: comm}}
+{{jid: ml1}}
+{{proc_id 2415269}}
+{{file_name: COMM_mortgage_080922_1.zip.pgp}}
+{{md5 2ae02588a733a3cfde4e6d4d2b8ca26c}}
+
+
+
+I've scanned this file into/z/infoftp_int/comm/mortgage/ for your convenience.
+
+
+
+
+author: anwarh
+comment: Hi [~Igor.Khosid],
+
+Parallel ID:{{20220627035342}}
+
+Let me know if you need anything for this. Thanks
+
+
+author: william.kong
+comment: [~anwarh]: Can you run the following data file in parallel:
+
+COMM_mortgage_070422_1.zip.pgp
+
+I've made a backup copy of the production PDF files and would like to compare the PDF results forCOMM_mortgage_070422_1.zip.pgp in parallel.
+
+
+
+Thanks!
+
+
+
+-- Will
+
+
+author: william.kong
+comment: [~anwarh]: Any updates on my comment above in regards to re-running the results?
+
+
+author: william.kong
+comment: [~anwarh]: I lost the production file apparently so I backed up a copy ofCOMM_mortgage_archival_07192022_1.zip.pgp. Can you return this particular cycle in parallel so that we can use to compare.
+
+
+
+
+author: anwarh
+comment: Hi [~William.Kong]/[~Igor.Khosid], 
+
+Sorry for the late response,
+Output is in: /z/dsi_pdfi_testing/commml1/07192022/
+
+Thanks,
+Anwar
+
+
+author: JIRAUSER11104
+comment: [~anwarh] [~William.Kong] [~Igor.Khosid]
+Status: Waiting for the production file.
+ 
+
+
+author: william.kong
+comment: [~anwarh]: Please see updated description of work and the new data file to use. We need to fix the script to save the original zip file in the zip folder.
+
+Please change status back to "QA Request" after you are done. Thanks!
+
+
+author: anwarh
+comment: Hi [~William.Kong],
+ data file used: COMM_mortgage_080922_1.zip.pgp, (/d/download/comm/mortgage/COMM_mortgage_080922_1.zip.pgp) 
+ Parallel server's (rhs) output is kept at: /z/dsi_pdfi_testing/commml1/new/pdf/
+
+This script commml1_process.sh uses archival_process.sh which is responsible for removing the zip files from the directory ($d_dir/pdf_afp/comm/commml1/zip).
+
+Also the issue of keeping zip files in that directory has already discussed and solved for parallel server in the ticket IS-1207. So, this issue will be solved whenever the script (archival_process.sh) will be released in production.
+
+Thanks,
+ Rakib.
+
+
+author: william.kong
+comment: [~anwarh]: I looked at your folder/z/dsi_pdfi_testing/commml1/new/pdf
+
+
+
+How come the individual pdf file name is 08162022 instead of 081022? The PDF compare program will complain that date is different. At least the index file namecommm_mortgage_index_08092022_1.txt matches?
+
+
+
+The following is the production pdf file content usingCOMM_mortgage_080922_1.zip.pgp
+
+!image-2022-08-18-16-56-29-963.png!
+
+
+author: anwarh
+comment: Hi [~William.Kong] ,
+
+Current date logic for pdf file name is:
+DFA looks for '000' field in data file (which is a bar delimited file converted from xml)
+if not found, sets the date to system date
+
+But based on xml2bar template file, there is no field 000, so it will always pick system date
+That's why you are seeing this issue
+
+Though, for this testing, I can rename these pdfs to match with production's pdf's date-month-year.
+
+Thanks,
+Rakib
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: I created a custom regex to avoid the date in file naming convention for PDF Compare; (Please review commml1.sh inca-isis-pr-04:/d/pdf_compare/ )
+
+
+
+I ran PDF compare and no issue. Please resume the other QA steps for this project:
+
+ca-isis-pr-04:/d/pdf_compare/result_commml1/pdf_compare_rpt.txt
+
+Total PDF Files Scanned: 219
+allowedDifferenceInPercentPerPage: 5:
+Thread Count: 32
+
+Total PDF Files with Differences: 0
+Start Time: Mon Aug 22 14:43:42 PDT 2022
+Finish Time: Mon Aug 22 14:45:25 PDT 2022
+
+
+
+
+
+
+author: JIRAUSER11104
+comment: Thanks, [~William.Kong]
+
+I'll check.
+
+
+author: JIRAUSER11104
+comment: QA test - *PASSED*
+
+Ran script:
+{code:sh}
+[andreyK@ca-isis-pr-04 pdf_compare]$ /d/pdf_compare/commml1.sh{code}
+Report:
+{code:sh}
+[andreyK@ca-isis-pr-04 pdf_compare]$ cat /d/pdf_compare/result_commml1/pdf_compare_rpt.txt
+
+Total PDF Files Scanned: 219
+allowedDifferenceInPercentPerPage: 5:
+Thread Count: 32
+
+Total PDF Files with Differences: 0
+Start Time: Mon Aug 22 14:52:41 PDT 2022
+Finish Time: Mon Aug 22 14:54:30 PDT 2022
+{code}
+
+
+author: william.kong
+comment: Thanks [~Andrey.Kutsenko]!
+
+
+
+[~anwarh]: Please prep File Transfer form so that we can release as early as tomorrow or Wednesday the latest.
+
+
+
+
+
+
+author: JIRAUSER11104
+comment: [~anwarh] [~William.Kong]
+Please update the status of this story based to SOP.
+
+
+author: william.kong
+comment: [~anwarh]:Please prep File Transfer form so that we can release hopefully by tomorrow (Wednesday)
+
+
+author: anwarh
+comment: Hi [~TunA],
+
+Transfer form:[^IS-1234 Transfer Form.doc]
+
+Code is in
+ */d/is/cvs/xfer/anwarH_backup/is-1234*
+
+Can you please move them into /d/is/cvs/xfer/anwarH/ and then release?
+
+Thanks,
+ Anwar
+
+
+author: tuna
+comment: Hi [~anwarh],
+
+Following codes have been released.
+
+Thanks,
+
+Tun
+
+
+
+
+
+20220825143154 08/25/2022 anwarH IS-1234 COMM - Stmt - Mortgage PDFi Conversion to AFP2PDF Python [InHse]
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/anwarH/
+total 120
+-rwxrwxrwx 1 oper1 opers 11972 Aug 25 14:31 commml1_process.sh
+-rwxrwxrwx 1 oper1 opers 1278 Aug 25 14:31 commml1.procs
+
+
+
+
+
+[~William.Kong]

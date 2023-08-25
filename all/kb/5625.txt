@@ -1,0 +1,884 @@
+Floating message properties and requirements
+A floating message area contain multiple selective messages.
+Each message criteria is evaluated from portal file. If its true, the message for that criteria will be printed. For instance, if a message area has 5 selective criteria and all of them evaluate to true, then all 5 messages will be printed.
+Default messages will always be printed and there may be one or moreThe message type must be textThe message vertical position must start roughly around 3.5 inchesThe message width should equal the statement body width
+Example of a floating message area with 3 messages:
+Message manager 4.0 setup
+Please note: The external message manager 4.0 dfas have the same name as mm2 dfas but have _MM4 appended to the names at the end.
+MSG_MGR_READ_CU_SEL_LIST_MM4.dfa
+MSG_MGR_READ_SAM_LIST_MM4.dfa
+MSG_MGR_FORMAT_CU_MSG_MM4.dfa
+MSG_MGR_FORMAT_MSG_SAM_MM4.dfa
+MSG_MGR_FORMAT_DYN_SAM_MM4.dfa
+MSG_MGR_DOC_SUP_CNT_MM4.dfa
+MSG_MGR_FLOAT_MSG_CNT_MM4.dfa
+Step 1)
+Define local message manager variables in $_BEFOREDOC. Initialize local variables such as selective criteria name (e.g. ACN = selective by account number, ZIP = selective by zip code, etc.)
+Define global message manager variables in $_BEFOREFIRSTDOC.
+Set up global variables such as the horizontal and vertical positions of the message, and store selective criteria entries from the index file ($prefix_msg_portal.txt) in &MSG_SEL array.
+/home/keep/msgmgr4_sample_portal.txt is an example of a portal index file with selective criteria, floating message column, and end of statement column. You can rename this file using the specified naming convention ($prefix_msg_portal.txt), and modify it accordingly for testing purpose.
+The portal file will have 2 additional columns. See example below:
+A 1 in the floating message column indicates that the message area will have floating text messages.
+For each line in the portal file, the conditional statement determines whether the message is printed or not. In the above example, if ESERVICE = yes, the message from MFCU111.imp file will be printed. Else, the message will be skipped and the next condition is evaluated and so forth.
+A 0 in the floating message column indicates that there are no floating messages and only one message will be printed. The condition for the message with the highest priority will be evaluated first. In the above example, the message for the ESERVICE criteria will be printed only if ESERVICE=yes; else the next criteria ENDBAL will be evaluated until one of the conditions is true.
+A 1 in the end of the statement column indicates that the message will appear at the end of the statement. A 0 means the message appears elsewhere other than the end of statement.
+Step 2) At the beginning of PRINT_DOC, add the following block of code. This will end the approved
+ sample pdf document once all the possible messages are printed.
+Step 3) If the message areas are located at the top of statement page, then do the following:
+Set EOS_MM=0In PRINT_DOC, before the outline of the statement body section, place the following block of code.
+For &JOB_TYPE d, assign MSGAREA and check the correct MSGAREA value.
+If the message areas are at the top of the statement, then check/change MSGAREA values before calling MSG_MGR_FORMAT_DYN_MM4 external.
+Step 4)
+Step 5) Add an outline after calling message manager. Set the vertical position
+ to 3.5 inches. This is typically where the statement section begins.
+Step 6) In the outline of the statement body section, change the vertical position to $ML_MAXY
+ $ML_MAXY is the main level maximum y-coordinate of all previous outlines.
+Step 7) Skip this step if there is no end-of-statement message. If there is an end-of-statement message, then do the following:
+Set EOS_MM=1Place the same block of code at the end of PRINT_DOC (after the last outline for statement section.
+Check/change MSGAREA values that is reserved for end of statement before calling MSG_MGR_FORMAT_DYN_MM4 external.
+Step 8)
+Add Listout command for FLOATMSGCNT report file
+Call MSG_MGR_DOC_SUP_CNT_MM4 external in $_AFTERDOC.
+This will tally up the documents that are suppressed and exclude them from the floating message count report.
+Step 9)
+Call MSG_MGR_FLOAT_MSG_CNT_MM4 external in $_AFTERLASTDOC.
+This will create a breakdown report of the floating message count
+Step 10) Because each message area now has its own criteria, ISD requires us to send them a list of message ids so they know which graphic message to use for the approved message pdf samples. The external module and script will handle that but we still have to add a listout command.
+Step 9) Set mm4 in control file and export the variable.
+Step 10) Under infotrack client message settings, there are 2 checkboxes for floating and end of statement message for each message area setting. Check the box that applies.
+Location of text imp files and message resources:
+Production and Test ( rht )
+Approval sample process - /home/isis/implib/test
+Normal statement process - /home/isis/implib
+Dynamic sample preview - /d/cid/prefix/dyn_sam
+Approved samples - /d/cid/prefix/sample
+Parallel/stage
+Approval sample process - /home/test/isis/implib/test
+Normal statement process - /home/test/isis/implib
+Dynamic samples - /z/cid/prefix/dyn_sam
+Approved samples - /z/cid/prefix/sample
+Video Transcript
+Okay, can you guys see my screen?
+Yeah, let me see your screen.
+Okay, so last week, Ty talked about how to create Message Manager, I mean,
+how to create the campaign in Message Manager 4.0 in InfoTrack.
+Today, I'll talk about how to set up Message Manager 4.0 in the DFA,
+as well as how to read information from the portal file.
+So in Message Manager 4.0, it now supports up to three messages instead of two.
+It also supports a floating message.
+Floating messages contain multiple selected messages, so each criteria expression will be evaluated.
+And if it's true, then the message will print, so you can have more than one message.
+Unlike, I mean, or in the existing Message Manager,
+only the message with the highest priority is printed.
+So once the criteria matches, that message is printed,
+but the next criteria won't be checked.
+In 4.0, all the message, all the criteria will be evaluated.
+So if, so for example, if you have five message criteria and all the criteria matches,
+then all five messages will be printed.
+And it also supports, it also supports multiple default messages as well.
+And the default messages must be printed regardless.
+In the current Message Manager, the default message only prints if none of the criteria matches.
+So if you...
+I have a question, sorry. So we can only have one campaign for each period, all right?
+So we cannot have like, like, you know, like, I just have a question in regards to like SNFB,
+like, they have like, right now they have an insert that running from one to, like,
+930 to 1030, and they have another insert that they want to add, like, in between, like,
+9, 10, 15 to 1030. You know, like, can the client just, like, can we, they add like a second
+campaign in between like that? Like, one, four, and one, nine...
+Only for different times?
+Yeah, yeah.
+No, it's only for dates, for different dates.
+Yeah, yeah. But I mean, like, I mean, like I said, that's what I'm saying, like, so if they want
+one that's, like, only from one, 9, 1 to 930, and then one from 9, 15 to 930, so, like, they have,
+like, can they do two separate ones like that? Or just...
+No, they'll have just one, they have to go back and change it before they process the next one.
+Okay.
+So floating message properties and requirements. The floating message area contains multiple
+selective messages. Each message criteria is evaluated from the portal file. If it's true,
+the message for that criteria will be printed. For instance, if a message area has five selective
+criteria and all of them evaluate to true, then all five messages will be printed.
+The default messages will always be printed, and there may be more than one.
+The message type must be text. Message vertical position must start roughly at around 3.5 inches,
+and the message width should equal to the statement body width.
+So if you look at this, this is the example of floating message with three message messages.
+The floating message has to be as wide as the statement width. So if you have a limited
+message area, that can't be a floating message. So, for example, this graphic message right here
+in the top right corner cannot be a floating message because it has a restricted message area.
+So let's look at the portal file here.
+What about the length of the message? How long can it be?
+This one? Floating one.
+Floating one? It could be as long as you want it to be.
+It could be the whole page here, right? And then it's up to the next page?
+We can test it out. We can test it out right now.
+Is that the rules? They can be long as much as they can.
+You have to go to the client message configuration settings and change the number of characters.
+I understand, but is that how we set the rules in turn?
+No, Peter, for the restriction, if there's a limit, you might want to ask Tai.
+Because, you know, in the UI, he sets the limit. On the back end, we accommodate.
+So I don't be able to answer this question.
+Okay. Yeah, just that's the thing is that because on our end, whatever you give us,
+we just display, right? So in this case, if there's five of these messages floating,
+then it all matches, right? Does it push the...
+Well, right now, I'm just typing out a really long message.
+Yeah, I want to see what... This is one of the samples you have.
+Oh, you have the SL text object, please.
+So we have to put some limited.
+Or unless ISD can add this command in here.
+What is it? Break on. I think it's called the break on and break off.
+And, you know, that's... So what's that does that basically ungroup them?
+No, it'll... Then now it will fix it.
+But you have to add the break on and break off in the
+imp file. I don't know if ISD is able to add that.
+And is that break on, break off with particular message or from the beginning message one to...
+And then the end is the message, the last message.
+Because you don't know when it's over.
+So you put at the... Yeah, you put at the beginning and then you put at the end,
+the break off at the end.
+Of one of the message, right?
+Yeah.
+Because if there's... In your case, let's say all five
+evaluate was true or true, then all five will display, right?
+Right.
+Let's set the fourth one by causing overflow.
+Then, yeah, you still need to break on. Then the fourth one, you have to add the break on and break off.
+So how do they know when it's break on, break off?
+Yeah, I don't know how they would know.
+So I'm just going to bring this up because this is going to be something that, you know, potentially...
+I think you can add it, break on, break off all the time, right?
+It doesn't hurt.
+Okay. If that's the case, yeah, we might have to ask them to do that.
+Just tell them to do that by default, yeah.
+Okay.
+Okay, so going back to here.
+So here's the portal file.
+This portal file, we have two additional columns.
+The floating message column and the end of statement column.
+And each one can have a value of zero or one.
+Zero meaning that it's not a floating message, and one meaning it's a floating message.
+And zero here means it's not the end of statement, and one meaning it's the end of statement.
+So here you can see that the first message area is a graphic message.
+It's not a floating message, and it's not in the statement.
+So graphic messages cannot be floating, only text message.
+The second message area, so this one is floating because you see a one here,
+but it's not in the statement.
+And there's only one message because none of the criteria matches,
+and you can verify that by checking the ending balance.
+It's just, yeah, ending balance is $2,004.08, and zip code is 94025.
+This one here is 1235.
+So if I change this to all zeros for the ending balance,
+then it should print this message as well.
+And change the zip code to match the zip code in the data.
+So now you have all three messages here.
+So that's the second message criteria,
+and this is for the third message area is the end of statement message.
+And you don't see it here yet because I'll show you how it works later.
+So the first thing you have to do is, inside your DFA,
+you define at the, before doc, you define all your local message manager variables,
+like account, like ACN, zip, end balance, product type.
+And in your, before first step, you define all your global message manager variables,
+like the horizontal, vertical position, width, and then you call these two external DFAs.
+And this DFA reads in the portal file and then saves the information
+from the portal file to a message array. So then the next step is, in print doc,
+in print doc, you put the beginning of print doc, you need this to place this condition here.
+If job type equals n in this condition, then end the document. So this checks if all the
+possible printed, all the possible messages have been printed and populated
+before the, before it ends the document. So it will generate
+all the possible, a PDF of all the possible messages.
+And then the next thing you do is, you add this block of code here.
+So this, this, yeah, this block of code, you add it here. You add it before the outline of your body,
+statement body. And then you assign a variable. There's a new variable. It's called EOS underscore,
+underscore mm. You set it to zero. And what it does is, when you set this to zero, the external
+DFA will compare this value to the, to the value in the last column in the portal file. And that's
+how it knows if it's end of statement message or not. End of statement message or not.
+And so this one is called, this one is the external module for the approved message sample.
+This one is for the dynamic sample preview. And this one is for the normal statement process.
+Yes.
+Question.
+Yeah.
+This logic is the same with previous message manager as a new one.
+Yeah. The logic, the logic in here, it's going to be, no, it's going to be, yeah,
+it's different. Well, it's similar, but I had to make a lot of changes.
+Yeah. The way I named the DFAs, it's the same as the existing DFAs. It's just that I appended,
+I appended underscore nn4 to the, to the end of it. So that's how you can distinguish between the
+regular, the existing message manager and the new message manager.
+And so, yeah, so this, what this, these DFA, these external module will check, will
+evaluate the criteria that matches, then it'll print the message in the portal file.
+So, and then the next thing you do is add, you add an outline. You add an outline right before
+the outline of the statement, statement section. And you set it to, yeah, typically we use 3.5
+for the start of the statement. So I, so I set it to 3.5 here. And then in the outline of your
+statement body, you set the vertical position to nlmaxy. So this nlmaxy is the main level of the
+maxy coordinate of all the previous outlines. So it's relative to the bottom position of your
+message. And then I just added a 0.1 to create some space so it's not too close to each other.
+So, since the floating message is dynamic,
+your, the statement should shift up and down depending on how long your message is.
+So if this message is, for example, if this message is empty, then this
+statement section should shift up. So,
+that's, so that's, yeah, that's the, that's where you place the block of code.
+And for the end of statement message, what you do is you take the same block of code,
+and you drag it to the last outline of your statement section.
+So, this is the last outline of the statement section. So take the same block of code and drag
+it down the last outline of your statement body section. And then change this variable to
+one to indicate that it's the end of statement message.
+So, now there's an end of statement message at the bottom. Also, you can have multiple default
+messages. So, if this, so if I change this to default, it should also print this message.
+Right now, it's only one message at the bottom.
+So, now there should be two messages at the bottom.
+So, that's for the end of statement message. You only need to add that
+section if you have, if they want as end of statement message.
+And then sometimes they only want to state, they only want end of statement message,
+so you don't need the top portion. So, if,
+so if they don't want any message, messages at the top of the statement,
+then you don't need this section here. And vice versa, if they want end of statement message.
+I mean, if they only want the top of the statement,
+any message at the top of the statement, then you don't need this section here.
+For the last step, ISD wants, actually, yeah, we have to create a list of
+list of message IDs and send it to ISD.
+Yeah, because each message area now has its own criteria. ISD requires us to send them a list
+of message IDs so they know which graphic message to use for the approved message PDF samples.
+And the external message module and script will handle that, but we still have to add a
+list out command. So, you just need to add a list out command in format group definitions.
+And then just copy this information.
+And that's it. Do you guys have any questions?
+Is that new? Or is that something that we just-
+Yeah, that's new.
+And what did it write to? It write to what-
+The external, it write to the external DFA. I mean, there's a list that in the external DFA
+that it writes to. Yeah.
+I know, to the file, right?
+Yeah, to a file.
+What file is it? What file does it call?
+Let me search for it.
+And then, so the script handling that at the east end level, right?
+Yeah, yeah.
+It's only when job type equals M, though.
+They only need it for the approved message sample.
+Oh, okay.
+Yeah. So, that list out had to be under M job select or-
+Yeah, M job select is right here.
+Okay, so it write to DER CID.
+DER CID prefix sample.
+And then the script will copy this.
+But this is, no, this is the portal file.
+Where's the message ID? Or this one?
+Yeah.
+So, the script will copy this file to ISD input folder and then they will use it.
+They will look at the message ID and pull the correct graphic message ID.
+But what's in it?
+It's just a list of message IDs.
+Is it in an external module? It's something that-
+Yeah, it's in the external module.
+So, it's transparent.
+I mean-
+Transparent.
+Yeah, all we have to do is, in the format DFA, all we have to do is just add it here.
+That's it.
+Add the list.
+Just open up a list out.
+Yeah, you just create a list out. That's it.
+And I think the directory, you need to define it, right?
+Yeah.
+Name, the name, directory, you need to define that.
+Yeah.
+So, yes, it's, if you guys are confused, you guys can always ask me.
+They are doing the development. Just say there's a floating message, there's a graphic message.
+But how do you develop when you have really no test campaign?
+Do you need to first create a campaign and then download it and then use it for the coding?
+Yeah, that's what I had to do.
+And then I had to add the additional columns here.
+Right, so create a campaign first and then use it,
+download the portal and then use it for development.
+Right. And then you can, yeah, you can change it for your own testing purposes.
+In the client message manager configuration, there's two check boxes here.
+One is for the floating, you check it.
+So, you check it if you need it, if it applies and uncheck it, if it doesn't apply.
+Oh, yeah, also in your control file, you need to set
+NM4 variable equals Y and export that variable.
+So, Lee, we just need to follow this instruction, right?
+We don't need to go back to the O one, right?
+Yeah, you don't have to go back to the NM2.
+Because if you change this to zero, it should behave like the NM2.
+Because it, yeah, like for the second message area, for example, if I change all this to zero,
+I mean, that means it's treated as a regular text message.
+And only the message with the highest priority will be printed for message manager 2.0.
+So, in message manager 2.0, it only prints one message per message area.
+Whereas in message manager 4.0, you can have more than one,
+you can print more than one message if the criteria,
+depending on whether the criteria matches or not.
+For the end of statement message, there's only one, right?
+Can have multiple, right? Is that correct?
+No, the one in the middle, I mean, this one can also have floating message as well.
+Oh, no, for the end of the statement message.
+Yeah, that can be folding as well.
+Right, but it's only one, correct? How many can it have?
+It can have five criterias.
+Oh, so if all five matches.
+Yeah, if all five matches, then it'll print all five.
+Five at the end.
+Yeah.
+So, each message area can have a maximum of five message criterias.
+But you can only have three message areas, a maximum of three message areas.
+So, three message area for both end of statement or the front right or top right?
+Yeah, for the middle.
+Not the one in the top right corner, not this one.
+Not that one. I'm talking about them.
+Yeah, this one in the middle.
+Yeah.
+So, three of those and three on the bottom of the end of statement.
+You can have five actually.
+Five.
+Five message criterias, but three message areas.
+Right. That's the maximum, yeah.
+And, yeah, five criteria, three message area.
+And the end of statement, the same thing, right?
+That's correct.
+I thought end statement only one, but no.
+No, you can have multiple.
+And then also you can, yeah, go ahead.
+Also, let's say the client wants the second message area
+to also be at the end of the statement.
+You can do that too.
+Or they can?
+Yeah, you can do that too.
+You set this to one.
+So, if I set this, if I change all this to one,
+it should now go to the bottom of the statement.
+Yeah.
+Oh, I see. So, all those.
+Yeah, instead of in the, because it was in the middle before, right?
+And now it's at the end of the statement.
+Because I changed this value in the last column to one, yeah.
+So, that column is telling you the message area.
+No, that column is telling you if it's the end of statement or not.
+So, you can have multiple.
+So, your end of statement can have multiple message areas as well, yeah.
+Hailey, going back to the message ID,
+now that you do a list out and provide us a file for ISD,
+do we still need to put the message ID in the e-statement index?
+Yes, you do.
+Yeah, you still do, yeah.
+The message list is for approval, right?
+Yeah, this is only for approval, yeah.
+Yeah, the one in the e-statement index, it's the same message ID,
+but yeah, you still need to insert it in there.
+Let's say the TXT record, yeah.
+Yeah, and also the paper, do we put in the paper TXT record?
+I don't think we put the message ID there.
+We put the message area in type.
+The e-statement index, we do have message, right?
+But the TXT, don't we have something indicated message?
+Yeah, it's a message type, which is 0, 1, 3, or 3, 4, or 5.
+Is that the same?
+It's the way that we do today for MM2?
+It's the priority, yeah.
+So 0, so in the TXT paper TXT, if it's 0, it's a default.
+If it's 1, it's, yeah.
+There's an indicator where there's a color and not color, graphics,
+not graphics, sorry, graphic or not graphic, right?
+In the TXT?
+Color, no, not in the TXT.
+You specify that in the control file.
+Oh, okay.
+You're talking about the color flag, right?
+Yeah, and I think that's where the building is a little different in terms of,
+this has graphics or not graphics, and I think that's in the control file, I think, yeah.
+Yeah, the color flag is in the control file.
+Yeah, I think so.
+Teran, is that correct?
+Last time you had to report this for building, remember?
+It has to be in the control file, yeah.
+No, it was in the control file.
+What happened was the...
+Let's see, the database, it was in the control file,
+there was different type of issue, different type of problem,
+but bottom line is in the database, the information is not recorded correctly.
+So to fix that, you might want to open up the ticket, you know, in the ticket,
+it basically tells you what it did wrong.
+Yeah, there was several different reasons,
+and I don't remember what was the ticket number.
+Yeah, Yami, you know, you've done some of them,
+did you recall some of the problem we had?
+I can't think of any at the moment.
+Yeah, you have the ticket number, it's summarize all the issues.
+Okay, so yeah, so that graphic color, we still need to add it to the control file.
+So that's a good concern though.
+You know, Lee, you got actually checked the...
+I don't remember what's the table, but Peter's right,
+if the table is not recorded correctly,
+then we then accounting was not able to build correctly.
+Yeah, well, then you have to set it correctly in the control file.
+So you did, so that's what, you know, we set it correct.
+Yeah, yeah.
+Okay, that's good.
+Hey, so let's say someone, remember that it's black, right?
+Someone forget that it's black.
+Would the program work?
+Would it go anywhere?
+If someone forgets to set the color flag,
+then it will be black and white, right?
+So it will run as black and white or it's...
+It will run as black and white.
+It will run as black and white.
+Yeah.
+Okay, so at that point,
+during QA, they will catch this, right?
+And then you also have to export it too.
+Yeah, you can't just set it, you have to export it.
+Okay, export it.
+I just want to see if there's a way that, you know,
+either the systematic program or during processing,
+we know that, hey, that was an error.
+So we need to go back and correct it.
+Because these flags, I know people do a lot of things
+in the control file and sometimes they forget, right?
+So there is a way that we able to identify or catch it
+during processing.
+But you said that if someone forget to add this in...
+Yeah, you treat it as black and white.
+It will keep it black and white for all process.
+Correct.
+And okay.
+I guess we just have to find out when they print
+and they will catch it.
+Or QA can check the control file, right?
+Well, at the time when we print samples, they will see that.
+Yeah.
+Yeah, that's something that... So that concludes my training.
+Do you guys have any other questions?
+Eddie, we're going to have the same issue
+for the end of the statement message, right?
+If it is the two, it's overflow more than one page.
+For the one you said, we got to put break on and break off.
+Break on and break off, yeah.
+If the message is too long.
+Yeah, even at the end of the statement.
+Yeah.
+I think last time when tying the demonstration,
+I asked them, hey, I might need to put a limit
+of number of characters.
+And they said, okay.
+But now that we know all three message can be at the end, right?
+So it will overflow regardless.
+And you cannot put limitation on all three messages.
+So if Lee said, if ISD going forward,
+all these messages, they need to add the...
+What is that?
+The off?
+Break on, break off.
+Prior and before each message.
+And that will solve the issues then.
+I think that would work.
+Sure.
+Let me see what happens if we have a bunch of default.
+This is fine.
+It's only when in your IMP file,
+it's only when in your IMP file,
+if they enter in a really long paragraph,
+then that's when there's an issue.
+Yeah, yeah.
+And that's when you have to add the
+break on and break off in the IMP file.
+But if they consistently just add break on,
+break off for each of these messages,
+then we'll solve the issue.
+Yeah.
+We test that, make sure that's the case.
+And then we let ISD tie know so that they can implement that.
+Yeah, I can let them know.
+Okay, that sounds good.
+Yeah, because I'm thinking,
+hey, this one we can use as an inline insert.
+Sometimes the client asking rush inline insert
+in the back of the statement, right?
+So we can just simply, okay, go ahead.
+You can put it in there.
+Well, the benefit of this is that today,
+yeah, inline insert definitely is the main thing.
+And the each selective insert today, we have design work.
+But I mean, it only works,
+the inline insert will only work for text message,
+not for graphic.
+Right, right.
+If there's graphic, it's not going to work.
+So that's, hey,
+is there a reason why we limited the graphics
+only on the top, on the right corner?
+But for the other message, we cannot use graphic.
+No, I think you can use graphic for the other messages.
+So if I put the graphic message here,
+I think it will show at the bottom, right?
+Well, I don't know which one is.
+I thought that would not be ready until phase two.
+The only issue is on the UI side,
+the graphic message cannot be dynamic
+because the UI statement message area,
+it can't just move up and down like that.
+But the end of message,
+well, in this case, it can be moved too
+because there's so many message, right?
+I mean, that's maybe the reason why they cannot use a graphic.
+Because when they set the position,
+that position is predefined, so they cannot shift it.
+We could be based on a parameter, but they cannot.
+Yeah, on the UI side, you can't make that dynamic.
+It means not going to shift up and down, move around.
+Well, that's the purpose.
+So it's going to be, if they're not going to be able to change that,
+then they cannot move using a dynamic graphics then.
+That's the limitations.
+But then for phase two, what was the purpose of phase two?
+What phase two?
+Message manager 4.0, they have a phase two, right?
+They didn't tell me.
+You don't know what the phase two is about?
+Yeah, I don't know what the phase two is.
+Oh, shoot.
+I think phase two is where they try to accommodate
+more than one graphic message.
+Right now, it's one graphic message,
+and you can have n number of floating message, right?
+Yeah.
+I think the enhancement is to accommodate multiple graphic message.
+But I'm surprised that they didn't tell you.
+You don't know.
+I would not know.
+No, they didn't tell me.
+Peter, David actually allocated resource for message manager enhancement.
+You might want to talk to David, see what's the implications.
+Yeah, yeah.
+What is on phase two?
+He might want to share that to all of us.
+Yeah, but I'm surprised that he doesn't know you,
+then you would not know either.
+I don't really know.
+I don't really know.
+Yeah, so I'll send a message and see what is involved.
+But definitely, we don't want to be just limited to, if the print side can produce that,
+then we don't want to be limited on the east side or vice versa.
+So hopefully, they have something in mind that graphic can be flow as well.
+And that will be powerful tools.
+Otherwise, we're still limited to just message building, not graphics.
+Okay, so it looks good so far.
+Good job.
+Thanks.
+Anything else?
+Yeah, so I think the next steps, guys, we will have some of these conversion upcoming next month,
+middle next month, most likely.
+And so it will assign accordingly to each one of you.
+And in the meantime, before to that time, I suggest you guys play around with it.
+And Lee will definitely can help how you can set this up in terms of getting the
+sample to come along with it.
+Maybe the one that he's using on right now, the one that he's working on right now,
+you can try to load it into your logo and try to understand how to set it up.
+So that's the will be advantage when we got the job turned over to you somewhere in mid February.
+Now, not all the data set will look like this.
+And not all the program application looks like the one that Lee show.
+So, but the idea is that if you these applications already have, okay, already have message manager
+two, or one, whatever they have today.
+So the code that it has in there is very similar to what Lee has.
+So it's just that we need to replace those.
+Again, you know, it's good to practice before that turnover.
+Lee, one more thing on the sam.sam file, the whole key, do we have to make any change on that?
+Most it stays, it's still the same.
+Okay.
+Yeah, this that sam will have five accounts that dynamic sample would have only one account.
+Okay.
+And I know, last time you did the training on 2.0, right, but I don't think we have the videos.
+So, if you kindly, maybe let's do another quick training for the new folks who never worked on
+message manager or DDA statement, or, you know, a complex statement before, so that they grab more,
+because I think there's a lot of fundamental that we is not included in this training.
+So I deal to have that another training separately.
+Yeah, I can schedule another training with them.
+Yeah, that's good. The ones that already knows how to set it up, don't have to attend.
+That's correct. That's correct. You can, we can send it out to all, whoever wants to attend.
+They can. Yeah.
+All right. I think that's wrap up of the trainings. Are there any questions from anybody?
+Oh, by the way, it's not live yet, Peter.
+I thought it went live already, you know.
+Still, still in QA.
+Still in QA.
+Alex is here. Alex, you're still checking it, right?
+Well, not really. We pretty much wrapped up,
+because we have other tasks, and now we have hypercube to test.
+Okay, so we decided that we, yeah, we will finish testing, unless you guys
+make some major change that requires us to regression test everything.
+But basically, we are counting on a new release on February.
+So we're going to retest on February everything anyway.
+Okay, so there is some February first, is that right?
+I mean, Alex, you test in pilot, but have you tested in stage?
+I should be testing the stage. Isn't it identical to pilot?
+No, but I mean, the environment is different. So I think we should test that too.
+And then we should process a cycle and then have ops printed out.
+Oh, yeah, definitely. Yeah.
+That's the end-to-end test.
+That's why we need it. Yeah, we're going to need parallel forms in your meeting.
+So most likely, Matt will like to beginning February somewhere.
+So let's keep that. We had a meeting with IAM today, and they won't be ready to turn over
+until mid-February anyway. So between now and then, I pretty much should have that live by then.
+But in the meantime, all this learning, we have to run anything used in pilot, correct?
+Is that right? Or in parallel?
+Oh, you can test it in both. You can create a campaign in parallel too, if you want.
+Well, pilot will be challenging because remember, pilot is actually customer
+verification site, right? So we don't want to mess around with that either.
+I mean, no, but we're just testing the demo. We're just testing demo client.
+Yeah, this is using a demo CID, okay. Yeah.
+All right. But at this point, I think if the programmers want to learn this,
+they will just learn it on their local PC. I mean, local designer, right?
+Yeah, they can just modify the portal file.
+We don't need to export anything out at this point.
+I mean, I'll export the demo application to the training folder.
+Okay.
+And then they can just use that as a reference. Yeah.
+Cool. All right. That's it.
+If there's no other question, then thank you, everybody.
+Thank you, Lee, for the training. It was pretty good. Thank you.
+Thanks, guys.
+Thank you.
+Thank you.
+Okay, so first of all, you need to initialize all your, actually specify the dimensions
+and the width and height of your message in before first doc.
+So here there's three message areas, horizontal, vertical, and the width for each message area.
+And then you got to call these two external DFAs to read in the portal file.
+And then in before doc, you got to specify all your selective message criteria variables.
+So in this example, ACN, and then you got to use these, the variable name you use has
+to be ACN, for example, you use account number, it has to be ACN, you can't use a different
+variable name, same thing with the zip, it can't be like zip code or zip underscore code,
+it's just zip.
+Then you got to create a message, what is it, message manager value table.
+So this table is used, I mean, you only need this table, you only need to find this table
+if you have any of these, if you need to use any of these criteria here, for example, product
+type imbalance.
+And these information usually are for each product, I mean, it belongs to a certain product
+like checking, savings, IRA certificates, and so this is what the message manager value
+table looks like, first row, I mean, each row is a different product with 18 fields,
+so it's pipe delimited.
+So if you if your criteria is, if you need to use a maturity days, for example, they'll
+be in column field three, so you got to put it in column three.
+For account number, make sure you strip the leading zeros, because otherwise it won't
+match and you won't pull the correct message.
+And for zip code, you only need the first five digits.
+Also, if you don't have any selective criteria, for example, they only want a default message,
+everybody gets the same message, you don't need to do any extra steps, so there's no
+selective since there's no selective criteria.
+So this is an example of how to assign account number to ACN variable, stripping out the
+leading zeros and extracting just the first five digits for zip code.
+So for your message manager value table, let me open one to show you how that works.
+So here, this is OSI data.
+You have to capture, if you want, if you need any balance, you have to capture any balance
+from record 2000, position 178, and you can check the OSI record layout.
+This is OSI record layout, record 2000.
+So record 2000, this is like shares and savings and checking.
+So record 2000 fields, I mean, position 178.
+So this is your ending balance here.
+So depending on what data core you're using, you're going to capture the values for each
+criteria differently.
+So for this one, this one's OSI, so it comes, the ending balance comes from record 2000,
+position 178, which is what I have here.
+So record 2000, position 178, the length is, the size is 13, 13 characters.
+And then you store in here.
+The ending balance is in the second column, according to this.
+Yeah right here.
+So it's a second field.
+So for each array element, that's going to be one, all the information is for one product,
+like checking.
+So if you have an interest rate that belongs to the same product or same checking, you
+append it, you append it to that array, but you don't have to increment the pointer.
+You only increment the pointer if you're working with a different product.
+So this one is just checking, so everything is in one array element.
+So if you have another product, you'll increment the message measure pointer, and then you
+should have two array elements.
+And here this is, for example, this one, record 4050, that's interest rate, but it belongs
+to the same product, so you just append it to this message manager table.
+This part I already covered last week, what to call the external DFAs.
+And then for each statement, you need to assign the message ID, or you need, yeah, you need
+to assign the message ID to a variable, NSGID, NSG underscore ID, underscore STR, you assign
+the message ID from the portal file into this variable.
+So you can have multiple message IDs, and they'll all be inside this variable.
+So here, so you have three message IDs, because there's three message areas, so all these
+message IDs will be stored in the e-statement index, and the message ID needs to be in the
+ninth field, in the e-statement index, and you store it when you write out the record,
+and you can see it right here.
+There's two message IDs here in the e-statement index, and then ISD will reference these message
+IDs to pull the messages.
+And then in your paper index, CXT record, you have to set the message area one type
+and message area two type here.
+So it starts at 4.11, that's the first message area.
+So the second message area will be 4.12.
+So 4.11 through 4.11 to 4.16, that's five message areas.
+Each message area will have, you can only have one byte, each byte represents criteria.
+So for example, zero is the default criteria, the next one, type one is criteria one, two
+will be criteria two.
+So if I run this, okay.
+So this one is, so this first, this account, this account here, the message area one has
+a default message, this is zero.
+Second message area has a, the plus sign is a floating message.
+So second message area is a floating message, and third message area is also a floating
+message, and that's position 4.13.
+So you also need to create a SAM file and a dynamic sample file for the approved message
+and the dynamic sample preview.
+So you have to create five accounts for the approved message samples and one account for
+the dynamic samples.
+And they all have to be, I mean, they have to be fake data, not real data.
+And if you don't want to create one, you can just copy it from a different client that
+has, they use the same data core.
+So for example, for Symmetar, let me see if I can, like ewcu is a Symmetar, is a Symmetar
+data structure.
+So there's a SAM file here, you can just copy this and rename it to the prefix that you
+need, but it has to be the same data core, it has to be the same data core.
+And in your control file, you have to set or define these message, message variables
+right here, message manager, total message area, image, color flag, well, these two variables,
+image message area and color flag, you only need them if you have a graphic message.
+So this one has one message, one graphic message, color flag, they want color for paper and
+E. If they don't want color, you don't need that.
+And for message manager 4.0, set it to yes and then export those variables.
+So in this case, this one, this application has three message areas.
+After that, you got to move your DFA resources and control file to the proper environment.
+So if you're testing in pilot, copy it to RHT, if you're testing in parallel, copy it
+to staging.
+Any questions so far?
+No?
+Okay.
+Yeah.
+Okay.
+Maybe you might have mentioned already, for the existing setup, for we are updating to
+message manager 4.0, which steps are we got to put the one you added in or we don't have
+to do all everything again, right?
+Because it's existing, right?
+So DFA, what do we need to do for DFA for existing job?
+We just need to update your message manager 4.0.
+If they want message manager 4.0, you got to do, just follow the instructions here.
+Wait, turn.
+Oh, this one.
+Okay.
+Yeah.
+So I create a documentation for that, so I mean, it's the same, the external module
+is similar.
+I mean, it's almost the same as the current external module, the name.
+I just added underscore mm4.
+Okay.
+So we just need to check on DFA calling mm4, right?
+Not just that.
+You got to put it in the correct place.
+You got to follow these steps.
+And also, you know, the margin, because I noticed in the current external message manager,
+the DFA, the margin is hard coded, right?
+See these margins here, like 0.5, 0.6, and then you have to do some calculations.
+But now for the, if you use the new external DFAs, I reset them all to zero, so you don't
+have to do any calculations.
+So whatever position you want to place it at, it'll be the correct position, right?
+Does that make sense?
+Okay, let me show you guys, go through an example, how to create it on InfoTrack, okay?
+Let's see here.
+So you go to client management settings here.
+I'm working with demos, sort of use demos as an example.
+Click on message settings.
+So this one has three message areas.
+For each one, you have to configure it, right?
+So for example, this is message area one.
+If it's image, use image, wait, where's text?
+Oh, yeah, this is image, not text, oh, text, imp.
+So if it's image, use image, then you don't need to worry, since it's an image.
+With height, this is in pixels, so you have to convert it.
+So if it's like three, if you want to convert it to pixels, you have to multiply inches
+by 85, and then if it's not accurate, you just have to change the number, or change
+it until you get it, until it's in the place, until it appears correctly.
+So here's the image width, image height, image has to be 300 dpi, marketing link, you have
+to check this if you have e-statement, areas, message area, priority, there's five.
+Yeah so, and if it's floating, you check this box, and if statement, you check this box.
+It's both, check both boxes.
+And then here you check the criterias that you need.
+So zip code is a text, text for ending balance, I mean, for ending balance, change it to rate.
+And now there's like, and there's different ending balance here, I think you can use any
+of them, like this one's end bell, and this is ending bell.
+Account number, make sure you select a file to upload a list for account numbers.
+Interest rate, for amounts or ending balance, you have to change it to rate.
+And for text message, you do the same thing, but for text message, you have to specify
+the maximum number of characters and how many characters you want per line.
+And then you can select different, for each message area, you can use a different set
+of criterias.
+So if you want to create a campaign, you can go to create a new campaign or you can make
+a copy of an existing campaign.
+So this one, I made a copy of the campaign.
+So here, the first tab is first message area.
+This is a graphic message.
+So the first tab, one is criteria one, two is criteria two, and this is the default.
+For default, you have to select, check this box, mark as default message.
+If it's image, you upload the image.
+So this is the image for each statement, image for paper.
+If you don't want any image, just check empty message content.
+If you want the same image for both, turn this on.
+And this is the second message area.
+So this is a text for the second message area.
+So this is for the first criteria, you'll get this message, B or B, you'll get this
+message and C is the default, because this is check, you get this message.
+Just go to next.
+So here you can just test your values to see how the message will look like.
+You don't really have to do anything here.
+You can skip this step if you want, but you want to see how it looks like then you enter
+in the value.
+So for example, I set zip code, this 94025.
+You want a picture of this dog.
+Let's go next, go next, and test it here.
+Generate, click the generate e-preview and it should be a picture of a dog.
+So yeah, that's only if you want to test your values, but you don't have to.
+And then here you just save your campaign, approve your campaign.
+So after you approve your campaign, you should see it in this folder, because I'm testing
+on stage, so you should see it in sample folder.
+Campaign has been approved.
+So these are all your resources for message resources if you need, if you want to test
+them locally, you can take it from here.
+But for text messages, you can't take it from here if you want to test it locally, you have
+to take it from home test keep, I mean home test basis, IMP library.
+Only for sample, for approved sample, it has to come from this folder.
+But if you're testing, if you're running a cycle, a normal cycle, it'll be in this folder.
+But this is for approved sample process, so you check this folder.
+And then the IMP files should be in the demo.
+And just copy this to your PC, all these demo IMP files.
+And for graphic message, actually, nothing for graphic, yeah, so that's basically it.
+You guys have any questions?
+At least, once CID, we need to release at the same time, it doesn't matter, it's go with
+the application for updating to MM4.
+Let's say like, let's say for example, OFC, you have a statement and visa, do we need
+to go live at the same time, or it doesn't matter?
+They don't have to go live at the same time.
+Okay, good, thank you.
+Yeah, that's all I have.
+Wait, wait, let me think about it.
+So you're saying, can one go live before the other?
+Yeah, yeah, yeah, let's say you have finished MS1 first, right?
+You can release first, right?
+Or you got to wait to MS1 and MV1 finish together, then you can release together.
+Let me see, let me check that real quick.
+I think you have to convert all of them before you can.
+Really?
+By application?
+No, I mean by CID.
+Yeah, by CID, because there's a box here, in feature settings, there's a feature settings.
+Yeah, see, if you check message manager four, or this one's message manager three.
+So if you check four, and not three, then you have to convert all of them.
+Or you cannot click both at the same time, huh?
+I don't think so.
+Yeah, you can't click both at the same time.
+So yeah, you can't release one before the other.
+Okay.
+Okay.
+All right.
+Thanks.
+Okay.
+Anything else?
+Oh, one more thing.
+The portal file, you can also get it from the same folder, which is the message resource
+sample folder.
+The portal file is also, you can also find it here, it's located here.
+And then, but for normal statement process, it'll be located one level folder up.
+Yeah, it should be here.
+I think someone cleaned it up, it's not here anymore.
+But yeah, that's it.
+Right.
+Make sure, after you create your campaign, the date of the campaign matches the file's
+file date.
+So yeah, that's the end of my training.
+You guys have any questions?
+Just let me know.
+Thank you.
+Okay, sure.
+Tagged:message managermm4selective criteria

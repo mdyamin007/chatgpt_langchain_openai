@@ -1,0 +1,14 @@
+title: MFCU:  Daily Notice Bad Address list Processing Script In-house Fix
+description: Parallel Required: No (But requires proof of regression testing to that DPVS counts matches Production).
+
+Spec #1  Avoid using MC_BY_ACCT variable in Insert File rewrite
+Remove Daily Notice processing script logic not update insert file MC_BY_ACCT variable.  The BadAddress mail code z will need to handle from the processing script/DFA level to flag mailcode=z.  
+
+Recommend adding the following function call into your mfcudla_process.sh after the     format_all_ltr_set5 "s" call.
+                      ${home_master}/master/mailcode_bin.pl $cid $prefix "${dir}${prefix}" $temp3 z d e
+
+
+Spec #2  Update processing shell script to give DP the option to manually run job by job_sel f, s, e:
+DP reported that they do not have the ability to run job_sel individually.  They need to have this flexibility to do so for ANY processing script as a SOP.  Please update processing script to provide this capability for the Daily Notice script.
+
+

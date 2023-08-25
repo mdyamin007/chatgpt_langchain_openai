@@ -1,0 +1,238 @@
+title: SLCU Backend Analysis
+body: # _****_
+
+# _**Backend Processes**_
+
+SLCU has 7 backend process:
+
+  1. Afp
+  2. Permission
+  3. Insert
+  4. Enotice
+  5. Paperless 
+  6. Etax
+  7. Doc
+
+##  _ **Statement types and index file name**_
+
+  1.  **global.ms1** =default
+  2.  **global.mv1** =visa_gold
+  3.  **global.mv2** =visa_plat
+  4.  **global.mv3** =visa_mbs
+  5.  **global.mv4** =visa_duet
+  6.  **global.ms4** =default
+  7.  **global.dla** =enotice
+
+  
+
+ESTMT Type| Prefix| Process to Use  
+---|---|---  
+default| ms1| AFP  
+default| ms4| No index file found  
+visa_gold| mv1| AFP  
+visa_plat| mv2| AFP  
+visa_mbs| mv3| AFP  
+visa_duet| mv4| No index file found  
+escrow| es1| No index file found  
+enotice| dla| DOC  
+etax| etax| ETAX  
+default| ms1_paperless| PAPERLESS  
+  
+##  _ **Afp Process**_
+
+Statements that will be processed by Afp:  **default, visa_gold, visa_plat,
+visa_mbs.**
+
+### Flags:
+
+  * afp.compression=true
+  * global.autoRegister=true
+
+### Handler (data): __AfpStatementData6__  
+
+ _ **fileName**  |  **acctNum**  |  **beginDate**  |  **closingDate**  |
+**numOfPages**  |  **acctName**  | ssn | appType | messageIds_
+
+  *  **Bold**  indicates mandatory field.
+  * Set sequence number from  **fileName**. Split File_Name with "_", if length == 5 take arr[3] as seqNum else take substring from arr[3] from 0 to starting of ".afp" or ".pdf". 
+
+### Registrar: __MessageEStmtRegistrar__
+
+  1. Always creates a new account if not found. 
+  2. As global.autoRegister is true, creates a new  ** _USR_**  and  ** _USR_SESSION_**  record. 
+  3. Set DSO date in  ** _USR_SESSION_**  table. 
+  4. Set account number as  _sess_login_id_  in  ** _USR_SESSION_**  table. 
+  5. Does not create user mapping. 
+  6. If a record is found in the  ** _FIN_ACCOUNT_**  table, update  _acct_owner_name,_  unless the name is "MEMBER". 
+  7. As multipleDocType is false, data will be blindly inserted while registering statements. 
+  8. Image_Message is true for " **default** ", " **visa** " and " **loan** ". Therefore registerMessage method will be called for those statement types. 
+  9. As multipleDocType is false, email notification will be turned on. So  ** _EmailNotification.register_**  method will be called.
+
+  
+
+ **getFinAccount()**
+
+  1. Search account with the  **account number** : 
+    1. If not found: 
+      1. Inserts into  _ **FIN_ACCOUNT**_  with the account number, name and set the status to NA,  **no acct_type**. 
+      2. Create  _ **USR**_ _ _ and  _ **USR_SESSION**_  with  **account number as sess_login_id, DSO date.**  
+      3. Insert into  _ **USR_FIN_ACCOUNT**_  with  **acct_id**  &  **usr_id**. 
+    2. If found: 
+      1. Updates the user's  **first_name**  to account name. 
+  2. Insert into paperless ( _ **PAPERLESS**_ )
+  3.  _FIN_ACCOUNT_ **:   type -> NA, Status -> A**.
+  4.  _USR_FIN_ACCOUNT:  _ **ufa_status  -> active.**
+  5.  _PAPERLESS **:**_    **p_new_status  -> B, p_old_status -> N. **
+  6.  _PAPERLESS2:  _ **p_latest_status  -> B, p_old_status -> N.**
+
+### Mismatch with Hypercube Business:
+
+  1.  ** _sess_login_id_** **= acctNum** instead of **_!usr_id_**
+  2. Though **autoRegister** is set to true, no entry in **_USR_MAPPING_** table. 
+  3.  **DSO** **date** not null.
+
+### Changes Needed:
+
+  1.  **Registrar  -> **
+    1. Use  **HypercubeEStmtRegistrar**  as the registrar for Afp process instead of  **MessageEStmtRegistrar**. 
+    2. In  **HypercubeEStmtRegistrar.registerMessages()**  method, add a check to  **cast data1 to AfpStatmentData6.**  
+
+  
+
+##  _ **Paperless Process**_
+
+Statements that will be processed by Paperless:  **default**
+
+### Flags:
+
+  * paperless.classPath
+
+### Handler (data): __SlcuPaperlessHandler__  
+
+ _ **acctNum** | **status** | email_
+
+  1.  **Bold**  indicates mandatory field.
+  2. Only digits are allowed as account number.
+
+### Registrar: __EnrollmentRegistrar__
+
+  1. Sets DSO date in USR_SESSION table.
+
+ **enroll():**
+
+  1. Search for account by account number.
+  2. If account not found ->
+    1. Creates new account and user if account is not found -> _FIN_ACCOUNT, USR, USR_SESSION._  
+    2. Creates user and account mapping ->  _USR_FIN_ACCOUNT._   
+  3. If account is found -> 
+    1. Search for user and account mapping by account number. 
+    2. If mapping not found -> 
+      1. Creates new user profile -> _USR, USR_SESSION_
+    3. If mapping found ->
+      1. Get the user data by user id. 
+  4. Get the admin user profile by login id as "superuser". 
+  5. Search and insert/updates the email address by ci id.
+  6. If contact_info record not found -> 
+    1. Creates new contact_info record ->  _CONTACT_INFO_. 
+  7. If contact_info record found -> 
+    1. Get the old email address by ci id.
+    2. If (old email not found and new email is provided from index file) or (old email and new email does not match) -> 
+      1. Sets the email from index file as ci_email_addr ->  _CONTACT_INFO._
+      2. Creates a new audit log record -> _AUDIT_LOG_SLCU_.  
+  8. Search for paperless record by account id and statement type as "default".
+    1. If paperless record not found -> 
+      1. Insert new papaerless record -> _PAPERLESS_ (p_old_status -> "N", p_new_status -> "B"). 
+      2. If "E" was sent from index file ->  _PAPERLESS_ (p_old_status -> "B", p_new_status -> "E"). 
+    2.  If new status was "B" and index file sends "E" (opt-out) -> 
+      1. Update paperless reocrd ->  _PAPERLESS_ (p_old_status -> "B", p_new_status -> "E"). 
+    3. If new status was "E" and index file sends "B" (opt-in) -> 
+      1. Update paperless reocrd ->  _PAPERLESS_ (p_old_status -> "E", p_new_status -> "B"). 
+  9.  _FIN_ACCOUNT:   _acct_owner_name -> "New Member", last_modified_date -> today's date.
+  10.  _USR_SESSION:_ sess_login_id -> acccount number, dso -> today's date.
+  11.  _USR_FIN_ACCOUNT:  _ufa_status -> "pre_reg", ufa_registrationdate -> today's date.
+  12.  _USR:_  usr_firstName -> "New Member".
+  13.  _CONTACT_INFO:  _ci_email_addr -> email from index file or null.
+  14.  _AUDIT_LOG_SLCU:_ created_by -> admin id(1), target_user -> user id, old_value -> old email, new_value -> email from index file. 
+  15.  _PAPERLESS:  _p_old_status -> "N/B/E", p_new_status -> "B/E".
+
+  
+
+  1. Email is only updated through a paperless process. 
+  2. In process file email is not mandatory. So if null email is processed then, the existing email in the contact_info table will be replaced by null value. 
+  3.  ** _sess_login_id_** **= acctNum** instead of **_!usr_id_**
+  4. No entry in **_USR_MAPPING_** table.
+  5.  **DSO date** not null.
+
+##  _ **Doc Process**_
+
+  1. No process file is found that will be processed by DOC.  
+  2.  ** _sess_login_id_** **= acctNum** instead of **_!usr_id_**
+  3.  **DSO** **date** not null.
+
+##  _ **Enotice Process**_
+
+  1. Will be done by Doc process. (Enotice process files has doc process data file format)
+  2. enotice.createAccount=false, no account will be created if not found.
+
+##  _ **Etax Process**_
+
+  1. No change needed. 
+  2. etax.createAccount=false, no account will be created if not found.
+
+  
+
+  
+
+Account created/updated by: AFP, DOC, PAPERLESS
+
+Account updated-only by: ENOTICE(doc), ETAX
+
+Contact info(email) created/updated by: PAPERLESS
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+

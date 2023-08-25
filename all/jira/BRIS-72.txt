@@ -1,0 +1,212 @@
+title: ETABoard:  Install Apache, PHP, Tomcat, Perl
+description: Setup Dockerized version of ETABoard:
+
+Install Docker and the container should have the following software:
+ * Apache
+ * Tomcat
+ * PHP
+ * Perl
+ * Oracle Drivers
+ * Mount Directories (ideally not to use mounts but 'scp' instead.
+
+
+author: william.kong
+comment: I've installed as much as I can. Here are some of the instructions as to how far I've completed:
+
+*Docker Resource Files:*
+
+
+{noformat}
+/home/terrence/install/docker_etaboard
+{noformat}
+You will need to review the docker_etaboard/Dockerfile for all the instructions that I've used to create the docker image. From there, you can understand what I installed.
+
+*+Helpful Hints:+*
+
+
+
++Building docker image from Docker File:+
+
+After you updated the Dockerfile and if you need to create a new image, please run the following; (Note: make sure you are inside the docker_etaboard directory before you run the following commands:
+
+
+{noformat}
+docker build . -t etaboard_img{noformat}
+
+
+This will compile the Dockerfile
+
+
+
++Creating a new updated Container:+
+
+Step #1) [Checking if container is active]
+
+Make sure there is no running active container by running the following command:
+
+
+{noformat}
+docker ps -a{noformat}
+This will list all active and/or not active running containers:
+
+
+
+!image-2020-01-16-10-49-25-087.png!
+
+In this example, the status column notates that it is still running for the past 7 minutes.
+
+Step #2) [Stopping an actively running container]
+
+
+{noformat}
+docker stop etaboard{noformat}
+
+
+
+
+Step #3) [Delete the container]
+
+
+{noformat}
+docker rm etaboard
+{noformat}
+
+
+Step #4) [Create a new container]
+
+In this example, we are building a container off of the docker images that we created earlier called 'etaboard_img' and we are going to label the container name as 'etaboard'
+
+
+{noformat}
+docker run -it -d -p80:80 -p8080:8080 --hostname ca-etaboard-pr-01 --name etaboard etaboard_img{noformat}
+
+
+
+
++Accessing the container:+
+
+To access the container (i.e. to ssh into the container), please ensure the container is actively running:
+
+!image-2020-01-16-10-54-08-025.png!
+
+In this example, the container stopped 3 seconds ago.
+
+Step #1) [Making the container active]
+
+
+{noformat}
+docker start etaboard
+{noformat}
+
+
+Step #2) [Accessing the container by opening an new bash terminal]
+
+
+{noformat}
+docker exec -it etaboard bash
+{noformat}
+Now you should see something as follows:
+
+!image-2020-01-16-10-57-38-179.png!
+
+
+
++Starting/Stopping/Restarting container:+
+
+
+{noformat}
+docker start etaboard
+docker stop etaboard
+docker restart etaboard
+{noformat}
+
+
+
+
++Deleting Docker Container:+
+{noformat}
+docker rm etaboard{noformat}
+
+
++Deleting Docker Image:+
+
+
+{noformat}
+docker rmi etaboard_image
+{noformat}
+
+
+
+
+
+
+
+
+
+author: william.kong
+comment: Here are some environment directory structure inside the etaboard container:
+
++PHP Code:+
+{noformat}
+/var/www/etaboard-prod{noformat}
+
+
++Apache Conf:+
+{noformat}
+/etc/apache2/{noformat}
+
+
++Tomcat:+
+
+Parent directory:
+
+
+{noformat}
+/opt/tomcat9{noformat}
+
+
+Log Directory:
+{noformat}
+/opt/tomcat9/logs{noformat}
+WebApp and WAR file
+{noformat}
+/opt/tomcat9/webapps/report
+/opt/tomcat9/webapps/report/reports.war{noformat}
+
+
+
+
+
+
+
+
+
+
+
+author: william.kong
+comment: Terrence:
+
+
+ * You may need to re-sync the PHP code again. This version was back 1 to 2 years ago when we worked on the PostGre Database project. So the code might be old. I did NOT install PostGre, but I just wanted to let you know how old the code is.
+ * I did not test Tomcat web application for the management report
+ * For sure the PHP DPVS pdf logic is not working since I did not install any printer driver.
+ * Please ensure the Dockerfile is updated. I may need to rebuild this to a different VM once I we have a new server in Brisbane.  I'm considering to setup one docker server that will have several docker containers running including ETBoard.
+
+
+
+
+author: terrence.tong
+comment: Attached is the updated docker file. [^Dockerfile]
+
+Everything is working, except for DPVS due to barz is not install and new server IP has not change.
+And cannot test print files claim logic. This server has no access to production print files.
+
+Back end process server IP has not change. 
+
+
+author: terrence.tong
+comment: Mostly done,
+
+Unibar will not work without license.
+
+ !screenshot-1.png|thumbnail! 

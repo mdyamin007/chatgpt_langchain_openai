@@ -1,0 +1,39 @@
+Sometimes we need to convert a lot of pseg at a time. In this case it is very tidious and time consuming to use the Papyrus image editor to convert all the pseg.
+In this case we can use the help of /isis/psel3700/pic/psel3pic in preprocessing02.
+There is already some scripts that are being used to convert tif images to pseg, such as,
+${home_master}/master/pseg_conv.sh
+${home_master}/master/conv_pseg_to_fs10.sh
+In this post we are going to provide a basic conversion approach. And we only worked on tif image to pseg conversion so far. If you have worked on any other image format, then please do share.
+The script "psel3pic" needs a file as profile which contains all the configuration of pseg conversion.
+The profile file extension is ".icd".
+Try to find template icd files in ${home_master}/master/ directory.
+I generally used the base_pseg.icd file for normal color tif image conversion.
+If you want to reduce the quality (but still printable for b/w) of the image after conversion, then you can use base_pseg_fs10.icd. You will need to use base_pseg_fs10.icd in case if the tiff file is generating bigger size for base_pseg.icd.
+In the icd file PICResolution and PPMFPP value should be "300" and PICDitherMax should be "1024". This is infoimage convention.
+You can play around with other variables for experiment purpose.
+You will notice that, in base icd files, PPMFInputName and TargetName variables are missing.
+PPMFInputName should contain the input tif file name with full path.
+TargetName should contain the output pseg file name with full path.
+You need to create your own icd file and add these two variables with their values.
+You need to run the below code in your /t/test_{username}.sh when your icd file is ready. Suppose your icd file is in $cur_icd_name variable. Then you should assign it to "profile" in below command.
+ssh -o BatchMode=yes $LOGNAME@preprocessing02 ". /home/control/daily.control; . /etc/profile; /isis/psel3700/pic/psel3pic /profile=$cur_icd_name >>${log_name} 2>;&1"
+For TKCUDL039 project i did the following:
+#TKCU01
+main_tif_name="Primary"
+data_dir="/z/download/pseg_conv_test/res_300/"
+template_icd_name="/z/download/pseg_conv_test/base_pseg_fs10_0322.icd"
+for filename in ${data_dir}/*tif
+do
+    # echo "Tiff file name: ${filename##*/}"
+    cur_tif_num=`echo ${filename##*/} | cut -d '_' -f2 | cut -d '.' -f1`
+    cur_tif_num_padded=$(printf "%02d" $cur_tif_num)
+    cur_icd_name="${data_dir}/base_pseg_TKCU${cur_tif_num}.icd"
+    # echo "Tiff num: ${cur_tif_num}"
+    cp $template_icd_name $cur_icd_name
+    ppmf="PPMFInputName=${data_dir}${main_tif_name}_${cur_tif_num}.tif"
+    echo $ppmf >> $cur_icd_name
+    target="TargetName=${data_dir}S1TKCU${cur_tif_num_padded}.300"
+    echo $target >> $cur_icd_name
+# log_name="${data_dir}base_pseg_TKCU${cur_tif_num_padded}.log"
+# ssh -o BatchMode=yes $LOGNAME@preprocessing02 ". /home/control/daily.control; . /etc/profile; /isis/psel3700/pic/psel3pic /profile=$cur_icd_name >>${log_name} 2>;&1"
+# done

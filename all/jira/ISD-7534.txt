@@ -1,0 +1,120 @@
+title: PUI - Update email process to get exact template
+description: Currently the notification template API returns all templates that contains the statement type description. Update Processing UI to use the template that have the exact same name as the processed statement type description.
+
+
+author: azad
+comment: To QA,
+
+_Task Background_:
+
+In Processing UI while selecting the email template for "Visa Statements",an issue occurred for RWCU. When triggering an email job for "Visa Statements", PUI selected the template for "Annual Visa Statements". This issue occurred because template-service api returned all templates whose names contained the string "Visa Statements" with most recently modified templates first and Processing UI selected the first template returned from api which happens to be the "Annual Visa Statements" template (it was the most recently modified template whose name contains the string "Visa Statements").
+
+To fix this issue Processing UI email job is updated. Now, processing ui will only select the template that matches(case-sensitive) the statements name/description stated on the cid.conf file.
+
+
+
+_Expected behavior for some primary cases_:
+
+CID: RWCU, Selecting template for a "Visa Statements" job:
+
+
+||Case||Expected Behavior||
+|Only "Visa Statements" template is active on InfoTRAC|Load "Visa Statements" template|
+|Only "Annual Visa Statements" template is active|No template found error|
+|Both "Visa Statements" and "Annual Visa Statements" templates are active|Load "Visa Statements" template|
+|Both templates are active but "Annual Visa Statements" template is most recently modified|Load "Visa Statements" template|
+|No active template for "Visa Statements"|No template found error|
+
+Please test this cases with additional cases if needed.
+
+To view the loaded template for an email job please run an AFP process for RWCU with the following demo file and then move to email template select page and check the loaded template for each cases.
+
+afp job file name:*mv1_20211211_1_01042022_1444_RWCU.txt*(Run with bypassing dt_job_id and parallel run checked)
+
+Processing UI stage: [http://pui-stage.infoimageinc.com/]
+
+InfoTRAC stage: [https://infotrac-stage.infoimageinc.com/]
+
+
+
+[~Tin.Chak] [~rifat.mahmud] [~mac] fyi
+
+Thanks
+
+Azhar
+
+
+
+
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+
+*TEST-RESULT*
++CID: RWCU+
+
+Type: mv1 (*Visa Statements*) [0000137550]
+ Index file: /d/INPUT-DEV/I3/process-files/rwcu/mv1_20211211_1_01042022_1444_RWCU.txt
+||Case||Expected Behavior||Actual Result||Test||
+|Only "Visa Statements" template is active on InfoTRAC|Load "Visa Statements" template|Job ID:[195177], File: /usr/local/processing-ui/station/logs/rwcu/email/08052022_0338038.log|*{color:#00875a}PASSED{color}*|
+|Only "Annual Visa Statements" template is active|No template found error|!scr_mv1_2.png|thumbnail! >>> [^scr_mv1_2.png]|*{color:#00875a}PASSED{color}*|
+|Both "Visa Statements" and "Annual Visa Statements" templates are active|Load "Visa Statements" template|Job ID:[195204], File: /usr/local/processing-ui/station/logs/rwcu/email/08082022_1004014.log|*{color:#00875a}PASSED{color}*|
+|Both templates are active but "Annual Visa Statements" template is most recently modified|Load "Visa Statements" template|Job ID:[195206], File: /usr/local/processing-ui/station/logs/rwcu/email/08082022_1017006.log|*{color:#00875a}PASSED{color}*|
+|No active template for "Visa Statements"|No template found error|!scr_mv1_5.png|thumbnail! >>> [^scr_mv1_5.png]|*{color:#00875a}PASSED{color}*|
+
+Type: as1 (*Visa Annual Statement*) [0000001052]
+ Index file: /d/INPUT-DEV/I3/process-files/rwcu/as1_12312020_1_05182022_9999_rwcu.txt
+||Case||Expected Behavior||Actual Result||Test||
+|No active template for "Annual Visa Statements"|No template found error|!scr_as1_1.png|thumbnail! >>> [^scr_as1_1.png]|*{color:#00875a}PASSED{color}*|
+|Both "Visa Statements" and "Annual Visa Statements" templates are active|Load "Annual Visa Statements" template|Job ID:[195210], File: /usr/local/processing-ui/station/logs/rwcu/email/08082022_1103045.log|*{color:#00875a}PASSED{color}*|
+
+
+author: azad
+comment: [~Tin.Chak]
+
+I am changing the status to in progress as the template service API is being updated right now so implementation from our side will be changed. Also, as we are dependent on API side on this, they don't seem to match the 8/17 prod release of this ticket. I am moving this ticket to next release on 8/24.
+
+[~rifat.mahmud] [~Igor.Khosid] [~Andrey.Kutsenko]fyi
+
+Thanks
+
+
+author: azad
+comment: [~Igor.Khosid] [~Andrey.Kutsenko]
+
+Due to the changes done on template-service API side, PUI implementation for this task has been changed. Please do the testing on Stage and cover all the cases done before.
+
+[~Tin.Chak] [~rifat.mahmud]
+
+Thanks
+
+
+author: JIRAUSER11104
+comment: QA is completed on PUI-Stage.
+ Result - *PASSED*.
+{quote}
+#Tested on test cases from previous posts.
+#Jobs:
+    Job ID:[195580]
+    /d/INPUT-DEV/I3/process-files/rwcu/mv1_20211211_1_01042022_1444_RWCU.txt
+    Job ID:[195585]
+    /d/INPUT-DEV/I3/process-files/rwcu/as1_12312020_1_05182022_9999_rwcu.txt{quote}
+
+
+author: JIRAUSER11104
+comment: Hi [~Azad], please update the status of this story based to SOP.
+
+
+author: azad
+comment: [~Tin.Chak] Deployed to Prod.
+
+[~Andrey.Kutsenko] Ticket is moved to done.
+
+[~rifat.mahmud]fyi
+
+
+
+Thanks
+
+Azad

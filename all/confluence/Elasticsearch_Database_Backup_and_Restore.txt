@@ -1,0 +1,204 @@
+title: Elasticsearch Database Backup and Restore
+body: Two steps : Take backup from server 10.8.9.126 and restore on server
+10.4.18.51
+
+####  
+Step #1 : Take backup from server 10.8.9.126
+
+               Indexes to backup : wecu_pilot, demo_pilot
+
+1\. Create a backup directory on the server (10.8.9.126) from which we want to
+take backup
+
+  
+root@[mailer-elk-pilot01:/usr/local/elasticsearch#](http://mailer-elk-
+pilot01/usr/local/elasticsearch) mkdir elasticsearchbkup
+
+  
+
+2\. Add this directory to the config file and restart elasticsearch
+
+  
+
+root@[mailer-elk-pilot01:/usr/local/elasticsearch#](http://mailer-elk-
+pilot01/usr/local/elasticsearch) sudo vi config/elasticsearch.yml
+
+  
+
+# Backup directory:
+
+path.repo: ["/usr/local/elasticsearch/elasticsearchbkup"]
+
+  
+
+Restart elastic search
+
+  
+root@[mailer-elk-pilot01:/usr/local/elasticsearch#](http://mailer-elk-
+pilot01/usr/local/elasticsearch) systemctl stop elasticsearch
+
+root@[mailer-elk-pilot01:/usr/local/elasticsearch#](http://mailer-elk-
+pilot01/usr/local/elasticsearch) systemctl start elasticsearch
+
+  
+3\. Register this repo at elasticsearch
+
+  
+
+Open Kibana and run below query to register:
+
+PUT _snapshot/dev_bkup  
+{  
+  
+"type" : "fs",  
+"settings" : {  
+"compress" : true,  
+"location" : "/usr/local/elasticsearch/elasticsearchbkup"  
+  
+}  
+  
+}
+
+  
+
+4\. To verify registration, run below query
+
+  
+GET _snapshot/_all
+
+Response:
+
+{  
+"dev_bkup": {  
+"type": "fs",  
+"settings": {  
+"compress": "true",  
+"location": "/usr/local/elasticsearch/elasticsearchbkup"  
+}  
+}  
+}
+
+5\. To take actual backup(called as snapshot in elasticsearch) run below query
+
+Note : snapshot_1 is the name of the backup, this name can be anything
+
+  
+PUT /_snapshot/dev_bkup/snapshot_1?wait_for_completion=true  
+{  
+"indices": "demo_pilot,wecu_pilot",  
+"ignore_unavailable": true,  
+"include_global_state": false,  
+"metadata": {  
+"taken_by": "Surekha",  
+"taken_because": "Test backup"  
+}  
+}
+
+  
+
+Response :  
+{  
+"statusCode": 504,  
+"error": "Gateway Timeout",  
+"message": "Client request timeout"  
+}
+
+We can ignore this alert, it is just that Kibana failed to get response from
+elastic search with in certain time, but in the backgroung elasticsearch is
+taking backup of the indexes specified.
+
+  
+6\. To check the status of the backup run below query.
+
+  
+GET /_snapshot/dev_bkup/snapshot_1/_status
+
+  
+
+#### Step#2: Restore to a different elasticsearch cluster (10.4.18.51)
+
+  
+
+  
+1\. Login to the server when we need to restore the backup that we have taken
+
+  
+2\. Create a repo and add the contents of the backup to this repo
+
+sdani@[dr-vm11:/usr/local/elk/elasticsearch$](http://dr-
+vm11/usr/local/elk/elasticsearch$) mkdir restore_bkup
+
+I have copoed the contents of the backup directory ( from the server
+10.8.9.126 , path :/usr/local/elasticsearch/elasticsearchbkup/) into my local
+directory on 10.4.18.51
+
+sdani@[dr-vm11:/usr/local/elk/elasticsearch$](http://dr-
+vm11/usr/local/elk/elasticsearch$) sudo cp -R
+/home/sdani/restoresnapshot/elasticsearchbkup/* restore_bkup/
+
+3\. Add this directory to the config file and restart elaticsearch
+
+  
+Add directory to config file
+
+root@[mailer-elk-pilot01:/usr/local/elasticsearch#](http://mailer-elk-
+pilot01/usr/local/elasticsearch) sudo vi config/elasticsearch.yml
+
+  
+Below contents are added to config file:
+
+# Backup directory:
+
+path.repo: ["/usr/local/elk/elasticsearch/restore_bkup"]
+
+  
+Restart elastic search
+
+  
+root@[mailer-elk-pilot01:/usr/local/elasticsearch#](http://mailer-elk-
+pilot01/usr/local/elasticsearch) systemctl stop elasticsearch
+
+root@[mailer-elk-pilot01:/usr/local/elasticsearch#](http://mailer-elk-
+pilot01/usr/local/elasticsearch) systemctl start elasticsearch
+
+  
+4\. Register this repo at elasticsearch
+
+Open Kibana and run below query to register:
+
+  
+PUT _snapshot/dev_restore  
+{  
+  
+"type" : "fs",  
+"settings" : {  
+"compress" : true,  
+"location" : "/usr/local/elk/elasticsearch/restore_bkup"  
+  
+}  
+  
+}
+
+Response:  
+{  
+"acknowledged": true  
+}
+
+5\. Restore the backup using below query :
+
+POST /_snapshot/dev_restore/snapshot_1/_restore  
+{  
+"indices": "demo_pilot,wecu_pilot",  
+"ignore_unavailable": true  
+}
+
+6\. Run below query to verify the number of documents
+
+  
+GET demo_pilot/_search
+
+GET wecu_pilot/_search
+
+  
+
+

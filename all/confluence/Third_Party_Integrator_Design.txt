@@ -1,0 +1,53 @@
+title: Third Party Integrator Design
+body:   
+
+Design| Reason  
+---|---  
+For each vendor, we should set up a cluster of standalone event-driven
+applications that interface with the vendor API.|
+
+This way, this application can be scaled and enhanced independently. It is
+possible that we will expand the functionality of these applications to call
+other APIs provided by the vendor, not just what we would be using currently.
+Additionally, it is possible for all services to call these APIs, opening up
+room for potentially for the Print team to use it if and when the situation
+arise.
+
+This should be event-driven, so that the syncing can happen asynchronously
+from the Infoservice logic, but at the same time still be managed in a queue
+so that updates are processed sequentially.
+
+The current symXchange is already doing this in some form. Each cluster, such
+as Hypercube or JAAS, will actually call the InfoTRAC cluster to perform the
+sync. In a way, the InfoTRAC cluster is being treated as the "Data Sync
+cluster" for symXChange. We are taking a step further and decoupling the
+entire data sync logic for each vendor into their own application cluster.
+symXChange can remain as it is now, but eventually, we should think about
+taking that code out into its own application also.  
+  
+The applications should log the status of each event.| This is in case we need
+to provide some sort of report. The tables should be unique per vendor. It is
+easier that way to research. Or maybe we should try to standardize the logs
+all into the same table and just have a vendor column to determine which is
+which.  
+For any given data update step, as necessary, send to MQ to event that
+happenened.| The MQ will read the event and deliver the message to the
+integrators who will determine the appropriate actions to take.  
+  
+  
+
+Specific Use Case:
+
+  * Infoservice update delivery preference
+  * Infoservice sends message to MQ
+  * MQ delegate task to one instance in the Integrator cluster
+  * The Integrator cluster will determine all the third party vendors to sync
+
+  
+
+Question:
+
+  1. Should we introduce some sort of API Gateway design?
+    1. Reasoning being that connections with the different vendors might require a lot of different security methods. How feasible is it to manage a variety of different security strategy in a single application? How will we deal with things like VPN tunnels?
+
+

@@ -1,0 +1,202 @@
+title: MOCU Hypercube migration analysis (In progress)
+body: # _****_
+
+# _**ROOT**_
+
+ **Client Name**|
+
+Monterey Credit Union  
+  
+---|---  
+  
+ **Schema**
+
+|  Default  
+ **Account Types**|  NA  
+  
+ **Statement Types**
+
+|
+
+  * default
+  * heloc
+  * etax
+  * enotice
+
+  
+ **Archival Period**|
+
+  * default: 23 months
+  * heloc: 23 months
+  * etax: 24 months
+  * enotice: 4 months
+
+  
+ **Batch Download**|  N/A  
+ **Enrollment**|  
+  
+ **Login Method**|
+
+  * cusso (SingleSignOn7Servlet)
+
+  
+ **Notification Preference**|  Email  
+ **Menu**|
+
+  * eStatements
+  * HELOC/LOC
+  * eNotices
+  * eTax
+
+  
+  
+ **Welcome Email**|  N/A  
+ **User account relation**|  one-to-one  
+  
+##  _ **Login methods:**_
+
+  *  **CUBUS_SSO(SingleSignOn7Servlet)**
+
+    *  **createLogin=true, updateEmail=true**
+    * Search for user by sess_login_id(acctNum)
+    * If user not found, create fin_account (acctNum, acctName=acctNum, status="A"), paperless (stmtType="default",acctId) , user(firstName= acctNum), usr_profile( sess_login_id=acctNum, DSO=null), usr_fin_account (usrId, acctId, ufa_status="active", regDate=current date). 
+  *  **CUBUS_hoblogin.jsp**
+    * Sets sso date in usr_session table. 
+    * Redirects to splash page if the account is on paper(B). Otherwise, land on homepage.
+
+##  _ **Homepage:**_
+
+  * Users can view a demo site before start viewing the actual site. This page appears if the account is on paper i.e. paperelss status = "B"
+
+  
+
+##  _ **Demo site:**_
+
+ _ ****_
+
+##  _ **eStatement site:**_
+
+  * By clicking "START VIEWING YOUR STATEMENTS", a disclosure appears. Users must choose "I agree" to land on the eStatement site. By choosing "I agree", paperless status is changed to paperless (E).
+  * 
+
+##  _ **eStatement List:**_
+
+  * ###  _eStatements:_
+
+    * If the user wants to receive paper statements, he/she can click the link. If this link is clicked, the user is redirected to the homepage where the user can view the demo site or login to the eStatement site.
+    *   * ###  _HELOC/LOC:_
+
+    * same UI and functionality as eStatements
+  * ###  _eNotices:_
+
+    * Can be landed on this page either from side menu "eNotices List" or "eNotices" tab. 
+    * In the "Archived eNotices" table, display the last 4 months from the current date.
+
+    *   * ###  _eTax:_
+
+    *  __
+
+##  _ **Disclosure/Reconciliation:**_
+
+  * Opens disclosure in a new tab
+
+##  _ **Check Images:**_
+
+  * 
+
+##  _Our Privacy Statement:_
+
+  * Online Privacy Policy is displayed in a new tab.
+  * 
+
+##  _How do eStmts work:_
+
+  * Frequently Asked Questions (FAQ) opens in a new tab.
+  * 
+
+##  _Newsletter:_
+
+  * Redirects to MOCU's site.
+
+  
+
+#  _MSM_
+
+##  _STATEMENT & EMAIL SEARCH:_
+
+  * Statements can be searched by account number.
+  * Email is fetched from the contact info table. 
+  * 
+
+##  _CHECK SEARCH_ _:_
+
+  * Check search by account number.
+  * 
+
+##  _ADMIN EDIT:_
+
+  * 
+
+##  _PAPERLESS MANAGEMENT:_
+
+  * Max 5 account numbers can be given as input separated by space to change paperless status.
+  * Need to provide an email address when paperless status changed from paper to paperless.
+  * Email address is inserted/updated into contact_info table.
+  * An entry is inserted into audit_log_mocu. location="MSM" and event="email".
+  * 
+
+##  _EMAIL PROOFING:_
+
+  * Email proofing template available for eStatement, eNotice, Heloc/LOC, eTax
+
+##  _OPTOUT REPORT:_
+
+  * Can be downloaded in Text or Excel format
+  * 
+
+##  _LATEST STATUS REPORT:_
+
+  * 
+
+##  _LOGOUT_
+
+#  _Processing UI_
+
+##  _Processes:_
+
+###  _afp_
+
+  *  **Handler:** AfpStatementData
+    * fileName acctNum **beginDate** **closingDate** numOfPages **acctName**
+  *  **Registrar:** DefaultEstmtRegistrar
+    * New fa created.
+    * New user created. firstName=acctName.
+    * New user profile created. loginName=acctNum, DSO=current date 
+    * Ufa created. ufa_status="active"
+    * Account owner name and user firstName is updated for existing accounts.
+    * New paperless inserted. new status="B", old status="N", stmtType. An default paperless entry also inserted i.e. stmtType="default" 
+    * Insert entry into estmt_doc
+    * p_job_id and esd_id is inserted into p_Job_estmt
+
+### check_image
+
+  *  **Handler:** DefaultCheckImageHandler 
+    * acctNum_date_amount_checkNum
+  *  **Registrar:**
+
+### enotice
+
+  * Handler
+  * Registrar
+
+### etax
+
+  * Handler
+  * Registrar
+
+### Reports:
+
+  * Accounting Report
+  * Paperless Report
+
+

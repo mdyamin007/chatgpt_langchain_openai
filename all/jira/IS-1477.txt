@@ -1,0 +1,213 @@
+title: COLU-[pvt][31640] (August Monthly Statements)
+description: For the description of the story, please note that these are for August Monthly Statements  FINAL Post-Launch changes.
+ Please use the following description:
+
+1. Update processing script to use below file naming conventions - this was the originally proposed names:
+ OUTER FILE:
+ colu_stmt_mmddyyyy.zip.pgp
+
+The inside files should be named:
+ MM_STMXT_STDL_mmddyyyy.txt
+ MM_STMXT_NEW_STDL_mmddyyyy.txt
+
+2. Update processing script to pickup file from 'stmt' sub-folder in the FTP directory.
+
+3. Setup/finalize processing script for print and PDF Archival (both Fiserv 'E' option and Nautilus 'e' option) for DP to process.
+ - Program will account for increase in account volumes based on how the PDF batches are generated.
+
+4. Update LOC/HELOC accounts that have 2 date columns (effective and posting dates) to eliminate display of the effective date and change column header to Date.
+
+
+
+SOW LINK:
+
+[http://sharepoint-svr/AS/Shared%20Documents/SOW%20Directory/COLU%20-%20Columbia%20Credit%20Union/SOW/COLU_MonthlyStatement_SOW.docx]
+
+
+
+
+author: terrence.tong
+comment:    Updates made the DFA and processing shell to handle Fiservs and Nautilus white index formats.
+
+ 
+   Parallel ID: 20220819153524
+   Currently in parallel: Yes
+   User: coltonR
+   Description: Updates to COLUMS1 and COLUMS2 processing shell.
+   Date Submitted: 2022-08-19 15:36:13
+   Date Last Updated: 2022-08-19 15:36:13
+   Files:
+      1) colums1.procs
+      2) colums2_process.sh
+      3) COLUMS1.dfa
+      4) colu_dda_data_splitter.py
+      5) COLUMS2.dfa
+      6) colu_dda_data_splitter.sh
+      7) colums1_process.sh
+      8) colums2.procs
+      9) colu_monthly_merger.sh
+
+
+
+author: JIRAUSER11400
+comment: DPVS-attatched [^colums2131.new_print]  [^colums2231.new_print]  [^colums1231.new_print]  [^colums1131.new_print] 
+
+
+author: JIRAUSER11400
+comment: 1. Update processing script to use below file naming conventions - this was the originally proposed names:
+OUTER FILE:
+colu_stmt_mmddyyyy.zip.pgp
+ 
+The inside files should be named:
+MM_STMXT_STDL_mmddyyyy.txt
+MM_STMXT_NEW_STDL_mmddyyyy.txt
+  
+2. Update processing script to pickup file from 'stmt' sub-folder in the FTP directory.
+ 
+3. Setup/finalize processing script for print and PDF Archival (both Fiserv 'E' option and Nautilus 'e' option) for DP to process.
+- Program will account for increase in account volumes based on how the PDF batches are generated.
+ 
+4. Update LOC/HELOC accounts that have 2 date columns (effective and posting dates) to eliminate display of the effective date and change column header to Date.
+
+
+Please attach the latest samples (save them as COLU_APPROVED_MoStmt_Samples.pdf) before attaching.
+
+
+
+author: phoebe.george
+comment: [~Igor.Khosid] I have attached the 'BEFORE' sample for the 'Effective/Post Date' for the HELOC example - see last section on statement.[^COLU_BEFORE_Sample.pdf]
+
+
+
+
+author: JIRAUSER11400
+comment: samples attached for Consumer and Business [^COLUMS.zip] 
+
+
+author: terrence.tong
+comment: Note for QA:
+
+for item #3( Setup/finalize processing script for print and PDF Archival (both Fiserv 'E' option and Nautilus 'e' option) for DP to process.)
+
+When processing archival options 'e' or 'E' both run the same thing with the exception of white text formatting at the top of the page in the pdfs. Nautilus format (running with option 'e')  and Fiserv's format (running with option 'E') both with be exported to their own respective folders in /z/pdf_afp/colu/colums1/<nautilus or fiserv>/ . These files are not deleted between each run, unless removed manually, and are incremented since colu has two data files for both colums1 and colums2 for regular/RegE data formats.
+
+
+
+
+author: gthillaivel
+comment: [~phoebe.george]  [~Ricky Lopez]
+
+Blocker BT-232
+
+
+author: phoebe.george
+comment: Description updated with changes (copied from previous comment).
+
+SOW link added - this is an updated version due to issues with uploading to SP previously.
+
+[http://sharepoint-svr/AS/Shared%20Documents/SOW%20Directory/COLU%20-%20Columbia%20Credit%20Union/SOW/COLU_MonthlyStatement_SOW.docx]
+
+[~Ricky Lopez] Please message Colton to check the QA issue that Gnana reported last night when he is online/available.
+
+Please also prep the parallel test forms ahead of time as we will need to submit as a rush once QA is completed.
+
+Thanks!
+
+
+author: gthillaivel
+comment: [~phoebe.george] [~Ricky Lopez] 
+
+Verified the updates in the description .Currently there is one blocker BT-233
+
+
+
+
+
+
+author: gthillaivel
+comment: [~phoebe.george]
+
+[~Ricky Lopez]
+
+Can you request the print samples and attach the IS checklist in the ticket
+
+
+author: JIRAUSER11400
+comment: [~gthillaivel] [^COLU business1.pdf]  [^COLU business2.pdf]  [^COLU consumer1.pdf]  [^COLU consumer2.pdf] -Samples attached
+
+
+author: gthillaivel
+comment: [~Ricky Lopez] [~OIR] [~phoebe.george] 
+
+Tap test passed for Business
+
+Tap test failed for consumer.BT-245 is logged for tracking
+
+
+author: gthillaivel
+comment: [~Ricky Lopez] [~OIR] [~phoebe.george] 
+
+Verified all the items provided for QA to test and the test results looks good
+
+Test results are in the location
+
+\\dell-2100\qa\2022\03_Change Request\Gnana T\IS-1477 COLU
+
+[~Ricky Lopez] Can you please attach the IS checklist
+
+
+author: terrence.tong
+comment: IS Checklist
+
+COLUMS1:
+
+1. /home/test/procs/colums1.procs
+2. /z/ftpbu/colubu/stmt/
+3. 31
+4. yes
+5. no
+6. Running archival with 'e' or 'E' will run the same archival process. The only difference is white index at the top of pdf for storage. 'e' will be placed in /z/pdf_afp/colu/colums1/nautilus/ and 'E' will be placed in /z/pdf_afp/colu/colums1/fiserv/. Running with 'n' option will run all three jobs 's', 'e', and 'E'.
+
+COLUMS2:
+1. /home/test/procs/colums2.procs
+2. /z/ftpbu/colubu/stmt/
+3. 31
+4. yes
+5. no
+6. Running archival with 'e' or 'E' will run the same archival process. The only difference is white index at the top of pdf for storage. 'e' will be placed in /z/pdf_afp/colu/colums2/nautilus/ and 'E' will be placed in /z/pdf_afp/colu/colums2/fiserv/. Running with 'n' option will run all three jobs 's', 'e', and 'E'.
+
+
+author: gthillaivel
+comment: [~phoebe.george] [~OIR] 
+
+Attached is the IS checklist
+
+[^IS Checklist.pdf]
+
+
+author: terrence.tong
+comment: Uploading Transfer form.  [^IS-1477 Transfer Release.doc] 
+
+
+author: terrence.tong
+comment:  [^IS-1477 Transfer Release.pdf] 
+
+
+author: william.kong
+comment: [~OIR](Colton): Code has just been released to production:
+
+
+
+colums1.procs colums1.procs.20220831155918 08/31/2022 coltonR Updates to COLUMS1 and COLUMS2 processing shell. (IS-1477)
+colums2_process.sh colums2_process.sh.20220831155918 08/31/2022 coltonR Updates to COLUMS1 and COLUMS2 processing shell. (IS-1477)
+COLUMS1.dfa COLUMS1.dfa.20220831155918 08/31/2022 coltonR Updates to COLUMS1 and COLUMS2 processing shell. (IS-1477)
+colu_dda_data_splitter.py 08/31/2022 coltonR Updates to COLUMS1 and COLUMS2 processing shell. (IS-1477)
+COLUMS2.dfa COLUMS2.dfa.20220831155918 08/31/2022 coltonR Updates to COLUMS1 and COLUMS2 processing shell. (IS-1477)
+colu_dda_data_splitter.sh 08/31/2022 coltonR Updates to COLUMS1 and COLUMS2 processing shell. (IS-1477)
+colums1_process.sh colums1_process.sh.20220831155918 08/31/2022 coltonR Updates to COLUMS1 and COLUMS2 processing shell. (IS-1477)
+colums2.procs colums2.procs.20220831155918 08/31/2022 coltonR Updates to COLUMS1 and COLUMS2 processing shell. (IS-1477)
+colu_monthly_merger.sh 08/31/2022 coltonR Updates to COLUMS1 and COLUMS2 processing shell. (IS-1477)
+
+
+
+

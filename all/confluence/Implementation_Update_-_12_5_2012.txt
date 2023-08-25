@@ -1,0 +1,343 @@
+title: Implementation Update - 12/5/2012
+body: ### Author: Bhavani
+Sridharan[](https://i3dev.easyredmine.com/projects/msgmgr/wiki/Implementation_Update_-_1252012#Author-
+Bhavani-Sridharan)
+
+  1. List<Criteria> object now resides in IndexFileRecord class. Created during INIT (Pass 0)
+  2. Defect for range test cases fixed
+    * Outbound cases (one value < and > anchor point boundaries) generated
+    * Range test cases within a single msg area (where attribute is the same) are being generated properly
+  3. Pass 2 in progress
+  4. Sample output for a few index files attached below:
+
+    
+    
+      
+      
+    Index File
+    Message Area|Priority|Message Id|File Name|CheckSum|Custom1|Custom2|Custom3|Custom4|Custom5|Compound|Criteria1~Operator1~Value1|Criteria2~Operator2~Value2|Criteria3~Operator3~Value3|Criteria4~Operator4~Value4|Criteria5~Operator5~Value5
+    1|1|1432|ms1_Zip_11.imp|efd2ad7402a2d3a4bcb8646e02c43462||||||AND|Zip~exclude~v:94255-98556|Balance~>~v:56222.00|MaturityDays~between~v:60:90
+    1|2|4551|ms1_MaturityDays_12.imp|d61b88dc150ad937e868436be71a86bb||||||AND|MaturityDays~between~v:15:20
+    1|3|4553|ms1_Zip_13.imp|b2097e3fa58f3f817e097eb072df188f||||||AND|Zip~include~v:00000-55555
+    1|4|4555|ms1_ProductType_14.imp|d15a3aabc20181c2ea0fd1e29f55d24e||||||AND|ProductType~include~v:L0050
+    1|5|1430|ms1_Default_15.imp|10bc5087b31e65f523b3b697fa4b91c2|||||||Default
+    2|1|1433|ms1_ProductType_21.tif|add4eb4b3a954f68ed8516f427794e40||||||AND|ProductType~include~v:S0005-S0025
+    2|2|4552|ms1_MaturityDays_22.tif|40dd3d823e59aa9b6d154c5668cc788d||||||AND|MaturityDays~between~v:15:20
+    2|3|4554|ms1_Zip_23.tif|40dd3d823e59aa9b6d154c5668cc788d||||||AND|Zip~include~v:00000-55555
+    2|4|4556|ms1_ProductType_24.tif|40dd3d823e59aa9b6d154c5668cc788d||||||AND|ProductType~include~v:L0050,S0020
+    2|5|1431|ms1_Default_25.tif|eb608bcd0706d1024bc09312cd972214|||||||Default
+    Total Messages:10
+    Output
+    $$$$$$  Printing Criteria Per Message Area of index file $$$$$$
+    ^^^^^^^ Message Area :1 ^^^^^^^
+    Balance~>~v:56222.00
+    MaturityDays~between~v:15:20
+    MaturityDays~between~v:60:90
+    ProductType~include~v:L0050
+    Zip~exclude~v:94255-98556
+    Zip~include~v:00000-55555
+    Test cases for this message area: 
+    Attribute: Balance
+    56222.00
+    83733.51
+    Attribute: MaturityDays
+    12
+    15
+    19
+    20
+    39
+    60
+    79
+    90
+    90
+    Attribute: ProductType
+    L0050
+    L7733
+    Attribute: Zip
+    00000
+    54739
+    55555
+    74856
+    94255
+    96267
+    98556
+    98565
+    ^^^^^^^ End Message Area :1 ^^^^^^^
+    ^^^^^^^ Message Area :2 ^^^^^^^
+    MaturityDays~between~v:15:20
+    ProductType~include~v:L0050,S0020
+    ProductType~include~v:S0005-S0025
+    Zip~include~v:00000-55555
+    Test cases for this message area: 
+    Attribute: MaturityDays
+    04
+    15
+    16
+    20
+    24
+    Attribute: ProductType
+    L0050
+    L5159
+    S0002
+    S0005
+    S0013
+    S0020
+    S0025
+    S0033
+    Attribute: Zip
+    00000
+    45678
+    55555
+    55558
+    ^^^^^^^ End Message Area :2 ^^^^^^^
+    $$$$$$ End Printing Criteria Per Message Area of index file $$$$$$
+    
+    Index File
+    Message Area|Priority|Message Id|File Name|CheckSum|Custom1|Custom2|Custom3|Custom4|Custom5|Compound|Criteria1~Operator1~Value1|Criteria2~Operator2~Value2|Criteria3~Operator3~Value3|Criteria4~Operator4~Value4|Criteria5~Operator5~Value5
+    2|1|1433|ms1_ProductType_21.tif|add4eb4b3a954f68ed8516f427794e40||||||AND|ProductType~include~v:S0005-S0025
+    Total Messages:1
+    
+    Output
+    $$$$$$  Printing Criteria Per Message Area of index file $$$$$$
+    ^^^^^^^ Message Area :2 ^^^^^^^
+    ProductType~include~v:S0005-S0025
+    Test cases for this message area: 
+    Attribute: ProductType
+    S0004
+    S0005
+    S0007
+    S0025
+    S0031
+    ^^^^^^^ End Message Area :2 ^^^^^^^
+    $$$$$$ End Printing Criteria Per Message Area of index file $$$$$$
+    
+    Index File
+    Message Area|Priority|Message Id|File Name|CheckSum|Custom1|Custom2|Custom3|Custom4|Custom5|Compound|Criteria1~Operator1~Value1|Criteria2~Operator2~Value2|Criteria3~Operator3~Value3|Criteria4~Operator4~Value4|Criteria5~Operator5~Value5
+    3|3|3270|ms1_AccountNumber_11.imp|71c39ce4806c2a15aa5a7779a00c38d8||||||AND|AccountNumber~include~f:AccountNumbers1.txt:776def8fe9ecf0f8338b3ed510933593
+    1|1|3267|ms1_AccountNumber_11.imp|71c39ce4806c2a15aa5a7779a00c38d8||||||AND|AccountNumber~exclude~f:AccountNumbers.txt:776def8fe9ecf0f8338b3ed510933593|ShareID~exclude~v:S00,S99,S123|Zip~exclude~v:11111-99999
+    1|2|3264|ms1_Default_12.imp|71c39ce4806c2a15aa5a7779a00c38d8|||||||Default
+    2|2|3265|ms1_Default_22.tif|e341924c6dbebf42f7ccb421b5b1c1ac|||||||Default
+    3|1|3269|ms1_Zip_31.imp|71c39ce4806c2a15aa5a7779a00c38d8||||||AND|Zip~include~v:11111
+    3|2|3266|ms1_Default_32.imp|71c39ce4806c2a15aa5a7779a00c38d8|||||||Default
+    2|1|3268|ms1_Zip_21.tif|e341924c6dbebf42f7ccb421b5b1c1ac||||||AND|Zip~include~v:99999
+    Total Messages:6
+    
+    AccountNumbers1.txt 
+    B424
+    B001
+    B002
+    B003
+    B014
+    B254
+    B756
+    AccountNumbers.txt
+    A424
+    A001
+    A002
+    A003
+    A014
+    A254
+    A756
+    
+    Output
+    $$$$$$  Printing Criteria Per Message Area of index file $$$$$$
+    ^^^^^^^ Message Area :1 ^^^^^^^
+    AccountNumber~exclude~f:AccountNumbers.txt:776def8fe9ecf0f8338b3ed510933593
+    ShareID~exclude~v:S00,S99,S123
+    Zip~exclude~v:11111-99999
+    Test cases for this message area: 
+    Attribute: AccountNumber
+    A254
+    A424
+    A756
+    Attribute: ShareID
+    S00
+    S123
+    S263
+    S99
+    Attribute: Zip
+    08559
+    100003
+    11111
+    53833
+    99999
+    ^^^^^^^ End Message Area :1 ^^^^^^^
+    ^^^^^^^ Message Area :2 ^^^^^^^
+    Zip~include~v:99999
+    Test cases for this message area: 
+    Attribute: Zip
+    94767
+    99999
+    ^^^^^^^ End Message Area :2 ^^^^^^^
+    ^^^^^^^ Message Area :3 ^^^^^^^
+    AccountNumber~include~f:AccountNumbers1.txt:776def8fe9ecf0f8338b3ed510933593
+    Zip~include~v:11111
+    Test cases for this message area: 
+    Attribute: AccountNumber
+    B003
+    B424
+    B756
+    Attribute: Zip
+    11111
+    14457
+    ^^^^^^^ End Message Area :3 ^^^^^^^
+    $$$$$$ End Printing Criteria Per Message Area of index file $$$$$$
+    
+    
+    Index File
+    Message Area|Priority|Message Id|File Name|CheckSum|Custom1|Custom2|Custom3|Custom4|Custom5|Compound|Criteria1~Operator1~Value1|Criteria2~Operator2~Value2|
+    1|1|4502|mv1_Default_11.tif|a696035d7a4bdfe5dbf3bb6e9d3771c5|||||||Default|
+    Total Messages:1
+    
+    Output
+    $$$$$$  Printing Criteria Per Message Area of index file $$$$$$
+    ^^^^^^^ Message Area :1 ^^^^^^^
+    Test cases for this message area: 
+    ^^^^^^^ End Message Area :1 ^^^^^^^
+    $$$$$$ End Printing Criteria Per Message Area of index file $$$$$$
+    
+    
+    Index File
+    Message Area|Priority|Selection Criteria|filename|Selection Criteria Values|Checksum|Message Id
+    1|1|Zip|ms1_Zip_11.imp|12345|debf5dfe721d3897423e6b527b91da58|2663
+    1|2|Default|ms1_Default_12.imp||830d3dd2ff96e7a65da3f313ebdc8102|2661
+    2|1|Zip|ms1_Zip_21.tif|12345|781a7da1ee245854e550f1858a23691a|2664
+    2|2|Default|ms1_Default_22.tif||781a7da1ee245854e550f1858a23691a|2662
+    Total Messages:4
+    
+    Output
+    $$$$$$  Printing Criteria Per Message Area of index file $$$$$$
+    ^^^^^^^ Message Area :1 ^^^^^^^
+    Test cases for this message area: 
+    ^^^^^^^ End Message Area :1 ^^^^^^^
+    ^^^^^^^ Message Area :2 ^^^^^^^
+    Test cases for this message area: 
+    ^^^^^^^ End Message Area :2 ^^^^^^^
+    $$$$$$ End Printing Criteria Per Message Area of index file $$$$$$
+    
+    
+    Index File
+    Message Area|Priority|Message Id|File Name|CheckSum|Custom1|Custom2|Custom3|Custom4|Custom5|Compound|Criteria1~Operator1~Value1|Criteria2~Operator2~Value2|
+    1|1|1000180|ms1_AccountNumber_11.imp|356ef176fada9f1d91dee0baba38a096||||||AND|AccountNumber~include~f:ms1_AccountNumbers_11.txt:263d1d5b66241dfaada71309b051f7e9
+    1|2|1000182|ms1_AccountNumber_12.imp|bfd0a7915d88de695247b350b19878ff||||||AND|Balance~include~f:ms1_Balances_12.txt:17f9110a3b0898ee50f9030422f6cd26
+    1|3|1000184|ms1_AccountNumber_13.imp|ef61536626f9cccb2896a80bdc76d7d6||||||AND|Zip~include~f:ms1_ZipCodes.txt:8b2f6d10ee498e2388291e0b9445a61e
+    1|4|1000186|ms1_AccountNumber_14.imp|ae0aa508dbe863ffa0eb31bb28ef5e53||||||AND|AccountNumber~include~f:ms1_AccountNumbers_14.txt:ae3cf717b1c85bfc13a88997b87e84ab
+    1|5|1000160|ms1_Default_15.imp|4d30775603b016bee4705571b05f9c24|||||||Default
+    2|1|1000181|ms1_AccountNumber_21.imp|8038dfe15f48d9f07953b91a2a7eeea5||||||AND|AccountNumber~include~f:ms1_AccountNumbers_21.txt:263d1d5b66241dfaada71309b051f7e9
+    2|2|1000183|ms1_AccountNumber_22.imp|ca18d46b033f0a6e194de39e5032b44f||||||AND|AccountNumber~include~f:ms1_AccountNumbers_22.txt:17f9110a3b0898ee50f9030422f6cd26
+    2|3|1000185|ms1_AccountNumber_23.imp|b4c97c946bae42df66a66dcbc79edc9e||||||AND|AccountNumber~include~f:ms1_AccountNumbers_11.txt:8b2f6d10ee498e2388291e0b9445a61e
+    2|4|1000161|ms1_Default_25.imp|335e3febb3f60e8205b4d8bf06c87650|||||||Default
+    Total Messages:9
+    
+    ms1_AccountNumbers_11.txt
+    S0012
+    S0012
+    S0045
+    S0003
+    S0101
+    S1020
+    S0002
+    ms1_Balances_12.txt
+    1000.20
+    2043.34
+    456.70
+    234.56
+    3456.78
+    10000.00
+    ms1_ZipCodes.txt
+    94124
+    95129
+    94014
+    94555
+    93456
+    96785
+    91024
+    90210
+    93456
+    93456
+    ms1_AccountNumbers_14.txt
+    S0012
+    S0012
+    S0045
+    S0003
+    S0101
+    S1020
+    S0002
+    ms1_AccountNumbers_21.txt
+    AC0012
+    AC0012
+    AC0045
+    AC0003
+    AC0101
+    AC1020
+    AC0002
+    ms1_AccountNumbers_22.txt
+    L0050
+    S0456
+    A1012
+    V0201
+    C0234
+    A1032
+    Output
+    $$$$$$  Printing Criteria Per Message Area of index file $$$$$$
+    ^^^^^^^ Message Area :1 ^^^^^^^
+    AccountNumber~include~f:ms1_AccountNumbers_11.txt:263d1d5b66241dfaada71309b051f7e9
+    AccountNumber~include~f:ms1_AccountNumbers_14.txt:ae3cf717b1c85bfc13a88997b87e84ab
+    Balance~include~f:ms1_Balances_12.txt:17f9110a3b0898ee50f9030422f6cd26
+    Zip~include~f:ms1_ZipCodes.txt:8b2f6d10ee498e2388291e0b9445a61e
+    Test cases for this message area: 
+    Attribute: AccountNumber
+    S0002
+    S0012
+    S0045
+    Attribute: Balance
+    1000.20
+    10000.00
+    Attribute: Zip
+    93456
+    94124
+    ^^^^^^^ End Message Area :1 ^^^^^^^
+    ^^^^^^^ Message Area :2 ^^^^^^^
+    AccountNumber~include~f:ms1_AccountNumbers_11.txt:8b2f6d10ee498e2388291e0b9445a61e
+    AccountNumber~include~f:ms1_AccountNumbers_21.txt:263d1d5b66241dfaada71309b051f7e9
+    AccountNumber~include~f:ms1_AccountNumbers_22.txt:17f9110a3b0898ee50f9030422f6cd26
+    Test cases for this message area: 
+    Attribute: AccountNumber
+    A1012
+    A1032
+    AC0002
+    AC0012
+    L0050
+    S0002
+    S0012
+    S1020
+    ^^^^^^^ End Message Area :2 ^^^^^^^
+    $$$$$$ End Printing Criteria Per Message Area of index file $$$$$$
+    
+    Index File
+    Message Area|Priority|Message Id|File Name|CheckSum|Custom1|Custom2|Custom3|Custom4|Custom5|Compound|Criteria1~Operator1~Value1|Criteria2~Operator2~Value2|
+    1|1|1000061|ms1_ApplicationCode_11.imp|e36c01f954cc78c8bb41cfbee970dab0||||||AND|ApplicationCode~include~v:10
+    1|2|1000062|ms1_Zip_12.imp|78b307a4739544aeb775638de656e4ed||||||AND|Zip~include~v:90000-95000
+    1|3|1000060|ms1_Default_13.imp|1306f9a3e1dbe0eb4cd190f32f89d480|||||||Default
+    Total Messages:3
+    
+    Output
+    $$$$$$  Printing Criteria Per Message Area of index file $$$$$$
+    ^^^^^^^ Message Area :1 ^^^^^^^
+    ApplicationCode~include~v:10
+    Zip~include~v:90000-95000
+    Test cases for this message area: 
+    Attribute: ApplicationCode
+    10
+    29
+    Attribute: Zip
+    42015
+    90000
+    90916
+    95000
+    95003
+    ^^^^^^^ End Message Area :1 ^^^^^^^
+    $$$$$$ End Printing Criteria Per Message Area of index file $$$$$$
+    
+
+

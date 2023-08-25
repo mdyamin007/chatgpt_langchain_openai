@@ -1,0 +1,111 @@
+title: SFTP Scanner - Prod Deployment and Rollout
+body:   
+
+## A. Production Deployment and Setup
+
+  
+  
+
+### a) QA and Prod (Linux Boxes) Server Setup
+
+  1. Install JDK 1.6 Update 39, Mule-ESB V3.3.2 and MySql 5.5 [Current status: Done]
+  2. Java/JDK Configuration setup - define & set configurations like JAVA CLASSPATH and BIN Path. Also, setup MULE Home Path and MySQL Home Path [Current status: Done]
+  3. MySQL DB Schema - Create schema for the Mule-ESB transaction tables and PUI Application Schema DB tables [Current status: Done]  
+(Note: PUI Scanner applciation uses Oracle based DB schema. In future, Mule-
+ESB can repoint to Oracle db schema or it can cpontinue to work with MySQL DB.  
+In case of OracleDB repoint, Mule-ESB SFTP scanner may require minor code
+changes in order to support Oracle DB)
+
+  4. GNU PG installation and configuration for data file encrypt/decrypt
+  5. FTP Server user account: Create ftp users for the source FTP servers so that Mule ESB Service can access the source SFTP Servers with root level (read-only) access [Current status: Done]
+  6. Email Server user account: Create Email Id for the the Mule ESB so that Mule Service can send the email notification for the internal/external users.  
+[Current status: Done]
+
+  
+  
+
+### b) Test Run in QA/Test Env
+
+  1. Peform testing in QA/Test Env - at least 3 rounds of testing required in the QA Env
+  2. Review the QA test results and performance
+
+  
+  
+
+### c) Depoy to Prod QA Env
+
+  1. Peform dry-testing in Prod Env - at least 2 rounds of testing required in the Prod Env in order to validate the env setup
+  2. Oracle DB schema - check the Oracle DB Tables and Sequences for the auto_increment ID values.  
+It may require a post-insert trigger to populate the ID sequence value into
+the PK field(e.g. Incoming-Table.ID Primary key)
+
+  
+  
+
+## B. Transition from PUI Scanner to MuleESB Scanner
+
+  1. Deploy & keep running Mule-ESB Scanner service in Linux QA env for 4-weeks in order to capture the incoming file logs in the MySQL DB Table
+  2. Compare the incoming-file logs and Email logs against the existing PUI DB Table and Email in order to validate the missing files and incoming-files results.
+  3. Identify and fix the issues in QA, if any reported.
+  4. Deploy updated version into QA Env and perform 1-2 days testing.
+  5. Deploy yhe latest vesion into the Mule Prod Server and run the service parallel dry-run for at least a week.
+  6. review the results similar to the QA Test results and findings.
+  7. In case, no issues reported during Prod dry-run, the service is fit for the production rollout.
+  8. Discuss the PUI Job schedule (Windows Job task) with the PUI Team to disable the job and enable Mule-ESB Scanner job in Prod.  
+The Mule-ESB Scanner will start processing the files from source SFTP Server
+to the target BU Server after a defined cut-off date.  
+Also, discuss the rollback strategy by enabling the original PUI Scanner job
+in order to avoid any business impact.
+
+  9. Setup meeting with the PUI Team to review & finalize the transition plan.
+
+  
+  
+
+## C. Production Rollout plan
+
+  
+  
+
+### Outstanding Task for DEV/QA/Test environment.
+
+  1. Validation of files (File size, CRC32/MD5 values and Emails) processed successfully.
+  2. Create new column and sequence generation trigger on DEV/QA Oracle database
+  3. Dipti to provide the additional test cases for validating the schema change
+  4. Complete the hook from Mule to trigger the PUI Handler for downstream processing [Not planned under Phase-1]
+  5. Dipti to hook up TEST CID to DEV env to test out the [#4](https://i3dev.easyredmine.com/issues/4 "Bug: test \(Closed\)") above
+
+  
+  
+
+### Production rollout on a single FTP server.
+
+  1. identify one SFTP Server where minimum number CID Accounts are active in order to avoid any go-live impact.
+  2. DP need to be informed about this rollout, keep close monitoring
+  3. No PUI process triggering is expected on this phase of rollout.
+  4. Keep monitoring the production traffic
+  5. Hook up Nagios to monitor Mule servers.
+  6. Rollback Procedure - Enable (turn-on) the original PUI/FTP Scanner Process and disable (turn-off) the Mule SFTP Service.
+
+* * *
+
+  
+  
+
+### Server Details
+
+  
+  
+
+#### Mule Server:
+
+  * Test Server - 10.8.9.57 (PD_DEV1) * Prod Server - 10.8.9.54 (MULE)
+
+  
+  
+
+#### FTP Server:
+
+  * ftpRoot@InfoFTP - [10.8.8.3] * ftpRoot@FTPS - [10.8.10.10] * ftpRoot@DS3FTP - [10.8.11.17]
+
+

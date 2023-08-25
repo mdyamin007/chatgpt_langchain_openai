@@ -1,0 +1,65 @@
+title: Meteor Research
+description: None
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Tai Trinh made the following comment in ISD-1727
+
+@dsi
+
+Please see the attached wiki page for context.
+
+In short, there is a version issue with Meteor. Meteor 1.9.0's node package needs a certain version of GNU C Library. Some of our hypercube servers is using a version of the Ubuntu OS that does not have the appropriate libraries. I have figured out how to resolve this by targeting version 1.2.1.
+
+However, for some reason, in the /home/meteor/.meteor/packages/meteor-tool folder, the 1.9.0 folder and its symbolic is still created. I think it was created when I start hypercube for the first time. Please research into how this gets created and if there is a way to prevent this. This 1.9.0 folder is the reason why the issue occurs. 
+
+
+
+author: sadman anik
+comment: Hi [~tai.trinh],
+h3. @isd
+
+
+
+I did some research regarding this problem. If we install meteor using the command :
+"*curl https://install.meteor.com/ | sh*",it install the latest release versionsalong with 1.1.10 but when we run hypercube then it runs on version 1.2.1 which is defined in *.meteor/local/release* file.
+
+At thisscenario, */.meteor/packages/meteor-tool*this directory contains both 1.1.10 and 1.9.0 release versions folder.
+
+I tried to delete 1.9,0 folder and run hypercube butmeteor executable could not startthat implies meteor is installed as version 1.9. Then i uninstall meteor by deleting .meteor folder and run the meteor installation command as bellow to target the meteor version 1.2.1,
+
+"*curlhttps://install.meteor.com/?release=1.2.1| sh*"
+
+Once theinstallation of meteor release version 1.2.1 is complete. At thisscenario, */.meteor/packages/meteor-tool*this directory contains only 1.1.10 release version folder.
+
+Also after run the hypercube using "*meteor --settings settings.json*" command, there was no change in*/.meteor/packages/meteor-tool* directory.It still contains only 1.1.10 release version folder and runs properly.
+
+Another thing i notice in this scenario that , when we run "*meteor --version*"command in version 1.2.1 then it automaticallystarts updating meteor-tools of version 1.9.0.
+
+*Possible Solution :*
+
+You can try deleting the .meteor folder and again install release version 1.2.1 using this command : "*curlhttps://install.meteor.com/?release=1.2.1| sh*". This should solve the problem as it works fine for me. I did not face the scenario like having both release version folder in*/.meteor/packages/meteor-tool* directory after install release version 1.2.1 or run hypercube for the first time.
+
+If this still occur then *METEOR_NO_RELEASE_CHECK*environment variable can be used for that while ruining hypercube.So if we run hypercube like this: "*METEOR_NO_RELEASE_CHECK=1 meteor --settings settings.json*"it shouldn't update any packages or meteor releases. It disables thebackground release updates by invoking*METEOR_NO_RELEASE_CHECK=1*accordingtoMeteor API Docs but it is available fromv1.4.1, 2016-08-18. So, you can downgrade the meteor version from 1.9.0 and run hypercube using thisenvironment variable.
+
+{{}}
+
+I think these information will help preventing your problem. Let me know if any other information is needed.
+
+Thank You.
+
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Tai Trinh made the following comment in ISD-1727
+
+@dsi
+
+Hi Sadman,
+
+Thank you for researching. It was very helpful.
+
+Best,
+Tai
+

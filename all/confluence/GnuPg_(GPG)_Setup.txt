@@ -1,0 +1,175 @@
+title: GnuPg (GPG) Setup
+body:   
+
+### Overview
+
+The GNU Privacy Guard (GnuPG) is a complete implementation of the OpenPGP
+Internet standard as described by RFC4880 (formerly RFC2440).  
+It is used for digital encryption and signing of data and mainly useful for
+offline communication (email) and data storage.
+
+tip. References / URLs:  
+<http://www.gnupg.org/>  
+<http://www.gpg4win.org/>  
+<http://www.gnu.org/software/gnupg/>
+
+  
+
+## Useful Commands
+
+  * Create key  
+ Generate a private key by typing in a terminal:  
+
+    
+        # gpg --gen-key
+    
+
+tip. You'll have to answer a bunch of questions but generally, you can accept
+the defaults.
+
+  * List keys  
+ Keys in your public key ring:  
+
+    
+        # gpg --list-keys
+    --------------------
+    nirajt@pd-dev1:~$ gpg --list-keys
+    /home/nirajt/.gnupg/pubring.gpg
+    -------------------------------
+    pub   2048R/9FA36F16 2007-10-25
+    uid                  Safe_Data_Center <opspc@safecu.org>
+    uid                  Tyler Phipps <tyler.phipps@safecu.org>
+    uid                  Matthew Rose <Matthew.Rose@safecu.org>
+    uid                  Eric Okata <Eric.Okata@safecu.org>
+    sub   2048R/EF655928 2007-10-25
+    
+    nirajt@pd-dev1:~$
+    
+
+  * Generate an ASCII version of your public key (e.g. to distribute it by e-mail):  
+
+    
+        # gpg --armor --output public.key --export 'Your Name'
+    
+
+  * To import an ASCII version of customer supplied public key  
+
+    
+        gpg --import Safe_Data_Center.asc
+    ----------------------------------
+    nirajt@pd-dev1:~$ gpg --import Safe_Data_Center.asc
+    gpg: keyring `/home/nirajt/.gnupg/secring.gpg' created
+    gpg: key 9FA36F16: public key "Safe_Data_Center <opspc@safecu.org>" imported
+    gpg: Total number processed: 1
+    gpg:               imported: 1  (RSA: 1)
+    nirajt@pd-dev1:~$  
+      
+    IMPORTANT NOTE - to import without signature please use: gpg --import --allow-non-selfsigned-uid <key>
+
+  * To list public keys and secret keys:  
+
+    
+        $gpg --list-public-keys
+    $gpg --list-secret-keys
+    $gpg --fingerprint
+    -------------------------
+    nirajt@pd-dev1:/home/mule/.gnupg$ gpg --fingerprint
+    /home/nirajt/.gnupg/pubring.gpg
+    -------------------------------
+    pub   2048R/9FA36F16 2007-10-25
+          Key fingerprint = 49B9 03B7 EE2D AB40 3D3E  D95D C605 18DD 9FA3 6F16
+    uid                  Safe_Data_Center <opspc@safecu.org>
+    uid                  Tyler Phipps <tyler.phipps@safecu.org>
+    uid                  Matthew Rose <Matthew.Rose@safecu.org>
+    uid                  Eric Okata <Eric.Okata@safecu.org>
+    sub   2048R/EF655928 2007-10-25
+    
+
+  
+  
+
+### **Command to Encrypt the CSV File**
+
+    
+    
+    $gpg --no-tty --yes --batch --always-trust --no-permission-warning --recipient 'Safe_Data_Center <opspc@safecu.org>' --output sscu_daily_report_2013-08-06.csv.pgp --encrypt sscu_daily_report_2013-08-06.csv
+    
+
+Where:
+
+    
+    
+         --batch | --no-batch
+                  Use  batch  mode.   Never  ask, do not allow interactive com-
+                  mands.  --no-batch disables this option.
+    
+         --no-tty  Make sure that the TTY (terminal) is never used for any  out-
+                  put.  This option is needed in some cases because GnuPG some-
+                  times prints warnings to the TTY if --batch is used.
+    
+         --yes     Assume "yes" on most questions.
+         gpg -ea is only a non-interactive command as long as all recipient keys are
+           considered trusted *and* the output filename does not already exist.
+    
+         --batch -ea by itself fails for a non trusted key. Along with the 'encryption
+           failed: unusable public key' message, you should have received a 'There is no
+           assurance this key belongs to the named user' message. --batch --yes will handle
+           the output file already existing, but not the untrusted key.
+    
+         If you must use batch, the you need to add --yes if the output file name may
+         already exist (it will be overwritten); and you need to either sign recipient
+         keys with a trusted key or add --always-trust to the command line.
+    
+
+  
+  
+
+  
+
+## Linux Commands To display the system status
+
+  * Mule Server (Prod) - MULE
+
+    
+    
+    nirajt@mule:/$ uname -a
+    Linux mule 3.2.0-29-generic #46-Ubuntu SMP Fri Jul 27 17:03:23 UTC 2012 x86_64 x86_64 x86_64 GNU/Linux
+    nirajt@mule:/$ lsb_release -a
+    No LSB modules are available.
+    Distributor ID: Ubuntu
+    Description:    Ubuntu 12.04.1 LTS
+    Release:        12.04
+    Codename:       precise
+    nirajt@mule:/$
+    
+
+  * Mule Server (Test) - PD-DEV1
+
+    
+    
+    nirajt@pd-dev1:/$ uname -a
+    Linux pd-dev1 3.2.0-29-generic #46-Ubuntu SMP Fri Jul 27 17:03:23 UTC 2012 x86_64 x86_64 x86_64 GNU/Linux
+    nirajt@pd-dev1:/$ lsb_release -a
+    No LSB modules are available.
+    Distributor ID: Ubuntu
+    Description:    Ubuntu 12.04.1 LTS
+    Release:        12.04
+    Codename:       precise
+    nirajt@pd-dev1:/$
+    
+
+  * DMZ Proxy Server (Apache box) - APACHEMULE
+
+    
+    
+    eaiadmin@ApacheMule:/$ uname -a
+    Linux ApacheMule 3.2.0-29-generic #46-Ubuntu SMP Fri Jul 27 17:03:23 UTC 2012 x86_64 x86_64 x86_64 GNU/Linux
+    eaiadmin@ApacheMule:/$ lsb_release -a
+    No LSB modules are available.
+    Distributor ID: Ubuntu
+    Description:    Ubuntu 12.04.2 LTS
+    Release:        12.04
+    Codename:       precise
+    eaiadmin@ApacheMule:/$
+
+

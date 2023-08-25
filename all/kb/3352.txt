@@ -1,0 +1,22 @@
+Set estmt_type='HTML' in the control file of the project.
+In the e-statement index file the column "PRESENTMENTTYPE" determine the format of e-notice. The default value is pdf. To set it to html add estmt_type='HTML' in the control file.
+For more details:
+Here is the mail when the print dfa and isisdisk_daily.sh needed update for this requirement
+-------------------------------------------------------
+Mail Subject:
+Re: CAMB/IVBK enotice
+In order to pass the presentment type to PRINT DFA, we will have to pass the variable in by parameter.
+Follow below steps:
+In control file, add a estmt_type=HTML.
+In isisdisk_daily.sh add pass in this variable when calling print_step ().
+echo -e "'\$ESTMT_TYPE=$estmt_type' \\">>$pdelsh
+*Note: There are many places to add this statement in print step. ADD this statement to the first 3 newDlStructure conditions and the last ELSE condition.
+Currently the presentment type is initialized in the ESTMT_IDX_INIT_FIRST.dfa.
+In PRINT DFA, add code to capture ESTMT_TYPE as ENV variable .
+In ESTMT_IDX_INIT_FIRST.dfa, Below $PRESENTMENTTYPE=PDF, add IF ESTMT_TYPE <>; THEN; &PRESENTMENTTYPE=ESTMT_TYPE
+Yamee: For the Statement print step we may need to do the same.
+Peter Dang
+Engineering Manager
+InfoIMAGE, Inc.|Headquarters|141 Jefferson Drive|Menlo Park, CA 94025
+peter.dang@infoimageinc.com|www.infoimageinc.com|650.473.6315
+--------------------------------------------

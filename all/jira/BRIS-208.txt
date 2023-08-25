@@ -1,0 +1,378 @@
+title: InfoREACH MongoDB Access
+description: Kent,
+
+We need cross access between Menlo's Mongo and BB's Mongo so that we can setup BB's Mongo to the same cluster. This way we will have data sync automatically to the BB. If this exercise is good, we will do the same for other eStatement Mongo as well and will send separate ticket for access.
+
+Please open the following port between both set.
+
+*Menlo*:
+ # [inforeach-mongo01.infoimageinc.com|http://inforeach-mongo01.infoimageinc.com/]
+ # [inforeach-mongo02.infoimageinc.com|http://inforeach-mongo02.infoimageinc.com/]
+ # [inforeach-01.infoimageinc.com|http://inforeach-01.infoimageinc.com/]
+
+*BB*:
+
+ ca-mongoir-pr-01
+
+ ca-mongoir-pr-02
+
+ ca-mongoir-pr-03
+
+*Port*: 22, 2701
+
+
+
+Thanks
+
+David
+
+
+author: kent.chan
+comment: This is good now
+
+!image-2020-10-13-10-23-20-645.png!
+
+
+author: nrahman
+comment: Hi Kent,
+
+We are being able to access the BB mongo set from Menlo set. We need the access Menlo servers from BB servers as well.
+
+*BB*:
+
+ ca-mongoir-pr-01
+
+ ca-mongoir-pr-02
+
+ ca-mongoir-pr-03
+
+*Menlo*:
+ # [inforeach-mongo01.infoimageinc.com|http://inforeach-mongo01.infoimageinc.com/]
+ # [inforeach-mongo02.infoimageinc.com|http://inforeach-mongo02.infoimageinc.com/]
+ # [inforeach-01.infoimageinc.com|http://inforeach-01.infoimageinc.com/]
+
+
+
+*Port*: 22, 2701
+
+
+
+
+author: kent.chan
+comment: This is good now
+
+!image-2020-10-15-10-09-27-763.png!
+
+
+
+
+author: trang809
+comment: Kent,
+
+I might not have specify this but can you open access to both direction, from Menlo to BB and from BB to Menlo. I will update ticket BRIS 209 as well.
+
+Thanks
+David
+
+
+author: kent.chan
+comment: Hi Dave
+
+MP to BB mongo access is good now. Taht was my fault, i missed the reverse direction request in the earlier comment.
+
+!image-2020-10-16-17-30-08-834.png!
+
+
+author: trang809
+comment: Nahid,
+
+Please check.
+
+Thanks
+
+David
+
+
+author: nrahman
+comment: Perfect! It's working. The clustering is done as well.
+
+
+
+Thanks a lot Kent.
+
+
+author: nrahman
+comment: [~davidt], [~kent.chan]
+Need following cross server access to be able to use mongo replicaset from app servers.
+
+
+*+1)+*
+*Source:*
+ca-inforeach-pr-01 (Brisbane)
+ca-inforeach-pr-02 (Brisbane)
+ca-inforeach-pr-03 (Brisbane)
+ca-inforeach-pr-04 (Brisbane)
+
+
+*Destination*:
+inforeach-mongo01 (Menlo)
+Port: 27017
+
+inforeach-mongo02 (Menlo)
+Port: 27017
+
+inforeach-01 (Menlo)
+Port: 27017
+
+*+2)+*
+*Source:*
+inforeach-01 (Menlo)
+inforeach-02 (Menlo)
+inforeach-03 (Menlo)
+inforeach-04 (Menlo)
+
+*Destination*:
+ca-mongoir-pr-01 (Brisbane)
+Port: 27017
+
+ca-mongoir-pr-02 (Brisbane)
+Port: 27017
+
+ca-mongoir-pr-03 (Brisbane)
+Port: 27017
+
+
+author: kent.chan
+comment: this is done. confirmed from inforeach-02 to ca-mongoir01-pr using port 27017
+
+
+
+For Menlo, there is only two inforeach-XX servers, 01 and 02. For BB, there is only two ca-mongoir-pr servers, 01 and 02. Access given accordingly
+
+
+
+!image-2020-10-21-09-01-22-096.png!
+
+
+author: nrahman
+comment: Hi Kent,
+
+Following are the 4 servers *for Menlo*.
+
+inforeach-01 10.8.9.114
+
+inforeach-02 10.8.9.115
+
+inforeach-03 10.8.9.207
+
+inforeach-04 10.8.9.208
+
+
+
+Following are the 3 mongo servers *for BB*
+
+ca-mongoir-pr-01 10.4.24.205
+
+ca-mongoir-pr-02 10.4.24.206
+
+ca-mongoir-pr-03 10.4.24.207
+
+Please provide access for the previously mentioned
+
+
+
+
+author: kent.chan
+comment: Nahid
+
+
+
+I validated Inforeach-01->27017->ca-mongoir-pr-01 works
+
+!image-2020-10-22-13-11-46-597.png!
+
+
+
+I validated the reverse access:
+
+ca-mongoir-pr-01->27017->Inforeach-01 works
+
+!image-2020-10-22-13-12-25-294.png!
+
+
+
+What exactly are you asking for?
+
+
+author: nrahman
+comment: Hi [~kent.chan] / [~davidt],
+
+I understand we are getting closer to the moving date and we do not want to waste any of your time. What I asked is pretty straight forward, not sure how we are confusing you. From [my requirement comment|#comment-14292] ,
+
+*:: Requirement 1 ::*
+
+*We want to be able to access all of the destination mongo servers in menlo from each of the source app servers in BB*
+
+*Source:*
+ ca-inforeach-pr-01 (Brisbane)
+ ca-inforeach-pr-02 (Brisbane)
+ ca-inforeach-pr-03 (Brisbane)
+ ca-inforeach-pr-04 (Brisbane)
+ 
+ 
+ *Destination*:
+ inforeach-mongo01 (Menlo)
+ Port: 27017
+ 
+ inforeach-mongo02 (Menlo)
+ Port: 27017
+ 
+ inforeach-01 (Menlo)
+ Port: 27017
+
+
+
+-------------------------------------------------------------------
+
+
+ *:: Requirement 2 ::*
+
+*We want to be able to access all of the following destination mongo servers in BB from each of the following source app servers in Menlo*
+
+*Source:***
+ inforeach-01 (10.8.9.114)
+ inforeach-02 (10.8.9.115)
+ inforeach-03 (10.8.9.207)
+ inforeach-04 (10.8.9.208)
+ 
+ *Destination*:
+ ca-mongoir-pr-01 (10.4.24.205)
+ Port: 27017
+ 
+ ca-mongoir-pr-02 (10.4.24.206)
+ Port: 27017
+
+ca-mongoir-pr-03 (10.4.24.207)
+ Port: 27017
+
+
+
+-------------------------------------------------------------------
+
+
+
+I think you *missed requirement 1*.
+
+!Screenshot from 2020-10-23 15-35-52.png|width=771,height=173!
+
+
+
+*For requirement 2*, you said in the [your comment|#comment-14294] that "_there is only two inforeach-XX servers, 01 and 02. For BB, there is only two ca-mongoir-pr servers, 01 and 02._" In my [later comment|#comment-14324] I provided the server name and their IPs to let you know *inforeach-03,inforeach-04 andca-mongoir-pr-03 exists*.
+
+Following are the 4 servers*from Menlo*.
+
+inforeach-01 10.8.9.114
+
+inforeach-02 10.8.9.115
+
+*inforeach-03 10.8.9.207*
+
+*inforeach-04 10.8.9.208*
+
+
+
+Following are the 3 mongo servers*from BB*
+
+ca-mongoir-pr-01 10.4.24.205
+
+ca-mongoir-pr-02 10.4.24.206
+
+*ca-mongoir-pr-03 10.4.24.207*
+
+
+
+
+author: kent.chan
+comment: [~nrahman]
+
+thank you much for the clarification...apologies for the confusion, there are so many tickets and requests right now, that one somehow was not clear.
+
+
+
+I have added and tested the rules requested. Should all be working now
+
+!image-2020-10-23-08-01-02-419.png!
+
+
+
+
+author: nrahman
+comment: Hi Kent,
+
+Thanks! *Requirement 1* is working perfectly, that means all the app servers in BB are being able to access menlo mongo servers.
+
+
+
+For requirement 2, as mentioned in my previous comment, *inforeach-03, inforeach-04 and ca-mongoir-pr-03 exists*, so please apply the rules to them as per the *Requirement 2*from my previous comment.
+
+Following are the issues..
+
+- Not being able to access *ca-mongoir-pr-03* from *inforeach-01*
+
+ !Screenshot from 2020-10-23 19-41-02.png|width=707,height=155!
+
+- Not being able to access *ca-mongoir-pr-03* from *inforeach-02*
+
+!Screenshot from 2020-10-23 19-24-36.png|width=714,height=130!
+
+- Not being able to access *ca-mongoir-pr-01,**ca-mongoir-pr-02 and**ca-mongoir-pr-03* from *inforeach-03***
+
+*!Screenshot from 2020-10-23 19-24-59.png|width=722,height=143!*
+
+- Not being able to access ** *ca-mongoir-pr-01,**ca-mongoir-pr-02 and**ca-mongoir-pr-03* from *inforeach-04*****
+
+*!Screenshot from 2020-10-23 19-25-20.png|width=726,height=126!*
+
+
+
+
+
+
+
+
+author: nrahman
+comment: Any update on this one?
+
+
+author: kent.chan
+comment: Good morning [~nrahman], apologies on the delay, this wasn't assigned to me so i didn't see this. It should work now. I've tested every one individually :)
+
+
+
+inforeach-01 to mongoir-01- good
+inforeach-01 to mongoir-02- good
+inforeach-01 to mongoir-03- good
+
+!image-2020-10-29-09-02-30-298.png!
+
+inforeach-02 to mongoir-01- good
+inforeach-02 to mongoir-02- good
+inforeach-02 to mongoir-03- good
+
+!image-2020-10-29-09-02-49-488.png!
+
+inforeach-03 to mongoir-01- good
+inforeach-03 to mongoir-02- good
+inforeach-03 to mongoir-03- good
+
+!image-2020-10-29-09-13-46-434.png!
+
+inforeach-04 to mongoir-01- good
+inforeach-04 to mongoir-02- good
+inforeach-04 to mongoir-03- good
+
+!image-2020-10-29-09-13-21-636.png!
+
+
+author: nrahman
+comment: Thanks a lot. Let me check and confirm. :)

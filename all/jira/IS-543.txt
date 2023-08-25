@@ -1,0 +1,345 @@
+title: VWCU - [23194][pvt] Adjustments needed to our Adverse Action Notice
+description: IS Assessment
+=============
+Hours for development: 4 IS hours + 2 ISD hours ( to update resources)
+Turnover Date : 02/02/2022
+Sample Date: 02/10/2022
+Sample Approval Date: 02/15/2022
+Go live date : 02/22/2022
+
+Assessment Details (IS):
+- Parallel required: Yes
+- add a field to our Adverse Action Notice and form updates
+- See Le's detail assessment and screenshot in TS#23671 comment #11 added on 10/29/2021 12:35 PM
+1) Both forms on front and back needs to be replaced (S1VWCUD8.300, S1VWCUD9.300)
+2) On the new pdf, section A has moved to the next page which means the input data from the screenshot below needs to be reposition
+3) Update /home/test/keep/xml_tables/vwcudla4.table and /home/test/keep/xml_tables/vwcudla5.table
+Add NewDataSet.Table.Adverse_x0020_Action_x0020_Reason_x0020_Counter field to the end of record 100 in both tables
+Add NewDataSet.Table.System_x0020_Counter_x0020_Offer_x0020_Statement field to end of record 100 in both tables
+4) Update VWCUDL046.dfa to pull in new fields and print on forms if column fields are not empty.
+
+
+
+
+author: eric.yan
+comment: Hi Dawn,
+
+The sample of applicant adverse action letter is available. I'll provide the co_applicant sample once the first one is approved.
+
+I've edited the first record to show all the check mark in corresponding position.
+
+
+author: eric.yan
+comment: [~dawnl]
+
+Is there any update from the client?
+
+
+author: billr
+comment: Eric, customer responded to sample:
+
+I was reviewing the sample PDF and it looks like all of the Principal Reasons were selected even though the XML we passed through for this account indicated "No". The only text that should appear in the Principal Reasons for Credit Denial should be "If the principal reasons are not marked and you would like a statement of specific reasons why your application was denied, please contact our credit service team shown below within 60 days of the date of this letter. We will provide you with the statement of reasons within 30 days after receiving your request."
+
+Please let me know if you need additional details to research this issue
+
+
+author: eric.yan
+comment: Hi [~billr],
+
+1) Yes, those check marks are intended as I mentioned in the previous comment.
+
+*"I've edited the first record to show all the check mark in corresponding position."*
+
+Basically, I manipulate the data file of the first record so that it would display all checkmarks. Other records are not altered and should be displayed properly.
+
+
+
+2) Extra verbiage is included in the xml data file. Please advise the client to resend test xml data for an updated sample.
+
+!image-2022-02-20-13-12-33-093.png!
+
+
+author: william.kong
+comment: [~billr]: Live date of 2/22 is missed. Timeline is no longer valid. Please continue to follow-up with client on a response to this. Once they respond, we will need to re-assign a new developer and new timeline for this project.
+
+
+author: william.kong
+comment: [~billr]/[~dawnl]: Any updates on this project and feedback.Live date of 2/22 is missed. Timeline is no longer valid. Please continue to follow-up with client on a response to this. Once they respond, we will need to re-assign a new developer and new timeline for this project.
+
+
+author: dawnl
+comment: Client has not approved the sample yet. I have reached out to client again.
+
+
+author: dawnl
+comment: Hi Eric, per today's meeting, you will provide new sample for VWCU to review. Thanks.
+
+
+author: eric.yan
+comment: [~dawnl]
+
+The updated sample is available for review.
+
+
+author: dawnl
+comment: Hi Eric,
+
+Here is the feedback from client:
+
+"The primary sample has anadditional boxed marked (see screenshot)on page 3. Instead of having the CU name, email, and phone number listed on one line can they be listed in this format?
+
+Vantage West Credit Union
+
+clprocessors@vantagewest.org
+
+520-751-7009
+
+"
+
+
+author: eric.yan
+comment: hi [~dawnl]
+
+I could format the message but there are shortcomings, here are the details.
+
+Since the message is dynamically read from the data file, I could not format the message unless by hard coding. That means any changes in the message could lead to unpredictable outcomes in the future.
+
+An alternative is that the client could insert some key word as line breaker, which I could utilize as line breakers to format the message, something like "new_line".
+
+For example:, the message could be like:
+
+"message body new_line Vantage West Credit Union new_line clprocessors@vantagewest.org new_line 520-751-7009"
+
+
+author: eric.yan
+comment: Hi [~dawnl] ,
+
+where is the new test file?
+
+
+author: dawnl
+comment: Hi Eric - client has not sent the file yet. I have reached out to them again.
+
+
+author: dawnl
+comment: Hi Eric,
+
+Here is the response from client:
+
+"
+
+Sorry for the delay. We cannot add the additional "new_line" text as indicated below. We can only add extra space between the text. Would the work?
+
+Also, can you line up the "X" to be centered in the box?
+
+"
+
+
+author: eric.yan
+comment: [~dawnl]
+
+Yes, double space would work. I would add customized logic to the message specifically.
+
+
+author: william.kong
+comment: [~eric.yan]: Is the update completed and were new samples provided? Would like to reset timeline expectations with [~dawnl]/Client. This 2/28/2022 is way past due.
+
+
+author: eric.yan
+comment: [~William.Kong]
+
+I'm waiting for the new test file from the client. I would suggest 4/15 to be the new live date, assuming the client could provide the test file in time and approve by 4/8.
+
+[~dawnl]
+
+Please advise.
+
+
+author: dawnl
+comment: I have informed client thenew live will be 4/15, assuming they could provide the test file in time and approve by 4/8.
+
+
+author: dawnl
+comment: Eric - please see the attached updated XML file and provide new sample. Thanks.
+
+
+author: eric.yan
+comment: [~dawnl]
+
+New sample is uploaded for review.
+
+
+author: dawnl
+comment: Eric,
+
+After reviewing the sample, client wants to make a change to the text. Please see the attached new XML files and provide new sample.
+
+
+author: eric.yan
+comment: [~dawnl]
+
+Here is the new sample.
+
+
+author: dawnl
+comment: [~eric.yan]
+
+Please provide a sample of the CoApplicant XML file ([Test Adverse Action Co Applicant 4.18.2022.xml).|https://app.na3.teamsupport.com/dc/1/attachments/14014611]
+
+Here is client's feedback:
+
+"The sample looks great. Can you provide a sample of the CoApplicant XML file I attached on 4/18 so I can verify all of that data is mapping over correctly?"
+
+
+
+
+
+
+author: dawnl
+comment: [~eric.yan]- please provide the new sample from CoApplicant XML file today.
+
+
+author: eric.yan
+comment: Hi Dawn,
+
+The sample for co_applicant is attached.
+
+
+author: dawnl
+comment: Hi [~eric.yan],
+
+Can you confirmthat nothing will change with the current Adverse Action process we have set up with InfoImage once these go live? See client's response below.
+
+"They look great. I am going to work with our team to get them implemented. I want to verify that nothing will change with the current Adverse Action process we have set up with InfoImage once these go live."
+
+
+author: eric.yan
+comment: Hi [~dawnl],
+
+
+
+This is verbiage change only depending on data file change, it won't affect the application process. I'm sending this to QA.
+
+
+author: eric.yan
+comment: pr_id: 20220502163420
+
+no enotice
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220502163420
+   Currently in parallel: Yes
+   User: ericY
+   Description: IS-543 VWCU - [23194][pvt] Adjustments needed to our Adverse Action Notice
+   Date Submitted: 2022-05-02 16:34:33
+   Date Last Updated: 2022-05-02 16:34:33
+   Files:
+      1) S1VWCUDF.300
+      2) vwcudla5.table
+      3) VWCUDL046.prj
+      4) VWCUDL046.dfa
+      5) vwcudla4.table
+      6) S1VWCUDE.300
+
+
+author: igor.khosid
+comment: [~dawnl] Please update the due date. The story turned over to QA yesterday 05.02 - late
+Please request the print samples
+
+[~eric.yan] - 
+I believe there is no eSite, for the notice 046? Please confirm 
+ 
+
+
+author: berezinez
+comment: [~eric.yan]
+
+the project is not in QA folder, please export it.
+
+
+author: dawnl
+comment: Hi [~eric.yan]- please provide the DPVS, print file and range for print sample request. Thanks.
+
+
+author: igor.khosid
+comment: [~eric.yan] - any updates on the project? Still not in QA folder
+
+
+author: eric.yan
+comment: Hi [~dawnl],
+
+please request sampel.
+
+dpvs attached,
+
+print file: vwcudla1184.2o1
+
+range 5-8, 277-279,
+
+paper 4000
+
+
+author: eric.yan
+comment: [~Igor.Khosid]
+
+Project exported toqa\VWCU\VWCUDL046.zip
+
+
+author: berezinez
+comment: [~dawnl] [~eric.yan]
+
+the output looks good, waiting for the laser samples.
+
+
+author: dawnl
+comment: Hi [~eric.yan]- I don't see the DPVS. Can you attached it? Thanks.
+
+
+author: eric.yan
+comment: [~dawnl]
+
+Sorry, here is the dpvs
+
+
+author: dawnl
+comment: Print sample request sent to OPS.
+
+
+author: igor.khosid
+comment: [~berezinez]
+Print samples - attached >>>>  [^IS-543_VWCU_Print Samples 05042022.pdf] 
+
+[~dawnl] Please update the due date
+
+[~eric.yan] - Please attach IS checklist
+
+
+author: dawnl
+comment: Due date updated.
+
+
+author: dawnl
+comment: [~eric.yan]- MPT #28903 has been assigned to you.
+
+
+author: berezinez
+comment: [~eric.yan] [~dawnl]
+
+QA is completed, please attach IS checklist.
+
+
+author: eric.yan
+comment: [~dawnl], [~berezinez]
+
+Here is the checklist.
+
+
+author: berezinez
+comment: [^IS_543 _VWCU_IS_Checklist.pdf]
+
+IS checklist attached.
+
+
+author: eric.yan
+comment: Code is released.

@@ -1,0 +1,287 @@
+title: Auto Campaign Enhancement Design Doc
+body: ## High-Level Workflow Diagram
+
+  
+  
+
+  
+
+### Workflow:
+
+  1. Print Processing will pick up the raw data file
+  2. During processing, it will extract all the necessary data for dynamic variables needed in downstream processing
+  3. Upon completion of processing, it will produce the version1 of CSV file into a network shared folder
+    1. CURRENT: the folder currently is carrying date per configuration: e.g. 20160729.
+    2. CHANGE: We need to change it to carry a microtime suffix to avoid re-use of past processing. e.g. 20160729-1470714575433. Keeping the date prefix for ease of sorting and lookup
+  4. Call Notification API to kick off the /autocampaign routine.
+    1. CURRENT: a parameter is provided to carry the CSV folder name
+    2. CHANGE: the parameter carrying folder name should continue to be provided. Need to carry the new folder name suggested above.
+    3. CHANGE: need an additional parameter as 'requireApproval=y' to be passed to indicate sample & approval workflow is needed.
+  5. Notification Service will copy the files necessary from the Shared folder to local working folder. Preserving the same folder name
+  6. Notification Service will transform the CSV from version 1 (no template ID) to version 2 (template ID populated per filename)
+    1. CHANGE: Need to carry the new folder name suggested above
+  7. Notification Service will invoke Campaign creation using the version 2 file
+    1. CHANGE: In addition to the production campaign creation, create an additional campaign by extracting small subset of data rows and replace with pre-defined sample email recipients (from InfoTRAC)
+  8. Notification Service will execute the campaign(s):
+    1. CURRENT: Production Campaign will be started immediately.
+    2. CHANGE: Production Campaign will stay as 'PENDING' status in InfoTRAC, waiting for approval. Only start campaign if it is approved.
+    3. CHANGE: Sample campaign created will be started immediately.
+
+  
+  
+
+## Change 01 - tempalteservice Changes
+
+>  ~~[BC] I'm not sure how this is involved. We don't need approval on the
+> template itself, need approval on the campaigns.~~  
+>  [BC] I think this confusion comes because you refer this change to be in
+> template service. The campaigns status around approval are managed via
+> notifyservice, right? If so, then the status changes all make sense.
+
+1\. Two new status for campaign will be added to tempalate service
+
+> a. APPROVED  
+> b. DISAPPROVED
+
+> Previously campaign status could be
+> DRAFT,SUBMITTED,FAILED,QUEUED,PENDING,PROCESSING,COMPLETED,CANCELLED,DELETED.
+
+  
+
+## Change 02 - InfoTrac Feature Settings
+
+1\. Add a new permission under Marketing feature
+
+> a. Approve Campaign
+
+>  ~~[BC] I prefer to have the permissions & sample emails created within the
+> 'Marketing' module itself.~~  
+>  ~~[BC] I don't think you need 3 new permissions though. Only one new
+> permission of "Approve Campaign" should be needed.~~  
+> [BC] Please relabel the section to be 'Auto-Campaign Sample Recipients'
+
+  
+
+## Change 03 - InfoTrac Marketing Template creation
+
+> 1.  **Sample Recipient**  Will become  **Auto-Campaign Sample Recipients**  
+>  2\. List of email address will be given at template creation. This email
+> addresses will be used for autocampaign sample CSV creation. Email addresses
+> will be stored as comma separated string at  **sampleRecipient**  property
+> of template object (templateservice)
+
+NotifTemplate {  
+    id (integer, optional),  
+    .........................  
+    .........................  
+    .........................  
+    sampleRecipient (string, optional),  
+    .........................  
+    .........................  
+    .........................  
+}
+
+    
+    
+      
+    
+
+example:
+
+{  
+    "id": 935,  
+    "type": "email",  
+    "appId": "marketing",  
+    .........................  
+    .........................  
+    "name": "RWCU - Autocampaign Visa Statement",  
+    .........................  
+    .........................  
+    "clientId": "demo",  
+    "status": "ACTIVE",  
+    *"sampleRecipient": "Ben.Chan@[infoimageinc.com](http://infoimageinc.com),nazmul.islam@[dsinnovators.com](http://dsinnovators.com),[Alok.Verma@infoimageinc.com](mailto:Alok.Verma@infoimageinc.com)",*  
+    .........................  
+    .........................  
+}
+
+    
+    
+      
+    
+
+> 3\. By clicking on Send Sample button, a dialogue box will appear where user
+> will give email address of  **Sample Recipient**.
+
+>  ~~[BC] Alok's approach is better then.  
+>  The logic & changes would be like this then:  
+> 1\. no sample email recipient in client management  
+> 2\. change the purpose of the 'sample recipient' within individual
+> templates: sample emails listed within individual templates will be used for
+> auto-campaign sampling purposes. The label should be renamed to 'Auto-
+> Campaign Sample Recipients'.  
+> 3\. change behavior of the 'Send Sample' button within template-editing-
+> view. Clicking on 'Send Sample', will open up a lightbox/dialogbox to prompt
+> for email(s) to send sample to as an on-demand basis.~~
+
+  
+
+## Change 04 - notifyservice Changes
+
+>  ~~[BC] Agree. Let's rename the parameter to 'requireApproval' = y/n~~
+
+1\. Add optional parameter named  **requireApproval = y/n**  to autocampaign
+API.
+
+2\. New workflow for autocampaign.
+
+1\. Autocampaign API will be called with
+
+> a. cid (Required - String) ex: demo  
+> b. csvDir (Required - String - Will contain folder name with micro time. ex
+> : 20160729-1470714575433 )  
+>  **c. requireApproval (Not Required - String) excepted value: a. n and b.
+> y**
+
+2\. SCP to Network Shared Folder
+
+> Remote directory should be -  **autocampaign.remote.host.csv.file.location**
+> \+ cid + csvDir
+>
+
+>> ex: autocampaign.remote.host.csv.file.location = "/var/printprocess/csvs/"  
+> cid = demo  
+> csvDir = "20160729-1470714575433"  
+> remoteDir = /var/printprocess/csvs/demo/20160729-1470714575433
+
+3\. Copy CSV files from remote directory to notifyservice local directory. CSV
+name will be as it is.
+
+> Local directory should be -  **notif.autocampaign.basefolder**  \+ cid +
+> csvDir
+>
+
+>> ex: notif.autocampaign.basefolder = "/var/autocampaign/csvs/v1/"  
+> cid = demo  
+> csvDir = "20160729-1470714575433"  
+> localDir = /var/autocampaign/csvs/v1/demo/20160729-1470714575433
+
+4\. Iterate all CSV files in that local folder (localDir). Step 5-8 will be
+applied for each CSV.
+
+5\. Check template with the name of the CSV files. Fetch latest active
+template from tempalteservice. Make a new CSV file with that template's ID.
+Save that CSV to 2nd local directory. CSV name will be as it is.
+
+> Local directory should be -  **notif.template.temp.csv.folder.path**  \+ cid
+> + csvDir
+>
+
+>> ex: notif.template.temp.csv.folder.path = "/var/autocampaign/csvs/v2/"  
+> cid = demo  
+> csvDir = "20160729-1470714575433"  
+> localDir2 = /var/autocampaign/csvs/v2/demo/20160729-1470714575433
+
+6\. Create campaign with newly generated CSV.
+
+> a. upload the newly generated CSV file to swift va inforscanner.  
+> b. Create Campaign with that csvId. Campaign status will be "PENDING".
+> Campain Name will be : "Campaign - " \+ templateName.
+>
+
+>> ex: Campaign - RWCU - Autocampaign Visa Statement
+
+7\. If requireApproval = n or null then -
+
+> a. Change CSV status to "SUBMITTED".  
+> b. Start the campaign immediately.
+
+8\. if requireApproval = y then
+
+> a. Extract a subset from newly created CSV. Create a sample CSV with
+> extracted CSV and  **sampleRecipient**  email addresses get from that
+> template object.
+
+> b. Sample CSV name will be "Campaign - " \+ templateName + " \- Sample" and
+> saved to localDir2 location.
+>
+
+>> ex: Campaign - RWCU - Autocampaign Visa Statement - Sample
+
+> c. Start sample campaign immediately.
+    
+    
+    [BC] We would like the notification service to auto-create the second campaign by extract subset of lines from the production CSV, and replace all the emails with the sample emails provided via the client management screen.  e.g. production CSV could carry 20k lines, 7 sample recipients provided in client management, when this happen, extract first 7 data lines from the production file, replace the emails.  Then create a campaign with 'Sample' as campaign name prefix, and start it right away.
+
+  
+  
+
+  
+
+## Change 05 - InfoTrac Marketing Tab
+
+1\. Once user go to the Marketing tab along with the other campaign,
+unapproved auto campaign(s) will be shown there.
+
+2\. Base on Permission User can do 4 type of activity there -
+
+> a. Approve campaign  
+> a. Disapprove campaign  
+> b. Check sample campaign report CSV.  
+> c. Archive campaign.
+    
+    
+    [BC] For each of the /autocampaign call on API, it should create two campaign in this view.  One as 'Campaign - TEMPLATE_NAME', and another as 'Campaign - TEMPLATE_NAME - Sample'
+
+  
+
+    
+    
+    [BC] For 'Campaign - TEMPLATE_NAME', status should be 'PENDING'.  Action available should be 'Approve', 'Disapprove', 'Cancel'
+
+  
+
+    
+    
+    [BC] For 'Campaign - TEMPLATE_NAME - Sample', status should be 'SENT' or 'COMPLETED' (as usual ones).  Action available should be 'Report', 'Archive' (as usual ones)
+
+  
+
+## Change 06 - Approve auto campaign
+
+1\. Make campaign status with  **APPROVED**  
+2\. Rest of the flow will be same as normal campaign
+
+> a. Create job with campaign information at next scheduler cycle or when
+> Start link will be clicked.  
+> b. Visible Report link when job become  **COMPLETED**.
+
+  
+  
+
+  
+
+## Flow 07 - Disapprove auto campaign
+
+    
+    
+    [BC] Maybe we don't need 'Cancel'.  Only need 'Disapprove'.  Upon Approve/Disapprove, need to capture who & when & action & comments
+
+1\. Make campaign status with "DISAPPROVED"
+
+  
+
+## Attachments
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+

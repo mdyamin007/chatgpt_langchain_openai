@@ -1,0 +1,22 @@
+title: SymXChange and InfoXChange
+body: Current behavior for symXChange:
+
+  * The third party core update is tightly coupled into functions that update DP or NP. 
+  * Infoservice does not determine whether it should update the cores. The responsibility is actually up to the upstream applications to pass a "core" parameter. 
+    * One path is: 
+      1. Upstream -> UserProfileResource -> UserProfileService -> UserProfileDAO -> CoreService.
+      2. There is a map of coreParams that get built in UserProfileDAO. 
+      3. CoreService has an if/else dependent on what coreName is inside the coreParams map. The coreParams is relatively the same between symXChange and jXChange because they are essentially very similar product from the same vendor. 
+      4. This is used if Infoservice is called directly or JAAS is called. So InfoTRAC/Hypercube/JAAS will follow this path.
+    * Another path is: -> SymXChangeResource -> SymXChangeService.
+      1. This is used by PUI.
+  * Infoservice has a CoreService class that handles interaction with the core directly (symXChange or jXChange). 
+  * Currently, only VWCU uses this from API (JAAS) and from PUI.
+    * PUI has a symxchangeEnable flag.
+
+There is also another integration called infoXChange/Pathway (vendor looks to
+be Fiserv):
+
+  * InfoXChangeResource -> InfoXChangeService
+
+

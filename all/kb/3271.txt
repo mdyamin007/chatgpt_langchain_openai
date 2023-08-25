@@ -1,0 +1,165 @@
+video explanation of setting message messager in DFA:
+https://kb.dsinnovators.com/wp-content/uploads/2021/02/day1_message_manager3_dfa_part1_2023-02-07-13-04-22_optimized.mp4
+https://kb.dsinnovators.com/wp-content/uploads/2021/02/day2_message_manager3_dfa_part2_2023-02-08-13-02-23_optimized.mp4
+https://kb.dsinnovators.com/wp-content/uploads/2021/02/day3_message_manager3_dfa_revision_2023-02-09-13-13-43_optimized.mp4
+Almost every statement type project has message manager ie bank or credit unions wants messages mainly for advertising purpose embedded with statements . It may be text message or graphic message. So in dfa we need to code for that.
+The message name comes from an external file called portal file such asalbkms1_msg_portal.txt that contains the message name to display and the contents of this file may be:
+1|DEFAULT|000000.300|68882
+EOF
+Here the 3rd column 0000000.300 is the message which is a pseg .
+Message can also be text message besides image. In this case portal will somewhat look like this:
+1|DEFAULT|NECUMS11|40981|null|null
+2|DEFAULT|NECUMS12|40982|null|null
+EOF
+So first, we will need a portal file. You can use portal file for other existing project and modify there to test your project. Example of some portal file:
+wecums1_msg_portal
+tfcums1_msg_portal
+To display this message we need to set some configurations variables like the positions where to display etc. Also we need to call external dfa( e.g.FORMAT MSG_MGR_READ_SAM_LIST EXTERNAL) to read the portal file and get the message name.
+Insert these codes in the following files:
+In $_BEFOREFIRSTDOC:
+  :________________________MESSAGE_MANAGER____________________ ;
+  &MSG1_HOR_POS = 0.1 ;
+  &MSG1_VER_POS = 3.1 ;
+  &MSG1_WIDTH = 7.5 ;
+  &PRINTED_MSG1 = 0 ;
+  &MSG2_HOR_POS = 0 ;
+  &MSG2_VER_POS = 3.4 ;
+  &MSG2_WIDTH = 2.8 ;
+  &PRINTED_MSG2 = 0 ;
+  IF &JOB_TYPE=='m' ;
+  THEN ;
+    IF $SYSTEM=='Windows' ;
+    THEN ;
+      :LOCAL_DIRECTORY ;
+    ELSE ;
+      :PRODUCTION_DIRECTORY ;
+    ENDIF ;
+    USE
+      FORMAT MSG_MGR_READ_SAM_LIST EXTERNAL ;
+  ELSE ;
+    IF &JOB_TYPE<>'d' ;
+    THEN ;
+      USE
+        FORMAT MSG_MGR_READ_CU_SEL_LIST EXTERNAL ;
+    ENDIF ;
+  ENDIF ;
+  /*----------------------------------------------------------*/
+In $_BEFOREDOC( Initializing Selective Criteria Variables):.
+  :________________MESSAGE_MANAGER_VARIABLES________________ ;
+  BRANCH =  '' ;
+  ACN =  '' ;
+  ZIP =  '' ;
+  MSG_ID_STR =  '' ;
+  ID_PTR = 0 ;
+  MSG1_ID =  '' ;
+  MSG_AREA1_NAME =  '' ;
+  MSG_AREA1_PRINTED = 0 ;
+  MSG_AREA1_TYPE = 0 ;
+  MSG2_ID =  '' ;
+  MSG_AREA2_NAME =  '' ;
+  MSG_AREA2_PRINTED = 0 ;
+  MSG_AREA2_TYPE = 0 ;
+  ENDBALANCE =  '' ;
+  PRODUCTTYPE =  '' ;
+  MM2_VALUE_PTR = 0 ;
+  /*----------------------------------------------------------*/
+In PRINT_DOC:
+If the project has Selective Criteria than we need to set all the selective criteria variables before executing below code, see setting selective criteria sections.
+Before printing anything
+  :________________________MESSAGE_MANAGER____________________ ;
+  IF &JOB_TYPE=='m' ;
+  THEN ;
+    IF &TOTAL_MSG_PRINTED>=&MSG_CNT ;
+    THEN ;
+      ENDDOCUMENT;
+    ENDIF ;
+  ENDIF ;
+  /*----------------------------------------------------------*/
+Include this little check section above, it will affect the campaign. For this check, in a campaign set up an extra account ( more than no of criteria ) will not appear. You will have better knowledge about it after you get familiar with the campaign setup.
+After calling FORMATGROUP:
+If the message positions are static (frequent scenario ) then, from the Print_Doc docformat call the following external docformats (normally before printing anything):
+  :________________________MESSAGE_MANAGER____________________ ;
+  IF &JOB_TYPE=='m' ;
+  THEN ;
+    USE
+      FORMAT MSG_MGR_FORMAT_MSG_SAM EXTERNAL ;
+  ELSE ;
+    IF &JOB_TYPE=='d' ;
+    THEN ;
+      USE
+        FORMAT MSG_MGR_FORMAT_DYN_SAM EXTERNAL ;
+    ELSE ;
+      USE
+        FORMAT MSG_MGR_FORMAT_CU_MSG EXTERNAL ;
+    ENDIF ;
+  ENDIF ;
+  /*----------------------------------------------------------*/
+If the message is dynamic (not frequent scenerio as static). For example the message will be printed after the end of the statement then:
+Set the relative vertical position in inch.
+If one of the message is dynamic then we need to manually extract the line that contains message number, pseg or imp file name, criteria string from portal file. Since the message position is dynamic we cannot tell the position of message initially so we need to manually call the external message manager dfa when the message is need to be printed.
+Call the following external dfa to print messages
+if &job_type == "m":MSG_MGR_FORMAT_SAMPLE
+if &job_type == "d": MSG_MGR_FORMAT_SAMPLE
+else: MSG_MGR_FORMAT_ANY_MSG
+you can use the PRINT_MSG docformat from NECUMS3 project. See the below image for example.
+Outline position of the external dfa MSG_MGR_FORMAT_ANY_MSG is set to Horizontal: Left Vertical: Lastmax. That is why it can print message dynamically after any other output in the dfa.
+Outline position of the external dfa MSG_MGR_FORMAT_CU_MSG is set to Horizontal: Left Vertical: TOP.
+In Paper WwriteRecord: (for jobtype 's')
+If there is one message put line 1, if 2 than put line 2
+      PUT MSG_AREA1_TYPE  START 411 LENGTH 1;
+      PUT MSG_AREA2_TYPE  START 412 LENGTH 1;
+so for paper you need to pass MSG_AREA1_TYPE, MSG_AREA2_TYPE and so on variable depending on how many messages are applicable for your project in position 411,412 and so on.
+Actually, message manager 3 doesn't support more than 2 messages. So, up to MSG_AREA2_TYPE should be enough. Values of those variables are set by the external dfas.
+In $_AFTERDOC(for job type 'f')
+    MSG_ID_STR =  '' ;
+    FOR MC
+      REPEAT MAXINDEX(MSG_ID) ;
+      IF MC>1 ;
+      THEN ;
+        MSG_ID_STR = MSG_ID_STR!','!MSG_ID[MC] ;
+      ELSE ;
+        MSG_ID_STR = MSG_ID[MC] ;
+      ENDIF ;
+    ENDFOR ;
+    &MESSAGEID = MSG_ID_STR ;
+And for estatement you need the pass the message ids ( that appear in the last column in the portal file ).
+variable naming conventions, mm2 table
+CRITETIA NAME
+MESSAGE MANAGER NAME
+COMMENTS
+ACCOUNT NUMBER
+ACN,ACCOUNTNUMBER
+No leading zeros (NUMPICTURE(ACCOUNT_NUMBER,'################0')) or just multiply by 1
+MEMBER NUMBER
+MEMBERNUMBER
+RIGHT(MEMBERNUMBER_ARCHIVAL,10,'0'), 10 digits padded with zeros e.g. 0000021401
+ZIP CODE
+ZIP
+EXTRACT(ZIP_CODE,'-',1) Should hold no more than 5 digits
+BRANCH
+BRANCH
+No leading zeros of space
+ENDBALANCE
+MM2 TABLE 2ND FIELD
+NUMPICTURE(MSG_ENDINGBAL,'0000000000.00') 10 digits padded with zeros no commas but can have decimal point e.g. 0000278919.25
+APPLICATIONCODE
+MM2 TABLE 4th FIELD
+RIGHT(NOSPACE(SUBSTR(~LINE,3,2, '')),10,'0') 10 digits padded with zeros no commas e.g. 0000000045
+MAJOR CODE
+MM2 TABLE 5THFIELD
+No leading or trailing space
+MINOR CODE
+MM2 TABLE 6THFIELD
+No leading or trailing space
+ACCOUNTTYPE
+MM2 TABLE 10THFIELD
+RIGHT(NOSPACE(SUBSTR(~LINE,3,2, '')),10,'0') 10 digits padded with zeros no commas e.g. 0000000045
+EXAMPLE:
+     	MSG_MINOR_CODE = NOSPACE(SUBSTR(CUR_RECORD_LINE,43,4, '')) ;
+     	MSG_MAJOR_CODE = NOSPACE(SUBSTR(CUR_RECORD_LINE,39,4, '')) ;
+      	MSG_ENDINGBAL = NOSPACE(SUBSTR(CUR_RECORD_LINE,88,11, ''))*1 ;
+      	MSG_ENDINGBAL = CONVERT('cobol','picture',MSG_ENDINGBAL,2) ;
+      	MSG_ENDINGBAL = NUMPICTURE(MSG_ENDINGBAL,'0000000000.00') ;
+     	MM2_VALUE_PTR = MM2_VALUE_PTR+1 ;
+      	MM2_VALUE_TABLE[MM2_VALUE_PTR] = '|'!MSG_ENDINGBAL!'|||'!MSG_MAJOR_CODE!'|'!MSG_MINOR_CODE!'|' ;
+MM2 table value needs to be set for each product ie each product should have its own entry in MM2 table.

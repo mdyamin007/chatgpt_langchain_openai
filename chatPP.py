@@ -32,18 +32,7 @@ else:
   else:
     index = VectorstoreIndexCreator().from_loaders([loader])
 
-# chain = RetrievalQA.from_chain_type(
-#   llm=ChatOpenAI(model="gpt-3.5-turbo"),
-#   chain_type="map_reduce",
-#   retriever=index.vectorstore.as_retriever(search_kwargs={"k": 1}),
-# )
-# print(chain.run(query))
 
-# llm = OpenAI(model_name="gpt-3.5-turbo")
-# qa = ConversationalRetrievalChain.from_llm(llm, index.as_retriever(), max_tokens_limit=1024)
-
-# Chatbot loop
-chat_history = []
 print("Welcome to the State of the ChatPP! Type 'exit' to stop.")
 while True:
     query = input("Please enter your question: ")
@@ -55,3 +44,5 @@ while True:
       retriever=index.vectorstore.as_retriever(search_kwargs={"k": 3}),
     )
     print(chain.run(query))
+
+#vua

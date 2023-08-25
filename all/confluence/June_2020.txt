@@ -1,0 +1,119 @@
+title: June 2020
+body: Tag
+
+svn+[ssh://pd-tools.infoimage.com/srv/svn/infotrac-
+tomcat/tags/infotrac_v4.3.05_2020062](ssh://pd-
+tools.infoimage.com/srv/svn/infotrac-tomcat/tags/infotrac_v4.3.05_20200529)5
+
+  
+
+New features:
+
+  * Password security is enhanced by having token security when we reset password. Users will be forced to change password when password is expired.
+  * Verbiage change. Below are tab name changes on Infotrac site. 
+
+  
+
+ **Current Tab Name**
+
+|
+
+ **New Tab Name**  
+  
+---|---  
+  
+Home
+
+|
+
+Dashboard  
+  
+Alerts
+
+|
+
+Roll under home / dashboard  
+  
+Account Center
+
+|
+
+User Management/Setup  
+  
+ActivityTrac
+
+|
+
+Insert Management  
+  
+InfoDocs Insert
+
+|
+
+E-Insert Management  
+  
+Confirm Service
+
+|
+
+Reverse Mail Tracking  
+  
+InfoDocs Reports
+
+|
+
+Administrative Reports  
+  
+InfoDocs AcctMgmt
+
+|
+
+Account Management  
+  
+  
+
+  * Enabling IP filtering for internal users. We have increased security of Infotrac by enabling IP filtering for infoimage infotrac users. Now Infoimage employees cannot login to infotrac from outside infoimage network. Also username of infotrac users are changed to have prefix info_ at beginning. Example: anild is now info_anild
+
+Bug fixes:
+
+  * MM2 changes to show error message on UI.
+
+  
+
+Database Queries:
+
+ALTER TABLE USR ADD "RESET_REQUIRED" NUMBER(1) default 0;  
+INSERT INTO FEATURE_DEFINITION (CODE, NAME, CREATED_TIME, PARENT_CODE, TYPE)
+VALUES ('rstPwdRqdReset', 'Reset Password Prompt', TO_DATE('2020-04-24
+12:06:00', 'YYYY-MM-DD HH24:MI:SS'), 'userMgmt', null);
+
+  
+
+CREATE SEQUENCE pass_history_id_seq  
+START WITH 1  
+INCREMENT BY 1  
+NOCACHE  
+NOCYCLE;
+
+CREATE TABLE password_history (  
+pid NUMBER NOT NULL PRIMARY KEY ,  
+username VARCHAR2(150),  
+client_id VARCHAR2(4) NOT NULL,  
+hash VARCHAR2(256),  
+modified_by VARCHAR2(150),  
+created_at TIMESTAMP default sysdate not null  
+);
+
+  
+insert into password_history (pid, username, client_id, hash, modified_by,
+created_at)  
+SELECT PASS_HISTORY_ID_SEQ.nextval, username, client_id,password,
+'info_admin', TO_DATE('2020-04-24 12:06:00', 'YYYY-MM-DD HH24:MI:SS') from usr
+;
+
+  
+INSERT INTO FEATURE_DEFINITION (CODE, NAME, CREATED_TIME, PARENT_CODE, TYPE)
+VALUES ('pwdHistry', 'Password History', TO_DATE('2018-10-23 12:06:00', 'YYYY-
+MM-DD HH24:MI:SS'), 'userMgmt' , null);
+
+

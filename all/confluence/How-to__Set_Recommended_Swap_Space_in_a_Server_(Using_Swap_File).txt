@@ -1,0 +1,92 @@
+title: How-to: Set Recommended Swap Space in a Server (Using Swap File)
+body: The following script can be used  in order to set the swap space of a server
+to a recommended amount.  
+  
+
+    
+    
+    #!/bin/sh
+    #
+    # Script: Swapper v0.3.0
+
+#
+
+    
+    
+    # Purpose: Sets appropriate swap file space for a system based on RAM space
+    #
+    # Usage: The script can be pasted in any POSIX compliant shell
+    #        that uses a UNIX based operating system.
+    #
+    # Author: Salman Abedin  
+    #
+    
+    
+    # Note: The process of setting the swap space puts a lot of stress on the CPU
+    
+    
+    #
+
+  
+
+trap '[ $? -eq 0 ] && echo Successfully set swap space || echo Something went
+wrong' EXIT
+
+    
+    
+      
+    
+    
+    
+    echo 'Getting swap file info'
+
+swap_file=$(cat /proc/swaps | sed -n '2p' | cut -d' ' -f1)
+
+[ -s $swap_file ] && swap_file=/swap
+
+    
+    
+      
+    echo 'Getting the system RAM info'  
+    ram_kb=$(grep MemTotal /proc/meminfo | sed 's/[^0-9]//g')  
+    ram_gb=$(( ram_kb / 1000000 ))
+
+  
+
+    
+    
+    echo 'Defining appropriate swap space based on the RAM info'
+
+if [ $ram_gb -lt 3 ]; then  
+    swap_space_gb=$(( ram_gb * 2 ))  
+elif [ $ram_gb -lt 9 ]; then  
+    swap_space_gb=$ram_gb  
+else  
+    swap_space_gb=$(( ram_gb / 2 ))  
+fi
+
+    
+    
+    sudo -s -- << eof
+    
+    echo 'Disabling the current swap file(if any) gracefully'
+    swapoff $swap_file 2>/dev/null && rm $swap_file 2>/dev/null
+    
+    echo 'Creating the new swapfile'
+    dd if=/dev/zero of=$swap_file bs=1G count=$swap_space_gb status=progress
+    
+    echo 'assigning appropriate permissions'
+    chmod 600 $swap_file
+    
+    echo 'formatting the new swapfile'
+    mkswap $swap_file
+    
+    echo 'enabling the new swapfile'
+    swapon $swap_file
+    
+    eof
+    
+
+  
+
+

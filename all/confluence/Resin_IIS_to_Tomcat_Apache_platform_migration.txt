@@ -1,0 +1,73 @@
+title: Resin/IIS to Tomcat/Apache platform migration
+body: # Resin/IIS to Tomcat/Apache platform migration
+
+  
+
+## Servers involved
+
+  
+
+## Configuration details
+
+### Tomcat App servers
+
+  1. APR
+
+  
+
+### Apache Proxy servers
+
+  1. [Migrate IP filter from Windows IIS to Apache Server](https://confluence.infoimageinc.com/display/PD1/Migrate+IP+filter+from+Windows+IIS+to+Apache+Server?searchId=QFFRD46N2)
+
+  
+
+## Load Tests
+
+## IMPORTANT THINGS to KNOW
+
+  1. External IP to Virtual IP routing, need to use the same external across all CID going forward
+  2. Meaning SSCU doesn't need to make DNS change as they are the first one, but all subsequent CIDs will need to change DNS values on their side.
+
+  
+
+## TODOs before 2015-01-24 Maintenance window
+
+  1. Change tomcat server.xml to point to real production server (was pointing to cloned db for load testing)
+  2. Install javamelody to monitor server status
+  3. Update apache settings to block external access to javamelody (i.e. /monitoring)
+
+  
+  
+
+## Instruction for Existing Resin Client migrate to Tomcat
+
+### Tomcat Server (This should be applied to one server at a time, all
+variable with ${} should be replaced accordingly. Below will be using TKCU and
+production environment as an example.)
+
+  1. Add the client folder under tomcat-${schema}/i3webapps/${orgName}  
+I.E. tomcat-cu/i3webapps/tkcu/
+
+  2. Make sure the logging.conf is under tomcat-${schema}/i3webapps/${orgName}/logging.conf  
+I.E. tomcat-cu/i3webapps/tkcu/logging.conf
+
+  3. Kick off the jenkins job to deploy to the server accordingly. (You should have the msm.war and ROOT.war after the jenkin build completed successfully)  
+I.E. You should see files below at this steup.  
+tomcat-cu/i3webapps/tkcu/logging.conf  
+tomcat-cu/i3webapps/tkcu/msm.war  
+tomcat-cu/i3webapps/tkcu/ROOT.war
+
+  4. Shut down tomcat server. Please be extra mindful that the server start and shutdown should be executed as role "tomcat"  
+I.E. "sudo -u tomcat /usr/local/tomcat/tomcat-cu/bin/shutdown.sh"
+
+  5. Modify the tomcat-${schema}/conf/server.xml and add the CID server information.  
+I.E. Add your CID info to tomcat-cu/conf/server.xml
+
+  6. Start the server. Please be extra mindful that the server start and shutdown should be executed as role "tomcat"  
+I.E. "sudo -u tomcat /usr/local/tomcat/tomcat-cu/bin/start.sh"
+
+  7. Safety purpose, please ensure to modify the local hosts file to add in the ${orgName}${sysEnv}.[infoimageinc.com](http://infoimageinc.com):${schemaPortNumber} and do a quick testing to ensure that the tomcat setup is successful before move on the apache setup.  
+I.E. <https://tkcuprod.infoimageinc.com:9880/msm/login.jsp>. You should be
+hitting the admin site login page.
+
+

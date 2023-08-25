@@ -1,0 +1,184 @@
+title: STAR: Billing Notice (bn1) Suppression Criteria Update for Electronic Posting
+description: The suppression estmt posting for acct that have asterisk in the address block.
+
+estimate 4 hours per app. Mostly testing to ensure we don't create double nesting.
+
+NOTE: This application was left off the assessment and original Jira story for assigning; Peter to assign new dates. Including placeholders for now.
+
+
+author: JIRAUSER11003
+comment: Hi [~phoebe.george],
+
+PDF Samples: [^STARLS1.pdf]
+
+Index file: [^bn1_20220124_1_20220125_0508_star.txt]
+
+
+
+I believe that we still need e-statement posting before we can submit the sample to the client.
+
+
+author: phoebe.george
+comment: [~jasonV] I reviewed on pilot, but unfortunately, the update is not working as expected.
+
+Based on the PDF you provided, I checked account number 16790685 - this should appear on the pilot site when posted.
+
+I also checked account number 17595054 - this should be 'suppressed' and should NOT be posted, as it has the asterisks in the address block:
+
+!image-2022-01-26-09-35-19-761.png!
+
+Let me know if this can be updated and/or if you want to discuss to clarify the update. Thanks!
+
+
+
+
+author: JIRAUSER11003
+comment: [~phoebe.george]thank you for the feedback I will get this resolved.
+
+
+author: JIRAUSER11003
+comment: [~phoebe.george]I am still working on a solution for this update. Can you please provide an updatedLive Date.
+
+Best, Jason
+
+
+author: JIRAUSER11003
+comment: [~phoebe.george]
+
+Updated Index File: [^bn1_20220124_1_20220128_1000_star.txt]
+
+Now the accounts with theasterisks in the address block should not be posted.
+
+
+
+
+
+
+author: phoebe.george
+comment: [~jasonV] Shun was able to post the new index file, and it displaying as expected. I could not view the account with asterisks on the site. but i checked two posted accounts and they were viewable, as expected since they did not have the asterisks in the address block. thanks!
+
+Please proceed with next steps when ready. Thanks!
+
+
+author: JIRAUSER11003
+comment: [~phoebe.george]thank you for making sure everything is correct! I will proceed to submit this issue to QA. Thanks!
+
+
+
+
+author: JIRAUSER11003
+comment: [~Igor.Khosid] [~phoebe.george]
+
+QA Details:
+
+1) Parallel ID:20220125043837
+
+2) Sample: [^STARLS1.pdf]
+
+3) Index file: [^bn1_20220124_1_20220128_1000_star.txt]
+
+4) DPVS: [^starbn1124-1.print]
+
+5) QA Checklist: [^qa_check_list_IS-716.docx]
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220125043837
+   Currently in parallel: Yes
+   User: jasonV
+   Description: IS-716 STAR: Billing Notice (bn1) Suppression Criteria Update for Electronic Posting
+   Date Submitted: 2022-01-25 04:38:54
+   Date Last Updated: 2022-01-28 09:58:01
+   Files:
+      1) STARBN1.dfa
+
+
+
+author: igor.khosid
+comment: QA completed
+IS checklist - attached >>>  [^IS-716_STAR_IS checklist.pdf] 
+
+1. Parallel report
+Parallel ID: 20220125043837
+Currently in parallel: Yes
+User: jasonV
+Description: IS-716 STAR: Billing Notice (bn1) Suppression Criteria Update for Electronic Posting
+Date Submitted: 2022-01-25 04:38:54
+Date Last Updated: 2022-01-28 09:58:01
+Files:
+1) STARBN1.dfa
+
+2. Difference prod vs test STARBN1.dfa
+> FOR I
+> REPEAT ADDR_IDX ;
+> ENDFOR ;
+904c908
+
+> ESUP_MAIL_CODE = '' ;
+918,919c922
+< IF POS('***********************************',UPPER(ADDR[I]),1)<>0
+< ;
+
+> IF POS('******',NOSPACE(ADDR[I]),1)<>0 ;
+921c925
+
+> ESUP_MAIL_CODE = 'z' ;
+940c943
+< ESUP_MAIL_CODE = '' ;
+
+943,944c946,950
+< USE
+< FORMAT LOCAL_ESTEMENT_SET_VARIABLES ;
+
+> IF ESUP_MAIL_CODE<>'z' ;
+> THEN ;
+> USE
+> FORMAT LOCAL_ESTEMENT_SET_VARIABLES ;
+> ENDIF ;
+986c992
+< IF &JOB_TYPE=='f' ;
+
+> IF &JOB_TYPE=='f' AND ESUP_MAIL_CODE<>'z' ;
+1194c1199
+< &MOD_PAGE_NUM = 0 ;
+
+1200c1206
+
+> &MOD_PAGE_NUM = 0 ;
+1217c1223,1225
+
+3. Index file processed bn1_20220124_1_20220128_1000_star.txt on stage
+Accounts displayed as expected.
+Acct that have asterisk in the address block suppressed from posting
+Posted accounts:
+16790685
+6699717409
+17712957
+17725506
+Suppressed accounts:
+17595054
+1673174900
+
+
+author: JIRAUSER11003
+comment: Hi [~phoebe.george], QA has completed. Do we need to parallel or can we bypass?
+
+
+author: phoebe.george
+comment: [~jasonV] I ended up creating a parallel test MPT #26372. It will be run for e-only.
+
+
+author: JIRAUSER11003
+comment: [~Peter.Dang] [~yameelee] [~phoebe.george]
+
+Parallel has passed see team support ticket: 26372
+
+Code ready for release.
+
+[^IS_PROGRAM_TRANSFER_FORM_IS-716.doc]
+
+
+
+
+author: JIRAUSER11003
+comment: [~phoebe.george]Star bn1 has been released to production.

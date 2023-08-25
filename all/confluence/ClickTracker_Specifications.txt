@@ -1,0 +1,198 @@
+title: ClickTracker Specifications
+body: ## Purpose/Objective Summary
+
+  1. Create short url
+  2. Track hits on url
+  3. Report
+
+  
+
+## Description
+
+We have three collections for clicktracking.
+
+  1. trackClick
+  2. urlMap
+  3. urlMapCounter
+
+We have following api endpoints in clickTracker
+
+  1.  **/getClickTrackURL:**  
+This api endpoint is used to store necessary information and returns a
+trackable tinyurl.  
+Sample request payload:  
+
+    
+          
+    
+
+{  
+    "header": {  
+        "cid": "mtro",  
+        "redirectURL": "<https://infopub-pilot.infoimageinc.com/video?videoId=qZgkTh574vrGF5wdG>"  
+    },  
+    "metadata": {  
+        "appId": "offer",  
+        "offerId": "tN8ZuiXwZq9PjmimD",  
+        "campaignId": "EdEcfLqgjzpHgsmpP",  
+        "campaignName": "test",  
+        "audienceId": "58df0096b7cd1f2fa425115c1",  
+        "offerName": "test",  
+        "audienceEmail": "inforeachtest3@[gmail.com](http://gmail.com)",  
+        "audienceName": "ANTOINETTE M LOBOSCO",  
+        "actionType": "clicked",  
+        "offerNotifId": "1188199110662",  
+        "offerVersion": "12",  
+        "distributionType": "Email"  
+    }  
+}
+
+    
+          
+    
+
+  
+Sample result:  
+
+    
+          
+    
+
+{  
+    "URL": "<https://clk-pilot.infoimageinc.com/DxI>"  
+}
+
+    
+        
+
+  
+In the request payload the header and it's child keys are required. The
+required keys depends on the appID (offer ,estmt, marketing etc). For example
+if the appID is "offer" then "campaignID", "offerID", "actionType" keys are
+required inside metadata. When the result tinyURL is visited it will redirect
+the user to the "redirectURL" provided during the api call.  
+Once this API is hit, it will increase the counter in "urlMapCounter" and
+encrypt the metadata and store it into "urlMap" collection and it will look
+like the following.  
+
+    
+          
+    
+
+{  
+    "_id": NumberInt(6939),  
+    "cid": "mtro",  
+    "redirectURL": "<https://infopub-pilot.infoimageinc.com/video?videoId=qZgkTh574vrGF5wdG>",  
+    "metadata": "J8rop5aTFHjqOMjNajpWhsoPQE5IlRAwx+uSAzgelVooJf7I6kXxmxYa7lHhC/V19g1FJZzp+9cS7d+mRurhP13/RxfOCfVYDDiNt3WA1xyVyP3uL62PWs/mbqJAqH2mjXkWF3pAcO4Z4WF+ez3X+hP5pqSmeC2uvwwKFa4z6UNher1k3/fLtm986AeQIdGLRWZHOSBORwPj7Vk8gdbBuU55Po8HVbP//eplDI7PS3/flrVOyP0vFgVmUvpZ9Ho001DRmZ7J73VEUV+WWGqWk1kWteHrmtlSZctAn61vYcy+q23nKAImnal1a06BcG+qwDwuIHP7o8pSnbwAzxvO6iSdwU4Z90T3Z0pANBgwz6JP9uEmwq3apubminLmHyCCcjcjz4kdmNF1Exj2osjT9wRsRIpktJZz9avElwOniGqTNgTJzPrU+PWvJqtff8HxyEjfMxlGDsnpoaA2et6oNpj+wcxvZyNZrj9gWBxi0Us=",  
+    "createdOn": ISODate("2018-09-12T12:27:19.067+0000")  
+}
+
+    
+          
+    
+
+  
+Once the result url (<https://clk-pilot.infoimageinc.com/DxI>) is hit,
+clicktracker will insert the decrypted metadata and insert a new document
+which will look like the following  
+
+    
+          
+    
+
+{  
+    "_id": ObjectId("111f5a6fdb1ff71589928650"),  
+    "appId": "offer",  
+    "cid": "mtro",  
+    "offerId": "tN8ZuiXwZq9PjmimD",  
+    "offerVersion": "12",  
+    "campaignId": "EdEcfLqgjzpHgsmpP",  
+    "campaignName": "test",  
+    "offerName": "test",  
+    "audienceEmail": "inforeachtest3@[gmail.com](http://gmail.com)",  
+    "audienceSmsNumber": "6507013188",  
+    "audienceName": "ANTOINETTE M LOBOSCO",  
+    "audienceId": "58df0096b7cd1f2fa425115c1",  
+    "offerNotifId": "1188199110662",  
+    "createdOn": ISODate("2018-09-19T16:01:10.806+0000"),  
+    "actionType": "clicked",  
+    "distributionType": "Email"  
+}
+
+    
+          
+    
+
+  2. /getClickTrackSummary/:cid  
+API download summary report of Number of clicks we had on each day
+
+  3. /getClickTrackDetail/:cid  
+API download detail report of Number of clicks we had on each day
+
+  4. /getClickTrackForCampaign/:cid  
+API download full report of campaign
+
+  5. /:tinyURL  
+This is the tinyUrl which clickTrack generates from requesting
+"getClickTrackURL" api based on the counter from 'urlMapCounter' collection.
+
+  
+  
+
+## Environment Setup Instructions
+
+  1. Pull from svn  
+
+    
+          
+    
+
+svn co  svn+ssh: //12.189.22.102:422/srv/svn/clicktrack/trunk/ .
+
+    
+          
+    
+    
+
+  1. Install the node and npm if not installed.  
+-> sudo apt update  
+-> sudo apt install nodejs npm  
+-> sudo apt install npm  
+-> node --version  
+-> npm --version  
+Our preferred versions for node is 11.10.1 and for npm is 6.7.0
+
+  1. Go to the pulled trunk directory and install the packages  
+-> npm install
+
+  1. You will find the different config files (e.g. config-pilot, config-prod etc) for different environments. If you have a new config file, please create a new config with specific name (e.g. config-prodmm) and under packages.json create a new script with that environment name (e.g. prodmm).
+
+  1. Once you have the script written in package.json and have the config-${ENV} in the file system with your preferred configuration, you can just run node with the script name specified while staying in project directory.  
+For example  
+
+    
+          
+    
+
+npm run ${SCRIPT_NAME  
+}
+
+    
+        
+
+  1. You will find the logs as per your configuration in the config file. You can update the code base by pulling from svn by  
+
+    
+          
+    
+
+svn up .
+
+    
+          
+    
+
+If you have written your script using nodemon you wont need to stop and rerun
+the node cause it will automatically restart.
+
+

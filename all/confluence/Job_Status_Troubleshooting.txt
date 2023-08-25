@@ -1,0 +1,82 @@
+title: Job Status Troubleshooting
+body:   
+
+#fffTable of Contents  
+
+  1. General
+  2. Types of Issues
+
+  
+
+##  **General**
+
+Below are some important things to note for jobs to show as expected on Job
+Status:
+
+  *     * ISD needs to enable AOLP in the conf file (i.e. global.default.needApproval=true)
+      * To skip internal release, ISD needs to enable the bypass flag in the conf file (i.e. global.default.bypassApproval=DP)
+    * PC needs to create the DT_JOB_ID
+    * PC needs to enable Estatement Job Tracking
+    * Estatement Online Proofing and Print Online Proofing need to be enabled in Client Management settings
+    * Estatement Online Proofing and Print Online Proofing need to be enabled for Admin roles
+    * There are Message Manager resources that sometimes need to be uploaded so statements show correctly on Job Status and match output on Account Management.
+
+  
+
+Estatement postings go through two steps: internal release and client
+approval. The AC/IM will check and release the job if everything looks good.
+Internal release is shown by the yellow PUI status 'Waiting for DP to Release'
+and the triangular accept/reject buttons on Job Status:
+
+  
+
+After the release step is performed, the job will become visible for the
+client to go in and approve. The PUI job will also change to a purple 'Waiting
+for Client Approval' status and circular accept/reject buttons should appear
+on Job Status. Note: If the bypass internal release flag is enabled in the
+conf file, the index file should skip to this purple status:
+
+  
+
+##  **Types of Issues** :
+
+  * Job not showing under Job Status
+    * Estatement
+      * Index file might not have been posted.
+      * Estatement job tracking might not be enabled. If not, ask PC to enable.
+      * DT_JOB_ID might not be matching between job status and PUI. Ask DP to check if they used the correct DT_JOB_ID.
+    * Paper
+      * Ask IS to check. Sometimes DP just needs to reprocess the job.
+      * InfoSync
+        * Check the indexFileProcess link (<http://ca-jobtrack-pr-01.infoimageinc.com:8980/indexFileProcess/getIndexFileRecord>) to try and find the proc_id. 
+        * Open InfoTRAC catalina logs and search for the proc_id
+        * Inside logs, there should be an InfoSync response with several parameters including the status. Successful entries should show "state": "submitted".
+        * If other statuses show, check with Will/Shailendra or someone else on IS.
+  * Approval buttons missing
+    * Check if conf file contains the AOLP flags
+    * Estatement/Print Online Proofing must be enabled in Client Management settings.
+    * Extended Tracking must be set to level 3 in Client Management settings.
+  * Entry exists but displays "estmt is not being tracked"
+    * PC might need to enable estatement job tracking
+  * Entry exists but wrong AppID is displaying (i.e. Tax 1099 is displayed as Tax 5498)
+    * Check if DP scanned the correct DT_JOB_ID, which ties to the description
+    * Check if PC input the correct names in DataTRAC
+  * Entry shows "Estmt job is currently running"
+    * Estatement job tracking is enabled, but index file is not posted.
+  * PDF in job details shows fine for estatement, but is blank/corrupted for paper
+    * Might be missing message manager resource file, check with IS.
+  * Envelope button missing
+    * Check if Extended Tracking is enabled in Client Management settings. Needs to be set to level 3.
+  * Proofing sample missing
+    * Check if IS has the file on their end
+    * Missing piece code. If so, we trigger an email to PC for correction and provide a link for reprocess. PC may have forgotten to trigger the sample file. - TS 24209
+  * Unauthorized message when clicking on PDF
+    * Restrict Account Search may be enabled in Client Management settings. Unauthorized message will appear for any restricted accounts that are being viewed by an admin user who has "Restrict Account Search" enabled in their role. 
+  * Delivery Information still shows all pending
+    * Missing PKG file. 
+      * When USPS scans the mail piece, they send us data in PKG files. We take the IMB value from the file and match against what we process. If there is no PKG file, then we cannot perform the matching and therefore results in outdated/incorrect delivery information.
+      * PKG file can be found on ca-jobtrack server.
+  * Missing Camera Image
+    * Might be invalid object name, ask Ops to research.
+
+

@@ -1,0 +1,245 @@
+title: SEFC Mortgage Trans Code 175 and 745 Update
+description: Transaction code 175. 
+
+"Display transaction as up to 4 separate lines, if conditions met:
+1) Payment line 
+IF (SUM (PRIN-PD (S,0044-0049) + INT-PD (S,0050-0054) + ESCROW-PD(S,0055-0059)) != 0 )
+THEN map:
+Amount from SUM (PRIN-PD (S,0044-0049) + INT-PD (S,0050-0054) + ESCROW-PD(S,0055-0059) (to Payments or Amount column)
+Date from PROC-DATE (S,0124-0129)
+Description from Transactions tab
+
+2) Partial Payment Unapplied line
+   IF ( SUSPENSE-AMT (S,0080-0084) != 0 ) 
+   THEN map: 
+      Amount from SUSPENSE-AMT (S,0080-0084)  (to Payments or Amount column)
+      Date from PROC-DATE (S,0124-0129)
+      Description Partial Payment Unapplied *
+
+
+3) Fee line
+   IF (FEE-PD (S,0060-0064) != 0)
+   THEN map Fee as a separate line on Statement
+      Date from PROC-DATE (S,0124-0129)
+      Amount from FEE-PD (S,0060-0064) (to Payments or Amount column)
+      Description:
+         IF (FEE-CODE (S,0123-0123) != NULL) AND (FEE-CODE (S,0123-0123) != * AND (FEE-CODE (S,0123-0123)value EQUALS value within "Fee Code" column in Fees Tab)
+         THEN map description from Fees tab based on value in FEE-CODE (S,0123-0123)
+         
+         IF (FEE-CODE (S,0123-0123) != NULL) AND (FEE-CODE (S,0123-0123) != * AND (FEE-CODE (S,0123-0123)value NOT EQUALS value within "Fee Code" column in Fees Tab)
+         THEN suppress STATEMENT and generate Exception Report
+
+         ELSE IF (FEE-CODE (S,0123-0123) = * AND (REC-CORP-ADV-REASON-CODE (S,0194-0197)value EQUALS value within "Corp Adv Reason Code" column in Corp Adv Reason Code tab)
+         THEN map description from Corp Adv Rsn Code Xref based on value in REC-CORP-ADV-REASON-CODE (S,0194-0197)"
+         
+         ELSE IF (FEE-CODE (S,0123-0123) = * AND (REC-CORP-ADV-REASON-CODE (S,0194-0197)value NOT EQUALS value within "Corp Adv Reason Code" column in Corp Adv Reason Code tab)
+         THEN suppress STATEMENT and generate Exception Report
+
+4) Payments to Deferred Balances line
+  IF PMTDEF-AMT (S,1018-1024) != 0
+  THEN map Payment to Deferred Balance as a separate line of Statement
+    Date from PROC-DATE (S,0124-0129)
+    Amount from PMTDEF-AMT (S,1018-1024) (to Payments or Amount column)
+    Description from Payment Deferral Types tab based on value in PMTDEF-TY (S,1016-1017) and TRAN
+
+Tran Code 745
+
+IF (TRAN = 745) AND (REC-CORP-ADV-REASON-CODE (S/W,0194-0197) != NULL) AND (REC-CORP-ADV-REASON-CODE (S/W,0194-0197) value EQUALS value within "Reason Code" column in Corp Adv Reason Code tab)
+THEN map
+
+  *Amount from SUM (TOTAL-RECD (S/W,0038-0043) + NET-DISB (S/W,0016-0021)) (Payments) 
+  *Date from PROC-DATE (S/W,0124-0129)
+  *Description from (REC-CORP-ADV-REASON-CODE (S/W,0194-0197) cross-reference against Corp Adv Reason Code tab
+  
+ELSE IF (TRAN = 745) AND (REC-CORP-ADV-REASON-CODE (S/W,0194-0197) != NULL) AND (REC-CORP-ADV-REASON-CODE (S/W,0194-0197) value NOT EQUALS value within "Reason Code" column in Corp Adv Reason Code tab)
+THEN supress STATEMENT and generate exception report
+
+ELSE IF
+
+  [(TRAN = 745) AND RECORD S AND (DISB-PROC-DATE (S,1006-1011) IN (05/02/22,07/01/22,07/02/22)]
+  OR
+  [(TRAN = 745) AND (REC-CORP-ADV-REASON-CODE (S/W,0194-0197) = NULL)]
+  OR
+  [(TRAN = 745) AND NET-DISB (S/W, 0016-0021) = 0 AND TOTAL-RECD (S/W, 038-0043) = 0)]
+
+THEN suppress TRANSACTION from statement
+
+Note from CU: In general, we want Tran Code 745 from both Record S and Record W to print to the statement. 
+
+While we do have multiple scenarios where we are suppressing the transaction from the statement, we are looking to suppress Tran Code 745 from printing to the statement if it's in Record S and the DISB-PROC-DATE (S,1006-1011) is either 05/02/22, 07/01/22 or 07/02/22. The other two scenarios in which want to suppress Tran 745 from the statement apply to both Record S and Record W (when REC-CORP-ADV-REASON-CODE (S/W,0194-0197) is NULL; when NET-DISB (S/W, 0016-0021) and TOTAL-RECD (S/W, 038-0043) are both zero).
+
+
+author: stephen.yee@infoimageinc.com
+comment: Hi [~tanmay]- can you please generate samples using this list.
+
+[^SEFC Mortgage Suppression Sample List.txt]
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~tanmay]- Issue with samples. Please see below and advise.
+
+It appears that neither issue has been corrected.
+
+Tran 175 fix - please see ANTHONY LOMBARDO statement. The issue is still not resolved. The Principal Only Payment transaction amount is blank.
+
+Anthony Lombardo - 0008621910 - 1705916063
+
+Tran 745 fix - please see PAUL J KOSNICK statement. The issue is still showing on the statement. Corporate Advances from 7/1 still exist.
+
+Paul Kosnick - 0002661910 - 1705915809
+
+Can you have programmers review the fix before we continue our review?
+
+I also attached screenshots of each statement with the problem highlighted.
+
+
+
+!PAUL J KOSNICK_Updated Statement_07272022.png!
+
+
+
+!ANTHONY LOMBARDO_Updated Statement_07272022.png!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~tanmay] [~berezinez] [~Igor.Khosid]- This has been approved. Please prepare for QA and change status to ready for QA. Please provide...
+
+1. Parallel ID
+2. Export projects into QA Folder
+3. Provide DPVS for print samples.
+4. Provide index file for QA posting.
+
+Approved samples - Located in Alis's Share folder. Look in subfolder "SEFC".
+
+Trans Code Mapping - [http://sharepoint-svr/AS/Mapping%20Documents/SEFC%20-%20SEFCU/Core%20Conversion%20(to%20Black%20Night)/Mortgage/Mapping/SEFCU_BlackKnightEXT0571_Transaction%20Code%20Mapping_UPDATE%2006.27.2022.xlsx]
+
+
+
+
+author: tanmay
+comment: [~berezinez] [~stephen.yee@infoimageinc.com]
+ * project has been placed at QA folder/d/iss/qa/SEFC/SEFCML51.zip
+ * Parallel id:20220726021509
+ * dpvs([^sefcml5118.print]) has been attached
+ * print range:1-10 fromsefcml51184.2o1.afp
+ * index file name: ml5_20220718_1_20220729_0033_sefc.txt
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220726021509
+   Currently in parallel: Yes
+   User: mahbuburT
+   Description: SEFC Mortgage Trans Code 175 and 745 Update
+   Date Submitted: 2022-07-26 02:15:28
+   Date Last Updated: 2022-07-28 22:08:21
+   Files:
+      1) SEFCML51.prj
+      2) SEFCML51.dfa
+
+
+author: igor.khosid
+comment: [~berezinez]
+Sounds like we are good to start testing. Please make it as a priority.
+
+[~tanmay] [~stephen.yee@infoimageinc.com] [~enricob] - FYI
+Please stay tuned for any additional info needed to expedite QA testing.
+
+
+author: igor.khosid
+comment: [~stephen.yee@infoimageinc.com]
+Please request the print samples in Brisbane
+[~berezinez] - FYI
+
+
+author: igor.khosid
+comment: [~berezinez] [~stephen.yee@infoimageinc.com] [~tanmay]
+
+Alis - print samples are in QA folder. Scanned copies more then 7MB and I can't attached to JIRA
+\\dell-2100\QA\2022\03_Change Request\Alis B\SEFC\IS-1361\IS checklist Print Samples
+
+
+author: igor.khosid
+comment: [~tanmay] - to expedite - Please attached IS checklist!
+[~stephen.yee@infoimageinc.com] [~berezinez] - FYI
+
+
+author: tanmay
+comment: [^IS-734#is_checklist.docx]
+IS checklist has been attached
+
+
+author: berezinez
+comment: QA is completed. IS checklist attached.
+
+[^IS_1361_SEFC_IS_checklist.pdf]
+
+
+author: tanmay
+comment: [~TunA] [~stephen.yee@infoimageinc.com]
+Please check the mail
+RE: SEFCU Mortgage BK Conversion Cycle 18 - Rollout/Mail Cycle 18 Segment 2
+
+
+author: tuna
+comment: Hi [~tanmay],
+
+Please attach transfer form in this Jira story and message me.
+
+Thanks,
+
+Tun
+
+
+
+[~stephen.yee@infoimageinc.com], [~rony]
+
+
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~TunA]- Here it is.[^IS_PROGRAM_TRANSFER_FORM_IS-1361.doc]
+
+
+author: tuna
+comment: Thanks [~stephen.yee@infoimageinc.com], [~tanmay],
+
+Following codes have been released.
+
+Thanks,
+
+Tun
+
+
+
+20220801092613 08/01/2022 mahbuburT IS-1361 SEFC Mortgage Trans Code 175 and 745 Update
+
+[main@rhs ~]$ ll /d/is/cvs/xfer/mahbuburT/
+total 528
+-rwxrwxrwx 1 mahbuburT DSI 197303 Aug 1 03:38 SEFCML51.dfa
+-rwxrwxrwx 1 mahbuburT DSI 694 Aug 1 03:38 SEFCML51.prj
+
+
+author: tanmay
+comment: development 

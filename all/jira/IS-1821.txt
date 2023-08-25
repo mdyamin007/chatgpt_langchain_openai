@@ -1,0 +1,110 @@
+title: VWCU - [35798] [pvt] Annual Escrow Analysis Script Can't Locate AFP
+description: The fix is for our processing script to locate the AFP to do checking against the PDF, which currently error out when the script can't locate the AFP. 
+
+1. remove vwcuea1 from /home/keep/redtitan/redtitan exception.list 
+
+2.Add the location to the afp as argument:
+
+${home_master}/master/redtitan_csv_index.pl $csvData $datfile $totalPages 10 ${fileDir}/afp/${cid}${jid}.afp
+
+ 
+
+
+author: JIRAUSER11300
+comment: The error:
+
+
+
+[oper1@rhs ~]$ /home/master/vwcuea1_process.sh s bypass
+1, grep '^DT_JOB_ID:' /home/insert/vwcuea1.ins|cut -d ' ' -f2|cut -d '.' -f2|cut -d '-' -f1
+removing old /home/keep/vwcuea1.datatrack.tmp file
+grep: /home/keep/maillist/vwcuea1_mail.lis: No such file or directory
+
+rm: cannot remove `/home/keep/vwcuea1.datatrack.tmp': No such file or directory
+**********************************************************************crow Analysis Process for vwcuea1 starting...
+Searching for data file VWCU_EA_??????.zip
+Data File Found: /d/ftpbu/vwcubu/EA/VWCU_EA_110822.zip
+Process Date Found: 110822
+nzip -j -P6s1Xe9 /d/ftpbu/vwcubu/EA/VWCU_EA_110822.zip -d /d/vwcu/vwcuea1//files/
+Archive: /d/ftpbu/vwcubu/EA/VWCU_EA_110822.zip
+ inflating: /d/vwcu/vwcuea1//files/VWCU_EA_110822.pdf
+ inflating: /d/vwcu/vwcuea1//files/VWCU_EA_SUMMARY_110822.csv
+Looking for Verification file /d/vwcu/vwcuea1//files/VWCU_EA_SUMMARY_??????.csv
+find /d/vwcu/vwcuea1//files/ -maxdepth 1 -type f -iname VWCU_EA_SUMMARY_??????.csv | head -1
+Verification File Found: /d/vwcu/vwcuea1//files/VWCU_EA_SUMMARY_110822.csv
+Found PDF data file
+11092022 1352 oper1 rhs s
+md5sum: s: No such file or directory
+Attemp to process an old file, |, s, Thu Nov 11 10:53:20 PST 2021.
+[oper1@rhs ~]$ vi /home/keep/cksum_log/vwcuea1_cksum.log
+[oper1@rhs ~]$ /home/master/vwcuea1_process.sh s bypass
+1, grep '^DT_JOB_ID:' /home/insert/vwcuea1.ins|cut -d ' ' -f2|cut -d '.' -f2|cut -d '-' -f1
+removing old /home/keep/vwcuea1.datatrack.tmp file
+grep: /home/keep/maillist/vwcuea1_mail.lis: No such file or directory
+
+rm: cannot remove `/home/keep/vwcuea1.datatrack.tmp': No such file or directory
+**********************************************************************crow Analysis Process for vwcuea1 star
+Searching for data file VWCU_EA_??????.zip
+Data File Found: /d/ftpbu/vwcubu/EA/VWCU_EA_110822.zip
+Process Date Found: 110822
+nzip -j -P6s1Xe9 /d/ftpbu/vwcubu/EA/VWCU_EA_110822.zip -d /d/vwcu/vwcuea1//files/
+Archive: /d/ftpbu/vwcubu/EA/VWCU_EA_110822.zip
+ inflating: /d/vwcu/vwcuea1//files/VWCU_EA_110822.pdf
+ inflating: /d/vwcu/vwcuea1//files/VWCU_EA_SUMMARY_110822.csv
+Looking for Verification file /d/vwcu/vwcuea1//files/VWCU_EA_SUMMARY_??????.csv
+find /d/vwcu/vwcuea1//files/ -maxdepth 1 -type f -iname VWCU_EA_SUMMARY_??????.csv | head -1
+Verification File Found: /d/vwcu/vwcuea1//files/VWCU_EA_SUMMARY_110822.csv
+Found PDF data file
+11092022 1354 oper1 rhs s
+md5sum: s: No such file or directory
+/home/master/update_insert.sh vwcuea1 110822
+`/d/vwcu/vwcuea1//files/VWCU_EA_110822.pdf' -> `/d/vwcu/vwcuea1//files//vwcuea1.pdf'
+`/d/vwcu/vwcuea1//files//vwcuea1.pdf' -> `/d/Iswk_new/vwcuea1/vwcuea1.pdf'
+
+
+Starting Red Titan Process for /d/vwcu/vwcuea1//files//vwcuea1.pdf at 11092022 1354
+/home/test/master/iswk_client3.pl vwcuea1 vwcuea1.pdf prod
+Socket connecting ca-rtitan-pr-04 ...
+Client rhs connected to host 10.4.20.124 ...
+Waiting for server ca-rtitan-pr-04 response ...
+Client get response 'done' from server ca-rtitan-pr-04
+Exitting client ...
+rm: cannot remove `/d/vwcu/vwcuea1//files//afp': No such file or directory
+rm: cannot remove `/d/vwcu/vwcuea1//files//data': No such file or directory
+Copying afp and csv output from red titan to processing directory
+
+
+Processing cycle 08 at 1354
+**********************************************************************
+Formatting...
+**********************************************************************
+
+
+Total Page Count for vwcuea1.pdf: 8716
+/home/master/redtitan_csv_index.pl /d/vwcu/vwcuea1//files//data/vwcuea1.csv /d/vwcu/vwcuea1//files//vwcuea1.dat 8716 10
+Prefix: vwcuea1 -- Exception file: /home/keep/redtitan/redtitan_exception.list
+AFP File vwcuea1.afp not found in /d/vwcu/vwcuea1//files//data.
+Error within program: Error RedTitan indexing csv file /d/vwcu/vwcuea1//files//vwcuea1.dat
+[oper1@rhs ~]$
+
+
+author: jun
+comment: [~Igor.Khosid]
+
+Can't putvwcuea1_process.sh in parallel because it's being held by parallel id20221025160938
+
+Attached is the script:[^vwcuea1_process.sh]
+
+^diff vwcuea1_process.sh /home/master/^
+^301,302c301,302^
+^< echo_output "${home_master}/master/redtitan_csv_index.pl $csvData $datfile $totalPages 10 ${fileDir}/afp/${cid}${jid}.afp"^
+^< ${home_master}/master/redtitan_csv_index.pl $csvData $datfile $totalPages 10 ${fileDir}/afp/${cid}${jid}.afp^
+^---^
+^> echo_output "${home_master}/master/redtitan_csv_index.pl $csvData $datfile $totalPages 10"^
+^> ${home_master}/master/redtitan_csv_index.pl $csvData $datfile $totalPages 10^
+
+
+
+
+author: igor.khosid
+comment: QA - completed

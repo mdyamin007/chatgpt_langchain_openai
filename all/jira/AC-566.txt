@@ -1,0 +1,94 @@
+title: PFCU - [27577][pvt] Suppress restricted statements from the HELOC and Mortgage Proofing files
+description: Programming hours: 4 hr
+
+Sample Date: 3/25
+
+Sample Approval: 3/29
+
+QA: 3/30
+
+Parallel: 4/1
+
+Live: 4/4
+
+
+
+Implement the logic to suppress restricted statements from the HELOC and Mortgage Proofing files;
+
+----This the logic for stmt we implemented for stmt from ticket 24435 ( which I have related here)
+
+Use thepfcu_cif_stmt_MMDDYYYY.txt.pgp file that gets placed into the ftpbu/pfcubu/stmt/ folder.
+
+Go to the column 8 and look for value == 1 (Value-0 = non-restricted and value-1 = restricted)
+
+
+
+21|JOHN BEMENT|JOHN BEMENT|14857928|00|JOHN||BEMENT|1|Savings
+
+
+
+If value is set to 1, donotinclude this file in the prf file. (i.e. proof file)
+
+This is so that when CU reviews the small proof file, it does not contain restricted accounts in the prf pdf.
+
+
+
+Note from client (3/16):That logic sounds right, the only caveat is that I believe that the cif file name and location is different for each application.
+
+
+author: rony
+comment: Hi [~dawnl]
+
+please create a story for me.
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+This is exactly the same as is-894.
+
+The update is to not display customers with emp code 1 in the job status proof sample. Check [https://app.na3.teamsupport.com/?TicketNumber=27588]comment 17.
+
+
+
+parallel id:20220317122202
+
+2 projects PFCUML11(heloc) and PFCUML21(mortgage)
+
+Coding logic is same as previous,I am adding the value "n" in field381 of paper txt if emp code appears 1.
+
+After that I am building the proof file from where the prf sample get generated with only those entries that doesn't have this n in 381 no column and the final proof sample will not include account that has emp code 1 ( "n" is paper txt ).
+
+
+
+attached are c1bmcok files ( which is paper txt file that contains all accounts ) for heloc(ml1) [^pfcuml1115.c1bmcok]and mortgage(ml2)[^pfcuml2120.c1bmcok]
+
+and you can some entries in those files with value *n* in column 381 , like pfcuml1115.c1bmcok line no 9.
+
+!image-2022-03-23-16-23-49-570.png!
+
+so I put this *n* from dfa for those accounts those have emp code 1.
+
+
+
+Now check the proof txt file from which proof sample gets generated and which includes all entires from c1bmcok file except the ones with *n*.
+
+[^pfcuml1115.prf.temp][^pfcuml2120.prf.temp]
+
+hence in those prf txt file I excluded the accounts with emp value 1 and the proof sample actually get generated from these files so proof sample will not have accounts with emp code 1.
+
+You can check the proof sample here for heloc if you want in stage.
+
+!image-2022-03-23-16-51-53-021.png!
+
+
+
+Sorry I don't have Is story yet for this . And here I can't see qa request status.
+
+Thanks
+
+
+
+
+author: dawnl
+comment: Rony - IS-960 has been assigned to you. thanks.

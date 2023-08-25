@@ -1,0 +1,127 @@
+title: SVN to GIT Migration
+body: # Create an authors-file
+
+To keep the history of commit authors we will need to compile a list of ALL
+authors who made commits to the SVN repository.
+
+> svn log -q | awk -F '|' '/^r/ {sub("^ ", "", $2); sub(" $", "", $2); print
+> $2" = "$2" <"$2">"}' | sort -u > Authors.txt
+    
+    
+    cat Authors.txt  
+    (no author) = No Author <infoimage>  
+    username = Display Name <email@infoimageinc.com>  
+    mholden = Michael Holden <michael.holden@infoimageinc.com>  
+    ...
+
+The conversion will fail if any commit from the SVN repository contains an
+author not present in the Authors.txt. The output will specify the exact
+username of the missing contributor, simply append their information to the
+Authors.txt and run the command again.
+
+# Setup location for conversion repositories
+
+mkdir ~/svn2gitRepos  
+cd ~/svn2gitRepos
+
+# Creating a GIT repository from a SVN repository
+
+## Standard Repository Layout
+
+If the SVN Repository follows the standard layout (project/trunk,
+project/branches/branch_n, project/tags/tag_n) we can specify the main
+repository location. The 'git svn' command will be able to follow the standard
+layout to create the conversion. Depending on the size of the repository this
+may take a while.
+
+> git svn clone --stdlayout --no-metadata --authors-file=Authors.txt <svn-
+> repo>/<project> <git-repo-name>
+>
+> Example:
+>
+> git svn clone --stdlayout --no-metadata -A Authors.txt
+> svn+ssh://michaelh@pd-tools.infoimage.com/srv/svn/infotrac-tomcat InfoTRAC
+
+## Non Standard Repository Layout
+
+The command will need to know where to look for each of the --trunk,
+--branches, and/or --tags. Only trunk is required, you can specify more than
+one branches and/or tags locations.
+
+> git svn clone --authors-file=Authors.txt --trunk=/trunk --branches=/branches
+> --branches=/bugfixes --tags=/tags <svn-repo>/<project> <git-repo-name>
+>
+> git svn clone --authors-file=Authors.txt --trunk=/trunk/resin-pro
+> svn+ssh://michaelh@pd-tools.infoimage.com/srv/is_svn/ resinpro
+>
+> git svn clone --authors-file=Authors.txt svn+ssh://michaelh@pd-
+> tools.infoimage.com/srv/is_svn/ --trunk= **branches/production** /i3-core
+> I3Core
+
+## Clean the new Git repository
+
+If you pulled branches and/or tags, we will want to convert them to actual git
+branches and/or tags. To do so we need to run the following commands.
+
+### Creating local branch from svn branches (to help push to our new remote)
+
+> for b in $(git for-each-ref --format='%(refname:short)' refs/remotes); do
+> git branch ${b##origin/} refs/remotes/$b && git branch -D -r $b; done
+
+### Creating tag from SVN tag branches and deleting the tags/ branches
+
+> for t in $(git for-each-ref --format='%(refname:short)'
+> refs/remotes/origin/tags); do git tag ${t/origin\/tags\//} $t && git branch
+> -D -r $t; done
+
+### Remove the origin/trunk branch as its already the master branch right now
+
+We no longer need the trunk branch. The default git branch is master, and we
+will create a 'develop' branch via gitlab soon.
+
+> git branch -D trunk
+
+### Congratulations, our git repository is now ready for development! Our last
+step will be to push our local repository into the Gitlab remote.
+
+# Pushing Repository to Gitlab
+
+## Initial Commit
+
+Now that we have a local git repository, we will want to push it into gitlab.
+On gitlab, create a new empty project. You can follow the instructions for
+"Push an existing Git repository"
+
+> cd repository
+>
+> git remote add origin ssh://git@gitlab.infoimageinc.com:221/client-
+> hosts/hypercube.git
+>
+> git push -u origin --all
+>
+> git push -u origin --tags
+
+You can now refresh the browser and see the repository is now in Gitlab.
+
+## Changes Committed to SVN After Initial Setup
+
+I did this once and it seemed to work. Basically we need to fetch the latest
+changes from SVN trunk which converts to GIT master. Rebase master to include
+the newest changes from SVN and push back into Gitlab.
+
+Note: This flow is probably assuming there were no changes made in the Git
+repository during this time.
+
+> cd ~/svn2gitRepos/processing-ui
+>
+> git svn fetch
+>
+> git svn rebase
+>
+> git svn push -u origin --all
+
+  
+
+  
+
+

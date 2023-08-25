@@ -1,0 +1,119 @@
+title: GCBK - [27840] [pvt]Optout Feature to apply to all statement types
+description: None
+
+
+author: igor.khosid
+comment: [~Ethan.Yu]
+Not sure if I understand what needs to be tested?
+Please provide descriptions ... 
+
+[~Andrey.Kutsenko] - FYI
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi [~Igor.Khosid],
+
+Can we set aside a QA personnel for this next week?
+
+We're planning to release this on Thursday.
+
+
+
+This is to test GCBK Email Optout Feature on stage.
+
+Here are the steps to QA:
+
+All with the same account that's signed up for electronic statements and email notification preference.
+ # Send an email to yourself for monthly statements and receive it.
+ # On Stage Admin Site, unsubscribe from email for that account for monthly statements.
+ # Send out an email to yourself for monthly statements and don't receive the email.
+ # Send out an email to yourself for loan statements and don't receive the email.
+
+Thanks!
+
+
+author: igor.khosid
+comment: [~Ethan.Yu] we can't guarantee next week = based on the agreement with ISD for a release to happen, it must be QA'd a week in advance 
+
+[~Andrey.Kutsenko] - FYI
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi [~Andrey.Kutsenko], what's the status of this ticket?
+
+
+author: JIRAUSER11104
+comment: [~Ethan.Yu] I'm still in progress.
+If you have any questions please see Zoom chat.
+[~Tin.Chak] [~Igor.Khosid] FYI
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+ *TEST - RESULT (STAGE) - {color:#00875a}PASS{color}*
+ 
+*1. Checking -> Send an email notification to yourself for Stmt - Mortgage (Acct #530592) and receive it >>> Verified.*
+ !scr_msm_Subscribe.png|thumbnail! 
+ 1.1. Posting in PUI Stage > Job ID:[195129] (Index file: /d/INPUT-DEV/I3/process-files/gcbk/ml3_20210428_1_20210428_9999_gcbk.txt) 
+ Log File: /usr/local/processing-ui/station/logs/gcbk/doc/08032022_0201009.log
+ 1.2. Triggering the notification email in PUI > Job ID:[195132]
+ Log File: /usr/local/processing-ui/station/logs/gcbk/email/08032022_0218009.log
+ !scr_triggering_subscribe.png|thumbnail! 
+ !scr_email_notification.png|thumbnail!
+
+*2. Checking -> Send out an email to yourself for Stmt - Mortgage (Acct #530592) and don't receive the email >>> Verified.*
+ 2.1. Setting "Email Subscribe Status" on the Admin site. Checkbox checked - Unsubscribe.
+ !scr_msm_Unsubscribe.png|thumbnail!
+ 2.2. Checking status in the database
+{code:sql}
+// ACCT_ID search
+select um.cif_num, fa.* from fin_account fa
+inner join usr_fin_account ufa on ufa.acct_id = fa.acct_id
+inner join usr_mapping um on um.usr_id = ufa.usr_id
+where fa.org_id = getorgid('gcbk') and fa.acct_number in ('530592');
+
+// Check in table RESTRICTION
+select *
+from RESTRICTION
+where ORG_ID = GETORGID('gcbk')
+and ACCT_ID = '31421261';
+{code}
+!scr_sql_RESTRICTION.png|thumbnail!
+ 2.3. Reposting in PUI Stage > Index file: /d/INPUT-DEV/I3/process-files/gcbk/ml3_20210428_1_20210428_9999_gcbk.txt (Job ID:[195133])
+ Log File: /usr/local/processing-ui/station/logs/gcbk/doc/08032022_0223049.log
+ 2.4. Triggering the notification email in PUI > Job ID:[195134]
+ Log File: /usr/local/processing-ui/station/logs/gcbk/email/08032022_0224036.log
+ !scr_triggering_unsubscribe.png|thumbnail!
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hey [~Igor.Khosid],
+
+You can contact [~Tin.Chak] about how to QA this.
+
+For the most part however, it'll just be doing the exact same QA that Andrey did last time around. We just removed logic regarding a conf file flag and after removing it. We want the logic to be the same as earlier.
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+ Test result - *PASSED*.
+{quote}Index File: /d/INPUT-DEV/I3/process-files/gcbk/ml3_20210428_1_20210428_9999_gcbk.txt
+
+*Test Case #1* - "Email Subscribe Status" on the Admin site - Subscribe.
+ !scr_pui_TC1.png|thumbnail! 
+ eStatement Email Notification ( Loans ) - Job ID:[195594] - Log File: /usr/local/processing-ui/station/logs/gcbk/email/08172022_0424025.log
+ !scr_email.png|thumbnail! 
+
+*Test Case #2* - "Email Subscribe Status" on the Admin site - Unsubscribe.
+ !scr_pui_TC2.png|thumbnail! 
+ eStatement Email Notification ( Loans ) - Job ID:[195596] - Log File: /usr/local/processing-ui/station/logs/gcbk/email/08172022_0437048.log
+{quote}
+
+
+author: JIRAUSER11104
+comment: Hi [~Ethan.Yu], please provide the checklist if needed and update the status of this story based to SOP.
+FYI, [~Tin.Chak]
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Released onto production

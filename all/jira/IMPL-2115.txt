@@ -1,0 +1,92 @@
+title: FCBT - [30662][pvt] FCBT - PLBA: Separate processing segments for 'Simple Bill' and 'Simple Bill Statement' files
+description: TITLE: FCBT - PLBA: Separate processing segments for 'Simple Bill' and 'Simple Bill Statement' files
+
+Application: LIQ Simple Bills
+
+
+
+
+
+
+
+Description:
+
+Permanent update to separate processing of files for 'LIQ Simple Bills'.
+
+Currently, we process two file names together (if received):
+
+
+
+SIMPLE BILL: <CID>_liq_simpbill_<exportID>_<MMDDYYYY>.txt.pgp
+
+SIMPLE BILL STATEMENT: <CID>_liq_simpbillstmt_<exportID>_<MMDDYYYY>.txt.pgp
+
+
+
+Recommendation to process as different segments if possible:
+
+Simple Bill as Segment 01 - 10.
+
+Simple Bill Stmt as Segment 11 - 20.
+
+
+
+*IS ASSESSMENT:*
+
+2hr - Update Script fcbt_lq1_process_wrapper.sh
+
+2hr - Update Script fcbt_lq1_process.sh
+
+5hr - Testing all 15 associations
+
+Total = 9hrs - IS hours  + Zero ISD hours
+
+
+
+*NOTES FOR DEVELOPER:*
+
+Please update scripts: fcbt_lq1_process_wrapper.sh & fcbt_lq1_process.sh. Add coding logic that will make sure each datafile is ran with the correct segment, for example:
+
+If datafile =<CID>_liq_simpbill_<exportID>_<MMDDYYYY>.txt.pgp(Simple Bill), then make sure the segment is 1 - 10.
+
+If datafile =<CID>_liq_simpbillstmt_<exportID>_<MMDDYYYY>.txt.pgp (Simple Bill Statement), then make sure the segment is 11 - 20.
+
+
+
+Set and test crontab with 2 entries. One to to be set as segment 1 for Simple Bill and the other set as segment 11 for the Simple Bill Statement.
+
+
+
+NOTE: Client only sends 1 segment per day, in the event any extra segments are sent, they will need to be processed manually.
+
+
+
+Timeline:
+
+Programmer: SamV
+
+Turnover = 8/12
+
+QA Sample = 8/22 by 1pm
+
+Client Sample = 8/23
+
+Final QA = 8/26
+
+Parallel = 9/6 (AFTER EOM)
+
+Live Date = 9/13
+
+
+author: rodriguez
+comment: Hi [~phoebe.george]can I please get the story for this created so it can be turned over to Sam today, thanks.
+
+
+author: phoebe.george
+comment: [~rodriguez] Sorry for the delay, it's been created. Thanks!
+
+
+author: phoebe.george
+comment: Attaching signed work order.
+
+[^FCBT_WO_30662_08.05.22_Signed.pdf]

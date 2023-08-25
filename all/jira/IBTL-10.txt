@@ -1,0 +1,82 @@
+title: RHS:  Modify all of the scripts to not use hostname but instead System Environment variable OR global configuration
+description: Please analyze the code to confirm the purpose of why using hostname and convert them to use environment variable.
+
+
+
+*+Common Case #1:+*
+
+hostname to check if system is 'rht'. The main purpose is to check if we are running on a machine use "development" mode. If so, i would suggest to either use an global environment variable or global configuration.
+
+e.g. code: /home/master/fnbkcm1_process.sh,/home/master/tax_process.sh, /home/master/daily_mail.py, etc...
+
+
+
+*+Common Case #2:+*
+
+There is code that needs to use hostname for the sole purpose to determine which machine the process is running on and outputs to log/report. In these cases, there is *NO* need to change the logic. For troubleshooting, we do need logic to output the host name into the log/report to know which system it is running on.
+
+e.g.
+
+/home/master/isisdisk.sh: echo -e "hostname=$HOSTNAME" >> ${isd_share_fileid_folder}${fileid_idx}
+
+
+
+Here are two grep functions to research:
+
+
+
+
+{noformat}
+grep -rH 'HOSTNAME' /home/master/* | grep -v '$HOSTNAME'
+grep -rH 'hostname' /home/master/* | grep -v '$hostname' | grep -v '${hostname}' | grep -v ' hostname ' | grep -v "[._]hostname" | grep -v "[ ]hostname,
+{noformat}
+
+
+
+
+
+
+I would suggest the following modes to consider:
+
+prod
+
+parallel
+
+pilot
+
+dev
+
+dr
+
+test
+
+
+
+Suggestion is to leverage the /etc/profile:
+
+
+
+
+{code:java}
+export runmode=dsi
+#modify the/home/master/env_init.sh code:
+if[ $RUNMODE = 'test' ]; then
+  export d_dir ='/d'
+  export pdel = '....'
+elif[ $RUNMODE = 'parallel' ]; then 
+  export d_dir ='/z' 
+  export pdel = '....'
+  if[ $LOGGROUP = "DSI" ]; then
+    export d_dir='/home/test/z/'
+  fi
+fi
+{code}
+
+
+
+
+
+
+
+
+

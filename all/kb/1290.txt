@@ -1,0 +1,36 @@
+The value of this line will be in Mapping or in SOW.
+DOCFORMAT PRINT_OCR_LINE;
+  MICR_ACCOUNT_NUM = NUMPICTURE(ACCOUNT_NUM,'000000000000') ;
+  MICR_PAY_AMT = NUMPICTURE(FORMATTED_VAR,'0000000.00;-0000000.00') ;
+  MICR_LINE = MICR_ACCOUNT_NUM!' $$'!LOAN_ID!' '!MICR_PAY_AMT ;
+  OUTLINE 
+    POSITION 0  0 ;
+      TEXT
+        POSITION ($MR_LEFT)  10.5 
+        WIDTH ($LP_WIDTH-$MR_LEFT-$MR_RIGHT) 
+        ALIGN CENTER
+        FONT ARIAL_9
+         '' ;
+      FOR F
+        REPEAT LENGTH(MICR_LINE) ;
+        IF F==1 ;
+        THEN ;
+          TEXT
+           POSITION 3.15  SAME 
+           WIDTH 0.083 
+           ALIGN LEFT
+           FONT OCR_FONT BOLD
+           (SUBSTR(MICR_LINE,F,1, '')) ;
+        ELSE ;
+          TEXT
+           POSITION LASTMAX  SAME 
+           WIDTH 0.083 
+           ALIGN LEFT
+           FONT OCR_FONT BOLD
+           (SUBSTR(MICR_LINE,F,1, '')) ;
+        ENDIF ;
+      ENDFOR ;
+  ENDIO ;
+Additional MICR Information:
+Just change the above code's font to "MIBH0"
+Tagged:microocr

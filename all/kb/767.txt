@@ -1,0 +1,337 @@
+There is two types for tax.
+standard - the dfa for those project is form specific like 1099SAGEN_17.dfa, 1099SGEN_17.dfa and script for those is tax_process.shand some cid specific data handling processing may exist to add or manipulate data in the IRS data format like /t/master/prep/camb/camb_spec_handle.pl which add account type at position 781-782 in irs data
+non-standard - cid specific project or dfa like BANBYTAX.dfa, those have their own processing script banb_yt_process.sh and data is normally in print image format those dfa use non standard ogl to print as backer a very case as fronts
+Standard Tax:
+The main and starting script for standard tax is tax_process.sh
+main ()
+{
+if [ $# -lt 3 ]
+then
+echo -e "Usage: $0 cid segment jobsel(m, s, f, c, d, p, v) [ household | combine ]"
+echo -e "m - All Required Job Type"
+echo -e "s - paper"
+echo -e "f - etax"
+echo -e "c - cd"
+echo -e "d - dvd"
+echo -e "p - pdf"
+echo -e "v - data validation"
+exit 1
+fi
+example of running this script:sh -x ${home_master}/master/tax_process.sh ${cid} 1 m
+jid of these process is yt1 see the control file like"/home/test/control/1098gen.control" you will see the jid
+      1 if [ $1 -a $1 = "format" ]; then
+      2      cid=$2
+      3
+      4      if [ $3 -a $3 = 'std' ]; then
+      5          dir="${d_dir}/tax/$cid/"
+      6      else
+      7          dir="${d_dir}/$cid/"
+      8      fi
+      9 else
+     10      seg=$2
+     11      dir="${d_dir}/tax/$cid/"
+     12 fi
+     13 jid="yt1"
+     14 prod_type="1098"
+     15 Tax_form="1098"
+so there is no cid specific project for standard like sana_tax_process.sh. This tax_process.sh will handle all the standard tax process.
+export tax=std #a line from tax_process.sh which indicates it is only for standard tax process
+combinging/grouping
+Data file location:
+in tax_process.sh
+source ${home_master}/master/tax.env $cid
+this file has the declaration of the data file location and the special handling script location
+cid=$1
+taxfiledir="${d_dir}/tax/${cid}/datafile"
+outfiledir="${d_dir}/tax/${cid}/file"
+export taxdir="${d_dir}/tax/$cid"
+prep_scripts_dir="${d_dir}/master/prep/$cid"
+codebase="${home_master}/master"
+So we need to put the data file in taxfiledir="${d_dir}/tax/${cid}/datafile"
+ Keep Backup 
+It keeps all the previous data file and output in backup directory ${d_dir}/tax/${cid}/backup/
+   #### backup old files before process
+   if [ ! -e ${taxdir}/backup ]; then
+       mkdir -m 777 -p ${taxdir}/backup
+   fi
+   for taxfile in ${taxdir}/*.afp; do
+       cp $taxfile ${taxdir}/backup 2> /dev/null
+       split_txtFile=`echo $taxfile | sed 's/.afp//'`
+       cp ${split_txtFile} ${taxdir}/backup 2> /dev/null
+   done
+   for taxfile in ${taxdir}/*.for1; do
+       cp $taxfile ${taxdir}/backup 2> /dev/null
+   done
+   for taxfile in ${taxdir}/*print; do
+       cp $taxfile ${taxdir}/backup 2> /dev/null
+   done
+   for taxfile in ${taxdir}/*txt; do
+       cp $taxfile ${taxdir}/backup 2> /dev/null
+   done
+   for taxfile in ${taxdir}/*log; do
+       cp $taxfile ${taxdir}/backup 2> /dev/null
+   done
+   for taxfile in ${taxdir}/*reject; do
+       cp $taxfile ${taxdir}/backup 2> /dev/null
+   done
+Tax Replacement for etax posting
+prepare_data_file.sh
+This script search data file in taxfiledir="${d_dir}/tax/${cid}/datafile" directory and copy those to outfiledir="${d_dir}/tax/${cid}/file". If the data files are in zip it will decrypt or unzip data if necessary.
+Then it call ${codebase}/1099sep_new.pl which generate for1 files like camb.1099miscgen.for1 based on content of original IRS file . In the IRS file record A field 26-27 has the return type or form type . It is a number the 1099sep_new.pl has some conditions to convert the data file to appropriate form file name based on that numbers. Like:
+like 6 means 1099igen and the script will convert the data file to 1099igen.for1, 9 means 1099rgen and the script will convert the data file to 1099igen.for1. and put those files to ${d_dir}/tax/$cid
+then if any special handling file scripts does exist the prepare_data_file.shcalls that's script like/t/master/prep/camb/camb_spec_handle.plwhich will work on the for1 files and also generate new for1 files
+if [ -e "$prep_scripts_dir/$special_handle" ]; then      # special handling for all forms
+echo "special handle - $special_handle"
+echo "special handle - $special_handle" >> $taxdir/today.log
+echo "perl $prep_scripts_dir/$special_handle $taxfile ${taxfile}.out" >> $taxdir/today.log
+perl $prep_scripts_dir/$special_handle $taxfile ${taxfile}.out
+chk_exit_status $? $prep_scripts_dir/$special_handle
+mv -f ${taxfile}.out $taxfile
+fi
+Special data handling script:
+For each standard process for each cid a special data handling script might be necessary which manipulates the original IRS data . Like /t/master/prep/camb/camb_spec_handle.pl which puts account type in 781-782 position in IRS data. This script is actually a link file . The main script is located at
+$home_master/master/ directory like camb_spec_handle_tax_acctype.pl. Those script are called from prepare_data_file.sh
+source ${home_master}/master/prepare_data_file.sh $cid 
+Ran file:
+tax_process.sh creates ran file which contains all the data files name.
+   ## create .ran file
+   ranfile_list=''
+   first_ranfile=0
+   for org_taxfile in ${taxfiledir}/*; do
+       if [ -f "$org_taxfile" ]
+       then
+         if [ ${first_ranfile} == 0 ]; then
+           first_ranfile=1
+           ranfile_list="${org_taxfile}"
+         else
+           ranfile_list="${ranfile_list},${org_taxfile}"
+         fi
+       fi
+   done
+   echo -e "$data_mm1  $data_mm2  $LOGNAME  $HOSTNAME  $job_sel $ranfile_list" >> ${home_env}/${keep_dir}/${cid}tax.ran
+Then based on the job sel the tax_process.sh calls paper process or etax process or archival process.
+For s( paper):
+if [ $job_sel = "m" -o $job_sel = "s" ]; then
+format_step "$taxdir" "$cid" "$segment" "s"
+fi
+format step:
+for all individual for1 files it calls format_only.sh
+it extracts the taxyear from A or T record and export it.
+    for taxfile in ${taxdir}/*.for1; do
+        prefix=`basename $taxfile | cut -d'.' -f2 | tr "[:upper:]" "[:lower:]"`
+        taxyear=`grep ^A $taxfile | head -1 | cut -d ' ' -f1 | cut -c2-5`
+        if [ ! $taxyear ]; then
+            taxyear=`grep ^T $taxfile | head -1 | cut -d ' ' -f1 | cut -c2-5`
+        fi
+        export taxyear
+control file:
+it calls control file for each individual forms ( each data file is for only one form ) like 1098gen.control , not cid specific control file.
+        if [ -e ${home_master}/control/${prefix}.control ]; then
+            echo "Formatting $taxfile"
+            form=`grep ^prod_type ${home_master}/control/${prefix}.control`
+            eval $form
+Here prefix is not cidjid but the form number
+    for taxfile in ${taxdir}/*.for1; do
+        prefix=`basename $taxfile | cut -d'.' -f2 | tr "[:upper:]" "[:lower:]"`
+It calls tax_get_patterns.pl which gets account or ssn pattern ( not sure for now need to know more details):
+            if [ $yourmachine = "rht" ]; then export testmode=y; fi
+            retstr=`${codebase}/tax_get_patterns.pl $cid $prod_type $segment` 
+            eval $retstr
+format_only.sh:
+It(tax_process.sh) calls format only. Argument is formname job sel and for1 file
+echo -e "${codebase}/format_only.sh $prefix $job_sel $taxfile" >> ${taxdir}/today.log
+${codebase}/format_only.sh $prefix $job_sel $taxfile
+It will combine the txt files( if combine flag is 1, it is the 4th argument of tax_process.sh ):
+   if [ $combine = "yes" ]; then
+      for taxfile in ${taxdir}/${cid}yt*.txt; do
+          cat $taxfile >> ${taxdir}/${cid}yt1.txt
+          mv $taxfile $taxfile.org
+      done
+#      for qafile in ${taxdir}/${cid}*.qa; do
+#          cat $qafile >> ${taxdir}/${cid}yt1.qa
+#          mv $qafile $qafile.org
+#      done
+   fi
+sample txt file :/z/tax/fnbk/fnbkyt199i.txt.
+Print Step:
+   ### Perform Print Step
+   echo " "
+   if [ $job_sel = "m" -o $job_sel = "s" ]; then
+        print_step $combine $taxdir $cid $segment 
+   fi 
+in print step it iterates through each txt file, get the prefix from associate control file and cycle from insert file:
+      for taxfile in ${taxdir}/${cid}yt1*.txt; do
+         echo "Perform print step to $taxfile"
+         pre=`basename $taxfile | cut -c8-10`
+         if [ $pre = "498" -o $pre = "098"  -o $pre = "98e" -o $pre = "99s" ]; then
+            prefix=`grep -H ^prod_type ${home_master}/control/*${pre}gen.control | grep $pre | cut -d':' -f1 |xargs -i% basename % | cut -d'.' -f1`
+         else
+            prefix=`grep -H ^prod_type ${home_master}/control/*gen.control | grep $pre | cut -d':' -f1 |xargs -i% basename % | cut -d'.' -f1`
+         fi
+         cycle=`grep ^PROC_DATE: ${home_ins}/insert/${cid}tax_${prefix}.ins | cut -d " " -f2 | cut -c3-4`
+sample control file:/home/test/control/1098gen.control
+sample insert file:/home/test/insert/fnbktax_1098gen.ins
+It get the mail code list and mail code from insert file:
+      ### paper suppression step ( try to handle this using MC_BY_SSN in the insert file )
+      mclist=`grep ^MC_BY_SSN: ${home_ins}/insert/${cid}tax_${prefix}.ins | cut -d' ' -f2`
+      mailcode=`grep ^MC_BY_SSN: ${home_ins}/insert/${cid}tax_${prefix}.ins | cut -d' ' -f3`
+then it suppress account :
+         if [ -s "$mclist" ]; then
+              perl ${codebase}/tax_suppress_by_ssn_acct.pl $taxfile $mclist $ssn $mailcode
+              if [ $? = 1 ]; then
+                   echo "Error : Exit by tax_suppress_by_ssn_acct.pl $mclist"
+                   exit 1
+              fi
+         fi
+then it get esupression list and code from insert file:
+         ### etax suppression step ( try to handle this using ESUP_BY_SSN in the insert file )
+         esuplist=`grep ^ESUP_BY_SSN: ${home_ins}/insert/${cid}tax_${prefix}.ins | cut -d' ' -f2`
+         esupcode=`grep ^ESUP_BY_SSN: ${home_ins}/insert/${cid}tax_${prefix}.ins | cut -d' ' -f3`
+then it suppress account:
+         if [ -s "$esuplist" ]; then
+              perl ${codebase}/tax_suppress_by_ssn_acct.pl $taxfile $esuplist $ssn $esupcode
+              if [ $? = 1 ]; then
+                   echo "Error : Exit by tax_suppress_by_ssn_acct.pl $esuplist"
+                   exit 1
+              fi
+         fi
+then it gets ssn list defined by the qa and build index file from original index file with those account/ssn:
+         ### ssn qa sample ( try to handle this using QA_BY_SSN in the insert file )
+         ssn_qalist=`grep ^QA_BY_SSN: ${home_ins}/insert/${cid}tax_${prefix}.ins | cut -d' ' -f2`
+         if [ -s "$ssn_qalist" ]; then
+              cat $ssn_qalist | tr -d '-' | tr -d '\t' | xargs -i% grep % $taxfile >  ${taxdir}/${cid}${pre}${segment}${cycle}.qa
+         fi
+it converts the txt file( e.g. fnbkyt199i.txt. ) into ${cid}${pre}${segment}${cycle}.txt ( eg. fnbk098131.txt )
+ mv $taxfile ${taxdir}/${cid}${pre}${segment}${cycle}.txt
+it calls isisdisk with this txt file:
+         echo "${codebase}/isisdisk_daily.sh $prefix s ${taxdir}/${cid}${pre}${segment}${cycle}.txt $segment"
+         #${codebase}/isisdisk_daily.sh $prefix s ${taxdir}/${cid}${pre}${segment}${cycle}.txt $segment &> $taxdir/printstep.log
+         ${codebase}/isisdisk_daily.sh $prefix s ${taxdir}/${cid}${pre}${segment}${cycle}.txt $segment
+         isis_error=$? 
+it append the printstep log to today.log in taxdir( d_dir/tax/cid/)
+         cat $taxdir/printstep.log >> ${taxdir}/today.log
+         rm $taxdir/printstep.log
+If error happens in isisdisk.sh:
+         if [ $isis_error != 0 ]
+         then
+               echo "Error processing program: ${codebase}/isisdisk_daily.sh "alltax" s ${taxdir}/${cid}${pre}${segment}${cycle}.txt $segment" >> $taxdir/today.log 
+               echo "Error processing program: ${codebase}/isisdisk_daily.sh "alltax" s ${taxdir}/${cid}${pre}${segment}${cycle}.txt $segment"
+               echo "Please look at $taxdir/today.log"
+               exit 1
+         fi
+For f( etax ):
+If the client has etax and jobsel is either m or f then it will call etax :
+( it also exports param2 which is used by dfa, will explain it later )
+hasEtax=`grep ^$cid ${home_master}/control/etax.control`
+esuptype=`grep ^$cid ${home_master}/control/etax.control | cut -d'|' -f2`
+etax_form_pos=`grep ^$cid ${home_master}/control/etax_form_pos.control | cut -d'|' -f2`
+export param2=$etax_form_pos
+if [ $hasEtax ]; then
+if [ $job_sel = "m" -o $job_sel = "f" ]; then
+echo -e "\nPerform Etax Step"
+etax_step $taxdir $cid "$closing_date" $esuptype $segment
+fi
+fi
+if [ $hasCDtax ] || [ $hasDVDtax ] || [ $hasPDFtax ]; then
+if [ $job_sel = "m" -o $job_sel = "c" -o $job_sel = "d" -o $job_sel = "p" ]; then
+cd_step $taxdir $cid "$segment" "c"
+fi
+fi
+###
+etax_step
+etax_step () {
+   typeset taxdir=$1
+   typeset cid=$2
+   typeset closing_date=$3
+   typeset esuptype=$4
+   typeset segment=$5
+it iterates through all the data file, also get prefix(form number) from the data file name:
+   for taxfile in ${taxdir}/*.for1; do
+       prefix=`basename $taxfile | cut -d'.' -f2 | tr "[:upper:]" "[:lower:]"`
+grep taxyear from taxfile and export it:
+   for taxfile in ${taxdir}/*.for1; do
+       prefix=`basename $taxfile | cut -d'.' -f2 | tr "[:upper:]" "[:lower:]"`
+       taxyear=`grep ^A $taxfile | head -1 | cut -d ' ' -f1 | cut -c2-5`
+       if [ ! $taxyear ]; then
+            taxyear=`grep ^T $taxfile | head -1 | cut -d ' ' -f1 | cut -c2-5`
+       fi
+       export taxyear
+get prod_type(e.g. 1098) and Tax_form(e.g. 1098) from form control file and evaluate those:
+       form=`grep ^prod_type ${home_master}/control/${prefix}.control`
+       eval $form
+       Tax_form=`grep ^Tax_form ${home_master}/control/${prefix}.control`
+       eval $Tax_form
+it got two lines form control file and eval those by the above code:
+prod_type="1098e"
+Tax_form="1098e"
+For 5498, 5468sa and 5498esa for cid asfc the closing date is 0430. Those data file comes in April.
+copy the datatrack.tmp and ran file:
+       #Create one temporary ${cid}tax_${prefix}.datatrack.tmp for all original data files, 
+       #Later in format_step(), this temporary datatrack.tmp file will copy to datatrack.tmp for each tax forms #04072014
+       if [ -s ${home_env}/${keep_dir}/${cid}tax_${prefix}.datatrack.tmp ]; then
+          rm -f ${home_env}/${keep_dir}/${cid}tax_${prefix}.datatrack.tmp
+       fi
+       echo "cp ${home_env}/${keep_dir}/${cid}tax.datatrack.tmp ${home_env}/${keep_dir}/${cid}tax_${prefix}.datatrack.tmp" &> $taxdir/format.log
+       cp ${home_env}/${keep_dir}/${cid}tax.datatrack.tmp ${home_env}/${keep_dir}/${cid}tax_${prefix}.datatrack.tmp
+       if [ -s ${home_env}/${keep_dir}/${cid}tax_${prefix}.ran ]; then
+		rm -f ${home_env}/${keep_dir}/${cid}tax_${prefix}.ran
+       fi
+       cp ${home_env}/${keep_dir}/${cid}tax.ran ${home_env}/${keep_dir}/${cid}tax_${prefix}.ran
+it gets the for account number, social security number and phone number which is used by the dfa:
+       ### Get Tax Pattern for account number, social security number and phone number
+       yourmachine=`hostname`
+       if [ $yourmachine = "rht" ]; then export testmode=y; fi
+       retstr=`${codebase}/tax_get_patterns.pl $cid $prod_type $segment` 
+       eval $retstr
+if the control( form specific ) file exists it gets mask acct and call format_only
+       if [ -e ${home_master}/control/${prefix}.control ]; then
+            #reading account masking flag
+            tax_acct_mask=`grep -i $cid ${home_master}/control/tax_acct_mask.control`
+            export tax_acct_mask
+            echo "Etax Formatting $prefix $tax_jobsel $taxfile"
+            ${codebase}/format_only.sh $prefix $tax_jobsel $taxfile &> $taxdir/format.log
+            cat $taxdir/format.log >> ${taxdir}/today.log
+            rm $taxdir/format.log
+            cp_etax $cid $cycle$segment $closing_date $prod_type $taxdir $esupplist
+       else
+            echo "${home_master}/control/${prefix}.control is MISSING !!!!!!!!!!!!!"
+       fi
+Then it callcp_etax which copy index and afp files in isd folder.
+cp_etax:
+it declares the isd path where the afp file and index file needs to be copied:
+if [ $filetype = "t" ]; then
+if [ $cid = "secu" ]; then 
+etax_path1="${d_dir}/isd_input_dev/I3/process-files/${cid}/"
+etax_path2="${d_dir}/isd_input_dev/indiv_afp/chcu/etax/afp-archive/${Tax_form}-${closing_date}-${cycleseg}/"
+else 
+etax_path1="${d_dir}/isd_input_dev/I3/process-files/${cid}/"
+etax_path2="${d_dir}/isd_input_dev/indiv_afp/${cid}/etax/afp-archive/${Tax_form}-${closing_date}-${cycleseg}/"
+fi
+else
+if [ $cid = "secu" ]; then 
+etax_path1="${d_dir}/isd_input/I3/process-files/${cid}/"
+etax_path2="${d_dir}/isd_input/indiv_afp/chcu/etax/afp-archive/${Tax_form}-${closing_date}-${cycleseg}/"
+else
+etax_path1="${d_dir}/isd_input/I3/process-files/${cid}/"
+etax_path2="${d_dir}/isd_input/indiv_afp/${cid}/etax/afp-archive/${Tax_form}-${closing_date}-${cycleseg}/"
+fi 
+fi
+It moves all the afp file generated in the working directory ( /t/tax/etax/ )form specific folder:
+### Perform DVD Step
+echo " "
+if [ $hasDVDtax ]; then
+if [ $job_sel = "m" -o $job_sel = "d" ]; then
+dvd_step $taxdir $cid
+fi
+fi
+###
+### Perform PDF Step
+echo " "
+if [ $hasPDFtax ]; then
+if [ $job_sel = "m" -o $job_sel = "p" ]; then
+pdf_step $taxdir $cid
+fi
+fi
+Here is a pdf reflecting the tax standard process flow:
+To be continued..........
+Tagged:infotracscriptstandardtaxtax script

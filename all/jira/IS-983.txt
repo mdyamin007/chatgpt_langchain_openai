@@ -1,0 +1,288 @@
+title: MVCU - [26115][pvt] eTax XREF File Setup
+description: Description: eTax XREF File Setup for FICS and Corelation Taxes
+
+
+
+Description/Assessment:
+
+IS Assessment
+ =============
+ Hours for development:  5 IS hours
+
+
+
+Assessment Details (IS):
+ =================
+ - Create post processing script to duplicate 1099INT etax index file and testing for etax posting with ISD
+
+(reference to fnbk_etax_idx_duplicate.pl)
+ - Add link for etax index duplicate script
+
+/d/tax/prep/mvcu/mvcu_etax_post_handle_1099i.pl -> /home/master/mvcu_etax_idx_duplicate.pl
+ - 1099INT data file must have only one combine Rec-B for each member.
+
+ - Use only SSN# to get all member# and post same tax form to all member#.
+
+Note: Tax form cannot display account# in box. Because the box cannot fit multiple account#.
+ - client will send two separate xref files - one for FICS data file and the other for Corelation data file.
+
+ - xref file will have two fields (SSN#|Member#)
+
+example:
+
+SSN#|Member#
+
+123456779|12345
+
+123456779|123456
+
+123456779|1234567
+
+
+
+Timeline:
+
+Turnover to IS 4/4/22
+
+Sample to QA: 8/29/22
+
+Sample to client: 8/31/22
+
+Sample approval: 9/5/22
+
+Parallel: 9/07/22
+
+LIVE DATE: 9/14/22
+
+
+author: tuna
+comment: Hey[~yameelee],,
+
+Just a reminder, please assign this Story. The timeline is in ticket but I don't see entry in IS Upcoming list.
+
+Thanks
+
+Tun
+
+
+
+
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+Currently pending feedback from Phoebe regarding whether there are more up to date FICS/Corelation cross reference files.
+
+
+author: phoebe.george
+comment: [~SamV2021] I confirmed with MVCU to please use the existing test file they provided. They are working on the formatting update to send a pipe delimited file, but requested if we can assist to use their test file in the meantime so they can begin review. If possible, once converted, can you send me the sample and they will be sure to mirror this. Although the only update they will be making will be to change to pipe delimited instead. Thank you!
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+Currently pending feedback regarding what the mapping should be in the cross reference files.For FICS, should 'SSN' be mapped to 'FICS Loan Number' or 'Keystone Account' (i.e. The same tax form belonging to a given SSN should be posted for all FICS Loan Number -- or for all Keystone Account)? And for Corelation, should 'TIN' be mapped to 'Account Number', or should it be the other way around?
+
+
+author: phoebe.george
+comment: [~SamV2021] I confirmed the following:
+
+FICS:
+
+SSN >> Mapped to FICS LOAN NUMBER
+
+Keystone:
+
+TIN >> Mapped to Keystone Account Number
+
+Let me know if you want to have a quick call to discuss. Thanks!
+
+
+author: phoebe.george
+comment: [~SamV2021] Sorry I have not had a chance to reach out to you, do you want to discuss the feedback? Thank you!
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+All good. I'm currently working on it!
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+Could you provide a new live date? Thanks!
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+I mostly finished working on the update for their FICS data file and can provide samples for that, but I'm running into issues with their Keystone Corelation data file. Based on the most recent data file I see: MVCU_1099INT_Corelation_011922_0952_PROD.txt.pgp (this is a file they sent us back when we did a January update: IS-737), there is no account number in fields 21-40. I believe this is nothing new though since in IS-737 for Corelation 1099-INT it says "No Account Numbers in field 21-40; do not display."
+
+The issue though is that since there is no corresponding account number in fields 21-40 for every TIN in the original data file, we rely on the cross reference file for account numbers. However, it appears that there may be some TINs that exist in the input file that do not exist in the cross reference file. In this case, the account number empty.
+
+There are two ways to resolve this issue involving this update for the Corelation process:
+
+1. Ensure that the client sends a data file that contains the 'Keystone Account Number' in fields 21-40 of the data file. For a TIN with multiple accounts, the client can use any 1 of the corresponding Keystone Account #s to populate this field. We will use the cross reference file to tie the same 1099-INT to all accounts.
+
+OR
+
+2. We will populate fields 21-40 for the client based on the cross reference file. The client should ensure that every TIN used in the input data file exists in the cross reference file. Otherwise, the account number will be empty  I will need to check with ISD whether it is possible we can just use a dummy account number in this case so that we don't need to stop the process. We may also want to generate a report of TIN#'s that are missing from the cross reference file. This option will require more allotted programming hours.
+
+On another note, I am currently still using a modified cross reference file as the ones provided "FICS Cross reference.xlsx.pgp" and "Keystone Cross Reference File.xlsx.pgp" are in excel format and should be pipe-delimited.
+
+Thanks!
+
+
+author: phoebe.george
+comment: [~SamV2021] Sorry for the delay, I informed MVCU on the corelation file and pending feedback on how they want to proceed and if add'l programming hours will be required.
+
+For FICS, can you provide an index file to ISD for pilot, so the CU can begin review for this set of files? Thanks!
+
+Also updating to new due date; let me know if this may work.
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+No worries!
+
+For FICS, have provided ISD an index file to post to pilot.
+
+The file I used to test wasmvcu_1099_FICS_011322_1127_PROD.001.pgp. This file does not contain any accounts (FICS Loan Numbers) that correspond to a SSN with more than one FICS Loan Number. So, to test this update properly, I have manually added some additional FICS Loan Numbers in the cross reference file for accounts that exist in the data file. Please see below for the mock-up data I have added to the FICS cross reference file:
+
+!mvcu_fics_xref_add.PNG|thumbnail!
+
+The client should review these specific accounts that I have modified in order to see the update.
+
+
+author: phoebe.george
+comment: [~SamV2021] [~TunA] For the Coreation xref file, MVCU has opted for option #2 based on Sam's previous comment: 
+
+2. We will populate fields 21-40 for the client based on the cross reference file. The client should ensure that every TIN used in the input data file exists in the cross reference file. Otherwise, the account number will be empty  I will need to check with ISD whether it is possible we can just use a dummy account number in this case so that we don't need to stop the process. We may also want to generate a report of TIN#'s that are missing from the cross reference file. This option will require more allotted programming hours.
+
+
+
+Can you provide hours and new timeline to complete this; they do want a report generated as recommended.
+
+Thanks,
+
+Phoebe
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george] [~TunA]
+
+Please also remind the client that they still need to give me cross reference files that have the correct file naming convention (e.g. FICS_Cross_reference_05102022.txt.pgp and Keystone_Cross_reference_05102022.txt.pgp), are not in excel format, and are pipe-delimited for final testing sincethe ones provided "FICS Cross reference.xlsx.pgp" and "Keystone Cross Reference File.xlsx.pgp" cannot be used.
+
+The following hours/timeline is my assessment:
+
+Hour total: 11 = (5 hrs original) + (6 hrs additional)
+
+Sample to QA: 5/26/22
+
+Sample to client: 5/30/22
+
+Sample approval: 6/02/22
+
+Parallel: 6/07/22
+
+LIVE DATE: 6/13/22
+
+
+author: JIRAUSER10906
+comment: Please see latest updates on ISD-6761.
+
+
+author: phoebe.george
+comment: [~SamV2021] There was an issue with the Keystone 1099INT that was posted in pilot. I had it pulled down since the customer has access to the pilot site now. The data was wrapping incorrectly for the name and address. 
+
+The 1099 FICS file was fine, so i kept it posted for MVCU to review. Can you check the Keystone PDF though?
+
+[~eric.yan] FYI
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+I have fixed the issue you mentioned with the Keystone 1099INT. I have requested Eric to post the latest index file to pilot on the ISD Jira.
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+Currently requesting Eric to post the Keystone Corelation and FICS 1098e-tax index files to pilot on ISD-6761.
+
+This is prior to making this update to 1098 to use the XREF file to generate additional e-tax index file entries.
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+I have made the requested update to the 1098 to use the XREF file to generate additional e-tax index file entries. I have requested Eric to post this e-tax index file that contains the latest update to pilot on ISD-6761.
+
+Once posted, please have the client review posted accounts to check if the expected accounts are duplicated. Here's an example account containing multiple mortgages in the data file [^MVCU_1098_Corelation_011922_0952_PROD.txt.pgp]whose SSN is associated with an additional account, per the XREF.
+ * Account#: 70115875 (in original data file  contains multiple mortgages)
+ * Account#: 70174212 (duplicated account, according to XREF)
+
+After approval and before QA/parallel testing, I will need to have the cross reference files that have the previously agreed upon specs to ensure that the correct cross reference files are sent over to us.
+ # Correct file naming convention (e.g. FICS_Cross_reference_09082022.txt.pgp and Keystone_Cross_reference_09082022.txt.pgp)
+ # In .txt format or (.csv if comma-delimited)
+ # Pipe-delimited or comma-delimited (.csv)
+
+
+author: phoebe.george
+comment: [~SamV2021] Based on our call yesterday, please let me know what it would take to complete the following:
+
+Using current tax xref file for FICS: Post eTax form to 'Keystone Account Number' - this is the 'member number' that will relate to the other e-documents posted for MVCU.
+
+!image-2022-09-29-10-27-06-195.png!
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+Hi Phoebe, this would be a simple change since 'Keystone Account Number' is already provided in the xref file.
+
+Please let me know, and I will make the change and get samples posted to pilot once Eric confirms that the flag for posting the same statements to different accounts is turned on.
+
+Thanks,
+ Sam
+
+
+author: phoebe.george
+comment: [~SamV2021] Thanks so much! Yes, please proceed with this change for new index files for ISD.
+
+
+author: phoebe.george
+comment: [~SamV2021] I checked a few account numbers from the Pilot PUI that Eric posted last week, but cannot locate through any of the Keystone Account numbers. Can you confirm if you switched to post to this number?
+
+Based on the PUI, i actually can't locate any of the account numbers on the xref list at all:
+
+
+
+!image-2022-10-04-10-22-56-335.png!
+
+
+
+Thanks,
+
+Phoebe
+
+
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+Hi Phoebe, I have not yet made the change to use the Keystone Account Number. I believe the re-posting that Eric did was after enabling the flag for posting duplicate accounts.
+
+I'll work on making the change and providing a new index file for Eric to post by end of day today.
+
+Thanks,
+ Sam
+
+
+author: phoebe.george
+comment: [~SamV2021] FYI, MVCU is working to produce a new FICS XREF file due to the number of mismatches. I will let you know once received.

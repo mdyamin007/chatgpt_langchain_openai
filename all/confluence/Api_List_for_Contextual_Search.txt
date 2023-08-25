@@ -1,0 +1,51 @@
+title: Api List for Contextual Search
+body: **Amjad** : Hi Kim,
+
+I did mistake when we discussed about the design of contextual searching api,
+actually we don't need to store pdf, The flow is following  
+AFP & TXT --> ES Crawl & Index  
+Search Query with 'keyword' to SearchAPI (developed by me), which internally
+call ES  
+ES find 'keyword' in 12345.TXT  
+ES respond result with 12345.TXT to SearchAPI  
+SearchAPI use the '12345' filename to locate the corresponding 12345.AFP  
+Call AFP2WEB with 12345.AFP to convert 12345.AFP to 12345.PDF  
+Open 12345.PDF and locate all instances of 'keyword' and highlight them using
+iText (or equivalent)  
+Return 12345.PDF with 'keyword' highlighted.
+
+Thanks
+
+ **Kim** : Amjad and Ben/Alok,  
+Sending my feedback on the design with a goal to turning the POC into full-
+fledged application:
+
+First of all - we need to put the design into a high level workflow (Amjad).
+Do we have a tool that can be used to document the design workflow (Ben/Alok)?
+I thought we were using Gliphy - needs to be used here.  
+Indexing: the AFP data will be converted to txt with AFP2Web, and a base64
+string will be generated from the contents of each AFP file. Although our
+average statement size is 3-5 pages, our commercial statements (which this is
+a major use case for) will have a lot more (100s) pages. Will we run into any
+limitation on the base64 conversion of those large AFP's into searchable
+strings?  
+URI: The directory path/URI structure for the documents need to accommodate
+searching within particular statement application and document types  
+Search: Need to incorporate the date range based filtering criteria for the
+documents on the search side  
+Re-Indexing: Anytime we need to re-index, do we have to regenerate the AFP's
+again - what is the logic to ensure we overwrite/populate the AFP directories
+appropriately?  
+Re-processing: when we pre-process document(s) or a cycle, how do we index it
+again properly for keyword search?  
+Results: Looks like using iText, we will need to generate new AFP's (with
+highlights) from the search results - will this create more AFP's as an
+intermediate and take up additional storage?  
+ES: How do we cluster/HA elastic search?  
+Once the above is sorted, we need to focus on the UI and ensure the data model
+is able to support the search UI for the end or admin user.
+
+Best,  
+Kim
+
+

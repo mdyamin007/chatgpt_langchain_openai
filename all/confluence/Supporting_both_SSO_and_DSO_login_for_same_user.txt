@@ -1,0 +1,211 @@
+title: Supporting both SSO and DSO login for same user
+body:   
+
+Client| Test Scenario| Test Steps| Expected Output| Actual Output| Test
+Results| Flags| Additional Comments  
+---|---|---|---|---|---|---|---  
+BKPL| SSO login with DSO Registered User| 1.Take a user registered with DSO
+i.e has DSO date and SSO date is set as NULL  
+2\. Try to Login with SSO method| User will directtly login skipping
+enrollment but in DB DSO date will be set as NULL but SSO date will be
+inserted| User directly logged skipping enrollment in DB DSO date was set as
+NULL but SSO date was inserted| Passed| FLAG:bothDsoAndSsoLoginEnable:false  
+dsoUserDoSSOEnrollment : false  
+eStatementEnrollment: false|  
+  
+BKPL| SSO login with DSO Registered User| 1.Take a user registered with DSO
+i.e has DSO date and SSO date is set as NULL  
+2\. Try to Login with SSO method| User will directtly login skipping
+enrollment but in DB DSO date will not be set as NULL but SSO date will be
+inserted| User directtly logged in skipping enrollment but in DB DSO date was
+not set as NULL and SSO date was inserted| Passed|
+FLAG:bothDsoAndSsoLoginEnable:true  
+dsoUserDoSSOEnrollment : false  
+eStatementEnrollment: false|  
+  
+BKPL| SSO enrollment with DSO Registered User| 1.Take a user registered with
+DSO i.e has DSO date and SSO date is set as NULL  
+2\. Try to Login with SSO method| Hypercube will directly login that user to
+the home/e-statement page| bkpl has no enrollment -Business of BKPL| Not
+applicable| FLAG:bothDsoAndSsoLoginEnable:false  
+FLAGS: eStatementEnrollment :false  
+dsoUserDoSSOEnrollment:true|  
+  
+BKPL| SSO enrollment with DSO Registered User| 1.Take a user registered with
+DSO i.e has DSO date and SSO date is set as NULL  
+2\. Try to Login with SSO method| Hypercube will route that user to the
+enrollment step| bkpl has no enrollment -Business of BKPL| Not applicable|  
+FLAG:bothDsoAndSsoLoginEnable:false  
+eStatementEnrollment :true  
+dsoUserDoSSOEnrollment:true|  
+  
+BKPL| SSO enrollment with DSO Registered User| 1.Take a user registered with
+DSO i.e has DSO date and SSO date is set as NULL  
+2\. Try to Login with SSO method| Hypercube will directly login that user to
+the home/e-statement page| Hypercube directly logged that user to the
+home/e-statement page| Passed|  
+  
+FLag:bothDsoAndSsoLoginEnable:true  
+Flags: dsoUserDoSSOEnrollment : true  
+eStatementEnrollment: false  
+dsoLoginEnable: "false" / removed|  
+  
+BKPL| DSO signup with SSO Registered User| 1.Take a user registered with SSO
+i.e has SSO date and DSO date is set as NULL  
+2\. Try to sign up with DSO method| Hypercube will check "SSO" date on during
+DSO signup and not let the user sign up with DSO method  
+  
+and show the message:"Our system indicates that you are currently registered
+to receive e-statements through Online Banking.Please log in to view your
+e-statements."| Hypercube checked "SSO" date on during DSO signup and didnot
+let the user sign up with DSO method  
+  
+and show the message:"Our system indicates that you are currently registered
+to receive e-statements through Online Banking.Please log in to view your
+e-statements."| Passed| FLAG:bothDsoAndSsoLoginEnable:false  
+FLAGS: eStatementEnrollment :false  
+dsoUserDoSSOEnrollment:true  
+dsologinEnable :false/removed|  
+  
+BKPL| DSO signup with SSO Registered User| 1.Take a user registered with SSO
+i.e has SSO date and DSO date is set as NULL  
+2\. Try to sign up with DSO method| Hypercube will not check "SSO" date on
+during DSO signup and let the user sign up with DSO method without any error  
+  
+DB Check In User_session table,Sess_login_id will show the username setup
+during dso signup| Hypercube didnot check "SSO" date on during DSO signup and
+let the user sign up with DSO method without any error  
+  
+DB Check In User_session table,Sess_login_id showed the username setup during
+dso signup| Passed| Flag:bothDsoAndSsoLoginEnable:true  
+Flags:dsoUserDoSSOEnrollment : true  
+eStatementEnrollment: false|  
+  
+BKPL| DSO signup with SSO Registered User| 1.Take a user registered with SSO
+i.e has SSO date and DSO date is set as NULL  
+2\. Try to sign up with DSO method| Hypercube will not check "SSO" date on
+during DSO signup and let the user sign up with DSO method without any error  
+  
+DB Check In User_session table,Sess_login_id will show the username setup
+during dso signup| Hypercube didnot check "SSO" date on during DSO signup and
+let the user sign up with DSO method without any error  
+  
+DB Check In User_session table,Sess_login_id showed the username setup during
+dso signup| Passed|  
+  
+FLag:bothDsoAndSsoLoginEnable:true  
+Flags: dsoUserDoSSOEnrollment : true  
+eStatementEnrollment: false  
+dsoLoginEnable: "false" / removed|  
+  
+BKPL| DSO-forgot password| Try resetting password with details provided during
+signup e.g Username/  
+Last 4 Digits of SSN/Date of Birth| Reset password will be successfull| Reset
+password was successfull| Passed| bothDsoAndSsoLoginEnable:true  
+dsoUserDoSSOEnrollment : true  
+eStatementEnrollment: false  
+dsoLoginEnable : false / removed|  
+  
+BKPL| DSO-login| Try logging in with details provided during signup| login
+will be successfull| login was successfull| Passed|
+bothDsoAndSsoLoginEnable:true  
+dsoUserDoSSOEnrollment : true  
+eStatementEnrollment: false  
+dsoLoginEnable : false / removed|  
+  
+DACB| SSO login with DSO Registered User| 1.Take a user registered with DSO
+i.e has DSO date and SSO date is set as NULL  
+2\. Try to Login with SSO method| User will directtly login skipping
+enrollment but in DB DSO date will be set as NULL but SSO date will be
+inserted| User directly logged skipping enrollment in DB DSO date was set as
+NULL but SSO date was inserted| Passed| FLAG:bothDsoAndSsoLoginEnable:false  
+dsoUserDoSSOEnrollment : false  
+eStatementEnrollment: false|  
+  
+DACB| SSO login with DSO Registered User| 1.Take a user registered with DSO
+i.e has DSO date and SSO date is set as NULL  
+2\. Try to Login with SSO method| User will directtly login skipping
+enrollment but in DB DSO date will not be set as NULL but SSO date will be
+inserted| User directtly logged in skipping enrollment but in DB DSO date was
+not set as NULL and SSO date was inserted| Passed|
+FLAG:bothDsoAndSsoLoginEnable:true  
+dsoUserDoSSOEnrollment : false  
+eStatementEnrollment: false|  
+  
+DACB| DSO signup with SSO Registered User| 1.Take a user registered with SSO
+i.e has SSO date and DSO date is set as NULL  
+2\. Try to sign up with DSO method| Hypercube will check "SSO" date on during
+DSO signup and not let the user sign up with DSO method  
+  
+and show the message:"Our system indicates that you are currently registered
+to receive e-statements through Online Banking.Please log in to view your
+e-statements."| Hypercube didnot check "SSO" date on during DSO signup and not
+let the user sign up with DSO method  
+  
+and show the message:"Our system indicates that you are currently registered
+to receive e-statements through Online Banking.Please log in to view your
+e-statements."| Passed| FLAG:bothDsoAndSsoLoginEnable:false  
+FLAGS:dsoUserDoSSOEnrollment" : true  
+eStatementEnrollment: false|  
+  
+DACB| DSO signup with SSO Registered User| 1.Take a user registered with SSO
+i.e has SSO date and DSO date is set as NULL  
+2\. Try to sign up with DSO method| Hypercube will not check "SSO" date on
+during DSO signup and let the user sign up with DSO method without any error  
+  
+DB Check In User_session table,Sess_login_id will show the username setup
+during dso signup| Hypercube didnot check "SSO" date on during DSO signup and
+let the user sign up with DSO method without any error  
+  
+DB Check In User_session table,Sess_login_id showed the username setup during
+dso signup| Passed|  
+  
+FLag:bothDsoAndSsoLoginEnable:true  
+Flags: dsoUserDoSSOEnrollment : true  
+eStatementEnrollment: false  
+dsoLoginEnable: "false" / removed|  
+  
+DACB| SSO enrollment with DSO Registered User| 1.Take a user registered with
+DSO i.e has DSO date and SSO date is set as NULL  
+2\. Try to Login with SSO method| Hypercube will route that user to the
+enrollment step| User was directed to enrollment step| Passed|  
+FLAG:bothDsoAndSsoLoginEnable:false  
+eStatementEnrollment :true  
+dsoUserDoSSOEnrollment:true|  
+  
+DACB| SSO enrollment with DSO Registered User| 1.Take a user registered with
+DSO i.e has DSO date and SSO date is set as NULL  
+2\. Try to Login with SSO method| Hypercube will directly login that user to
+the home/e-statement page| Hypercube directly logged that user to the
+home/e-statement page| Passed| FLAG:bothDsoAndSsoLoginEnable:false  
+FLAGS: eStatementEnrollment :false  
+dsoUserDoSSOEnrollment:true|  
+  
+DACB| SSO enrollment with DSO Registered User| 1.Take a user registered with
+DSO i.e has DSO date and SSO date is set as NULL  
+2\. Try to Login with SSO method|  
+|  
+| Passed|  
+  
+FLag:bothDsoAndSsoLoginEnable:true  
+Flags: dsoUserDoSSOEnrollment : true  
+eStatementEnrollment: false  
+dsoLoginEnable: "false" / removed|  
+  
+DACB| DSO-forgot password| Try resetting password with details provided during
+signup e.g Username/  
+Last 4 Digits of SSN/Date of Birth| Reset password will be successfull| Reset
+password was successfull| Passed| FLAG:bothDsoAndSsoLoginEnable:false  
+FLAGS:dsoUserDoSSOEnrollment: true  
+eStatementEnrollment: false|  
+  
+DACB| DSO-login| Try logging in with details provided during signup| login
+will be successfull| login was successfull| Passed|
+FLAG:bothDsoAndSsoLoginEnable:false  
+FLAGS:dsoUserDoSSOEnrollment: true  
+eStatementEnrollment: false|  
+  
+  
+  
+
+

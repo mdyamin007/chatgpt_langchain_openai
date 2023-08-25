@@ -1,0 +1,200 @@
+title: CIF processing Enhancement Design Doc
+body: # CIF/Auth File processing enhancement (Selective Account Relationship purge
+based on Account Type) - Design Doc
+
+  
+
+# Introduction
+
+  
+
+## Purpose/Objective Summary
+
+  1. Enhance the current CIF/Auth file processing to allow selective purging by account type.
+  2. Break out common CIF/Auth file logic to be re-used.
+
+  
+
+## Scope
+
+  
+
+### In-Scope
+
+  1. Selective purging by account type for a full membership CIF file.
+  2. Create an independent method to handle generating the master list as well as purging
+  3. Create an independent method to compare two standardized lists and returns the non-matched entries
+  4. Create an independent method to remove the account-user link when provided a list.
+
+  
+
+### Out-of-Scope
+
+  1. Feature [#3](https://i3dev.easyredmine.com/issues/3 "Enhancement: TEST: improvement on eSafetyBox \(Closed\)")
+  2. Feature [#4](https://i3dev.easyredmine.com/issues/4 "Bug: test \(Closed\)")
+  3. ...
+
+  
+  
+
+## Assumptions
+
+  1. This enhancement will be meant for bank models only.
+  2. Only the account-user link is removed when purging. Entries in the account and user tables are untouched.
+
+  
+
+## Dependencies
+
+  
+
+  
+
+# Requirements
+
+  1. Full membership CIF file. Full membership of entire FI or full membership of a specific account type.
+
+  
+
+## Business Requirements & Use Cases
+
+ID| Title| Details| ScreenMock| Importance  
+---|---|---|---|---  
+BRQ-01| Purge by account type|  **Requirement**  Instead of comparing against
+the full user base to determine which account-user relationship need to be
+updated. It will compare only against a selective user base by account type.|
+...| P0 - Show Stopper  
+  
+  
+
+## Functional Requirements & Use Cases
+
+ID| Title| Details| Bus. Req. Ref.| Importance  
+---|---|---|---|---  
+FRQ-01| Configurable account type| Allow selective purging by a configuration
+in a client's P-UI .conf file| ...| P0 - Show stopper  
+FRQ-02| Support for multiple account types| Allow selective purging to be by a
+combination of multiple account types| ...| P1 - High  
+FRG-03| Standardized account-user handling class| Create an standalone class
+that contains different methods to handle account-user relationships. This
+includes support for features such as selective purging| ...| P0 - High  
+  
+  
+
+## Performance & Scalability Requirements (SLA)
+
+ID| Title| Details| Importance  
+---|---|---|---  
+PRQ-01| Generate master list and store into memory| Minimize database calls by
+generating a master account-user list to compare against input file| P0 - Show
+stopper  
+  
+  
+
+## QA/Test Requirements
+
+ID| Title| Details| Importance  
+---|---|---|---  
+TRQ-01| Proper account-user relationship update| Test multiple cases of
+account-user relationships and verify that the correct update has been made.
+If account-user relationship falls under the account type, verify link is
+purged if not present in the CIF file. Otherwise, for all other account links
+between that user verify that it remains untouched.| P0  
+TRQ-02| Backwards compatibility| Verify updated logic does not cause older
+AUTH processing clients to fail| P0 - Show stopper  
+  
+* * *
+
+  
+  
+
+#  **Design**
+
+  
+
+## Architecture & Workflow Diagram
+
+  
+
+## Data Model changes (ER diagram & ddl.sql)
+
+  
+
+## Application component functional details
+
+Component| Class| Method| Params| Comments  
+---|---|---|---|---  
+Generate Account-User List| AccountUserHandler| generateList()| String CID,
+String acctType, String userType| This method will return a account-user
+relationship list based on the parameters, if acctType and userType parameters
+are no present, default to full membership base. The list returned will follow
+contain the usr_fin_account primary key.  
+Compare Two Account-User Lists| AccountUserHandler| analyzeLists()|
+List<String> masterUfaList, List<String> inputUfaList, String
+compareOrContrast| This method will do a compare or contrast on the two
+provided lists and provide a result list accordingly  
+Purge Account-User Link| AccountUserHandler| purgeUfaLink()| List<String>
+purgeList| This method will take in a list of UFA primary keys to
+indiscriminately remove them from the usr_fin_account table.  
+  
+  
+
+## Integration Points & Interface
+
+From Component| To Component| Details| Error Handling  
+---|---|---|---  
+  
+  
+
+# Summarized Change Log
+
+Date| Who| Changes to Design Doc  
+---|---|---  
+8/06/2014| Joe C| Initial auth processing enhancement information  
+3/11/2013| Ben C| Added some TODO notes and examples  
+3/08/2013| Ben C| Initial Draft  
+  
+  
+
+# Sign-Off
+
+Group| Date| Who| Comment  
+---|---|---|---  
+Product Manager (Business)|  
+|  
+|  
+  
+Account Service (AS)|  
+|  
+|  
+  
+Dev./Impl. Manager (Technical)|  
+|  
+|  
+  
+Production Control (PC)|  
+|  
+|  
+  
+Data Processing (DP)|  
+|  
+|  
+  
+Accounting/Invoicing|  
+|  
+|  
+  
+  
+  
+
+# Appendix
+
+<add as you need>
+
+###  Attachments
+
+  
+
+250250
+
+

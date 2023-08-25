@@ -1,0 +1,103 @@
+title: MFCU:  Daily Notice Bad Address list Processing Script In-house Fix
+description: Parallel Required: No (But requires proof of regression testing to that DPVS counts matches Production).
+
+Spec #1  Avoid using MC_BY_ACCT variable in Insert File rewrite
+Remove Daily Notice processing script logic not update insert file MC_BY_ACCT variable.  The BadAddress mail code z will need to handle from the processing script/DFA level to flag mailcode=z.  
+
+Recommend adding the following function call into your mfcudla_process.sh after the     format_all_ltr_set5 "s" call.
+                      ${home_master}/master/mailcode_bin.pl $cid $prefix "${dir}${prefix}" $temp3 z d e
+
+
+Spec #2  Update processing shell script to give DP the option to manually run job by job_sel f, s, e:
+DP reported that they do not have the ability to run job_sel individually.  They need to have this flexibility to do so for ANY processing script as a SOP.  Please update processing script to provide this capability for the Daily Notice script.
+
+
+
+
+author: william.kong
+comment: [~anwarh]: Please do not forget to work on this in-house project. We do need to give job_sel flexibility as a SOP for any processing jobs including this one (i.e. Spec #2 above).
+
+
+author: anwarh
+comment: Hi [~Igor.Khosid],
+
+PR ID: 20220404121919
+Let me know if you need anything else. 
+
+Thanks,
+Anwar
+
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220404121919
+   Currently in parallel: Yes
+   User: anwarH
+   Description: IS-912 MFCU: Daily Notice Bad Address list Processing Script In-house Fix
+   Date Submitted: 2022-04-04 12:19:25
+   Date Last Updated: 2022-04-06 14:27:41
+   Files:
+      1) mfcudla_suppress_with_bad_address.py
+      2) mfcudla_process.sh
+      3) mfcudla.procs
+      4) mfcudla_post_with_paperless.py
+
+
+author: igor.khosid
+comment: [~anwarh] - Please move it to QA if it is ready
+
+
+author: anwarh
+comment: Hi [~Igor.Khosid], any update on this? 
+
+
+author: igor.khosid
+comment: Sorry [~anwarh] - will try today or tomorrow
+
+
+author: igor.khosid
+comment: QA - completed
+1. Parallel report
+Parallel ID: 20220404121919
+Currently in parallel: Yes
+User: anwarH
+Description: IS-912 MFCU: Daily Notice Bad Address list Processing Script In-house Fix
+Date Submitted: 2022-04-04 12:19:25
+Date Last Updated: 2022-04-06 14:27:41
+Files:
+1) mfcudla_suppress_with_bad_address.py
+2) mfcudla_process.sh
+3) mfcudla.procs
+4) mfcudla_post_with_paperless.py
+
+2. Difference prod vs test >>> attached  >>>  [^Difference prod vs test.txt] 
+
+
+author: anwarh
+comment: Hi [~TunA],
+
+Please release this:[^IS-912 Transfer Form.docx]
+/d/is/cvs/xfer/anwarH
+
+Thanks
+
+
+author: tuna
+comment: Hi [~anwarh],
+
+Following codes have been released.
+
+Thanks,
+
+Tun
+
+
+
+20220418081033 04/18/2022 anwarH IS-912 MFCU: Daily Notice Bad Address list Processing Script In-house Fix
+
+[main@rhs ~]$ ll /d/is/cvs/xfer/anwarH
+total 312
+-rwxrwxrwx 1 anwarH DSI 2142 Apr 18 07:44 mfcudla_post_with_paperless.py
+-rwxrwxrwx 1 anwarH DSI 30111 Apr 18 07:44 mfcudla_process.sh
+-rwxrwxrwx 1 anwarH DSI 21180 Apr 18 07:44 mfcudla.procs
+-rwxrwxrwx 1 anwarH DSI 1851 Apr 18 07:44 mfcudla_suppress_with_bad_address.py

@@ -1,0 +1,507 @@
+title: Setup COLU tax for print and PDF archival[32937][pvt]
+description: SmartSheet Feedback sheet
+
+https://app.smartsheet.com/sheets/mmRx8PW8cPxh965cvgJgcq83mqjqqM4qC8Gf3vj1?view=grid
+
+
+
+Setup COLU tax for print and PDF archival (no electronic).
+
+Print:
+
+Set-up tax processing for the following tax forms in IRS format:
+ # 1098
+ # 1099-INT: Update for aggregate by SSN and Address for print/PDF archival
+ # 1099-C
+ # 1042-S
+
+
+
+Include masking for SSN and Account Numbers; use standard masking formatting:
+ - SSN masking:
+ 'XXX-XX-####', 'XX-XXX####'
+
+ - Account number masking:
+ XXXXXX###
+
+
+
+No suppression criteria required.
+
+MIS files for invalid addresses with be printed and mailed at Full FC rate; flagged to 5.MIS file on DPVS.
+
+
+
+PDF archival specifications:
+ * No index file required.
+ * Individual PDFs for each account/tax form type.
+ * PDF naming convention = <Account number>_<Doc Type>_<Date>_<fseq>.pdf
+
+Doc Type = should this reference tax form accordingly: 1098, 1099I, 1099C, 1042S
+
+Date = We typically default date to 12/31/YY (based on current tax year)
+
+Fseq: Sequential number (1,2,3, etc.) of PDF in the archival as they are created to ensure that all PDF names are unique.
+
+Zip individual PDF's and copy to COLU's client pickup folder called: colu_tax_MMDDYYYY.zip
+
+
+
+Tax test files:
+ File arrival : 09/02/2022 09:45 PST
+ test/COLU_TaxTest.zip.pgp
+ 
+
+Please use dates:
+
+Turnover Date : 10/20/2022
+ Sample to QA Date: 11/18/2022
+ Sample date: 11/22/2022
+ Approval Date: 11/30/2022
+ Go live date :12/09/2022
+
+
+
+
+author: JIRAUSER11400
+comment: [~OIR]
+ # Does CU require us to suppress tax forms with DO NOT MAIL in the address block? - *No*
+ # Does CU need us to create an index file/PDF for Nautilus. - *Yes*
+
+
+author: tuna
+comment: Hi [~Ricky Lopez], [~phoebe.george],
+
+Please review acct/SSN masking and estimated timeline below.
+
+Thanks,
+
+Tun
+
+
+
+
+
+- For SSN masking:
+'XXX-XX-####', 'XX-XXX####'
+
+- For Account number masking:
+XXXXXX###
+
+# are actual numbers
+
+
+
+- Estimated Timeline
+ Turnover Date : 10/20/2022
+ Sample to QA Date: 11/18/2022
+ Sample date: 11/22/2022
+ Approval Date: 11/30/2022 
+ Go live date :12/09/2022
+
+
+author: phoebe.george
+comment: [~Ricky Lopez] Please update the dates that Tun provided on the Epic and story.
+
+I updated the descriptions already with the info that he provided.
+
+Thanks
+
+
+author: terrence.tong
+comment: Hi [~phoebe.george], can you ask if COLU is ok with having an extra index file in the zip file? By default, the setup is to include an index file with a pdf. If they don't want it I'll make a custom setup for them. Thanks!
+
+
+author: JIRAUSER11400
+comment: [~OIR]-This is ok to include, CU can ignore file.
+
+
+author: terrence.tong
+comment: Thanks [~Ricky Lopez]
+
+
+author: terrence.tong
+comment: Hi [~Ricky Lopez] [~phoebe.george], do you know if COLU is ok with password-protected zip files? The default configuration for zipping only is also to have a password.  
+
+
+author: JIRAUSER11400
+comment: [~OIR]-Yes this should be fine, please use same PW as their FTP login PW
+
+
+author: terrence.tong
+comment: [~Ricky Lopez] Can you remind me what is their ftp login password? I'll send you an email regarding the default password.
+
+
+author: terrence.tong
+comment: [~Igor.Khosid]
+Please review these control files, I added colu to them and they are ready for release. Thanks!
+control file parallel id: 20221025143242
+
+
+author: terrence.tong
+comment: main program parallel: 20221025143934 (not ready for QA)
+
+
+author: terrence.tong
+comment: [~Igor.Khosid] here are screenshots of the chnages.
+cdtax.control
+ !cdtax.PNG|thumbnail! 
+tax_archival.control
+ !tax_archival.PNG|thumbnail! 
+tax_acc_mask.control
+ !tax_acc.PNG|thumbnail! 
+
+
+author: igor.khosid
+comment:    Parallel ID: 20221025143242
+   Currently in parallel: Yes
+   User: wilsonY
+   Description: is-1713 release control file
+   Date Submitted: 2022-10-25 14:32:59
+   Date Last Updated: 2022-10-25 14:32:59
+   Files:
+      1) tax_acct_mask.control
+      2) tax_archival_key.control
+      3) cdtax.control
+
+
+author: igor.khosid
+comment: Files updated
+1) tax_acct_mask.control
+2) tax_archival_key.control
+3) cdtax.control
+
+
+author: terrence.tong
+comment: [~TunA] control file is ready for release.  [^IS-1713_control_file_only-1.doc] 
+
+
+author: terrence.tong
+comment: Hi [~TunA] control file updated, please review and release it thanks!  [^IS-1713_control_file_only.doc] 
+
+
+author: terrence.tong
+comment: [~Igor.Khosid] [~phoebe.george] [~Ricky Lopez] Please review these pdf files and provide them to the client, while I work on the script. Thanks!
+1098:  [^colu_1098.pdf] 
+1099c:  [^colu_1099c.pdf] 
+1042s:  [^colu_1042s.pdf] 
+1099int:  [^colu_1099int.pdf]
+
+
+
+author: terrence.tong
+comment: [~Ricky Lopez] Can you ask if the client is ok with changing the naming style to
+PDF naming convention = <Account number>__<Doc Type>___<Date>__<fseq>.pdf
+
+Because if not the account number, doc type, and date will be a sequence of numbers, and it may be tough to distinguish what is what.
+
+
+author: terrence.tong
+comment: [~Ricky Lopez] ignore my comment, for some reason the underscore is not showing up in the description but when I click on the description, it's showing the underscore.
+
+
+author: terrence.tong
+comment: [~Ricky Lopez] Can you confirm with the client about the following questions. 
+1. how does the data file will come in, does it come in just one data file with all forms zip and encrypted? 
+2. Can you ask them to make a folder called "tax" and put the data file in there, similar to colums1/2 and colu loan. 
+
+
+author: terrence.tong
+comment: [~Ricky Lopez]
+3. can you ask if the client is ok with using colu_tax_<mmddyy>_<segment>.zip.pgp
+4. we can use the same naming convention for file inside the zip.pgp
+colu.1042sgen.for1
+colu.1098gen.for1
+colu.1099cgen.for1
+colu.1099igen.for1
+
+
+author: JIRAUSER11400
+comment: [~OIR]- I will get back to you on questions
+
+
+
+[~phoebe.george]-FYI
+
+
+author: terrence.tong
+comment: [~Ricky Lopez] For clarification, the client wants the zip files to be named colu_tax_mmddyyyy.zip, or do they want the zip files to be in the folder colu_tax_mmddyyyy?
+
+If the latter, can you ask if they are ok with naming it colu_<form>_311_yyyy.zip?
+
+
+author: phoebe.george
+comment: [~Ricky Lopez] For this, ask Nicole if she is okay with the PDF archival files for Nautilus to be named this way:
+
+OUTER FILE: colu_tax_<mmddyy>_<segment>.zip.pgp
+We can use the same naming convention for files inside the zip.pgp to be called:
+colu.1042sgen.for1
+colu.1098gen.for1
+colu.1099cgen.for1
+colu.1099igen.for1
+
+
+author: terrence.tong
+comment: Hi [~phoebe.george] [~Ricky Lopez],
+
+I should've been more clear on question 4.
+1. Can you confirm if colu is fine with naming their datafile colu_tax_<mmddyy>_<segment>.zip.pgp? 
+2. For files inside we can follow the same naming scheme they used in the test file
+colu.1042sgen.for1
+colu.1098gen.for1
+colu.1099cgen.for1
+colu.1099igen.for1
+
+For client pickup(archive):
+
+I need some clarification on what this phrase means:
+
+"Zip individual PDF's and copy to COLU's client pickup folder called: colu_tax_MMDDYYYY.zip"
+
+1. This sounds like the client wants the zip file to be put into a folder called colu_tax_MMDDYYYY.zip, the .zip extension is what I am confused about.
+
+2. If that's what they want, do you know if they are ok with naming the file colu_<form>_<cycle><segment>_<tax year>.zip (Default naming scheme)
+
+
+
+
+author: tuna
+comment: Hi Wilson, [~phoebe.george], [~Ricky Lopez]
+
+Just FYI. Following file names are our internal data file names, after the standard tax script analyst and break-down the client's data files into separate tax forms. Client should not follow that naming convention. I provided the STANDARD TAX File naming convention that client should follow.
+ - Infoimage Internal file names for standard tax:
+
+colu.1042sgen.for1
+ colu.1098gen.for1
+ colu.1099cgen.for1
+ colu.1099igen.for1
+
+
+
+Thanks
+
+Tun
+
+
+
+
+
+STANDARDIZED TAX FILE NAMING CONVENTIONS (for clients)
+ ==================================
+ All tax files including test and production files should be submitted using the below instructions for file naming conventions. If replacement files for any tax forms are submitted, please provide instructions to your Account Coordinator on how to handle any previous files received that will not be used for processing/production.
+
+Please determine which of the following methods you will be sending your tax files and use the following naming conventions accordingly:
+
+INDIVIDUAL TAX DATA FILES
+ ==========================
+ These file names are for individual tax files containing one data file per one type of tax form.
+
+File Naming Convention:
+
+{CID}_{TAX_FORM}_{MMDDYY}_{HHMM}_{PROD|TEST}.pgp
+ 
+ e.g.:
+ AACU_1099i_121010_1523_TEST.pgp
+ AACU_1099i_011511_0925_PROD.pgp
+ 
+ 
+ 
+ ZIPPED TAX FILES
+ ================
+ These files names are for zipped files containing individual tax data files (see previous section). If you choose not to pgp the individual tax data files, then you will need to pgp encrypt the zipped file.
+ 
+ File Naming Convention:\{CID}
+
+_TAX_{ MMDDYY}_{HHMM}_{PROD|TEST}.zip.pgp
+
+e.g.:
+ AACU_TAX_121510_0823_TEST.zip.pgp
+ AACU_TAX_012011_1539_PROD.zip.pgp
+
+
+
+CONCATENATED/COMBINED TAX FILES
+ ==============================
+ These files names are for systems that generate a single tax data file containing multiple tax forms.
+
+File Naming Convention:
+
+{CID}_TAX_{MMDDYY}_{HHMM}_{PROD|TEST}.pgp
+ 
+ e.g.:
+ AACU_TAX_121110_1209_TEST.pgp
+ AACU_TAX_011011_0529_PROD.pgp
+ 
+ 
+ 
+ SAMPLE / SUPPRESSION ACCOUNT LISTS
+ ==================================
+ If you choose provide a list for a select sample group or if you choose to suppress specific accounts per individual tax forms, please provide these account lists using the following file naming conventions. The date and timestamp must match with the tax data files listed previously.
+ 
+ - File Naming Convention for Sample Accounts:\{CID}
+
+_{TAX_FORM}_{MMDDYY}_{HHMM}_SAMPLE_{PROD|TEST}.pgp
+
+e.g.:
+ AACU_1099i_121010_1523_SAMPLE_TEST.pgp
+ AACU_1099i_011511_0925_SAMPLE_PROD.pgp
+ - File Naming Convention for Suppressing Tax Forms: \{CID}_{TAX_FORM}_{MMDDYY}_{HHMM}_SUPPRESS_{PROD|TEST}.pgp
+
+e.g.:
+ AACU_1099i_121010_1523_SUPPRESS_TEST.pgp
+ AACU_1099i_011511_0925_SUPPRESS_PROD.pgp
+
+
+
+[~OIR]
+
+
+author: terrence.tong
+comment: [~phoebe.george] [~Ricky Lopez]
+
+Please follow the naming convention provided by Tun, if they want to give us a single data file. Thanks!
+
+Inside file:
+h6. colu_1099i_{MMDDYY}_{HHMM}_{PROD|TEST}
+colu_1099c_{MMDDYY}_{HHMM}_{PROD|TEST}
+colu_1098_{MMDDYY}_{HHMM}_{PROD|TEST}
+colu_1042s_{MMDDYY}_{HHMM}_{PROD|TEST}
+
+zipped and encrypted file(zip.pgp):
+h6. colu_tax_{MMDDYY}_{HHMM}_{PROD|TEST}.zip.pgp
+
+
+
+author: terrence.tong
+comment: [~phoebe.george] [~Ricky Lopez] Any updates on the questions I asked earlier? Thanks!
+
+
+author: JIRAUSER11400
+comment: [~OIR]CU will use naming convention as above
+
+colu.1042sgen.for1
+colu.1098gen.for1
+colu.1099cgen.for1
+colu.1099igen.for1
+
+
+
+
+author: terrence.tong
+comment: [~Ricky Lopez] Please ask colu not to use the .for1 format as the inside file. The .for1 format is reserved for internal use as stated by tun in the previous comment. 
+
+Please use the standard naming convention suggested by tun:
+
+Inside file:
+h6. colu_1099i_{MMDDYY}_{HHMM}_{PROD|TEST}
+colu_1099c_{MMDDYY}_{HHMM}_{PROD|TEST}
+colu_1098_{MMDDYY}_{HHMM}_{PROD|TEST}
+colu_1042s_{MMDDYY}_{HHMM}_{PROD|TEST}
+
+zipped and encrypted file(zip.pgp):
+h6. colu_tax_{MMDDYY}_{HHMM}_{PROD|TEST}.zip.pgp
+
+
+
+
+author: JIRAUSER11400
+comment: [~OIR]- OK, will update
+
+
+author: terrence.tong
+comment: [~Ricky Lopez] [~phoebe.george]
+Just a reminder of the information I need:
+1. Make sure input file is using the standard file naming convention
+2. Make sure datafile are in the tax folder 
+h6. example: tax/colu_tax_{MMDDYY}_{HHMM}_{PROD|TEST}.zip.pgp
+3. Please confirm if the client is ok with using the following for client pickup 
+h6. colu_<form>__<cycle><segment>__<tax year>.zip (Default naming scheme)
+
+
+
+author: terrence.tong
+comment: [~phoebe.george]Any updates on the information I need?
+
+
+author: JIRAUSER11400
+comment: I reached back out today, I will send update once they respond. [~OIR]
+
+
+author: JIRAUSER11400
+comment: [~OIR]COLU has sent back word document with review/feedback items (attached)[^Tax form Review. - InfoIMAGE 11-08-2022docx.docx]
+
+
+author: phoebe.george
+comment: [~OIR] Please hold off on making the updates on the document that Ricky attached.
+
+[~Ricky Lopez] Some of these items are not do-able as they arrive in the data file this way. We will run through the list with the client tomorrow on our call so they know what areas can be updated and not.
+
+
+author: terrence.tong
+comment: [~phoebe.george] [~Ricky Lopez] Please let me know when the 2022 data file is ready.
+1. Currently investigating 1042S and 1099Int issues. 
+2. The year and address are based on outdated information (2021 data file). 
+3. Naming format can be updated in the next revision.
+
+
+author: terrence.tong
+comment: [~phoebe.george] [~Ricky Lopez] Can you please let the client know that for 1099INT, the reason why the account number is not there is that we are using aggregate for 1099i. So account numbers are put at the bottom box. Thanks
+
+
+author: JIRAUSER11400
+comment: [~OIR]I thought the list they included was in word document, but I was mistaken.
+
+
+|*Form*|*Description*|*Page #*|
+|1099 Int|Account Numbers are blank in the box. Account numbers do show up in table below tax form - {color:#FF0000}Using aggregate for 1099i{color}|All|
+|1099 Int|Columbia Credit Union address should be PO Box instead of Street address.|All|
+|1099 Int|Recipient's Name is Last name first name. No comma separating. Please add comma|All|
+|1099 Int|For Calendar Year is 2022. The tax files are from 2021.|All|
+|1042-S|Columbia Credit Union address should be PO Box instead of Street address. Should show +4 on zip|All|
+|1042-S|Dashes on 7b and 7c run into check boxes and next columns|All|
+|1042-S|Recipient's Name is Last name first name. No comma separating. Please add comma|All|
+|1042-S|For Calendar Year is 2022. The tax files are from 2021.|All|
+|1098|For Calendar Year is 2022. The tax files are from 2021.|All|
+|1098|Recipient's Name is Last name first name. No comma separating. Please add comma|All|
+|1098|Columbia Credit Union address should be PO Box instead of Street address.|All|
+|1098|Add Plus 4 to zip codes|All|
+|1099C|Add Plus 4 to Columbia CU zip code|All|
+|1099C|Columbia Credit Union address should be PO Box instead of Street address.|All|
+|1099C|For Calendar Year is 2022. The tax files are from 2021.|All|
+|1099C|Recipient's Name is Last name first name. No comma separating. Please add comma|All|
+
+
+
+
+
+
+author: terrence.tong
+comment: [~phoebe.george] [~Ricky Lopez]
+For 1042S, the extending problem has been fixed and we'll provide samples later. As for why the street name is cut off at the bottom, I believe this is due to the pdf viewer issue because it's only happening if I open with a certain pdf viewer. Please ask the client to try and view the pdf file using another viewer. Thanks!
+
+
+author: terrence.tong
+comment: [~Ricky Lopez] As for the return address, this is captured in the data file provided by the client. They would need to provide the updated data file in order to show the +4 zip code (XXXX portion).
+
+example (2021):
+A2022      910617775     5 237  COLUMBIA CREDIT UNION     0200 SE PARK PLAZA DRIVE    VANCOUVER     WA98666XXXX
+
+
+
+author: terrence.tong
+comment: [~Ricky Lopez] [~phoebe.george]
+ Can you give me an update for the information I need?
+
+1. Make sure input file is using the standard file naming convention
+2. Make sure datafile are in the tax folder 
+h6. example: tax/colu_tax_{MMDDYY}_{HHMM}_{PROD|TEST}.zip.pgp
+3. Please confirm if the client is ok with using the following for client pickup 
+h6. colu_<form>__<cycle><segment>__<tax year>.zip (Default naming scheme)
+
+
+author: JIRAUSER11400
+comment: [~OIR]Still waiting on feedback, I will make sure to bring up on our offline call with them.
+
+
+author: terrence.tong
+comment: [~Ricky Lopez] Ok, thanks!

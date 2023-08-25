@@ -1,0 +1,163 @@
+title: ESignature configurable Auth setting
+body: **1: JSON format for member and non member auth type list and message for any
+cid.This setting could be added at infodoc account management property json or
+as a separate meta for esignature configurable auth feature. Currently it is
+added at infodoc account management property json. This setting is for BKCU
+current implementation.**
+
+{  
+    "signerAuthMethods": {  
+        "member": [{  
+            "type": "email",  
+            "label": "Email",  
+            "status": "required"   
+        }, {  
+            "type": "phone",  
+            "label": "SMS",  
+            "status": "optional"   
+        }, {  
+            "type": "question",  
+            "label": "Q&amp;A",  
+            "status": "required"   
+        }],  
+        "nonMember": [{  
+            "type": "email",  
+            "label": "Email",  
+            "status": "disabled"   
+        }, {  
+            "type": "phone",  
+            "label": "SMS",  
+            "status": "required"   
+        }, {  
+            "type": "question",  
+            "label": "Q&amp;A",  
+            "status": "disabled"   
+        }]  
+    },  
+    "signerAuthMessages": {  
+        "member": {  
+            "message": "",  
+            "status": "disabled"   
+        },  
+        "nonMember": {  
+            "message": "To access your documents, please copy and paste the below link. %0A%0A",  
+            "status": "enabled"   
+        }  
+    },  
+    "eSignEnable": true,  
+    "eSignWorkFlowEnable": true,  
+    "eSignLandingUrl": "<https://mtrodev.infoimageinc.com>",  
+    "companyURL": "<https://mtrodev.infoimageinc.com>"   
+}
+
+    
+    
+      
+    
+
+  
+ _  
+ **Here if Auth status is disable then it will not show at front end auth
+dropdown list as below "nonMember_auth.png" screenshot for  
+non member example. only SMS is enable and other are disable.And for member
+all three auth are require or optional and showing  
+all three at dropdown "member_auth.png" screenshot.So if we do not need to
+support any authtype like email,sms or QA then we  
+will set it's status as disable for any CID.**_
+
+and
+
+ _ **If Auth message status is disable then custom message textarea will be
+disable otherwise enable at front end based on below "auth_message.png"
+screenshot.**_
+
+ **2: java class for signer auth and message json mapping and view to front
+end as dropdown and text area as below format.**
+
+@JsonIgnoreProperties(ignoreUnknown = true)  
+public class EsignAuthSetting {
+
+    
+    
+      
+      
+        private EsignAuthMethod signerAuthMethods;  
+      
+        private EsignAuthMessage signerAuthMessages;  
+      
+        public EsignAuthMethod getSignerAuthMethods() {  
+            return signerAuthMethods;  
+        }  
+      
+        public void setSignerAuthMethods(EsignAuthMethod signerAuthMethods) {  
+            this.signerAuthMethods = signerAuthMethods;  
+        }  
+      
+        public EsignAuthMessage getSignerAuthMessages() {  
+            return signerAuthMessages;  
+        }  
+      
+        public void setSignerAuthMessages(EsignAuthMessage signerAuthMessages) {  
+            this.signerAuthMessages = signerAuthMessages;  
+        }  
+      
+    }  
+      
+    ,  
+    public class EsignAuthMethod {  
+      
+        private List<EsignAuthList> member;  
+      
+        private List<EsignAuthList> nonMember;  
+      
+        public List<EsignAuthList> getMember() {  
+            return member;  
+        }  
+      
+        public void setMember(List<EsignAuthList> member) {  
+            this.member = member;  
+        }  
+      
+        public List<EsignAuthList> getNonMember() {  
+            return nonMember;  
+        }  
+      
+        public void setNonMember(List<EsignAuthList> nonMember) {  
+            this.nonMember = nonMember;  
+        }  
+    }  
+    ,  
+    public class EsignAuthMessage {  
+      
+        private EsignAuthList member;  
+      
+        private EsignAuthList nonMember;  
+      
+        public EsignAuthList getMember() {  
+            return member;  
+        }  
+      
+        public void setMember(EsignAuthList member) {  
+            this.member = member;  
+        }  
+      
+        public EsignAuthList getNonMember() {  
+            return nonMember;  
+        }  
+      
+        public void setNonMember(EsignAuthList nonMember) {  
+            this.nonMember = nonMember;  
+        }  
+    }  
+    ,  
+      
+    @JsonIgnoreProperties(ignoreUnknown = true) public class EsignAuthList { private String type; private String label; private String status; private String message; public String getType() { return type; } public void setType(String type) { this.type = type; } public String getLabel() { return label; } public void setLabel(String label) { this.label = label; } public String getStatus() { return status; } public void setStatus(String status) { this.status = status; } public String getMessage() { return message; } public void setMessage(String message) { this.message = message;  
+        }  
+    }
+    
+
+  
+
+### Attachments
+
+

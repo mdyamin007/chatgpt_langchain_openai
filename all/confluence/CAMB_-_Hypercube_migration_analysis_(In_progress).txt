@@ -1,0 +1,848 @@
+title: CAMB - Hypercube migration analysis (In progress)
+body: **Client Name**|  Cambridge Bank  
+---|---  
+ **Schema**|  Bank  
+ **SSO**|
+
+  * dihblogin 
+  * blhblogin 
+
+  
+ **DSO**|  NA  
+ **Account Types**|
+
+  * DD
+  * TD
+  * LN
+  * MM
+  * CD
+  * SV
+
+  
+ **Application Types**|
+
+  * default
+  * analysis
+  * escrow
+  * heloc
+  * loan_abs
+  * promontory
+  * ira
+  * enotice
+  * etax
+
+  
+ **User-Account Relation**|  many to many  
+ **Archival Period**|
+
+  * default = 24 months
+  * enotice = 13 months
+  * etax = 84 months 
+
+  
+ **Paperless Configuration**|  bySelective  
+ **on DP change**|
+
+Optout page.  
+  
+ **Delivery Preference**|
+
+  * paper (B)
+  * electronic (E)
+  * both (W)
+
+  
+ **Notification Preference**|
+
+  * Email
+  * Sms
+
+  
+ **NP Link Type**|  byUfa  
+ **Batch Download**|  NA  
+ **Menu Tabs**|
+
+Statements, Notices, Disclosures, Profile  
+  
+ **Welcome email**|  NA  
+  
+  
+
+#  _ROOT_
+
+##  _Login Methods_
+
+  * ### dihblogin (diSso.LoginServlet)
+
+    * flags: updateEmail=true, hasMultipleAcct = true, hasAcctType=true, insertADesc=true, acctLogic=remove
+    * createAcct = true.
+    * sso fields: **user_fi_number** , **pswd** , **email** , email2, smsnumber,carrierid, **account_number** , anum, astat, **atype** , ausr, **adsc**
+    * trim all leading zeores from account number
+    *  **acctListMap** : **key** = acctNum|atype, **value** = DIBusinessAccount(acctNum, anum, astat, atyp, ausr, adsc)
+    * user = Search by user_fi_number from USR_MAPPING. If not found
+      * Create a new User. FirstName = "Customer", expirationDate = null, **type= "P"**
+      * Attach CIF to this user. Insert into USR_MAPPING.
+    * Search for user profile by user_fi_number. If not found,
+      * Create a new user profile. LoginName="!"userId, password,  SSO = null, status="NEW". 
+    *  **Update UFA links:** user_fin_account links will be added/removed based on account list in the sso request.  
+
+      * Traverse through the account list provided in sso file. If the account is not present in fin_account table (searched by acctNum and acctType),
+        * Create a new fa with acctNum, type, Name="New Customer", lastModified=current date, status="A".
+        * Create paperless (if not found searched by acctId and stmtType="default") with newStatus="B", oldStatus="N", stmtType="default", modifiedBy=1. 
+        * If an existing account of that user is passed through sso file, update ufa_status, ufa_registrationdate,expiration_date, source, viewable, e_notfy.
+        * If a new account is passed through sso file,  create a new ufa with status="pre_reg", account number, regDate= current date, expiration date=current date. And insert int audit_log_camb with event="add", location="sso".
+        * Search for uatBean from user_acct_type_mapping by userId, acctId and stmtType="default".
+          * If not found, create a new one and insert userId, acctId, stmtType="default", acctType and acctDesc. 
+          * If found, update acctDesc.
+        *  **Update notification_preference table** (byUfa) with email and/or SMS from sso file.:
+          * Search for npList by usrId, acctId and stmtType="default". 
+          * If npList found i.e. list size > 0,
+            * First check if only one np found or not.
+            * If only one np record is found, check if email or (smsnumber & carrierid) present or not.
+              * If either of them is present, and if smsStatus of that np record is "Y", update email address and modifiedBy of that record.
+              * If smsStatus is not "Y", and mobileNumber & carrierid is present, set email status="N" and smsStatus="Y". Otherwise, i.e. mobileNumber & carrierId is not passed I sso, set emailStatus="Y" and smsStatus = "N"
+              * Set email address, smsNumber, smscarrierId, modifiedBy and save to np table.
+            * If no email or sms&carrierId is passed through sso file, the np record which was stored previously in np table, gets deleted.
+          * If npList not found,  
+
+            * If email or (smsnumber & carrierid) is passed through sso file, create a new np (byUfa) with usrId, acctId and stmtType="default". First check mobileNumber and carrierid. If smsnumber and carrierid is present, setEmailStatus=N, smsStatus=Y, email address, smsNum, carrierId, modifiedBy=userId and save to np table. If mobilenumber and carrierid is **not passed** in sso file, set emailStatus="Y" and smsStatus="N" and email address.
+        * Delete all account descriptions for all non existing user accounts. (Delete from user_acct_type_mapping table by userId and acctId).
+        * Remove all leftover UFA links of that user as they are not defined in SSO request. Insert into audit_log_camb (event="delete", createdBy="0", location="sso")
+    * Insert into log_record. log_time=current time, org_id, user_id, event_type=login, log_msg=acctNumber, log_remote_ip
+  * ### dissoexchange (diSso.SSOExchangeServlet)
+
+    * Search for userprofile from USR and USR_SESSION table. Redirect to signoff page is no user profile found for the user.
+    * Search for ufa for the user. If no ufa found, go to error page. errorMessage="MISSING_UFA".
+    * Update sess_last_login as current date.
+    * Redirect to enrollment if SSO is null or sess_active_status is not "active".
+  * ### blhblogin (bottomlineBFS2sso.LoginServlet)
+
+    * flags: emailUpdate=true, hasMultipleAcct=true, hassAcctType=true, hasSecondEmail=false, insertADsc=true
+    * SSO fields: **comp_user_number, pswd, email,** email2 **,** smsnumber **,** carrireid, **account_number** , anum, **atype,account_name**
+    * comp_user_number is splitted by "/". user_fi_number = 1st part of comp_user_number | second part of comp_user_number. vendorUserId = second part of comp_user_number.
+    * account_number is splitted by "/". if length is not 2, redirect to error page. errorMessage=DISABLED_USER. anum, acctNum=first part of account_number and atypeDI = second part of account_number.
+    * trim all leading zeroes from account number
+    * account_name is treated as adsc. If account_name is missing in sso file, redirect to error page. errorMessage = MISSING_ADSC
+    * If invalid account type is provided in sso file (sedond part of account_number), redirect to error page. errorMessage = INVALID_ATYPE
+    * acctListMap: key=acctNum|atyp, value = DIBusinessAccount(acctNum, anum, astat, atyp, ausr, adsc)
+    * Search for user from usr_mapping by ufiNumber. If not found, create a new user (firstName="Customer", **type= "N"**) and attach cif to it. (Insert into usr_mapping).
+    * Search for user profile by the cifNumber. if no user profile found, create a new user. loginName="!"userId, permissions=1, SSO=NULL, **vendor_user_id = second part of comp_user_number** , status="NEW"
+    *  **Update UFA links:** user_fin_account links will be added/removed based on account list in the sso request.  
+
+      * Traverse through the account list provided in sso file. If the account is not present in fin_account table (searched by acctNum and acctType),
+        * Create a new fa with acctNum, type, Name="New Customer", lastModified=current date, status="A".
+        * Create paperless (if not found searched by acctId and stmtType="default") with newStatus="B", oldStatus="N", stmtType="default", modifiedBy=1. 
+        * If an existing account of that user is passed through sso file, update ufa_status, ufa_registrationdate,expiration_date, source, viewable, e_notify.
+        * If a new account is passed through sso file,  create a new ufa with status="pre_reg", account number, regDate= current date, expiration date=current date. And insert int audit_log_camb with event="add", location="sso".
+        * Search for uatBean from user_acct_type_mapping by userId, acctId and stmtType="default".
+          * If not found, create a new one and insert userId, acctId, stmtType="default", acctType and acctDesc. 
+          * If found, update acctDesc.
+        * Update notification_preference table (byUfa) with email and/or SMS from sso file.
+        * Delete all account descriptions for all non existing user accounts. (Delete from user_acct_type_mapping table by userId and acctId).
+        * Remove all leftover UFA links of that user as they are not defined in SSO request. Insert into audit_log_camb (event="delete", createdBy="0", location="sso")
+    * Insert into log_record. log_time=current time, org_id, user_id, event_type=login, log_msg=acctNumber, log_remote_ip
+  * ### blssoexchange (bottomlineBFS2sso.SSOExchangeServlet)
+
+    * Search for userprofile from USR and USR_SESSION table. Redirect to signoff page is no user profile found for the user.
+    * Search for ufa for the user. If no ufa found, go to error page. errorMessage="MISSING_UFA".
+    * Update sess_last_login as current date.
+    * Redirect to enrollment if SSO is null or sess_active_status is not "active".
+
+##  _ **SSO:**_
+
+###  _ **Enrollment:**_
+
+  * User goes through enrollment based on following conditions:
+    1. If user never login via sso i.e. SSO is null (sso exchange)
+    2. sess_active_status is not "active" (sso exchange)
+  *  **Enrollment Step 1:** Pdf view 
+    *  
+  *  **Enrollment Step 2:** E-Sign Disclosure and Consent Agreement. The link redirects the user to Cambridge Savings Bank's site.
+    *   *  **Enrollment Step 3:** Account preference.
+    * The user can choose either paperless or paper as a delivery preference. Can't choose both.
+    * Either Email or Text can be chosen as notification preference. Can't choose both. 
+    * Email address is non-editable. But Text can be edited.
+    * There is a search box at the top right corner. Account numbers can be searched from here.
+    * Sets sess_active_status="active",ufa_status="active", SSO=current date.
+    * Insert event="enroll", location="sso" to audit_log_camb. 
+      * 
+
+###  _Menu_
+
+###  _Statements:_
+
+  * Shows account nickname(description) and last 4 digits of account number preceded by an asterisk(*) In account selector dropdown and above the statements table. format: accountNickname - *last 4 digits of accountNumber.
+    *   * The first paperless (E or U) account of the user remains selected in the account selector dropdown after landing on Statements page.
+  * For closed accounts, a message is displayed saying, the user will not have access to this account after 1 year from the last modified date of this account.
+    *   * Displays system maintenance message.
+  * If any account is on Paper, the Optout page appears. Email field is non-editable. The user can read and consent to CAMB's E-Sign Disclosure and Consent Agreement by clicking the link provided on this page. The user is redirected to their site after clicking this link. 
+    * 
+
+###  _Notices:_
+
+  *  __
+
+###  _Disclosures:_
+
+  * 3 types of disclosures.   
+
+    1. E-Sign Disclosure and Consent Agreement: Redirects to CAMB's own site
+    2. Deposit and Savings Statement Disclosure
+    3. Loan Statement Disclosure
+
+###  _Profile:_
+
+  * A search box is available for searching account numbers.
+  * Delivery preference: Can be chosen separately for Statement and Notice.
+    * Paperless
+    * Paper
+    * Both Paperless and Paper. This option is visible only when its set as dp from msm site.
+  * After changing dp from paperless to paper, stays in this page. If user tries to go to Statements, for that particular account(after being selected from the account dropdown) opt-out page appears.
+  * Notification preference: Email or Text.
+  * Uneditable email address field.
+  * SMS (text) can be updated from profile page. 
+    * 
+
+#  _MSM:_
+
+##  _Account Management:_
+
+  * Accounts can be searched by account number or email address.
+  * Account Information: 
+    *   * Delivery Preference:
+    * Can update delivery preference. (Paperless, Paper, Both)
+    * Can browse delivery preference history
+    * Can update email address and SMS text.
+    *   * Online Statements
+    * Statement Date, Monthly Inserts
+
+##  _Email Reminder_
+
+  * 
+
+##  _Email Proofing_
+
+  * Email proofing for the following statement types:
+    * Online Statements
+    * Account Analysis Statement
+
+    * Loan Statements
+
+    * IRA
+    * Annual Escrow Analysis
+    * Annual Borrower Statement
+    * Insured Cash Sweep
+    * Mortgage Notices
+    * Notices
+    * Password Update
+    * AI User Removal
+    * Email Reminder
+
+##  _Upload Inserts_
+
+  * 
+
+##  _Reports:_
+
+  *  **AI User Modification Activity Report:**
+    * This report show the audit trail of changes by administrator user (add/edit/delete) administrator user. Pulls data from audit_log_camb and usr_session table.
+
+    * Displays Modified By | Applied To Admin User(target user) | Modification Type | Modified Time
+  *  **Update Email Address report:**
+    * This report lists the Email Address Updates. Pulls data from notification_history, use, usr_mapping, fin_account and usr_fin_account table.
+
+    * Displays CIF | Account Number | Account Type | Email Address | Modified By | Modified Date
+  * 
+
+##  _Administration_
+
+  * 
+
+##  _Exit_
+
+  
+
+#  _Backend_
+
+##  _Processes_
+
+###  _auth:_
+
+  *  _ **Handler**_ : **CambAuthHandler**
+    * Must have 10 or 11 fields.
+    *  **Format:** custNumber | agreNumber| acctNum | cifNumber | active | appType | minorCode | lastName | firstName | userIdDesc | empFlag 
+    * Leading 0's are removed from acctNum
+    * cifNumber must be a number and length must be not less than 9 digits.
+    * firstName should be valid (not null or length greater than zero)
+    * acctNum must be a number and length must be greater than zero
+  *  ** _Registrar:_** **CambAuthRegistrar**
+    *  **preProcess():**
+      *  **ufaSet =** ufa_ids searched from fin_account, paperless, usr_fin_account, usr_mapping and user where user type="P"
+      *  **cifSet =** Cif numbers searched from fin_account, paperless, usr_fin_account, usr_mapping and user where user type="P"
+    * Search for user from usr_mapping by cifNumber. If user not found, 
+      *  **Create a new user** with firstName, lastName, type="P", expiration date=null. 
+      * Attach cif to this user. Insert orgId, cirNumber, userId, primary_user_flag="P" into usr_mapping. 
+    * atype = Gets appType from a static Map. If appType = SV or DD and minorCode is D001, atype is "MM". Otherwise, the corresponding value which is passed through index file will be stored as atype. 
+    * Search for fin account by acctNum and atype. If not found, **create a new account** with acctNum, acctName=firstName+lastName, type=atype, lastModified=current date, status="A".
+    * Insert an **entry into audit_log_camb.** event="add", targetUser=null, acctId, createdBy="0", location="auth"
+    *  **Add paperless for the account** for stmtType="default" and "enotice". oldStatus="N", newStatus="B"
+    * addUserFinanceAccount(): 
+      * ufa = Gets ufas searching by usrId and acctId.
+      * secondaryUsers = Gets all users searched from usr_mapping by cifNum and primary_user_flag="S"
+      * If no ufa found, create new ufa with usrId, acctId, ufa_status="pre_reg", acctNum and reg_date=current date.
+      * Insert event="add", targetUser=usrId, acctId, createdBy="0", location="auth" into audit_log_camb.
+      * Iterate throudh secondaryUsers. Remove secondary users from ufaSet.
+      * Also remove ufas from ufaSet and cifNum from cifSet.
+    *  **postProcess():**
+      * Search for ufas by the account id's of ufaSet. If an account is not linked with an enrolled user and the latest status of this account is "E, change the paperless status of that account. Set newStatus="B", oldStatus="E". Insert an entry to audit_log_camb (event="default2B", location="auth")
+      * Delete np record (byUfa). Insert into audit_log. event="rmNP, location="auth", createdBy="0".
+      * Remove Ufa i.e. delete the ufa_id from usr_fin_account table and insert into audit_log_camb. event="unlink", createdBy="2", location="auth"
+      *  **Deactivate session:  **
+        * For the leftover cifs of cifSet, If the cifNumber exists in ufa table i.e. if the user has any more accounts tied to it, skip deactivating.
+        * Deactivate the users. set sess_active_status="inactive", sess_login_id= **inactive_sessLoginId_current timestamp** and insert into audit_log_camb. event="deactivate, createdBy="2", location="auth"
+    * Database changes: USR, USR_MAPPING, FIN_ACCOUNT, AUDIT_LOG_CAMB, PAPERLESS, USR_FIN_ACCOUNT
+
+###  _afp:_
+
+  *  ** _Handler:_ AfpStatementData9**
+    * ms1=default, ms3=promontory, me1=heloc, mt1=mortgage, ae1=escrow, ra1=ira, tax=etax, aa1=analysis, yla=loan_abs
+    * Format **: fileName** | **accountNumber** | **beginDate** | **closingDate** | **numberOfPages** | **accountName** |SSN| **appType** |messageIDs|hasCheckStr|insertId|regionCode|crippleFlag|zipFileName|outputFormat [bold fields are mandatory] 
+    * appType must be anyone of these: DD, SV, CD, LN, ML, MM, AA
+  *  ** _Registrar:_ MessageEstmtRegistrar3**
+    * Find fin account by acctNum and acctType. If not found, create a new fa with orgId, acctNum, acctname, acctType, lastModified=current date, status="A".
+    * If fa found with a different acctName or acctName is neither "MEMBER" nor CUSTOMER", update acct_owner_name.
+    * Insert paperless .
+      * Search for paperless by acctId and stmtType. If not found, create a new one and insert. modifiedBy="1", oldStatus="N", newStatus="B",stmtType.
+      *  **If stmtType is not "default"**, search for paperless by acctId and stmtType="default". If not found, create a new one and insert. modifiedBy="1", oldStatus="N", newStatus="B", **stmtType= "default".**
+    * Insert entry into estmt_doc, p_job_estmt(p_job_id, est_id)
+  * Database changes: FIN_ACCOUNT, PAPERLESS, ESTMT_DOC, P_JOB_ESTMT
+
+###  _doc:_
+
+  *  _ **AfpRegistrar:**_
+    * autoRegister=false, enableAccountType=true, enableAccountLookup=false, acctNumAsLoginid = false
+    * Find fin account by acctNum and acctType. If not found, create a new fa with orgId, acctNum, acctname, acctType, lastModified=current date, status="A".
+    * If fa found with a different acctName or acctName is neither "MEMBER" nor CUSTOMER", update acct_owner_name and lastModified=current time.
+    * Insert paperless.
+      * Search for paperless by acctId and stmtType. If not found, create a new one and insert. modifiedBy="1", oldStatus="N", newStatus="B",stmtType.
+      *  **If stmtType is not "default"**, search for paperless by acctId and stmtType="default". If not found, create a new one and insert. modifiedBy="1", oldStatus="N", newStatus="B", **stmtType= "default".**
+    * Insert entry into estmt_doc, estmt_file and arch_file
+    * Insert p_job_id and esd_id into p_job_estmt
+    * Database changes: FIN_ACCOUNT, PAPERLESS, ESTMT_DOC, P_JOB_ESTMT, ARCH_FILE, ESTMT_FILE
+
+###  _enotice4:_
+
+  *  ** _Handler:_ ENoticeData7**
+    * Field count must be 11 or 12
+    *  **Format** : **letterRecord** | acctNum | **acctType** | acctname | afpFileName | type | closingDate | imageCount | postCardFlag | **zipFileName** | region | **letterRecord  ** [bold fields are mandatory] 
+    * The first field value is Letter Record (Record Type). Its value must be L.
+    * The value of last field value must be L also. It indicates the Letter Record (Record Terminator).
+    * Value of postCardFlag must be 0 or 1
+  *  ** _Registrar:_ DefaultENotice4Registrar**
+    *  **enotice4.createAccount=true, global.autoRegister=false**
+    * Search for account with acctNum and acctType. If no account found, create a new one and insert acctNum, acctName,type=acctType,lastModified=current date, status="A" into fin_account.
+    * If account found, update acct owner name if is is different and does not contain any of these keywords: "MEMBER", "CUSTOMER", "USER" 
+    * If paperless not found with stmtType="enotice", Insert paperless. modifiedBy="1", oldStatus="N", newStatus="B", stmtType="enotice"
+    * Insert arch_file_id, file_type, file_name, parent_path in arch_file.
+    * Insert acctId, stmtType, arch_file_id, postCardFlag, type i.e. letter code into enotice table.
+    * Insert p_job_id and enotice_id in p_job_enotice table.
+    * Database changes: FIN_ACCOUNT, PAPERLESS, ARCH_FILE, ENOTICE, P_JOB_ENOTICE
+
+###  _etax:_
+
+  *  ** _Handler:_ ETaxData3**
+    * Must have 8 columns in index file.
+    * Format: **acctNum** | **type** | **afpFileName** | date | suffix | appType | ssn | zipFileName
+  *  ** _Registrar:_ ETaxRegistrar3**
+    *  **etax.createAccount=true**
+    * Search for account with acctNum and acctType. If no account found,
+      * Create a new one and insert acctNum, acctName,type=acctType, lastModified=current date, status="A" into fin_account.
+      * Search for paperless by acctId and stmtType="default". If not found, create a new one and insert. modifiedBy="1", oldStatus="N", newStatus="B",stmtType=default.
+    * If account found, but no paperless , insert paperless . modifiedBy="1", oldStatus="N", newStatus="B",stmtType. 
+    * Insert file_type, file_name, parent_path in arch_file.
+    * Insert acctId, type, arch_file_id, date, ssn to etax table. 
+    * Insert p_job_id and etax_id into p_job_etax table.
+    * Database changes: FIN_ACCOUNT,PAPERLESS, ARCH_FILE, ETAX,  P_JOB_ETAX
+
+###  _aiUserProcessing:_
+
+  *  ** _Handler:_ DefaultAIHandler**
+    * Must have exact 5 columns.
+    *  **Format: firstName,lastName,permission,sessLoginId,email**  
+    * permissions can be 1, 3, 5, 7, 15. Can't pass 255 as permissions because a user with permission 255 can't be created or updated.
+  *  ** _Registrar:_ AIRegistrar**
+    *  **getAIUsersListByOrgId() :** Gets all users by usr_id. Gets usr_ids from usr_session whose sess_active_status is not "inactive" and sess_permissions is not 255 and sess_login_id is not "superuser"
+    *  **updatePermissionByUserId() :** update sess_permission (set sess_permission) using usr_id and org_id in usr_session table.
+    *  **createNewAIUser() :**
+      * Create a new user and user profile. Insert into USR and USR_SESSION table.
+        * usr_session: loginName= sessLoginId (from index file), password = p@ssword1, permission, DSO = current date, passwordExpiration= 90, sess_active_status =  "new"
+        * usr: firstName, lastName
+      * create a new np with usrId and stmtType. usrId= userId of the newly created user profile, stmtType="default". Set email address, modifiedBy="1". Insert/Update notification_preference table with this np. Also insert an entry into notification_history table.
+    *  **deactivateuserById() :** Find user profile searching by userId and orgId. Update usr_session table. Sets loginName as **" inactive_"+currentLoginName+"_"+currentDate_timestamp**. and sets **sess_active_status= "inactive".**
+    *  **isValidPermission() :** Checks if permission passed through index file is valid or not. Valid permissions are 255, 15, 7, 5, 3, 1
+  *  **processing job:**
+    * dbAiUsers **= getAIUsersListByOrgId()**
+    * Iterate through dbAiUsers. If the sessLoginId from index file matches with the loginName of any dbAiUser, 
+      * If a different permission level is passed for the user and the permission level is not greater than maximum permission level 7, update the permission in usr_session table. **updatePermissionByUserId().**
+      * Permission level doesn't get updated if same permission level is passed for a user or if a greater value than maximum permission level i.e. 7 is passed in index file.
+    * If a new user is passed with a valid permission level ( permission <= 7) through index file, create a new AI user. **CreateNewAIUser().**
+    * If any field is missing in index file or, if any line gets skipped during processing due to any DataException, deactivate those users. **deactivateUserById()**.
+    *  **Database changes:** USR, USR_SESSION, NOTIFICATION_PREFERENCE, NOTIFICATION_HISTORY
+
+###  _email notification:_
+
+  * notification.isSendEmailViaAPI=true
+  * notification.isEmailManageByEstmt=true
+  * email.mortgage.featureType=sms
+  * featureType => enotice, escrow, ira, default = sms
+
+###  _Enrollment Processing:_
+
+  * paperless.headers=cif,acctnum,app,acctname,email,sms,status,np,stmttype
+  * paperless.createAccount=true
+  *  ** _Handler:_ StandardEnrollmentHandler**
+    *  ** **Format:**** **CIF number** | **Account Number** | **Application** | **Account Name** | Email | SMS | Status | Notification Preference | Statement Type
+    *  Account number must be of type long.
+    * Cif length can't be greater than 100
+    * Must provide a valid application type. Valid app types are: SAV, DDA, CD, CL, CLView, IL, LOC, MM, MTG, 0, 1, 2, 4, 8, 16, 32, 64, 128, 138, 148, 256, 286, 1024, 1025, 1026, 4096, CK, SV, CNS, CML, MTG, TD
+    * Length of Account name must be less than 100
+    * If User name is not provided, account name is treated as user name.  If username provided, length must be less than 100.
+    * If Status i.e. paperless status is not provided, Default paperless status E is set.
+    * If Notification Preference is not provided, Default NP "email" is set. If provided, validate email and/or sms. Email length must not exceed 100. Sms length must be 10. USA_COUNTRY_CODE is appended at the beginning of SMS. So, the final length of SMS number must be 11. 
+    * If Statement type is passed through index file, validate it from database. If statement type is not provided in index file, default stmt type "default" is set.
+  *  ** _Registrar:_ StandardEnrollmentRegistrar**
+    *  **FIN_ACCOUNT:** Search for fin account with acctNum and acctType. If not found, create a new fin account with account number, acctName, last modified=current date, acctType and acctStatus=null (set acctStatus="H" only if 5 is passed as status).
+    * If account found, and status=5 is passed through index file, Update fin account status as "H". 
+    *  **USER and USR_MAPPING:** Search for users by userId. Gets userIds of primary users from usr_mapping by cifNumber. i.e. primary_user_flag != S. If no user found
+      * Create a new user with firstName and usrType. (firstName and usrType is not provided in index file, so null will be inserted).
+      * Attach cif to this user. Insert orgId, cifNumber, usr_id and primary_user_flag="P" in USR_MAPPING table.
+    * If user found, update firstName.
+    *  **USR_SESSION:** Search for user profile from usr_session. If no user profile found for that user, create a new user profile. Set sess_login_id = "!"+usrId, ssoKey = C@m$B*1rg3, sess_permission = 1.
+    *  **USR_FIN_ACCOUNT:**  Search for ufa by usrId and acctId. If no ufa found, create a new ufa and insert into the usr_fin_account table. set ufa_status="active" and reg_date=current date.
+    *  **PAPERLESS:** Search for paperless status by acctId and stmtType. If not found, create new paperless with acctId, modifiedBy=1, modifiedDate=current date, oldStatus=N, newStatus=B, reason=null. And update paperless status according to the status passed through index file.
+    * If paperless found but the paperless modified date is latest i.e. data parsedate is before the modified date, do nothing.
+    * If stmtType is not default, create default paperless if necessary. Search for paperless by actId and stmtType="default". If not found, create a new paperless with acctId, modifiedBy=1, modifiedDate=current date, old status="N", new status="B".
+    * If the account status is not active but paperless status is updated to E, set the account status to "active".
+    * If the paperless status is updated to "E" but the user has no SSO date, enroll the user. set sess_active_status="active" and SSO=current date.
+    * Get np by usrId, acctId and stmtType. If no np found, create a new np as byUfa. (updateNp=true). If np found, update modifiedTime according to parseDate. (updateNp=true).
+    * forUpdate np's, update np status. If, sms is passed, set smsStatus=Y, smsNumber and smscarrierid. Otherwise, if email is passed, set smsStatus="N" and emailStatus="Y". If email attachment is passed, set email attach status="Y" and attachment password. That means, either sms or email or attachment status will be set as "Y".
+    *  **Database changes:** FIN_ACCOUNT, USR, USR_MAPPING, USR_SESSION, PAPERLESS, USR_FIN_ACCOUNT, NOTIFICATION_PREFERENCE
+
+###  _Reports:_
+
+  *  _ **Paperless report:**_
+    *  paperlessReport.stmtType1=default, paperlessReport.stmtType2=enotice,enotice
+    *  _ **Handler:**_ **DefaultPaperlessReportBank**
+    *  ** _Render:_ DefaultPaperlessReportRenderBank**
+    * Fetch all accounts from fin_account and paperless2 with latest paperless status is "E". And displays **acctNum | p_latest_status | acctType**
+  *  ** _EnrollUpdateReport:_**
+    *  ** _EnrollUpdateReportGenerator:_** Fetch acctNum, type, p_latest_status, p_modified_date from fin_account and paperless2 of last 7 days where p_old_status is not "N". This report displays **acctNum | acctType | delivery preference | modified date**
+  *  ** _Bounceback report:_**
+  *  _ **Admin user activity report:**_
+    * adminUserActivityReport.ReportGenerator
+
+  
+
+  
+
+#  _ **Analysis Summary (ROOT)**_
+
+Scope| Feature| CAMB| Hypercube| Note  
+---|---|---|---|---  
+  
+ **Enrollment(SSO)**
+
+|  User enrollment|
+
+The user goes through enrollment based on the following conditions.
+
+  1. SSO is null
+  2. If the sess_active_status is not "active"
+
+|  46 incomplete Supported  47 incomplete Not Supported 48 complete Supported
+alternatively | In Hypercube, a user goes through enrollment if he/she never
+logged in via SSO  
+Enrollment Step 1| Pdf view|  49 complete Supported  50 incomplete Not
+Supported |  
+  
+Enrollment Step 2|
+
+E-Sign Disclosure and Consent Agreement.
+
+ The link redirects the user to Cambridge Savings Bank's site.
+
+|  51 complete Supported  52 incomplete Not Supported |  
+  
+Enrollment Step 3|
+
+  * A search box at the top right corner to search account numbers.
+  * Choose delivery preference (paperless or paper) for account statements and inserts.
+  * Choose delivery preference(paperless or paper) for notices.
+  * Choose notification preference: Email or Text
+  * Email address: Non-editable field. 
+  * SMS: editable.
+
+|  54 complete Supported  55 incomplete Not Supported 56 incomplete Supported
+alternatively |
+
+  * Account search box is not supported.
+
+  
+ **Statements**|  Account Optout|
+
+A user is redirected to the opt-out page if any account is on Paper.
+
+  * E-Sign Disclosure and Consent Agreement. The link redirects the user to Cambridge Savings Bank's site.
+
+  * Email or SMS can be chosen as notification preference.
+  * Non-editable email address field.
+  * Editable SMS text field.
+
+|  57 incomplete Supported  58 complete Not Supported |  
+  
+Account selector dropdown|
+
+  * Shows account description.
+  * The format to show the account is:
+    * accountNickname - *last 4 digits of accountNumber.
+    * Example: **SAVINGS-*1001**
+
+|  59 incomplete Supported  60 incomplete Not Supported |  
+  
+Account Display at the top of Statements table.| The accounts with nickname is
+displayed at the top of statements table, in parallel with the account
+selector dropdown. Display format same as the account selector dropdown.|  61
+incomplete Supported  62 complete Not Supported |  
+  
+Selected account| The first paperless account remains selected in the account
+selector dropdown.|  63 complete Supported  64 incomplete Not Supported |  
+  
+Closed account| Shows a message for closed accounts.|  65 complete Supported
+66 incomplete Not Supported |  
+  
+  
+|
+
+  * Date,  a pdf icon, Description, Monthly Inserts
+
+|  67 complete Supported  68 incomplete Not Supported |  
+  
+**Notices**|  
+|
+
+  * Date, a pdf icon, Description
+
+|  69 complete Supported  70 incomplete Not Supported |  
+  
+**Profile**|  Delivery Preference|
+
+  * Can be chosen separately for Statement and Notice.
+    * Paperless
+    * Paper
+    * Both Paperless and Paper. This option is visible only when it is set as dp from msm site.
+
+|  71 incomplete Supported  72 complete Not Supported |  
+  
+Notification preference|
+
+  * Email or Text
+  * Un-editable email field.
+  * Editable text field.
+
+|  73 complete Supported  74 incomplete Not Supported |  
+  
+A search box| There is a search box at the top right corner of profile page.
+Accounts can be searched from here.|  75 incomplete Supported  76 complete Not
+Supported |
+
+  * Account search box is not supported.
+
+  
+ **Disclosure**|  
+|
+
+  * 3 type of disclosures.
+    * E-Sign Disclosure and Consent Agreement: Redirects to CAMB's own site
+    * Deposit and Savings Statement Disclosure
+    * Loan Statement Disclosure
+
+|  77 complete Supported  78 incomplete Not Supported |  
+  
+  
+# _**Analysis Summary (MSM)**_
+
+Scope| Feature| CAMB| Infotrac| Note  
+---|---|---|---|---  
+ **Account Management**
+
+  
+
+|  Account search|
+
+Search by account number and email address.
+
+|  79 complete Supported  80 incomplete Not Supported |  
+  
+Delivery preference|
+
+  * Admin can update delivery preference (paperless, paper and both).
+  * Admin Can browse delivery preference history
+
+|  81 complete Supported  82 incomplete Not Supported |  
+  
+Notification preference|
+
+  * Admin can change notification preference. either email or sms.
+  * Admin can update email address and SMS
+
+|  83 complete Supported  84 incomplete Not Supported |  
+  
+**Email proofing**|  12 templates for email proofing  
+  
+  
+  
+|
+
+  * Online Statements (default)
+  * Account Analysis Statement (analysis)
+
+  * Loan Statements (heloc)
+
+  * IRA (ira)
+  * Annual Escrow Analysis (escrow)
+  * Annual Borrower Statement (loan_abs)
+  * Insured Cash Sweep (promontory)
+  * Mortgage Notices (mortgage)
+  * Notices (enotice)
+  * Password Update (passUpdate)
+  * AI User Removal (acctRemoved)
+  * Email Reminder (reminder1)
+
+|  85 complete Supported  86 incomplete Not Supported |
+
+  * Email Reminder is not supported anymore
+
+  
+ **Upload Inserts**|  
+|
+
+Inserts can be uploaded online for the following statements:
+
+  * loan_abs (Annual Borrower)
+  * enotice (Notices)
+  * default (Online Statements)
+  * promontory (IntraFI Deposit)
+  * mortgage (Mortgage Notices)
+  * ira (IRA)
+  * escrow (Annual Escrow Analysis)
+  * etax (eTax)
+
+|  121 complete Supported  122 incomplete Not Supported |  
+  
+**Reports**|  9 types of reports are available| Latest Stats|  125 complete
+Supported  126 incomplete Not Supported |  
+  
+User Login Activity|  127 complete Supported  128 incomplete Not Supported |  
+  
+AI Login Activity|  129 complete Supported  130 incomplete Not Supported |  
+  
+AI User Activity|  131 complete Supported  132 incomplete Not Supported |  
+  
+Email Address Collection|  133 complete Supported  134 incomplete Not
+Supported |  
+  
+Paperless|  135 complete Supported  136 incomplete Not Supported |  
+  
+Email Reminder|  139 incomplete Supported  140 complete Not Supported | Not
+supported anymore  
+Update Email Address Report|  87 incomplete Supported  88 complete Not
+Supported |  
+  
+AI User Modification Activity Report|  89 incomplete Supported  90 complete
+Not Supported |  
+  
+**Administration**|  Administration|
+
+Can create, update and delete new admin user.
+
+|  145 complete Supported  146 incomplete Not Supported |  
+  
+  
+# _**Analysis Summary (PUI)**_
+
+Process
+
+|
+
+Prefix
+
+|
+
+Backend Business
+
+|
+
+Mismatch with hypercube business
+
+|
+
+Changes needed
+
+|
+
+Note  
+  
+---|---|---|---|---|---  
+afp|
+
+ms1=default, ms3=promontory, me1=heloc, mt1=mortgage, ae1=escrow, ra1=ira,
+tax=etax, aa1=analysis, yla=loan_abs
+
+|
+
+  *  **Handler:  **AfpStatementData9
+  *  **Registrar: **MessageEstmtRegistrar3****
+    * Creates new account. 
+    * Update account owner name for existing accounts.
+    * Insert paperless
+    * Insert entry into estmt_doc, p_job_estmt
+  *  **Database changes:  **
+    * FIN_ACCOUNT, PAPERLESS, ESTMT_DOC, P_JOB_ESTMT
+
+|  
+|  
+|  
+  
+auth|  
+|
+
+  *  **Handler: CambAuthHandler**
+  *  **Registrar: CambAuthRegistrar**
+    *  **ufaSet =** ufa_ids searched from fin_account, paperless, usr_fin_account, usr_mapping and user where user type="P"
+    *  **cifSet =** Cif numbers searched from fin_account, paperless, usr_fin_account, usr_mapping and user where user type="P"
+    * If no user found searched by cifNumber from usr_maping, **create a new user** (type P) and attach cif to it.
+    * If no finAccount found searched by acctNum and type from fin_account, **create a new fin account.**
+    * Insert paperless for default and enotice.
+    * Search for ufa by usrId and acctId. If no ufa found, create a new ufa. set ufa_status="pre_reg"
+    *  **post process:**
+      * Iterate through the leftover ufas and cifs of ufaSet and cifSet.
+      * If any account is not linked with an enrolled user and the latest status of this account is "E, change the paperless status of that account. Set newStatus="B".
+      * Delete np (byUfa) and ufa.
+      * Deactivate the users. Set sess_active_status="inactive", sess_login_id= inactive_sessLoginId_current timestamp
+  *  **Database changes:  **
+    * USR, USR_MAPPING, FIN_ACCOUNT, AUDIT_LOG_CAMB, PAPERLESS, USR_FIN_ACCOUNT
+
+|  
+|  
+|  
+  
+enotice4|  
+|
+
+  *  **Handler:  ENoticeData7**
+  *  **Registrar: DefaultENotice4Registrar**
+    * enotice4.createAccount=true, global.autoRegister=false
+    * Create a new fin account if not found searched by acctNum and acctType.
+    * Update account owner name for existing accounts.
+    * Insert paperles with stmtType="enotice"
+    * Insert entry into arch_file, enotice, p_job_enotice.
+  *  **Database changes:**
+    * FIN_ACCOUNT, PAPERLESS, ARCH_FILE, ENOTICE, P_JOB_ENOTICE
+
+|  
+|  
+|  
+  
+doc|  
+|
+
+  *     * autoRegister=false, enableAccountType=true, enableAccountLookup=false, acctNumAsLoginid = false
+    * Creates new account if not found. 
+    * Update account owner name for existing accounts.
+    * Insert paperless.
+    * Insert entry into estmt_doc,estmt_file, arch_file, p_job_estmt.
+    *  **Database changes** :
+      * FIN_ACCOUNT, PAPERLESS, ESTMT_DOC, P_JOB_ESTMT, ARCH_FILE, ESTMT_FILE
+
+|  
+|  
+|  
+  
+etax|  
+|
+
+  *  **Handler: ETaxData3**
+  *  **Registrar: ETaxRegistrar3**
+    * etax.createAccount=true
+    * Create new account and paperless. 
+    * Insert into arch_file, etax, p_job_etax.
+  *  **Database changes:**
+    * FIN_ACCOUNT,PAPERLESS, ARCH_FILE, ETAX,  P_JOB_ETAX
+
+|  
+|  
+|  
+  
+aiUserProcessing|  
+|
+
+  *  **Handler: DefaultAIHandler**
+  *  **Registrar: AIRegistrar**
+    * Search for all users whose sess_active_status is not "inactive" and sess_permissions is not 255 and sess_login_id is not "superuser".
+    * If any sessLoginId matched with the above users with a different permission level, **update the permission of the user.**
+    * If a new user i.e. not present in db, is passed through index file, **create a new AI user.** Permission must be <= 7. For these newly created users, current date is set as DSO, password expiration is 90 and sess_active_status="new"
+    * For newly created AI users, insert usrId, email, stmtType="default" into np talbe.
+    * An entry also gets inserted into the notification_history table.
+    * If any field is missing in index file or, if any line gets skipped during processing due to any DataException, deactivate those users. Set loginName as "inactive_"+currentLoginName+"_"+currentDate_timestamp. and sets sess_active_status="inactive".
+  *  **Database changes:**
+    * USR, USR_SESSION, NOTIFICATION_PREFERENCE, NOTIFICATION_HISTORY
+
+|  
+|  
+|  
+  
+Enrollment Processing|  
+|
+
+  *  **Handler: StandardEnrollmentHandler**
+    *  ** **Format:**** **CIF number** | **Account Number** | **Application** | **Account Name** | Email | SMS | Status | Notification Preference | Statement Type 
+    * paperless.createAccount=true
+  *  **Registrar: StandardEnrollmentRegistrar  **
+    * Creates fin account. If status 5 is passed, update the account status as "H"
+    * Create user and attach cif to user. insert primary_suer_flag="P" in usr_mapping.
+    * Create user profile with sess_login_id = "!"+usrId
+    * Create ufa if not found. set ufa_status="active".
+    * Create paperless and update the paperless status according to the status passed through the index file. 
+    * Create a paperless for stmtType="default"
+    * If the paperless status is updated to "E" but the account status is "H", activate the account i.e. set account status="A".
+    * If the paperless status is updated to "E" but the user has no sso date, enroll the user i.e. set current date as SSO and set sess_active_status="active"
+    * Search for np as byUfa. If no np is found, create np. 
+    *  **Database changes:**
+      *  **Database changes:** FIN_ACCOUNT, USR, USR_MAPPING, USR_SESSION, PAPERLESS, USR_FIN_ACCOUNT, NOTIFICATION_PREFERENCE
+
+|  
+|  
+|  
+  
+Reports|  
+|
+
+  *  **EnrollUpdate Report:  **
+    * Fetch acctNum, type, p_latest_status, p_modified_date from **fin_account** and **paperless2** of last 7 days where p_old_status is not "N". 
+    * This report displays  **acctNum | acctType | delivery preference | modified date**
+  *  **Admin user activity report:**
+    * Feetch data from usr_session and user table.
+    * Displays **Login ID, Name,Ro le, User Status, Last Login Date, Last Password Change Date**
+  *  **Paperless report:  **
+    * Fetch all accounts from fin_account and paperless2 with latest paperless status is "E".
+    * Displays  **acctNum | p_latest_status | acctType**
+  * Bounceback Report
+
+|  
+|  
+|  
+  
+  
+  
+
+

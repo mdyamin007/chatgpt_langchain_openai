@@ -1,0 +1,112 @@
+title: EQBK  Three Branch Acquisition Pre-ingestion Setup
+description: Set-up pre-ingestion script to process customer supplied PDF files with CSV index file to use for posting 1 year of pre-ingestion DDA/Savings file to eStatement production.
+Test CSV file attached.
+
+
+author: kericapote
+comment: [~Tin.Chak] do we do staging or pilot? Customer and I cannot see staging.
+
+The index file name is ms1_20201201_1_20220323_1353_eqbk.txt.
+
+Please ask isd to process in the stage.
+
+Btw for some entries in client csv index file account type is empty. We are ignoring these records. There are total 14 such entries found.
+
+
+
+!image-2022-03-24-03-14-22-299.png!
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~kericapote]I'll assign it to someone. It should be posting to pilot for the client to review. I also didn't see any estimated hours. Can you update the ticket with the estimated hours?
+
+
+author: rony
+comment: Hi [~Tin.Chak]
+
+Would it be possible to manually post the existing index file to the pilot cause I ran it for the stage? If not let me know I will run for the pilot.
+
+
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~rony]You can manually post the file. The prefix is existing, so there's no issue.
+
+
+author: rony
+comment: Hi [~Tin.Chak], hmm I never post index files. Don't know how to do that. Maybe that needs access to pui site right, which I don't have.
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~kericapote] Can you add the ISD estimated hours? Thanks.
+
+
+author: shun.kuwashima
+comment: [~rony] assuming we're gonna be posting these as doc processing (i.e. with the header) instead of afp processing (no header), then the index file contains one too many columns. We need to essentially remove one column so that the file can post properly. Can you provide an updated index file?
+
+
+author: rony
+comment: Hi[~Shun.Kuwashima]
+
+Sorry for late response. Which column do we need to remove?
+
+!image-2022-04-04-23-24-11-565.png!
+
+
+
+
+author: shun.kuwashima
+comment: [~rony] Column header is fine, it's showing 20 fields as expected. There's an additional delimiter at the end of each line which is causing the PUI to find 21 fields instead and therefore errors. I think we just need to remove that last delimiter from each line.
+
+
+author: rony
+comment: Hi [~Shun.Kuwashima]
+
+Are you saying there are extra pipe at the end. I don't see any additional pipe. Each line has 20 pipe characters.
+
+
+author: shun.kuwashima
+comment: [~rony] A field exists on both sides of the pipe, therefore 20 pipes actually results in 21 fields/columns. I tested removing a pipe for one entry on pilot and it worked, so I think we need 19 pipes.
+
+
+author: rony
+comment: Hi [~Shun.Kuwashima]
+
+Sorry my mistake in the previous message, there are actually 19 pipes in each line.
+
+
+author: shun.kuwashima
+comment: Hi [~rony], I counted 20 delimiters in this index file ms1_20201201_1_20220323_1353_eqbk.txt (in case you're looking at the file on our server, I edited the first line for testing but the rest should have 20), which is the one Keri provided in the first comment. Can you confirm if that's the right file?
+
+
+author: kericapote
+comment: [~Shun.Kuwashima] [~rony] please advise status of this as samples were due 4/4.
+
+
+author: rony
+comment: Hi [~Shun.Kuwashima]
+
+would you please check this one:ms1_20201201_1_20220405_1425_eqbk.txt
+
+[~kericapote]
+
+
+author: shun.kuwashima
+comment: [~kericapote] This index file posted successfully on pilot. Please check on their pilot admin site.
+
+
+author: kericapote
+comment: [~Shun.Kuwashima] approved by Maurice Kellogg. Please move to QA.
+
+
+author: shun.kuwashima
+comment: Thanks [~kericapote], this actually doesn't require any updates from ISD, just testing estatement posting.
+[~rony] if you haven't done so already, please trigger/run the estatement index file onto stage and let QA know when it's ready for them to verify.
+
+
+author: kericapote
+comment: [~Shun.Kuwashima] EQBK is asking if these members will get email notifications telling them that these statements have posted. Please let me know, Thx!
+
+
+author: shun.kuwashima
+comment: Emails should send out by default, so we should be all good on ISD's side as well. Closing out story

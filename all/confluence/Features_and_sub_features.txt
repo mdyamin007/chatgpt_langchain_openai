@@ -1,0 +1,474 @@
+title: Features and sub features
+body: A feature can have sub-features with the foreign key (Parent_code reference
+back to its parent's code in the feature_definition table). The Feature model
+will be recursive and can be extended to multiple levels. The following are
+the features and sub_features in the current code base and we need migrate
+those in to database.
+
+ **Feature**|  **Sub-Feature/Permission**|  **Type**|  **Comments**  
+---|---|---|---  
+ActivityTrac|  
+|  
+|  
+  
+  
+| Access ActivityTrac| General|  
+  
+  
+| Create new ActivityTrac form| InfoIMAGE only| Internal users are PC staffs
+for this feature  
+  
+| Link additional insert with an inventory| InfoIMAGE only|  
+  
+  
+| Modify created form| InfoIMAGE only|  
+  
+  
+| Edit form| General|  
+  
+  
+| Replace pdf for inventory insert| InfoIMAGE only|  
+  
+  
+| Approve form| General|  
+  
+  
+| Un-approve form| InfoIMAGE only|  
+  
+  
+| Remove form| InfoIMAGE only|  
+  
+  
+| View Detailed form| InfoIMAGE only| User with this permission will see 2
+forms (paper and eStmt)  
+  
+| View form| General| Not include the users has permission of "View Detailed
+form"  
+Certified Mail|  
+| General|  
+  
+  
+| Access Certified Mail| General|  
+  
+Confirm Mail|  
+| General| Not sure if it's used by any live production client. Keep
+implementation in code and in 'Feature' table. Just that we won't turn this on
+for any client at current time.  
+Message Manager 2.2|  
+|  
+|  
+  
+  
+| Access Message Manager| General|  
+  
+  
+| Create MM campaign| General|  
+  
+  
+| Edit campaign| General| including view samples, upload image messages and
+etc)  
+  
+| Approve campaign| General|  
+  
+  
+| Un-approve campaign| InfoIMAGE only|  
+  
+  
+| Remove draft campaign| General  
+  
+| View approved campaign| General| including paper and eStmt  
+Message Manager 3.0|  
+|  
+| same as "Message Manager 2.2" above  
+Online Proofing|  
+|  
+|  
+  
+  
+| Access Online Proofing| General|  
+  
+  
+| Review the samples| General|  
+  
+  
+| Release the samples| InfoIMAGE only| Internal users in Laser, DP and etc
+departments  
+  
+| Approve/unapprove the samples| General|  
+  
+View Statements|  
+| General| Not sure if it's used by any live production client. Keep
+implementation in code and in 'Feature' table. Just that we won't turn this on
+for any client at current time.  
+Client Management|  
+| InfoIMAGE only|  
+  
+  
+| Access Client Mgmt| InfoIMAGE only|  
+  
+  
+| Create new client| InfoIMAGE only|  
+  
+  
+| Update existing client| InfoIMAGE only| include disabling client  
+  
+| Feature Access| InfoIMAGE only|  
+  
+  
+|  ~~Sub-client access~~|  InfoIMAGE only| only if whole sale client  
+Feature Setup|  
+| InfoIMAGE only|  
+  
+  
+| Access Feature Setup| InfoIMAGE only|  
+  
+  
+| Message Manager Setup Read| InfoIMAGE only|  
+  
+  
+| Message Manager Setup Edit| InfoIMAGE only|  
+  
+ ~~Home~~|  
+|  General| Home Screen is available to everybody. So we will not setup this
+as a feature. However, the content displayed for the user depends on the
+client type of the user. InfoImage and whole sale user will see the sub-client
+list when login (view 1), and to navigate to a client, the user need click on
+that client. Basic client's user will see the content regarding that client
+directly (view 2). The modules shown within the Home screen (for a client --
+view 2) depends on corresponding functional module is enabled for the CID/User
+or not. e.g. if 'Job Tracking' module is enabled for a client, a corresponding
+'Job Status' module would be shown inside the Home screen. If a module will
+not display, the whole box (section) will be removed from displaying.  
+Inventory|  
+| General| No permission details needed. Only enable/disable on CID level  
+Job Status|  
+| General| No permission details needed. Only enable/disable on CID level  
+Production Report|  
+| General| Not ready for any live production client yet. Keep implementation
+in code and in 'Feature' table. Just that we won't turn this on for any client
+at current time.  
+Account Center|  
+| General|  
+  
+  
+| Access Account Center| General|  
+  
+Role Management|  
+| General| to control showing the sub-tab in UI or not, disabling this in
+Permission view, automatically disable the corresponding permission below via
+JS  
+  
+| Access Role Mgmt| General|  
+  
+  
+| Create new role| General|  
+  
+  
+| Update existing role| General| including disable roles and manage
+role/permission mapping  
+User Management|  
+| General| to control showing the sub-tab in UI or not, disabling this in
+Permission view, automatically disable the corresponding permission below via
+JS  
+  
+| Access User Mgmt| General|  
+  
+  
+| Create a new user| General|  
+  
+  
+| Update existing user| General| including disable user  
+  
+| Manage user/roles mapping| General|  
+  
+  
+| Manage alerts| General|  
+  
+  
+According to Will's feedback, we may need enhance some logic based on client's
+request, for example, password expiration logic per client, also disable logic
+if a user didn't login for certain period of time, and display last login time
+and etc.  
+  
+
+# Old Role Feature Mapping:
+
+There were some static Role in old code base as follows (in
+com.infoimage.infotrac.system.domain.Role.java)-
+
+    
+    
+        public static final Role CUSTOMER = new Role(Integer.valueOf("1", 2),"CUSTOMER","Customer");
+        public static final Role WHOLESALE = new Role(Integer.valueOf("10", 2),"WHOLESALE","Wholesale");
+        public static final Role STAFF = new Role(Integer.valueOf("100", 2), "STAFF", "Staff");
+        public static final Role SALES = new Role(Integer.valueOf("1100", 2), "SALES", "Sales");
+        public static final Role ACCT = new Role(Integer.valueOf("10100", 2), "ACCT", "Accounting");
+        public static final Role OPS = new Role(Integer.valueOf("100100", 2),"OPS","Operations");
+        public static final Role DP = new Role(Integer.valueOf("1000100", 2), "DP", "Data Processing");
+        public static final Role PC = new Role(Integer.valueOf("10000100", 2),"PC","Production Control");
+        public static final Role AS = new Role(Integer.valueOf("100000100", 2),"AS","Account Services");
+        public static final Role AM = new Role(Integer.valueOf("1000000100", 2),"AM","Account Managers");
+        public static final Role IMP = new Role(Integer.valueOf("10000000100", 2),"IMP","Implementation");
+        public static final Role IS = new Role(Integer.valueOf("100000000100", 2), "IS", "Information Systems");
+        public static final Role ISD = new Role(Integer.valueOf("1000000000100", 2),"ISD","Internet Services");
+        public static final Role ADMIN = new Role(Integer.valueOf("1111111111111", 2),"ADMIN","Administrator");
+    
+
+An Array ALL was populated with all of these static role -
+
+    
+    
+        public static final Role[] ALL = new Role[] { 
+            ADMIN, ISD, IS, IMP, AM, AS, PC, DP, OPS, ACCT, SALES, STAFF, WHOLESALE, CUSTOMER 
+        };
+    
+
+**Feature**|  **File Name**|  **Mapped Permission**|  **Code Snippet**  
+---|---|---|---  
+CUSTOMER (Customer)| userProfileForm.jsp| Feature Access|
+
+<%--  
+        <c:if test="${userProfileForm.user.role.code=='CUSTOMER' and userProfileForm.user.adminLevel.code=='BASIC'}">  
+            <div class="row">  
+                <div class="view" style="width:160px;float:left;"><a href="${flowExecutionUrl}&_eventId=featureAccess">Feature Access</a></div>      
+            </div>  
+        </c:if>  
+        \--%>  
+  
+WHOLESALE (Wholesale)| secure.jsp| Show Client Name|
+
+<%--  
+    <c:if test="${USER.inRole['STAFF'] || USER.inRole['WHOLESALE']}">  
+        <h1><c:out value="${[CLIENT.name](http://CLIENT.name)}"/></h1>  
+    </c:if>  
+    \--%>  
+    <h1 style="margin-top: 9px; margin-bottom: 9px; height: 16px;"><c:out value="${[CLIENT.name](http://CLIENT.name)}"/></h1>  
+  
+STAFF (Staff)| ../secure/emis/home.jsp| Show diffrent tables column (like
+-Edit, Status, Creation Date, Form ID, Description etc) based on the 'STAFF'
+role|
+
+<%--  
+                                    <c:when test="${USER.inRole['STAFF']}">  
+                                    \--%>  
+  
+  
+| listReport.jsp| Provide Delete and Replace permission|
+
+<%--<c:if test="${USER.inRole['STAFF']}">\--%>  
+        <c:if test="${CLIENT.type.type=='R'}">  
+            <th><a href="${flowExecutionUrl}&_eventId=replace&ith=${status.index}">Replace</a></th>  
+            <th><a href="javascript:deleteReport('${flowExecutionUrl}&_eventId=delete&ith=${status.index}','${[pr.report.name](http://pr.report.name)}')">Delete</a></th>  
+        </c:if>  
+  
+  
+|  
+| Provide Several permission|
+
+<%--<c:if test="${USER.inRole['STAFF']}">\--%>  
+<c:if test="${CLIENT.type.type=='R'}">  
+  
+  
+| ../template/secure.jsp| Show client Name based on this Role|
+
+<%--  
+    <c:if test="${USER.inRole['STAFF'] || USER.inRole['WHOLESALE']}">  
+        <h1><c:out value="${[CLIENT.name](http://CLIENT.name)}"/></h1>  
+    </c:if>  
+    \--%>  
+    <h1 style="margin-top: 9px; margin-bottom: 9px; height: 16px;"><c:out value="${[CLIENT.name](http://CLIENT.name)}"/></h1>  
+  
+SALES (Sales)|  
+|  
+|
+
+    
+    
+      
+      
+  
+ACCT (Accounting)|  
+|  
+|
+
+    
+    
+      
+      
+  
+OPS (Operations)| ../proofingMgmt/proofingList.jsp| Release Sample|
+
+<%--<c:if test="${USER.inRole['OPS'] or USER.inRole['DP'] or
+USER.inRole['ISD']}">\--%>  
+<%--     <c:if test="${(CLIENT.type.type=='R') and
+USER.hasAccess['releaseSample']}"> \--%>  
+    <c:if test="${((USER.rootClient.type.type=='R') and USER.hasRootPermission['releaseSample'])}">  
+        <c:set var="admission" value="true" />  
+    </c:if>  
+  
+DP (Data Processing)| ../proofingMgmt/proofingList.jsp| Release Sample|
+
+<%--     <c:if test="${(CLIENT.type.type=='R') and
+USER.hasAccess['releaseSample']}"> \--%>  
+    <c:if test="${((USER.rootClient.type.type=='R') and USER.hasRootPermission['releaseSample'])}">  
+        <c:set var="admission" value="true" />  
+    </c:if>  
+  
+PC (Production Control)| ../emis/link/linkInventory.jsp|  
+|
+
+<c:when test="${USER.inRole['PC'] && 'Y'==emis.eSelIns}">  
+  
+  
+|  
+|  
+|
+
+<c:when test="${!USER.inRole['PC']}">  
+                            You do not have permission to link between inserts and inventories.   
+                            Only Production Control Staff can operate on linking inserts and inventories.  
+                        </c:when>  
+  
+  
+| emisInventoryForm.jsp| Replace File|
+
+<%--  
+                                            <c:when test="${USER.inRole['PC']}">  
+                                            \--%>  
+                                            <c:when test="${(CLIENT.type.type=='R') && USER.hasAccess['replacePdfTrac']}">  
+                                                Replace the file:  <input type="file" name="emisInventoryForm.inserts[${status.index}].pdfFile.file" id="emisInventoryForm.inserts[${status.index}].pdfFile.file" />.  
+                                                <br/><font color='red'>Note: The replacement will apply to all inserts from all forms refer to this inventory. </font>  
+                                            </c:when>  
+  
+  
+| ../emis/home.jsp| Create Activity Log|
+
+<%--  
+                <c:if test="${USER.inRole['PC']||USER.inRole['ADMIN']}">  
+                    <a href="/secure/emis/[create.do](http://create.do)"><img src="/images/buttons/CreateNewActivityLog.png" /></a>   
+                </c:if>  
+                \--%>  
+                <c:if test="${(CLIENT.type.type=='R') and USER.hasAccess['createFormTrac']}">  
+                    <a href="/secure/emis/[create.do](http://create.do)"><img src="/images/buttons/CreateNewActivityLog.png" /></a>   
+                </c:if>  
+  
+  
+|  
+| Access Remove Update and Link column|
+
+<%--  
+                                          <c:if test="${USER.inRole['PC']}">  
+                                        <th width="40px">Remove</th>  
+                                        <th width="30px">Update</th>  
+                                        <th width="30px">Link</th>  
+                                          </c:if>  
+                                          \--%>  
+  
+  
+|  
+| Access approval|
+
+<%--  
+                                                    <c:when test="${USER.inRole['PC']}">  
+                                                    \--%>  
+                                                     <c:when test="${(CLIENT.type.type=='R') && USER.hasAccess['accessTrac']}">  
+                                                         <p class="centered_image"><img src="/images/icons/needApproval.png"/></p>  
+                                                     </c:when>  
+  
+  
+|  
+| Unapprove Activity Trac|
+
+<%--<c:when test="${USER.inRole['PC']}">\--%>  
+                                                     <c:when test="${(CLIENT.type.type=='R') and USER.hasAccess['unapprovFormTrac']}">  
+                                                         <a href="/secure/emis/[create.do?id=${list.id}&action=unapprove](http://create.do?id=${list.id}&action=unapprove)"><p class="centered_image"><img src="/images/icons/approvedIcon.png"></p></a>  
+                                                     </c:when>  
+  
+  
+|  
+|  
+|
+
+    
+    
+      
+      
+  
+  
+|  
+|  
+|
+
+    
+    
+      
+      
+  
+AS (Account Services)|  
+|  
+|
+
+    
+    
+      
+      
+  
+AM (Account Managers)|  
+|  
+|
+
+    
+    
+      
+      
+  
+IMP (Implementation)|  
+|  
+|
+
+    
+    
+      
+      
+  
+IS (Information Systems)|  
+|  
+|
+
+    
+    
+      
+      
+  
+ISD (Internet Services)| proofingList.jsp| Release Sample|
+
+<%--<c:if test="${USER.inRole['OPS'] or USER.inRole['DP'] or
+USER.inRole['ISD']}">\--%>  
+<%--     <c:if test="${(CLIENT.type.type=='R') and
+USER.hasAccess['releaseSample']}"> \--%>  
+    <c:if test="${((USER.rootClient.type.type=='R') and USER.hasRootPermission['releaseSample'])}">  
+        <c:set var="admission" value="true" />  
+    </c:if>  
+  
+  
+| ../template/secure.jsp| Access Feature Setup|
+
+<!--  
+            <template:menuItem id="featureSetupTab" cssClass="dropDwonMenuButton" href="#" label="Feature Setup" tab="featureSetup" display="${USER.inRole['ISD']}"/>  
+            \-->  
+            <template:menuItem id="featureSetupTab" cssClass="dropDwonMenuButton" href="#" label="Feature Setup" tab="featureSetup" display="${USER.hasAccess['featureSetup']}"/>  
+  
+ADMIN (Administrator)| ../emis/home.jsp| Create Activity Log|
+
+<%--  
+                <c:if test="${USER.inRole['PC']||USER.inRole['ADMIN']}">  
+                    <a href="/secure/emis/[create.do](http://create.do)"><img src="/images/buttons/CreateNewActivityLog.png" /></a>   
+                </c:if>  
+                \--%>  
+                <c:if test="${(CLIENT.type.type=='R') and USER.hasAccess['createFormTrac']}">  
+                    <a href="/secure/emis/[create.do](http://create.do)"><img src="/images/buttons/CreateNewActivityLog.png" /></a>   
+                </c:if>  
+  
+  
+
+

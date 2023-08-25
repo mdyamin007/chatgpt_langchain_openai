@@ -1,0 +1,580 @@
+title: ASFC Migration Analysis
+body: # **ROOT:**
+
+ **Login Method**
+
+|
+
+FISERVSSO (com.infoimage.security.SingleSignOn7Servlet)  
+  
+---|---  
+  
+ **Enrollment Step**
+
+|
+
+2 Steps:
+
+i. Disclosure
+
+ii. verify pdf  
+  
+ **Welcome Email**
+
+|
+
+Yes (Only for sso users)  
+  
+ **Menu**
+
+|
+
+  *  **e-Statements**
+  *  **e-Notice**
+  *  **e-Tax**
+  *  **e-Escrow Analysis  **(if has escrow data in DB)
+  *  **e-IRA  **(if has ira data in DB)
+  *  **Disclosure**
+  *  **Privacy Policy**
+  *  **Profile**
+  *  **Exit  **(for DSO users only)
+  *  **No account dropdown button**
+
+  
+  
+ **Account Types**
+
+|
+
+NA  
+  
+ **Statement Types**
+
+|
+
+  1. default : e-Statements
+  2. escrow: e-Escrow Analysis  
+  3. mortgage: Mortgage Loan 
+  4. billing: Home Equity Loan
+  5. enotice: e-Notice
+  6. ira: e-IRA
+  7. etax: e-Tax 
+
+in production db there is only escrow, default and ira stmt type.  
+  
+ **Archival Period**
+
+|
+
+  1. default, escrow, mortgage, billing, enotice, ira:  **18 months**
+  2. etax:  **13 months**
+
+  
+  
+ **Paperless Configuration**
+
+|
+
+NonSelective  
+  
+ **Unenrollment on DP change**
+
+|
+
+True  
+  
+ **Delivery Preference**
+
+|
+
+Paper=B, Paperless=E  
+  
+ **Notification Preference**
+
+|
+
+Email (a lot of users have SMS number in np table with sms_status="Y")  
+  
+ **NP Link Type**
+
+|
+
+byUfa  
+  
+ **Batch Download**
+
+|
+
+N/A  
+  
+  
+
+###  **User-account Relation:**
+
+  * One user linked to one Account
+
+###  **Login methods:**
+
+###        FISERVSSO:
+
+    * create user & account
+    * updates email
+
+###  **Enrollment:**
+
+Goes through enrollment if paperless status is "B" or "U"
+
+#  **Menu:**
+
+###  **e-Statements:  **
+
+shows default type statements with statement date, status and monthly inserts.
+
+###  **e-Escrow Analysis:  **
+
+shows escrow type statements with statement date, status and monthly inserts.
+
+### e-IRA: ** **
+
+shows ira type statements with statement date, status and monthly inserts.
+
+###  **e-Notice:**  
+
+shows enotice with notice date, status and description.
+
+###  **e-Tax:**
+
+shows eTax tax date and description.
+
+###  **Checks:**
+
+Shows checks. **OsiIsNetAccessCheckImageServlet** (/getimg)
+
+###  **Disclosure:  **
+
+shows disclosure jsp page in new tab.
+
+###  **Privacy Policy:**
+
+Shows privacy policy pdf.
+
+###  **Profile:  **
+
+  1. Has option to change the delivery preference (paperless and paper)
+  2. Shows notification option with the email address but not editable
+  3. If delivery preference is selected to paper and submit then confimation page appears. If continue button is pressed then delivery preference is changed to paper and user is unenrolled.
+
+  
+
+ **Exit:  ** log out of eStatement for DSO user.
+
+  
+
+### Special Business:
+
+  1.  **Pop reminder for enotice (orcc_hblogin.jsp) :**
+
+If there is unviewed notice 9 hours before the last login then the user will
+be redirected to enotice pop reminder page.
+
+  2.  **Undelivered email reminder:**
+
+If the email address in the contact info table is empty and invalid then the
+user is redirected to invalidEmail.jsp. But ASFC doesn't use contact info
+tables anymore.
+
+  3.  **Bankruptcy:  **When account number is starting with 99 followed by the 10 digits account, it's a bankrupted account. Should not be accessed to the site.
+
+### DSO:
+
+  1. Has MFA
+  2. MFA is not generated next time if **"** **I'm on a private device. Remember this device. "** is selected.
+  3.   4. Users can't login if their sess_active_status is "blacklisted". (in production db there is no such data)
+  5. DSO users cannot do SSO and vice versa
+
+##  **MSM:**
+
+  *  **Account Management:  **
+    1. Can search by Member Number (account number) and Email Address
+    2. Can update the Email address.
+    3. Can update Delivery Preference
+    4. Can view DP change history
+    5. Can view statements
+  *  **Email proofing:**
+
+1.  e-Statements
+
+2\. e-Escrow Analysis
+
+3\. e-Notices
+
+4\. e-Tax
+
+5\. Welcome
+
+6\. Reminder
+
+7\. Password Update
+
+8\. AI User Removal
+
+9\. e-IRA
+
+10\. MFA
+
+11\. Forget Username
+
+  *  **Email Reminder:**
+
+All e-Statement users will receive one email reminder if they have any
+unviewed e-Statement and haven't logged into e-Statements for a certain period
+of time (by default is 21 days). This page will allow you to set the time
+period of the email reminder.
+
+  *  **Reports:  **
+  *   *  **Administration:  **AI user creation and update
+  * ### Exit
+
+## Backend process analysis:
+
+Has 6 backend process:
+
+  1. afp
+  2. check_index
+  3. etax
+  4. enotice4
+  5. ecl
+  6. auth
+
+## Afp:
+
+  * Flags:
+    * global.autoregister= true
+    * afp.isZipped=true
+    * afp.default.estmtselinsert=true
+  * Handler:AfpStatementData9
+  * Registrar: HypercubeEStmtRegistrar
+  * Index file format: afp_file|acct_num|begin_date|closing_date|page_count|acct_owner_name|SSN|Application Type|Message IDs for Market Link|Has_check|Insert ID|Region Code|Cripple Flag
+
+  * Mandatory field: afp_file, acct_num, acct_name, start_date, closing_date, page_count
+  * Acct_owner_name can not be empty and more than 50 characters. If so trims to 50.
+  * Searches account by account number. If not found then it creates account, usr, usr session, user fin account, user mapping, paperless.
+  * Account owner name is updated for existing account.
+
+ **Database changes:**
+
+  1. Fin_Account
+  2. Usr
+  3. Usr_Fin_Account
+  4. Usr_Session
+  5. Usr_Mapping
+  6. Paperless
+  7. Estmt_Doc
+  8. Arch_File
+
+## Check_index:
+
+  * Flags:
+    * check_index.registeredUserOnly=false
+  * Handler: DefaultCheckImageHandler2
+  * Registrar:CheckImageRegistrar
+  * Index file format: acctNum|checkAcctNum|number|checkDate|amount|check_type
+  * Inserts data into account_check_image table for existing account
+
+ **Database changes:**
+
+  1. Account_check_image
+
+## Etax:
+
+  * Flags:
+    * etax.automatedEmailNotification=true
+    * etax.isZipped=true
+    * etax.createAccount=false
+  * Handler: ETaxData3
+  * Registrar: ETaxRegistrar3
+  * Index file format: acctNum|type|afpFileName|date|suffix|appType|SSN/TAX_ID|INPUT_ZIP_FILENAME
+
+  * acctNum, type, afpFileName, date, input_zip_filename
+  * Searches account by account number. If not found then it returns null. 
+  * Inserts data into paperless table
+
+ **Database changes:**
+
+  1. Arch_File
+  2. ETax
+  3. Paperless
+
+## Enotice4:
+
+###  **Enotice4:**
+
+  * Flags:
+    * enotice4.isZipped=true
+    * enotice4.automatedEmailNotification=true
+    * entoice4.createAccount=false
+  * Handler: ENoticeData7
+  * Registrar: HypercubeENoticeRegistrar
+  * Index file format: L|acctNum|acctType|AcctName|afpName|letterCode|closingDate|imageCount|postCardFlag|zipFileName|L
+  * Post code should be  0|""|1 else error, if ="" then sets to '0'
+  * Searches account by account number. If not found then it returns null. Otherwise updates account owner name and user name.
+
+ **Database changes:**
+
+  1. Arch_File
+  2. Enotice
+
+## Ecl:
+
+  * Flags:
+    * global.email.storage = notifyPref
+    * ecl.clientType=cu
+    * ecl.delimiter=|  
+
+    * ecl.combination=AcctNum,Email,SMS  
+
+    * ecl.totalColumns=3
+  * Handler: DefaultEclHandler4
+  * Get ufa by account number, if ufa is null throws error
+  * Get notifyprefList  by usrId,acctId, stmt=default
+  * If notifyprefList is empty inserts into np with usrId,AcctId,Email, stmt type=default
+  * Else get notifyprefList[0] , updates np
+
+ **Database changes:**
+
+  1. Notification_Preference
+
+## Auth:
+
+  * Flags:
+    * auth.thresholdvalue=50
+    * auth.checksum.bypass=true
+  * Handler:AsfcAuthHandler
+  * Registrar: AsfcAuthRegistrar
+  * Index file format: Member Number|User Type|First Name|Last Name|Account Owner Name|TIN|DOB
+
+ **Database changes:**
+
+  1. usr
+  2. usr_session
+  3. usr_mapping
+  4. fin_account
+  5. paperless
+  6. usr_fin_account
+
+### Reports:
+
+  1. undeliverableReport
+  2. paperlessReport
+  3. bouncebackReportApi
+  4. accumulativeOptOutReport
+
+  
+
+# Analysis Summary (ROOT)
+
+ **Scope**
+
+|
+
+ **Feature**
+
+|
+
+ **Description**
+
+|
+
+ **Hypercube**
+
+|
+
+ **Note**  
+  
+---|---|---|---|---  
+  
+ **Enrollment (SSO)**
+
+  
+
+  
+
+  
+
+|  User enrollment logic| Goes through enrollment if the paperless status is
+"B" or "U"|  81 incomplete Supported  82 complete Not Supported | The client
+will use default (sso date based) enrollment logic.  
+  
+Enrollment Steps
+
+|
+
+2 Steps:
+
+i. Disclosure
+
+ii. verify pdf
+
+|  111 incomplete Supported  112 complete Not Supported |
+
+In hypercube, the enrollPreferences step is needed.  
+  
+Welcome Email
+
+| Yes (Only for SSO users)|  37 incomplete Supported  38 complete Not
+Supported |
+
+Welcome email is supported for both sso and dso users  
+  
+ **Enrollment (DSO)**|  Has MFA|
+
+Sends security code to phone or email while login.
+
+MFA is not generated next time if **"** **I'm on a private device. Remember
+this device. "** is selected.
+
+|  12 complete Supported  13 incomplete Not Supported |  
+  
+  
+**Home Page**
+
+|
+
+Exit Menu
+
+| for DSO users only|  43 incomplete Supported  44 complete Not Supported |  
+  
+Account selector| There is no account selector dropdown|  25 complete
+Supported  26 incomplete Not Supported |  
+  
+View Status| Viewed/Not-viewed status is shown beside each statement.|  83
+incomplete Supported  84 complete Not Supported | **Note** \- Minor(leaving it
+for now)  
+Bankruptcy account|
+
+When the account number is starting with 99 followed by the 10 digits account,
+it's a bankrupted account. Should not be accessed to the site.
+
+|  14 incomplete Supported  15 complete Not Supported |  
+  
+Blacklisted user (DSO)|
+
+Users can't log in if their sess_active_status is "blacklisted". (in
+production DB there is no such data)
+
+|  16 incomplete Supported  17 complete Not Supported |  
+  
+  
+**Profile**
+
+|
+
+Account opt-out
+
+|
+
+Unenrolled on delivery preference changed to paper.
+
+|  47 complete Supported  48 incomplete Not Supported |
+
+  
+  
+  
+Delivery pref change confirmation| When delivery pref is changed to paper and
+submit then a confirmation page appears.|  18 incomplete Supported  19
+incomplete Not Supported 20 complete Partially Supported | In hypercube
+confirmation pop up appears  
+  
+ **  
+  
+**
+
+# Analysis Summary (MSM)
+
+ **Scope**
+
+|
+
+ **Feature**
+
+|
+
+ **Description**
+
+|
+
+ **Infotrac**
+
+|
+
+ **Note**  
+  
+---|---|---|---|---  
+  
+ **Account management**
+
+|  
+|  
+|  21 complete Supported  22 incomplete Not Supported |  
+  
+**Email Proofing**|  
+|  
+|  61 complete Supported  62 incomplete Not Supported |  
+  
+**Email Reminder**|  
+|  
+|  65 incomplete Supported  66 complete Not Supported |  
+  
+**Reports**|  
+|  
+|  67 complete Supported  68 incomplete Not Supported |  
+  
+**Admin**|  
+|  
+|  71 complete Supported  72 incomplete Not Supported |  
+  
+  
+# Analysis Summary (PUI):
+
+ **Scope**
+
+|
+
+ **Feature**
+
+|
+
+ **Description**
+
+|
+
+ **Note**  
+  
+---|---|---|---  
+  
+ **Afp**
+
+|  Truncating acct owner name|
+
+Acct_owner_name can not be empty and has more than 50 characters. If so trims
+to 50.
+
+| In doc process acct_owner_name will be truncate if the number of character
+is more than 100  
+ **Etax**|  Registrar| EtaxRgistrar3 can be updated to HypercubeEtaxRegistrar|  
+  
+ **Enotice4**|  Migrating to doc| Enotice4 can be processed by doc process|  
+  
+ **Ecl**|  
+|  Inserts data into notification table as byUfa|  
+  
+ **Auth**|  
+|  Inserts data in standard format needed by Hypercube|  
+  
+ **Reports**|  
+|  No reports will be affected if migrated to Hypercube and infotrac|  
+  
+  
+  
+
+

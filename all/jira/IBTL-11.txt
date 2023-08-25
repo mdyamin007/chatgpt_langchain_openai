@@ -1,0 +1,77 @@
+title: IS-APP:  IS Print Triggering API Testing on InfoSync
+description: +*Test Fake URL:*+
+
+
+{noformat}
+curl --location --request POST 'http://is-apps-dev.infoimage.com:9090/infosync/v1/ftpscanner/?cid=abcs&filename=abc.txt&md5=f67c2bcbfcfa30fccb36f72dca22a817&asd=asd'{noformat}
+
+
+
+
+
+
++*GitLab:*+
+ * Download Latest InfoSYNC "BRIS-5" Branch and run the docker instance
+
+
+
+*+How to run this container:+*
+
+After you unzip, go into theInfoSYNCunzipped folder:
+
+To build 'image', run the following command:
+ * docker-compose build
+
+To create 'container' run the following command (Note: -d option runs as daemon; If you don't use-d, it is ok, but if you hit Ctrl+C, it will stop).
+ * docker-compose up -d
+
+
+
+However, you will need to modify the docker-compose.yml to configure a few arguments:
+{code:java}
+version: '3.0'
+services:
+ infosync:
+ image: infosync_bris5_img
+ build: ./
+ container_name: infosync_bris5
+ restart: always
+ ports:
+ - 9090:80
+ volumes:
+# You will need to get this app.cfg file from attachment and update the following line to point to this file.
+ - "/Users/william/Downloads/infosync-BRIS-5/app.cfg:/var/www/config/app.cfg:ro"
+# Please use your own id_rsa file belonging to the RHS account you are connecting to trigger the global isis_scan.sh
+ - "/Users/william/Downloads/infosync-BRIS-5/ftpscanner.cfg:/var/www/config/ftpscanner.cfg:ro"
+ - "/Users/william/Downloads/infosync-BRIS-5/id_rsa:/id_rsa:ro"{code}
+
+
++*Configuration:*+
+ * As mentioned above, please update docker-compose.yml described in the comments lines above.
+ * Update ftpscanner.cfg file which should be located inside the container under the same /config folder as app.cfg. This is the configuration files for the scanner. Update the ftpscanner config to match what you are testing (e.g. update the test.sh script to your your testing script name.. e.g. /home/shailendraR/my_isis_test_scan.sh)
+
+
+
+
+
+
+
+
+author: shailendrar
+comment: 1/14 - Development testing is completed. The code will be moving to staging server.
+
+
+author: shailendrar
+comment: 1/29 - 1/18 release ran into permission issues so the code had to be rolled back. The new code release date is set after Jan month end i.e. 2/6.
+
+
+author: shailendrar
+comment: The new tentative code release date is set to 3/11.
+
+
+author: shailendrar
+comment: [~William.Kong] - Assigning back to you for production code release after month end. Tentative date is set to 4/8.
+
+
+author: william.kong
+comment: [~shailendrar]: Closing this ticket out. You verified last week that it worked.

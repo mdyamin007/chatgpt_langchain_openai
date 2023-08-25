@@ -1,0 +1,105 @@
+title: DataCore Account Profile Service
+body:   
+
+## Summary
+
+Expose an API for internal calling to fetch account information. To start
+with, only fetching the address & contact info.  
+  
+
+## Who is calling this API?
+
+As requirement from RABO for the 2014-02 release, we only need to fetch the
+primary account holder's address, it will be called from the Print-Processing
+side. Once per account due to the scalability limitation from Connectware.  
+  
+
+## How to call this API?
+
+Refer to the API spec at Swagger UI: <https://pd-
+dev2.infoimage.com:9880/infoservice/#!/connectware>  
+  
+
+## Connectware spec doc:
+
+file:///Z:/Ben%20Chan/Connectware_v153_docs/WebServices/html/FinancialConnectWS/FinancialConnectWS_frame.html  
+  
+
+## What are we calling from this API?
+
+We will be calling Connectware to get the info. Some reference details below:
+
+  1. Method: CIAcctNmeAddrInq
+    * Values to Obtain: Account Address
+    * Params:
+      * Application Code:
+        * deposit account = DP
+        * loan account = LN
+      * RoutingID:
+        * RABO's values:
+          * production: 385
+          * test: 390
+        * RABO BMS values:
+          * production: 393
+  2. Method: CIAcctProfile
+    * Values to Obtain: related account number(s)? (pending Eliana's info)
+    * Subsequently use 'CICustPrfl' to fetch corresponding account info?
+  3. Method: DPAcctInq
+    * Values to Obtain:
+
+Value to Obtain| Connectware Spec  
+---|---  
+Balance| E22758| DP Teller Authorization Balance| Numeric| 13| 2| Balance used
+to authorize dollar transactions.  
+ ~~Charge Indicator~~|  ~~E20065~~|  ~~DP Charge/No Charge Indicator~~|
+~~Numeric~~|  ~~1~~|  ~~0~~|  ~~This code indicates if the account will be
+charged for analysis and/or direct fees.  
+0 No charge if under age limit.  
+1 Charge.  
+2 Special handling.  
+3 Special referral.  
+4 Billing.  
+5 Waive analysis.  
+6 Waive direct and analysis.  
+7 Waive direct.~~  
+RDI Waive Fee| E20790| DP User Code B| Alphanumeric| 1| 2| User Code B
+assigned to the account. See Business Description for DP User Code A.  
+(from RABO) if value == "W", means waive  
+  
+  
+
+  * Comment from Diane:
+    * For many customers the Total Accessible Balance and the Teller Authorization Balance may be the same.  
+For the bank's knowledge, the only difference between the two fields is
+whether or not the Exception Score Processing (ESP) amount is included in the
+authorization balance.  
+With the Teller Authorization Balance the ESP amount is optionally included.
+An indicator on Bank Control tells the system to use the ESP amount or not
+when calculating the balance.  
+The Total Accessible Balance will always include the Exception Score Amount,
+if one is available for the account.
+
+  
+  
+
+## IS (print processing) cURL execution:
+
+There is an IP restriction in place for infocloud01. HTTP requests must be
+submitted through RHS (10.8.9.61). Use the Linux cURL command to access the
+web service without running the program.
+
+curl -X GET -k
+'[https://infocloud01.infoimage.com:9880/infoservice/api/v1/connectware/?cid=${cid}&svcID=${svcID}&routingID=${routingID}&E16054=${app_num}&E16055=${account_number](https://infocloud01.infoimage.com:9880/infoservice/api/v1/connectware/?cid=${cid}&svcID=${svcID}&routingID=${routingID}&E16054=${app_num}&E16055=${account_number)}
+
+Replace the variable fields ${var} with the corresponding argument (see above
+for details).  
+  
+
+## Reference:
+
+  * InfoIMAGE's assigned Vendor ID: RIS013
+  * User IDs:
+    * rabo.userId=r385010 (prod)
+    * bms.userId=r393010 (readiness/test)
+
+

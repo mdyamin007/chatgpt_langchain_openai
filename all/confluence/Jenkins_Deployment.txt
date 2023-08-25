@@ -1,0 +1,128 @@
+title: Jenkins Deployment
+body: # **Jenkins Deployment**
+
+  
+  
+
+## Jenkins Build Flow for eStatement Projects
+
+  1. The Jenkins Build for eStatement projects are using the Inheritance Plugins so that we can apply the OOP logic to avoid all the repetitive steps to be set again, again, and again...
+  2. The build is following the main flow.
+    1. Grand Parent Job: Which introduced all the required parameters required for the child job to be executed and the methodology used to build, such as Ant or Maven that we have on eStatement projects.
+    2. Parent Job: Inheritance from the Grand Parent and defined the system environmental variable with the deployment server information.
+    3. Child Job: The actual Job that we use to kick off the build and do the deployment. It inheritance the Parent Job based on the Environment. It also has to provide the SVN repository accordingly.
+  3. eStatement Client Jenkins Build (Using Template on Development as an example)
+    1. Grand Parent Job:
+      1. Name: _WebAppBuild
+      2. Parameters:  
+sysEnv: undefined  
+tomcatServer: undefined  
+schema: undefined  
+orgName: undefined
+
+      3. Build Defined: Maven
+      4. Post Deploy: Bash script to deploy to servers accordingly.
+    2. Parent Job:
+      1. Name: _WebAppBuild-A-dev
+      2. Provide Parameters below a system value:  
+sysEnv: dev  
+tomcatServer: [pd-dev3.infoimageinc.com](http://pd-dev3.infoimageinc.com)
+
+    3. Child Job:
+      1. Name: _WebAppJobTemplate-A-dev
+      2. Provide Parameters below a system value:  
+schema: default/bank/cu  
+orgName: template
+
+      3. Provide the SVN repository for the project to be built:  
+Repository URL: svn+<ssh://pd-
+tools.infoimage.com/srv/svn/estmt2/template/trunk>  
+Note: When setting up a new one, you will be using the template which has the
+SVN repository pre-populated with ${orgName} to be replaced with the actual
+orgName.
+
+  4. eStatement Core Java Projects Jenkins Build (Using i3-core on Development as an example)
+    1. Grand Parent Job:
+      1. Name: _i3LibsAnt
+      2. Parameters:  
+sysEnv: undefined  
+tomcatServer: undefined  
+jarFileName: undefined
+
+      3. Build Defined: Ant
+      4. Post Deploy: Bash script to deploy to servers accordingly.
+    2. Parent Job:
+      1. Name: _i3LibsAnt-A-dev
+      2. Provide Parameters below a system value:  
+sysEnv: dev  
+tomcatServer: [pd-dev3.infoimageinc.com](http://pd-dev3.infoimageinc.com)
+
+    3. Child Job:
+      1. Name: i3-core-A-dev
+      2. Provide Parameters below a system value:  
+jarFileName: infoimage
+
+      3. Provide the SVN repository for the project to be built:  
+Repository URL: svn+<ssh://pd-tools.infoimage.com/srv/is_svn/trunk/i3-core>
+
+  
+  
+
+## Setup a new Client on Jenkins (Using Template on Development as an example)
+
+  1. Make sure the code changes is committed to the SVN.
+  2. Shut down the tomcat server before deployment.  
+To Shut down tomcat server.  
+
+sudo -u tomcat /usr/local/tomcat/tomcat-default/bin/shutdown.sh
+
+  
+Check if the processes died.  
+
+ps -ef | grep tomcat-default
+
+  
+If not, kill it by  
+
+sudo kill ${processes number  
+}
+
+  3. Once it's fully shutdown. Find the corresponding Jenkins Job and kick off the build. Jenkins will make the code update, compile, and deploy to the server accordingly.
+
+  4. Once the Build success, double check the application path `/usr/local/tomcat/tomcat-default/i3webapps/template/` on the tomcat server ([pd-dev3.infoimageinc.com](http://pd-dev3.infoimageinc.com)). You should see the "msm.war" as well as "ROOT.war" with a new time stamp.
+
+  5. Start the tomcat server.
+
+sudo -u tomcat /usr/local/tomcat/tomcat-default/bin/startup.sh
+
+6\. Watch the log and make sure all applications are started before apply the
+update to the other tomcat server if needed.
+
+Fetch log by practicing below:
+
+  * Find the latest log by time stamp
+
+ls -ltr /usr/local/tomcat/tomcat-default/logs
+
+  * Continuously fetching the log to ensure you keep seeing the latest update while the server is updating it during the boot up.
+
+tail -f /usr/local/tomcat/tomcat-default/logs/catalina.2015-05-20.l
+
+  * Once you see the keyword `"INFO: Server startup in 320255 ms"` in the log, it means the server has started successfully. On the safe side, try to access the tomcat server via browser to ensure it is started.
+
+  
+  
+
+## Core code deployment (Using i3-core on Development as an example, however
+this will apply to all projects including afp2pdf, i3-core, processing-ui, and
+dp)
+
+  1. Make sure the code changes are committed to the SVN correctly.
+  2. Find the corresponding Jenkins Job and kick off the build. Jenkins will make the code update, compile, and deploy to the server accordingly.
+  3. Once the Build success, double check the library path(/var/lib/i3-lib/estmt2) on the tomcat server ([pd-dev3.infoimageinc.com](http://pd-dev3.infoimageinc.com)). You should see the "infoimage.jar" got updated with a new time stamp.  
+Note: infoimage.jar is only a link, it should be referencing to the actual jar
+file under the dev/i3-jars/infoimage-${SVN-Version-Number}.jar
+
+  4. Now, you are ready to reboot the server for the new jar file to take affect.
+
+

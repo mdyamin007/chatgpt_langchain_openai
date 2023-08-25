@@ -1,0 +1,63 @@
+# Control files should be named ${cid}${jid}.control.
+cid="demo"                               # CID is case sensitive and should be lower case (except the DFA)
+jid="ms1"                                # monthly statement, so kept ms1
+prefix="${cid}${jid}"
+dir="${d_dir}/${cid}/"           		 # dir is for processing the working directory. 
+job_name="Monthly_Statement"             # This shows on DPVS (put underscore instead whitespace) / from sow
+firm_name="${cid}_CU"                    # Company Name. This shows on DPVS (put underscore instead whitespace) / from sow
+jde="DUP1"                               # kept the way it is
+jdl="ISISLI"                             # kept the way it is
+start_cmd="$jde,$jdl"                    # kept the way it is 
+prod_type="STM"                          # monthly statement, so kept "STM", if daily lettter then "LTR"
+split_num="10000"                        # maximum no of account per print file, used in mail separation
+format_dfa="DEMOMS11"                    # DFA names should not use variables due to case sensitivity and hardcode in uppercase and naming convention is, ${cid}${jid}${incremental_no}. Here incremental no may be 1 or 2 or 3
+print_dfa="2DSD2IND"                     # Put tray count before IND. In this project there are two trays.
+ind_pdf_format_dfa="DEMOMS11"            # put this variable if the project requires estmt. (f option)
+pdf_format_dfa="DEMOMS11"                # if the project requires PDF archival. (e option) 
+profile="/home/isis/userisis/pdec.prf"   # papyrus reference
+PP1="3501"                               # because, The first tray contains a pre-print with a stock code 3501 (SOW) (paper tray assignment)
+PP2="4000"                               # because, second tray is standard 4000 (SOW)
+ppmf="/home/isis/userisis/default.lbp"   # papyrus reference
+ppmf_form="F1STMT"                       # papyrus reference
+samp_flag="sam"                          # not sure what it is 
+format="simplex"                         # in control file of tkcu "format" is assigned two times,
+format="duplex"                          # so i assigned it for two times, one for simplex and next one for duplex. Don't know how it works
+ver_pos="2.7"                            # Top 2D vertical position
+hor_pos="1.5"                            # Top 2D horizontal position
+&page2d_hor=".25"						 # Bottom 2D horizontal position	
+&page2d_ver="10.4"						 # Bottom 2D vertical position
+two_d_bar="y"
+newzipsep="y"
+misc_type="rtm"                          # Invalid address handling. rtm=return back to the bank, nop=non print, spm=special handling , etc.
+new_envelope_structure="y"            
+ENV1="4401"                              # SOW presort rate
+ENV2="4402"                              # SOW full rate 
+ENV3="4402"                              # SOW special handlng
+ENV4="4406"                              # SOW 
+infotrac="m"                             # When the job has infotrac and mail tracking.
+estmt_trac="y"                           # When the job has infotrac and mail tracking.
+track_by_rec="y"                         # When the job has infotrac and mail tracking.
+if [ ${testmode} -a ${testmode} = "y" ]; then
+     profile="/home/test/isis/userisis/pdec.prf"
+     ppmf="/home/test/isis/userisis/default.lbp"
+fi
+cycleno=${1}`grep PROC_DATE: ${home_ins}/insert/${prefix}.ins | cut -d " " -f2 | cut -c3-4`      # cycleno should not contain $cid or $jid
+fn=${dir}${prefix}${cycleno}             # try to keep fn in this format
+new_move_afp=1                           # for threading process
+afp_split_count=20000                    # how many afp in one zip
+# job that has online proofing
+job_prf="y"
+prf_p1_ovl"DEMOPA"/"EMPTY"
+prf_p2_ovl"DEMOPA"/"EMPTY"
+#overlay page for heavy_cnt statements
+cover_ovl=FNBKCV
+# job that has msg_manager 2
+msg_mgr_t2="y"
+total_msg_area="1"
+img_msg_area="1"
+supprefix="$prefix$cycleno"
+texas="y"                                # Prints in Texax. If not used, prints in California
+export dir fn msg_mgr_t2 total_msg_area supprefix  # export the variables that need to be exported to environment variable 
+mail_full_serv='ASE3'                    # mail full rate service
+# i didn't do anything regarding msg manager and online proofing
+Tagged:control filescript

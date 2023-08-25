@@ -1,0 +1,104 @@
+title: Accuracy Testing
+body:   
+
+## Environment Setup
+
+  
+
+### Deployment
+
+  *  **First Round of Testing will be done in Pilot environment (10.8.11.208) for 'Demo' client**
+    * Why Pilot?
+      * Testing of this feature includes processing of a MM campaign to generate AFPs and individual PDFs and requires the support of the IS Paper Team's isis.sh processing script. The Paper Team cannot point it to process a System A (10.8.8.221) MM campaign. Hence testing will commence from Pilot.
+    * Why 'Demo' client?
+      * Using the 'Demo' client on both InfoTRAC and eStatements will ensure that any ongoing pilot testing of real clients is not affected.
+
+  *  **Pre-Requisite Deployments**
+    * Developer to install Click Tracking feature for Pilot
+    * IS Team prepares a small test data file (say 30 accounts) for 'Demo' client which will consume the MM campaign
+      * InfoTRAC MM Campaign needs to set criteria based on the data file.
+    * Paper Team's isis.sh to be ready for processing for 'Demo' client
+    * PUI processing for MM to be deployed for 'Demo' client
+    * eStatements site to be installed for 'Demo' client
+
+  
+  
+
+### Overview of Test Flow between InfoTRAC and eStatements
+
+Demo data file created for testing:
+<http://develop.infoimage.com/attachments/download/1202/demoms1_osi.dat>  
+[Edit this
+section](https://i3dev.easyredmine.com/projects/msgmgr/wiki/Accuracy/edit?section=5)
+
+  
+
+## Testing
+
+  
+
+### Verification Constraints
+
+  * No visibility of Campaign details on eStatements website.
+    * Workaround: Ensure that each processing of 'Demo' data file by isis.sh is done for a different Statement Date. This done by changing the first 2 lines of 'Demo' data file for isis.sh 's' and isis.sh 'f' processing to a date different from those already on eStatements web site.
+  * No visibility of Target Group details on eStatements website.
+    * Workaround: Plan test data such that there is 1-1 correspondence between target groups and click-through URLs across campaigns i.e. a URL must correspond to exactly one target group of exactly one campaign.
+
+ **Sample Test Data to overcome Verification Constraints**
+
+eStatement Date| Campaign| Target Group Name| Target Group Priority| Target
+Group Criteria| Maps to URL  
+---|---|---|---|---|---  
+ _(ensure uniqueness by tweaking demoms1_osi.dat)_|  
+|  
+|  
+|  _(must sync with ranges in 'Demo' data file records_|  _(keep unique across
+target groups, across campaigns for verification)_  
+June 01, 2013| 8041/test_clktrack2| Default| 5| NA|
+[www.google.com](http://www.google.com/)  
+May 31, 2013| 7861/Click Track Testing 2| DemoZipRange3| 1| Zip:97000-98000|
+[www.oracle.com](http://www.oracle.com/)  
+  
+|  
+| DemoZipRange2| 2| Zip:92500-92550| [www.hp.com](http://www.hp.com/)  
+  
+|  
+| DemoZipRange1| 3| Zip:80000-90000| [www.intuit.com](http://www.intuit.com/)  
+  
+|  
+| DemoZipRange4| 4| Zip:92270| [www.facebook.com](http://www.facebook.com/)  
+  
+|  
+| Default| 5| NA| [www.seleniumhq.org](http://www.seleniumhq.org/)  
+  
+  
+  
+
+### Automated Impression and Click Generation for Test Data
+
+ **Glossary**
+
+Impressions: generated when the PDF is fetched from the server following a
+user's click on the eStatement link.  
+Clicks: generated when user clicks on the eStatement link, opens the PDF, and
+clicks on the graphic message with an embedded URL.
+
+ **Script for logging Impressions and Clicks (ClickAway.java)**
+
+Since it is not feasible to generate a huge no. of clicks for testing
+manually, an automated test script was written using
+
+  * Selenium / Java WebDriver for browser-controlled impressions
+  * Apache PDFBox to access and click URL sandwiched in the eStatement PDF as a result of MM campaign processing
+
+ **Log Parser (LogParser.java)**
+
+The Impressions and Clicks generation script creates a log that records vital
+impressions and click data. To summarize the data and create verification
+points and avoid manual computations, a log parser was written using
+
+  * Core Java
+
+  
+
+

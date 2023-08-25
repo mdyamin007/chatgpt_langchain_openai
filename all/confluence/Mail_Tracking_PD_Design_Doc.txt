@@ -1,0 +1,718 @@
+title: Mail Tracking PD Design Doc
+body:   
+
+# Introduction
+
+  
+
+## Purpose/Objective Summary
+
+  1. Mail tracking is part of job tracking module.
+  2. Be able to tracking outbound mail information use tracking data from USPS and PSI.
+  3. Provide customer access to mail tracking data and summary reports through job tracking.
+
+  
+
+## Scope
+
+  
+
+### In-Scope
+
+  1. Client should be able to view, search all job summaries and tracking information.
+  2. Retrieve tracking from PSI and USPS FTP server.
+  3. Store tracking data use NoSQL solution.
+
+  
+
+### Out-of-Scope
+
+  1. Reports designed for Origin IMb Tracing.
+
+  
+
+## Assumptions
+
+ **IMPORTANT:**  All assumptions need to be confirmed with corresponding
+stake-holder during design review. Assumptions would likely become
+Dependencies upon confirmation/design-review.
+
+  1. Mail tracking module need a trigger to retrieve tracking data from PSI and FTP server and store tracking data to mongo database.
+  2. Keep tracking data in mongo DB for 90 day in order to avoid duplicate IMB code.
+  3. No Notice Breakdown for MailTracking.
+    1. Break the permission for 'Full Detail Tracking'.  
+
+Feature: Full-Detail Tracking  
+meta data "Detail Level":  
+Level 1 = InfoIMAGE employee access only, do not show to client.  
+Level 2 = client able to access account detail data only, no PDF access  
+Level 3 = client able to access account detail data AND PDF  
+Permissions show on Client side ONLY IF Detail Level >= 2:
+
+        
+                  
+          
+            1. Access Account List Details  
+            2. Access Statement PDFs  
+          
+        Feature: Mail Tracking  
+        Meta Data "Detail Level":  
+        Level 1 = InfoIMAGE employee access only, do not show to client.  
+        Level 2 = client able to access mail tracking detail data only, no Camera Image access  
+        Level 3 = client able to access mail tracking detail data AND Camera Image access  
+        Permissions show on Client side ONLY IF Detail Level >= 2:  
+          
+            1. Access Mail Tracking Transit/Geo status  
+            2. Access Mail Proof Camera Image
+        
+        
+
+  
+
+## Dependencies
+
+1\. Trigger
+
+  * jsch-0.1.51.jar
+  * mongo-2.10.1.jar
+
+2\. InfoTrac MailTracking
+
+  * mongo-2.10.1.jar
+  * gson-2.2.2.jar
+  * iText-5.0.2.jar
+  * json-20140107.jar
+
+  
+
+# Requirements
+
+  
+
+## Business Requirements & Use Cases
+
+ **TODO:**   **(Required)**  List out all needs/requirement from business/end-
+user perspective. Assign an ID for each requirement/use-case item for easier
+reference in future
+
+ID| Title| Details| ScreenMock| Importance  
+---|---|---|---|---  
+BRQ-01| Retrieve Tracking Data|  
+ **Requirement:**  Allow administrators to retrieve tracking data from PSI and
+USPS use a trigger.  
+ **Use Case 1** : Remove tracking data use trigger user interface (create date
+> 90 days).  
+ **Use Case 2** : Manually update tracking data due to unexpected issue.|
+<attach file>| one of following:  
+P0-Show Stopper  
+ **P1-High**  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+BRQ-02| Delivery Summary|  
+ **Requirement:**  View and search paper job summary and delivery status.  
+ **Use Case 1** : View job summary and delivery status when click on "Mail
+Tracking" tab.  
+ **Use Case 2** : View mail tracking detail when click on job number.  
+ **Use Case 3** : Search mail delivery details by attributes like account
+number, customer name, zip code.| <attach file>| one of following:  
+P0-Show Stopper  
+ **P1-High**  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+BRQ-03| Camera Image|  
+ **Requirement:**  View camera image.  
+ **Use Case 1** : View camera image along with delivery summary (account
+number, Intelligent Mail Identification, customer name destination and scan
+time).| <attach file>| one of following:  
+P0-Show Stopper  
+ **P1-High**  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+BRQ-04| Geographic Summary|  
+ **Requirement:**  View delivery summary by state.  
+ **Use Case 1** : View delivery summary by state when click on "Geographic
+Summary".  
+ **Use Case 2** : Export geographic summary.| <attach file>| one of following:  
+P0-Show Stopper  
+ **P1-High**  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+BRQ-05| Charts|  
+ **Requirement:**  
+ **Chart 1** : Chart to capture average delivery times based on geographic
+location (zip code, city, state).  
+ **Chart 2** : Chart to capture average delivery times for areas of slow
+mail.| <attach file>| one of following:  
+P0-Show Stopper  
+ **P1-High**  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+  
+  
+  
+
+## Functional Requirements & Use Cases
+
+ID| Title| Details| Bus. Req. Ref.| Importance  
+---|---|---|---|---  
+FRQ-01| Search Function|  
+ **Requirement:**  
+\- Search by begin date  
+\- Search by end date  
+\- Search by application  
+\- Search by customer name  
+\- Search by zip code from  
+\- Search by zip code to  
+\- Search by state  
+\- Search results that have reached the final destination.  
+\- If no search results found, display a message  
+ **Use Case:**|  <optional>| one of following:  
+P0-Show Stopper  
+ **P1-High**  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+FRQ-02| ...| ...| ...| ...  
+  
+  
+  
+
+## Performance & Scalability Requirements (SLA)
+
+ **TODO: (Required)**  List out all needs/requirement from Performance
+perspective. Associate them with an ID for easier reference
+
+ID| Title| Details| Importance  
+---|---|---|---  
+PRQ-02| Fast Search response|  
+ **Requirement:**  All Search operation should return results within 100ms.  
+ **Use Case:**  <enter if applicable>| one of following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+PRQ-02| ...| ...| ...  
+  
+  
+
+## QA/Test Requirements
+
+ **TODO:**   **(Required)**  List out all needs/requirement from QA/Testing
+perspective. Associate them with an ID for easier reference
+
+ID| Title| Details| Importance  
+---|---|---|---  
+TRQ-01| Selectable Search Box element| (example)  
+ **Requirement:**  The search textbox AND the 'Search' button need to tagged
+with 'id' value so that Selenium could select it for entering value and
+subsequent submit  
+ **Use Case:**  Rely on Selenium to submit random search terms and capture
+response time as well as validation search results| one of following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+TRQ-02| ...| ...| ...  
+  
+* * *
+
+  
+
+# Design
+
+  
+
+## Architecture & Workflow Diagram  
+ **1.**   _ **Index File Trigger WorkFlow**_  
+
+ **2.**   _ **Mail Tracking Data Trigger WorkFlow**_  
+
+ **3.**   _ **MongoDB Collections**_  
+ **Generate record table after index file trigger get called:**
+
+  * \--------------.
+  * \--------------.  
+
+ **Generate index file table after index file trigger get called**
+
+  * \--------------.
+  * \--------------.  
+
+ **Generate lookup table after index file trigger get called**
+
+  * \--------------.
+  * \--------------.  
+
+ **Update index file table after tracking file trigger get called**
+
+  * \--------------.
+  * \--------------.  
+
+ **Update index file table after tracking file trigger get called**
+
+  * \--------------.
+  * \--------------.  
+
+ **Other Tables**
+
+  * Geographic.  
+
+  * Operation Code.  
+
+  * Zip Code.  
+
+  * USPS Zip Code Database: <http://www.unitedstateszipcodes.org/zip-code-database/>
+  * Operation Code: [Operation Codes.xlsx](https://i3dev.easyredmine.com/attachments/1890/Operation%20Codes.xlsx?t=1402520067 "Download file")
+
+ **4.**   _ **Show Mail Track Detail**_  
+250
+
+ **4.**   _ **GEO Chart and Delivery Pie Chart**_
+
+    
+    
+    (1) GEO Summary
+    
+    /getGeoSummary/{pid  
+    }  
+       a. Get GEO summary for one job.  
+       b. Set {pid  
+    } = "NA" to fetch GEO summary acrossing all jobs. 
+    
+    
+      
+      
+    Parameters:  
+    iDisplayLength, iDisplayStart, cid, proc_id, mail_track_uuid  
+      
+    Assumpted JSON Format: {  
+        "TotalRecords": 60,  
+        "geoSummaries": [  
+            {  
+                "state": "AL",  
+                "totalMail": 35,  
+                "deliveredMail": 10,  
+                "scannableMail": 35,  
+                "exceptionMail": 4  
+            },  
+            {  
+                "state": "AK",  
+                "totalMail": 44,  
+                "deliveredMail": 13,  
+                "scannableMail": 25,  
+                "exceptionMail": 8  
+            },  
+            {  
+                "state": "AS",  
+                "totalMail": 33,  
+                "deliveredMail": 13,  
+                "scannableMail": 35,  
+                "exceptionMail": 6  
+            }  
+        ]  
+    }  
+      
+    Actual JSON Format: {  
+        "TotalRecords": 60,  
+        "geoSummaries": {  
+            "AL": {  
+                "total": 35,  
+                "delivered": 10,  
+                "scannable": 35,  
+                "exception": 4  
+            },  
+            "AK": {  
+                "total": 44,  
+                "delivered": 13,  
+                "scannable": 25,  
+                "exception": 8  
+            },  
+            "AS": {  
+                "total": 33,  
+                "delivered": 13,  
+                "scannable": 35,  
+                "exception": 6  
+            }  
+        }  
+    }  
+      
+    (2) Delivery Summary  
+      
+     /fetchOverallDeliverySummary/{pid  
+    }  
+       a. Get delivery summary for one job.  
+       b. Set {pid  
+    } = "NA" to fetch delivery summary acrossing all jobs.   
+      
+    Assumpted JSON Format: {  
+        "iTotalDisplayRecords": 1,  
+        "iTotalRecords": 1,  
+        "aaData": [  
+            {  
+                "procId": "321856",  
+                "jobNum": "XJobNum",  
+                "appID": "NA",  
+                "site": "XCA",  
+                "totalPresort": "10",  
+                "processDate": "2010-10-14",  
+                "deliveredMail": 0,  
+                "exceptionMail": 19,  
+                "scannableMail": 14,  
+                "lessThreeDays": 0,  
+                "threeToFiveDays": 0,  
+                "overFiveDays": 0,  
+                "deliveredMailPersentage": 0.0,  
+                "mailVolume": 19,  
+                "maxCalendarDays": 0,  
+                "minCalendarDays": 30,  
+                "avgCalendarDays": 0.0  
+            }  
+        ]  
+    }  
+    Actual JSON Format: {  
+        "iTotalDisplayRecords": 1,  
+        "iTotalRecords": 1,  
+        "aaData": [  
+            {  
+                "procId": "321856",  
+                "jobNum": "XJobNum",  
+                "appID": "NA",  
+                "site": "XCA",  
+                "totalPresort": "10",  
+                "processDate": "2010-10-14",  
+                "deliveredMail": 0,  
+                "deliveredMailPersentage": 0.0,  
+                "mailVolume": 19,  
+                "maxCalendarDays": 0,  
+                "minCalendarDays": 30,  
+                "avgCalendarDays": 0.0  
+             "pieData": [  
+                    {  
+                        "duration": "<3",  
+                        "complete": "2704659"  
+                    },  
+                    {  
+                        "duration": "3-5",  
+                        "complete": "3499890"  
+                    },  
+                    {  
+                        "duration": ">5",  
+                        "complete": "215998"  
+                    },  
+                    {  
+                        "duration": "In Transit",  
+                        "complete": "38537"  
+                    },  
+                    {  
+                        "duration": "Exception",  
+                        "complete": "3354"  
+                    }  
+                ]  
+            }  
+        ]  
+    }  
+      
+    (3) Scan Detail  
+     /[fetchScanDetail.do](http://fetchScanDetail.do)  
+    Get scan detail for one account.  
+      
+    Parameters:  
+    iDisplayLength, iDisplayStart, cid, proc_id, mail_track_uuid  
+      
+    (3) (GEO map) get account list by state and job type  
+    URL:  
+    http: //host/secure/jobSummary/fetchAccountsByState/{state}/{jobType}/{procId}  
+      
+    E.g. Get scannable mails to TX  
+    http: //10.8.8.234:8091/secure/jobSummary/fetchAccountsByState/TX/[scannable.do](http://scannable.do)  
+      
+    Parameters:  
+    * state   
+    * jobType(scannable,exception,delivered,total),  
+    * procId  
+      
+    (4) (PIE) get account list by duration type and persentage  
+    URL:  
+    http: //host/secure/jobSummary/fetchAccountsByDuration/{durationType}/{procId}  
+      
+    E.g. Get scannable mails to TX  
+    http: //10.8.8.234:8091/secure/jobSummary/fetchAccountsByDuration/3-5/[12345.do](http://12345.do)  
+      
+    Parameters:  
+    * durationType: "<3",  
+    "3-5",  
+    ">5",  
+    "inTransitMail",  
+    "exceptionMail"   
+    * procId  
+      
+    NOTE: 10.8.9.42 server will reject request if URL contains "<" or ">", need to review it later.  
+    temporary solution for it is to modify the special character to use a normal string.  
+      
+    Change "<3" to "lessthan3",  
+    ">5" to "greatthan5" when make call to server.  
+      
+    (5) (PIE) get delivery summary for single job.  
+    URL:  
+    http: //host/secure/jobSummary/fetchOverallDeliverySummary/{pid}  
+    E.g.   
+    http: //10.8.8.149:8091/secure/jobSummary/fetchOverallDeliverySummary/[123.do](http://123.do)  
+      
+    Parameters:  
+    * procId  
+      
+    (6) Account Search (Full IMB Mail Tracking)  
+    URL:  
+    .../secure/jobSummary/[doMailTrackSearch.do](http://doMailTrackSearch.do)  
+      
+    Parameters:  
+    * proc_id, acctNum, acctName, zip  
+      
+    (7) Get Camera Image (Full IMB Mail Tracking)  
+    URL:  
+    http: //host/secure/jobSummary/getCameraImage/{cid}/{pid}/{acctNum}.do  
+    E.g.   
+    http: //10.8.8.234:8091/secure/jobSummary/getCameraImage/sscu/413540/[84817.do](http://84817.do)  
+      
+    Parameters:  
+    * cid, procId, acctNum  
+      
+    5. MongoDB Usage Check  
+      
+    A 16 megabyte namespace file can support approximately 24,  
+    000 namespaces. Each collection and index is a namespace.  
+    Check more detail, please go to http: //[docs.mongodb.org/manual/reference/limits/](http://docs.mongodb.org/manual/reference/limits/)  
+      
+    6. Scheduled Task  
+      
+    7: 00 AM - PSI Data Download  
+    8: 00 AM - PSI file scan   
+    10: 00 AM - Data Clean Up  
+    15: 00 PM - USPS File Scan
+
+  
+
+  
+
+## Data Model changes (ER diagram & ddl.sql)
+
+ **TODO:**   **(Required if involve LARGE schema change)**  Draft a ER diagram
+of the existing AND new data-model design. Highlight the entity/relationship
+that is added/changed.
+
+ **TODO:**   **(Required if involve schema change)**  Include a ddl.sql file
+that could be executed against old schema in order to create/change
+table/columns, as well as handling the corresponding data-migration if
+applicable.  
+  
+
+  
+
+## Application component functional details
+
+ **TODO:**   **(Required if involve big architectural change)**  List out the
+key class/method created/changed for this project. Highlight the changed
+portion (e.g. additional param for a method)
+
+ **Overview:**   **TODO:**  Provide an overview of what changes if not already
+illustrated in the Architecture diagram above
+
+Component| Class| Method| Params| Comments  
+---|---|---|---|---  
+...| ...| ...| ...| ...  
+  
+  
+
+## Integration Points & Interface
+
+ **TODO: (If Applicable)**  List out Integration Points and corresponding
+interface
+
+From Component| To Component| Details| Error Handling  
+---|---|---|---  
+InfoTRAC| PUI|
+
+DT_JOB_ID nee250d to be synchronized by...
+
+| If DT_JOB_ID during PUI processing is not found in ...  
+  
+  
+  
+
+# Q & A
+
+ **PSI work flow detail**  
+Q:  **What is the execution sequence of "Mail Pieces", "Proof of Induction"
+"Confirm" and "UMove"?**  
+A:
+
+  * Mail Pieces: PSI internal Scan Process (not needed for mail tracking)
+  * Proof of Induction: Scan process detail when mail piece send from PSI to USPS.  
+Values we needed from this process for Mail Tracking: JobID, Operating Center
+City, Operating Center State, MID, CRID, Permit Number, IMB, Mailing Date
+
+  * Confirm: Copy from USPS (Optional for mail tracking)
+  * UMove: PSI internal Scan Process (Optional for mail tracking)
+
+Q:  **What are the possible values for the 3-char acronyms in the JobID of
+"Proof of Induction"?**  
+A: DFW - Dallas/Ft. Worth , HOU - Houston , AUS - Austin
+
+ **IMB code & psnet_hold code**  
+Q:  **How to get IMB code from index file?**  
+A:  
+IMB<31> = BarID(2) + serviceID(3) + MailID(9) + SequenceID(6) + Zipcode(11)
+
+Q:  **How to differentiate origin and destination mail barcode?**  
+A: index file only contains destination mail barcode.
+
+Q:  **Since IS print TxT record index file does not have all the required
+information for tracking, we need use mail tracking index file, but how to get
+mail tracking index file?**  
+A: IS will add service ID and MID in the furture.
+
+Q:  **Where is USPS Mailpiece Scan Details(Scan Time, USPS Operation Code
+Description, USPS Facility)?**  
+A: PKG file. we already have these files for mail tracking.
+
+ **Other**  
+Q:  **Will the link to report be in a different page? Will the Excel and pdf
+export be functional? Will the search be functional?**  
+A: The links to more drilled down reports will create a new table that will
+replace the "Delivery Statistics Summary" report. The pie chart and "Search
+Criteria" box should both stay on the page.  
+The pie chart should be replaced by the appropriate statistics based on the
+selection criteria entered by the user. "[Current Month/Date Range]" will then
+be replaced by the date range entered by  
+the user. If the user does not enter a date range, the default date range will
+be the current month. Yes, the Excel export, PDF export and search should be
+functional in the actual product.  
+For the purposes of the demo, you may pre-fill several search criteria boxes
+for each report type and link that search to a static report with appropriate
+data.
+
+Q:  **What would be the filter criteria exception? Please provide an example
+with data.**  
+A: If the user enters any invalid search criteria (does not match any data in
+our database), the search should just display "No mail tracking information
+found" in place of the report.  
+Example: If the user accidentally enters "John" into the Account Number field
+instead of the Customer Name field, it will return "No mail tracking
+information found".  
+If the user enters "00000", an account number that does not exist, it will
+return the same "No mail tracking information found" message.
+
+Q:  **Which column represents the original begins and end date? Will there be
+any functionality of pie chart?**  
+A: The reports do not include a column for the original begin and end dates.
+These dates will be reflected in the title of the page "Delivery Statistics
+for [Current Month/Date Range]".  
+The pie chart should be updated based on data within the date range.
+
+Q:  **Will these reports be different html page? If so than how would the user
+reach the page? Where would the link be?**  
+A: Yes, all reports will be displayed under the "Mail Tracking" tab, with the
+"Search Criteria" box and pie chart in the same place. The new report will
+essentially replace the "Delivery Statistics  
+Summary" report on page 2. The user would reach each page by choosing one of
+the reports under the "Reports Available" drop-down menu. The reports below
+are now numbered to match the reports listed under "Reports Available". If the
+user does not fill in any of the search criteria, selecting one of the 4
+reports will default to data available in the current month.  
+If selection criteria are provided, the report data needs to be filtered
+appropriately. If no Begin Date/End Date is provided, the date range will
+default to the current month.
+
+Q:  **Since we create a collection for each job, it may reach the maximum
+number of collections supported by MongoDB, what should we do when it
+happen?**  
+A: Every time mongo creates a database, it creates a namespace (db.ns) file
+for it. By default the namespace file size is 16MB, but we can increase the
+size manually. The metadata for each collections is 628 bytes. Divide that by
+16MB and we get approximately 24000 namespaces per database by default. Each
+collection is a namespace and so is each index. Since every collection has at
+least an index on _id the practical limit on the number of collections is
+about 12000, The maximum limit on how big a namespace file can be which is
+2GB. That gives us roughly 3 million namespaces to use.  
+<http://docs.mongodb.org/manual/reference/limits/#Size%20of%20Namespace%20File>
+
+Q:  **In PC database why ActualDrop is null and DropDate is not null?**  
+  
+
+  
+
+# System Glossary
+
+Definition| Description  
+---|---  
+Pending Mail|  **From**  Drop Date  **to**  the day we receive post office
+data  
+In Transit Mail|  **From**  the day we receive post office data  **to**
+delivered day  
+Exception Mail|  
+(1) Received post office data, but keep shipping status over 10 days  
+(2) Didn't receive post office data over 10 days  
+Calendar Day|  
+(1) Use Today-DropDate for mails which status are "shipping" and "NA"  
+(2) Use ScanDate-DropDate for other mails  
+  
+  
+
+# Summarized Change Log
+
+Date| Who| Changes to Design Doc  
+---|---|---  
+3/11/2013| Ben C| Added some TODO notes and examples  
+3/08/2013| Ben C| Initial Draft  
+  
+  
+  
+
+# Sign-Off
+
+Group| Date| Who| Comment  
+---|---|---|---  
+Product Manager (Business)|  
+|  
+|  
+  
+Account Service (AS)|  
+|  
+|  
+  
+Dev./Impl. Manager (Technical)|  
+|  
+|  
+  
+Production Control (PC)|  
+|  
+|  
+  
+Data Processing (DP)|  
+|  
+|  
+  
+Accounting/Invoicing|  
+|  
+|  
+  
+  
+  
+  
+
+  
+
+###  Attachments
+
+250
+
+  
+
+

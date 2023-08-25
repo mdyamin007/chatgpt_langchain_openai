@@ -1,0 +1,145 @@
+title: Message Manager
+body: This is an overview on the current Message Manager system. The document will
+explains some of the non-dynamic design that result in unexpected behaviors.
+
+# What service does Message Manager provide?
+
+For a particular statement cycle, the client may want to show ads for
+Mortgages to standard customers, but Student Loans to students with the
+assumption that it is more likely that students would think about getting a
+student loan than a mortgage for a house. Traditionally, how this would be
+done is that the client would send the Print team several lists of account
+numbers, or other such identifying information, e.g. account number 123
+belonging to a student will be in the student_list. The documents will then be
+composed based on that data. Message Manager fulfills this need for different
+messages based on customer-data-driven criterias. The tool allows the client
+to provide InfoIMAGE with the message and applicable criterias for any given
+statement all in a single frontend module.
+
+# What does Message Manager do?
+
+Message Manager configure the variable messages for particular message areas.
+It does not actually configure the message areas themselves. The message areas
+are statically defined per application. In Message Manager 3, up to two
+message areas can be supported, and each message area can support two
+different messages: one for the default case, and one that is criteria-driven.
+In our example, the default would be the mortgage message, and the criteria-
+driven would be the student loan, which would only show for students.
+
+To clarify, Message Manager does not actually allow the client to define how
+many message areas a statement should have, or where the messages will show
+up. The client define the listed information beforehand, and those
+determinations are coded into the Print program. They cannot be changed
+dynamically. The only two things that are dynamic are: (1) the message that
+will be placed into the message areas, and (2) the criterias that determine
+which message will be placed. Once the client gets to the point of using
+Message Manager, they are configuring what message to put into the pre-defined
+message areas.
+
+* * *
+
+# User Workflow
+
+This is how the client would use Message Manager.
+
+## Before Using the Message Manager Module
+
+  1. Define the number of message areas the application (statement) will have. 
+  2. Define the type of message for each message area. 
+
+## Using the Message Manager Module
+
+  1. Create the campaign. A campaign is defined as the message configurations for a specific application within a date range. The campaign encodes the client's intention of "For this DDA application, between August 1, 2022 and September 1, 2022, default statements will be generated with a Mortgage ads image message, or, for students, a Student Loan ads image message."
+  2. Set up the criterias that, when met, will trigger the Print program to apply the message.
+  3. Provide the messages to be used in the message areas: images for image area and verbiage for text area. There is an option to have no content.
+  4. Review the sample PDF.
+  5. Approve the campaign for used in production.
+
+* * *
+
+# Technical Details
+
+## Message Area Definition
+
+The message areas are defined by the Print team per CID per application. For
+example, DEMO Monthly (default) application will have two message areas vs
+DEMO Escrow (escrow) application will have one message areas. The dimensions
+and locations of these message areas are also defined by the Print team.
+
+The   _Message Settings_ on InfoTRAC in client management is only a mirror of
+these predefined configurations. These message settings are used to render the
+UI in Message Manager.  **While the InfoTRAC settings should match with the
+Print settings, the settings on InfoTRAC do not actually determine number of
+messages possible for an application, the dimensions of the message, nor where
+the messages are**. A behavior that may sometimes be observed when the
+InfoTRAC settings are mismatched with the Print settings are that the PDF
+samples will have the messages placed at different locations than what is
+defined in the InfoTRAC settings.
+
+The type of messages are also mostly static. There are two possible message
+areas.
+
+  * Message Area 1: This message area should always be at the top right corner on the first page, sharing the same horizontal space as the address. This message area can either be a graphic message or a text message, though, it is usually a graphic message.
+  * Message Area 2: This message area should always be on the first page in the space just below the address and Message Area 1. This message must be a text message.
+
+## Message Placement
+
+All message placements are done by the Print scripts/programs with one
+exception, which is the image for Message Area 1. Due to support for a
+marketing link, an additional hyperlinked image is stamped ontop of the PDF
+providing by the Print program. This is why it is important that the InfoTRAC
+settings must match closely with the Print settings, otherwise the PDF will
+have two overlapping messages, i.e. the stamped image does not completely
+cover the printed image.
+
+## Message Manager Preview
+
+While using Message Manager, the user is able to generate previews. There are
+two types of previews: Dynamic Sample and Approval Sample. Both samples are
+provided by print scripts/programs. The scripts require some input, but will
+also generate the PDF based on configurations from the Print team.
+Aforementioned, the message locations are determined by the Print settings.
+Additionally, whether the graphic image is colored or black-and-white is also
+determined by the Print settings.
+
+### Dynamic Sample
+
+This is a per-image sample. The PDF is a combination of a pre-print, and a
+message at a particular location, either Message Area 1 or Message Area 2; not
+both.
+
+The underlying script is  _dyn_sample_gen.sh  _(Usage: dyn_sample_gen.sh cid
+app msgArea msgFile).
+
+  * cid: the CID
+  * app: the application, e.g. ms1
+  * msgArea: integer for the area to place the message, which is either 1 or 2
+  * msgFile: the file containing the message, either an image for a graphic message, or an IMP file, which is a text files that contains formatting information also
+
+### Approval Sample
+
+This is a full sample with all the possible Message Area together. This sample
+assume that all the criterias, if any, are matched.
+
+The underlying script is  _approve_sample_msgid.sh_ (Usage:
+approve_sample_msgid.sh cid app messageCode|zipFile startDate endDate appName
+msgAreaCount).
+
+  * cid: the CID
+  * app: the application, e.g. ms1
+  * messageCode|zipFile: usually, it is "1|(zipFileName)". The messageCode of 1 denotes a successful call. What's more important is the zipFileName that provides the script with the zipFile that contains all the necessary data
+  * startDate: the campaign startDate; this is used to format the PDF name
+  * endDate: the campaign endDate; this is used to format the PDF name
+  * appName: this is a legible name for the application, e.g. ms1 -> Monthly. 
+  * msgAreaCount: this is the count of the total message areas. It should be either 1 or 2.
+
+It is important to note again that the script is driven solely by the Print
+settings. The values passed to the script are only auxiliary. For example, if
+the Print settings define one message area, and two message areas are passed
+to the script, it will fail. Similarly, if the Print settings define two
+message areas, and only one message area is passed to the script, there will
+be an error regarding a missing message area.
+
+  
+
+

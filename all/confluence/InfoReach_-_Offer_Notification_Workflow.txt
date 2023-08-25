@@ -1,0 +1,103 @@
+title: InfoReach - Offer Notification Workflow
+body: ## Purpose/Objective Summary
+
+  1. infoReach integration with Targeting Engine
+  2. Notification Scheduler - Detailed design doc
+
+  
+
+## Business Requirements
+
+ID| Title| Details| Importance  
+---|---|---|---  
+BRQ-01| integration with targeting engine|  **Requirement:**  
+To make sure that the targeting engine updates audience once a campaign is
+added/modified| P0  
+BRQ-02| Offer Notification Scheduler|  **Requirement:**  .  
+To design a scheduler which can handle different types of notifications and
+process them.| P0  
+  
+  
+
+## InfoReach - Targeting Engine Data Flow
+
+(infoReach camapign/rule wiki : [Targeting Rule
+Specs](https://i3dev.easyredmine.com/projects/offermgmt/wiki/Targeting_Rule_Specs))  
+(Targeting Engine wiki: [Target Engine Design
+Doc](https://i3dev.easyredmine.com/projects/offermgmt/wiki/Target_Engine_Design_Doc))
+
+Put URL for updating audience by campain ID API :
+
+  
+
+## Offer Notification Scheduler Design Doc
+
+Following flow explains workflow for a notification schedule. Notification
+scheduler is a cron job that will be scheduled to trigger the following flow
+in certain time frequency.
+
+Following is a sample eligibleAudience collection:
+
+  
+
+{  
+    "_id" : "58495894e8177eb1f8b55849",  
+    "audienceId" : "zBmauQyEEABgQjuih",  
+    "offerId" : "Gwjs5vsva3P73wAYE",  
+    "campaignId" : "ii9G7azDnxZSzrjHq",  
+    "acctNumber" : "110130202000",  
+    "acctName" : "Khoshnoor Afroz"   
+}  
+{  
+    "_id" : "58495a08e8177eb1f8b5584a",  
+    "audienceId" : "ScGmnhNFzA8P22K7F",  
+    "offerId" : "r54993ALZwtxoxwrk",  
+    "campaignId" : "P7gfhSsNA3M6rWDQK",  
+    "acctNumber" : "110130202000",  
+    "acctName" : "Khoshnoor Afroz"   
+}
+
+  
+
+To track last sent notification for a audienceID we will be using events
+collection on eventTracker. First time when during making the csv file we will
+be adding data to clickTracker's trackClick collection with status 'QUEUED'.
+While calling notifyService we will send a callback url to a infoReach API
+which can update eventTracker collection. Afterwards infoReach will store data
+in trackClick once notifyService provides data of notification with status
+'QUEUED'/'FAILED' or 'SENT'/'DEFERRED'/'BOUNCED'.
+
+Once notifyService starts pushing notification for the jobs, it will update
+notification collection. When it is needed to get notificationDetails from
+infoReach we will be reading directly from notifyService collection. Following
+is an diagram that describes the data flow.
+
+Following is a sample trackClick collection that will be stored from
+infoReach:
+
+  
+
+    
+    
+    {
+        "_id" : "Gjj5xhN2BTA8PWeo8",
+        "appId" : "offer",
+        "cid" : "fffc",
+        "offerId" : "Gwjs5vsva3P73wAYE",
+        "campaignId" : "ii9G7azDnxZSzrjHq",
+        "audienceId" : "nGmxiPaxmcBMXKZm9",
+        "timestamp" : ISODate("2016-12-15T17:31:52.641Z"),
+        "status" : "QUEUED" 
+    }
+    
+
+  
+
+  
+
+## Limitations / Concerns
+
+  1.  **Current flow on targeting engine structure does not allow us to 'Get List' from a rule in infoReach**
+  2.  **What happens when a rule is updated. It wont change the audience data until the etl process runs again**
+
+

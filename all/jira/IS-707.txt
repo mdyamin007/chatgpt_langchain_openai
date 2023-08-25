@@ -1,0 +1,124 @@
+title: SEFC - [25203][pvt] Tax Form Question/Request
+description: Programming Hours: 1hr IS (RUSH) /
+
+Turn Over: 1/5/2022
+
+Sample Date: 1/7/2022 (see below; just share account # matching this condition; No need to create pdf samples)
+
+QA Date: 1/72022
+
+Approval Date: 1/11/2022
+
+Live Date: 1/12/2022
+
+IS Assessment:
+
+The suppression for 0.00 is in place already. We just need to add the suppression logic for 000-00-0000 tin to 1099IGEN_21.dfa forboththe Print program and eTax program. 
+We will not generate print and will not generate/create an eTax document for this condition to post and archive.
+
+If PDF archival needs to be suppressed as well, please notate this into the description of work in the Jira ticket that it is required and add 1 additional programming hour to this request.
+
+For samples, please give AC the list of accounts that program identified as being suppressed so that they confirmed we did the logic correctly. There is no need to create PDF output for samples we are testing suppression logic.
+
+
+author: william.kong
+comment: [~jun]: This project is assigned to you. Official start date is 1/5/2022, but i think you should start early since this is tax related.
+
+
+author: jun
+comment: [~dyuen] [~Igor.Khosid]
+
+There wasn't any account with 000000000 SSN number in the data file. I manually tested by changing the SSN in field 12-20 of data file to000000000 to verify the mail code is changed to suppressed for print and etax.
+
+
+
+parallel id:20220105085041
+
+project:qa\Tax2021\1099IGEN_21.zip
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220105085041
+   Currently in parallel: Yes
+   User: junM
+   Description: IS-707 SEFC 1099INT Suppress for print and etax if tin is 000000000
+   Date Submitted: 2022-01-05 08:51:11
+   Date Last Updated: 2022-01-05 08:51:11
+   Files:
+      1) 1099IGEN_21.dfa
+
+
+
+author: igor.khosid
+comment: [~jun] [~dyuen]
+QA - completed, works as designed
+IF &TAX_SSN_TIN_DATA=='000000000' 
+>           MAIL_CODE = 'z' ;
+>           MAIL_CODE2 = 'z' ;
+
+1. Parallel report
+Parallel ID: 20220105085041
+Currently in parallel: Yes
+User: junM
+Description: IS-707 SEFC 1099INT Suppress for print and etax if tin is 000000000
+Date Submitted: 2022-01-05 08:51:11
+Date Last Updated: 2022-01-05 08:51:11
+Files:
+1) 1099IGEN_21.dfa
+
+2. Difference
+>       IF &CID=='sefc' ;
+>       THEN ;
+>         IF &TAX_SSN_TIN_DATA=='000000000' ;
+>         THEN ;
+>           MAIL_CODE = 'z' ;
+>           MAIL_CODE2 = 'z' ;
+>         ENDIF ;
+>       ENDIF ;
+
+
+
+
+
+author: dyuen
+comment: Thank you [~Igor.Khosid]
+
+[~jun], can you give me a list of accounts that you tested with where you changed the SSN to 000-00-0000? Per Will's assessment above, we don't need a PDF output just the accounts.
+
+Thanks
+
+
+author: jun
+comment: [~dyuen]
+
+I tested with the first account. SSN is851081860 and account number is1708173800. I changed the SSN from 851081860 to00000000.
+
+
+author: william.kong
+comment: Still pending approval from client. Once approved we can release on or before 1/10/2022
+
+
+
+Just a friendly reminder from Tun, before release, please make sure you diff all the core / standard tax script because there may be a lot of code conflicts/release recently.
+
+
+author: william.kong
+comment: [~dyuen]: Has there been any updates/feedback from the samples [~jun]provided yesterday?
+
+
+author: dyuen
+comment: [~William.Kong], I didn't get any samples back from Jun. I spoke with Jun and he said he can't provide PDF samples or a list of accounts. I updated the ticket for SEFC to see if they're OK with us releasing code without seeing samples. Thanks
+
+
+author: dyuen
+comment: [~jun], client is OK with proceeding with samples.
+
+Per SEFC: "I'm comfortable with moving forward without having samples to review."
+
+Please confirm once code has been released.
+
+Thanks!
+
+
+author: jun
+comment: [~dyuen]Code released to production

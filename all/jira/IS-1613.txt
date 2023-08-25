@@ -1,0 +1,232 @@
+title: IVBK - [33224][pvt][in-house] eNotice Program Update to Split CAMB and IVBK files
+description: Description: IVBK - eNotice Program Update to Split CAMB and IVBK files
+
+Permanent changes to update the IVBK Daily Notice program to split the file between CAMB and IVBK for notice processing.
+
+Reference Yamee's setup for the IVBK DDA processing script to reference:
+
+/home/master/camb_ivbk_split_data.pl
+
+
+
+IVBK notice processing should only auto-trigger if IVBK accounts exist in the daily cycle.
+
+
+
+Timeline:
+
+Hour: 4
+
+Turnover: 09-23-2022
+
+Turnover to QA: 09-27-2022
+
+Sample: 09-28-2022
+
+Approval: 09-29-2022
+
+Parallel: Yes
+
+Live: 10-07-2022
+
+
+author: phoebe.george
+comment: [~tohidulI] Can you confirm if this will be ready for QA today? Thanks!
+
+
+
+
+author: tohiduli
+comment: Parallel ID:20220916011732
+
+There is no cosmetic changes.
+
+IVBKDL001.zip, IVBKDL003.zip and IVBKDL006.zip files are exported to QA folder.
+
+index file:dla_20220909_1_20220928_0550_ivbk.txt
+
+attached dpvs:[^ivbkdla109.print]
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220916011732
+   Currently in parallel: Yes
+   User: tohidulI
+   Description: IS-1613 update
+   Date Submitted: 2022-09-16 01:17:56
+   Date Last Updated: 2022-09-29 02:08:42
+   Files:
+      1) IVBKDL003.prj
+      2) IVBKDL001.prj
+      3) IVBKDL001.dfa
+      4) IVBKDL003.dfa
+      5) IVBKDL006.dfa
+      6) IVBKDL006.prj
+      7) ivbkdla_process.sh
+      8) extractIVBKAccounts.py
+      9) ivbkdla.procs
+      10) cambdla.procs
+
+
+author: igor.khosid
+comment: [~avannik]
+Please proceed with final testing. In-house project
+
+
+author: JIRAUSER11700
+comment: [~tohidulI] [~rony]
+
+Since the major change is in the scripts, I need yourhelp. Could you please run the process of splitting files on some test data and give me the results, preferably so that the input and the output states could be seen?
+
+I viewed the script and I have understanding of what it does, but I'm afraid that's not enough.
+
+
+author: tohiduli
+comment: Hi [~avannik]
+
+Here is an test data example.
+
+The xref file is:[^ivbk_xref_acct_09122022_080001.txt]
+
+The xref file contains the ivbk account numbers.
+
+The main data files are:
+
+[^1342.0909.1438171.CK_NSFNT.STM]
+
+[^1342.0909.1438369.TD_NOTE.STM]
+
+[^1342.0909.1438495.DP-OVDFT.STM]
+
+After theextractIVBKAccounts.py is run:
+
+the CAMB Files will be:
+
+[^camb_1342.0909.1438171.CK_NSFNT.STM]
+
+[^camb_1342.0909.1438369.TD_NOTE.STM]
+
+[^camb_1342.0909.1438495.DP-OVDFT.STM]
+
+
+
+The IVBK Files will be:
+
+[^ivbk_1342.0909.1438495.DP-OVDFT.STM]
+
+[^ivbk_1342.0909.1438171.CK_NSFNT.STM]
+
+[^ivbk_1342.0909.1438369.TD_NOTE.STM]
+
+
+
+For example the account number10423507 is in the xref file, the account also exist in 1342.0909.1438171.CK_NSFNT.STM file, so the account containing account number10423507 will be extracted to ivbk_1342.0909.1438171.CK_NSFNT.STM file. The camb data files will contain those accounts other than the ivbk ones.
+
+
+author: JIRAUSER11700
+comment: Thank you [~tohidulI], I got it.
+
+As there are changes to IVBKDL001.dfa,IVBKDL003.dfa, andIVBKDL006.dfa, please request print samples. Thanks!
+
+
+author: tohiduli
+comment: Hi [~phoebe.george]
+
+can you have isd to enable auto trigger for this file pattern *"ivbk_1342.\d\{4}.\d\{7}.(CK_NSFNT|TD_NOTE|DP-OVDFT).STM.pgp"*?
+
+
+author: phoebe.george
+comment: [~tohidulI] Thanks, I have requested Shun to update and will confirm once done.
+
+
+author: JIRAUSER11700
+comment: [~rony] [~tohidulI]please request print samples
+
+
+author: tohiduli
+comment: Hi [~avannik]
+
+print range:1-3, 6,9,12
+
+dpvs:[^ivbkdla122.print]
+
+
+author: phoebe.george
+comment: Print samples have been requested from TXOPS. They will scan and send to Alex when ready.
+
+
+author: JIRAUSER11700
+comment: Print samples attached >>>[^IS-1613_IVBK_PrntSmpls_10072022.pdf]
+
+
+author: JIRAUSER11700
+comment: [~phoebe.george] 
+Do we have any specifications on how these notices will be sent? Envelopes, endorsement? I see no SOW for IVBK.
+
+
+author: phoebe.george
+comment: [~avannik] IVBK is setup for eNotice only; no print will be generated due to paperless file; as these are flagged as digital notices. That is why there is no SOW. Thanks!
+
+
+author: JIRAUSER11700
+comment: [~phoebe.george]my bad - I looked at the samples and got confused.
+
+I saw no issues, QA passed.
+
+
+author: phoebe.george
+comment: [~avannik] Thank you!
+
+[~tohidulI] Please provide IS checklist as soon as you are able to. I'm going to create the MPT and assign to you now. Thanks!
+
+
+author: tohiduli
+comment: Hi [~avannik], [~phoebe.george] 
+
+attached is-checklist
+
+[^IS-1613_IS_CHECKLIST_10102022.docx]
+
+
+author: tohiduli
+comment: Hi [~phoebe.george] 
+
+Attached program transfer form. please have an onshore dev to upload the files to production when parallel is passed. *Please also have DP to update the /home/keep/autoexec/autoexec.list file with the following line.*
+
+*ivbk:dla:rhs2:ivbk_1342.\d\{4}.\d\{7}.(DP-OVDFT|TD_NOTE|CK_NSFNT).STM.pgp:ivbkdla_process.sh:1:1:auto:0*
+
+files are checked in to xfer folder. *Also make sure the cronjob is updated according to the mentioned in the transfer form.*
+
+[^IS_PROGRAM_TRANSFER_FORM_IS_1613_10102022.doc]
+
+^attached updated mail list^
+
+^[^ivbkdla_mail.lis]^
+
+
+author: JIRAUSER11700
+comment: IS Checklist attached >>>[^IS-1613_IS_CHECKLIST_10102022.pdf]
+
+
+author: tohiduli
+comment: Hi [~phoebe.george]
+
+attached new program transfer form to reflect cron job for ivbkdla_process.sh
+
+[^IS_PROGRAM_TRANSFER_FORM_IS_1613_10212022.doc]
+
+
+author: phoebe.george
+comment: [~Peter.Dang] [~TunA] The CRON/split file test worked tied to #34351. Can you assist with this code release this morning based on the transfer form from Tohid in previous comment? I want to start processing production files that have been held as soon as possible.
+
+Thanks,
+
+Phoebe
+
+
+author: phoebe.george
+comment: [~Peter.Dang] [~TunA] [~yameelee] Can one of you assist to release code for this tied to transfer from in previous comment from Friday? Thank you!
+
+
+author: yameelee
+comment: code released. backup id:20221024115404

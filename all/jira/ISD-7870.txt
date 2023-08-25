@@ -1,0 +1,556 @@
+title: Wrapper service - adding fullpath for archived AFP
+description: None
+
+
+author: rifat.mahmud
+comment: To QA: 
+
+This is an urgent request. I know that the time is very short for testing, but we need it before the month-end. This testing shouldn't take much time.
+
+Wrapper Service API is used to call AFP2WEB to convert AFP files to PDF. We call Wrapper API from processing-ui and prism and infoservice. The changes are in i3-core, so we need to check processing-ui and prism only. This change should not affect the normal behavior of prism or processing-ui.
+
+*Processing UI case:* 
+
+When an index file is processed(doc, afp), processing-ui checks the cutoff value(might vary from client to client, usually 150-200 pages) for which an afp file will be converted to pdf. That means if the cutoff value for a client is 200 pages, then processing-ui will call Wrapper API to convert the AFP file to PDF file.
+QA needs to verify if an index file is processed successfully, and also needs to check whether the AFPs that are over the cutoff value are converted to PDF successfully by checking the esd_doc_type in ESTMT_DOC table and file_type in ARCH_FILE.  Also, QA needs to verify it from frontend(prism) to see whether these converted PDFs are being successfully pulled from frontend. Be sure to check Bypass DT_Job_ID from the processing-ui frontend while processing.
+
+*Files to test :* 
+1. ms1_08312021_09102021_2008_ewbb.txt (default). There are 6 AFPs in this index file, I've set the cutoff to 187 pages. So 3 files should be converted to PDF, and 3 should remain in AFP format.
+
+2. ms1_07312021_1_08132021_1301_fnbt.txt (default). There are 6 AFPs in this index file, I've set the cutoff to 167 pages. So 3 files should be converted to PDF, and 3 should remain in AFP format.
+
+Please post these index files and check whether they are posted successfully, and check the statements from prism admin site.
+
+*Prism Case:*
+
+From prism, we call Wrapper API to convert AFP to PDF on the fly. So if a file type is AFP in the database, then when user clicks on the statements, the call goes to Wrapper API, and Wrapper API returns the converted PDF and we show it on the frontend. For files that are already in PDF format, prism fetches them from our servers.
+
+*Data for prism to test :* 
+
+||Client||Account Number||
+|EWBB|8031004677|
+|EWBB|8031004487|
+|EWBB|8031004685|
+|FNBT|10030775|
+|FNBT|458408556|
+
+All these statements are in AFP format, so prism should call Wrapper API and successfully pull them as PDF.
+
+
+
+author: shun.kuwashima
+comment: [~Andrey.Kutsenko] I've attached today's log file from our stage server. I think the database record alone should be fine to check if it's a pdf, but I believe the logs should show this as well.
+
+
+author: JIRAUSER11104
+comment: *Test Result (EWBB) - PASS.*
+*Test Result (FNBT) - {color:red}FAIL{color}*
+
+----
+*===EWBB===*
+*Processing UI case:*
+ 1. Check cutoff parameter in conf file -> /usr/local/processing-ui/conf/ewbb.conf
+{code:sh}
+ 88 // afp processing
+ 89 afp.compression=true
+ 90 afp.convert=true
+ 91 afp.convert.cutoff=187{code}
+2. Successful posted Index File: /d/INPUT-DEV/I3/process-files/ewbb/ms1_08312022_09102022_2008_ewbb.txt
+ 3. Checked Log File: /usr/local/processing-ui/station/logs/ewbb/afp/10272022_0251057.log
+ The Wrapper will only be called from pui if the page count of the statement is greater than 187 for the afp process - PASS
+ 4. Checked DB:
+{code:sql}
+select ED.*, AF.* from ESTMT_DOC ED
+inner join FIN_ACCOUNT FA on ED.ACCT_ID = FA.ACCT_ID
+inner join ARCH_FILE AF on ED.ESD_FILENAME = AF.FILE_NAME
+where ESD_ID in ('224823391', '224823392', '224823393', '224823394', '224823395', '224823396'){code}
+!screenshot-1.png|thumbnail!
+
+*Prism Case:*
+ Acc for test:
+ 8003012369 (file converted to PDF at the PUI, see ESD_ID = '224823391' on the screenshot above)
+ 12105649 (file converted to PDF at the PUI, see ESD_ID = '224823393' on the screenshot above)
+ 8003138586 (file type is AFP in the database, see ESD_ID = '224823394' on the screenshot above)
+ 1. Statements on msm site open and looks good.
+ 2. Checked log file on Prism -> /usr/local/tomcat/tomcat-default/logs/catalina-2022-10-27.out
+{code:sh}
+ACC:8003012369
+
+712 ***[SecuredServlet.java] JSESSIONID=3AD825B86D8EE537DDCBCE08EBC7FACA.webapp1-default
+713 found file on /d/PV-NAS-DEV/indiv_afp/ewbb/pdf-archive/C/ewbbms1-08312022/ewbbms1_08312022_8003012369_71766_20221027-02_51_57.441.pdf mapped server=/d/PV-NAS-DEV/indiv_afp
+714 Oct 27, 2022 2:50:29 PM com.infoimage.financial.estmtdoc.EStmtServlet processUserRequest
+715 INFO: 224823391
+
+
+ACC:12105649
+
+942 ***[SecuredServlet.java] JSESSIONID=BE3B2160B9B552C25B49DFD23A6379A5.webapp1-default
+943 found file on /d/PV-NAS-DEV/indiv_afp/ewbb/pdf-archive/C/ewbbms1-08312022/ewbbms1_08312022_12105649_93722_20221027-02_52_29.45.pdf mapped server=/d/PV-NAS-DEV/indiv_afp
+944 Oct 27, 2022 3:06:39 PM com.infoimage.financial.estmtdoc.EStmtServlet processUserRequest
+945 INFO: 224823393
+
+
+ACC:8003138586
+
+770 Account Id: 38543549
+771 [FindAcctId_Cuttoff] Query 1: SELECT Open_Date FROM Fin_Account WHERE Acct_Id =?
+772 ***********admin is true com.infoimage.util.security.auth.impl.simple.SimpleLoginSession@7617d755
+773 ***[SecuredServlet.java] JSESSIONID=3AD825B86D8EE537DDCBCE08EBC7FACA.webapp1-default
+774 sending command stmt ada=0 cid=ewbb server=tomcatc-s zip=20221027-14_51_57.424_198168.zip file=ewbbms1_08312022_8003138586_73611.afp zip=20221027-14_51_57.424_198168.zip storage=a site="msm" acctId=38543549 stmtType=stmt
+775 Inside wrapper service
+776 =====================>site(for not zipped): "msm" serviceName: BIBO
+777 found file on /d/PV-NAS-DEV/indiv_afp/ewbb/compressed-afp/20221027-14_51_57.424_198168.zip mapped server=/d/PV-NAS-DEV/indiv_afp
+778 =====================>serviceName: BIBO
+779 Site is "msm"
+780 =====================>serviceName: BIBO
+781 Status: 200
+782 Oct 27, 2022 2:57:07 PM com.infoimage.financial.estmtdoc.EStmtServlet processUserRequest
+783 INFO: 224823394{code}
+
+*===FNBT===*
+
+*Processing UI case:*
+ 1. Check cutoff parameter in conf file -> /usr/local/processing-ui/conf/fnbt.conf
+{code:sh}
+ 53 // afp processing
+ 54 afp.compression=false
+ 55 afp.isZipped=true
+ 56 afp.copyZipBuffer=65536
+ 57 afp.storage.path=a
+ 58 #afp.default.estmtselinsert=true
+ 59 afp.convert=true
+ 60 afp.convert.cutoff=167
+ 61 afp.convert.server=afp2web{code}
+2. Posted Index File: /d/INPUT-DEV/I3/process-files/fnbt/ms1_07312021_1_08132021_1301_fnbt.txt 
+ Got an error when converting (Log File: /usr/local/processing-ui/station/logs/ewbb/afp/10272022_0251057.log):
+{code:sh}
+[10/27/2022 16:10:45] Copy /d/INPUT-DEV/indiv_afp/fnbt/afp-archive/fnbtms1-07312021/fnbtms1_31_1_08132021_1300_1.zip to /d/PV-NAS-DEV/indiv_afp/fnbt/compressed-afp/20221027-16_10_42.239_198174.zip took 3 seconds
+[10/27/2022 16:10:46] Got exception when converting...java.lang.Exception: Couldn't generate PDF file
+java.lang.Exception: Couldn't generate PDF file
+	at com.infoimage.processing.application.afp.Afp2PdfConverter.convert(Afp2PdfConverter.java:122)
+	at com.infoimage.processing.application.afp.ProcessingJob.extractZipConvert(ProcessingJob.java:1022)
+	at com.infoimage.processing.application.afp.ProcessingJob.exec(ProcessingJob.java:474)
+	at com.infoimage.processing.server.Worker.run(Worker.java:171)
+	at java.lang.Thread.run(Thread.java:748){code}
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+
+Test result - PASS.
+----
+*===FNBT===*
+ *Processing UI case:*
+ 1. Check cutoff parameter in conf file -> /usr/local/processing-ui/conf/fnbt.conf
+{code:sh}
+ 53 // afp processing
+ 54 afp.compression=false
+ 55 afp.isZipped=true
+ 56 afp.copyZipBuffer=65536
+ 57 afp.storage.path=a
+ 58 //afp.default.estmtselinsert=true
+ 59 afp.convert=true
+ 60 afp.convert.cutoff=167
+ 61 afp.convert.server=afp2web{code}
+2. Successful posted Index File: /d/INPUT-DEV/I3/process-files/fnbt/ms1_07312021_1_08132021_1301_fnbt.txt 
+ 3. Checked Log File: /usr/local/processing-ui/station/logs/fnbt/afp/10282022_0151000.log
+ The Wrapper will only be called from pui if the page count of the statement is greater than 167 for the afp process - PASS
+ 4. Checked DB:
+{code:sql}
+select FA.ACCT_NUMBER, ED.*, AF.* from ESTMT_DOC ED
+inner join FIN_ACCOUNT FA on ED.ACCT_ID = FA.ACCT_ID
+inner join ARCH_FILE AF on ED.ESD_FILENAME = AF.FILE_NAME
+where PARENT_PATH like '20221028-13%'{code}
+!screenshot-2.png|thumbnail!
+
+*Prism Case:*
+ Acc for test (converted to PDF at the PUI):
+ 18441278
+ 458406014
+
+Acc for test (is in afp format)
+ 460485402
+
+1. Statements on msm site open and looks good.
+ 2. Checked log file on Prism -> /usr/local/tomcat/tomcat-default/logs/catalina-2022-10-28.out
+{code:sh}
+ACC:18441278
+
+5195 ***[SecuredServlet.java] JSESSIONID=2CBE930FF1B8ACC2437AE037827C5D2E.webapp1-default
+5196 found file on /d/PV-NAS-DEV/indiv_afp/fnbt/pdf-archive/C/fnbtms1-07312021/fnbtms1_07312021_18441278_17740_1_20221028-01_51_12.336.pdf mapped server=/d/PV-NAS-DEV/indiv_afp
+5197 Oct 28, 2022 2:21:59 PM com.infoimage.financial.estmtdoc.EStmtServlet processUserRequest
+5198 INFO: 224823473
+
+ACC:458406014
+
+5199 ***[SecuredServlet.java] JSESSIONID=2CBE930FF1B8ACC2437AE037827C5D2E.webapp1-default
+5200 found file on /d/PV-NAS-DEV/indiv_afp/fnbt/pdf-archive/C/fnbtms1-07312021/fnbtms1_07312021_458406014_17739_1_20221028-01_51_31.727.pdf mapped server=/d/PV-NAS-DEV/indiv_afp
+5201 Oct 28, 2022 2:23:14 PM com.infoimage.financial.estmtdoc.EStmtServlet processUserRequest
+5202 INFO: 224823474
+
+
+ACC:460485402
+
+5203 ***[SecuredServlet.java] JSESSIONID=2CBE930FF1B8ACC2437AE037827C5D2E.webapp1-default
+5204 sending command stmt ada=0 cid=fnbt server=tomcatc-s zip=20221028-13_51_00.744_198211.zip file=fnbtms1_07312021_460485402_17737_1.afp zip=20221028-13_51_00.744_198211.zip storage=a acctId=29751325 stmtType=stmt
+5205 Inside wrapper service
+5206 =====================>site(for not zipped):  serviceName: BIBO
+5207 found file on /d/PV-NAS-DEV/indiv_afp/fnbt/compressed-afp/20221028-13_51_00.744_198211.zip mapped server=/d/PV-NAS-DEV/indiv_afp
+5208 =====================>serviceName: BIBO
+5209 Site is prism
+5210 =====================>serviceName: BIBO
+5211 Status: 200
+5212 Oct 28, 2022 2:24:41 PM com.infoimage.financial.estmtdoc.EStmtServlet processUserRequest
+5213 INFO: 224823476{code}
+
+
+
+author: rifat.mahmud
+comment: To QA,
+
+There was an issue with noncompressed afps. The code was searching files in the storage server(PV-NAS), whereas it should have searched in the input server(INPUT-DEV). The life cycle of an afp file should be as below - 
+
+AFP files are put in the input server -> those files are processed via processing-ui -> after processing, those files are moved to the storage server from processing UI in either AFP form or PDF form.
+
+So QA needs to put afp files in the input server before processing, not the storage server. 
+
+The testing cases should be the same as mentioned above for both prism and processing-ui. Though QA needs to prepare his/her own data as it needs to be completely separate from the developer data because this issue is mainly data and path related. So this testing needs a fresh set of data. Let me know if you need anything. [~Andrey.Kutsenko] should be well aware of the testing process.
+
+Thanks,
+Rifat  
+
+
+author: igor.khosid
+comment: [~rifat.mahmud]
+[~Andrey.Kutsenko] is OOO today coming back Monday 11.14.2022
+
+
+author: JIRAUSER11104
+comment: QA is in progress.
+
+
+author: JIRAUSER11104
+comment: [~rifat.mahmud]
+ Test EWBB - PASS (report attach later)
+ Test FNBT - FAIL (error when posting index file)
+
+File: /usr/local/processing-ui/station/logs/fnbt/afp/11152022_0538055.log
+{code:sh}
+java.io.IOException: The index file doesn't have the corresponding id in IS DB!
+	at com.infoimage.financial.estmtSelInsert.is.dao.impl.EstmtSelInsertISDaoImpl.getIdxFileID(EstmtSelInsertISDaoImpl.java:50)
+	at com.infoimage.processing.estmtSelInsert.EstmtSelInsertISDaoHome.getIdxFileID(EstmtSelInsertISDaoHome.java:24)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at com.caucho.burlap.server.BurlapSkeleton.invoke(BurlapSkeleton.java:173)
+	at com.caucho.burlap.server.BurlapSkeleton.invoke(BurlapSkeleton.java:102)
+	at com.caucho.burlap.server.BurlapServlet.service(BurlapServlet.java:194)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:303)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:208)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:52)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:241)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:208)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:220)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:122)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:503)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:170)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:103)
+	at org.apache.catalina.valves.AccessLogValve.invoke(AccessLogValve.java:950)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:116)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:421)
+	at org.apache.coyote.http11.AbstractHttp11Processor.process(AbstractHttp11Processor.java:1070)
+	at org.apache.coyote.AbstractProtocol$AbstractConnectionHandler.process(AbstractProtocol.java:611)
+	at org.apache.tomcat.util.net.JIoEndpoint$SocketProcessor.run(JIoEndpoint.java:314)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
+	at java.lang.Thread.run(Thread.java:748)
+[11/15/2022 17:38:55] [ERROR] IndexFileId is missing from the IS DB (LinkPaperAndEstmt WHERE Index_File=ms1_07312021_1_08132021_1301_fnbt.txt)
+[11/15/2022 17:38:55] Application Error: EstmtSelectiveInsert Failure: idxFileID is missing in IS DB!
+[11/15/2022 17:38:55] Report status for job Id: [198591]{code}
+
+When we call Wrapper API to convert AFP to PDF on the prism once, maybe it makes sense to write the resulting pdf file on the storage server(PV-NAS) and not pull the wrapper the next time.
+And it turns out we constantly call the wrapper (example >>> acct num: 8003052126)
+See log on andreyk@ca-prism-st-01:~$ vim /usr/local/tomcat/tomcat-default/logs/catalina-2022-11-15.out
+{code:sh}330 acct num: 8003052126
+331 acct type: 01
+332 UID,CID: 21896125,7354
+333 pStatus : B
+334 PERM:  255
+335 Stmt type in profile : default
+336 Account Id: 28714468
+337 [FindAcctId_Cuttoff] Query 1: SELECT Open_Date FROM Fin_Account WHERE Acct_Id =?
+338 ***********admin is true com.infoimage.util.security.auth.impl.simple.SimpleLoginSession@a08c05f
+339 ***[SecuredServlet.java] JSESSIONID=329DDA5F356153AE57186E2013B3106F.webapp1-default
+340 ***[SecuredServlet.java] JSESSIONID=A9D2FDEBDE3E3F3A0D9D9645734AC57F.webapp1-default
+341 sending command stmt ada=0 cid=ewbb server=tomcatc-s zip=20221115-15_12_24.92_198577.zip file=ewbbms1_10312022_8003052126_72231.afp zip=20221115-15_12_24.92_198577.zip storage=a site="msm" acctId=28714468 stmtTy    pe=stmt
+342 Inside wrapper service
+343 =====================>site(for not zipped): "msm" serviceName: BIBO
+344 found file on /d/PV-NAS-DEV/indiv_afp/ewbb/compressed-afp/20221115-15_12_24.92_198577.zip mapped server=/d/PV-NAS-DEV/indiv_afp
+345 =====================>serviceName: BIBO
+346 Site is msm
+347 Inside filename adding block
+348 =====================>serviceName: BIBO
+349 Status: 200
+350 Nov 15, 2022 3:34:27 PM com.infoimage.financial.estmtdoc.EStmtServlet processUserRequest
+351 INFO: 225432094
+
+
+369 acct num: 8003052126
+370 acct type: 01
+371 UID,CID: 21896125,7354
+372 pStatus : B
+373 PERM:  255
+374 Stmt type in profile : default
+375 Account Id: 28714468
+376 [FindAcctId_Cuttoff] Query 1: SELECT Open_Date FROM Fin_Account WHERE Acct_Id =?
+377 ***********admin is true com.infoimage.util.security.auth.impl.simple.SimpleLoginSession@62f4e4c0
+378 ***[SecuredServlet.java] JSESSIONID=D2EE811AB8454D557D616610CA5A5C01.webapp1-default
+379 ***[SecuredServlet.java] JSESSIONID=A9D2FDEBDE3E3F3A0D9D9645734AC57F.webapp1-default
+380 sending command stmt ada=0 cid=ewbb server=tomcatc-s zip=20221115-15_12_24.92_198577.zip file=ewbbms1_10312022_8003052126_72231.afp zip=20221115-15_12_24.92_198577.zip storage=a site="msm" acctId=28714468 stmtTy    pe=stmt
+381 Inside wrapper service
+382 =====================>site(for not zipped): "msm" serviceName: BIBO
+383 found file on /d/PV-NAS-DEV/indiv_afp/ewbb/compressed-afp/20221115-15_12_24.92_198577.zip mapped server=/d/PV-NAS-DEV/indiv_afp
+384 =====================>serviceName: BIBO
+385 Site is msm
+386 Inside filename adding block
+387 =====================>serviceName: BIBO
+388 Status: 200
+389 Nov 15, 2022 3:46:09 PM com.infoimage.financial.estmtdoc.EStmtServlet processUserRequest
+390 INFO: 225432094{code}
+
+
+
+
+
+
+author: rifat.mahmud
+comment: [~Andrey.Kutsenko],
+
+For FNBT posting, estmtselInsert was flagged as true, that's why you got an error. If this flag is true, then a valid dt_job_ID is required in the IS database, but as this is not a parallel testing, the index file you posted didn't have any valid dt_job_ID in IS database and that's why you got the error. I've flagged it as false for your testing purpose. I'll revert it once your testing is finished. [~Shun.Kuwashima] FYI.
+
+For prism, it never writes the PDF file in the storage server. Prism only calls the wrapper service for converting, and then shows the PDF on the front end. Processing-UI handles writing the PDF files in the storage server. Prism will always call wrapper service if the file is in AFP format, prism won't change anything in the database(maybe except for is_viewed in estmt_doc) or in the storage server while viewing the statements.
+
+Let me know if you need anything.
+
+Thanks
+
+
+author: JIRAUSER11104
+comment: Test Result *EWBB*>>> PASS.
+
+*REPORT*
+----
+*Processing UI case:*
+ 1. Prepared Index File: /d/INPUT-DEV/I3/process-files/ewbb/ms1_10312022_11102022_2008_ewbb.txt
+ 2. AFP files are put in the input server (INPUT-DEV):
+{code:sh}
+ andreyk@ca-pui-st-01:~$ ls -ltr /d/INPUT-DEV/indiv_afp/ewbb/afp-archive/ewbbms1-10312022/
+total 146696
+-rw-rw-r-- 1 andreyk andreyk 21443973 Sep 13  2021 ewbbms1_10312022_12105649_93722.afp
+-rw-rw-r-- 1 andreyk andreyk 11142886 Sep 13  2021 ewbbms1_10312022_8003011163_71742.afp
+-rw-rw-r-- 1 andreyk andreyk 28306666 Sep 13  2021 ewbbms1_10312022_8003012369_71766.afp
+-rw-rw-r-- 1 andreyk andreyk 20615231 Sep 13  2021 ewbbms1_10312022_8003052126_72231.afp
+-rw-rw-r-- 1 andreyk andreyk 19470373 Sep 13  2021 ewbbms1_10312022_8003138586_73611.afp
+-rw-rw-r-- 1 andreyk andreyk 10708838 Sep 13  2021 ewbbms1_10312022_83225573_94068.afp
+{code}
+3. Checking that the storage server (PV-NAS-DEV) does not have these files:
+{code:sh}
+ andreyk@ca-pui-st-01:~$ ls -ltr /d/PV-NAS-DEV/indiv_afp/ewbb/afp-archive/ | grep ewbbms1-10312022 | wc -l
+0
+{code}
+4. Successful posted the Index File on PUI Stage.
+
+5. Checked Log File: /usr/local/processing-ui/station/logs/ewbb/afp/11152022_0312024.log
+ - The Wrapper will only be called from pui if the page count of the statement is greater than 187 (based on the ewbb.conf) for the afp process - PASS
+ - After processing, those files are moved to the storage server from processing UI in either AFP form or PDF form.
+ PDF forms:
+{code:sh}
+    andreyk@ca-pui-st-01:~$ ls -ltr /d/PV-NAS-DEV/indiv_afp/ewbb/pdf-archive/C/ewbbms1-10312022/
+total 87104
+-rw-r--r-- 1 root 4294967294 30214573 Nov 15 15:08 ewbbms1_10312022_8003012369_71766_20221115-03_12_24.227.pdf
+-rw-r--r-- 1 root 4294967294 12742009 Nov 15 15:08 ewbbms1_10312022_83225573_94068_20221115-03_13_40.241.pdf
+-rw-r--r-- 1 root 4294967294 23405782 Nov 15 15:11 ewbbms1_10312022_12105649_93722_20221115-03_14_14.673.pdf
+{code}
+All AFP forms on the Storage server:
+{code:sh}
+    andreyk@ca-pui-st-01:~$ unzip -l /d/PV-NAS-DEV/indiv_afp/ewbb/compressed-afp/20221115-15_12_24.92_198577.zip
+Archive:  /d/PV-NAS-DEV/indiv_afp/ewbb/compressed-afp/20221115-15_12_24.92_198577.zip
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+ 28306666  2022-11-15 15:13   ewbbms1_10312022_8003012369_71766.afp
+ 10708838  2022-11-15 15:14   ewbbms1_10312022_83225573_94068.afp
+ 21443973  2022-11-15 15:17   ewbbms1_10312022_12105649_93722.afp
+ 19470373  2022-11-15 15:17   ewbbms1_10312022_8003138586_73611.afp
+ 11142886  2022-11-15 15:17   ewbbms1_10312022_8003011163_71742.afp
+ 20615231  2022-11-15 15:17   ewbbms1_10312022_8003052126_72231.afp
+---------                     -------
+111687967                     6 files
+{code}
+
+6. Checked DB:
+{code:sql}
+select ED.*, AF.* from ESTMT_DOC ED
+inner join FIN_ACCOUNT FA on ED.ACCT_ID = FA.ACCT_ID
+inner join ARCH_FILE AF on ED.ESD_FILENAME = AF.FILE_NAME
+where ESD_ID in ('225432089', '225432090', '225432091', '225432092', '225432093', '225432094'){code}
+{code:json}
+#|ACCT_NUMBER|ESD_ID|ACCT_ID|ESD_BEGINDATE|ESD_CLOSINGDATE|ESD_PARENT_PATH|ESD_FILENAME|ESD_PAGE_COUNT|ESD_DOC_TYPE|ESD_EMAIL_ADDR|ESD_EMAIL_TIME|ESD_EMAIL_STATUS|STMT_TYPE|SEQ_NUM|ISVIEWED|HAS_CHECK|ESD_MESSAGE_ID|ESD_INSERT_ID|CRIPPLE_FLAG|TYPE_CODE|STATUS|LOAN_ID|HAS_ADA|ARCH_FILE_ID|FILE_TYPE|PARENT_PATH|FILE_NAME|PAGE_COUNT|STORAGE_SERVER|AFP2WEB_PM|AFP2WEB_INI|PRESENTMENT_TYPE
+1|8003012369|225432089|14000288|2022-10-31|2022-10-31|20221115-15_12_24.92_198577.zip|pdf-archive/C/ewbbms1-10312022/ewbbms1_10312022_8003012369_71766_20221115-03_12_24.227.pdf|198|pdf||||default|71766|N|1||00000|C|||||264421985|pdf|20221115-15_12_24.92_198577.zip|pdf-archive/C/ewbbms1-10312022/ewbbms1_10312022_8003012369_71766_20221115-03_12_24.227.pdf|198|a|||
+2|83225573|225432090|38533680|2022-10-31|2022-10-31|20221115-15_12_24.92_198577.zip|pdf-archive/C/ewbbms1-10312022/ewbbms1_10312022_83225573_94068_20221115-03_13_40.241.pdf|192|pdf||||default|94068|N|1||00000|C|||||264421986|pdf|20221115-15_12_24.92_198577.zip|pdf-archive/C/ewbbms1-10312022/ewbbms1_10312022_83225573_94068_20221115-03_13_40.241.pdf|192|a|||
+3|12105649|225432091|10404489|2022-10-31|2022-10-31|20221115-15_12_24.92_198577.zip|pdf-archive/C/ewbbms1-10312022/ewbbms1_10312022_12105649_93722_20221115-03_14_14.673.pdf|191|pdf||||default|93722|N|1||00000|C|||||264421987|pdf|20221115-15_12_24.92_198577.zip|pdf-archive/C/ewbbms1-10312022/ewbbms1_10312022_12105649_93722_20221115-03_14_14.673.pdf|191|a|||
+4|8003138586|225432092|38543549|2022-10-31|2022-10-31|20221115-15_12_24.92_198577.zip|ewbbms1_10312022_8003138586_73611.afp|186|afp||||default|73611|N|1||00000|C|||||264421988|afp|20221115-15_12_24.92_198577.zip|ewbbms1_10312022_8003138586_73611.afp|186|a|||
+5|8003011163|225432093|14018032|2022-10-31|2022-10-31|20221115-15_12_24.92_198577.zip|ewbbms1_10312022_8003011163_71742.afp|185|afp||||default|71742|N|1||00000|C|||||264421989|afp|20221115-15_12_24.92_198577.zip|ewbbms1_10312022_8003011163_71742.afp|185|a|||
+6|8003052126|225432094|28714468|2022-10-31|2022-10-31|20221115-15_12_24.92_198577.zip|ewbbms1_10312022_8003052126_72231.afp|178|afp||||default|72231|N|1||00000|C|||||264421990|afp|20221115-15_12_24.92_198577.zip|ewbbms1_10312022_8003052126_72231.afp|178|a|||
+{code}
+*Prism Case:*
+ Acc for test:
+ 8003012369 (converted to PDF at the PUI)
+ 8003052126
+ 1. Statements on msm site open and looks good.
+ 2. Checked log file on Prism -> andreyk@ca-prism-st-01:~$ vim /usr/local/tomcat/tomcat-default/logs/catalina-2022-11-15.out
+{code:sh}
+ACC:8003012369
+
+308 ***[SecuredServlet.java] JSESSIONID=A9D2FDEBDE3E3F3A0D9D9645734AC57F.webapp1-default
+309 found file on /d/PV-NAS-DEV/indiv_afp/ewbb/pdf-archive/C/ewbbms1-10312022/ewbbms1_10312022_8003012369_71766_20221115-03_12_24.227.pdf mapped server=/d/PV-NAS-DEV/indiv_afp
+310 Nov 15, 2022 3:28:42 PM com.infoimage.financial.estmtdoc.EStmtServlet processUserRequest
+311 INFO: 225432089
+
+
+
+ACC:8003052126
+
+369 acct num: 8003052126
+370 acct type: 01
+371 UID,CID: 21896125,7354
+372 pStatus : B
+373 PERM:  255
+374 Stmt type in profile : default
+375 Account Id: 28714468
+376 [FindAcctId_Cuttoff] Query 1: SELECT Open_Date FROM Fin_Account WHERE Acct_Id =?
+377 ***********admin is true com.infoimage.util.security.auth.impl.simple.SimpleLoginSession@62f4e4c0
+378 ***[SecuredServlet.java] JSESSIONID=D2EE811AB8454D557D616610CA5A5C01.webapp1-default
+379 ***[SecuredServlet.java] JSESSIONID=A9D2FDEBDE3E3F3A0D9D9645734AC57F.webapp1-default
+380 sending command stmt ada=0 cid=ewbb server=tomcatc-s zip=20221115-15_12_24.92_198577.zip file=ewbbms1_10312022_8003052126_72231.afp zip=20221115-15_12_24.92_198577.zip storage=a site="msm" acctId=28714468 stmtTy    pe=stmt
+381 Inside wrapper service
+382 =====================>site(for not zipped): "msm" serviceName: BIBO
+383 found file on /d/PV-NAS-DEV/indiv_afp/ewbb/compressed-afp/20221115-15_12_24.92_198577.zip mapped server=/d/PV-NAS-DEV/indiv_afp
+384 =====================>serviceName: BIBO
+385 Site is msm
+386 Inside filename adding block
+387 =====================>serviceName: BIBO
+388 Status: 200
+389 Nov 15, 2022 3:46:09 PM com.infoimage.financial.estmtdoc.EStmtServlet processUserRequest
+390 INFO: 225432094{code}
+
+
+author: JIRAUSER11104
+comment: Test Result *FNBT* >>> PASS.
+
+REPORT
+----
+
+*Processing UI case:*
+ 1. Prepared Index File: /d/INPUT-DEV/I3/process-files/fnbt/ms1_07312021_1_08132021_1301_fnbt.txt
+ 2. AFP files are put in the input server:
+ {code:sh}
+ andreyk@ca-pui-st-01:~$ unzip -l /d/INPUT-DEV/indiv_afp/fnbt/afp-archive/fnbtms1-07312021/fnbtms1_31_1_08132021_1300_1.zip
+Archive:  /d/INPUT-DEV/indiv_afp/fnbt/afp-archive/fnbtms1-07312021/fnbtms1_31_1_08132021_1300_1.zip
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+  9441994  2021-08-13 13:01   fnbtms1_07312021_10217107_17736_1.afp
+  3213857  2021-08-13 13:01   fnbtms1_07312021_11003194_17738_1.afp
+ 30861791  2021-08-13 13:01   fnbtms1_07312021_18441278_17740_1.afp
+   637900  2021-08-13 13:01   fnbtms1_07312021_458406014_17739_1.afp
+ 28110980  2021-08-13 13:01   fnbtms1_07312021_458408556_17741_1.afp
+ 20308169  2021-08-13 13:01   fnbtms1_07312021_460485402_17737_1.afp
+---------                     -------
+ 92574691                     6 files
+{code}
+3. Checking that  the storage server(PV-NAS) does not have these files:
+ {code:sh}
+ andreyk@ca-pui-st-01:~$ ls -ltr /d/PV-NAS-DEV/indiv_afp/fnbt/afp-archive/ | grep fnbtms1-07312021 | wc -l
+0
+{code}
+4. Successful posted the Index File on PUI Stage.
+
+5. Checked Log File: /usr/local/processing-ui/station/logs/fnbt/afp/11162022_1125027.log
+ - The Wrapper will only be called from pui if the page count of the statement is greater than 167 (based on the fnbt.conf > 'afp.convert.cutoff=167') for the afp process - PASS
+ - After processing, those files are moved to the storage server from processing UI in either AFP form or PDF form.
+    PDF form:
+    {code:sh}
+andreyk@ca-pui-st-01:~$ ls -ltr /d/PV-NAS-DEV/indiv_afp/fnbt/pdf-archive/C/fnbtms1-07312021/
+total 77872
+-rw-r--r-- 1 root 4294967294 28003992 Nov 16 11:20 fnbtms1_07312021_458408556_17741_1_20221116-11_25_28.8.pdf
+-rw-r--r-- 1 root 4294967294 30779599 Nov 16 11:20 fnbtms1_07312021_18441278_17740_1_20221116-11_25_50.369.pdf
+-rw-r--r-- 1 root 4294967294   569257 Nov 16 11:20 fnbtms1_07312021_458406014_17739_1_20221116-11_26_14.598.pdf
+{code}
+    All AFP form on the Storage server:
+    {code:sh}
+andreyk@ca-pui-st-01:~$ unzip -l /d/PV-NAS-DEV/indiv_afp/fnbt/compressed-afp/20221116-11_25_27.991_198619.zip
+Archive:  /d/PV-NAS-DEV/indiv_afp/fnbt/compressed-afp/20221116-11_25_27.991_198619.zip
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+  9441994  2021-08-13 13:01   fnbtms1_07312021_10217107_17736_1.afp
+  3213857  2021-08-13 13:01   fnbtms1_07312021_11003194_17738_1.afp
+ 30861791  2021-08-13 13:01   fnbtms1_07312021_18441278_17740_1.afp
+   637900  2021-08-13 13:01   fnbtms1_07312021_458406014_17739_1.afp
+ 28110980  2021-08-13 13:01   fnbtms1_07312021_458408556_17741_1.afp
+ 20308169  2021-08-13 13:01   fnbtms1_07312021_460485402_17737_1.afp
+---------                     -------
+ 92574691                     6 files
+{code}
+
+6. Checked DB:
+{code:sql}
+select FA.ACCT_NUMBER, ED.*, AF.* from ESTMT_DOC ED
+inner join FIN_ACCOUNT FA on ED.ACCT_ID = FA.ACCT_ID
+inner join ARCH_FILE AF on ED.ESD_FILENAME = AF.FILE_NAME
+where PARENT_PATH like '20221116%';{code}
+
+{code:sh}
+#|ACCT_NUMBER|ESD_ID|ACCT_ID|ESD_BEGINDATE|ESD_CLOSINGDATE|ESD_PARENT_PATH|ESD_FILENAME|ESD_PAGE_COUNT|ESD_DOC_TYPE|ESD_EMAIL_ADDR|ESD_EMAIL_TIME|ESD_EMAIL_STATUS|STMT_TYPE|SEQ_NUM|ISVIEWED|HAS_CHECK|ESD_MESSAGE_ID|ESD_INSERT_ID|CRIPPLE_FLAG|TYPE_CODE|STATUS|LOAN_ID|HAS_ADA|ARCH_FILE_ID|FILE_TYPE|PARENT_PATH|FILE_NAME|PAGE_COUNT|STORAGE_SERVER|AFP2WEB_PM|AFP2WEB_INI|PRESENTMENT_TYPE
+1|458408556|225434958|39518800|2021-07-31|2021-07-31|20221116-11_25_27.991_198619.zip|pdf-archive/C/fnbtms1-07312021/fnbtms1_07312021_458408556_17741_1_20221116-11_25_28.8.pdf|192|pdf||||default||N|0||||||||264427346|pdf|20221116-11_25_27.991_198619.zip|pdf-archive/C/fnbtms1-07312021/fnbtms1_07312021_458408556_17741_1_20221116-11_25_28.8.pdf|192|a|||
+2|18441278|225434959|22598960|2021-07-31|2021-07-31|20221116-11_25_27.991_198619.zip|pdf-archive/C/fnbtms1-07312021/fnbtms1_07312021_18441278_17740_1_20221116-11_25_50.369.pdf|186|pdf||||default||N|0||||||||264427347|pdf|20221116-11_25_27.991_198619.zip|pdf-archive/C/fnbtms1-07312021/fnbtms1_07312021_18441278_17740_1_20221116-11_25_50.369.pdf|186|a|||
+3|458406014|225434960|29751324|2021-07-31|2021-07-31|20221116-11_25_27.991_198619.zip|pdf-archive/C/fnbtms1-07312021/fnbtms1_07312021_458406014_17739_1_20221116-11_26_14.598.pdf|180|pdf||||default||N|0||||||||264427348|pdf|20221116-11_25_27.991_198619.zip|pdf-archive/C/fnbtms1-07312021/fnbtms1_07312021_458406014_17739_1_20221116-11_26_14.598.pdf|180|a|||
+4|11003194|225434961|4876842|2021-07-31|2021-07-31|20221116-11_25_27.991_198619.zip|fnbtms1_07312021_11003194_17738_1.afp|166|afp||||default||N|0||||||||264427349|afp|20221116-11_25_27.991_198619.zip|fnbtms1_07312021_11003194_17738_1.afp|166|a|||
+5|460485402|225434962|29751325|2021-07-31|2021-07-31|20221116-11_25_27.991_198619.zip|fnbtms1_07312021_460485402_17737_1.afp|153|afp||||default||N|0||||||||264427350|afp|20221116-11_25_27.991_198619.zip|fnbtms1_07312021_460485402_17737_1.afp|153|a|||
+6|10217107|225434963|4850367|2021-07-31|2021-07-31|20221116-11_25_27.991_198619.zip|fnbtms1_07312021_10217107_17736_1.afp|124|afp||||default||N|0||||||||264427351|afp|20221116-11_25_27.991_198619.zip|fnbtms1_07312021_10217107_17736_1.afp|124|a|||
+{code}
+
+
+
+*Prism Case:*
+ Acc for test:
+ 458408556 (converted to PDF at the PUI)
+ 11003194
+ 1. Statements on msm site open and looks good.
+ 2. Checked log file on Prism -> andreyk@ca-prism-st-01:~$ vim /usr/local/tomcat/tomcat-default/logs/catalina-2022-11-16.out
+{code:sh}
+ACC:458408556
+
+ 66 ***[SecuredServlet.java] JSESSIONID=D921F2E274AAB44EE1A78F1D890D9295.webapp1-default
+ 67 found file on /d/PV-NAS-DEV/indiv_afp/fnbt/pdf-archive/C/fnbtms1-07312021/fnbtms1_07312021_458408556_17741_1_20221116-11_25_28.8.pdf mapped server=/d/PV-NAS-DEV/indiv_afp
+ 68 Nov 16, 2022 11:28:39 AM com.infoimage.financial.estmtdoc.EStmtServlet processUserRequest
+ 69 INFO: 225434958
+
+
+
+
+ACC:11003194
+
+ 70 ***[SecuredServlet.java] JSESSIONID=D921F2E274AAB44EE1A78F1D890D9295.webapp1-default
+ 71 sending command stmt ada=0 cid=fnbt server=tomcatc-s zip=20221116-11_25_27.991_198619.zip file=fnbtms1_07312021_11003194_17738_1.afp zip=20221116-11_25_27.991_198619.zip storage=a acctId=4876842 stmtType=stmt
+ 72 Inside wrapper service
+ 73 =====================>site(for not zipped):  serviceName: BIBO
+ 74 found file on /d/PV-NAS-DEV/indiv_afp/fnbt/compressed-afp/20221116-11_25_27.991_198619.zip mapped server=/d/PV-NAS-DEV/indiv_afp
+ 75 =====================>serviceName: BIBO
+ 76 Site is prism
+ 77 Inside filename adding block
+ 78 =====================>serviceName: BIBO
+ 79 Status: 200
+ 80 Nov 16, 2022 11:41:52 AM com.infoimage.financial.estmtdoc.EStmtServlet processUserRequest
+ 81 INFO: 225434961
+{code}

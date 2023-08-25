@@ -1,0 +1,577 @@
+title: InfoXchange API
+body: ## 1\. Introduction
+
+  * PathWays  
+PathWays is a secured web host, or "middleware" server that provides a variety
+of web services for interaction with Spectrum and its related products.  
+PathWays hosts a number of Spectrum web services to fulfill your core
+transaction processing needs. These WS-I compliant web services provide
+standardized method of executing Spectrum commands via XML against the Fiserv
+Spectrum Core system.
+
+  * InfoXchange API  
+RESTful web service integrated with PathWays Spectrum web-services, this REST
+service will allow partners and clients to update members' enrollment status
+(i.e. enrolled/un-enrolled into eStatements) in both InfoIMAGE's eStatement
+system as well as Fiserv Spectrum Core system in a synchronized fashion.
+
+  
+  
+
+## 2\. Purpose/Objective Summary
+
+Objective: To enroll the member by updating the custom flag (flag-69) into
+member-level user preference settings. This service will be used by SSCU's
+third-party vendors to update the member-level preferences for eStatement
+enrollment.
+
+Description: Create a transaction and invoke PathWays Spectrum (WS-I) Web
+Services in order to update the member-level control flag (eStatement
+preference) settings.  
+  
+
+## 3\. Old Environment ( Mule ESB )
+
+  
+
+### 3.1 Mule ESB
+
+Dev: pd-dev1 ( 10.8.9.57 )  
+Prod: ( 10.8.9.54 )
+
+    
+    
+    -- Pathways Production
+    pathways.ws.url=https://pwp.safecu.org/estatements/wsiservices/CmdSpectrum
+    http.soap.contentType=text/xml;charset=UTF-8
+    http.soap.action=url:submitXMLCommand
+    xml.request.tokenId=INI00
+    
+
+  
+
+#### mule setup
+
+/opt/muleEE3.3.2/apps  
+/opt/muleEE3.3.2/mule_ee.log  
+  
+
+### 3.2 Old Pathways API integration code
+
+svn+<ssh://pd-tools/srv/svn/instant_enrollment/trunk>  
+  
+
+#### 3.2.1 Instant enrollment API
+
+Dev: pd-dev1 ( 10.8.9.57 )  
+Prod: ( 10.8.9.54 )
+
+Path: /opt/muleEE3.3.2/apps  
+  
+
+### 3.3 PathWays Spectrum (WS-I) Web
+Services[](https://i3dev.easyredmine.com/projects/esafetybox/wiki/InfoXchange#33-PathWays-
+Spectrum-WS-I-Web-Services)
+
+  
+  
+
+#### 3.3.1 API Spec
+
+\\\dell-2100\isd\bchan\partners\Fiserv\API Specs\FiservCBS_12.1.0.0\HTML  
+  
+
+#### 3.3.2 Pathway Access
+
+ **Test environment?** :
+<https://pwtest.safecu.org/summit/TESTCU/pathways/wsiservices/CmdSpectrum?wsdl>  
+ **Pro environment?** :
+<https://pwd.safecu.org/estatements/services/CmdSpectrum>
+
+Sample request and reponse
+
+XML Input Request for PathWays API
+
+<Summit xmlns="<http://summit.fiserv.com>"  
+    xmlns:xsi="<http://www.w3.org/2001/XMLSchema-instance>" xsi:schemaLocation="<http://summit.fiserv.com/cfg/CommandSchema/sisCommands.xsd>">  
+    <Spectrum>  
+        <CommandRq>  
+            <RequestHeader>  
+                <Teller>  
+                    <ID>INI11</ID>  
+                </Teller>  
+                <Override>0</Override>  
+            </RequestHeader>  
+            <FDINRq>  
+                <Account>12345</Account>  
+                <Surname>Zhe</Surname>  
+                <FlagLevel>M</FlagLevel>  
+            </FDINRq>  
+        </CommandRq>  
+    </Spectrum>  
+</Summit>
+
+    
+    
+    
+
+  
+
+XML Output Response from PathWays API
+
+<?xml version="1.0"?>  
+<Summit xmlns="<http://summit.fiserv.com>"  
+    xmlns:xsi="<http://www.w3.org/2001/XMLSchema-instance>" xsi:schemaLocation="<http://summit.fiserv.com/cfg/CommandSchema/sisCommands.xsd>">  
+    <Spectrum>  
+        <CommandRs>  
+            <ResponseHeader>  
+                <Status>  
+                    <StatusCode>Code</StatusCode>  
+                    <StatusDesc>Description</StatusDesc>  
+                </Status>  
+                <MessageStatus>  
+                    <Date>date</Date>  
+                    <Time>time</Time>  
+                    <SequenceNum>sequence-numer</SequenceNum>  
+                </MessageStatus>  
+            </ResponseHeader>  
+        FLAG_Command_Response  
+        </CommandRs>  
+    </Spectrum>  
+</Summit>
+
+    
+    
+      
+    
+
+  
+
+    
+    
+    SOAP Response Body:
+
+<S:Envelope xmlns:S="<http://schemas.xmlsoap.org/soap/envelope/>">  
+    <S:Body>  
+        <ns2:submitXMLCommandResponse xmlns:ns2="urn:[connections.spectrum.summitsite.com](http://connections.spectrum.summitsite.com)">  
+            <submitXMLCommandResponse>  
+                <![CDATA[<Summit xmlns="<http://summit.fiserv.com>" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Spectrum>...</Spectrum></Summit>]]>  
+            </submitXMLCommandResponse>  
+        </ns2:submitXMLCommandResponse>  
+    </S:Body>  
+</S:Envelope>
+
+    
+    
+      
+      
+    <Spectrum>  
+        <CommandRs>  
+            <ResponseHeader>  
+                <Status>  
+                    <StatusCode>00</StatusCode>  
+                    <StatusDesc>SUCCESSFUL</StatusDesc>  
+                </Status>  
+            </ResponseHeader>  
+            <FDINRs>  
+                <Account>10639</Account>  
+                <Results>  
+                    <FlagLevelAndSuffix>M00</FlagLevelAndSuffix>  
+                    <FlagType>C</FlagType>  
+                    <FlagNum>25</FlagNum>  
+                    <Description>MONTHLY STATEMENT</Description>  
+                </Results>  
+                <Results>  
+                    <FlagLevelAndSuffix>M00</FlagLevelAndSuffix>  
+                    <FlagType>C</FlagType>  
+                    <FlagNum>53</FlagNum>  
+                    <Description>PRD/DD</Description>  
+                </Results>  
+                <Results>  
+                    <FlagLevelAndSuffix>M00</FlagLevelAndSuffix>  
+                    <FlagType>C</FlagType>  
+                    <FlagNum>55</FlagNum>  
+                    <Description>CALL-24</Description>  
+                </Results>  
+                <Results>  
+                    <FlagLevelAndSuffix>M00</FlagLevelAndSuffix>  
+                    <FlagType>C</FlagType>  
+                    <FlagNum>64</FlagNum>  
+                    <Description>PERFECT CENTS</Description>  
+                </Results>  
+                <Results>  
+                    <FlagLevelAndSuffix>M00</FlagLevelAndSuffix>  
+                    <FlagType>C</FlagType>  
+                    <FlagNum>69</FlagNum>  
+                    <Description>E-STATEMENTS</Description>  
+                </Results>  
+                <Results>  
+                    <FlagLevelAndSuffix>M00</FlagLevelAndSuffix>  
+                    <FlagType>C</FlagType>  
+                    <FlagNum>71</FlagNum>  
+                    <Description>STMT PRINT SUPPRESS</Description>  
+                </Results>  
+                <Results>  
+                    <FlagLevelAndSuffix>M00</FlagLevelAndSuffix>  
+                    <FlagType>C</FlagType>  
+                    <FlagNum>88</FlagNum>  
+                    <Description>MY DEPOSIT ELIGIBLE</Description>  
+                </Results>  
+            </FDINRs>  
+        </CommandRs>  
+    </Spectrum>
+    
+
+Local testing:
+
+    
+    
+    https://localhost:8090/oauth2/token?username=infoimage&password=enFoRS1Ige&client_id=s6BhdRkqt3&grant_type=password&scope=READ_PROFILE%20WRITE_PROFILE
+    
+    https://localhost:8090/api/v1/enrollment?access_token=vOBAeLkb95Bmr7iIQi3Wk_5t2pCHdESKSNHBAy8UcaXOz16Lvd5lUJ-N5wh-2FlwLXzWU67c6SVOeTHBFtMI1g
+    
+    {
+        "accountNumber": "999990315",
+        "clientId": "NAOP_SSCU",
+        "customAttribs": {
+            "emailId": "test@rewaew.com",
+            "flagInd1": "S",
+            "flagLevel1": "M",
+            "flagNum1": "69",
+            "flagType1": "C",
+            "reasonNum1": "",
+            "suffix": "00",
+            "surname": "JO" 
+        },
+        "enrollment": "E" 
+    }
+    
+    1. Enrollment
+
+{  
+    "clientId": "InfoIMAGE",  
+    "accountNumber": "26145",  
+    "enrollment": "E",  
+    "customAttribs": {  
+        "suffix": "",  
+        "surname": "LY",  
+        "flagInd1": "S",  
+        "flagLevel1": "M",  
+        "flagType1": "C",  
+        "flagNum1": "69",  
+        "reasonNum1": "",  
+        "emailId": "null"  
+    }  
+}
+
+    
+    
+      
+      
+    <?xml version="1.0" encoding="UTF-8"?>  
+    <soapenv:Envelope  
+        xmlns:soapenv="<http://schemas.xmlsoap.org/soap/envelope/>"   
+        xmlns:urn="urn:[connections.spectrum.summitsite.com](http://connections.spectrum.summitsite.com)"   
+        xmlns:xsd="<http://www.w3.org/2001/XMLSchema>"   
+        xmlns:xsi="<http://www.w3.org/2001/XMLSchema-instance>">  
+        <soapenv:Header/>  
+        <soapenv:Body>  
+            <urn:submitXMLCommand>  
+                <xmlRequest>  
+                    <Summit  
+                        xmlns="<http://summit.fiserv.com>"   
+                        xmlns:xsi="<http://www.w3.org/2001/XMLSchema-instance>" xsi:schemaLocation="<http://summit.fiserv.com/cfg/CommandSchema/sisCommands.xsd>">  
+                        <Spectrum>  
+                            <CommandRq>  
+                                <RequestHeader>  
+                                    <Teller>  
+                                        <ID>INI11</ID>  
+                                    </Teller>  
+                                    <Override>0</Override>  
+                                </RequestHeader>  
+                                <FLAGRq>  
+                                    <Account>26145</Account>  
+                                    <Suffix>00</Suffix>  
+                                    <Surname>ZZ</Surname>  
+                                    <FlagSetOrClear1>S</FlagSetOrClear1>  
+                                    <FlagLevel1>M</FlagLevel1>  
+                                    <FlagType1>C</FlagType1>  
+                                    <FlagNum1>69</FlagNum1>  
+                                    <ReasonNum1></ReasonNum1>  
+                                </FLAGRq>  
+                            </CommandRq>  
+                        </Spectrum>  
+                    </Summit>  
+                </xmlRequest>  
+            </urn:submitXMLCommand>  
+        </soapenv:Body>  
+    </soapenv:Envelope>  
+      
+    2. Un-Enrollment  
+    {  
+        "clientId": "InfoIMAGE",  
+        "accountNumber": "12813",  
+        "enrollment": "P",  
+        "customAttribs": {  
+            "suffix": "",  
+            "surname": "CH",  
+            "flagInd1": "C",  
+            "flagLevel1": "M",  
+            "flagType1": "C",  
+            "flagNum1": "69",  
+            "reasonNum1": "",  
+            "emailId": ""  
+        }  
+    }  
+      
+    <?xml version="1.0" encoding="UTF-8"?>  
+    <soapenv:Envelope  
+        xmlns:soapenv="<http://schemas.xmlsoap.org/soap/envelope/>"   
+        xmlns:urn="urn:[connections.spectrum.summitsite.com](http://connections.spectrum.summitsite.com)"   
+        xmlns:xsd="<http://www.w3.org/2001/XMLSchema>"   
+        xmlns:xsi="<http://www.w3.org/2001/XMLSchema-instance>">  
+        <soapenv:Header/>  
+        <soapenv:Body>  
+            <urn:submitXMLCommand>  
+                <xmlRequest>  
+                    <Summit  
+                        xmlns="<http://summit.fiserv.com>"   
+                        xmlns:xsi="<http://www.w3.org/2001/XMLSchema-instance>" xsi:schemaLocation="<http://summit.fiserv.com/cfg/CommandSchema/sisCommands.xsd>">  
+                        <Spectrum>  
+                            <CommandRq>  
+                                <RequestHeader>  
+                                    <Teller>  
+                                        <ID>INI11</ID>  
+                                    </Teller>  
+                                    <Override>0</Override>  
+                                </RequestHeader>  
+                                <FLAGRq>  
+                                    <Account>12813</Account>  
+                                    <Suffix>00</Suffix>  
+                                    <Surname>ZZ</Surname>  
+                                    <FlagSetOrClear1>C</FlagSetOrClear1>  
+                                    <FlagLevel1>M</FlagLevel1>  
+                                    <FlagType1>C</FlagType1>  
+                                    <FlagNum1>69</FlagNum1>  
+                                    <ReasonNum1></ReasonNum1>  
+                                </FLAGRq>  
+                            </CommandRq>  
+                        </Spectrum>  
+                    </Summit>  
+                </xmlRequest>  
+            </urn:submitXMLCommand>  
+        </soapenv:Body>  
+    </soapenv:Envelope>
+    
+    
+
+  
+  
+
+#### 3.3.3 Custom flag
+
+A header record must exist on the first line in the file. Fields in this
+record are pipe-delimited and they are described in the following table:
+
+ **Field**|  **Type**|  **Required?**|  **Max Length**|  **Description**  
+---|---|---|---|---  
+suffix| String| Optional| 2| Suffix. Members with multiple checking accounts
+will have a separate suffix per checking account. However, since the
+eStatement enrollment status is not selective, the suffix will not affect the
+member's eStatement enrollment status.  
+surname| String| Optional| 2| Surname. Enter first two characters of member's
+surname. If no value is passed, "ZZ" will be used by default.  
+flagInd1| String| Required| 1| Flag Set/Clear Indicator. Enter "S" to set the
+flag (enrolls member into eStatements) or "C" to clear the flag (un-enrolls
+member from eStatements).  
+flagLevel1| String| Optional| 1| Flag Level. Required field for each action.
+Enter the Level of the flag you are setting or clearing: "M" = Member level,
+"S" = Share Level or "L" = Loan Level. "M" should be passed for eStatement
+enrollment/un-enrollment. If no value is passed, "M" will be used by default.  
+flagType1| String| Optional| 1| Flag Type. Required field for each action.
+Supported values: "C" = Control, "R" = Restrictive. "C" should be passed for
+eStatement enrollment/un-enrollment. If no value is passed, "C" will be used
+by default.  
+flagNum1| String| Optional| 2| Flag Number. Required field for each action.
+Supported values: Control Flag = # 1- 90, Restrictive Flag = # 1- 20. "69"
+should be passed for eStatement enrollment/un-enrollment. If no value is
+passed, "69" will be used by default.  
+reasonNum1| String| Optional| 2| Reason Number. Optional field for each action
+on control flags. Required field for each action on restricted flags.  
+emailId| String| Optional| 255| Required for eStatement enrollment when
+flagInd1 = "S".  
+      
+    
+    reasonNum1
+    
+    Supported values:
+    1 - I prefer paper statements
+    2 - I do not have reliable access to a computer or internet connection
+    3 - I am unable to print/save my eStatements from my computer
+    50 - Consolidate status to default
+    80 - Stop file processing
+    81 - Bounceback email
+    82 - 90 days revert to paper
+    83 - Closed account
+    84 - Admin edit
+    85 - Revert back to paper
+    86 - Electronic and paper
+    87 - Remove disclosure accept date
+    88 - No viewable account
+    90 - None
+    99 - None
+    
+    Note: InfoIMAGE is not responsible for handling the actions of the reason code selected, other than enrollment/un-enrollment from eStatements. 
+    For example, if reason code "83" is passed, InfoIMAGE will not automatically close this account.
+    
+
+  
+
+### 3.4 Data Model
+
+infoxchange DB  
+  
+
+#### 3.4.1 Transaction
+
+transaction_id  
+client_id  
+account_number  
+enrollment  
+suffix  
+surname  
+flagSetOrClear  
+flagLevel1  
+flagType1  
+flagNum1  
+reasonNum1  
+member_client_emailid  
+transaction_status  
+retry_count  
+CREATED_ON  
+UPDATED_ON  
+payload_request  
+pathway_response
+
+    
+    
+       
+    
+
+  
+  
+
+#### 3.4.2 TransactionLog
+
+transaction_id  
+client_id  
+account_number  
+payload_request  
+pathway_response  
+    
+    
+      
+    
+
+## 4\. New Environment ( InfoXchange REST API
+)[](https://i3dev.easyredmine.com/projects/esafetybox/wiki/InfoXchange#4-New-
+Environment-InfoXchange-REST-API-)
+
+  
+
+### 4.1. REST API call
+
+E.g.  
+<https://sandboxapi.infoimageinc.com/infoservice/api/v1/account/sscu/?acctAutoCreate=y>
+
+> Payload: {  
+>     "acctNum": "999990418",  
+>     "acctType": "NA",  
+>     "acctName": "Walter Oreilly",  
+>     "status": "A",  
+>     "notifyType": "email",  
+>     "paperlessStatus": {  
+>         "newDeliveryPref": "paperless",  
+>         "stmtType": "default"  
+>     },  
+>     "notifyPref": [  
+>         {  
+>             "emailAddress": "noreply@[noreply.com](http://noreply.com)",  
+>             "emailStatus": "Y",  
+>             "emailAttachmentStatus": "N",  
+>             "emailVerifyStatus": "C"  
+>         }  
+>     ],  
+>     "infoXchange": {  
+>         "pathway": {  
+>             "suffix": "",  
+>             "surname": "OR",  
+>             "flagInd1": "S",  
+>             "flagLevel1": "M",  
+>             "flagType1": "C",  
+>             "flagNum1": "69",  
+>             "emailId": "noreply@[noreply.com](http://noreply.com)"  
+>         }  
+>     }  
+> }
+>
+>  
+> Response: {  
+>     "status": 200,  
+>     "acctNum": "999990418",  
+>     "acctType": "NA",  
+>     "message": "Account 999990418 has been successfully updated"  
+> }
+
+  
+
+### 4.2 Transaction Log in MongoDB
+
+{  
+    "_id": ObjectId("597a895bc4aacbf07c7c6a2d"),  
+    "SURNAME_DEFAULT": "ZZ",  
+    "transactionId": "5C8EA8865D0180730080207D",  
+    "clientId": "sscu",  
+    "accountNumber": "999990418",  
+    "enrollment": "E",  
+    "suffix": "",  
+    "surname": "OR",  
+    "flagInd1": "S",  
+    "flagLevel1": "M",  
+    "flagType1": "C",  
+    "flagNum1": "69",  
+    "isProcessed": 1,  
+    "statusCode": "00",  
+    "transactionStatus": "SUBMITTED",  
+    "retryCount": 0,  
+    "updatedOn": ISODate("2017-07-28T00:46:19.740Z"),  
+    "jsonInputPayload": "{\"clientId\" : \"sscu\", \"accountNumber\" : \"999990418\", \"enrollment\" : \"E\", \"customAttribs\" : {   \"suffix\" : \"\", \"surname\" : \"OR\", \"flagInd1\" : \"S\", \"flagLevel1\" : \"M\", \"flagType1\" : \"C\", \"flagNum1\" : \"69\", \"reasonNum1\" : \"null\", \"emailId\" : \"null\" } }",  
+    "pathwayRequestXml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><soapenv:Envelope xmlns:soapenv=\"<http://schemas.xmlsoap.org/soap/envelope/>\" xmlns:urn=\"urn:[connections.spectrum.summitsite.com](http://connections.spectrum.summitsite.com)\" xmlns:xsd=\"<http://www.w3.org/2001/XMLSchema>\" xmlns:xsi=\"<http://www.w3.org/2001/XMLSchema-instance>\"><soapenv:Header/><soapenv:Body><urn:submitXMLCommand><xmlRequest>&lt;Summit xmlns=&quot;http://summit.fiserv.com&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot; xsi:schemaLocation=&quot;http://summit.fiserv.com/cfg/CommandSchema/sisCommands.xsd&quot;&gt;&lt;Spectrum&gt;&lt;CommandRq&gt;&lt;RequestHeader&gt;&lt;Teller&gt;&lt;ID&gt;INI11&lt;/ID&gt;&lt;/Teller&gt;&lt;Override&gt;0&lt;/Override&gt;&lt;/RequestHeader&gt;&lt;FLAGRq&gt;&lt;Account&gt;999990418&lt;/Account&gt;&lt;Suffix&gt;00&lt;/Suffix&gt;&lt;Surname&gt;OR&lt;/Surname&gt;&lt;FlagSetOrClear1&gt;S&lt;/FlagSetOrClear1&gt;&lt;FlagLevel1&gt;M&lt;/FlagLevel1&gt;&lt;FlagType1&gt;C&lt;/FlagType1&gt;&lt;FlagNum1&gt;69&lt;/FlagNum1&gt;&lt;ReasonNum1&gt;&lt;/ReasonNum1&gt;&lt;/FLAGRq&gt;&lt;/CommandRq&gt;&lt;/Spectrum&gt;&lt;/Summit&gt;</xmlRequest></urn:submitXMLCommand></soapenv:Body></soapenv:Envelope>",  
+    "pathwayResponseXml": "<?xml version='1.0' encoding='UTF-8'?><S:Envelope xmlns:S=\"<http://schemas.xmlsoap.org/soap/envelope/>\"><S:Body><ns2:submitXMLCommandResponse xmlns:ns2=\"urn:[connections.spectrum.summitsite.com](http://connections.spectrum.summitsite.com)\"><submitXMLCommandResponse><Summit xmlns=\"<http://summit.fiserv.com>\" xmlns:xsi=\"<http://www.w3.org/2001/XMLSchema-instance>\"><Spectrum><CommandRs><ResponseHeader><Status><StatusCode>00</StatusCode><StatusDesc>SUCCESSFUL</StatusDesc></Status></ResponseHeader><FLAGRs /></CommandRs></Spectrum></Summit></submitXMLCommandResponse></ns2:submitXMLCommandResponse></S:Body></S:Envelope>"  
+}
+
+    
+    
+      
+    
+
+  
+
+# Q & A
+
+    
+    
+    Q: **What is the URL for SOAP call?**  
+     A:    
+    DEV: <https://pwd.safecu.org/estatements/wsiservices/CmdSpectrum>  
+    PROD: <https://pwp.safecu.org/estatements/wsiservices/CmdSpectrum>
+
+  
+
+### Attachments
+
+250250250250250
+
+  
+
+

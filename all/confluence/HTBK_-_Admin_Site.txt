@@ -1,0 +1,75 @@
+title: HTBK - Admin Site
+body:   
+
+truenone  
+  
+---  
+  
+  
+
+# Admin Site
+
+* * *
+
+#
+
+## Unenroll SSO Feature
+
+Users who have logged into eStatement via SSO will have the  **Unenroll SSO
+**button enabled.
+
+When a user is unenrolled, the following will occur:
+
+  1. SSO Date and SSO Key are set to null.
+  2. Every linked account is checked to see if there are other enrolled users.   
+
+    1. For each account, if there are no enrolled users, the account is switched back to Paper if it is not already on Paper.
+
+## Delete User Feature
+
+Users who have logged into eStatement and have a User Profile (USR_SESSION)
+will have the  **Delete**   **User** button enabled.
+
+When a user is deleted, the following will occur:
+
+  1. Sub-users will be completely removed. 
+    1. USR_SESSION is deactivated.
+    2. SSO date and SSO key are set to null.
+    3. All UFAs are removed.
+    4. Parent-child relationship is removed from USR_TREE.
+    5. Sub-user CIF is removed from USR_MAPPING.
+  2. Primary users are only deactivated.
+    1. USR_SESSION is deactivated.
+    2. SSO date and SSO key are set to null.
+    3. Every linked account is checked to see if there are other enrolled users.
+      1. For each account, if there are no enrolled users, the account is switched back to Paper if it is not already on Paper.
+    4. UFA.source set to DSO to enable Auth file removal
+
+  
+
+# Auth File Processing
+
+* * *
+
+HTBK's auth file processing is set up to maintain only the primary account
+relationships. For business users who have sub-users, the sub-users are
+maintained only through SSO.
+
+## SSO
+
+Retail users log into SSO via NCR (DI). Business users log into SSO via BB.
+
+### Business Rule
+
+Primary users who have logged in via SSO will not be removed in the post-
+process even if the account relationships are removed from the auth file.
+
+#### Technical Implications
+
+  1. Users who logged in via SSO will have the UFA.source set to SSO. These users will now be referenced as SSO Users.
+  2. Auth files will ignore UFAs with UFA.source == SSO. 
+  3. SSO Users can only be removed through the Delete User function on the Admin Site. (see  for more details)
+    1. Primary SSO Users will be reverted to having UFA.source == DSO, allowing the Auth file to remove the corresponding account relationships if they are no longer in the Auth file
+    2. Business Sub-users will be removed 
+
+

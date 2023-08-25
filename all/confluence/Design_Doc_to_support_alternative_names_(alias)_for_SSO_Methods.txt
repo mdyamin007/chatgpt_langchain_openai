@@ -1,0 +1,137 @@
+title: Design Doc to support alternative names (alias) for SSO Methods
+body: ### Introduction
+
+This design documentation is to represent the necessary information and
+changes required to support different names (alias) for existing SSO methods.
+
+### Purpose/Objective Summary
+
+Currently, clients can only SSO via existing SSO methods and the methods
+cannot be called with other names.
+
+The main objective of this feature is to accept client provided SSO names and
+redirect them to existing SSO methods like singleSignOn7, digitalInsightV2
+etc. The alias name might be on the sso-keygen URL params or on the request
+body. This name will be extracted and matched with the predefined alias-method
+map and the client will do SSO via an existing method.
+
+In InfoCONFIG side, there will be a SSO method properties with the client
+selected alias name. This alias method will be similar to an existing SSO
+method with some properties changed or exactly the same. In the Hypercube
+side, this alias method name will be read from request URL or request body and
+via a mapping the predefined SSO method will be executed with the new alias
+method's properties.
+
+### Scope
+
+#### In-Scope
+
+  1. Get the client provided SSO alias from the request URL or request body. 
+  2. Map the alias name to existing SSO method name.
+    1. If the client set an alias name, they always have to request with this alias name to do SSO via that method. For example, if the alias name is **NARMI** then they have to send request on **/NARMI**. They can't send request to "/" (default request) to execute the **NARMI** method. 
+    2. The alias can be a default method. But to execute the alias method, the client has to send sso request to /alias-name. 
+  3. Preserve the previous SSO method's businesses. 
+
+### Requirements
+
+#### Business Requirements & Use Case
+
+ID| Title| Details  
+---|---|---  
+BR_01| Use alias name to do sso| Client will SSO into Hypercube with an
+appropriate method and they will call the method whatever they like. We will
+call it "alias".  
+BR_02| Always request on /alias-name| The client will request on /alias-name
+to do SSO via alias.  
+BR_03| Alias as a default SSO method| The alias can be a default SSO methods
+name but the client have to send request on /alias-name, not on "/" (default
+request).  
+BR_04| Both the alias and the regular method can be configured| If "NARMI" is
+the alias for regular method  **singleSignOn7** , then both NARMI and
+singleSignOn7 can be configured separately on InfoCONFIG.  
+  
+#### Functional Requirements & Use Case
+
+ID| Title| Details  
+---|---|---  
+FR_01| Define alias-method mapping| Define an map object in constants.js.
+key=alias, value=sso method name  
+FR_02| Grab the method name alias from request url| The alias name will be
+provided via request url and grab and match the name with alias-method keys.
+If exists then the method name will be the key's value. If not then it is not
+a valid alias.  
+FR_03| Grab the method name alias from request body| If the method name is not
+provided via request url then it will be grabbed from the request body.  
+FR_04| Preserve existing SSO key gen business| If the alias method is not
+provided or not registered, then the previous sso key gen business will be
+activated.  
+FR_05| Prevent "/" request if default method is alias| The client will not go
+through SSO if the request is on "/" (default request) and the default method
+is an alias.  
+  
+#### QA/Test Requirements
+
+ID| Title| Details  
+---|---|---  
+TR_01| Test alias feature for different sso methods|  
+  
+  
+### Code Changes
+
+Project file path| Method Scope| Changes  
+---|---|---  
+lib/allConstants/constants.js|  
+| SSO_ALIAS_MAP object added on Meteor.App  
+routes/mainRoutes.js| Router.route('/ssoKeyGen/:_method')| Logic added to get
+the alias name and call the mapped auth method  
+lib/allConstants/util.js| getMappedMethodForAlias(alias-name)| New method
+introduced. Will return the existing method name mapped to the alias-name.
+Will return undefined if the alias-name is not present on the SSO_ALIAS_MAP or
+undefined.  
+  
+###  **Sample Data on SSO_AIAS_MAP:**
+
+Sample Map Entries
+
+SSO_ALIAS_MAP: {
+
+        narmi: "singleSignOn7",
+
+        alkemi: "q2sso",
+
+        jackHenry: "digitalInsightV2"
+
+}
+
+  
+
+  
+
+Sample Request and mapping
+
+  *  **https://demo.infoimageinc.com/ssoKeyGen/singleSignOn7  **this will be mapped to **" singleSignOn7"**
+  *  **https://demo.infoimageinc.com/ssoKeyGen/narmi                    **this will be mapped to ** "singleSignOn7"**
+  *  **https://demo.infoimageinc.com/ssoKeyGen/alkemi**                   this will be mapped to " **q2sso** "  
+  *  **https://demo.infoimageinc.com/ssoKeyGen/**                                 this will not be supported if the default method is an alias name like narmi, alkemi or jackHenry
+
+  
+
+ **  
+**
+
+### Feedback / Question / Answers
+
+Question
+
+|
+
+Answer  
+  
+---|---  
+  
+|  
+  
+  
+  
+
+

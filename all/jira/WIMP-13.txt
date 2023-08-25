@@ -1,0 +1,116 @@
+title: Setup Parallel Environment FTPScanner
+description: It's been long over due that we did not setup a proper environment for IS team to run parallel jobs. Currently our parallel processing script reads from production database. This code needs to updated to point to parallel database. David has setup the scanner for stage. It's just a matter of testing. This will improve the overall confusion of scanning files in production in order to run testing in parallel. This will also give DSi independence to transfer files to parallel instead of asking DP or IS staff to help the place file in production to scan prior to running their parallel run.
+
+
+
+Obective:
+
+Installing in Stage Environment first.  We will revisit Dev environment when time permits.
+
+
+
+Stage_PUI(10.8.8.225):
+
+FTPScanner Stage program:
+
+  Program run on D:/scanner
+ * global.ftpRootBUPath=//ftpbu-new/ftpbu_stage
+ * global.ftpDonePath=//ftpbu-new/download_stage
+ * global.scanner.0.ftpRootPath=//rhstore.infoimageinc.com/infoftp_int_stage
+ * global.print.host=http://is-apps.infoimage.com/execute-preparation/
+
+
+
+RHSTORE(10.8.9.74):
+
+
+{noformat}
+infoftp_int_stage:  Stage infoftp_int folder for IS & ISD to place files to be scanned w/o notifying customer{noformat}
+
+
+
+
+FTPBU-New(10.8.9.36): 
+
+
+{noformat}
+download_stage:  Stage download folder that keeps files for 3 months
+ftpbu_stage:  Stage ftpbu folder{noformat}
+
+
+
+
+
+
+
+
+
+author: william.kong
+comment: 10/23:  Meeting was held between Peter, David, and Will K. on this project.  Instructional email was sent by Will K. to Ernest/Peter/David/Terrence/Kent/Neil in regards to this project.  All we need to do now is update the processing script, test and inform IS, ISD, DP, and Network department.
+
+10/28:  Needing to mount via SMB from 10.8.8.225 to rhstore.infoimageinc.com
+
+11/4: Peter plan to test on 11/7 and release 11/12.
+
+12/16:  Peter to send email to internal team that all the files will be purged in the test environment.  Task #2 is to sync the production database to dev database.  Task #3, need access to download server.
+
+
+author: infoimage\ericlan
+comment: Peter, please provide update on this ticket. Thanks!
+
+
+
+
+author: peter.dang
+comment: Script is in unit testing mode by Hosein. JEF#42702.
+
+Junho has sync the incoming file table now we need to coordinate with David to turn on ISD file scanner so we can run integration test.
+
+
+author: william.kong
+comment: *Recap:*
+
+Please test scanning functionality first. We will test the triggering logic once DSi completes the InfoSYNC update to support the 'Trigger' services.
+
+
+
+*DAVID*: Please update the Staging FTPScanner specifications in the description area.
+
+*PETER*: Please coordinate the scanning testing with David along with Hosein.
+
+
+
+
+
+
+
+
+
+
+author: trang809
+comment: I updated the internal ftp, download and ftpbu path per William's specification above. Also update other configuration to ensure the later code are there.I attempted to create acbkbu folder so that I can test but does not have permission. Will try to test again once William help create the folder.
+
+
+author: trang809
+comment: I was able to run a test after William created bbbbbu folder. Waiting for final confirmation on the path before I setup the scheduler.
+
+
+
+
+author: hkhosravani
+comment: the following steps were tested:
+ * get_infotrac.pl was updated to pass database as an argument.
+ * Dev and Parallel procedures GETFILEINFO were updated with parallel server and tested.
+ * Scanner folder /z/infoftp_int/ was tested.
+ * Parallel db was tested to ensure scanner worked properly.
+ * FCBT liq-sim job was processed to test the process as whole.
+
+need to add a step to check against prod db in case parallel db does not have the md5 for incoming file.
+
+
+author: hkhosravani
+comment: job is set to QA.
+
+
+author: hkhosravani
+comment: job has been released to production.

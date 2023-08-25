@@ -1,0 +1,182 @@
+title: WECU - [24612][pvt][in-house] Mortgage Loan Statement for borrower with Bankruptcy not producing
+description: IS Assessment
+=============
+Hours for development: 3 IS hours
+Turnover Date : 12/22/2021
+Sample to QA Date: 12/27/2021 
+Sample Approval Date: 12/28/2021
+Go live date : 12/31/2021
+
+Assessment Details (IS):
+-
+
+
+
+Bankruptcies on all 3 Loan Bill templates (Installment, Mortgage, LOC) should be suppressed unless noted in the exception below:
+
+EXCEPTION: OnMortgage template, do NOT SUPPRESS if either of the following are true.
+
+Major Code = CML, and Minor Code = IARM or IFXD
+Major Code = MTG, and Minor Code = FIXD or MHPK or CARM or ARMS or HEFX or CFXD or USDA
+
+
+
+author: tohiduli
+comment: 
+
+Project(WECUML11.zip) exported to QA folder.
+
+Parallel ID:20211223095056
+
+E-statement index:ml1_20210918_6_20211223_1018_wecu.txt
+
+Print Range:947-948 5403-5406, 5539-5542, 5651-5654
+
+File ID: 4.2o1
+
+Attached dpvs
+
+[^wecuml1618.print]
+
+
+
+
+
+
+author: igor.khosid
+comment:    Parallel ID: 20211223095056
+   Currently in parallel: Yes
+   User: tohidulI
+   Description: WECU IS-689 update
+   Date Submitted: 2021-12-23 09:51:11
+   Date Last Updated: 2021-12-23 10:04:32
+   Files:
+      1) WECUML11.dfa
+
+
+
+author: igor.khosid
+comment: QA - completed
+>
+  SUBSTITUTE MAJOR_MINOR_SUPPRESSION_TABLE
+    DEFAULT= 'FALSE',
+    'CML_IARM' = 'TRUE',
+    'CML_IFXD' = 'TRUE',
+    'MTG_MHPK' = 'TRUE',
+    'MTG_CARM' = 'TRUE',
+    'MTG_ARMS' = 'TRUE',
+    'MTG_HEFX' = 'TRUE',
+    'MTG_USDA' = 'TRUE',
+    'MTG_CFXD' = 'TRUE',
+    'MTG_FIXD' = 'TRUE' ;
+
+<
+  IF UPPER(STATEMENT_TYPE)==UPPER('bk-7') OR UPPER(STATEMENT_TYPE)==
+   UPPER('bk-13') OR DELINQUENCY_NOTICE_FOUND==1 ;
+>
+  IF SUBSTITUTE(MAJOR_MINOR_SUPPRESSION_TABLE,MAJOR_CODE!'_'!
+   MINOR_CODE)=='FALSE' AND (BANKRUPTCY_CHAP=='CH7' OR 
+   BANKRUPTCY_CHAP=='CH11' OR BANKRUPTCY_CHAP=='CH12' OR 
+   BANKRUPTCY_CHAP=='CH13') ;
+
+
+author: tohiduli
+comment: Hi [~TunA]
+
+Does this update need parallel?
+
+
+author: JIRAUSER10911
+comment: [~tohidulI] [~TunA] 
+
+
+
+Any update on sample? Due date is set for today.
+
+
+author: tohiduli
+comment: Hi [~Kbittmann]
+
+PDF sample attached
+
+[^wecuml11.pdf]
+
+QA is completed. Can you create a parallel form?
+
+
+author: JIRAUSER10911
+comment: [~tohidulI] [~Igor.Khosid] 
+
+
+
+Samples approved. Parallels 25188 and 25189 created.
+
+
+author: igor.khosid
+comment: [~tohidulI] [~MattL]
+
+[~tohidulI] - Please attach IS checklist
+
+
+author: tohiduli
+comment: Hi [~Igor.Khosid]
+
+IS Checklist attached
+
+[^IS-689_IS_CHECKLIST_12302021.docx]
+
+
+author: igor.khosid
+comment: IS checklist - attached >>>  [^IS-689_WECU_IS_Checklist.pdf] 
+
+
+author: william.kong
+comment: [~fahad]: Please prepare program transfer form and attach to this ticket. If Igor passes this Project, I will need to get Yamee to assist with the code release before 12pm PST since today is half day.
+
+
+author: tohiduli
+comment: Hi [~William.Kong] 
+
+[^IS_PROGRAM_TRANSFER_FORM_IS_689.doc]
+
+Is transfer form attached
+
+
+author: william.kong
+comment: [~Jessica]/[~Kbittmann]: per our scrum meeting. I recalled mentioning this needs to go through parallel to test suppression. It's past 12:30pm PST so I'm not sure if we can release it today. We will need to ask DP to hold job until parallel has past to release code before processing their cycle.
+
+
+author: william.kong
+comment: [~Jessica]/[~Kbittmann]: Please advise if we are on schedule for tomorrow's live date since we are still pending parallel...
+
+
+author: JIRAUSER10911
+comment: [~tohidulI]
+
+Ready for code release.
+
+
+author: tohiduli
+comment: Hi [~TunA]
+
+Can you release the code?
+
+the file is checked into the xfer folder.
+
+File list is in the attached transfer form.
+
+
+author: tuna
+comment: Hi [~tohidulI], [~Kbittmann],
+
+Following file has been releaased.
+
+Thanks,
+
+Tun
+
+
+
+20220107140817 01/07/2022 tohidulI IS-689 WECU - [24612][pvt][in-house] Mortgage Loan Statement for borrower with Bankruptcy not producing
+
+-rwxrwxrwx 1 tohidulI DSI 278449 Jan 7 05:42 /d/is/cvs/xfer/tohidulI/WECUML11.dfa

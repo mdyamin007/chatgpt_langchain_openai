@@ -1,0 +1,500 @@
+For hardcoded IMB barcodes in remittance addresses like below
+You can create this using this code:
+      CREATEOBJECT BAROBJ(USPS4STATECUSTBARC)
+        POSITION (SAME-0.19)  (LASTMAX+0.05) 
+        PARAMETERS
+          ('BARCODEIDENTIFIER'='00')
+          ('SERVICETYPEIDENTIFIER'='703')
+          ('CUSTOMERIDENTIFIER'='901141')
+          ('SEQUENCEIDENTIFIER'='913000000')
+          ('DELIVERYPOINTZIPCODE'='145340346')
+          ('HEIGHT'='.134')
+          ('HRI'='3')
+          ('FONTNAME'='xzar00(10,70)');
+Reference: PFCUML1
+Service type(SERVICETYPEIDENTIFIER) is standard value 703 for IMB remittance(BRE). STID(SERVICETYPEIDENTIFIER) 703 is for CRE courtesy return envelope.
+For values in this code, you can find this in the IS database inside IMB_TRAC
+Here map these values like this
+asd
+DatabaseCodeMAIL_ID
+CUSTOMERIDENTIFIER
+SEG = 0
+SEQUENCEIDENTIFIER=000000
+DELIVERYPOINTZIPCODE = 5digit zip code + 4digit area code + 2 digit delivery point
+For 2 digit delibvery point code, lookup here:
+https://tools.usps.com/zip-code-lookup.htm?byaddress
+asked for the below information from IM:  Barcode ID STID MID Serial # Zip+4 Delivery Point and IM will probably ask Ops.
+Imb bar code testing discussion with Igor:
+Visit imbgenerator to test scanning imb bar code.To validate the imb bar code number visit imbdecoder
+Peters training on imb bar code
+Video Transcript
+[00:00:00 --> 00:00:11]  Okay, so let's take a look at this real quick.
+[00:00:11 --> 00:00:23]  All right, so we're talking about IMB training today, and we emphasize on remittance IMB.
+[00:00:23 --> 00:00:25]  Okay.
+[00:00:25 --> 00:00:27]  So, what are IMB, right?
+[00:00:27 --> 00:00:36]  These are for intelligent mail ball code, and you can see, as you can see here, these up and down bar here.
+[00:00:36 --> 00:00:41]  They represent some information inside of it. Okay.
+[00:00:41 --> 00:00:47]  And this on top here, this is an IMB, but it's not a remittance IMB, right?
+[00:00:47 --> 00:00:54]  Remittance meaning something that you look at the bottom here, where it has a coupons.
+[00:00:54 --> 00:01:08]  Okay. And for our, you know, our company, the address are normally placed on the right hand side.
+[00:01:08 --> 00:01:12]  Okay. And normally, it's statics.
+[00:01:12 --> 00:01:17]  Okay. Meaning this address does not change.
+[00:01:17 --> 00:01:32]  And the other IMB is this is the mailer IMB where we send it out to recipient, mail to recipient, and this, every record, right, of the clients have a different address.
+[00:01:32 --> 00:01:47]  So, on the left top corner, okay, of the page, you can see, and as you can see, alongside with it, it's also have other information, the ball code, etc.
+[00:01:47 --> 00:01:55]  And then there's a endorsement here, return services request.
+[00:01:55 --> 00:02:01]  You look at down here, we don't see the return services requested, right? There's a reason for that as well.
+[00:02:01 --> 00:02:09]  Okay, so why, why do you use an IMB? Why we just, you know, need this.
+[00:02:09 --> 00:02:30]  The post office has many programs on all in US, there's many type of programs, and IMB, if you, you know, want to take advantage of, you know, besides just tracking, right, there's other services like chain address requests, etc.
+[00:02:30 --> 00:02:37]  So those are type of program that provides by US post office.
+[00:02:37 --> 00:02:52]  And so, one of the main advantage here is also if you want automation, meaning reduced price of the mail piece, right, you have to have the IMB in it.
+[00:02:52 --> 00:03:03]  So let's say a mail, one envelope with, you know, three pages going out, it may cost 55 cents, right, without the IMB.
+[00:03:03 --> 00:03:15]  But with the IMB, and we sorted many volumes, right, this piece can go down to, I don't know, 35 cents, etc.
+[00:03:15 --> 00:03:30]  So that's the advantage of having, you know, using the IMB for us. I mean, if I'm at home and I just mail out to one client, or to my parents or something like that, I don't need this IMB.
+[00:03:30 --> 00:03:51]  But for our company, because we are service provider to our credit unions and bank, we have many clients out there, right, and therefore, by combining them and, you know, sort them, then we get a qualified mail piece, much, much lower price.
+[00:03:51 --> 00:03:57]  So it's a good, you know, discount for our clients.
+[00:03:57 --> 00:04:12]  Okay, so that's the difference between, you know, right now I'm talking about the mailer for recipient IMB and the sender.
+[00:04:12 --> 00:04:27]  Yeah, go ahead. Yeah, when you say you short it, based on what you short it, based on area, John? Yeah, yeah, so the, we, you know, we have a machine, right.
+[00:04:27 --> 00:04:36]  When we insert all these paper or stuff that into one envelope, right, once it's done, put in there.
+[00:04:36 --> 00:04:44]  That could be 100,000, right. Operator will load that into a machine called shorters. Okay.
+[00:04:44 --> 00:04:53]  And when it's short, it reads the IMB in here, or the address, I'm sorry, it reads the address block.
+[00:04:53 --> 00:05:00]  It based on the zip code, etc. So it try to group them together.
+[00:05:00 --> 00:05:11]  So let's say everybody in 47130 will be, you know, in that, in that
+[00:05:11 --> 00:05:21]  orders, right, and then 47120 will be the next order, etc. Right. So they pack them all that, you know, together.
+[00:05:21 --> 00:05:24]  Does that make sense?
+[00:05:24 --> 00:05:38]  So it's actually physical shorted, and then it spit it out back into a different, like another bins that contain all these envelopes sorted.
+[00:05:38 --> 00:05:46]  So when they ship it to our USPS office, they already know, they already know that hey, all these are sorted, they don't need to run sorted again.
+[00:05:46 --> 00:05:54]  And the way to do that is that 47130 is in this case, it's in Indiana, right.
+[00:05:54 --> 00:06:13]  They know right away, and their machine, you know, they don't have to store it again. So it's much faster to mail it to send it out to other people when they are grouped in, you know, by zip code, etc.
+[00:06:13 --> 00:06:16]  Okay.
+[00:06:16 --> 00:06:35]  There's a lot of stuff in the IMB, you know, I'm going to cover here in a few more minutes. Return service request, right. This is endorsement. It tells when there's, when there, this person here no longer live there, right.
+[00:06:35 --> 00:06:46]  So what does it do, what does the mail person do, right. So, what they do is they look at the endorsement here, depending on what we have here, right.
+[00:06:46 --> 00:06:53]  So if this is called return, so it will send it this back to this bank.
+[00:06:53 --> 00:06:56]  Yeah, to the bank.
+[00:06:56 --> 00:07:01]  Now, in the remitted address block here.
+[00:07:01 --> 00:07:11]  As I mentioned here is hard coded. Yeah, this is dynamic generate from our TXT right at the top, the bottom is all hard coded.
+[00:07:11 --> 00:07:20]  There's one client that actually dynamic but very very certain that we see a dynamic remitted barcode.
+[00:07:20 --> 00:07:28]  But anyhow, let's take a look at the structure of the IMB real quick.
+[00:07:28 --> 00:07:38]  All right, so here is the structure. So, as you can see, the first it divide to four section here.
+[00:07:38 --> 00:07:42]  And the first one is barcode ID.
+[00:07:42 --> 00:07:44]  It made something.
+[00:07:44 --> 00:07:49]  And then they have a track service type ID. Very important here.
+[00:07:49 --> 00:08:00]  It has meaning. And then of course it contain the customer number. We call them mail ID.
+[00:08:00 --> 00:08:08]  And as you can see here, it has 15 digits.
+[00:08:08 --> 00:08:11]  And then, of course, the zip code.
+[00:08:11 --> 00:08:21]  You can see up here the zip code right now is only by digits. Okay. In here, but why is in here to have, you know, 11.
+[00:08:21 --> 00:08:25]  So let's talk about this service type ID.
+[00:08:25 --> 00:08:35]  If you go to USPS website today, and you search for service type ID, it will give you a lot of different type of service.
+[00:08:35 --> 00:08:46]  Each of them, like I mentioned earlier, these are type of programs that USPS service provider for, you know, their customer.
+[00:08:46 --> 00:08:52]  And depending on what you enroll in. Okay, you will use that type of service ID.
+[00:08:52 --> 00:08:59]  So, for our company currently right now we have two type, right, or three type.
+[00:08:59 --> 00:09:10]  So, as you can see 036 041 and 703. Okay. These are the three main one that we couldn't use.
+[00:09:10 --> 00:09:15]  Although the subject we change in the future, if we add more.
+[00:09:15 --> 00:09:19]  So 036 and 041.
+[00:09:19 --> 00:09:45]  It meant
+[00:09:50 --> 00:09:58]  Yes, yes, yes.
+[00:09:58 --> 00:10:10]  Yes, so the client have to, to basically fill out the information.
+[00:10:10 --> 00:10:13]  When they sign up to type of
+[00:10:13 --> 00:10:22]  Service with us. So in the confluence like we do have some of the specs.
+[00:10:22 --> 00:10:28]  So let's take a service ID service type ID. It's not complete. So it's when you see here.
+[00:10:28 --> 00:10:31]  So we got 036 041.
+[00:10:31 --> 00:10:44]  I see.
+[00:10:44 --> 00:10:48]  Yeah, I see.
+[00:10:48 --> 00:11:02]  So, as far as I know, 041, that mean, 0 tracking. Yes. 036 it mean mail tracking. No, that's correct. That's correct.
+[00:11:02 --> 00:11:06]  And also there is another one on in this.
+[00:11:06 --> 00:11:13]  It is 2255. I got 2.5 or 522. This electronic service.
+[00:11:13 --> 00:11:20]  Yeah. Yeah. So, 036, as you can see right here, it's called manual.
+[00:11:20 --> 00:11:21]  Right.
+[00:11:21 --> 00:11:25]  No, no confirmation you see that destination confirm.
+[00:11:25 --> 00:11:32]  There's none of that but 041 is a destination confirmed. So that mean it can be checked. Right.
+[00:11:32 --> 00:11:34]  So a lot of.
+[00:11:34 --> 00:11:50]  Now that you know we have a way to check some information. We basically using this code 041. What that does is that when the service type ID.
+[00:11:50 --> 00:12:09]  To my screen. When the customer, yes, I see this information. What I do is they provide the details. When this mail piece deliver by, you know, each stage.
+[00:12:09 --> 00:12:13]  So if you look at on info tracks today.
+[00:12:13 --> 00:12:25]  You see that right.
+[00:12:25 --> 00:12:37]  So we look at info track today.
+[00:12:37 --> 00:12:43]  You can just pick up the same company like sent
+[00:12:43 --> 00:12:47]  that we are using job status.
+[00:12:47 --> 00:12:50]  You see there a truck here. Right.
+[00:12:50 --> 00:12:54]  That mean is by tracking information.
+[00:12:54 --> 00:12:57]  You click on any of these pre sorts.
+[00:12:57 --> 00:13:00]  You will see whether it's deliver or not.
+[00:13:00 --> 00:13:10]  You see the word deliver here. I mean it deliver. Now you click on the truck. It will tell you when it deliver. See that.
+[00:13:10 --> 00:13:12]  Okay.
+[00:13:12 --> 00:13:18]  Now why does two I think one is going to the main hub.
+[00:13:18 --> 00:13:20]  And then
+[00:13:20 --> 00:13:25]  the second one actually probably deliver going out to to
+[00:13:25 --> 00:13:29]  to the address itself.
+[00:13:29 --> 00:13:35]  So that's how that information sent back to us and
+[00:13:35 --> 00:13:40]  when we mail when we code it with this information
+[00:13:40 --> 00:13:43]  in our TSC record.
+[00:13:43 --> 00:13:47]  We also keep track of it.
+[00:13:47 --> 00:13:50]  So we send it to
+[00:13:50 --> 00:13:52]  ISD
+[00:13:52 --> 00:14:00]  We place an ISD share where it contains each of these records and we
+[00:14:00 --> 00:14:04]  basically store that information until
+[00:14:04 --> 00:14:08]  we get the information coming back. Right. If this thing run daily
+[00:14:08 --> 00:14:11]  where it check to see hey is this
+[00:14:11 --> 00:14:15]  IMB here match what USB has sent to us. If it does
+[00:14:15 --> 00:14:18]  what is the status. So it said deliver then
+[00:14:18 --> 00:14:22]  the program will update that records
+[00:14:22 --> 00:14:27]  to have a check called deliver. And so that's how when you look up here you see
+[00:14:27 --> 00:14:30]  and then for the it's delivered.
+[00:14:30 --> 00:14:35]  So I can see here 0 0 0 41. This is the full IMB here.
+[00:14:35 --> 00:14:38]  So here we are using the API of
+[00:14:38 --> 00:14:42]  the space right. Yes.
+[00:14:42 --> 00:14:48]  OK so the thing is there is multiple mail mailer in US right.
+[00:14:48 --> 00:14:51]  Now we are using two mailers here.
+[00:14:51 --> 00:14:55]  Yes. Right now we are using 0 41.
+[00:14:55 --> 00:14:57]  0 41 and 0 36.
+[00:14:57 --> 00:15:01]  0 36 which very rare. OK. Right now I think 0 41 because anybody
+[00:15:01 --> 00:15:06]  want to be tracked. So 0 41 become a standard.
+[00:15:06 --> 00:15:11]  And the next one we have that we just implemented this year called return mail.
+[00:15:11 --> 00:15:13]  Right.
+[00:15:13 --> 00:15:17]  That's I think that's a slight to show me.
+[00:15:17 --> 00:15:22]  That's a difficult code. If you look at let's see we have some job that already there.
+[00:15:22 --> 00:15:26]  Let's go home here.
+[00:15:26 --> 00:15:33]  I believe Cambridge is very live with that.
+[00:15:33 --> 00:15:45]  Job status. Let's take a look at a few jobs down here.
+[00:15:45 --> 00:15:54]  OK. So I can see here says real fight to to see that.
+[00:15:54 --> 00:15:58]  I don't see any complete tracking yet.
+[00:15:58 --> 00:16:00]  Go back.
+[00:16:00 --> 00:16:02]  Another job.
+[00:16:02 --> 00:16:05]  Daily notice.
+[00:16:05 --> 00:16:10]  11 to 2.
+[00:16:10 --> 00:16:15]  Let's take a look at LLC.
+[00:16:15 --> 00:16:17]  OK.
+[00:16:17 --> 00:16:22]  So this far too. Now if you look at the PDF itself.
+[00:16:22 --> 00:16:28]  It has a different endorsement.
+[00:16:28 --> 00:16:31]  And you can see here electronic.
+[00:16:31 --> 00:16:33]  It's requested. OK. Yes.
+[00:16:33 --> 00:16:45]  What this really mean. Right.
+[00:16:45 --> 00:16:51]  All right. So we have this but everything else the same contained.
+[00:16:51 --> 00:16:59]  The only thing is far too too. So this is a different service like I told you this type service type.
+[00:16:59 --> 00:17:03]  It's different program that provide by USPS.
+[00:17:03 --> 00:17:09]  So what it does is that what electronic service request type.
+[00:17:09 --> 00:17:10]  Right.
+[00:17:10 --> 00:17:16]  Is 0 5 2 5 2 2.
+[00:17:16 --> 00:17:21]  And we call it in the control file we call it.
+[00:17:21 --> 00:17:24]  OK. So we look at the control file.
+[00:17:24 --> 00:17:32]  We we use the the mail service type as yes.
+[00:17:32 --> 00:17:34]  Yes.
+[00:17:34 --> 00:17:41]  Or an MCO.
+[00:17:41 --> 00:17:49]  Yes.
+[00:17:49 --> 00:17:50]  Yes.
+[00:17:50 --> 00:17:51]  So one.
+[00:17:51 --> 00:17:57]  And that's automatically put in the type 5 2 2 for you. You don't have to hard code.
+[00:17:57 --> 00:17:59]  The rest is yes.
+[00:17:59 --> 00:18:00]  A 3.
+[00:18:00 --> 00:18:02]  Oh yeah. Very rarely see.
+[00:18:02 --> 00:18:03]  Yes.
+[00:18:03 --> 00:18:04]  3 and 4.
+[00:18:04 --> 00:18:05]  The same.
+[00:18:05 --> 00:18:21]  We have another another type for 0 41 because some client has more than a million mail piece and they need an extended melody and I explained that real quick here.
+[00:18:21 --> 00:18:30]  So any other question in term of the service type.
+[00:18:30 --> 00:18:38]  OK. So in here that contain the customer ID.
+[00:18:38 --> 00:18:41]  The barcode ID will be always 0 0.
+[00:18:41 --> 00:18:42]  No.
+[00:18:42 --> 00:18:43]  The first it is.
+[00:18:43 --> 00:18:44]  Oh yeah.
+[00:18:44 --> 00:18:45]  Well I did right now.
+[00:18:45 --> 00:18:46]  Not always.
+[00:18:46 --> 00:18:47]  OK.
+[00:18:47 --> 00:18:48]  Going out.
+[00:18:48 --> 00:18:50]  I think confirm mail.
+[00:18:50 --> 00:18:51]  That's another one.
+[00:18:51 --> 00:18:52]  It can be different.
+[00:18:52 --> 00:18:54]  So one etc.
+[00:18:54 --> 00:18:57]  But right now for us it's all 0 0.
+[00:18:57 --> 00:19:03]  OK.
+[00:19:03 --> 00:19:06]  Here the IMB.
+[00:19:06 --> 00:19:08]  Mel ID contain.
+[00:19:08 --> 00:19:09]  Fits and digits.
+[00:19:09 --> 00:19:10]  Right.
+[00:19:10 --> 00:19:16]  So the customer when they they want this type of program they have to apply.
+[00:19:16 --> 00:19:17]  Right.
+[00:19:17 --> 00:19:22]  Let's say I have a company and I want to have the melody.
+[00:19:22 --> 00:19:31]  I have to fill out the form with USPS and they will give me an identification number.
+[00:19:31 --> 00:19:33]  Normally they ask what's your volume of mail.
+[00:19:33 --> 00:19:34]  Right.
+[00:19:34 --> 00:19:38]  If it's less than a million in a month they will give you nine.
+[00:19:38 --> 00:19:41]  I mean yeah.
+[00:19:41 --> 00:19:43]  Nine digits melody.
+[00:19:43 --> 00:19:45]  OK.
+[00:19:45 --> 00:19:54]  And if you have more than if you like a big service provider I guess they will give you six digit melody.
+[00:19:54 --> 00:19:55]  OK.
+[00:19:55 --> 00:19:58]  And there's a reason for that.
+[00:19:58 --> 00:20:00]  And some customers in between.
+[00:20:00 --> 00:20:05]  I am not a modern million but less than I don't know.
+[00:20:05 --> 00:20:06]  20 million.
+[00:20:06 --> 00:20:08]  Right.
+[00:20:08 --> 00:20:10]  So they give them a six digits.
+[00:20:10 --> 00:20:13]  Right.
+[00:20:13 --> 00:20:16]  Or sorry they said you know what.
+[00:20:16 --> 00:20:18]  You can apply for another one.
+[00:20:18 --> 00:20:22]  So you can have two Mel ID for one client.
+[00:20:22 --> 00:20:24]  They can have two Mel ID.
+[00:20:24 --> 00:20:27]  So here customer means the bank rate.
+[00:20:27 --> 00:20:28]  The bank.
+[00:20:28 --> 00:20:29]  Yeah the bank.
+[00:20:29 --> 00:20:32]  So the bank can have two Mel ID like East West Bank have two Mel ID.
+[00:20:32 --> 00:20:35]  For that is they volume too high.
+[00:20:35 --> 00:20:40]  And one Mel ID can can have a duplicate.
+[00:20:40 --> 00:20:42]  This this number here can be duplicate.
+[00:20:42 --> 00:20:45]  So I will explain what's meant by duplicate.
+[00:20:45 --> 00:20:48]  So the melody can have nine number.
+[00:20:48 --> 00:20:50]  The six last six number.
+[00:20:50 --> 00:20:51]  Okay.
+[00:20:51 --> 00:20:58]  It will be automate generated sequentially for every piece.
+[00:20:58 --> 00:21:01]  Right. So within a month.
+[00:21:01 --> 00:21:04]  This number here.
+[00:21:04 --> 00:21:07]  Sorry USPS can only keep track 45 days.
+[00:21:07 --> 00:21:16]  Within 45 days this number can read run again the six six number sequence so that's if you have volume more than a million.
+[00:21:16 --> 00:21:22]  It might you know you might see the same same piece again right.
+[00:21:22 --> 00:21:30]  So that's why they want to make sure that if you your volume is more than a million you might even get another Mel ID.
+[00:21:30 --> 00:21:40]  And the way we if the client has to Mel ID we will divide the application which one to use which Mel ID.
+[00:21:40 --> 00:21:49]  So East West Bank that DDA use ESA 3 and their loans and daily notice we use ESA 4 so they have two different melody.
+[00:21:49 --> 00:21:53]  Okay.
+[00:21:53 --> 00:22:01]  Now, when, when before we didn't have tracking info image using six digit number.
+[00:22:01 --> 00:22:06]  Six which Mel IDs which is 036 and the rest here is a sequence.
+[00:22:06 --> 00:22:20]  So that's six. That's nine digit right. So it's a huge volume right nine digits that's almost hundred million 99 million.
+[00:22:20 --> 00:22:23]  So that volume is really big.
+[00:22:23 --> 00:22:32]  When we hit when we have a lot of volume, because we if we use your 36 that means all the banks and great union will use the same melody at that time.
+[00:22:32 --> 00:22:38]  That should be sufficient to hold that many number for 45 days.
+[00:22:38 --> 00:22:43]  But again, we don't use info image Mel ID at this point.
+[00:22:43 --> 00:23:06]  So going forward, we will use the customer Mel ID. And I think it's required for all the customers apply for Mel ID when they enroll them, you know, to our service.
+[00:23:06 --> 00:23:14]  Yeah, yeah, yeah, yeah.
+[00:23:14 --> 00:23:29]  Yeah, yeah because the sequence number are so large, right sequential number are so large, it will not overlap overlap.
+[00:23:29 --> 00:23:39]  Right nine digits right you talk about nine digits sequential.
+[00:23:39 --> 00:23:44]  No bank banks, crazy and they have the old Mel ID right there six right.
+[00:23:44 --> 00:23:55]  So if their volume is more than that, they will have to apply for another melody but yeah, they know their body.
+[00:23:55 --> 00:24:07]  So, you know, 996 that in 100,000 right so you talk about 99 hundred thousand.
+[00:24:07 --> 00:24:22]  Not a million yet, right before million piece in 45 days right that's a lot of mail. So, if their customer base is like 200,000.
+[00:24:22 --> 00:24:30]  And you talk about their file application. You just multiply five with 200,000.
+[00:24:30 --> 00:24:40]  Man, it's not gonna hit 9999 hundred thousand.
+[00:24:40 --> 00:24:58]  Okay. And then the last piece up here is very important, and it contains a zip code, plus the four digits extended zip code number, and then the to delivery preference.
+[00:24:58 --> 00:25:14]  So that's the construction of the IMB. And so the post office be quiet, the all these fields, right, to put in correctly before it can deliver
+[00:25:14 --> 00:25:18]  and see this.
+[00:25:18 --> 00:25:24]  This first string.
+[00:25:24 --> 00:25:26]  Okay.
+[00:25:26 --> 00:25:31]  Next is the
+[00:25:31 --> 00:25:37]  you know in our program, right when we code the IMB.
+[00:25:37 --> 00:25:41]  So for remittance piece.
+[00:25:41 --> 00:25:47]  We have to hard code it right for the for the regular mail.
+[00:25:47 --> 00:25:56]  We have to hard code the mail code service type in a control file, and that's all we do today we don't have to hard code anything.
+[00:25:56 --> 00:25:59]  It all remarried generate that at the print step.
+[00:25:59 --> 00:26:09]  But this piece right here for remittance is not generally at the print step, it actually inside of document format for steps right.
+[00:26:09 --> 00:26:18]  So we hard code this information. So what it contains is exactly those four fields that we're talking about. Bokel identifier, right.
+[00:26:18 --> 00:26:22]  Service type identifier.
+[00:26:22 --> 00:26:26]  Customer identifier, sequent into the report.
+[00:26:26 --> 00:26:34]  Okay, let's take a look at that real quick.
+[00:26:34 --> 00:26:43]  We might run overtime a little bit if anybody has to leave that's fine.
+[00:26:43 --> 00:26:49]  So I know you know this so we click on right click on this information and see here.
+[00:26:49 --> 00:26:55]  So ballcode and fire.
+[00:26:55 --> 00:27:00]  It has 703. Yeah.
+[00:27:00 --> 00:27:08]  Then customer identifier. At this point, it has 901141 why six digits right it should be.
+[00:27:08 --> 00:27:10]  Should be nine, right.
+[00:27:10 --> 00:27:15]  And then sequence identifier is 913000 okay.
+[00:27:15 --> 00:27:27]  So what's that mean here. If you click on this the old papaya 6.2 version is only take six digits for the customer ID. So we we split the mail ID nine digits.
+[00:27:27 --> 00:27:34]  Six here, and plus three over here. We, we took the last three and we abandoned here.
+[00:27:34 --> 00:27:36]  You see that.
+[00:27:36 --> 00:27:43]  That's the old papaya stuff how you know we coded, and then the rest. It's a sequence sequential number.
+[00:27:43 --> 00:27:47]  We hard coded 006 digit.
+[00:27:47 --> 00:27:51]  Okay. Remember when I talk about the structure of the email ID.
+[00:27:51 --> 00:27:57]  Because my ID has 15 digits.
+[00:27:57 --> 00:28:05]  Nine digits is the melody itself. Right. So, this is six plus 913 does three more here, that's nine digits, that's the melody.
+[00:28:05 --> 00:28:10]  And the other sequential right here.
+[00:28:10 --> 00:28:20]  So you can type this now with the new papaya that we're using. So instead of doing split you can do 913. Okay. Remember down here.
+[00:28:20 --> 00:28:24]  You can enter the customer identity either six or nine, right.
+[00:28:24 --> 00:28:30]  You can do nine. And then over here you can just
+[00:28:30 --> 00:28:36]  just put zero zero like that.
+[00:28:36 --> 00:28:38]  It's the work, right.
+[00:28:38 --> 00:28:49]  It says the same thing as, you know, take out 913 in a pen to the sequence to the identity ID sequence number here.
+[00:28:49 --> 00:28:53]  And then next is the zip code.
+[00:28:53 --> 00:28:57]  And you see here, this is a five digit zip code.
+[00:28:57 --> 00:29:00]  And you can tell right the way.
+[00:29:00 --> 00:29:11]  This zip code right here, that's not matching this, you see this 47202, and we're using 84604. Right.
+[00:29:11 --> 00:29:14]  So that means this is wrong. Right.
+[00:29:14 --> 00:29:26]  And if you can see here again, this extends for, we don't know where, you know, who have this information or why they enter this, and in the last two digits, do little preference.
+[00:29:26 --> 00:29:36]  So, when you see this information like that, that means incorrect, not just the zip code cell, but the melody here.
+[00:29:36 --> 00:29:44]  This may not belong to this customer. Right. Somebody just forgot to leave this as a placeholder.
+[00:29:44 --> 00:29:49]  And did not update this IMB correctly.
+[00:29:49 --> 00:29:57]  Okay. And that's causing a very big issue for us. Now, let me explain what's the big issue.
+[00:29:57 --> 00:30:00]  So, this is a remittance.
+[00:30:00 --> 00:30:10]  And this customer ABC here, old, well has a bill balance of $1,800.
+[00:30:10 --> 00:30:11]  Okay.
+[00:30:11 --> 00:30:20]  And they need to pay, right. So they received the statement they need to pay. So what they do, they cut the tear this off piece of coupon off.
+[00:30:20 --> 00:30:28]  And they place this in the envelope with the address right here, with the payments. Right.
+[00:30:28 --> 00:30:36]  Now when USPS see this barcode, it overrides this, you know, this address up here. They don't care.
+[00:30:36 --> 00:30:46]  They just look at this, and they deliver to that, you know, zip code based on the IMB contain, right, which is 86 something we saw earlier.
+[00:30:46 --> 00:30:51]  And that's go to a different bank or create union. Right.
+[00:30:51 --> 00:31:00]  So, the other bank, or suddenly receive a lot of bills from this client and they don't know what happened I why did they do see the news.
+[00:31:00 --> 00:31:03]  Well, the problem is right in this IMB here.
+[00:31:03 --> 00:31:11]  And so, you know, there's a lot of, you know,
+[00:31:11 --> 00:31:31]  restoration things work that we have to do in the background to correct this information from the business in a first of all, this statement here, because it mailed to a wrong credit union, it takes like a month later to find out when, and when that they find out this information
+[00:31:31 --> 00:31:42]  is to, it's basically they miss a month. So if you look at when you miss a month, the interest depend on 3.5 of 24,000 right.
+[00:31:42 --> 00:31:50]  That can be huge. If they're the outstanding principle is, you know, bigger than this. So depend on on their interest.
+[00:31:50 --> 00:32:03]  It could go up to, you know, 1000 2000 per customer. Right. That mean this customer don't have to pay that credit union because it's our mistakes.
+[00:32:03 --> 00:32:16]  But we have to pay our customer because about to our bank, our customer because this can result in a big lawsuit because the banks say, I didn't get the money.
+[00:32:16 --> 00:32:26]  You know, therefore, this interest here I would try to customer customer said no, you know, somebody sent it to a wrong one. Right.
+[00:32:26 --> 00:32:45]  Therefore, you know, it ended up to be a big lawsuit plus. So this is a really, you know, not just reach data breach, meaning we sent to a wrong credit union, but also because of financial background that liability that involved in this.
+[00:32:45 --> 00:32:48]  In this process.
+[00:32:48 --> 00:32:52]  I might explain that clear on that.
+[00:32:52 --> 00:33:00]  So if you don't have a question on that, we need to make sure.
+[00:33:00 --> 00:33:04]  Two things, right. We have to.
+[00:33:04 --> 00:33:07]  First, we have to get this information.
+[00:33:07 --> 00:33:10]  And we have to.
+[00:33:10 --> 00:33:17]  Intercorrectly. Right. And verify correctly. There's no other options.
+[00:33:17 --> 00:33:21]  So I'm looking at this.
+[00:33:21 --> 00:33:25]  This design statement, and I know.
+[00:33:25 --> 00:33:30]  Notice a couple things that we can improve here.
+[00:33:30 --> 00:33:38]  So I'm just going to put a note for the BA but you know this is very helpful for for you guys as well.
+[00:33:38 --> 00:33:41]  If leave the IMB mapping blank.
+[00:33:41 --> 00:33:49]  If the specification or require you are missing. So don't set output IMB so in the revision here.
+[00:33:49 --> 00:33:59]  There's no say I'll put IMB if they don't have the mapping information just said do not create IMB or something like that. Okay.
+[00:33:59 --> 00:34:09]  And they need to alert the IS or I am if the mapping is missing. So going forward. This should not even turn over.
+[00:34:09 --> 00:34:12]  If this information is missing.
+[00:34:12 --> 00:34:20]  So, maybe shooting, they can map they will map right even hard code, this information they put hardcore.
+[00:34:20 --> 00:34:29]  This information here they will provide an address right. This information, they must provide the IMB information.
+[00:34:29 --> 00:34:36]  There's no other way they get to put that. Okay, if they don't put it there.
+[00:34:36 --> 00:34:41]  They need to notify all the managers and what's the reason. Right.
+[00:34:41 --> 00:34:44]  So that's number one.
+[00:34:44 --> 00:34:52]  For the IS developers. You got to need to make sure that if this information is missing.
+[00:34:52 --> 00:34:53]  Okay.
+[00:34:53 --> 00:34:59]  Leave the IMB output blank. Do not output any placeholder.
+[00:34:59 --> 00:35:02]  Got to make sure that okay.
+[00:35:02 --> 00:35:05]  If I mean is missing.
+[00:35:05 --> 00:35:09]  Notify the BA IMM.
+[00:35:09 --> 00:35:14]  And then at the end, there's an IMB app scan.
+[00:35:14 --> 00:35:18]  You can double check that and sign up in a checklist.
+[00:35:18 --> 00:35:24]  So these are the things that we must do going forward. There's no way that you know,
+[00:35:24 --> 00:35:30]  we said, Oh, this is an excuse because I'm waiting for the information.
+[00:35:30 --> 00:35:39]  And therefore I put, you know, I put a blank stuff in here. Right. Somebody.
+[00:35:39 --> 00:35:48]  We can't do that. And if you do that, you make sure, you know, somebody, even you put something in here, you have to verify it. Right.
+[00:35:48 --> 00:35:50]  How you verify it.
+[00:35:50 --> 00:35:53]  You have to use a scanner to verify it.
+[00:35:53 --> 00:35:58]  Okay.
+[00:35:58 --> 00:36:10]  So these are very important step that we have to ensure going forward that you not missing this because the library is just too high for this type of incident.
+[00:36:10 --> 00:36:15]  So in new application.
+[00:36:15 --> 00:36:26]  If it has the remittance coupon, should you always ask all the information for IMB or some information we should already know.
+[00:36:26 --> 00:36:30]  All information. All have to be complete.
+[00:36:30 --> 00:36:38]  Okay. Now, normally what if sometimes they ask us what would be the.
+[00:36:38 --> 00:36:45]  I already instruct the VA forward that they must do this. Okay.
+[00:36:45 --> 00:36:49]  I have a training with them later today as well.
+[00:36:49 --> 00:37:00]  Right. And, you know, ego or QA you guys might have a different process to verify these, but, you know, for the developer today.
+[00:37:00 --> 00:37:09]  I want to share the app with you in my email. I don't know if you got any chance looking at the app real quick.
+[00:37:09 --> 00:37:15]  There is a US.
+[00:37:15 --> 00:37:21]  Okay, that's two. Okay. There's USPS mobile and the awesome with data I mean app scanner.
+[00:37:21 --> 00:37:24]  So you can download this scanner.
+[00:37:24 --> 00:37:26]  It works really well.
+[00:37:26 --> 00:37:47]  And it's free.
+[00:37:47 --> 00:37:57]  I have the app here but I can show you once you download it, or you do just scans it and it shows you the all the information of the IMB.
+[00:37:57 --> 00:38:12]  And the other one is the USPS app as well, or you can go directly to USPS website.
+[00:38:12 --> 00:38:17]  Over here, there's a quick to call lookup address.
+[00:38:17 --> 00:38:41]  And you can just find my address so you don't need to put a company and just, you know, so this is the address that I'm here for instance so PO box 789 let's try that.
+[00:38:41 --> 00:38:45]  And then CD is in.
+[00:38:45 --> 00:38:53]  What is that Columbus.
+[00:38:53 --> 00:38:59]  In the end.
+[00:38:59 --> 00:39:02]  I know.
+[00:39:02 --> 00:39:04]  Okay.
+[00:39:04 --> 00:39:12]  Now let's say I don't have a zip code.
+[00:39:12 --> 00:39:14]  Click find.
+[00:39:14 --> 00:39:29]  You can see it gives you the address with the full extended circle. Okay. So for some tool to for some tool to see that here.
+[00:39:29 --> 00:39:46]  So, 0789 that's information you need. So the zip code contain nine digits, plus the below point code 89. So for 7202 0789.
+[00:39:46 --> 00:40:01]  That's, that's the full zip code that we're looking for. So, if you have any questions on that you can always look up here to to verify it.
+[00:40:01 --> 00:40:03]  Now Mel ID.
+[00:40:03 --> 00:40:13]  When they, when the client fill out the form, they send that information to info image with the form say what the Mel ID is.
+[00:40:13 --> 00:40:19]  So, in
+[00:40:19 --> 00:40:22]  In the
+[00:40:22 --> 00:40:34]  In the job tracking the ETA board, there is a interface where today I know an operation manager, enter that information for us. Okay, you don't have to do anything.
+[00:40:34 --> 00:40:38]  So when they enter that Mel IDs on automatically populated.
+[00:40:38 --> 00:40:51]  Now, when the BA map for this, right, they also check with the I am to say hey, what is the Mel ID, so they will map it correctly.
+[00:40:51 --> 00:40:54]  But it's also stored in our database.
+[00:40:54 --> 00:41:00]  So I'm looking at our database today.
+[00:41:00 --> 00:41:07]  It's called IMB tracks the table. So you can look at in parallel or production.
+[00:41:07 --> 00:41:23]  It will be the same.
+[00:41:23 --> 00:41:38]  So,
+[00:41:38 --> 00:41:55]  So,
+[00:41:55 --> 00:42:12]  So,
+[00:42:12 --> 00:42:28]  Okay, so there is a table called IMB track, and that's contained all the information with the Mel ID and the sequence that anytime we, you know, we generate a statement, we actually
+[00:42:28 --> 00:42:35]  create a sequence number for each piece.
+[00:42:35 --> 00:42:53]  All right. So that's what we covered today. Are there any questions.
+[00:42:53 --> 00:43:06]  So I will start this in the same folder, knowledge transfers, so that you can see
+[00:43:06 --> 00:43:16]  someone someone have a question.
+[00:43:16 --> 00:43:19]  Okay.
+[00:43:19 --> 00:43:26]  That's it for today training. If you have any questions just feel free to just send out me an email.
+[00:43:26 --> 00:43:32]  But again, this is very important. We should not
+[00:43:32 --> 00:43:38]  this information have to provide to you, then you turn over, and you don't have the information.
+[00:43:38 --> 00:43:45]  You got stopped by that do not leave anything as a placeholder lead that blank. Okay.
+[00:43:45 --> 00:43:57]  That's a very important piece because so many times we clone the program right I know that you guys do, and even all the global onshore they do that.
+[00:43:57 --> 00:43:59]  And they lead that field.
+[00:43:59 --> 00:44:06]  The way it is, they didn't change it. I mean they change the, the address here.
+[00:44:06 --> 00:44:09]  Right, because we noticed right away. Right.
+[00:44:09 --> 00:44:13]  But they didn't change the content in here.
+[00:44:13 --> 00:44:15]  This, this can be missed.
+[00:44:15 --> 00:44:18]  Okay.
+[00:44:18 --> 00:44:20]  Hey, Peter.
+[00:44:20 --> 00:44:30]  For the OCR or MSCR. Does the security information is there.
+[00:44:30 --> 00:44:32]  OCR on the bottom.
+[00:44:32 --> 00:44:43]  OCR is, it just OCR don't have security information in there. They just have a way so that the scanner can can read it.
+[00:44:43 --> 00:44:45]  Okay.
+[00:44:45 --> 00:44:48]  Have a fund.
+[00:44:48 --> 00:44:55]  So, that's the way they scan the information and they store as an image.
+[00:44:55 --> 00:45:11]  It's much easier to pick up and you know people can use different phone right so it's very hard to scan it.
+[00:45:11 --> 00:45:16]  All right. That's it for today. Thank you everybody.
+[00:45:16 --> 00:45:26]  theory and theory, we have two kinds of envelope we have.
+[00:45:26 --> 00:45:29]  I think.
+[00:45:29 --> 00:45:34]  One is called business requires and a CRE is.
+[00:45:34 --> 00:45:36]  What is that.
+[00:45:36 --> 00:45:50]  I don't know the difference, but one is for the business use and one is for consumer so I don't really know the differences about asking someone to clarify that.
+[00:45:50 --> 00:45:55]  But to us it's just a member of right.
+[00:45:55 --> 00:46:03]  And below.
+[00:46:03 --> 00:46:06]  I think I've heard that term.
+[00:46:06 --> 00:46:08]  Just recently as well.
+[00:46:08 --> 00:46:20]  But I know once for business, apply and go.
+[00:46:20 --> 00:46:23]  Thank you all.
+[00:46:23 --> 00:46:24]  Thank you.
+[00:46:24 --> 00:46:38]  Thanks.
+[00:00.000 --> 00:21.360]  I'm going to take this folder and I'm going to put it in the description.
+[00:21.360 --> 00:41.360]  Do you say print? Do you say print? Print? Oh, you already provided. Oh! There's the one? Okay, okay, okay.
+[00:41.360 --> 00:46.360]  Yeah, so let me show you one more time. Yes, sorry.
+[00:46.360 --> 01:06.360]  No problem. All right, so just open this stuff right there, right?
+[01:06.360 --> 01:20.360]  Okay, so that's what you need, right? This website. So you need this website and you need this HTML, okay?
+[01:20.360 --> 01:43.360]  Now open any PDF, okay? Any PDF. Don't reduce the zoom. Use, I mean, 140 or 125, not less.
+[01:43.360 --> 01:57.360]  Then grab anything so you can copy IMB code, all right? So copy IMB code.
+[01:57.360 --> 02:08.360]  And I mean, I'm using, I'm using, I mean, you can use any paint or whatever, right? I'm using Snobby.
+[02:08.360 --> 02:18.360]  Okay, okay, I got it. So then save it, save us, okay? So I'm going to save it on the desktop, okay?
+[02:18.360 --> 02:38.360]  BMP is fine, okay? So I'm going to say run this, okay? I don't need this anymore. I don't need this.
+[02:38.360 --> 02:49.360]  Let me use, so you still need this one, right? Let me close this one. So this file right there, right?
+[02:49.360 --> 02:57.360]  And I mean, you can browse or you can just grab it.
+[02:57.360 --> 03:08.360]  So I'm going to use a number, okay? Just copy this number, okay?
+[03:08.360 --> 03:10.360]  Now the HTML file, I guess.
+[03:10.360 --> 03:30.360]  And then use this HTML file, okay? Open this HTML and paste this number here.
+[03:30.360 --> 03:42.360]  And remember, it should be one, two, three, four, five.
+[03:42.360 --> 03:50.360]  So it should be 33 num characters, okay? If it's going to be less, it's not going to work.
+[03:50.360 --> 04:00.360]  Something wrong with your code, okay? Not with your code, with how the system reacts, okay?
+[04:00.360 --> 04:23.360]  Then submit it and here we go. You have a mailer ID, okay? Oh, oh, oh, let me show you something. So we use...
+[04:23.360 --> 04:36.360]  Oh, doggie. Oh, shoot. Hold on.
+[04:36.360 --> 04:45.360]  Please wait. Hold on a second.
+[04:45.360 --> 05:12.360]  Okay. Come on, come on. What's wrong? It's some sort of installing update.
+[05:12.360 --> 05:25.360]  Okay. So, but I mean, this is important. Okay. So mailer ID, you know where it's coming from, right?
+[05:25.360 --> 05:36.360]  It's coming from SOW, okay? But also, you can check...
+[05:36.360 --> 05:45.360]  So now this one, this one, SEFC, right? I mean, well, I used EFC, right?
+[05:45.360 --> 05:56.360]  But also you can check this on ETA, on ETA board. Right.
+[05:56.360 --> 06:06.360]  Mailer ID, right. Yes, mailer ID. So you can go there, right there. I'll be update, okay.
+[06:06.360 --> 06:33.360]  It will show mailer ID, right. 901, whatever, right? Oops, what it says? 901.
+[06:33.360 --> 06:43.360]  Okay. Oh, no, you see, so 901. So this is correct, right?
+[06:43.360 --> 06:53.360]  You see, 901. So this is zip code. I mean, so this should come from the PDF, right?
+[06:53.360 --> 07:03.360]  This is fine. Now, very important also, well, important, not really, but sometimes yes.
+[07:03.360 --> 07:16.360]  If you go to PDF. Okay. So we checked this one right there, right?
+[07:16.360 --> 07:33.360]  So you see 53, the last two digits from the house number. Okay. So that's what it is.
+[07:33.360 --> 07:43.360]  This is the same. 53. Sometimes when there is an apartment, you know, it's not going to match, right?
+[07:43.360 --> 07:53.360]  This would be different, but the house number, it's always the same. 53, 53. Okay.
+[07:53.360 --> 08:02.360]  So that's all what it is. Okay. So that's how you can use it. It's very simple.
+[08:02.360 --> 08:16.360]  Okay, got it. Just open PDF, copy IMB, right? I mean, all this barcode, save it, push it to here.
+[08:16.360 --> 08:24.360]  It's going to give you a number and then copy this into this HTML file. Okay.
+[08:24.360 --> 08:38.360]  The only thing when you open PDF file, don't make it too small. Okay, got it.
+[08:38.360 --> 08:44.360]  Just use 141 or 125. Okay, got it.
+[08:44.360 --> 08:54.360]  One hundred is okay, but I don't remember. There is a little bit limitation. So maybe one hundred percent is okay too, but not less.
+[08:54.360 --> 09:01.360]  Okay. Not less, then it's not going to be okay. Okay. Okay. Okay.
+[09:01.360 --> 09:08.360]  All right. All right, Ryan. Oh, thank you. Thank you so much.
+[09:08.360 --> 09:14.360]  Okay, thanks.

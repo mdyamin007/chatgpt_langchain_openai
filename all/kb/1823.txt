@@ -1,0 +1,42 @@
+We have been live with the color inkjet printer in Texas for a couple of months now. It is a roll-fed printer and has a cutter connected to the end of the printer. We need to tell the cutter to do 3hold punch, perf or do neither on the fly. We do that by adding a 2digit RECIPE CODE at the end of the smaller 2d barcode at the bottom left corner of the sheet. In order to make it consistent and be ready to transit to color quickly in the future, we will need to do this for all jobs: TX and CA, b/w and color. For any new setup, IM and AS will need to provide the corresponding recipe code whenever the stock is perforated or 3hole, except when we are using the house stock numbers (4001, 4008, 4005, 4006, 4007). If you are setting up a new application specifically for the color printer, just use a house stock code. If we are converting an existing application to print on the color printer, we will keep the current preprint stock code.
+RECIPE CODES:
+Perf Recipe
+Description
+00
+All 8.5 x 11 stock that do not require perf or 3hole, including House 4000 & 4004
+01
+All 8.5 x 11 stock that require 3hole, including House 4001 and 4008
+02
+All 8.5 x 11 stock that require 1-line perf at 3 2/3 inches from Bottom, including house 4005
+03
+All 8.5 x 11 stock that require 2-line perf at 3 2/3 inches repeated, including house 4006
+04
+All 8.5 x 11 stock that require 1-line perf at 3 2/3 inches from Top, including house 4007
+05
+All 8.5 x 14 stock that require 1-line perf at 3.5 inches from Bottom
+06
+All 8.5 x 14 stock that do not require perf
+07
+All 8.5 x 11 stock that require top 1-line perf at 3.5 inches
+08
+All 8.5 x 11 stock that require 1-line perf at 3 inches from Bottom
+09
+All 8.5 x 11 stock that require 1-line perf at 3 5/8 inches from Bottom
+10
+All 8.5 x 11 stock that require 1-line perf at 3 5/8 inches from Top
+A Recipe Code is used to let the finishing equipment know how to handle perforation and 3hole-punching on the sheet. It is a 2- digit code appended to the end of page-2d barcode.
+Any questions, please let me know.
+Thanks,
+Ernest
+There is a need to update the 2d barcodes we produce on the print files to accommodate for the new color inkjet printer in Texas. It is a continuous feed printer, meaning that it will be using a blank row of paper. There will not be any preprints for that printer. There is a cutter attached to the end of the printer and it will cut the output to the proper 8.5x11 size and do 3hole punch and perf on the fly :
+Currently, we are using some fonts to generate rasterized image of the 2D barcodes. We need to change to use a dll to generate vectorized image instead
+For the page-2d (the smaller one at the lower left hand corner of the page), we have to append a 2digit code to the end of the string that the program output to the 2D. That is a code to tell the cutter whether 3hold and/or perforation is needed.
+We will apply all these changes to all print dfa, it does not matter whether it is for a Texas or CA job, b/w or color. I have updated all the print dfa that I know of a few weeks ago. I have attached a word document describing all the changes in the print dfas. You should update the print dfas in you Papyrus docdef folder with the ones from production. Also copy ASSIGN_RECIPE_CODE.dfa and PP_RECIPE_CODE.dfa to your local docdef folder because the new print dfas will be calling those 2 external dfas. If you are working on a new setup and the paper used has 3hole or perf and it is not using a house stock (4000s), you will need to add the 2digit code to ASSIGN_RECIPE_CODE.dfa which contains a CASE statement that assigns the 2 digit code based on the stock code PP[?] value in the control file. For all the 4000 house paper and anything that do not have 3hole or perf, you dont have to do anything additional because they have been coded in that CASE stmt already. Refer to the perf recipe code table at the end of the Word document to determine what 2digit code is needed.
+If you have made changes to a print dfa from you local copy, you can either download the current version from production and apply your own changes for the application or run your dfa against the shell script /home/test/master/edit_dfa.sh and it will update your dfa with the new changes. Usage is /home/test/master/edit_dfa.sh dfa. It will create a new dfa with .edited at the end.
+If you are not clear and/or have any questions, please feel free to let me know.
+Thanks,
+Ernest
+2D barcode updates
+Do not use inverted text for color header bars with white text. The text will be reduced in size when printed on the Inkjet color printer. Should do the following:
+- Use the BOX command to create the shaded bar and the TEXT command to print with white text
+- For Application Output Format, select IOCA-FS45 JPEG comp for Image Mode

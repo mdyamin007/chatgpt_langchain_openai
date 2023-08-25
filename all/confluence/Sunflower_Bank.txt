@@ -1,0 +1,82 @@
+title: Sunflower Bank
+body:   
+
+## Current setup
+
+  1. Nightly data dump file (i.e. Auth file) that contains all account info for importing data into InfoIMAGE system. Reference to attached spec file for details
+
+  
+  
+
+## Usage cases
+
+  
+  
+
+### Phase I
+
+  1. When new account/enrollment happen on the Fiserv side, eStatement couldn't allow user to access until we get the latest update from the next nightly data-file drop. Hence, we need to be able to call Fiserv web-service API directly to fetch latest account profile info if we don't already have the data in InfoIMAGE system.
+  2. Utilize the web-service to periodically pull the account data with our own defined frequency instead of relying on Sunflower to provide offline data-dump files. An independent offline process would still be preferred as access so that most of the data would be stored locally within InfoIMAGE.
+
+  
+  
+
+### Phase II
+
+  1. Real-time update of eStatement opt-in/out info to Fiserv instead of relying on the offline paperless report channel.
+  2. Other account profile could be updated real-time as well. (e.g. Notification email address)
+
+  
+  
+
+## High-level Integration design
+
+  
+  
+  
+  
+
+## Estimation
+
+  1.  **7 engineering person weeks**  to implement the integration logic:
+    1. Design and setup the Mulesoft Workflows to handle getCustProfileBySSN() and syncAllCustProfiles()  **~11days**
+    2. Implement the Fiserv SOAP Web Service adaptors to getCustCifBySsn() and getCustProfileByCif()  **~10days**
+    3. Update the eStatement application to call methods in InfoIMAGE Service Layer instead of querying database directly  **~5days**
+    4. Setup independent process to periodically call the syncAllCustProfiles() on Mule.  **~2days**
+    5. Integration Testing with Sunflower bank.  **~5days**
+  2. Additional efforts needed outside of the integration effort estimate:
+    1. Initial Mulesoft setup to establish the InfoIMAGE Service Layer
+    2. Mulesoft production environment setup (w/ High-Availability covered)
+    3. Network setup to adhere to Sunflower/Fiserv connection restriction. (e.g. VPN or custom SSH tunnel setup)
+
+  
+  
+
+## Assumptions made that need Sunflower Bank clarification
+
+  1. When comparing the data attributes between the Auth-file and WebService API, we assume the  **< CustPermId>** in  **< CustId>** is equivalent to the  **CIF#**  in Auth-File
+  2. We assume the authentication is on application level via  **< HostLogonRq>** and  **< HostLogonRs>**. In order to get the application sign-on, we only need to provide the  **< CustLoginId>** to obtain the  **< SessKey>** for subsequent web-service calls. And the  **< CustLoginId>** is available from the Postilion's  **< LoginId>** attribute.
+    1. Meaning we don't need to provide the  **< Pswd>** value, correct?
+  3. In the case when multiple CIF# is returned for a given SSN#, there are pre-defined set of business rules to allow the application to identify which is the proper CIF# to use.
+  4. Assuming there is a accurate way to validate if the nightly dump file is delivered successfully. (e.g. provide a MD5 file upon successful transfer of the data-dump itself)
+
+  
+  
+
+## Appendix docs
+
+  
+
+### Attachments
+
+  
+
+  
+
+250
+
+250
+
+  
+
+

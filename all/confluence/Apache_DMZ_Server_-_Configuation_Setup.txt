@@ -1,0 +1,622 @@
+title: Apache DMZ Server - Configuation Setup
+body:   
+
+## 1\. Securing Mule Server (Tomcat) with Apache Web Server mod_proxy
+
+A reverse proxy can act as a gateway service allowing access to servers on
+your trusted network from an external network.  
+Using a reverse proxy is a simple and convenient approach to allowing access
+to servers on your trusted network from external networks, such as the
+internet.
+
+Reverse proxies provide a number of benefits in terms of security and
+maintenance, including the following.
+
+  * The obvious point is none of your application or database servers are exposed to external networks directly, which is a good starting point when trying to build a secure solution.
+  * URLs presented to users can be "pretty", rather than containing specific machine names, ports and long paths. A simple redirect would still expose the true URL, while a reverse proxy completely hides it from the user.
+  * Following on from the previous point, users bookmark URLs. If that bookmark contains a specific machine name, then no matter how resilient you try to make your solution, they will go to their bookmark and think your site it down. Separating them from the physical implementation of your services make your apparent availability better.
+  * From a security perspective, the less architectural information you expose to the outside world, the better. If hackers are presented the actual machine names and ports that are running a service, it makes it significantly easier for them to attack those services.
+  * The fact the URLs no longer point directly to actual machines enables dramatic architecture changes to be hidden from users. A simple configuration change within the reverse proxy can direct all the workload to a new set of servers.
+
+The internal servers (Mule , tomcat) can be accessed by outside world thru
+secured channels (https) by 2 ways:
+
+  * Secure Mule/Tomcat Server directly
+  * Secure an Apache web server front-end that controls access to Mule/Tomcat
+
+  
+  
+
+### 1.1 Objective
+
+  * It is proposed to configure & put in place a reverse proxy for MULE application that is running a tomcat embed server over SSL inside the network.
+  * The Mule - SSCU Instant Enrollment Service is running on secured Port 8090.
+  * The proposed API call from outside will go thru below steps:  
+
+    
+        DNS Name: api.infoimageinc.com
+        [12.189.22.101]  --> [10.8.11.22:443 - Apache with proxy] --> [10.8.9.54:8090 - Mule Prod Server - Mule]
+    DNS Name: testapi.infoimageinc.com
+        [12.189.22.102] --> [10.8.11.22:8443 - Apache with proxy] --> [10.8.9.57:8090 - Mule Test Server - pd-dev01]
+    
+    ---------------------  Temporary arrangement running -------------------------------------------------------------
+    DNS Name: stgapi.infoimageinc.com
+        [12.189.22.100:8090 - Apache with mod_proxy] --> [10.8.11.21:8090 - Mule Server] --> Self (no proxy). 
+        NOTE: Currently, this box reside inside DMZ, it will be moved inside the Corp network with IP=10.8.9.54 
+             (Prod Mule Server and will be accessed by the URL: api.infoimageinc.com using Apache2 ReverProxy rule.]
+    ------------------------------------------------------------------------------------------------------------------
+    
+
+* * *
+
+  
+  
+
+## 2\. Reverse Proxying With Apache 2.0
+
+Apache web server as a front-end server is preferred for many reasons, few of
+them are:
+
+  1. Apache can server static content much faster
+  2. Apache can run as a load balancer in front of a cluster of tomcat instances
+  3. Apache can handle SSL encryption for a cluster of tomcat instances
+  4. Apache has several modules that can easily be plugged in
+
+tip. Apache's mod_proxy module will be used to redirect traffic to the
+Mule/Tomcat server and use Apache to provide the SSL encryption  
+  
+
+  
+
+### 2.1 Dataflow between HTTP-Client and HTTP-Server
+
+ **2.1.1 Redirect and Rewrite**
+
+  * The HTTP client sends a request to the HTTP Server.
+  * The HTTP Server sends the manipulated URL back to the Client.
+  * The HTTP client sends again a request using the changed URL. If the new URL points to a new HTTP Server, the request a new connection is setup to this server.
+  * The new server sends back the the answer.
+
+One disadvantage using this approach together with another server is, that the
+manipulated URL is not hidden from the HTTP client, the changed URL is
+presented to the users.
+
+ **2.1.2 Proxy Server**
+
+  * The HTTP client sends a request to the HTTP Proxy.
+  * The HTTP Proxy connects the HTTP Server.
+  * The HTTP Server sends back the answer to the HTTP Proxy.
+  * The HTTP Proxy sends back this answer to the HTTP client.
+
+There are several advantages using proxies. The new server is completely
+hidden for the user. The URL always points to the HTTP Proxy, the connection
+to the real HTTP Server is hidden. The HTTP Proxy caches the documents
+locally, therefore we have a performance gain.
+
+ **2.1.3 Reverse Proxy Server**
+
+With a  **reverse proxy** , a single machine is inserted to act as a gateway
+to the real servers in the network. Now, instead of multiple machines directly
+handling the requests from clients, a single machine is responsible for
+accepting and redirecting the requests to the real servers. This means that a
+single domain continues to appear as a single machine, while still having the
+flexibility of multiple machines working behind the scenes to honor the actual
+requests.
+
+Using external/internal firewalls, the proxy server can be placed within the
+DMZ using secured (VPN) with restricted communication links between the
+reverse proxy and the real servers behind the firewall, as shown in Figure 2.
+
+  
+  
+
+  
+
+### 2.2 Basic Architecture and DNS
+
+Before we move into the actual configuration, let's consider how all of this
+will work. The diagram below shows the basic architecture.
+
+ **Schematic Diagram**
+
+Given below diagram describes Apache based reverse-proxy configuration
+details.  
+<warning>  
+Note: The IP-address and port described below using standard configuration
+details, actual configuration details covers under next section.  
+</warning>
+
+* * *
+
+* * *
+
+ **Apache-Mule Server Deployment Diagram**
+
+  * In the above diagram, we have an Internet URL called "[api.infoimageinc.com](http://api.infoimageinc.com)" (for Prod) and "[testapi.infoimageinc.com](http://testapi.infoimageinc.com)" (Test Env). The public/External IP 12.189.22.101/12.189.22.102, which is NATed to 10.8.11.22 on  **ApacheMule**  host in DMZ. It will connect to the internal Mule Server using the ReverseProxy configuration rules.
+
+  * Apache has already been installed on  **ApacheMule** , the  _mod_proxy_  module loaded, SSL configured and Mule Server is running on  **Mule/Prod-dev1**  (10.8.9.54/57) inside the corporate network.
+  * When a user visits Apache website using the default web port of 443(https), Apache will redirect the traffic to Tomcat on port 8090 (Mule Prod box).
+  * Similarly, when browser is communicating on port 8443 (https), apache will enable encryption and redirect traffic to Mule Test box on port 8090.
+
+* * *
+
+  
+  
+
+### 2.3 APACHE - Configuration
+
+Since we want our traffic over the public Internet to be encrypted, we must
+setup SSL, so apache has to listen on two ports:
+
+  * Listen 443 (secured)
+  * Listen 8443 (secured)
+
+  
+
+As a part of the Apache2 - ReverseProxy configuration setup - given below conf
+files updated:
+
+  *  **< Apache2_Home>/ports.conf** \- contains the configuration for port 443 & 8443
+  *  **< Apache2_Home>/httpd.conf** \- contains the configuration for secure SSL mod proxy modules.
+  *  **< Apache2_Home>/sites-available/default-ssl** \- contains the configuration for the virtual secured site running on port 443
+  *  **< Apache2_Home>/sites-available/ssl-8443-proxy** \- contains the configuration for the virtual secured site running on port 8443  
+where _<Apache2_Home>_= /etc/apache2/ on server 10.8.11.22.
+
+  
+  
+
+### 2.3.1 ports.conf
+
+    
+    
+    NameVirtualHost *:8081
+    NameVirtualHost _default_:443
+    NameVirtualHost *:8443
+    
+    <IfModule mod_ssl.c>
+        Listen 443
+        Listen 8443
+    </IfModule>
+    
+    <IfModule mod_gnutls.c>
+        Listen 443
+        Listen 8443
+    </IfModule>
+    
+    
+
+  
+  
+
+### 2.3.2 httpd.conf
+
+    
+    
+    LoadModule headers_module /usr/lib/apache2/modules/mod_headers.so
+    LoadModule proxy_module /usr/lib/apache2/modules/mod_proxy.so
+    LoadModule proxy_http_module /usr/lib/apache2/modules/mod_proxy_http.so
+    LoadModule proxy_http_module /usr/lib/apache2/modules/mod_proxy_html.so
+    LoadModule rewrite_module /usr/lib/apache2/modules/mod_rewrite.so
+    LoadModule ssl_module /usr/lib/apache2/modules/mod_ssl.so
+    
+    
+
+  1. These module enable/disable will be reflected under the folder <Apache2_Home>/mods-enabled
+
+  
+  
+
+### 2.3.3 ssl-8443-proxy and default-ssl
+
+    
+    
+    ssl-8443-proxy
+    ---------------------------------------
+    <VirtualHost *:8443>
+    
+      ServerAdmin webmaster@localhost 
+      ServerName testapi.infoimageinc.com
+      ServerAlias testapi
+    
+      # Index + Directory Root.
+      DocumentRoot /opt/apache2/ssl8443proxy
+      DirectoryIndex index.html
+    
+      <Directory />
+           Options FollowSymLinks 
+           AllowOverride None
+      </Directory>
+    
+      <Directory /opt/apache2/ssl8443proxy/>
+           Options Indexes FollowSymLinks MultiViews
+           AllowOverride None
+           Order allow,deny
+           allow from all
+      </Directory>
+    
+      ProxyRequests Off
+      ProxyPreserveHost On
+    
+      <Proxy *> 
+         AddDefaultCharset Off
+         Order deny,allow 
+         Allow from all 
+      </Proxy>
+    
+      ProxyPass / https://10.8.9.57:8090/
+      ProxyPassReverse / https://10.8.9.57:8090/
+    
+      <Location /> 
+           Options FollowSymLinks 
+           AllowOverride None 
+      </Location>
+    
+      # logging section
+      LogLevel info
+      ErrorLog /opt/apache2/log/ssl-error8443.log
+      CustomLog /opt/apache2/log/ssl-error8443.log combined
+    
+      SSLEngine on
+      SSLProxyEngine On
+      SSLProtocol all
+      SSLCertificateFile /etc/apache2/ssl/testapi/apache.crt
+      SSLCertificateKeyFile /etc/apache2/ssl/testapi/apache.key
+      SSLCertificateChainFile /etc/apache2/ssl/ca_cert/ca.crt
+    
+      SSLVerifyClient optional_no_ca
+      #SSLVerifyClient none
+      SSLOptions +ExportCertData
+    
+    </VirtualHost>
+    
+    ----------------------------------------------------------------------
+    Refer attached file: default-ssl for default 443 port configuration.
+    ----------------------------------------------------------------------
+    
+
+  * The  **ProxyPass**  and  **ProxyPassReverse**  is responsible for the redirection.
+  * The  **RewriteEngine**  and  **RewriteRule**  is responsible for redirecting any requests for the URL on port 443/8443 (https) to the Mule Server thru secure channel running on port 8090 (https).
+
+* * *
+
+  
+  
+
+## 3\. MULE / TOMCAT -Configuration
+
+  * For Mule Server, it should listen to the given port in order to handle the incoming request
+  * In case of  **Tomcat**  Server, server.xml contains the tomcat configuration details
+
+    
+    
+    Server.xml
+        <Connector port="8080" maxHttpHeaderSize="8192" maxThreads="150" minSpareThreads="25" maxSpareThreads="75" enableLookups="true" redirectPort="443" acceptCount="100" connectionTimeout="20000" disableUploadTimeout="true"/>  
+    
+        <Connector port="8443" maxHttpHeaderSize="8192" maxThreads="150" minSpareThreads="25" maxSpareThreads="75" enableLookups="true" acceptCount="100" connectionTimeout="20000" disableUploadTimeout="true"        
+            scheme="https" 
+            secure="true" 
+            SSLEnabled="false" 
+            proxyPort="443" 
+            proxyName="your_company_domain_name" 
+         />
+    
+    
+
+* * *
+
+  
+  
+
+## 4\. Apache2 Server Commands
+
+1\. To install the Apache2 on Ubuntu
+
+    
+    
+    $apt-get install apache2 apache2-doc apache2-utils
+    
+
+  
+
+2\. To enable the Mod-Proxy module
+
+    
+    
+    a2enmod proxy
+    a2enmod proxy_http
+    sudo apt-get install libapache-mod-ssl
+    
+
+  
+
+3\. To enable the Site "[api.infoimageinc.com](http://api.infoimageinc.com)"
+or "default"
+
+    
+    
+    $sudo a2ensite api.infoimageinc.com
+    $sudo a2ensite default
+    To disable the site: sudo a2dissite default
+    
+
+  
+
+4\. To load the configuration settings and restart the server:
+
+    
+    
+    sudo /etc/init.d/apache2 force-reload
+    OR
+    service apache2 reload
+    
+
+  
+
+Finally, restart the Apache server to initialize all the changes, with this
+command:
+
+    
+    
+    sudo service apache2 restart
+    
+
+  * Also, Restarting your Apache server will reload it with all of your changes in place.  
+$sudo service apache2 reload OR $/etc/init.d/apache2 restart
+
+  * See below folder to see the list of sites available:  
+/etc/apache2/sites-available
+
+* * *
+
+  
+  
+
+## 5\. SSL Certs Commands
+
+To generate the Server Cert
+
+    
+    
+    sudo openssl req -x509 -nodes -days 375 -newkey rsa:2048 -keyout /etc/apache2/ssl/testapi/apache.key -out /etc/apache2/ssl/testapi/apache.crt
+    <<
+    -----
+    Country Name (2 letter code) [AU]:US
+    State or Province Name (full name) [Some-State]:California
+    Locality Name (eg, city) []:Menlo Park
+    Organization Name (eg, company) [Internet Widgits Pty Ltd]:InfoIMAGE Inc
+    Organizational Unit Name (eg, section) []:Dept of IT
+    Common Name (e.g. server FQDN or YOUR name) []:testapi.infoimageinc.com
+    Email Address []:niraj.tripathi@infoimageinc.com
+    >>
+    
+
+  * SSL Cert - Storing certificate under JKS
+
+The following command line imports the certificate authority's certificate
+into a JKS formatted key store named trust.jks, the trust store.
+
+    
+    
+    $> keytool -v -alias mavensrv -import \
+         -file /somewhere/in/filesystem/CACert.cert\
+          -keystore trust.jks
+    Enter keystore password:
+    Owner: ....
+    Issuer: ....
+    Serial number: ....
+    Valid from: Mon Feb 21 22:34:25 CET 2005 until: Thu Feb 19 22:34:25 CET 2015
+    Certificate fingerprints:
+             MD5:  .......
+             SHA1: .....
+    Trust this certificate? [no]:  yes
+    Certificate was added to keystore
+    [Storing trust.jks]
+    $>
+    
+
+  * SSL Cert Locations on Apache2 Server
+
+#.| URL| SSL Cert Location Path| On Server| Config file-name  
+---|---|---|---|---  
+1| [api.infoimageinc.com](http://api.infoimageinc.com)|
+/etc/apache2/ssl/apache.crt| server 10.8.11.22| default-ssl  
+2| [testapi.infoimageinc.com](http://testapi.infoimageinc.com)|
+/etc/apache2/ssl/testapi/apache.crt| server 10.8.11.22| ssl-8443-proxy  
+3| [stgapi.infoimageinc.com](http://stgapi.infoimageinc.com)|
+/etc/ssl/certs/server.crt| server 10.8.11.21| not in use. decommissioned.  
+  
+Refer: Below URLs to perform the SSL Certs validation:
+
+<http://www.digicert.com/help/>  
+<https://www.ssllabs.com/ssltest/>
+
+* * *
+
+  
+  
+
+## 6\. How to Create a SSL Certificate on Apache for Ubuntu 12.04
+
+ **About SSL Certificates**  
+A SSL certificate is a way to encrypt a site's information and create a more
+secure connection. Additionally, the certificate can show the virtual private
+server's identification information to site visitors. Certificate Authorities
+can issue SSL certificates that verify the server's details while a self-
+signed certificate has no 3rd party corroboration.
+
+ **Step One**  -- Activate the SSL Module  
+\--------------------------------------------------------------------------------
+
+  * The next step is to enable SSL on the droplet.  
+
+    
+        $ sudo a2enmod ssl
+    
+
+  * Follow up by restarting Apache.  
+
+    
+        $ sudo service apache2 restart
+    
+
+**Step Two**  -- Create a New Directory  
+\--------------------------------------------------------------------------------
+
+  * We need to create a new directory where we will store the server key and certificate  
+
+    
+        $ sudo mkdir /etc/apache2/ssl 
+    
+
+**Step Three**  -- Create a Self Signed SSL Certificate  
+\--------------------------------------------------------------------------------
+
+  * When we request a new certificate, we can specify how long the certificate should remain valid by changing the 365 to the number of days we prefer.  
+As it stands this certificate will expire after one year.  
+
+    
+        $ sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/apache2/ssl/apache.key -out /etc/apache2/ssl/apache.crt
+    
+
+  * With this command, we will be both creating the self-signed SSL certificate and the server key that protects it, and placing both of them into the new directory.
+
+  * This command will prompt terminal to display a lists of fields that need to be filled in.
+  * The most important line is "Common Name". Enter your official domain name here or, if you don't have one yet, your site's IP address.  
+
+    
+        You are about to be asked to enter information that will be incorporated
+    into your certificate request.
+    What you are about to enter is what is called a Distinguished Name or a DN.
+    There are quite a few fields but you can leave some blank
+    For some fields there will be a default value,
+    If you enter '.', the field will be left blank.
+    -----
+    Country Name (2 letter code) [AU]:*US*
+    State or Province Name (full name) [Some-State]:*California*
+    Locality Name (eg, city) []:*Menlo Park*
+    Organization Name (eg, company) [Internet Widgits Pty Ltd]:*InfoIMAGE Inc.*
+    Organizational Unit Name (eg, section) []:*IT*
+    Common Name (e.g. server FQDN or YOUR name) []:*www.infoimageinc.com*
+    Email Address []:*eaiadmin@infoimageinc.com*
+    
+
+**Step Four**  -- Set Up the Certificate  
+\--------------------------------------------------------------------------------
+
+  * Now we have all of the required components of the finished certificate.The next thing to do is to set up the virtual hosts to display the new certificate.  
+Open up the SSL config file:  
+
+    
+        sudo nano /etc/apache2/sites-available/default
+    
+
+  * Make the following changes.
+    * Change the port on the virtual host to 443, the default SSL port:  
+
+        
+                <VirtualHost *:443>
+        
+
+    * Add a line with your server name right below the Server Admin email:  
+
+        
+                ServerName api.infiinageinc.com:443
+        
+
+**Note:**  [api.infoimageinc.com](http://api.infoimageinc.com) \- your DNS
+approved domain name or server IP address (it should be the same as the common
+name on the certificate).
+
+  * Add in the following three lines to the end of your virtual host configuration, and make sure that they match the extensions below:  
+
+    
+        SSLEngine on
+    SSLCertificateFile /etc/apache2/ssl/apache.crt
+    SSLCertificateKeyFile /etc/apache2/ssl/apache.key
+    
+
+  
+Save and Exit out of the file.
+
+ **Step Five**  -- Activate the New Virtual Host  
+\--------------------------------------------------------------------------------
+
+  * Before the website that will come on the 443 port can be activated, we need to enable that Virtual Host:  
+
+    
+        sudo a2ensite default
+    
+
+  * You are all set. Restarting your Apache server will reload it with all of your changes in place.  
+
+    
+        sudo service apache2 reload
+    
+
+  * In your browser, type [https://youraddress](https://youraddress/), and you will be able to see the new certificate.
+
+* * *
+
+  
+  
+
+## 7\. Apache2 Directory Layout
+
+Ubuntu/Debian is using the following directory structur for Apache 2
+
+#.| Path| Description  
+---|---|---  
+1| /etc/apache2/| base directory for all configuration files  
+2| /etc/apache2/apache2.conf| main configuration file. This file loads the
+other configurations from the directories mentioned below.  
+3| /etc/apache2/ports.conf| configuration file for Listen $Port  
+4| /etc/apache2/conf.d| directory for additional configuration options  
+5| /etc/apache2/sites-available| available sites  
+6| /etc/apache2/sites-enabled| enabled sites, may contain softlinks to files
+in /etc/apache2/site-available. Only this sites are loaded  
+7| /etc/apache2/mods-available| available modules ( **.load) and module
+configurations (**.conf)  
+8| /etc/apache2/modules-enabled| enabled modules, may contain softlinks to
+files in /etc/apache2/mods-available.  
+Only this modules are loaded. You must also link the conf file if it exists.  
+9| /etc/apache2/ssl| directory containing ssl cert files. I suggest creating
+three directories crl, crt and key in this directory.  
+To enable a site or a module symlink it from the -available to the -enabled
+directory:  
+/etc/apache2/sites-enabled$ ln -s ../sites-available/default  
+  
+* * *
+
+  
+  
+
+## 8\. References
+
+#.| Title| URL  
+---|---|---  
+1| HTTPD - Apache2 Web Server|
+<https://help.ubuntu.com/12.04/serverguide/httpd.html>  
+2| Apache2 VHosts Examples|
+<https://httpd.apache.org/docs/2.4/vhosts/examples.html>  
+3| Apache Tomcat Resource Center| <http://www.mulesoft.com/understanding-
+apache-tomcat>  
+4| Apache Tomcat Proxy Configuration| <http://www.mulesoft.com/tomcat-proxy-
+configuration>  
+5| A Simple Step-By-Step Guide To Apache Tomcat SSL Configuration|
+<http://www.mulesoft.com/tomcat-ssl>  
+6| Apache Tomcat mod_jk Connector Configuration Made Simple|
+<http://www.mulesoft.com/apache-tomcat-mod-jk-connector-configuration>  
+7| Mule tomcat Server| <http://www.mulesoft.com/tomcat-60>  
+<http://www.mulesoft.com/tomcat-service>  
+<http://www.mulesoft.com/tomcat-jmx>  
+<http://www.mulesoft.com/tomcat-security>  
+  
+* * *
+
+  
+
+### Attachments
+
+250250250250250
+
+

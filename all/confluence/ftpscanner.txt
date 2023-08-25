@@ -1,0 +1,52 @@
+title: ftpscanner
+body: # FTP Trigger
+
+Title | Request Type | Endpoint  
+---|---|---  
+[FTP Trigger](ftpscanner) | `POST` | _`/?cid=<>&filename=<>&md5=<>`_  
+  
+## Requirements
+
+This expects a config file usually located in `/var/www/config/ftpscanner.cfg`
+containing following content:
+
+Confluencepythontrue
+
+## Steps
+
+  1. This endpoint will accept the request and immediately send back response if all the path parameters are present.
+  2. It will then create a background thread.
+  3. In there a **SSH** remote connection will be opened with the credential provided in the `ftpscanner.cfg` file.
+  4. It will then execute following command
+
+Confluenceshelltrue
+
+  1. Exit code of that command will be validated, if non-zero exit code found, an email will be sent with all the parameters and also with the command output. You can also find the `hostname` there too. It will use `EMAIL_LIST` as recipients.
+  2. If any other unexpected error occurs, it will also send an email without the script output.
+  3. Email server will be used from `MAIL_SERVER` in `app.cfg` file.
+
+## Path Parameters
+
+Name | Description | Example  
+---|---|---  
+`cid` | CID parameter | `abcd`  
+`filename` | file parameter | `abc.txt`  
+`md5` | md5 parameter | `f67c2bcbfcfa30fccb36f72dca22a818`  
+  
+## Response Code
+
+Code | Description  
+---|---  
+`200` | Trigger accepted  
+  
+## Example Request
+
+Confluenceshelltrue
+
+## Example Response
+
+`200` OK
+
+Confluencejsontrue
+
+

@@ -1,0 +1,164 @@
+title: Crawford Software Documentation
+body:   * Operation Express Installation Document
+
+  * 2\. Software License Document
+
+  * 3\. Software Support Guide
+
+  * 4\. ProPDF user Guide
+
+  * 5\. Guide for indexing outputs
+
+           
+
+  * 6.  Utilities used for indexing/scripting. Contain parameters to use in the .INI file.
+
+           
+
+  * 7\. Scripting language documentation
+
+           
+
+            * Additional useful info go read: Pro-Indexer-User-Guide.pdf -> PRO Indexer scripting extensions  
+               This section has built-in functions for index to read, set, and return values.
+
+    Example code for modifying a field value in script and return back the value to field for indexing:
+
+    
+
+  * 8\. Information on error codes
+
+           
+
+  
+
+ _ **Software Download**_
+
+Hostname = [sftp.crawfordtech.com](http://sftp.crawfordtech.com)
+
+Port = 22
+
+Username = infoimage
+
+Password =  g5NHegf7a
+
+  
+
+ _For Windows Environment_
+
+Please go to the "shipments" folder in the SFTP site and download the 3 files
+seen there.
+
+Executing "ctiipro.dte.v2 " will create a CTIPro64 folder in the root
+directory
+
+Executing "ctipro.prodesigner" will create a PRODesigner64 directory.  I
+usually place that in the root directory also.
+
+The "prolcnse.lic" file should be placed in the "%ALLUSERSPROFILE%\application
+data\crawfordtech" directory.
+
+  
+
+ ** _Mapping PDF fonts to AFP_**
+
+Add the following to your ini file.
+
+ _Linux_
+
+ _afpcodePagepath=_ /opt/ctipro/afpfonts _  
+afpcharacterSetpath= /opt/ctipro/afpfonts  
+afpcodedFontpath=_/opt/ctipro/afpfonts
+
+%afpfont% is the logical path
+
+afpcodePagepath=%afpfont%\afpfonts  
+afpcharacterSetpath=%afpfont%\afpfonts  
+afpcodedFontpath=%afpfont%\afpfonts
+
+  
+
+ ** _Practical Experience_**
+
+1\. The conversion process will check /opt/ctipro/fonttab/ppidefault.tab for
+true type font  
+2\. if font is found, it will use true type font store in /opt/ctipro/ttfonts/
+(this folder has a readme.txt)  
+3\. if font not found, I think based on "PPIDFLTFNT=DEFAULT" defined in the
+INI file, it will use default font:  
+/opt/ctipro/psfonts/default.afm  
+/opt/ctipro/psfonts/default.pfb
+
+4\. Afpvectortoraster does not do anything with fonts, just vector graphics.
+Vector is smaller in  
+file size and it is better for display and printing in compare to raster.
+
+5\. Run a job with Debug=1
+
+Go to the fPPI_STINT_DumpFontList Table in the debug and you will see the font
+names from the PDF file and the physical  
+font being used if it is not inline.
+
+Font not embedded and font pulled from font table  
+      PPIPDFFontEntry: SFE2 TrueType TimesNewRoman,Bold - (PDF obj 0, file 0) not emb   subst by tt3002m_ TimesNewRoman,Bold  
+Embedded font  
+      PPIPDFFontEntry: FE1 TrueType SegoeUI - (PDF obj 8, file 1) emb subset    
+
+  
+
+6\. Below are the flags to add and remove from the .ini when dealing with
+embedded images that causes output individual afp from Papyrus to be larger in
+file size.
+
+The result is slower processing time in Crawford and smaller size individual
+afp from Papyrus.
+
+  * Added  
+; create image  
+Pageconvert=image  
+PFS45ENCODING=LZW  
+rasterresolution=300
+
+          IGNOREMISSINGRESOURCES=YES
+
+          ; cti add - The scalarfont interpreter is required for correct font processing  
+          SCALARFONTINTERPRETER=T1   
+          USESTRICTBASE14NAMES=YES
+
+         ; Create simplex output  
+         AFPDUPLEX=NO
+
+  * Removed  
+;PPIFONTMERGE=NONE | REF | SUBSETS | ALL | FORCE  
+;PPIFORM=NESTED | SINGLE | FLAT  
+;USEPDFSTANDARDFONTNAMES=YES
+
+; since some things maybe ripped to image -default it b/w  
+;;;;;;;;;;;;;;;;;rasterformat=cmyk
+
+; cti  
+;AFPOPTIMIZEFILESIZE=NO  
+;AFPSUPPRESSGSLE=YES  
+; cti moved  
+;;;;;;;;;;;;;;AfpVectorToRaster=yes  \- images ALL vector graphics  
+;this lets many become GOCA AFP vectors - save space and time  
+;PPIFEATURES=(AODD,NI,SB,NSH,SC,FEO,NVG)
+
+;PDFIGNORESOURCEMAPPEDFONTWIDTHS=NO  
+;RASTEROBJECTORDER=NORMAL  
+;PROPDFOC=ALL|DEFAULT|name  
+;PROPDFCLIPDATA=COMMENTS|YES|NO  
+;Override font widths calculated from referenced fonts with font-widths-array
+from PDF  
+;PTF3570=YES  
+;MULTIBYTEOUTPUT=YES
+
+  
+
+  
+
+  
+
+  
+
+

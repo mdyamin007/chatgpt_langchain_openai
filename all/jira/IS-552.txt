@@ -1,0 +1,154 @@
+title: UFCU - Update to Archival for Mortgage Statements
+description: *Parallel Requirement*: No
+
+
+
+From Diego:
+ The use of the xfer file is new only to monthly statements. For other applications you will simply need to pull the last fields(along with the other items we already pull from xfer) which are new in the xfer file Field 21 == email address and 22 = SalesforceID
+
+This changes the index we output from:
+
+DocCode,MemberNum,MemberName,StatementDate, path/filename,statement name,delivery preference,YES
+
+TO:
+
+DocCode,MemberNum,MemberName,StatementDate, path/filename,statement name,delivery preference,YES,email,SalesforceID
+
+For monthly statement we will need to read in the file and match up the account number to field1 of the xfer and pull those 2 fields above.
+
+Just confirming now the actual order of the 2 new fields on index but i believe the order on their end can be set to what we provide. just wanted to add some information now.
+
+
+author: tohiduli
+comment: Hi [~andreav]
+
+
+
+Any feedback on the archival sample?
+
+
+author: andreav
+comment: No response yet, hopefully will get a response tomorrow.
+
+
+author: william.kong
+comment: [~andreav]/ [~tohidulI]: What is the status of this project? The due date of Nov 12 is way overdue. Please advise if this project is still active
+
+
+author: andreav
+comment: Client approved the sample yesterday on ticket 23662. Please move to QA.
+William, Do we need to do parallel too?
+
+
+author: william.kong
+comment: [~andreav]: I Just updated description of work in the ticket. Parallel is not required for this update.
+
+
+author: andreav
+comment: Tohid, once QA passes, DO NOT release the code until I have confirmed a release date with the client. 
+
+
+author: tohiduli
+comment: Project exported to QA folder.
+
+parallel ID:20211201024230
+
+archival sample location: /z/pdf_afp/ufcu/ufcuml1/zip/
+
+the project do not have e-statements.
+
+
+author: igor.khosid
+comment: Parallel ID: 20211201024230
+ Currently in parallel: Yes
+ User: tohidulI
+ Description: UFCUML1 archival update resources
+ Date Submitted: 2021-12-01 02:42:43
+ Date Last Updated: 2021-12-01 02:42:43
+ Files:
+ 1) UFCUML11.dfa
+ 2) ufcuml1_extract_xref.py
+ 3) ufcuml1_pdf.control
+
+
+author: berezinez
+comment: [~tohidulI] [~andreav]
+
+the changes in Index file output look good, QA is completed, please attach IS checklist,
+
+
+
+index_fields = DOC_TYPE|MEMBER_NUMBER|MEMBER_NAME|STATEMENT_DATE|PATH_FILENAME|STATEMENT_NAME|DELIVERY_PREFERENCE|YES_COLUMN|EMAIL_ADDRESS|SALESFORCE_ID
+
+
+author: william.kong
+comment: [~tohidulI] : *Please submit code transfer form for now*. [~andreav]is pending when the other UFCU parallel is going to be completed so I don't know what "Due Date" to update on this ticket. I think client wants all changes for all UFCU related projects to be released together.
+
+
+
+For now, I will mark Monday, Dec 6, 2022. Do NOT release code on that day unless [~andreav]+explicitly+ asked you to. For now, I will +not+ change status from "QA Completed" to "Release Ready"
+
+
+author: andreav
+comment: I am checking if a code release date of 12/7 will work for the client. In the meantime, please provide the information needed for IS managers to roll out the code when needed.
+
+
+author: andreav
+comment: Client will start to send the new xref file tomorrow. Please roll out the code for tomorrow's processing.
+
+
+author: tohiduli
+comment: [^IS-552_IS_CHECKLIST_12072021.docx]
+
+
+
+Is Checklist attached
+
+
+author: tohiduli
+comment: [^IS_PROGRAM_TRANSFER_FORM_IS_552.doc]
+
+Hi [~TunA] 
+
+Transfer form attached.
+
+parallel ID:20211201024230
+
+please release the code.
+
+the files are checked in to xfer folder.
+
+file lists are in transfer form.
+
+
+author: tuna
+comment: [~tohidulI]
+
+I got following error when I release. Can you please check-out and check in again? Thanks!
+
+
+
+[main@rhs ~]$ /home/master/cp_file.pl tohidulI "IS-552 UFCU - Update to Archival for Mortgage Statements" HOSTNAME: rhs Wed Dec 8 08:49:22 PST 2021 Description of Transfer: IS-552 UFCU - Update to Archival for Mortgage Statements cmp -c /d/is/cvs/xfer/tohidulI/UFCUML11.dfa home/isis/docdef/UFCUML11.dfa backup file /home/isis/isisbackup/isis/docdef/UFCUML11.dfa.20211208084922 cp /d/is/cvs/xfer/tohidulI/UFCUML11.dfa /home/isis/docdef/UFCUML11.dfa scp /d/is/cvs/xfer/tohidulI/UFCUML11.dfa main@texas:/home/isis/docdef UFCUML11.dfa 100% 97KB 97.1KB/s 00:00 cmp -c /d/is/cvs/xfer/tohidulI/ufcuml1_process.sh home/master/ufcuml1_process.sh Error: /d/is/cvs/xfer/tohidulI/ufcuml1_process.sh home/master/ufcuml1_process.sh differ: byte 8173, line 199 is 40 12 ^J . Files are different. Please check.
+
+
+
+
+
+[~rony], [~andreav]
+
+
+author: tuna
+comment: Thanks, [~rony]! It's good now. Following codes have been released.
+
+
+
+20211208090343 12/08/2021 tohidulI IS-552 UFCU - Update to Archival for Mortgage Statements
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/tohidulI/
+total 96
+-rwxrwxrwx 1 tohidulI DSI 4337 Dec 8 08:59 ufcuml1_extract_xref.py
+-rwxrwxrwx 1 tohidulI DSI 514 Dec 8 08:59 ufcuml1_pdf.control
+
+
+
+[~tohidulI], [~andreav]

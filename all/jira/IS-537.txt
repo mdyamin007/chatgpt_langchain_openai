@@ -1,0 +1,156 @@
+title: FLCU - [23318][pvt][in-house] In-House Request to fix Statement error
+description: This is about Interest Charged overflow error for ISIS version 6.
+
+
+
+William comment in TS #23039:
+
+"Please re-assign ticket to AC to create an in-house ticket for this issue as we would like to implement a permanent fix for next month should this issue occur again."
+
+
+
+I tried adjust print position for interest charged lines, but the error cannot go away. I don't know if you have other idea. When you have time, please try to adjust it.
+
+
+
+If it doesn't work, please discuss with William for how to proceed. We may either update to ISIS version 7 or get help from ISIS.
+
+
+
+You can test as follow:
+ - I attached project.
+
+ - Update/home/test/isis/docdef/FLCUMS11_TEST.dfa
+
+ - Run /home/master/pr_test.sh in rh2 ( for parallel env)
+
+ - Run following command straight for formatting:
+
+/isis/pdel3620/pdel3 /profile=/home/test/isis/userisis/pdec.prf /input=/d/iss/tun/research/FLCU_STMT_093021_NEW.con /output=/z/flcu/flcums1131.afp /docdef=FLCUMS11_TEST /c '$BADACCTS=/z/flcu/flcums1131.bad' '$BADACCTS2=/z/flcu/flcums1131_b32.bad' '$UPSLIST=/z/flcu/flcums1131.upslist' '$PREFIX=flcums1' '$JOB_SEL=s' '$TTLFILE=/z/flcu/flcums1131.ttl' '$TIFFDIR=' '$LOOKUPFILE=' '$PROCDATE=07312021' '$COLOR_FLAG=' '$SDATE=' '$INSERT_TYPE=' '$PRT_DISCLOSURE=' '$XMLFILE=/z/flcu/flcums1131e.xml' '$EOM_FLAG=' '$MAIL_CONF_JOB_SEQ=' '$MAIL_CONF_SERV_TYPE=' '$LAST_CHECK_NUM=' '$TOTAL_CHECK_CNT=' '$TOTAL_CHECK_AMT=' '$ZIPFILE=/z/flcu/flcums1131.txt'
+
+
+author: william.kong
+comment: [~Jessica]: As discussed we will review the live date of this in-house project when I get a chance to discuss with Thomas when he returns from vacation next week.
+
+
+author: jharvey
+comment: [~William.Kong]
+
+I need a new timeline for this update. Would you please work with Thomas to provide?
+
+
+author: william.kong
+comment: [~thomasY]: Let's shoot for 2/28/2022 but still try to get this done earlier since we delayed this project.
+
+
+author: thomasy
+comment: Parallel:20220222154837
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220222154837
+   Currently in parallel: Yes
+   User: thomasY
+   Description: 537
+   Date Submitted: 2022-02-22 15:48:39
+   Date Last Updated: 2022-02-22 15:48:39
+   Files:
+      1) FLCUMS11.dfa
+
+
+author: igor.khosid
+comment: QA - completed
+<
+                IF VAR[7]<>'0200' AND VAR[7]<>'0201' AND VAR[7]<>'020'
+  '4' AND VAR[7]<>'9017' AND VAR[7]<>'0500' AND VAR[7]<>'0501' AND 
+                 VAR[7]<>'0502' AND VAR[7]<>'0503' AND VAR[7]<>
+                 '0300' AND VAR[7]<>'0301' AND VAR[7]<>'0302' AND VAR[
+                 7]<>'0400' AND VAR[7]<>'0401' AND VAR[7]<>'0402' AND 
+                 VAR[7]<>'9079' ;
+>
+                IF VAR[7]<>'0200' AND VAR[7]<>'0201' AND VAR[7]<>
+                 '0204' AND VAR[7]<>'9017' AND VAR[7]<>'0500' AND VAR[
+                 7]<>'0501' AND VAR[7]<>'0502' AND VAR[7]<>'0503' AND 
+                 VAR[7]<>'0300' AND VAR[7]<>'0301' AND VAR[7]<>
+                 '0302' AND VAR[7]<>'0400' AND VAR[7]<>'0401' AND VAR[
+                 7]<>'0402' AND VAR[7]<>'9079'
+
+
+author: igor.khosid
+comment: [~thomasY] [~jharvey]
+
+[~thomasY] - please attach IS checklist
+
+
+author: william.kong
+comment: [~thomasY]: Please run this in parallel. I would like to see the results of the DPVS and compare it with the original production DPVS to see if there is a lot of page differences. I would expected that number accounts to be the same, but the number images may be a few images less with this enhancement.
+
+I would suggest using version 7.19 instead of 7.14 if you have time to switch it. If not, we can keep 7.14.
+
+
+
+
+
+
+author: william.kong
+comment: [~jharvey]& [~Igor.Khosid]: We need to delay this project once more. [~thomasY]did additional testing yesterday and added more records to the data file, but it actually didn't fix the issue. He is needing re-review and fix this issue again.
+
+
+
+We most likely may not make it for this 2/28/2022 date. I will check in with him tomorrow again on the progress.
+
+
+author: thomasy
+comment: Parallel:20220222154837
+
+Made a small additional update that should completely resolve the issue for any number of transactions.
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220222154837
+   Currently in parallel: Yes
+   User: thomasY
+   Description: 537
+   Date Submitted: 2022-02-22 15:48:39
+   Date Last Updated: 2022-02-24 17:18:00
+   Files:
+      1) FLCUMS11.dfa
+
+
+author: igor.khosid
+comment: QA - completed
+Please attach IS checklist
+
+>>>>>
+Difference prod vs test
+<
+IF PAGEBREAKFORFEE AND END_VPOS+OUTLINE_START>14800 ;
+THEN ;
+BOX
+POSITION 0.43  (BEGIN_VPOS-0.02) 
+WIDTH 5.62 
+HEIGHT (END_VPOS-BEGIN_VPOS+0.02) 
+THICKNESS MEDIUM TYPE SOLID;
+OUTLINE_START = 0 ;
+>
+IF PAGEBREAKFORFEE AND END_VPOS+OUTLINE_START>14000 ;
+THEN ;
+BOX
+POSITION 0.43  (BEGIN_VPOS-0.02) 
+WIDTH 5.62 
+HEIGHT (END_VPOS-BEGIN_VPOS+0.02) 
+THICKNESS MEDIUM TYPE SOLID;
+OUTLINE_START = 2000 ;
+
+
+
+author: william.kong
+comment: [~thomasY]: Let roll this out on Monday.
+
+
+author: william.kong
+comment: [~thomasY]: Please work with [~TunA]for this release after this call.
+
+
+author: thomasy
+comment: This is released.

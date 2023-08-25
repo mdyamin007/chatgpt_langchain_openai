@@ -1,0 +1,219 @@
+title: URL Tracking
+body:   
+
+## Overview
+
+In order to provide metric report for client to tell how well are Message
+click-through doing, instrumentation need to be introduced to the links posted
+on top of the Message contents. Considering time-to-market, keeping this
+solution as light-weight as possible. Full blow instrumentation platform would
+require much bigger effort and should go along the new platform revamp project
+on the ISUS side.  
+  
+
+## Detailed Design:
+
+  1. Update processing logic:  **[~3 days]**
+    1. to link the information stored on infoTrac to eStatment system
+    2. By default, we will flag the links will be tracked and this is configurable per client in ${cid}.conf
+  2. Add logic to dynamically generating the marketing link on PDF statement (AI and member site):  **[~1 week]**
+    1. When user click on the link, it will hit infoimage hosted web site first, For example : <https://estmt.cfhs.org/linkTrack?x=${encryptedValue>}
+      1. Infoimage hosted member site and AI site
+      2. Infoimage site (for example [www.infoimageinc.com](http://www.infoimageinc.com/) )
+    2. After infoImage logs the tracking information, we will redirect to the destination link
+    3. The marketing link on PDF is dynamically generated:
+      1. Different user/account will see different link.
+      2. Even for same PDF statement, AI user and member will see different link.
+        1. Member: <https://estmt.cfhs.org/linkTrack?x=${encryptedValue>} or [https://estmt.cfhs.org/linkTrack/${encryptedValue](https://estmt.cfhs.org/linkTrack/$%7BencryptedValue)}
+        2. AI: <https://estmt.cfhs.org/msm/linkTrack?x=${encryptedValue>} or [https://estmt.cfhs.org/msm/linkTrack/${encryptedValue](https://estmt.cfhs.org/msm/linkTrack/$%7BencryptedValue)}
+        3. ${encryptedValue} contain the following information:
+          1. org_id
+          2. usr_id (typically cookie could be utilized to track unique users, but it is not applicable in this case since the link is in PDF)
+          3. message_id (at infotrac, which can be linked to which campaign)
+          4. esd_id (can find out which statement, account, cycle, type and etc)
+          5. event { for example ImgLinkTrack}
+          6. dest_ link  
+The above information will be generated as
+${org_id}:${usr_id}:${message_id}:${esd_id}:${event} :${dest_link}  
+First and then encrypt it to ${encryptedValue}
+
+  3. Implement logic for tracking at sites (AI and member site):  **[~2 week]**
+    1. Detailed information about link clicking will be logged (who, when, which link, which pdf)
+      1. The servlet will not need login, shouldn't be secure version
+      2. Detail Information will be logged in InfoTrac schema
+    2. AI tracking information will not display in the report.
+    3. Summary information:
+      1. Backend script will access eStatment schema and infoTrac detailed schema to generate the summary report hourly. The summary will contain the following information:
+        1. Month
+        2. Account_number
+        3. client_id
+        4. message_id
+        5. campaign_id
+        6. unique_clicks
+        7. total clicks
+  4. Reports(InfoTrac):  **[~2 days]**
+    1. Create report tabs/structure and display reports:
+      1. Reports tab => Message Manger => Msg Campaign list
+      2. Click on an individual campaign, it will list the summary information for that campaign's marketing links (unique clicks and total clicks)
+      3. Click on the count link, display the account lists
+  5. PDF preview(InfoTrac): Link will be the final destination link  **[~1 days]**
+
+  
+
+# Node.js
+
+  
+
+## Node.js installation :
+
+    
+    
+    1.Ubuntu  
+        a. Install the dependencies:
+           sudo apt-get install g++ curl libssl-dev apache2-utils
+           sudo apt-get install git-core.
+        b. Run the following commands:
+           git clone git://github.com/ry/node.git
+           cd node
+           ./configure
+           make
+           sudo make install
+    
+    2.Windows    
+    
+        a.Install cygwin or similar unix box
+    
+        b.Use setup.exe in the cygwin folder to install the following packages:
+            devel -> openssl
+            devel -> g++-gcc
+            devel -> make
+            python -> python
+            devel -> git
+    
+        Open the cygwin command line with Start > Cygwin > Cygwin Bash Shell.
+    
+        c. Run the below commands to download and build node.
+           git clone git://github.com/ry/node.git
+           cd node
+           ./configure
+           make
+           sudo make install
+     
+
+  
+
+## Node.js : Current Test Setup :
+
+  * Server installed: [pd-dev2.infoimage.com](http://pd-dev2.infoimage.com)
+  * upstart script is placed in /etc/init/clicktrack.conf
+  * node server could be start/stop by  
+
+    
+        service clicktrack start
+    service clicktrack stop
+
+  * log file is located at /var/log/clicktrack/clicktrack.log
+  * It creates an http server at port 8888.The node module reads the encrypted URL,decrypts it,processes it and saves the document to mongo.
+  * Asynchronously it sends back a 301 to the actual requested URL specified in that particular message.
+  * node project uri :  **[pd-dev2.infoimage.com](http://pd-dev2.infoimage.com):8888/node**.
+  * To do simple test: <http://pd-dev2.infoimage.com:8888/node?LQS8qsWMuvzKQTSwYAeCRE0_SqKpUPzmuz61AjfAyimUOmUIJzT2mKYHwqnW1vZGPLxeU1O0B6dp6TI__g5Qs8hTJXplixmcCDuvpSrMRK7A1-8MPLoYhnTDHwu1q9IAoJx17KT7zwY2qh2nm4_e8DWbeXX5YRQsA4GxLlAW8-So4lLF1LTYPtrYl4-Qu9DQETsa9Em14lC05YKWybOxXfhs5Xo4VSV-a5sgLKkZy_yM8Gv7mt2B-9_UEM4Alhb1WUhx2arkWE9_2rWV-fOXJnDuq1VATxz7Cjz8MNSVWJQ>
+
+  
+  
+
+# Mongo
+
+  
+
+## Mongodb installation :
+
+    
+    
+      1) Ubuntu : A very claer cut and precise documentation can be found at http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/
+      2) Windows :http://docs.mongodb.org/manual/tutorial/install-mongodb-on-windows/
+    
+
+  
+
+## Mongodb shell access :
+
+Either go to <mongodb installation dir>/bin (depending upon whther environment
+PATH variable includes mongodb/bin)  
+If it is included in path just type mongo and enter.  
+You "ll have access to mongo shell where by default it will connect to test
+DB.  
+You can fire any query on any db.The Query language is simple.  
+Please refer to [http://docs.mongodb.org](http://docs.mongodb.org/) for
+further ref on query language  
+(NOTE: mongodb should be running )  
+  
+
+## Mongodb : Current Test Setup :
+
+Mongodb for Click Tracking is currently running on  **[pd-
+grid01.infoimage.com](http://pd-grid01.infoimage.com)**.  
+Default port is 27017  
+The DB created for click tracking is  **clicktrackerDB**.  
+The collection for impressions and clicks is  **clicktrackerColl**.  
+  
+
+## LinkGenerator : URLGen.jar dependency on Estmt :
+
+ **i3core pkg**  
+ **class :EstmtMsgFilter.java**  
+ **method : prepareClickTrackingUrl**  
+This method is used for preparing the data,logging an impression,  
+then preapring the data for click and returning the encrypted String.  
+class URLGenerator(dependency : URLGen.jar is an independent api) is  
+used for creating the data set(Infotrac message parameters and encrypting it).  
+The constructor for URLGenerator takes a String as argument which is the
+application type for  
+which we are doing the tracking,the options for which are specified with
+AppTypesEnum  
+contained in the same jar.  
+Can also pass a String as in following the  
+standard: "MM" for Message Manager campaigns.  
+More options to come : "Email" for Email Camapigns.  
+sample code for using URLGen jar for MM Campaigns:  
+URLGenerator generator = new
+URLGenerator([AppTypesEnum.MM.name](http://AppTypesEnum.MM.name)());  
+generator.generateURL(Object infotracMessage);  
+No other classes is required to be used from URLGen jar  
+  
+
+## Test/Production Release plan
+
+ **TaskID**|  **Date/Time**|  **Owner**|  **TODO**  
+---|---|---|---  
+1| DONE| DEV| Deploy eStmts and Infotrac on System B(pilot)  
+2| Oct1-Oct 15 2013| DEV/Bhavani| Testing on Pilot (2 weeks ).This will be an
+end to end testing which will incorporate the following steps :  **1.**
+Create and approve multiple campaigns with Message manager 3.0. built on
+certain criteria  **2.**  P-UI the above campaigns to run  **3.**  Create
+impressions and clicks by testing(viewing) estmts(on pilot) for the relevant
+account logins as specified by the criteria for the above
+campaigns.Impressions and clicks are recorded against each message area and
+target group.  **4.**  Validate the imp/click statistics on Infotrac under the
+Analytics tab for the particular CID/campaign/message area.  **5.**
+Automation : Load Testing with bulk data  
+3| Oct1-Oct 15 2013| DEV/Raja| Bug Fixing as raised above  
+4| Oct16-Oct 22 2013| IS| Parallel Testing :Cross team validation for actual
+processing of a campaign along with the paper side to check sanity of the
+changes not impacting other features  
+5| Oct16-Oct 22 2013| DEV/Raja| Production set up for Node and mongo :  **1.**
+Recognize prod machines for node and mongo(high RAM :least 8 gb.)  **2.**
+Node set up with upstart and monit utility  **3.**  May be scale mongo to
+master/slave(2 instances) on different machines  
+6| Oct22-Oct 25 2013| DEV/Bhavani| Move to stage :Final round of testing with
+the production servers for node and mongo  
+7| Oct26-Oct 31 2013| DEV/Raja| Production release  
+  
+  
+
+### Attachments
+
+250
+
+  
+
+

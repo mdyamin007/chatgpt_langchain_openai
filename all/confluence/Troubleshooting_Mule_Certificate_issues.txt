@@ -1,0 +1,77 @@
+title: Troubleshooting Mule Certificate issues
+body:   
+  
+
+## DEV (testapi)/PROD (api) certificates on the ApacheMule machine
+
+Prod certs location: /etc/apache2/ssl/api_prod  
+testapi certs location: /etc/apache2/ssl/testapi
+
+certificate would have a .crt extension and key with a .key extension  
+  
+
+  
+
+## Check the content/expiry of those certificates
+
+You may use jdk's keytool to check the certifcate details  
+eg:  
+keytool -printcert -file api_apache.crt
+
+Owner:
+EMAILADDRESS=[ben.chan@infoimageinc.com](mailto:ben.chan@infoimageinc.com),
+CN=[api.infoimageinc.com](http://api.infoimageinc.com), OU=IT, O=InfoIMage
+inc, L=MenloPark, ST=California, C=US  
+Issuer:
+EMAILADDRESS=[ben.chan@infoimageinc.com](mailto:ben.chan@infoimageinc.com),
+CN=[api.infoimageinc.com](http://api.infoimageinc.com), OU=IT, O=InfoIMage
+inc, L=MenloPark, ST=California, C=US  
+Serial number: b88c7d82be25a6ff  
+Valid from: Mon Jul 14 11:09:28 PDT 2014 until: Thu Apr 19 11:09:28 PDT 2018  
+Certificate fingerprints:  
+MD5: 95:B6:A8:16:D5:2C:B2:80:CB:FD:EB:CE:DD:38:95:1A  
+SHA1: 6D:32:EE:80:64:45:AF:7E:A4:62:74:C2:57:30:70:3D:41:BA:76:58  
+Signature algorithm name: SHA1withRSA  
+Version: 3
+
+Extensions:
+
+#1: ObjectId: 2.5.29.14 Criticality=false  
+SubjectKeyIdentifier [  
+KeyIdentifier [  
+0000: C0 FE D9 BA F9 0D 36 0A F5 46 A8 A4 D3 2A 65 BB ......6..F...*e.  
+0010: C9 2E 31 1A ..1.  
+]  
+]
+
+[#2](https://i3dev.easyredmine.com/issues/2 "Bug: test notif \(Closed\)"):
+ObjectId: 2.5.29.19 Criticality=false  
+BasicConstraints:[  
+CA:true  
+PathLen:2147483647  
+]
+
+[#3](https://i3dev.easyredmine.com/issues/3 "Enhancement: TEST: improvement on
+eSafetyBox \(Closed\)"): ObjectId: 2.5.29.35 Criticality=false  
+AuthorityKeyIdentifier [  
+KeyIdentifier [  
+0000: C0 FE D9 BA F9 0D 36 0A F5 46 A8 A4 D3 2A 65 BB ......6..F...*e.  
+0010: C9 2E 31 1A ..1.  
+]
+
+]  
+  
+
+  
+
+## Create/Renew the certificates
+
+A new certificate can be created issuing the below command
+
+openssl req -x509 -nodes -days 1375 -newkey rsa:2048 -keyout
+/etc/apache2/ssl/apache.key -out /etc/apache2/ssl/apache.crt  
+rsa certificate named apache.crt and key named apache.key would be created in
+the /etc/apache2/ssl/ folder. the validity of the x509 certificate would be
+1375 days
+
+

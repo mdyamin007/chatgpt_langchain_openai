@@ -1,0 +1,85 @@
+title: NCR SSO details and setup
+body: **  
+**
+
+NCR SSO parameters name and their usages in hypercube sso that is given as an
+encoded string(SAML response) from any client(CID) side as following:
+
+  
+
+  *  **XML_DATA:** This parameter contains the value of user information as a XML format with the key name of userGUID, userID, name, email and phoneNumber.  Here userGUID is used as sub user ID and name, email, phoneNumber currently has no usages in hypercube sso.
+
+ **Example:**
+<![CDATA[<userInfo><userGUID>ef2785b5e5004233b8cd8ed558bc03c5</userGUID><userID>tpvcerts1</userID><name>Ferris
+Bueller</name><email>[sf250134@ncr.com](mailto:sf250134@ncr.com)</email><phoneNumber></phoneNumber></userInfo>]]>
+
+  
+
+  *  **USER_ACCOUNTS:** This parameter contains the value of accounts information as a XML format with the key name of account, type, nickName and accountNumber. Here every parameter is used for making account list object in hypercube sso.
+
+ **Example:**
+<![CDATA[<Accounts><account><type>NA</type><nickName></nickName><accountNumber>9090804050</accountNumber></account></Accounts>]]>
+
+  
+
+  *  **user_type:** This parameter contains the value of user types such as N, P.. as a string. Here if user type is N then external user id is used/passed as a concatenation of  **USER_ID** and **userGUID** otherwise **USER_ID** in hypercube sso.
+
+  1.  **USER_ID:** This parameter contains the value of user ID as a string. Here **USER_ID** is used/passed as external user id ih hypercube sso.
+  2.  **FI_ID:** This parameter contains the value of FI_ID as a string. It's a constant value for any clients. This parameter is not used anymore. Just checking empty validation in hypercube sso.
+
+  
+
+ **NCR auth method name and structure details in properties.json**
+
+"ncr": {
+
+ "password": "fh1",
+
+ "usrAutoCreate": "y",
+
+ "acctAutoCreate": "y",
+
+ "checkPrimaryUser": "y",
+
+ "removeUFA": "y",
+
+ "acctTypeRequired": "y",
+
+ "delimiterNotRequireForSubuser": false,
+
+ "captureAcctDesc": "y"
+
+}
+
+ **NCR auth method (ssoKeyGen.ncr) implementation details in auth.json**
+
+As mentioned above that NCR sso parameters are given as an encoded string(SAML
+response) from client side. We follow below steps to decode the encoded
+string(SAML response) and retrieve all parameters to use in sso at hypercube
+side.
+
+  1. Use base64 decode and retrieve NCR XML data from encoded string(SAML response).
+  2. Retrieve ds:X509Certificate from XML data to validate the certificate using public certificate (.cert) file
+  3. Retrieve xenc:EncryptedKey value  from XML data to decrypt the key using private certificate (.pem) file and RSA-OAEP algorithm
+  4. Retrieve xenc:CipherValue encoded value from XML data to decode using base64 decode
+  5. Decrypt decoded xenc:CipherValue value using decrypted key in step 3 and AES-CBC algorithm and get decrypted XML data
+  6. Decrypted XML data in step 5 contains all parameters that mentioned above.
+  7. Retrieve all parameters and make json object to make API calls for enrolling or SSO into hypercube
+
+  
+  
+
+ **NCR ENV setup details in server**
+
+  1. Check private key and certificate files path or folder (private_file_path) in hypercube settings.json file for your deployment environments such as dev,pilot,stage etc and change it based on your deployment environments. Similarly, check private key file's name (private_key_file_name) and certificate file's name (certificate_file_name) and put them in private_file_path location. Below is a screenshot from settings.json file
+
+  
+  
+
+  1. Make sure private_file_path location is physically present in your deployment environments before starting the meteor server otherwise hypercube will return error to run. Similarly, private key and certificate files should be in this location otherwise NCR sso method will not work.
+
+  
+
+  1. We don't need any clients specific settings for that. Any clients which will use ncr sso method will be a part of it.
+
+

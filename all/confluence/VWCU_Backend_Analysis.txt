@@ -1,0 +1,516 @@
+title: VWCU Backend Analysis
+body: **VWCU**
+
+  
+
+VWCU has 8 backend process.
+
+These are:
+
+ **Auth**
+
+ **Afp**
+
+ **Enotice**
+
+ **Etax**
+
+ **Check index**
+
+ **Document processing**
+
+ **Insert**
+
+ **Revert to Paper**
+
+  
+
+doc.default.estmtselinsert=true // Supports market link feature
+
+afp.default.estmtselinsert=true // Supports Estmt Selective Insert
+
+global.default.imageMessage=true // Supports Estmt Selective Insert
+
+  
+
+ **Auth Processing:**
+
+7 columns in the index file
+
+File format: SSN|First Name|Last Name|Date of Birth|Acct Number|Paperless
+Status|Email
+
+  
+
+ **Database changes:**
+
+FIN_ACCOUNT: acct_number, acct_owner (first+ last name), type ->NA, Status->
+A, acct_id, org_id
+
+USR_FIN_ACCOUNT: ufa_id, usr_id, acct_id, UFA_status-> Active,
+ufa_Registration, E-Notify->Y
+
+Usr: usr_id, usr_ssn, usr_birthdate, Gender->F, Usr_Firstname-> (first+ last
+name)
+
+USR_SESSION: org_id, usr_id, sess_permission, sess_login_id (!acct_number),
+sess_pass, sess_active, Status-> active, session_pw_changed
+
+Paperless, Paperless2: acct_id, p_latest_status-> B, Pmodified_Date,
+P_Modified_By, STMT_Type-> default, P_Old_Status-> 'N'
+
+Audit_Log: created_by, Event_time, target user, Acct_id, Loacation, Event
+
+  
+
+Inserts sess_login_id as '!account_number' in usr_session table
+
+  
+
+  
+
+  
+
+ **Business:**
+
+if(account=new) -> create account
+
+if(user not found in usr_fin_account) -> insert usr_fin_account, usr and
+usr_session.
+
+if(user exists in usr_fin_account) -> update usr_fin_account, usr and
+usr_session if any changes found.
+
+If(paperless status not found) -> insert in paperless, paperless2 as stmt_type
+->default.
+
+If(paperless status found) -> no changes
+
+If(account=Old) -> Update if any changes found.
+
+  
+
+ **AFP Processing:**
+
+13 columns in the index file
+
+Mandatory columns: file name, account number, begin date, closing date,
+numbers of pages, owner name.
+
+For default-> ms1, ms2, mv1
+
+For mortgage-> ml1, ml2
+
+ **Database changes:**
+
+FIN_ACCOUNT: acct_number, type ->NA, Status-> A, acct_id, org_id,
+last_modified_date
+
+USR_FIN_ACCOUNT: ufa_id, usr_id, acct_id, UFA_status-> Active,
+ufa_Registration
+
+Usr: usr_id, Gender->F, Usr_Firstname
+
+USR_SESSION: org_id, usr_id, sess_permission, sess_login_id (acct_number),
+sess_pass, sess_active, Status-> active, session_pw_changed
+
+Estmt_doc: esd_id, acct_id, esd_begin_date, esd_closing_date, esd_parent_path,
+esd_filename, esd_page_count, esd_doct_type, estmt_type->default, seq_num,
+isviewed
+
+Estmt_file: esd_id, arch_file_id, create_date, change_date, stmt_type
+
+P_job_estmt: P_Job_id, Esd_id
+
+Arch_file: Arch_file_id, File_type, Parent_path, File_name, Page_Count,
+storage_server
+
+  
+
+afp.default.estmtselinsert=true // Supports Estmt Selective Insert
+
+  
+
+Create account by removing leading zeros
+
+Insert sess_login_id as 'account_number' in usr_session table
+
+  
+
+ **Business:**
+
+if(account=new) -> create account
+
+If(paperless status) -> insert in paperless, paperless2 as stmt_type
+->default.
+
+If(account=Old) -> Update if if any changes found. ( owner_name,
+last_modified_date)
+
+***owner name cannot be "MEMBER", "CUSTOMER"
+
+if(user not found in usr_fin_account) -> do nothing
+
+if(user in usr_fin_account) -> update usr_fin_account, usr and usr_session if
+any changes found.
+
+  
+
+ **E-Notice Processing:**
+
+4 columns in the index file, can be 6 columns also
+
+Mandatory columns: account number, Letter types, File name, date
+
+Letter types can be comma separated
+
+If 6 columns -> add account_name, Code
+
+Letter Type ->36
+
+  
+
+ **Database changes:**
+
+FIN_ACCOUNT: owner name, last_modified_date
+
+Enotice: Enotice_Id, Acct_id, Enotice_Type, Enotice_Stamp, Arch_file_id,
+is_viewed
+
+P_job_enotice: P_Job_id, Enotice_id
+
+Arch_file: Arch_file_id, File_type, Parent_path, File_name, Page_Count,
+storage_server
+
+  
+
+ **Business:**
+
+if(account_name=null) -> if acct_number 10000 to higher -> set account name
+with masked account with unmasked last 4 digits
+
+if acct_number 100 to 10000 -> set account name with masked account with
+unmasked last 2 digits
+
+  
+
+if(account=new) -> Nothing
+
+If(account=Old) -> Update if any changes found. (owner_name,
+last_modified_date)
+
+Insert enotice, P_Job_enotice, Arch_file
+
+  
+
+ **E-Tax Processing:**
+
+8 columns in the index file
+
+Mandatory columns: account number, type, afp File name, date, zipfilename
+
+Optional columns ->suffix, apptype, ssn
+
+  
+
+ **Database changes:**
+
+Etax: etax_id, acct_id,etax_type, etax_stamp, arch_file_id, isViewed, ssn
+
+P_job_etax: P_Job_id, Etax_id
+
+Arch_file: Arch_file_id, File_type, Parent_path, File_name, Page_Count,
+storage_server
+
+  
+
+  
+
+ **Business:**
+
+if(account=new) -> Nothing
+
+If(account=Old) -> Insert etax, P_Job_etax, Arch_file
+
+  
+
+ **Document Processing:**
+
+20 columns in the index file
+
+JobType|PresentmentType|DocumentCode|FileName|ZipFileName|DocumentBeginDate|DocumentEndDate|ImageCount|AccountNumber|AccountType|AccountSuffix|AccountName|SSN|MessageID|InsertID|RegionCode|CrippleFlag|PostcardFlag|Afp2webPM|Afp2webIni
+
+  
+
+ **Database changes:**
+
+FIN_ACCOUNT: acct_number, type ->NA, Status-> A, acct_id, org_id,
+last_modified_date
+
+USR_FIN_ACCOUNT: ufa_id, usr_id, acct_id, UFA_status-> Active,
+ufa_Registration
+
+Usr: usr_id, Gender->F, Usr_Firstname
+
+USR_SESSION: org_id, usr_id, sess_permission, sess_login_id (!usr_id),
+sess_pass, sess_active, Status-> active, session_pw_changed
+
+Usr_mapping-> org_id, CIF as (Account number), usr_id
+
+Paperless, Paperless2: acct_id, p_latest_status-> B, Pmodified_Date,
+P_Modified_By,
+
+Estmt_doc: esd_id, acct_id, esd_begin_date, esd_closing_date, esd_parent_path,
+esd_filename, esd_page_count, esd_doct_type, estmt_type->default, seq_num,
+isviewed
+
+Estmt_file: esd_id, arch_file_id, create_date, change_date, stmt_type
+
+Arch_file: Arch_file_id, File_type, Parent_path, File_name, Page_Count,
+storage_server
+
+  
+
+doc.default.estmtselinsert=true // Supports market link feature
+
+Create account with leading zeros
+
+Insert sess_login_id as '!usr_id' in usr_session table
+
+Insert CIF as 'account number' in usr_mapping table (with leading zeros if
+any)
+
+  
+
+ **Business:**
+
+if(account=new) -> create account
+
+if(user in usr_fin_account) -> update owner name, modified date in fin account
+if any changes found,
+
+usr if any changes found.
+
+If(no default paperless status found) -> insert in paperless, paperless2 as
+stmt_type ->default forcefully
+
+insert in paperless, paperless2 as stmt_type -> given stmt_type
+
+  
+
+If(default paperless status found) -> no changes to default
+
+insert in paperless, paperless2 as stmt_type -> given stmt_type
+
+If(account=Old) -> Update if any changes found.
+
+  
+
+ **Check Processing:**
+
+6 columns in the index file
+
+  
+
+ **Database changes:**
+
+Account_check_image: aci_id, acct_id, aci_check_num, aci_check_date,
+aci_check_AMT, aci_front_path, aci_front_filename, aci_back_filename,
+aci_last_modified_date, ACI_created_date, aci_mime_type, aci_check_acct_num,
+stmt_type,
+
+P_Job_check: P_Job_id, Check_id
+
+  
+
+ **Revert to Paper:**
+
+  
+
+ **Database change:**
+
+Paperless2:
+
+Paperless:
+
+  
+
+ **Business:**
+
+if(P_latest_status=U) -> if P_modified_date < cut_off_date
+
+and P_modified_date > live_date
+
+Then, update status-> B with reason code 82
+
+  
+
+ **VWCU has 2 backend Report**
+
+Opt-Out Report
+
+Bounce back report
+
+Paperless Report
+
+  
+
+ **Opt-Out Report:**
+
+Report type- accumulative
+
+Used query:
+
+SELECT fa.acct_number FROM fin_account fa, paperless p
+
+WHERE fa.org_id=getorgid(?)
+
+AND fa.acct_id=p.acct_id
+
+AND p.stmt_type='default'
+
+AND p.p_new_status in ('E', 'U')
+
+AND p.p_id=(
+
+SELECT MAX(p2.p_id)
+
+FROM paperless p2
+
+WHERE p2.acct_id=p.acct_id
+
+AND p2.stmt_type='default'
+
+AND p2.p_modified_date < ?
+
+) ORDER BY p.p_modified_date DESC;
+
+  
+
+ **Undeliverable Report:**
+
+  
+
+**(Remember to check report header names)**
+
+ **Report Header: (check header in backend code)**
+
+ **CIF NUMBER|ACCOUNT NUMBER|APP CODE|ACCOUNT HOLDER NAME|EMAIL
+ADDRESS|CODE|REASON**
+
+  
+  
+
+ **Configurations:**
+
+clusterFlag = true
+
+resetPaperlessStatus = false
+
+setEmailInvalid = false
+
+To_be_processed = "Inbox" (to_be_processed)
+
+Record = "notification_preference_id"
+
+startFlag =
+
+endFlag =
+
+pui_usr_id = 1
+
+Acct_list = 0(accts_to_skip)
+
+insertToDB = true
+
+Recipient_list = false
+
+zip protection = true  
+  
+
+ **Process of CUUndeliverableReport(:**
+
+IF clusterFlag is TRUE:
+
+DO:
+
+Get Email Servers from HA_SERVER
+
+END DO
+
+ELSE
+
+Add ha_zimbra server to EmailServerList
+
+IF internal_backup is not NULL:
+
+DO
+
+Create File with some name
+
+ELSE
+
+Create file with getting directory name from Global Confing(
+**processing.conf** )
+
+For all emailServers
+
+DO:
+
+retrieve all the bounceBack emails from the mail server for each email, the
+function will move it to a new folder for archival and see if it exists in
+hTable.  If so, log it in the database.
+
+IF RESET PAPERLESS:
+
+Reset to Paperless
+
+IF SETEMAILINVALID
+
+Set Email to Invalid
+
+END DO
+
+Generate Report
+
+PGP and ZIP functionality
+
+** VWCU Doesn't set email to invalid
+
+** VWCU Doesn't reset paperless status
+
+** VWCU Inserts Data in SummaryReport table
+
+  
+
+ **Paperless Report**
+
+  
+
+paperlessReport.daysBeforeBackup=1
+
+paperlessReport.stmtType1=default,
+
+paperlessReport.stmtType2=default,enotice
+
+  
+
+ **Notification Features**
+
+  
+
+email.hiddenMessage=np_id
+
+email.featureType=sms
+
+notification.isSendEmailViaAPI=false
+
+notification.isEmailManageByEstmt=true
+
+  
+
+** Has Welcome Reminder
+
+  
+
+

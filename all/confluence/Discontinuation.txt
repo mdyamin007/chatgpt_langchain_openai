@@ -1,0 +1,216 @@
+title: Discontinuation
+body:   
+
+## **Remove Estatement Site Access**
+
+|  
+  
+---|---  
+Prism|
+
+  * Server.xml on all servers/environments
+    * Restart the server and test if the site is accessible/others can still be accessed
+  * Remove the cid folder in i3webapps
+  * Remove the cid folders inside tomcat-[schema]/work/Catalina 
+    * Dev
+    * Pilot (01 and 02)
+    * Stage
+    * Production (01 and 02)
+  * Remove logs from usr/local/tomcat/tomcat-[schema]/logs on all environments
+  * Remove from Apache proxy servers
+
+  
+Hypercube|
+
+  * Sites-enabled and sites-available from proxy servers (09/10 or 17/18)
+  * Remove from /usr/local/tomcat/app-configs/infoservice/config.properties
+  * Remove from lib/allConstants/constants.js file (hypercube folder in eclipse)
+    1. -inside meteor.app -  
+remove cid from cid_to_load_properties listing
+
+  * remove cid authCipher & authConstant from settings.json for each environment (hypercube folder in eclipse)
+    * settings.json
+    * settings_pilot.json
+    * settings_stage.json
+    * settings_prod.json
+  * Remove cid public folder from the hypercube code
+  * Remove cid private folder from the hypercube code
+  *  **Note** : There are 4 hypercube production servers (01/02/03/04) and 2 pilot (01/02)
+
+  
+Test pages|
+
+  * SSO and/or admin test page on PUI dev server  
+
+    * SSO: /usr/local/tomcat/tomcat-processing/i3webapps/ROOT/sso/js
+    * Admin: /usr/local/tomcat/tomcat-processing/i3webapps/ROOT/admin/js
+
+  
+InfoTRAC|
+
+  * Disable properties in client management tab (PC should be able to disable)
+
+  
+  
+API (Gitlab):
+
+  * Notifyservice
+  * Infoservice
+
+|
+
+  * Remove from config.properties
+    * Notify DSI
+
+  
+  
+  
+
+##  **Remove from PUI Code/Configurations**
+
+|  
+  
+---|---  
+PUI configuration files|
+
+  * Remove entire CID.conf
+  * Remove cid from infoimage.conf
+
+  
+  
+PUI site
+
+**Confirm with Accounting before removing the Processing Reports
+
+|
+
+  * File transfer status - remove all file schedules
+  * Report Scheduler - report all report schedules
+  * Cron jobs on PUI servers
+    * sudo crontab -e
+  * OrganizationEnum.java (Infoimage-commons)
+  * Email handler
+    * application/email EmailHandlerFactory
+  * Processing reports 
+    * processing-ui/application/accounting2/handler
+  * Delete any cid classes
+  * Remove the pui logs from station folder
+
+  
+Scanner|
+
+  * Remote into ca-ftpbu-pr-01 and remove cid from:
+    * E:\scanner: config.properties
+    * E:\scanner_info: config.properties
+    * E:\scanner_secure3: config.properties
+    * E:\scanner_secure4: config.properties
+    * E:\scanner_secure5: config.properties
+    * E:\scanner_manual: config.properties
+  * Remove from ca-ftpbu-st-01
+    * E:\isd_scanners\dev
+    * E:\isd_scanners\pilot
+    * E:\isd_scanners\stage
+    * E:\scanner_pilot
+    * E:\scanner_pilot2
+    * E:\scanner_stage
+
+  
+Mongo DB|
+
+  * ClientProperties all environments
+    * Notify DSI (Naim/Afikur) to remove from all mongo DB instances
+
+  
+Other|
+
+  * Remove from Jenkins (Prism client)
+  * Remove from Jira (Disable only needed)
+  * Remove from Nexmo acct, used for SMS (Notify David to remove)
+  * Remove from Swift servers, used for batch download
+    * Notify DSI 
+
+  
+  
+  
+
+##  **Remove Data**
+
+|  
+  
+---|---  
+  
+PVNAS
+
+**Confirm with AM, since they sometimes do not inform us to keep certain data.
+
+|
+
+  * PVNAS-DEV
+    * indiv_afp
+    * peb3
+  * PVNAS
+    * indiv_afp
+    * peb3
+  * PVNAS2
+    * indiv_afp
+    * peb3
+
+  
+INPUT|
+
+  * INPUT-DEV 
+    * process-files
+    * process-files-backup
+    * indiv_afp
+  * INPUT
+    * process-files
+    * process-files-backup
+    * indiv_afp
+
+  
+  
+FTPBU
+
+**delete folder contents is fine, keep folder name just in case. Ran into
+issues before when removing entire folder from download or ftpbu
+
+|
+
+  * Download
+    * Remove contents from production
+    * Remove contents from E:
+  * ftpbu
+    * ca-ftpbu-pr-01 
+    * ca-ftpbu-st-01 (remote in)
+      * \\\ca-isis-dv-01.infoimageinc.com\ftpbu_dev
+      * \\\ca-isilon02-nfs.infoimageinc.com\rht\ftpbu
+      * \\\ca-isis-dv-01.infoimageinc.com\ftpbu_dev
+      * \\\ca-isilon02-nfs.infoimageinc.com\rht\ftpbu
+      * \\\ca-isis-dv-01.infoimageinc.com\infoftp_int_dev
+      * \\\ca-isilon02-nfs.infoimageinc.com\rht\infoftp_int
+      * \\\ca-isis-dv-02.infoimageinc.com\infoftp_int_dev
+      * \\\ca-isis-dv-02.infoimageinc.com\ftpbu_dev
+      * download-nas02.infoimageinc.com\ftpbu_stage
+      * \\\download-nas02.infoimageinc.com\infoftp_int_stage\
+      * e:/ftpbu_test/internal_ftp
+      * e:/ftpbu_test/pvnas
+      * e:/download
+      * E:/download_pilot
+      * E:/ftpbu_pilot/pvnas
+  * FTP locations:  
+
+    * Secure 2
+    * Secure 3
+    * Secure 4
+    * Secure 5
+
+  
+Database|
+
+  * Email Junho to purge all data from all schemas/environments from oracle DB
+
+  
+  
+  
+
+

@@ -1,0 +1,242 @@
+title: PFCU - [30635][pvt][in-house] Message Manager Print Image Quality
+description: IS Assessment
+=============
+Hours for development: 4 IS hours
+Turnover Date : 10/06/2022
+Sample to QA Date: 10/13/2022
+Approval Date: 10/17/2022 
+Go live date : 10/31/2022
+
+Rony and Anwar has been testing and working on this update.
+
+Assessment Details (IS):
+- Parallel required: (yes)
+- Clone base_color_pseg_icd and call it base_color_pseg_300_dpi.icd Change PICResolution to 300 and set PICWidth and PICHeight to null or blank
+- Description:
+  Two options:
+
+  Option 1) Create a color_pseg_300_dpi list file and place in ${home_keep}/keep. Add prefix (pfcums1) to the list.
+
+          Inpseg_conv.sh, if color_flag is 1 and prefix exists in the list, call base_color_pseg_300_dpi.icd, else call base_color_pseg.icd
+
+
+
+  Option 2) Create a variable color_pseg_300_dpi="y" in control file and export variable.
+
+          Inpseg_conv.sh, if color_flag is 1 and color_pseg_300_dpi="y" and defined, call base_color_pseg_300_dpi.icd, else call base_color_pseg.icd        
+
+
+
+- Files: base_color_pseg_300_dpi.icd , pseg_conv.sh
+
+
+author: dawnl
+comment: Hi [~rony],
+
+Can you answer client's question below?
+
+"The update looks to be a great improvement. Will this update in printed image quality also be reflected in our HELOC Messages as well?"
+
+Thanks.
+
+
+author: rony
+comment: Hi [~dawnl]
+
+
+
+I haven't made update for heloc apps yet. I will and let you know asap.
+
+
+
+Thanks
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+Parallel id:20221013061746
+
+Previously quality of the paper sample was very poor for pfcu for which we needed to update below 2 steps:
+
+
+
+!image-2022-10-13-19-53-14-476.png!
+
+Below are the pdfs for heloc before the update and after the update. You can see the message manager message quality is better than before.pdf. These 2 pdfs are from campign .
+
+[^pfcu_HELOC_10142022_10142022_after.pdf][^pfcu_HELOC_10142022_10142022_before.pdf]
+
+
+
+The same goes for monthly:
+
+[^pfcu_Monthly_10112022_10112022_after-1.pdf]
+
+[^pfcu_Monthly_10102022_10102022_before-1.pdf]
+
+
+
+
+
+[^pfcuml1115.print][^pfcums1331.print]in case you want to print, please print *5.is* for *heloc* and *sam* file for *monthly*. Below are the pdfs for these:
+
+[^pfcuml1115.is.pdf][^pfcums1331.sam.pdf]
+
+
+
+[~dawnl]
+
+Thanks
+
+
+
+
+author: JIRAUSER11700
+comment: [~rony] 
+Guys, I don't know what to check here but to state that the improvement looks impressive.
+ I know too little about Papyrus to understand what you do. Is this a special procedure to process images so that they look normal after importing to Papyrus -and not the usual crap-? If so, all projects would benefit from it and I recommend spreading around the knowledge.
+
+I probably want too much, but maybe there is also a way to have lossless compression in psegs, like in PNG? Text in images still visibly suffers from jpeg compression artefacts. I really don't understand why Papyrus keeps compressing images that way: it's not like we are low on disk space in the 21st century.
+ Or maybe there's a quality setting for compression that we can max out?
+
+[~dawnl], kindly request print samples. Thank you.
+
+
+author: rony
+comment: Hi [~avannik]
+
+This is about the message manager. So let's say we or the client sets a campaign with an image message. Now when we run a script it gets the image from the campaign. Then our script converts the image to pseg. But when converting pseg we have been using a configuration file called *icd* file which is.
+
+/home/master/base_color_pseg.icd . But I don't know why the values of these 2 flags are like this:
+
+!image-2022-10-14-19-14-43-622.png!
+
+as you see the resolution is 200 dpi and the width changed to 66%. And it has been like this for a long long time. But for this pfcu the result is worse and noticeable by the client for which we are forced to take these steps to make changes to these values. But since this icd file is being used by many existing applications instead of directly changing here we created a new icd file *base_color_pseg_300_dpi.icd* where we change the resolution to 300 dsi and make the Width, Height values empty. And as a result the quality increased.
+
+So going forward any new app needs to used the new icd file it just needs to define the color_pseg_300_dpi variable in the control file and export it.
+
+
+
+Thanks
+
+
+
+
+
+
+
+
+
+
+author: JIRAUSER11700
+comment: [~rony]great explanation, thanks.
+I wonder why someone did this to base configuration, which is probably used in multiple projects....
+
+
+author: rony
+comment: Hi [~avannik]
+
+[^IS_Checklist.docx]
+
+
+
+Thanks
+
+
+author: JIRAUSER11700
+comment: [~dawnl]kind reminder, please request the samples - thanks!
+
+
+author: dawnl
+comment: Hi [~rony],
+
+Please provide range for print sample request.
+
+Thanks.
+
+
+author: rony
+comment: Hi [~dawnl]
+
+Already provided this in one of the previous comments.
+
+!image-2022-10-19-09-10-17-064.png!
+
+
+
+Thanks
+
+
+author: dawnl
+comment: Hi [~rony]- I need the range. Thanks
+
+
+author: rony
+comment: Hi [~dawnl]
+
+Print full file.
+
+
+
+Thanks
+
+
+author: dawnl
+comment: [~avannik]- sent print sample request to TXOPS.
+
+
+author: JIRAUSER11700
+comment: Print samples attached:
+[^IS-1697_PFCU_PrntSmpls_10242022_TX.pdf][^IS-1697_PFCU_PrntSmpls_10242022-1_TX.pdf]
+
+
+author: JIRAUSER11700
+comment: Setting works for print too - just wanted to make sure. QA passed.
+
+
+author: dawnl
+comment: [~rony]- MPT #35421 has been assigned to you. Thanks.
+
+
+author: dawnl
+comment: [~rony]- parallel has been completed. When can you release the updat? Thanks.
+
+
+author: rony
+comment: Hi [~TunA]
+
+Need help to release this.[^IS_PROGRAM_TRANSFER_FORM_Rev 11012022.doc]
+
+
+
+[~dawnl]
+
+Thanks
+
+
+author: tuna
+comment: Hi [~rony],
+
+Following codes have been released.
+
+Thanks,
+
+Tun
+
+
+
+
+
+20221104083653 11/04/2022 ronyD IS-1697 PFCU - [30635][pvt][in-house] Message Manager Print Image Quality
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/ronyD/
+total 192
+-rwxrwxrwx 1 ronyD DSI 714 Nov 4 01:09 base_color_pseg_300_dpi.icd
+-rwxrwxrwx 1 ronyD DSI 1825 Nov 4 01:09 pfcuml1.control
+-rwxrwxrwx 1 ronyD DSI 1914 Nov 4 01:09 pfcums1.control
+-rwxrwxrwx 1 ronyD DSI 6965 Nov 4 01:09 pseg_conv.sh
+
+
+
+[~dawnl]

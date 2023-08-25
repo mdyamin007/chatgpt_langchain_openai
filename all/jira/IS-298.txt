@@ -1,0 +1,208 @@
+title: SFCE - Map 2 transaction types.
+description: Have a look at the Current Logic,
+
+
+*IF[PostingDateislessthanorequal2020-10-25]*
+*Then*
+*IF[Category==Payment]*
+*Then*
+       *Category+FROM+Description+TRANSACTIONSERIAL+TransactionSerial*
+*ElseIF[Category==Advance&TransferOptionisnotEmpty]*
+*Then*
+       *Category+TransferOption+TransferIdCategory+TransferId+Description+TRANSACTIONSERIAL+TransactionSerial*
+*Else*
+       *Description*
+*Else*
+*IF[DescriptionnotEmptyandAdjustmentOptionnotEmpty]*
+*Then*
+       *Desription*
+*ElseIF[Category==Payment&Source==ACH]*
+*Then*
+       *Category+Source+FROM+AchCompanyName+AchCompanyEntryDescription+AchName*
+*ElseIF[Category==Payment&Source==Check]*
+*Then*
+       *Category+Source*
+*ElseIF[TransferOptionisnotEmpty]*
+*Then*
+       *Category+TransferOption+FROM+Source+Description+TransferIdCategory+TransferId*
+*Else*
+      *TerminalCity+MerchantName+TransactionSerial*
+**
+
+So Including your Logic it will become like this,
+
+
+*IF[PostingDateislessthanorequal2020-10-25]*
+*Then*
+*IF[Category==Payment]*
+*Then*
+       *Category+FROM+Description+TRANSACTIONSERIAL+TransactionSerial*
+*ElseIF[Category==Advance&TransferOptionisnotEmpty]*
+*Then*
+       *Category+TransferOption+TransferIdCategory+TransferId+Description+TRANSACTIONSERIAL+TransactionSerial*
+*Else*
+       *Description*
+*Else*
+*IF[DescriptionnotEmptyandAdjustmentOptionnotEmpty]*
+*Then*
+       *Desription*
+   *ElseIF[Category==Advance&Source==Insurance]*
+*Then*       *Source + Description*
+   *ElseIF[Category==Payment&Source==ACH origination]*
+*Then*       *Category + Description*
+*ElseIF[Category==Payment&Source==ACH]*
+*Then*
+       *Category+Source+FROM+AchCompanyName+AchCompanyEntryDescription+AchName*
+*ElseIF[Category==Payment&Source==Check]*
+*Then*
+       *Category+Source*
+*ElseIF[TransferOptionisnotEmpty]*
+*Then*
+       *Category+TransferOption+FROM+Source+Description+TransferIdCategory+TransferId*
+*Else*
+      *TerminalCity+MerchantName+TransactionSerial*
+
+
+author: JIRAUSER10910
+comment: Sample was provided via Skype on *August 12, 2021*.
+
+
+author: stephen.yee@infoimageinc.com
+comment: From the CU: Hello, I have looked a several statements (and attached screen shots) the external transfer and insurance issue appear to be correct. Bad news, fixing that looks like they broke something else. Cash payments are posting with the transaction serial number as opposed to cash payment or something like that (again please see screen shots attached).
+
+
+
+!SFCE Screenshot 1.png|thumbnail!
+
+
+
+!SFCE Screenshot 2.png!
+
+
+author: JIRAUSER10910
+comment: Hi [~stephen.yee@infoimageinc.com] ,
+
+In Member 100438 & 100306, mentioned transactions are...
+
+!image-2021-08-20-02-29-06-744.png!
+
+!image-2021-08-20-02-34-12-616.png!
+
+!image-2021-08-20-02-35-07-665.png!
+
+
+Mentioned transactions fall into this marked condition,
+
+
+!image-2021-08-20-02-30-03-315.png!
+
+which will print "*TerminalCity MerchantName TransactionSerial*" but there is no data present for *TerminalCity*and*MerchantName.* That's why it only prints *TransactionSerial*as description in the end.
+
+Thanks,
+[~fahad]
+
+
+author: stephen.yee@infoimageinc.com
+comment: Understood. Lets add the following rule for cash payments so we dont break anything else:
+
+<source option ="S"> + <category option>
+
+Cash Payment
+
+Please provide new sample.
+
+
+author: JIRAUSER10910
+comment: Hi [~stephen.yee@infoimageinc.com]
+
+Then the new logic is ...
+
+*If [Category is Payment and Source is Cash ]*
+
+*Then*
+
+  *Source + Category*
+
+Let me know if I'm wrong.
+Thanks,
+Fahad
+
+
+author: stephen.yee@infoimageinc.com
+comment: Looks good. Please generate samples.
+
+
+author: JIRAUSER10910
+comment: HI [~stephen.yee@infoimageinc.com],
+Sample is provided on Skype.
+Thanks,
+Fahad
+
+
+author: stephen.yee@infoimageinc.com
+comment: This has been approved. Please prepare for QA and change status to ready for QA. Please provide...
+ # Parallel ID
+2. Export projects into QA Folder
+3. Provide DPVS for print samples.
+ # 4. Provide index file for QA posting.
+
+QA - Please see "Capture" attachment. The approved samples are saved in my Share drive[^sfcemv6.pdf]. There is no mapping per se but please see comments on this Jira for what the update was. Please call me if anything is unclear. We updated the rules for cash payments.[^sfcemv6.pdf]
+
+
+author: JIRAUSER10910
+comment: Hi [~stephen.yee@infoimageinc.com] & [~Igor.Khosid] ,
+ Project is in *QA Folder*.
+ Parallel Id:*20210812043240*
+ ISD index:*mv6_20210725_1_20210906_1032_sfce.txt*
+
+Attached the *DPVS*.
+ [^sfcemv6126.print]
+
+Thanks,
+ Fahad
+
+
+author: igor.khosid
+comment: Parallel ID: 20210812043240
+ Currently in parallel: Yes
+ User: fahadK
+ Description: JIRA IS-298
+ Date Submitted: 2021-08-12 04:33:05
+ Date Last Updated: 2021-08-24 07:33:10
+ Files:
+ 1) SFCEMV41.dfa
+ 2) SFCEMV41.prj
+
+
+author: igor.khosid
+comment: [~stephen.yee@infoimageinc.com]
+
+Please update the due date
+
+
+author: JIRAUSER10910
+comment: HI [~TunA],
+Resources are in xfer folder*/d/is/cvs/xfer/fahadK/*
+
+Please proceed to roll out.
+
+Thanks,
+Fahad
+
+
+author: tuna
+comment: Hi Fahad and Steve,
+
+Code released.
+
+Thanks,
+
+Tun
+
+
+
+20210909122500 09/09/2021 fahadK SFCE - Map 2 transaction types
+
+
+
+[~fahad], [~rony], [~stephen.yee@infoimageinc.com]

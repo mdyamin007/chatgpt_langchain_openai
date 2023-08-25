@@ -1,0 +1,143 @@
+title: October 2021 Release
+body: # **InfoTRAC**
+
+  
+
+ **Features:**
+
+  * Vulnerability Scan Related Changes (CSRF, Response Header)
+  * Internal Resource File Relocated
+  * Password reset implemented
+  * Login flow updated to apply CSRF
+  * User lock-unlock ui update
+  * System template variable sample value included
+  * API URL updated for Batch Download module
+
+ **Wiki page links**
+
+  * [InfoIMAGE User Guides/ Requirement Documents](https://confluence.infoimageinc.com/pages/viewpage.action?pageId=73629710)
+  *   *   * 
+
+  
+
+  *  **Change log**
+    * Account management v2 Bug Fix
+      1. Acct_View log was not present on audit log
+      2. archivalPeriod was not working properly
+      3. disableEditOnSSO property was not working properly
+      4. disableEditOnDSO property was not working properly
+      5. emailAndSmsNotification property was not working properly
+      6. restrictionConfig was not working properly when enabled for multiple statements
+      7. User Enrollement status was not showing properly for DSO user and when dp was changed to paper from electronic for not enrolled user
+      8. disablePaper property was not working properly
+      9. Stmt_View and Account_Info_Updated log was not showing properly
+      10. Account Creation Report - Officer Code was not showing properly
+    * CSRF Token-Based Authentication Issue Fixes
+    * User creation with duplicate email for sso client issue fixed
+    * User list page redirecting url updated
+    * PDF Loading Issue Fixed
+
+  
+
+#  **Configuration update for password reset  ** **feature and CSRF login
+flow**
+
+We have modified  **infotracOneURL**  and  **ipFilteredRedirectURL  **to the
+following configs respectively
+
+<env-entry>  
+        <env-entry-name>infotracBaseUrl</env-entry-name>  
+        <env-entry-type>java.lang.String</env-entry-type>  
+        <env-entry-value>https://infotrac.infoimageinc.com</env-entry-value>  
+    </env-entry>
+
+    <env-entry>  
+        <env-entry-name>infotracSecureURL</env-entry-name>  
+        <env-entry-type>java.lang.String</env-entry-type>  
+        <env-entry-value>https://infotrac-secure.infoimageinc.com</env-entry-value>  
+    </env-entry>
+
+We have also added a new property file name  **config.properties**  on
+**/app-configs/infotrac directory  **which holds the template name for the
+password reset feature.
+
+We have to add the following settings in proxy for cacheing
+
+deploy docker image with v6
+
+#  **Configuration update for Batch Download Module**
+
+We have added **infoServiceBatchDownloadURL** to the configs
+
+<env-entry>  
+    <env-entry-name>infoServiceBatchDownloadURL</env-entry-name>  
+    <env-entry-type>java.lang.String</env-entry-type>  
+    <env-entry-value> http://infoservice-common.infoimageinc.com/api/v1/</env-entry-value></env-entry-value>  
+</env-entry>
+
+#  **Apache proxy update**
+
+##### ca-proxy-pr-13,ca-proxy-pr-14
+
+  
+
+xml
+
+  
+
+#  **InfoService**
+
+Release branch **infoservice_v2.09_20211027** and [confluence
+page](https://confluence.infoimageinc.com/display/IN/Password+Reset)
+
+ **Features:**
+
+  * Password reset system added
+
+  
+
+ **New Endpoint:**
+
+  1.  **POST** /v1/auth/{cid}/{appId}/passwordtoken - Generates new token and URL
+  2.  **GET** /v1/auth/{appId}/passwordtoken/validate - Validates token and URL
+
+  
+
+ **Queries to run:**
+
+We have to run the following query into (ca-mongoreg-pr-01, ca-mongoreg-pr-02,
+ca-mysql-pr-01) **hypercube** database.
+
+  1. db.createCollection("pass_reset_tokens")
+  2. db.pass_reset_tokens.createIndex({"expireAt":1},{expireAfterSeconds: 0})
+  3. db.createCollection("ip_filtering")
+  4. db.ip_filtering.createIndex({"expireAt":1},{expireAfterSeconds: 0})
+
+  
+
+#  **Template Service**
+
+Insert the following template to the template service for the password reset
+system
+
+js
+
+  
+
+#  **uspsscanservice**
+
+Release branch **uspsscanservice_v1.05_20211027**
+
+ **Features:**
+
+  * Introduce health check which will check MQ, mount path and trigger alert when find any issue.
+
+ **Property change**
+
+xmlRDark
+
+ **Servers to deploy**
+
+55 incomplete ca-jobtrack-pr-01 56 complete ca-jobtrack-pr-02
+
+

@@ -1,0 +1,257 @@
+title: FLCU - [30536][pvt] Daily Letter 048 Error
+description: IS Assessment
+=============
+Hours for development: 3 IS hours + (ISD hours not required)
+Turnover Date : 08/09/2022
+Sample to QA Date: 08/16/2022
+Approval Date: 08/19/2022
+Go live date : 08/23/2022
+Engineering resource: Zhuoxin Tan
+
+Assessment Details (IS):
+- Parallel required: (no)
+
+- Suppress letter 048 if the comma fields missing and email alert to DP, Joye and client (check with Joye for client email address to add).
+- Output: (script update)
+- Application name: flcudna
+
+- Notice type: (048) Solar Loan Reamo Change Notice
+
+
+author: JIRAUSER11101
+comment: [~jharvey] 
+ Just want to confirm if this is good.
+ To generate the email alert, I will check the data file header if its existing or not.
+
+The good data file will have this header with comma delimited:
+ *FIRST NAME,LAST NAME,STREET,CITY,STATE,ZIP,EXTRA ADDRESS,NEXT PAYMENT AMOUNT,NEXT PAYMENT DUE DATE,INTEREST RATE,LOAN BALANCE,DATE OF REAMORTIZATION,FINANCE CHARGE,TOTAL OF PAYMENTS ,NUMBER OF PAYMENTS,ACCOUNT NUMBER,LOAN ID*
+
+bad data I found inFLCU_DN_07062022_01.zip.pgp only contain this:
+ *Report Terminated due to Error*
+
+ if we don't find the good header in data file, we will abort the letter and send out email to alert DP, client and you.
+good header means the header has to be consistent.
+
+
+author: jharvey
+comment: [~zhuoxinT]
+
+I believe the issue was that some of the data in the file was missing fields, I am attaching a file the client provided that had the error in the last line of data for you to review.  They want the accounts that do not have all of the comma fields to suppress from printing, not the entire file.  Is that possible? [^SLREAMO_NOTICE (1).txt] 
+
+
+author: JIRAUSER11101
+comment: [~jharvey], any update/feedback on the required fields?
+
+
+author: JIRAUSER11101
+comment: [~jharvey]any feedback? I am not able to provide the sample today, please update the timeline.
+
+
+author: jharvey
+comment: [~zhuoxinT]
+
+Please see client's response below. Are you able to program for if the commas are missing?
+
+Hi Joye, the file will at times have missing fields if the member did not have data to fill in that specific field. I believe what we are trying to do is suppress the letter code 048 if the file is incomplete where there are missing commas that notate where a field should be located whether blank or with data. Not sure if that answers your question. Please let me know if you have further questions. 
+
+
+
+
+author: JIRAUSER11101
+comment: [~jharvey] 
+ as we discussed before, the data will have many fields. Client have to tell us if what fields that are required. Then we can check on those fields.
+
+for example, the last line of the data. We only have the name and address.
+ Should we check on all the fields? Or just the fields after EXTRA ADDRESS? Or just any other fields?
+Each customer can have up to 17 fields. Are we going to check on all 17 fields?
+for example, the EXTRA ADDRESS looks like are not required. most of them are empty. I circled below. 
+
+ !image-2022-08-17-11-45-10-153.png|width=1744,height=337!
+
+
+author: JIRAUSER11101
+comment: [~jharvey]
+
+any update?
+Or I just check every single field? There might be some fields are not required which are empty.
+That will also suppress for that customer.
+
+
+
+Thanks
+
+
+author: jharvey
+comment: [~zhuoxinT]
+
+I apologize, FLCU is not very responsive, I followed up in the ticket again this morning.  As soon as they answer I will update here. 
+
+
+author: JIRAUSER11101
+comment: [~jharvey] 
+any update?
+
+
+author: jharvey
+comment: [~zhuoxinT]
+
+No, sorry, I will continue to reach out.
+
+
+author: JIRAUSER11101
+comment: [~jharvey] 
+Ok, please let me know once they reply.
+Thank you!
+
+
+author: tuna
+comment: Hi [~jharvey],
+
+Due date is over. Do we have estimated new release date for this project? So I can adjust dates in IS upcoming list.
+
+For now, I will move due date to (09/19). If you have specific live date. Please check with[~zhuoxinT].
+
+Thanks,
+
+Tun
+
+
+author: jharvey
+comment: [~TunA]
+
+I have tried repeatedly to get a response from client, I made a comment telling them that we were moving the Go Live to 09/19 dependent on them replying and answering [~zhuoxinT] questions.  I will update the date on the Jira to reflect that date.
+
+
+author: jharvey
+comment: [~zhuoxinT]
+
+This is the response I got from the client.  I am not sure this is what you need, please tell me if we need to schedule a call to discuss with client.
+
+Hi Joye, the file will at times have missing fields if the member did not have data to fill in that specific field. I believe what we are trying to do is suppress the letter code 048 if the file is incomplete where there are missing commas that notate where a field should be located whether blank or with data. Not sure if that answers your question. Please let me know if you have further questions.
+
+
+author: JIRAUSER11101
+comment: [~jharvey] 
+Client mentioned "the file will at times have missing fields if the member did not have data to *fill in that specific field.*"
+Are they able to tell what are those specific fields?
+The data have 17 fields listed:
+FIRST NAME,LAST NAME,STREET,CITY,STATE,ZIP,EXTRA ADDRESS,NEXT PAYMENT AMOUNT,NEXT PAYMENT DUE DATE,INTEREST RATE,LOAN BALANCE,DATE OF REAMORTIZATION,FINANCE CHARGE,TOTAL OF PAYMENTS ,NUMBER OF PAYMENTS,ACCOUNT NUMBER,LOAN ID
+
+Are we going to check on all the fields or just couple of that? Please give the exact field name listed above.
+
+
+author: jharvey
+comment: [~zhuoxinT]
+
+Client responded that the only field that may sometimes not have data is the Extra Address field.  They would like us to suppress if any other field is missing data.  Also would you please provide a new timeline for this since client missed it?
+
+
+author: JIRAUSER11101
+comment: [~jharvey] 
+I am going to test it. if everything is good. I will provide the sample and turn it over to QA next week.
+
+Sample to QA Date: 09/20/2022
+Approval Date: 09/23/2022
+Go live date : 09/29/2022
+
+
+
+Thanks
+
+
+author: JIRAUSER11101
+comment: [~Igor.Khosid]
+
+Parallel ID: 20220817152640
+ Currently in parallel: Yes
+ User: zhuoxinT
+ Description: IS-1418 FLCU - [30536][pvt] Daily Letter 048 Error
+ Date Submitted: 2022-08-17 15:27:13
+ Date Last Updated: 2022-09-16 09:26:11
+ Files:
+ 1) FLCUDN048.dfa
+ 2) flcudn_process.pl
+
+DPVS:[^flcudna117.print]
+Index file:[^flcu_afp_enotice_08172022_102712_1.txt]
+print sample:[^flcudna1174.2o1.pdf]
+archival sample:[^FLCU_DN_Archival_08172022.zip]
+
+fyi [~jharvey], when there is an account has missing fields, no archival pdf will be created.
+e.g. this data file:[^SLREAMO_NOTICE (1).txt]has 10 accounts, last account (missing fields) is excluded for all options(print, estmt and archival)
+
+
+author: igor.khosid
+comment: [~Andrey.Kutsenko]
+Please review and confirm if it is ready for the client
+
+
+author: igor.khosid
+comment: [~Andrey.Kutsenko] - what is the testing status?
+
+
+author: JIRAUSER11104
+comment: [~zhuoxinT] if you use FLCUDN048.dfa from the project you uploaded to the QA folder
+ Then when generating a TXT file, the +e-suppression Flag+(pos.345) is not set if more data than ACCOUNT NUMBER is lost
+ Here is a snippet of code where there may be an error, just after line 383 you need to add {color:#ff0000}MAIL_CODE2 = 'z' ;{color}
+{code:sh}
+ 
+    376     IF MISSING_FIELDS<> '' AND MISSING_CNT<>0 ;
+    377     THEN ;
+    378       MESSAGE -1,3
+    379        ,'Error: Fields are missing in data file. Suppressi'
+    380   'ng the letter. Please contact client.'!
+    381        ''
+    382   'Missing fields: '!MISSING_FIELDS;
+    383       MAIL_CODE = 'z' ;
+    384     ENDIF ; 
+{code}
+If I use this file:
+{code:sh}
+[oper1@rhs ~]$ ls -ltr /home/test/isis/docdef/FLCUDN048.dfa
+-rwxr-xr-x  1 testmain isgroup 17386 Sep 20 10:15 /home/test/isis/docdef/FLCUDN048.dfa{code}
+That TXT file is generated without lines for clients whose data in the data file is missing.
+
+
+
+Therefore, I ask you to export the project with the latest updates.
+
+
+author: JIRAUSER11101
+comment: [~Andrey.Kutsenko] 
+Exported the latest update to QA folder, 
+Please let me know if any questions.
+thanks
+
+
+author: JIRAUSER11104
+comment: Thanks,[~zhuoxinT]
+ QA is completed. Ready for customer review.
+ Checked project in Papyrus.
+{quote}Records are suppressed if there is no data in any field other than the "EXTRA ADDRESS" field.
+{quote}
+
+
+author: jharvey
+comment: [~zhuoxinT]  [~Andrey.Kutsenko]
+
+Client approved samples.
+
+[~zhuoxinT] please provide new Go Live date. 
+
+
+author: JIRAUSER11101
+comment: [~jharvey] 
+new Go Live date by: 10/5/2022
+Thanks
+
+
+author: JIRAUSER11101
+comment: [~TunA] 
+[^IS-1418_PROGRAM_TRANSFER_FORM.doc]
+
+
+author: JIRAUSER11101
+comment: [~jharvey] 
+code released
+backup id:20221005121030

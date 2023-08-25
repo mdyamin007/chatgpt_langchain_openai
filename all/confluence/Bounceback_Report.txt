@@ -1,0 +1,126 @@
+title: Bounceback Report
+body: ## Overview
+
+New BounceBack report uses an API to access the report data and create the
+report. To call the API there is certain parameter that needed to send while
+calling.  
+  
+
+## Setup Details:
+
+In processing.conf need to add the following configuration to indicate which
+processing job to call.
+
+ _ **// processing: BounceBackReportAPI**  
+bounceBackReportAPI.desc=Bounce Back Report  
+bounceBackReportAPI.classPath=com.infoimage.processing.application.file.upload2.ProcessingJob  
+bounceBackReportAPI.jobStatus=true  
+bounceBackReportAPI.undoable=false_
+
+In  _ **client conf**_  file following configuration need to be added to call
+the ReportGenerator class:
+
+ _ **//bouncebackReport from API**  
+bounceBackReportAPI.classPath=com.infoimage.processing.application.file.upload2.bouncebackReport.ReportGenerator_
+
+In  **api.prop**  following line must be present to call the API:
+
+ _com.infoimage.apiurl.infoservice =
+<https://devapi.infoimageinc.com/infoservice/api/v1/>_
+
+All the configuration of the report are read from the P_REPORT table of
+Database.
+
+  * P_REPORT table
+
+ **Coulumn Name**|  **Type**|  **UI Name**  
+---|---|---  
+ORG_NAME| VARCHAR2(25 BYTE)| CID  
+FILE_NAME| VARCHAR2(60 BYTE)| File Name  
+TITLE| VARCHAR2(255 BYTE)| Report Title  
+COMMAND| VARCHAR2(225 BYTE)| Command  
+PARAMETERS| BLOB| Parameters  
+FILE_CONTENT| VARCHAR2(255 BYTE)| File Content  
+FILE_HEADER| VARCHAR2(255 BYTE)| File Header  
+ENCRYPTION_TYPE| VARCHAR2(60 BYTE)| Encryption Type  
+ENCRYPTION_VALUE| VARCHAR2(255 BYTE)| Encryption Value  
+PICKUP_PATH| VARCHAR2(255 BYTE)| Pickup Path  
+FTP_FOLDER| VARCHAR2(255 BYTE)| FTP Folder  
+FTP_LOGIN| VARCHAR2(255 BYTE)| FTP Login  
+FTP_PASS| VARCHAR2(255 BYTE)| FTP Pass  
+CONFIRM_EMAIL| VARCHAR2(255 BYTE)| Confirm Email  
+CONFIRM_EMAIL_TEMPLATE| VARCHAR2(100 BYTE)| Confirm Email Template  
+CONFIRM_EMAIL_SUBJECT| VARCHAR2(100 BYTE)| Confirm Email Subject  
+  
+  
+
+  
+
+## API Details:
+
+ **"<https://devapi.infoimageinc.com/infoservice/api/v1/>"**  
+ **cid** (mandatory field) : Organization Short Name  
+ **StartDate** (mandatory field): format-MM/dd/yyyy  
+ **EndDate** (mandatory field): format-MM/dd/yyyy
+
+Other fields are optional  
+  
+
+## Report Description:
+
+  1. In processing job the  **parameter**  configurations from the blob of P_REPORT and other configurations from  **P_REPORT**  table is loaded to the  ** _UploadHandler_**  class under  ** _parametersProp_**  and  ** _reportData_**  object. All the configuration for the report are collected from this two configuration object.
+  2.  **Parameter Properties** : These are the parameter that are supported for the BounceBack report:
+    1.  **range :**  Range indicated the start date and end date of the report. This start date and end date is required to send as query parameter for calling the API. Range can be declared by two ways.  
+a. range = -30  
+b. range = -40:-10  
+(a) means the start date of the report is 30 days prior today and end date is
+today.  
+(b)means the start date is 40 days prior today and end date is 10 days prior
+today.
+
+    2.  **range.businessDayOnly**  : It can be true and false. If true then it will skip the weekends.
+    3.  **fields**  : Used as query parameter for API call.
+    4.  **pJobId**  : Used as query parameter for API call.
+    5.  **name**  : Used as query parameter for API call.
+    6.  **text**  : text parameter is case sensitive and used as query parameter for API call. This parameter is also used to replace ${appDesc} keyword of report name or file name unless there is also appDesc parameter.
+    7.  **cycle**  : Used as query parameter for API call.
+    8.  **appDesc**  : Used to replace  _${appDesc}_  keyword of report name or file name. If there are multiple "text" parameters values, appDesc is required.
+    9.  **delimiter**  : Used as delimiter of the report data.
+    10.  **timeStamp**  : Used to replace  _${timeStamp}_  keyword of report title. If this parameter is not given then the keyword is replaced by MMddyyyy_HHmmss.
+  3. Used the following property from  **api.prop**  :  
+ **APIProperties.getInstance().getProperty(
+"com.infoimage.apiurl.infoservice")** to get the api url which is -  _
+**"<https://devapi.infoimageinc.com/infoservice/api/v1/>"**_ and added the
+following values with the path* "report/{CID}/bounceback"*. The query
+parameters -( **startDate, endDate, fields, pJobId, name, text, cycle).**
+
+  4. If the response status is 200 then the report is generated. Otherwise throws exception accordingly.
+    1. For # of  **emptyApiJobIds**  returned from API  **warning**  count is increased.
+    2. For # of  **failedApiJobIds**  returned from API  **bad**  count is incred.
+    3. For # of  **failedRecords**  from API  **bad**  count is increed.
+    4. For each record there will be one row in the report.
+  5. Report Title or File Name: If no filename is there in DB then following title is used:  
+ _orgName_bouncebackreport_  MMddyyyy_HHmmss.txt_  
+report title supports the following keywords:* {appDesc}, {timeStamp}, {cid}*
+
+  6. Report Header : If no header is there in DB then following header is used by default(pipe line by default otherwise delimiter)  
+ **CIF NUMBER|ACCOUNT NUMBER|APP CODE|ACCOUNT HOLDER NAME|EMAIL
+ADDRESS|CODE|REASON**  
+Header can be provided separating using comma. It will be replaces with the
+delimiter( if provided otherwise "|").  
+Supports Keyword: {dtJobId} - replaced with the  **dtJobId**  returned from
+API under each  **record**. If different dtJobId is returned then the header
+will contain them separating by delimiter.
+
+  7. Report Data Rows: If file content not provided By default the data orientation is as like as the orientation of header by default. Otherwise each row will contain data by the orientation of the keyword in it.  
+Supported keywords:  **${cifNum}, ${acctNum}, ${appCode}, ${acctName},
+${emailAddress}, ${code}, ${reason}, ${date},${ notificationType},${
+pJobId},${npId}**
+
+ **Attachments**
+
+  
+
+ **250**
+
+

@@ -1,0 +1,95 @@
+title: INFO - [22944][pvt][in-house] DP / Unable to update DPJS/IFS
+description: This is in estmt2/processing/ui (trunk/pilot/stage/production).
+
+
+
+There are two different Util classes. One in com.infoimage.processing.common and one in com.infoimage.dp.scanner. The save_app_action.jsp is using the scanner.Util one.The code is importing both repo, so that's why it can't figure out which Util class to use. Can you update the page to explicitly use the scanner.Util?
+
+
+
+ISD - we're getting the following error message when trying to add a file under under cid for JHA/
+
+
+
+-----------------------Error Message-----------------------------
+
+type Exception report
+
+message Unable to compile class for JSP:
+
+description The server encountered an internal error that prevented it from fulfilling this request.
+
+exception
+
+org.apache.jasper.JasperException: Unable to compile class for JSP:
+
+An error occurred at line: 81 in the jsp file: /dpjs/save_app_action.jsp
+The type Util is ambiguous
+78: else
+79: {
+80: try {
+81: java.util.regex.Pattern.compile(Util.toRegExp(pattern));
+82: }
+83: catch (java.util.regex.PatternSyntaxException e)
+84: {
+
+
+An error occurred at line: 86 in the jsp file: /dpjs/save_app_action.jsp
+The type Util is ambiguous
+83: catch (java.util.regex.PatternSyntaxException e)
+84: {
+85: e.printStackTrace();
+86: pageContext.forward("/error.jsp?errMsg="+"Invalid definition of pattern: "+Util.escapeBracket(pattern));
+87: return;
+88: }
+89: int isRequired = 0;
+
+
+An error occurred at line: 244 in the jsp file: /dpjs/save_app_action.jsp
+The type Util is ambiguous
+241: subAppType = 1;
+242:
+243: try {
+244: java.util.regex.Pattern.compile(Util.toRegExp(subPattern));
+245: }
+246: catch (java.util.regex.PatternSyntaxException e)
+247: {
+
+
+An error occurred at line: 249 in the jsp file: /dpjs/save_app_action.jsp
+The type Util is ambiguous
+246: catch (java.util.regex.PatternSyntaxException e)
+247: {
+248: e.printStackTrace();
+249: pageContext.forward("/error.jsp?errMsg="+"Invalid definition of pattern: "+Util.escapeBracket(subPattern));
+250: return;
+251: }
+252:
+
+
+Stacktrace:
+org.apache.jasper.compiler.DefaultErrorHandler.javacError(DefaultErrorHandler.java:103)
+org.apache.jasper.compiler.ErrorDispatcher.javacError(ErrorDispatcher.java:366)
+org.apache.jasper.compiler.JDTCompiler.generateClass(JDTCompiler.java:485)
+org.apache.jasper.compiler.Compiler.compile(Compiler.java:379)
+org.apache.jasper.compiler.Compiler.compile(Compiler.java:354)
+org.apache.jasper.compiler.Compiler.compile(Compiler.java:341)
+org.apache.jasper.JspCompilationContext.compile(JspCompilationContext.java:657)
+org.apache.jasper.servlet.JspServletWrapper.service(JspServletWrapper.java:357)
+org.apache.jasper.servlet.JspServlet.serviceJspFile(JspServlet.java:395)
+org.apache.jasper.servlet.JspServlet.service(JspServlet.java:339)
+javax.servlet.http.HttpServlet.service(HttpServlet.java:727)
+org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:52)
+note The full stack trace of the root cause is available in the Apache Tomcat/7.0.57 logs.
+
+
+author: tai.trinh
+comment: This is a global bugfix. Unsure which AC to assign to.
+
+
+author: sysadmin
+comment: Mackenzie Huynh made the following comment in ISD-5431
+
+@ac
+
+It is ready for pilot approval.

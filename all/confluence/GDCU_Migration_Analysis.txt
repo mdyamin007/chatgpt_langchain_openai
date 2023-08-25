@@ -1,0 +1,635 @@
+title: GDCU Migration Analysis
+body:   
+
+Document Status|
+
+YellowDRAFT  
+  
+---|---  
+Document Owner|
+
+  
+  
+  
+
+# Goldenwest Credit Union
+
+32circle
+
+#  **Frontend:**
+
+##  **ROOT**
+
+  
+|  
+  
+---|---  
+ **Client Name**|  Goldenwest Credit Union  
+ **Schema**|  default  
+ **Login Method**|  JWSSO (SingleSignOn7Servlet)  
+ **Enrollment Step**|  N/A  
+ **Welcome Email**|  N/A  
+ **Menu**|
+
+  * Statements
+
+  
+ **Account Types**|
+
+N/A  
+  
+ **Statement Types**|
+
+  * default  (eStatements)
+
+  
+ **Archival Period**|
+
+  * Default: 12
+
+  
+ **Paperless Configuration**|  Non-Selective  
+ **Delivery Preference**|  Paper (B)  
+ **Notification Preference**|  Email only  
+ **NP Link Type**|  byUSR  
+ **Batch Download  **| N/A  
+ **DSO login**|  N/A  
+ **User-Account Relation**|
+
+One to One  
+  
+ **Note**|
+
+  *  **USCU is a sub-CID of GDCU. So they don't have any user interface. USCU always processes via GDCU.**
+
+  
+  
+###  **Database Migration**
+
+ **USR_SESSION** : acct_number used as sess_login_id. So migration is needed.
+
+ **USR_MAPPING** : No inserted data for new user. So migration is needed.
+
+ **NOTIFICATION_PREFERENCE** : No data inserted in NP table. Uses
+**Contact_Info** table. So migration is needed.
+
+###  **SSO (signlesignon7)**
+
+####  **SignleSignOn7Servlet:**
+
+  * method=MD5, createLogin=true, updateEmail=true.
+  * loginId, **email** , mobileNumber, carrierId, hashValue, requestTime, acctNumList, acctTypeList, userType, vendorLoginId, userName, acctDescList.  
+
+    * if carrierId doesn't exist set carrierId='na'.
+  * Remove all leading zeros of acctNum.
+  * Find user by loginName
+    * If user found,  Find user login by usr_id.
+    * If login is null then create new **UserProfile**
+      * Remove all leading zeros of loginId and assign as acctNum.
+      * Find account From **FIN_ACCOUNT** table by org_id, acct_number, If the account doesn't exist create an account with acctNum, acctName=acctNum, orgId, status='A'.
+      * Find paperless from **PAPERLESS2** table by acctId, stmtType='default'. If not found create new paperless with acctId, stmtType='default', modifiedBy='1', modifiedDate.
+      * Create **user** where firstName=acctNum.
+      * Update **ufa** with userId, acctId, status='active', regDate.
+  * If email not null for sso login
+    * If  **ContactInfo**  is null, Set  **contactInfo**  with ciId, modifiedFlag=true
+    * If email doesn't exist in  **contactInfo**  and provide the new email then set new email into the contactInfo.
+    * If email exists into the **contactInfo** and provide the new email. If oldEmail doesn't match with the newEmail then update the contactInto with the new email.
+
+ **Home Page**
+
+  * Show disclosure
+  * Shows all the statements.
+  * 
+
+  
+
+* * *
+
+##  **MSM**
+
+### Account Management
+
+  * Search account information and account statements by account number.
+  * Shows account number, account name, and email address.
+  * Admin can't change the email address.
+  * Shows eStatements: account number, statement date, monthly inserts.
+  * Shows all account numbers by searching email address.
+
+### Email Proofing
+
+  * Statement types:
+    * eStatements
+
+  
+
+### Upload Inserts
+
+  * Shows Begin date, closing date, stmt type, title of the statements.
+  * Can be uploaded customer insert.
+
+### Marketing Promo Email
+
+  * Accounts:
+    * All statement users (InfoIMAGE's database)
+    * Partial List (Email Control List)
+  * Upload .txt file with following fields and separate  by pipe delimiter
+    * ACCOUNT | FIRST NAME | LAST NAME | EMAIL ADDRESS
+
+### Reports
+
+  * Shows all the available reports with descriptions.
+  * Reports:
+    1. Latest Stats
+    2. User Login Activity
+    3. AI Login Activity
+    4. Email Address Collection
+    5. Marketing Insert Report
+  * Can download the reports as .txt file
+
+### Administration
+
+  * Admin can create, view, modify and remove other users.
+
+### Exit
+
+  * Showing the confirmation for logout e-statement session or not.
+
+* * *
+
+##  **Processing UI**
+
+### BACKEND PROCESSES
+
+GDCU has 5 processes,
+
+  1. AFP
+  2. PERMISSION
+  3. ECL
+  4. INSERT
+  5. DOC
+
+### Settings
+
+  * global.autoRegister=true
+  * global.enableAccountType=false
+  * global.multipleStmtType=false
+  * global.multipleDocType=false
+  * global.ssoKey=9#g%d$cu!
+
+### Statement Types and Index file prefix
+
+  *  **global.ms1** =default
+
+### AFP Process
+
+Flags:
+
+  * afp.compression=false
+  * afp.isZipped=true
+  * afp.copyZipBuffer=65536
+  * afp.storage.path=a
+
+#### Handler: AfpStatementData9
+
+  * Fields **: fileName** , **acctNum** , beginDate, closingDate, numOfPages, **acctName** , ssn, appType, messageIds, hasCheck, insertId, regionCode, crippleFlag, zipFileName,
+
+** **Bold** indicates all are mandatory fields.
+
+#### Registrar: MergedClientMessageEStmtRegistrar3
+
+  * autoRegister=true, enableAccountType=false, mergeCids=uscu,gdcu
+  * Find  **account  **from the  **FIN_ACCOUNT** table by org_id and acct_number.
+  * If  **account**  is null create an account where orgId, acctNum, acctName, lastModified=currentdate, status='A'
+  * As global.autoRegister is true, creates a new  **USR**  and  **USR_SESSION**  record. 
+  * Insert into  **USR_MAPPING**  with org_id, cif_num, usr_id.
+  * Insert into  **USR_FIN_ACCOUNT  **user_id, account_id, status,  timeStamp.
+  * Insert into  **PAPERLESS**  with acctId, modifiedBy='1', modifiedDate, newStatus='B', oldStatus='N', stmtType.
+
+Database Changes: USR, USR_SESSION, USR_MAPPING, USR_FIN_ACCOUNT, PAPERLESS.
+
+### PERMISSION Process
+
+Flags:
+
+  * permission.handler.classPath=com.infoimage.processing.application.permission.handler.DefaultPermHandler
+  * permission.registrar.classPath=com.infoimage.processing.application.permission.registrar.DefaultPermRegistrar
+  * permission.level=3
+  * permission.purge=true
+
+#### Handler: DefaultPermHandler
+
+  * Field: **acctNum.**
+
+** **Bold** indicates all are mandatory fields.
+
+#### Registrar: DefaultPermRegistrar
+
+  * Update **ACCT_ACCESS** table by acctNum with aa_min_level=3
+
+Database Changes: ACCT_ACCESS
+
+### ECL Process
+
+Flags:
+
+  * ecl.classPath=com.infoimage.processing.application.ecl.handler.GdcuEclHandler
+
+ **Handler** : **GdcuEclHandler**
+
+  * Fields: mark, **acctNum** , **email**.
+  * Update **CONTACT_INFO** table with orgName, acctNum, email.
+
+ ** **Bold** indicates all are mandatory fields.
+
+Database Changes: CONTACT_INFO
+
+### INSERT Process
+
+Flags:
+
+  * insert.classPath=com.infoimage.processing.application.insert.handler.DefaultInsertHandler
+
+ **Handler** : **DefaultInsertHandler**
+
+  * Fields: **fileName** , **title** , fileType='application/pdf', closingDate, stmtType.
+  * Insert into **EMAIL_ATTACH** table with email_id, ea_file_type, ea_file_name, ea_size.
+  * Update EMAIL_ATTACH table with ea_content by ea_id.
+  * Insert into **INSERT_FILE** table with ea_id, org_id, stmt_type, closing_date, title, begin_date.
+  * Insert into **P_JOB_INSERT** table with insert_id.
+
+ ** **Bold** indicates all are mandatory fields.
+
+Database Changes: EMAIL_ATTACH, INSERT_FILE, P_JOB_INSERT.
+
+### DOC Process
+
+Flags:
+
+  * doc.compression=false
+  * doc.isZipped=true
+  * doc.copyZipBuffer=65536
+  * doc.acctNumAsLoginId=true
+
+#### Handler: DataHandler
+
+#### Registrar: AfpRegistrar
+
+  * autoRegistrar=true, enableAccountType=false, acctLookup=false, nullDsoTimeStamp=false, acctNumAsLogin=true.
+  * Search account from the FIN_ACCOUNT table by org_id and acct_num. If account not found create new UserProfile.
+    * Insert into **FIN_ACCOUNT** table with orgId, acctNum, acctName, lastModified=currentDate, status='A'.
+    * Insert int **USR** table with ssn, birthDate, gender, firstName, lastName, middleName, ci_id.
+    * Insert into **USR_SESSION** table with orgId, orgName, __loginName=acctNum__ , password, details, DSO=currentDate
+    * Insert into **USR_MAPPING** table with orgId, cif, userId.
+    * Insert into **USR_FIN_ACCOUNT** table with userId, acctId, status.
+  * If account found, Update acctName (Except "MEMBER", "CUSTOMER"), __firstName=acctNum.__
+  * If paperless not found, Insert into **PAPERLESS** with acctId, modifiedBy='1', modifieddate, newStatus='B', onldStatus='N', stmtType='default'.
+
+Database Changes: **** FIN_ACCOUNT, USR, USR_SESSION, USR_MAPPING,
+USR_FIN_ACCOUNT, PAPERLESS.
+
+### Email Notification Process
+
+Flags:
+
+  * email.default.needApproval=true
+  * email.reminder1.needApproval=false
+  * email.reminder2.needApproval=false
+  * email.marketing1.needApproval=true
+
+#### ESTMT Handler: GdcuEStmtEmailHandler
+
+  * isSendEmailViaApi=false, isEmailManageByEstmt=true, attachmentFeature=false, isSelectiveTemplate=false, isSelectiveMailServer=false, isSendViaAPI=false
+  * Fetch _emailAddr, acctId, acctNum, name, ciId, esdId,_ If email not null.
+
+### Reports
+
+ **Accounting Report:** The accounting report contains the following reports:
+
+  *  **Afp report:  **Fetch data from the P_JOB and P_ESTMT_COUNT table and display the information about the job such as image count, success, warning, failed, etc.
+  *  **Email notification report:  **Fetch data from the P_JOB table and display the information about the job such as success, email, email attach, SMS, warning, failed, etc.
+  *  ** **Check Index report:  ****Fetch data from the P_JOB table and by appName="check_index" and display the information about the job such as date, job number, success count, warning count, failed count, etc.
+  *  **Marketing promo email notification report:** Fetch data from the P_JOB and P_JOB_EMAIL table by appName="email", stmtType="marketing1" and display the information about the job such as success, warning, failed count, etc.
+  *  **Inserts report:** Fetch data from the P_JOB table by appName="insert" and display the information about the job such as success, warning, failed, documents diverted, etc.
+  *  **Accounting report:** Fetch data from the P_JOB and P_JOB_EMAIL table and display the information about the job such as accounts, images, email, email attach, SMS, etc.
+  * The total number of promotion email, check processing, enrolled members are displayed.
+
+  
+
+* * *
+
+## Analysis Summary (ROOT)
+
+Scope| Feature| GDCU Business| Hypercube| Note  
+---|---|---|---|---  
+  
+ **Enrollment(SSO)**
+
+|  User enrollment|
+
+No enrollment
+
+|  822 complete  Supported  823 incomplete Not Supported 824 incomplete
+Supported alternatively |  
+  
+**Home**|
+
+  * eStatements
+
+|
+
+|  825 complete Supported  826 incomplete Not Supported 827 incomplete
+Supported alternatively |  
+  
+  
+  * Disclosure verbiage
+
+|  
+|  2901 complete Supported  2902 incomplete Not Supported 2903 incomplete
+Supported alternatively |  
+  
+  
+  
+
+## Analysis Summary (MSM)
+
+Scope| Feature| GDCU Business| InfoTRAC| Note  
+---|---|---|---|---  
+Account Management|
+
+Account Management
+
+|
+
+  * Search by Account Number
+  * Search by E-mail Address
+
+|  2715 complete  Supported  2716 incomplete Not Supported 2717 incomplete
+Supported alternatively |  
+  
+  
+  * Account Information
+    * Account Number
+    * Account Name
+    * Email Address: Non-editable
+
+|  2718 complete  Supported  2719 incomplete Not Supported 2720 incomplete
+Supported alternatively |  
+  
+  
+eStatements:
+
+  * Account Number
+  * Statement Date
+  * Monthly Inserts
+
+|  2721 complete  Supported  2722 incomplete Not Supported 2723 incomplete
+Supported alternatively |  
+  
+Email proofing|  
+|
+
+  * Email Notifications Templates:
+    * eStatements
+
+|  2730 complete  Supported  2731 incomplete Not Supported 2732 incomplete
+Supported alternatively |  
+  
+Upload Inserts|  
+|
+
+  * Marketing Insert Management
+
+|  2733 complete  Supported  2734 incomplete Not Supported 2735 incomplete
+Supported alternatively |  
+  
+Marketing Promo Email|  
+|
+
+  * Accounts:
+    * All statement users (InfoIMAGE's database)
+    * Partial List (Email Control List)
+  * Upload .txt file with following fields and separate  by pipe delimiter
+    * ACCOUNT | FIRST NAME | LAST NAME | EMAIL ADDRESS
+
+|  2895 complete Supported  2896 incomplete Not Supported 2897 incomplete
+Supported alternatively |  
+  
+Reports|  
+|
+
+  * Latest Stats
+
+|  2790 complete  Supported  2791 incomplete Not Supported 2792 incomplete
+Supported alternatively |  
+  
+  
+  * User Login Activity
+
+|  2793 complete  Supported  2794 incomplete Not Supported 2795 incomplete
+Supported alternatively |  
+  
+  
+  * AI Login Activity
+
+|  2796 complete  Supported  2797 incomplete Not Supported 2798 incomplete
+Supported alternatively |  
+  
+  
+  * Email Address Collection
+    *  **Report Data:** Account Number, Account Owner Name, E-mail Address 
+    *  **DB Used:** CONTACT_INFO, USR, FIN_ACCOUNT, USR_FIN_ACCOUNT
+
+|  2805 complete  Supported  2806 incomplete Not Supported 2807 incomplete
+Supported alternatively |  
+  
+  
+  * Marketing Insert Report
+
+|  2808 complete  Supported  2809 incomplete Not Supported 2810 incomplete
+Supported alternatively |  
+  
+Administration|  
+|
+
+  * Admin can create, view, modify and remove other users.
+
+|  2739 complete  Supported  2740 incomplete Not Supported 2741 incomplete
+Supported alternatively |  
+  
+Exit|  
+|  
+|  2742 complete  Supported  2743 incomplete Not Supported 2744 incomplete
+Supported alternatively |  
+  
+  
+  
+
+## Analysis Summary (PUI)
+
+Process and Reports| Prefix| Backend Business| Mismatch with Hypercube
+Business| Changes Needed| Note  
+---|---|---|---|---|---  
+AFP|
+
+  * ms1=default
+
+|
+
+#### Handler: AfpStatementData9
+
+#### Registrar: MergedClientMessageEStmtRegistrar3
+
+  * autoRegister=true, enableAccountType=false, mergeCids=uscu,gdcu
+  * Find  **account  **from the  **FIN_ACCOUNT**  by org_id and acct_number.
+  * If  **account**  is null create an account where orgId, acctNum, acctName, lastModified=currentdate, status='A'
+  * As global.autoRegister is true, creates a new  **USR**  and  **USR_SESSION**  record. 
+  * Insert into  **USR_MAPPING**  with org_id, cif_num, usr_id.
+  * Insert into  **USR_FIN_ACCOUNT  **user_id, account_id, status,  timeStamp.
+  * Insert into  **PAPERLESS**  with acctId, modifiedBy='1', modifiedDate, newStatus='B', oldStatus='N', stmtType.
+
+Database Changes: USR, USR_SESSION, USR_MAPPING, USR_FIN_ACCOUNT, PAPERLESS.
+
+|
+
+  * Set account_number as sess_login id into the USR SESSION table.
+
+|
+
+  * global.acctNumAsLoginId=false
+
+| Last process  date **2019/03/02** in production.  
+PERMISSION|  
+|
+
+#### Handler: DefaultPermHandler
+
+#### Registrar: DefaultPermRegistrar
+
+  * Update **ACCT_ACCESS** table by acctNum with aa_min_level=3
+
+Database Changes: ACCT_ACCESS
+
+|  
+|  
+|  
+  
+ECL|  
+|
+
+ **Handler** : **GdcuEclHandler**
+
+  * Fields: mark, **acctNum** , **email**.
+  * Update **CONTACT_INFO** table with orgName, acctNum, email.
+
+Database Changes: CONTACT_INFO
+
+|
+
+  * Stores email into the CONTACT_INFO table
+
+|
+
+  * global.email.storage=notifyPref
+
+|  
+  
+INSERT|  
+|
+
+ **Handler** : **DefaultInsertHandler**
+
+  * Fields: **fileName** , **title** , fileType='application/pdf', closingDate, stmtType.
+  * Insert into **EMAIL_ATTACH** table with email_id, ea_file_type, ea_file_name, ea_size.
+  * Update EMAIL_ATTACH table with ea_content by ea_id.
+  * Insert into **INSERT_FILE** table with ea_id, org_id, stmt_type, closing_date, title, begin_date.
+  * Insert into **P_JOB_INSERT** table with insert_id.
+
+ ** **Bold** indicates all are mandatory fields.
+
+Database Changes: EMAIL_ATTACH, INSERT_FILE, P_JOB_INSERT.
+
+|  
+|  
+|  
+  
+DOC|
+
+  * doc.acctNumAsLoginId=true
+
+|
+
+#### Handler: DataHandler
+
+#### Registrar: AfpRegistrar
+
+  * autoRegistrar=true, enableAccountType=false, acctLookup=false, nullDsoTimeStamp=false, acctNumAsLogin=true.
+  * Search account from the FIN_ACCOUNT table by org_id and acct_num. If account not found create new UserProfile.
+    * Insert into **FIN_ACCOUNT** table with orgId, acctNum, acctName, lastModified=currentDate, status='A'.
+    * Insert int **USR** table with ssn, birthDate, gender, firstName, lastName, middleName, ci_id.
+    * Insert into **USR_SESSION** table with orgId, orgName, __loginName=acctNum__ , password, details, DSO=currentDate
+    * Insert into **USR_MAPPING** table with orgId, cif, userId.
+    * Insert into **USR_FIN_ACCOUNT** table with userId, acctId, status.
+  * If account found, Update acctName (Except "MEMBER", "CUSTOMER"), __firstName=acctNum.__
+  * If paperless not found, Insert into **PAPERLESS** with acctId, modifiedBy='1', modifieddate, newStatus='B', onldStatus='N', stmtType='default'.
+
+Database Changes: **** FIN_ACCOUNT, USR, USR_SESSION, USR_MAPPING,
+USR_FIN_ACCOUNT, PAPERLESS.
+
+|
+
+  * Set account_number as sess_login id into the USR SESSION table.
+
+|
+
+  * doc.acctNumAsLoginId=false
+
+| First process since **2016/12/14** in production.  
+Email Notification|
+
+  * isSendEmailViaApi=false
+  * isEmailManageByEstmt=true
+
+|
+
+#### ESTMT Handler: GdcuEStmtEmailHandler
+
+|  
+|
+
+  * isSendEmailViaApi=true
+  * isEmailManageByEstmt=false
+
+  
+
+  * Need to use **NotifyPrefEmailHandler** instead of **GdcuEStmtEmailHandler**
+
+|
+
+  * Last email job trigger at **2008** in production.
+
+  
+Reports|  
+|  **Accounting report:** The accounting report contains the following
+reports:
+
+  *  **Afp report**
+  *  **Email notification report**
+  *  ** **Check Index report****
+  *  **Marketing promo email notification report**
+  *  **Inserts report**  
+  *  **Accounting report**
+
+The total number of promotion email, check processing are displayed.
+
+|  
+|  
+|  
+  
+  
+  
+
+  
+
+  
+
+

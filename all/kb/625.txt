@@ -1,0 +1,50 @@
+Codes:
+Put the following code into ~/.bashrc file and then use 'source ~/.bashrc' to reflect the updates.
+xsh () {
+        local tee_flg=1 srv=rht cnt=0 arg= log=
+        [ -z "$1" -o ${#1} -ne 7 ] && prefix=log || prefix=$1
+        for i; do
+                if [ $i = -x ]; then 
+                        tee_flg=0
+                elif [[ $i =~ (rht|rhs|rh|rh2|rhs2) ]]; then
+                        srv=$i
+                elif [ $i != $prefix ]; then 
+                        [ ${i:0:1} = "-" ] && echo "Wrong Config Parameter: $i" && return 1
+                        [ $arg ] && arg="$arg $i" || arg=$i
+                fi
+        done
+        [ -n "$arg" ] && log="${prefix}_${arg// /,}_${srv}_$(date +"%m%d%y").log" || log="${prefix}_${srv}_$(date +"%m%d%y").log"
+        if [ $tee_flg -eq 1 ]; then 
+                echo "ssh $srv \"sh -x /t/test_$USER.sh $arg\" |& tee $log"
+                ssh $srv "sh -x /t/test_$USER.sh $arg" |& tee $log
+        else
+                echo "ssh $srv \"sh -x /t/test_$USER.sh $arg\"" 
+                ssh $srv "sh -x /t/test_$USER.sh $arg" 
+        fi
+}
+SYNOPSIS:
+xsh [prefix] [argumnets]
+eg.
+$ xsh
+- ssh rht "sh -x /t/test_amirR.sh" |& tee log_rht_103117.log
+Description:
+It will run the /t/test_$USER.sh script and create a log of standard error and standard out on any selected or default server. It is not usable for running the user script at background.
+log: A log of standard error and standard out, will be created by default. It can be turned off by -x switch. Log file's name is automated among log_$argument_$server_$MMDDYY.log, log_$server_$MMDDYY.log, $prefix_$argument_$server_$MMDDYY.log and $prefix_$server_$MMDDYY.log depending on availability of $prefix and $server value. MMDDYY is date for server and it might not match the local date.
+Arguments:
+Other than $prefix arguments can be given any order. $prefix should be the first argument.
+-x      To turn of the logging
+$prefix  If present, it must be the first argument and must have 7 characters. This value will be only used in the name of log file.
+$server  It must be among rht, rh2, rhs and rhs2. Default is rht. If multiple is defined then the last one will be used.
+$args    These are the arguments to pass to /t/test_$USER.sh scipt. These arguments can be given in any order.
+Examples:
+$ xsh -x
+- ssh rht "sh -x "/t/test_amirR.sh"
+$ xsh rhs2
+- ssh rhs2 "sh -x /t/test_amirR.sh" |& tee log_rhs2_103117.log
+$ xsh oscums2 rh2
+- ssh rh2 "sh -x /t/test_amirR.sh" |& tee oscums2_rh2_103117.log
+$ xsh oscums2 rh2 s | xsh oscums2 s rh2
+- ssh rh2 "sh -x /t/test_amirR.sh s" |& tee oscums2_s_rh2_103117.log
+$ xsh s
+- ssh rht "sh -x /t/test_amirR.sh s f" |& tee log_s,f_rht_103117.log
+Tagged:processing scriptscritpxsh

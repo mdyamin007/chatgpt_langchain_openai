@@ -1,0 +1,113 @@
+title: SHBK - Invoice - LOC PDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+
+Processing Scripts to modify:
+ shbk_loc_process.sh
+
+Data Files to use:
+
+
+
+*NOTE*: This job runs on RH2. Since we are migrating from RHS to RH2, we should test all options so that we can do afpcompare and also ensure there is no errors in the processing logs.
+
+
+
+*{color:#de350b}WARNING: POTENTIAL CODE CONFLICT{color}*:
+
+There is another concurrent projectIS-1467at the time of assigning this project. Please check if IS-1467 was released before this project goes live. If so, please merge the code with IS-1467 ; However, if this code is released+after++IS-1467+goes live, please inform the developer on IS-1467 that they need to merge this project.
+
+
+
+
+author: anwarh
+comment: Hi [~William.Kong], 
+
+There is another ongoing development going on for this project. 
+https://jira.infoimageinc.com/browse/IS-1467
+
+Should I continue developing this project by merging his code? Please advise. 
+
+Thanks,
+Anwar
+
+
+author: william.kong
+comment: Please hold until that project finishes. I've been waiting for a firm update from AC to get this project released on time but client has not reviewed / approved samples on this other project.
+
+
+author: william.kong
+comment: [~anwarh]: Per my email yesterday. We will need to get started on this project even though there is a existing project active (IS-1467). If this project finishes before IS-1467, then we will ask developer to merge your code. However, ifIS-1467 goes live before this project finishes, we will ask you to merge this code withIS-1467
+
+For now, I'm going to tentatively mark 9/30/2022 as the live date. If you need another 2 - 3 days to go live, it will be ok since this is 'additional' unplanned project added to the scope of phase I of this project 64B.
+
+
+
+
+author: william.kong
+comment: [~anwarh]: I just noticed Tevis released IS-1467 to production. Please proceed merging this project to the latest version.
+
+
+author: anwarh
+comment: Hi [~William.Kong],
+
+Parallel ID: 20221104092123
+ production cycle: 11/01
+
+Data files:
+ /z/dsi_pdfi_testing/shbkme1/data/SHBK_LOC_110122.txt.pgp
+
+old zips: /z/dsi_pdfi_testing/shbkme1/old/
+ new zips: /z/dsi_pdfi_testing/shbkme1/new/
+
+Thanks,
+ Anwar
+
+
+author: william.kong
+comment: [~Igor.Khosid]/ [~Andrey.Kutsenko]: I've copied the files to:
+
+ca-unittest-pr-02:/d/pdf_compare/shbkme1_prod
+
+ca-unittest-pr-02:/d/pdf_compare/shbkme1_parallel
+
+
+
+Please note that the archival file format for client is in tif. I've converted the TIFF file to PDF in order to use pdfcompare.
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~Igor.Khosid]/[~Andrey.Kutsenko]: Would you be able to find time to review this particular QA request. We have 3 more projects to complete Phase I including this one. We are targeting to wrap up Phase I of this project next week before Thanksgiving so that we can shutdown RH2 server.
+
+[~Andrey.Kutsenko]: When you work on this, please review my comment above. The output file format is TIFF for this archival project. I manually converted to PDF so that you can leverage the pdfcompare tool. If you have any questions on this one, please do not hesitate to reach out to me.
+
+
+author: JIRAUSER11104
+comment: Thanks, [~William.Kong]
+ Test result - PASS.
+{code:java|title=$ perl pdf_compare.pl shbkme1_prod/ shbkme1_parallel/ result_shbkme1 -pixels 6 -threads 16|borderStyle=solid}
+Total PDF Files Scanned: 249
+allowedDifferenceInPercentPerPage: 6:
+Thread Count: 16
+
+Total PDF Files with Differences: 0
+Start Time: Wed Nov 16 15:34:47 PST 2022
+Finish Time: Wed Nov 16 15:37:39 PST 2022{code}
+

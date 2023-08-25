@@ -1,0 +1,66 @@
+title: Epayment Workflow
+body: 1\. MTRO sends us a statement data file on monthly basis or as per the
+frequency of statement cycle  
+2\. MTRO sends us a daily balance file that contains the updates about the
+current outstanding balance of each account, and any other additional meta-
+data involved.  
+3\. InfoIMAGE processes data from daily balance file and the statement data
+file as and when received. Statement data file updates reflects on estatements
+application. While Daily balance file updates reflect on payments section of
+SSO login for User/Member  
+4\. MTRO User Members log-in into SSO application and can see the latest
+statements and due payments etc. per Loan account.  
+5\. MTRO User/Member ePayment options to either make one-time payment or
+schedule a payment using a payment source.  
+6\. Before going to payment gateway SSO estatements payment application
+validates for ACH routing or Debit card number prefix provided by MTRO.  
+a. IF MTRO routing number present the store MTRO user ACH routing and account
+number details to be later shared with MTRO for account balancing purposes.  
+b. IF MTRO debit card present prompt user to make payment using ACH
+transaction and redirect to ACH screen. If the user still wants to do Debit
+card transaction then it will go to payment gateway.  
+7\. During payment gateway call we validate card for type debit/credit,  
+a. If card type is credit card decline the transaction. This validation is
+needed if client's Payee Accounts are Loan accounts. Normally credit card is
+not accepted for Loan payments.  
+b. If card type is debit do following validations
+
+i. Address verification - mainly zip code is validated from the billing
+address.  
+ii. CVV verification  
+iii. Supported Debit card types (options like VISA and Master only).
+
+8\. Based on success response from the card validation in previous step. Make
+a successful financial transaction through payment gateway.  
+9\. At the end of each day InfoIMAGE to send Daily transaction reports. Two
+reports will be sent.  
+a. One report with all the transactions done with payment gateway.  
+b. One report with all the transactions that have MTRO routing/ MTRO ACH
+details.  
+10\. During settlement window payments get actually deducted from payment
+source account and deposited into destination account i.e. MTRO account as
+configured during Onboarding process.  
+11\. As per the settlement updates received by MTRO from its bank account on
+daily basis, MTRO will update User/Member account balances on their side.  
+12\. InfoIMAGE sends daily MTRO account  
+13\. MTRO repeats step 1 & 2 if it's a statement cycle end processing or only
+repeats STEP 2 on a daily basis.  
+ASSUMPTIONS:  
+1\. MTRO will provide list of ACH routing numbers.  
+2\. MTRO will provide list of Debit card prefixes.  
+3\. MTRO will have Loan accounts as pay to accounts hence for the payments
+they would like us to allow only ACH and Debit card payments, while DENY
+credit card payments to loan/mortgage accounts.  
+Concerns:  
+1\. Each financial transaction essentially will have MINIMUM TWO payment
+gateway transactions unless the pay from account is a MTRO ACH account. Client
+is billed by the number of payment gateway transactions, NOT by financial
+transactions. Each of following is considered as single payment gateway
+transaction:  
+a. Debit/Credit card validation AND/OR Address/CVV/Zip verification  
+i. A failed verification transaction is still counted as a payment gateway
+transaction and billable.  
+b. Storage of a payment source for future use  
+c. Process an actual ACH/Card payment
+
+

@@ -1,0 +1,172 @@
+title: VWCU - Stmt - MortgagePDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133570-C00.01-V21226
+
+Processing Scripts to modify:
+ vwcuml2_process.sh
+
+Data Files to use:
+ VWCU_ML_041221.zip
+
+
+
+
+
+*NOTE*: This job runs on RH2 server. Since we are migrating from RH2 server to RHS, please test ALL job_sel options to ensure RHS can run with error messages in the processing log files.
+
+
+
+
+author: william.kong
+comment: [~eric.yan]: Please advise if you still have this program that you originally worked on via Redmine back in May through June of last year. Here's the redmine link:[JEF #48148: PDFi to AFP2WEB Conversion Project vwcuml2 [PRINT SERVICE] - Change Requests - InfoIMAGE Tracking (infoimageinc.com)|https://track.infoimageinc.com/issues/48148]
+
+
+
+If you do, please let us know so I can find another person to take over this project.
+
+
+
+Please advise.
+
+
+
+Thanks!
+
+
+
+-- Will
+
+
+
+
+author: eric.yan
+comment: [~William.Kong]
+
+Sorry, I'm afraid I don't have the old backup anymore.
+
+
+author: william.kong
+comment: [~eric.yan]: Thanks! I will look for another person to start this project.
+
+
+author: william.kong
+comment: Per Rony's email just earlier, this is also a RedTitan job that needs onshore team to take over.
+
+
+author: tuna
+comment: HI [~jun],
+
+This is the project that Terrence mentioned last week. I assigned to you and provided following timeline according to your upcoming project list. Please review and let me and[~William.Kong]knows. if you have concerns.
+
+Thanks,
+
+Tun
+
+
+
+Turnover Date : 08/19 
+ Sample to QA Date: 09/19
+ Approval Date: 09/22 
+ Go live date : 09/30
+
+
+author: william.kong
+comment: [~jun]: If at all possible, please see if we can get this completed before EOM. If it has to be 9/30, then let me know.
+
+
+
+[~OIR] (Terrence): FYI. I may need to advise during ITAC meeting again next week that we need more time.
+
+
+author: jun
+comment: [~William.Kong],
+
+This is ready for testing. I used theVWCU_ML_081022.zip data file since that's latest production process.
+
+/z/pdf_afp/vwcu/vwcuml2/
+
+
+author: william.kong
+comment: [~jun]: Thanks! I'll review the big afp file and will ask QA to perform the normal QA steps for the PDF archival and others.
+
+
+
+[~Igor.Khosid]/[~Andrey.Kutsenko]/[~berezinez]: Not sure who will be assigned. But I assisted copying the pdf files to:
+
+
+
+ca-isis-pr-04:/d/pdf_compare/vwcuml2_prod (new pdf)
+
+ca-isis-pr-04:/d/pdf_compare/vwcuml2_parallel (new pdf)
+
+
+author: william.kong
+comment: AFPCompare is good:
+
+
+
+afpcompare stdout log: /x/afpcompare/vwcuml2/prod/../2415487_vwcuml210.afp.stdout_0.log
+
+NO Difference found in 2415487_vwcuml210.afp_1_6215_diff.xml
+
+Compared /x/afpcompare/vwcuml2/prod/2415487_vwcuml210.afp vs /x/afpcompare/vwcuml2/parallel/709522_vwcuml210.afp
+8bea044eb38a92237e8557321c36760b /x/afpcompare/vwcuml2/prod/2415487_vwcuml210.afp
+46cb36c897433cd0f4618d3332252f4c /x/afpcompare/vwcuml2/parallel/709522_vwcuml210.afp
+
+Start Time: Tue Aug 23 14:48:04 PDT 2022
+Finish Time: Tue Aug 23 14:48:36 PDT 2022
+
+***********************************************************************
+
+
+Total Page Count: /x/afpcompare/vwcuml2/prod/2415487_vwcuml210.afp (6215)
+Total Page Count: /x/afpcompare/vwcuml2/parallel/709522_vwcuml210.afp (6215)
+
+
+
+
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+ Test result - *PASSED*.
+ [andreyK@ca-isis-pr-04 pdf_compare]$ cat /d/pdf_compare/result_vwcuml2/pdf_compare_rpt.txt
+{quote}Total PDF Files Scanned: 3106
+ allowedDifferenceInPercentPerPage: 8:
+ Thread Count: 32
+
+Total PDF Files with Differences: 0
+ Start Time: Tue Aug 23 16:31:33 PDT 2022
+ Finish Time: Tue Aug 23 17:06:14 PDT 2022
+{quote}
+Ran script:
+{code:sh}
+[andreyK@ca-isis-pr-04 pdf_compare]$ perl pdf_compare.pl vwcuml2_prod/ vwcuml2_parallel/ result_vwcuml2 -pixels 8 -threads 32 -maxfiles 4000{code}
+
+
+author: william.kong
+comment: [~jun]: Can you please prep the file transfer form and release this tomorrow? Thanks for getting this done before 8/31 instead of Sept!!!
+
+
+author: jun
+comment: Attached transfer release form
+
+[^IS_PROGRAM_TRANSFER_FORM_Rev 07132016.doc]
+
+
+author: jun
+comment: [~William.Kong],
+
+Code released to production

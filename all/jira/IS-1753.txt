@@ -1,0 +1,213 @@
+title: GOCU - [34765][pvt][in-house] DP - GOCU student Visa Oct 2022 processing error
+description: Dev Hour: 2
+
+Qa: 10/26/2022
+
+Now as soon as qa can finish and let us know we can release. 
+
+ 
+
+Details:
+
+--------------
+
+The change should just be changing afp input file path to /d/pdf_afp/gocu/gocuvs1/afp/ 
+
+script: gocuvs1_process.sh  
+
+
+author: JIRAUSER11005
+comment: Hi [~Igor.Khosid]
+ 
+Please find below the required information for the QA process.
+
+Thanks.
+Salman.
+
+
+||Title||Parallel ID||Data File||Archival Directory||
+|afp2pdf input file path fix|20221026121749|SV21OCT.zip.pgp|/z/pdf_afp/gocu/gocuvs1/zip|
+
+
+
+
+author: JIRAUSER11700
+comment: Currently in parallel: Yes
+ User: salmanA
+ Description: GOCU - [34765][pvt][in-house] DP - GOCU student Visa Oct 2022 processing error
+ Date Submitted: 2022-10-26 12:18:02
+ Date Last Updated: 2022-10-26 12:18:02
+ Files:
+ 1) gocuvs1_process.sh
+
+
+author: JIRAUSER11700
+comment: As far as I can see, the script modification does what is intended: copy afp file to/d/pdf_afp/gocu/gocuvs1/afp/, then run conversion to pdf from the new location.
+
+QA passed
+
+
+author: JIRAUSER11005
+comment: Hi [~TunA]
+
+Please find below the required information for the release process.
+
+
+||Title||Release Directory||Transfer Form||
+|afp2pdf input file path fix|/d/is/cvs/xfer/salmanA|[^IS-1753_Transfer-Form.docx]|
+
+
+Thanks.
+ Salman.
+
+
+author: tuna
+comment: HI Salman,
+
+Following code has been released.
+
+Thanks
+
+Tun
+
+
+
+20221027084814 10/27/2022 salmanA IS-1753 GOCU - [34765][pvt][in-house] DP - GOCU student Visa Oct 2022 processing error
+
+[main@rhs]$ ll /d/is/cvs/xfer/salmanA/
+
+-rwxrwxrwx 1 salmanA DSI 10273 Oct 26 23:12 gocuvs1_process.sh
+
+
+
+
+
+[~rony],[~dawnl]
+
+
+author: JIRAUSER11005
+comment: Hi [~Igor.Khosid]
+
+I am re-opening the ticket to fix the bug that was left unresolved.
+Please find below the required information for the QA process.
+
+Thanks.
+ Salman.
+||Title||Parallel ID||Data File||Archival Directory||
+|afp2pdf input file path fix|20221027145545|SV21OCT.zip.pgp|/z/pdf_afp/gocu/gocuvs1/zip|
+
+
+
+
+author: JIRAUSER11700
+comment: [~infoimage]Salman, I cannot run the script. Could you please run it and attach the output here?
+
+All I can do is make a diff, but this time I can't see what is its point:
+
+!diff.png!
+
+it looks to me that you are back to running the conversion from the old directory (where it did not work?)
+
+
+
+
+author: JIRAUSER11005
+comment: Hi [~avannik] 
+
+ Please try again with the following parallel ID.
+I went ahead and ran the script and it seems to be working fine now.
+
+Thanks.
+ Salman.
+||Title||Parallel ID||Data File||Archival Directory||
+|afp2pdf input file path fix|20221028063824|SV21OCT.zip.pgp|/z/pdf_afp/gocu/gocuvs1/zip|
+
+
+
+
+author: JIRAUSER11700
+comment: [~infoimage]Alright, the results look ok. I guess the script is working now.
+
+
+author: dawnl
+comment: [~rony] [~infoimage]- QA completed. Can you release it ASAP today?
+
+
+author: JIRAUSER11005
+comment: Hi [~TunA]
+
+Please find below the required information for the release process.
+
+
+||Title||Release Directory||Transfer Form||
+|afp2pdf input file path fix|/d/is/cvs/xfer/salmanA|[^IS-1753_Transfer-Form.docx]|
+
+
+ Thanks.
+ Salman.
+
+
+author: tuna
+comment: HI Salman,
+
+Following code has been released.
+
+Thanks,
+
+Tun
+
+
+
+20221028121501 10/28/2022 salmanA IS-1753 GOCU - [34765][pvt][in-house] DP - GOCU student Visa Oct 2022 processing error
+
+[main@rhs ~]$ ll /d/is/cvs/xfer/salmanA/
+total 72
+-rwxrwxrwx 1 salmanA DSI 10275 Oct 28 11:59 gocuvs1_process.sh
+
+
+
+[~rony],[~dawnl]
+
+
+
+
+author: dawnl
+comment: [~rony] [~infoimage],
+
+DP got the same error.
+
+!image-2022-10-28-14-43-12-117.png!
+
+
+author: rony
+comment: Hi [~TunA]
+
+The issue was while calling afp2pdf we are calling it for afp which was in the working directory/d/gocu/gocuvs11218.afp instead of /d/pdf_afp/gocu/gocuvs1/ directory. Since the working directory is not shared folder with preprocessing02 ( where the actual afp 2 pdf conversion happens ) it was giving errors, which was reported in ts [https://app.na3.teamsupport.com/?TicketNumber=34765.]Then we worked on updating it but unfortunately, we didn't fully update it. Check the below diff :
+
+!image-2022-10-31-13-38-51-358.png|width=1332,height=489!
+
+The right is the current production code that you released upon our request. As you see on the right side it is still using e_opt_afp_file which is still from /d/gocu/ folder. Although we created a new variablee_opt_afp_file_conventional which points to /d/pdf_afp/gocu/gocuvs1/ but we didn't use it while calling afp2pdf.
+
+Unfortunately, this is something that didn't raise the issue in parallel due to /z being shared through all servers.
+
+I already ran in parallel and the afp used for afp2pdf call is from pdf_afp folder now.
+
+!image-2022-10-31-14-20-34-420.png!
+
+
+
+Would you please release this once more? Transfer for is same as previous.[^IS-1753_Transfer-Form-1.docx]
+
+[~dawnl]
+
+
+
+Thanks
+
+Rony
+
+
+
+
+author: peter.dang
+comment: Code has released. BKID: 20221031092849

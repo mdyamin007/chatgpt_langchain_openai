@@ -1,0 +1,409 @@
+title: WECU - [29844][pvt] Test Visa Statement After Core Upgrade
+description: Dev Hour: 2 hours no ISD hours needed .
+
+
+
+Turnover Date: 07/05/22
+
+Sample Date: 07/07/22
+
+Approval Date: 07/11/22
+
+Qa Date: 07/12/22
+
+Live Date: 07/13/22
+
+
+
+Details:
+
+------------------
+
+Dfa: WECUMV11.dfa
+
+Check comment 23, 24 to see the requirement.
+
+- Currently the description display logic is:
+
+NOT EMPTY(GRP3_F13[TRANS]) OR NOT EMPTY(GRP3_F14[TRANS])
+
+FONT AR080 ALIGN LEFT (CHANGE(GRP3_F14[TRANS]!'-'!GRP3_F13[TRANS],'- ', ''))
+
+- Need to check the value of GRP3_F13[TRANS] if it is payment orPeriodicFinanceCharge display only GRP3_F13[TRANS]
+
+Programmer: Faiza
+
+
+
+----------------------Per Tricia (comment 23)----------------------------------
+
+We are upgrading our system on 8/7/22 and there are a couple of new transaction descriptions in the statement raw data file that we will need to change for our 8/15/22 Visa statements.
+
+This is the current mapping for the transaction descriptions:
+
+
+
+There are some accounts that will have a description noted after a payment. We dont want this description listed after payment, we only want it to list Payment.
+<Transaction AmountType="Credit">
+
+ <FeatureName>Purchases</FeatureName>
+
+ <MerchantCategoryCode>6012</MerchantCategoryCode>
+
+ <ChannelType>ExternalInteractive</ChannelType>
+
+ <TransactionType>Payment</TransactionType>
+
+ <TransactionDate>6/7/2022</TransactionDate>
+
+ <PostingDate>6/7/2022</PostingDate>
+
+ <EffectiveDate>6/7/2022</EffectiveDate>
+
+ <Amount>-2501.68</Amount>
+
+<Description>Highest rate payment applied to PrincipalDebit transactions.</Description>
+
+ <DescriptionSummary>Payment</DescriptionSummary>
+
+There are also some accounts that will have a description noted for the periodic finance charge. We dont want this description listed after the periodic finance charge, we only want it to list PeriodicFinanceCharge
+
+
+</Transaction>
+
+ <Transaction AmountType="Debit">
+
+ <FeatureName>Purchases</FeatureName>
+
+ <MerchantCategoryCode>6012</MerchantCategoryCode>
+
+ <ChannelType>Batch</ChannelType>
+
+ <TransactionType>PeriodicFinanceCharge</TransactionType>
+
+ <TransactionDate>6/9/2022</TransactionDate>
+
+ <PostingDate>6/15/2022</PostingDate>
+
+ <EffectiveDate>6/15/2022</EffectiveDate>
+
+ <Amount>1.26</Amount>
+
+<Description>DaysInPeriod=31; Balance=115.00; Rate(APR)=12.900000; Rate(Daily)=0.035342</Description>
+
+ <DescriptionSummary>PeriodicFinanceCharge</DescriptionSummary>
+
+
+
+-------------------------------Per Tricia (comment 24)----------------------------
+
+Here is a snip of the payment with the black line through what we don't want to print on the statement.
+
+
+
+
+author: rony
+comment: Hi [~Kbittmann]
+
+Will this change be applicable for only8/15/22 or permanent change?
+
+
+
+[~Tasneem]
+
+
+
+Thanks
+
+
+
+
+author: rony
+comment: Hi [~Kbittmann]
+
+Would you please ask the client to provide us with a data file?
+
+
+
+[~Tasneem]
+
+Thanks
+
+
+
+
+author: JIRAUSER10911
+comment: [~Tasneem] [~rony] 
+
+Test file was uploaded on 6/10. WECU_VISA_060922_1
+
+
+author: rony
+comment: Hi [~Kbittmann]
+
+Sample is/d/ac-secure-share/ac/kris/IS-1295/wecumv1109.pdf .
+
+
+
+[~Tasneem]
+
+
+
+Thanks
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+Please see the sample/d/ac-secure-share/ac/kris/IS-1295/wecumv1109.pdf.
+
+[~Kbittmann]
+
+Thanks
+
+
+author: igor.khosid
+comment: [~Andrey.Kutsenko] - please review and submit for the client review
+
+
+author: JIRAUSER11104
+comment: [~rony]. please:
+ -1) provide- -test data file- 
+ found this >>> /z/download/wecu/visa/WECU_VISA_060922_1.zip.pgp
+ 2) export the project to QA folder
+ 3) provide the index file after the customer approves the sample
+
+[~Kbittmann] please provide the SOW and Mapping files.
+
+
+author: JIRAUSER11104
+comment: QA test result: Pass and Sample ready for Customer review.
+
+
+author: JIRAUSER10911
+comment: [~rony]
+
+Samples approved.
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+project WECUMV11.zip is in qa folder.
+
+Parallel id:20220712084839
+
+This is simple update of removing verbiage from description whenDescriptionSummary isPeriodicFinanceCharge orPayment. I think we don't need dpvs or index file for that.
+
+
+
+checklist attached.
+
+[^IS-1295_Checklist.docx]
+
+
+
+Thanks
+
+
+author: JIRAUSER11104
+comment: ****************************************************
+ Parallel ID: 20220712084839
+ Currently in parallel: Yes
+ User: ronyD
+ Description: IS-1295 WECU - [29844][pvt] Test Visa Statement After Core Upgrade
+ Date Submitted: 2022-07-12 08:48:51
+ Date Last Updated: 2022-07-12 08:48:51
+ Files:
+ 1) WECUMV11.dfa
+****************************************************
+
+
+author: JIRAUSER11104
+comment: Hi [~rony]thank you for the provide usthe project WECUMV11.zip
+However, provide also for this project xml data file and correlation template control file.
+
+
+author: rony
+comment: Hi [~Andrey.Kutsenko]
+
+/home/test/keep/xml_tables/wecumv1.table this is the control file for this project.
+
+/z/wecu/wecumv1/files/ has the xml file WECU_VISA_060922.xml and associated bar file wecumv1_data.dat.
+
+
+
+[~Tasneem]
+
+
+
+Thanks
+
+
+author: JIRAUSER10911
+comment: [~rony]
+
+Please update bug ticket so we can move forward. This item was supposed to go live today. If not for today then we need this to go live tomorrow.
+
+
+author: rony
+comment: Hi [~Kbittmann]
+
+Didn't realize bug will be produced/caught at this point. Next time while providing timeline I will keep few more days for qa before release.
+
+If qa pass today, we will go for release today.
+
+
+
+Thanks
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+IS checklist >>>  [^IS-1295_WECU_CheckList.pdf] 
+
+
+author: rony
+comment: Hi [~TunA]
+
+
+
+Need to releaseWECUMV11.dfa .
+
+
+
+[~Tasneem] [~Kbittmann]
+
+Thanks
+
+Rony
+
+
+author: tuna
+comment: Hi [~rony],
+
+Following code has been released.
+
+Thanks,
+
+Tun
+
+
+
+20220714105502 07/14/2022 ronyD IS-1295 WECU - [29844][pvt] Test Visa Statement After Core Upgrade
+
+[main@rhs ~]$ ll /d/is/cvs/xfer/ronyD/
+total 264
+-rwxrwxrwx 1 ronyD DSI 74178 Jul 14 10:44 WECUMV11.dfa
+
+
+
+
+
+[~Tasneem], [~Kbittmann]
+
+
+author: JIRAUSER10911
+comment: [~TunA] [~Tasneem]
+
+Please roll this code back until 8/12. We need to process today's file with old code. Sorry for the confusion.
+
+
+author: tuna
+comment: Hi [~Tasneem],
+
+Please work with [~rony] for roll back process. Let me know when the codes are ready in your or Rony folder to release roll back.
+
+Thanks,
+
+Tun
+
+
+
+[~Kbittmann]
+
+
+author: rony
+comment: Hi [~TunA]
+
+Code is in my xfer folder.
+
+
+
+[~Kbittmann]please remind me again when to release the latest update.
+
+
+
+Thanks
+
+Rony
+
+
+author: JIRAUSER10911
+comment: [~rony]
+
+Code will need to be rereleased on 8/12. Live date updated.
+
+
+author: tuna
+comment: HI [~rony], [~Tasneem], [~Kbittmann],
+
+Following code has been rolled back. You may need to change status from "DONE" to something like "in progress". So that you will remember to release again.
+
+Thanks
+
+Tun
+
+
+
+
+
+20220715111957 07/15/2022 ronyD IS-1295 WECU - [29844][pvt] Test Visa Statement After Core Upgrade
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/ronyD/
+total 264
+-rwxrwxrwx 1 ronyD DSI 73849 Jul 15 11:07 WECUMV11.dfa
+
+
+author: JIRAUSER10911
+comment: [~Tasneem] [~rony] [~TunA]
+
+Please ensure you release code today.
+
+
+author: rony
+comment: Hi [~TunA]
+
+Need help to release.[^IS_PROGRAM_TRANSFER_FORM - Copy.doc].
+
+This same code was released before and also rolled backed if you check one comment above. Now need to release it again.
+
+[~Tasneem]
+
+Thanks
+
+
+author: tuna
+comment: HI [~rony],
+
+Following code has been released.
+
+Thanks
+
+Tun
+
+
+
+20220812123212 08/12/2022 ronyD IS-1295 WECU - [29844][pvt] Test Visa Statement After Core Upgrade
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/ronyD/
+total 264
+-rwxrwxrwx 1 ronyD DSI 74178 Aug 12 12:24 WECUMV11.dfa
+
+
+
+[~Tasneem]
+
+
+
+

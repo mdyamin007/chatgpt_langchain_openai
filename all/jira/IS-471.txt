@@ -1,0 +1,142 @@
+title: BKPL:  Processing Logic Improvements/Fix (IN-HSE)
+description: Hi Rony and Sakib,
+
+
+
+I would like the following corrected in light of the processing issues that we encountered over the weekend specifically with BankPlus
+
+
+
+#1. Update /$d_dir/file_share/ logic:
+
+Please update logic to have a subdirectory:
+
+$d_dir/file_share/bkpl/ms2/
+
+Program will need to delete the contents of this directory before file is placed here.
+
+
+
+
+
+#2. Update logic to incorporate iconv -c -t UTF-8 $input_data_file > $output_xml_utf_datafile
+
+Please insert this iconv utility command after the /home/util/rmhex00.pl
+
+After this program runs, you will need to use the utf-8 version of the file (ie. $output_xml_utf_datafile)
+
+The iconv will set the UTF-8 encoding of the given input data file.
+
+
+
+After this program runs, I would like us to view the following two accounts to make sure the address looks ok. Here were the two screenshots with the errors:
+
+
+
+Line: 35833435
+
+Here is the foreign character issue:  !image-2021-10-07-18-22-24-062.png!
+
+
+
+2^nd^ data issue. See below. Im fixing the data again.
+
+ !image-2021-10-07-18-22-35-464.png!
+
+
+
+
+
+Line: 93700792:
+
+
+
+If output is ok, then please share the results for us to review as well too. We would like to see if the foreign character appears correctly in the afp output.
+
+The original data file that from client will be located in:
+
+/z/ftpbu/JHABU/bkpl/stmt/AIP706INFSTM20211001060758.XML.PGP_10012021_070516
+
+
+
+The manipulated statement file that we removed foreign character is located in:
+
+/z/ftpbu/JHABU/bkpl/stmt/AIP706INFSTM20211001060758.XML.PGP.fixed
+
+
+
+#3. Update the bkpl_image.control file to use /home/keep/maillist/bkplms2_mail.lis instead of /home/keep/maillist/bkplms1_mail.lis; Not sure why we use ms1 for the mail list when the program is setup to use ms2. This will confuse our team if we do not keep the jid consistent. Also change /bkplms1_cksum.log to /bkplms2_cksum.log to be consistent.
+
+
+
+
+
+#4. Please change backup directory from /d/download/$cid/ to /d/download/$cid/dda & also updated the /home/procs/bkplms2.procs to reflect this new location:
+
+!image-2021-10-12-17-26-20-602.png!
+
+!image-2021-10-12-17-26-54-923.png!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~rony]: I added item #4 requirement just now to make it a bit more organized. Thanks!
+
+
+author: william.kong
+comment: [~mahbubS]: Per your skype, i saw the screenshots of the address area. It looks good.
+
+
+
+[~stephen.yee@infoimageinc.com]: We are going to release a minor internal enhancement to address minor processing issues / improvements we identified during the last end of month cycle. The code is scheduled to be released by tomorrow. Thanks!
+
+
+
+!image-2021-10-28-11-52-08-992.png!
+
+!image-2021-10-28-11-52-18-814.png!
+
+
+author: mahbubs
+comment: Is there any parallel form required to fill? Or just transfer form is enough?
+
+Thanks
+
+
+author: mahbubs
+comment: Attached is the transfer form.[^IS_PROGRAM_TRANSFER_FORM-1.doc]
+
+^Peter, i did cvs checkin.^
+
+^Please release code.^
+
+
+author: mahbubs
+comment: Hi All,
+
+Code has been released by Peter.
+
+Thanks
+
+
+author: william.kong
+comment: [~mahbubS]: Please update this ticket with your hours spent and mark the status to "Done". Thanks for getting this project completed on time.
+
+

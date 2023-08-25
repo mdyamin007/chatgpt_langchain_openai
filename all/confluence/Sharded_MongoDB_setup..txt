@@ -1,0 +1,189 @@
+title: Sharded MongoDB setup.
+body:   
+
+## The sharded setup topology  
+
+rs1/rs2 : replica sets  
+mongod : Mongo Daemons  
+mongos : Router
+
+Multiple shards can be setup in separate servers.  
+  
+
+  
+
+## Docker setup
+
+### Upgrade ubuntu
+
+Docker works best on the 3.8 kernel. Precise comes with a 3.2 kernel, so we
+need to upgrade it.
+
+check kernel version:
+
+uname -a  
+sudo apt-get update  
+sudo apt-get install linux-image-generic-lts-raring linux-headers-generic-lts-
+raring  
+sudo reboot
+
+    
+    
+      
+    
+
+  
+
+First, check that your APT system can deal with https URLs: the file
+/usr/lib/apt/methods/https should exist. if not
+
+apt-get update  
+apt-get install apt-transport-https
+
+    
+    
+      
+    
+
+  
+Then, add the Docker repository key to your local keychain.
+
+$ sudo apt-key adv \--keyserver hkp:
+//[keyserver.ubuntu.com](http://keyserver.ubuntu.com):80 \--recv-keys
+36A1D7869245C8950F966E92D8576A8BA88D21E9  
+$ sudo sh -c "echo deb <https://get.docker.com/ubuntu> docker main
+/etc/apt/sources.list.d/docker.list"  
+$ sudo apt-get update  
+$ sudo apt-get install lxc-docker // if this doesn't work,  
+$ sudo wget -qO- https: //[get.docker.io/](http://get.docker.io/) | sed -e
+"s/[docker.com/docker.io/g](http://docker.com/docker.io/g)" | sh (or)  
+$ curl -sSL https: //[get.docker.com/ubuntu/](http://get.docker.com/ubuntu/) |
+sudo sh
+
+    
+    
+      
+    
+
+  
+now test it
+
+    
+    
+    $ sudo docker run -i -t ubuntu /bin/bash
+    
+
+  
+
+build the image from the DockerFile [ The docker files are attached ]
+
+    
+    
+    docker build -t mongocluster/mongod mongod
+    docker build -t mongocluster/mongos mongos
+    
+
+  
+
+install mongoclients
+
+    
+    
+    $ sudo apt-get install mongodb-clients
+    
+
+  
+  
+
+  
+
+## Setup script
+
+Create a DockerFile for mongod and mongos and store them in ./mongod and
+./mongos folder respectively.
+
+# Latest setup made on production on three machines:
+
+    
+    
+      
+      
+    # on dbs-prod01 (10.8.14.37)  
+    docker run -p 10.8.14.37: 8881: 27017 --name rs1_srv1 -d i3dockerrepo/mongodb --replSet rs1   
+    docker run -p 10.8.14.37: 8893: 27017 --name rs2_srv3 -d i3dockerrepo/mongodb --replSet rs2  
+    docker run -p 10.8.14.37: 8871: 27017 -h cfg1 --name cfg1 -d i3dockerrepo/mongodb --noprealloc --smallfiles --configsvr --dbpath /data/db --port 27017  
+      
+    # on dbs-prod02 (10.8.14.38)  
+    docker run -p 10.8.14.38: 8882: 27017 --name rs1_srv2 -d i3dockerrepo/mongodb --replSet rs1  
+    docker run -p 10.8.14.38: 8891: 27017 --name rs2_srv1 -d i3dockerrepo/mongodb --replSet rs2  
+    docker run -p 10.8.14.38: 8872: 27017 -h cfg2 --name cfg2 -d i3dockerrepo/mongodb --noprealloc --smallfiles --configsvr --dbpath /data/db --port 27017  
+      
+    # on dbs-prod03 (10.8.14.39)  
+    docker run -p 10.8.14.39: 8883: 27017 --name rs1_srv3 -d i3dockerrepo/mongodb --replSet rs1  
+    docker run -p 10.8.14.39: 8892: 27017 --name rs2_srv2 -d i3dockerrepo/mongodb --replSet rs2  
+    docker run -p 10.8.14.39: 8873: 27017 -h cfg3 --name cfg3 -d i3dockerrepo/mongodb --noprealloc --smallfiles --configsvr --dbpath /data/db --port 27017  
+      
+    # on dbs-prod01 (10.8.14.37)  
+    # Replication Set 1  
+    mongo --port 8881 --host 10.8.14.37  
+      
+    rs.initiate()  
+    rs.add("10.8.14.38:8882")  
+    rs.add("10.8.14.39:8883")  
+    rs.status()  
+    cfg = rs.conf()  
+    cfg.members[  
+        0  
+    ].host = "10.8.14.37:8881"   
+    rs.reconfig(cfg)  
+    rs.status()  
+      
+    # on dbs-prod02 (10.8.14.38)  
+    # Replication Set 2  
+    mongo --port 8891 --host 10.8.14.38  
+      
+    rs.initiate()  
+    rs.add("10.8.14.37:8893")  
+    rs.add("10.8.14.39:8892")  
+    rs.status()  
+    cfg = rs.conf()  
+    cfg.members[  
+        0  
+    ].host = "10.8.14.38:8891"   
+    rs.reconfig(cfg)  
+    rs.status()  
+      
+    # on dbs-prod03 (10.8.14.39)  
+    docker run -p 10.8.14.39: 8860: 27017 --name mongos1 -d dharmi/mongos --port 27017 --configdb 10.8.14.37: 8871,  
+    10.8.14.38: 8872,  
+    10.8.14.39: 8873  
+    mongo --port 8860 --host 10.8.14.39  
+    sh.addShard("rs1/10.8.14.37:8881")  
+    sh.addShard("rs2/10.8.14.38:8891")  
+    sh.status()  
+      
+    # on dbs-prod01 (10.8.14.37)  
+    docker run -p 10.8.14.37: 8861: 27017 --name mongos2 -d dharmi/mongos --port 27017 --configdb 10.8.14.37: 8871,  
+    10.8.14.38: 8872,  
+    10.8.14.39: 8873  
+    mongo --port 8861 --host 10.8.14.37  
+    sh.status()  
+    
+    notes:
+    A shard can be a standalone mongod or a replica set. In a production environment, each shard should be a replica set.
+    
+    ref: https://docs.docker.com/examples/mongodb/
+         https://sebastianvoss.com/docker-mongodb-sharded-cluster.html
+    
+
+For information on metrics, please check  link.
+
+### Attachments
+
+  
+
+250250250
+
+  
+
+

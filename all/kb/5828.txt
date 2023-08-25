@@ -1,0 +1,54 @@
+Adding Return Mail Service for any Bank step by step :
+step - 01 : set mail_full_serv value to ESR1 in your control file and export this variable like below.
+As we know, barcode, stock codes, endorsement lines are printed from print_dfa. That's why we need to grab the print_dfa name from the control file and update the code of print_dfa accordingly so that it can print ELECTRONIC SERVICE REQUESTED basis on the value of MAIL_SERV_TYPE
+step -02 : Open the print dfa and add the following lines in BEFOREFIRSTDOC
+ENDORSEMENT_BY_MAILTYPE =  '' ;
+&MAIL_SERV_TYPE = ENVIRONMENT('MAIL_SERV_TYPE') ;
+&ENDORSEMENT_TYPE = ENVIRONMENT('ENDORSEMENT_TYPE') ;
+USE
+  FORMAT IGNORE_IMB_FILE_EXTENSION EXTERNAL ;
+Here, we are initializing ENDORSEMENT_BY_MAILTYPE variable and catching MAIL_SERV_TYPE , ENDORSEMENT_TYPE variables value from Environment variables.
+Look, we are calling an external dfa IGNORE_IMG_FILE_EXTENSION . Actually this dfa determines the value of &BYPASS_IMB_BAR variables value like below,
+step - 03 : Look into the format groups and search for barobj where barcode is being printed. Just after the barcode line add the following line highlighted in the snapshot below,
+IF &MAIL_SERV_TYPE=='522' ;
+THEN ;
+ ENDORSEMENT_BY_MAILTYPE = 'ELECTRONIC SERVICE REQUESTED' ;
+Now, ENDORSEMENT_BY_MAILTYPE value is determined.
+step - 04 : Update the logic like below in such way that If ENDORSEMENT_BY_MAILTYPE is not empty then print ELECTRONIC SERVICE REQUESTED otherwise print the endorsement verbiage basis on the value of &ENDORSEMENT_TYPE
+IF ENDORSEMENT_BY_MAILTYPE== '' ;
+THEN ;
+ IF &ENDORSEMENT_TYPE=='R' ;
+ THEN ;
+  TEXT
+   POSITION (INCH(&HOR_POS)+0.9)  (INCH(&VER_POS)-0.85) 
+   FONT AR080
+   'RETURN SERVICE REQUESTED' ;
+ ENDIF ;
+ IF &ENDORSEMENT_TYPE=='A' ;
+ THEN ;
+  TEXT
+   POSITION (INCH(&HOR_POS)+0.9)  (INCH(&VER_POS)-0.85) 
+   FONT AR080
+   'ADDRESS SERVICE REQUESTED' ;
+ ENDIF ;
+ IF &ENDORSEMENT_TYPE=='T' ;
+ THEN ;
+  TEXT
+   POSITION (INCH(&HOR_POS)+0.9)  (INCH(&VER_POS)-0.85) 
+   FONT AR080
+   'TEMP-RETURN SERVICE REQUESTED' ;
+ ENDIF ;
+ELSE ;
+ TEXT
+  POSITION (INCH(&HOR_POS)+0.9)  (INCH(&VER_POS)-0.85) 
+  FONT AR080
+  (ENDORSEMENT_BY_MAILTYPE) ;
+ENDIF ;
+That's it. Now if you check in your control file and print dfa and run the processing script then you will see that endorsement line is coming properly.
+Now let's take a deeper look
+processing script calls isisdisk and isisdisk source control files
+That's why, all the variables of control files are available into current terminal or environment. After that, isisdisk calls
+get_mail_seq.pl script and this script makes query into database and writes output of the query into ${working_dir}/${cid}${jid}${segment}${cycle}.mail_full_servb file. If you open the file then you will find something like below,
+That means, we need to tell AC/IM person to set mailer id in development and parallel at the time starting development and production at the time of code release. Otherwise script will throw an error.
+Look, after calling get_mail_seq.pl script we are catching 2nd column value from ${working_dir}/${cid}${jid}${segment}${cycle}.mail_full_servb file and assigning this value into mail_full_serv_db . Later value of mail_full_serv_db is assigned into mail_serv_type .
+After that, at the time of calling papyrus this mail_serv_type value is passed as an environment variable from where print dfa catches it and works basis on it.

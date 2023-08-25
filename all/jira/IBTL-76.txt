@@ -1,0 +1,303 @@
+title: TXT File Processing API URL Updates
+description: 
+
+The following scripts needs to be updated to translate the URLs:
+|IS Scripts:|||
+|/home/test/master/infosync_job_monitoring.py|
+|/home/test/master/olp_handler.sh|
+|/home/test/master/trigger_tracking_by_rec.pl|
+|/home/test/master/isisdisk.sh|
+|/home/test/master/olp_handler.sh|
+
+
+
+Here are the enviornment and URL that needs to be changed:
+|*TXT FileProcesing:*
+ |
+|*Environment*|*Menlo*|*Brisbane*|
+|Dev|pd-dev7.infoimage.com:8580|ca-jobtrack-dv-01.infoimageinc.com:8980|
+|Pilot|pd-pilot1.infoimageinc.com:8580|ca-jobtrack-pi-01.infoimageinc.com:8980|
+|Stage|webapp-stage01:8580|ca-jobtrack-st-02.infoimageinc.com:8980|
+|Production|webapp-prod22.infoimageinc.com:{color:#de350b}8980{color}|ca-jobtrack-pr-01.infoimageinc.com:8980|
+|ALL|10.8.9.60|ca-preproc-pr-02|
+
+
+
+Here's an example of the approach of using/home/test/master/infosync_job_monitoring.py code.
+
+
+
+Today the code looks like:
+
+!image-2020-09-16-09-57-49-066.png!
+
+
+
+Use the specs above, the new logic will be:
+
+
+{noformat}
+# pilot
+ if HOSTNAME in ["rht", "rht.infoimage"] or DATABASE == "test":
+ return "http://ca-jobtrack-pi-01.infoimageinc.com:8980/indexFileProcess/trigger?host=ca-preproc-pr-02&username=pdev1&pwd=infoimage&path=/z/isd_share/%s/print_fileid/&filename=%s" % (cid, file_name)
+ # stage
+ elif TESTMODE == "y" and HOSTNAME != "rht":
+ return "http://ca-jobtrack-st-02.infoimageinc.com:8980/indexFileProcess/trigger?host=ca-preproc-pr-02&username=pdev1&pwd=infoimage&path=/z/isd_share/%s/print_fileid/&filename=%s" % (cid, file_name)
+ # production
+ else:
+ return "http://ca-jobtrack-pr-01.infoimageinc.com:8980/indexFileProcess/trigger?host=ca-preproc-pr-02&username=pdev1&pwd=infoimage&path=/d/isd_share/%s/print_fileid/&filename=%s" % (cid, file_name)
+{noformat}
+
+
+
+author: terrence.tong
+comment: I tested the url and the ports. They refused connection
+
+[terrence@rhs ~]$ telnet ca-jobtrack-st-02.infoimageinc.com 8980
+Trying 10.8.9.158...
+telnet: connect to address 10.8.9.158: Connection refused
+telnet: Unable to connect to remote host: Connection refused
+
+And do you plan to change pd-dev2.infoimage.com:8880?
+
+Last isisdisk.sh doesn't use any url defined in your url matrix (update is not needed)
+
+
+author: william.kong
+comment: 
+
+[~anil.dasa]: Per our conversation, we cannot have two different ports in our coding.  When we change our code, only one port number can be assigned in our code which will be 8980.
+
+
+|Stage|webapp-stage01:{color:#de350b}8580{color}|ca-jobtrack-st-02.infoimageinc.com:8980|
+
+
+
+My suggestion is to update the Menlo server IPTables to rough port 8980 to 8580 for your Dev, Pilot, & Stage system. For prod, route port 8080 to 8980. I 'think' this can be done using Linux IP tables. Sean as had this experience before setting the new linux PUI system where I asked him to route port 8080 to 80. Try to ping him to see if he can share the knowledge and also get approval w/ David as well since I'm asking for this workaround solution for Menlo.
+
+
+
+Once completed, I can inform Terrence to test. BTW, we can wait until Monday since Terrence is going to be OOO on Friday. (I almost forgot about that).
+
+
+
+
+
+
+
+
+author: anil.dasa
+comment: [~William.Kong]
+
+I have used port forwarding and I was able to do that on dev, pilot and stage machines. Same query is not working on production.
+
+pd-dev7
+
+sudo iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 8980 -j REDIRECT --to-port 8580
+
+pd-pilot1
+sudo iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 8980 -j REDIRECT --to-port 8580
+
+webapp-stage01
+sudo iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 8980 -j REDIRECT --to-port 8580
+
+webapp-prod22(10.8.9.162)
+sudo iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 8980 -j REDIRECT --to-port 8080
+
+
+author: william.kong
+comment: [~anil.dasa]: What was the error message on production?
+
+
+
+In the meantime, I will double-check that the ports are opened on the ones you've created.
+
+
+author: anil.dasa
+comment: [~William.Kong]
+
+There is no error. I am not able to access below prod link like I was able to access stage link
+
+[http://webapp-prod22.infoimageinc.com:8980/indexFileProcess/]
+
+[http://webapp-stage01:8980/indexFileProcess/]
+
+
+
+
+author: william.kong
+comment: [~anil.dasa]: I've confirmed the ports are open on your dev/pilot/stage.  Just need to know what issues you are facing with production.
+
+
+
+[williamK@rhs ~]$ telnet ca-jobtrack-dv-01.infoimageinc.com 8980
+Trying 10.8.9.198...
+Connected to ca-jobtrack-dv-01.infoimageinc.com (10.8.9.198).
+Escape character is '^]'.
+Connection closed by foreign host.
+
+
+
+[williamK@rhs ~]$ telnet ca-jobtrack-pi-01.infoimageinc.com 8980
+Trying 10.8.9.141...
+Connected to ca-jobtrack-pi-01.infoimageinc.com (10.8.9.141).
+Escape character is '^]'.
+Connection closed by foreign host.
+
+
+
+[williamK@rhs ~]$ telnet ca-jobtrack-st-02.infoimageinc.com 8980
+Trying 10.8.9.158...
+Connected to ca-jobtrack-st-02.infoimageinc.com (10.8.9.158).
+Escape character is '^]'.
+Connection closed by foreign host.
+
+
+
+
+author: anil.dasa
+comment: [~William.Kong]
+
+port 8980 is not open on webapp-prod22(10.8.9.162) machine. That is why I was not able to access site on 8980 port.
+
+
+author: william.kong
+comment: [~premraj.patil] and [~kent.chan]: This is a Menlo port access issue that we need to fix in order to get our code in sync for Brisbane. Here is the email that Anil sent. Can you review and assist with opening up the port within Menlo:
+
+
+
+{color:#de350b}Hi Network Team,{color}
+
+{color:#de350b}{color}
+
+{color:#de350b}Can you open port 8980 on 10.8.9.162 machine? We need to route requests coming on port 8980 to 8080. I have added routing already but seems like port 8980 is not open.{color}
+
+{color:#de350b}{color}
+
+{color:#de350b}Regards,{color}
+
+{color:#de350b}Anil.{color}
+
+
+
+
+author: william.kong
+comment: [~anil.dasa]:  All ports are working in Menlo Data Center side. I'm going to re-assign to Terrence to get the Menlo Park Data Center updated.
+
+
+
+[~Terrence.Tong]: Please review and update the code for Menlo Park data center and run a quick test. The Brisbane systems are still WIP, but we should go ahead and release the code to Menlo Data Center regardless if Brisbane is ready. I think Brisbane Prod is ready, not sure about Brisbane Parallel and Dev yet.
+
+
+author: william.kong
+comment: [~anil.dasa]: Terrence reported thatca-jobtrack-pr-01.infoimageinc.com 8980 is not working. Can you advise when this will be updated and corrected?
+
+
+author: william.kong
+comment: [~Terrence.Tong] and [~anil.dasa]: I missed both Kent and Anil's email from Friday and this morning below. I will create ticket for Kent to open up the Menlo Port ASAP.
+
+!image-2020-09-21-15-19-21-286.png!
+
+
+author: terrence.tong
+comment: ca-jobtrack-pi-01.infoimageinc.com - working
+ca-jobtrack-st-02.infoimageinc.com - working
+ca-jobtrack-pr-01.infoimageinc.com - Connection refused
+ca-jobtrack-dv-01.infoimageinc.com - working
+
+
+
+author: william.kong
+comment: I updated the specs in red font. Need to wait for Kent or Prem to open up the port:
+
+https://jira.infoimageinc.com/browse/BRIS-171
+
+
+
+
+author: william.kong
+comment: [~anil.dasa]: Can you confirm if port is opened webapp-prod22.infoimageinc.com:{color:#de350b}8980{color:#172b4d} is opened? Per Kent, since all the systems are in the 10.8.9.### network ALL ports are opened. This would lead me to believe that the web app-prod22 system application is not running on port 8980{color}{color}
+
+
+
+{color:#de350b}{color:#172b4d}!image-2020-09-23-14-27-38-676.png!{color}{color}
+
+
+author: anil.dasa
+comment: [~premraj.patil]
+
+on webapp-prod22(10.8.9.162) we have an application indexFileProcess running on port 8080. We are trying to route traffic coming on port 8980 to port 8080. Can you help achieve this. When we hit url with port 8980, request should be forwarded to app running on 8080. Let us know if this is possible.
+
+Original working app (copy and paste in browser to see content): [http://webapp-prod22.infoimageinc.com:8080/indexFileProcess/]
+
+Desired url : [http://webapp-prod22.infoimageinc.com:8980/indexFileProcess/]
+
+
+
+
+
+[~William.Kong]
+
+If network cannot help on this, I will run application directly on port 8980. Print side production severs should directly call 8980. Need to changed in all possible prod servers.
+
+
+
+
+
+
+author: premraj.patil
+comment: Hi ANil,
+
+I think it will be better if we change the port from 8980 to 8080 at application level.
+
+
+author: anil.dasa
+comment: [~William.Kong]
+
+can you fix some time frame so that I change port on my side and you can change ports on your side applications.
+
+
+author: william.kong
+comment: [~anil.dasa] and [~davidt]: Please confirm with David that is to coordinate a release. If so I would suggest either Friday morning or Monday morning.  If you agree, please schedule invite with Terrence to do the code release together.
+
+[~Terrence.Tong]: Anil will need to change the Menlo Park port number to 8090 and will need to coordinate the release with you in production. If there are any questions or concerns, please let us know.
+
+
+
+
+
+
+
+
+
+
+author: anil.dasa
+comment: [~William.Kong] and [~Terrence.Tong]: I have confirmed with David and he is ok to change port. I have sent meeting request for Monday 7:00 AM PST.
+
+
+author: william.kong
+comment: [~anil.dasa]: Please contact Terrence on Monday @ 12pm PST to test if port is opened. If so, he will test connection and if works, he will release code to production
+
+
+
+[~Terrence.Tong]: Per our conversation earlier, please expect Anil to contact you at 12pm PST
+
+
+
+[~davidt]: FYI.
+
+
+author: terrence.tong
+comment: Code released 
+
+20200928122330 09/28/2020 terrence IBTL-76 - inhouse - TXT file processing API URL Updates.
+
+
+author: william.kong
+comment: [~Terrence.Tong]: for the trigger_by_rec.pl, use this:
+
+!image-2020-09-28-18-18-24-107.png!
+
+
+author: william.kong
+comment: [~anil.dasa] and [~Terrence.Tong]: I'm going to close this ticket out. Looks like things are working out from last night's release.

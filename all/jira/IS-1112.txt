@@ -1,0 +1,1423 @@
+title: IDCU - [27431][pvt] New ARM Letters
+description: ADDING SOW LINK - latest version dd 8.26.22:
+
+[http://sharepoint-svr/AS/Shared%20Documents/SOW%20Directory/IDCU%20-%20Idaho%20Credit%20Union%20(OSI)/SOW/IDCU_ARM_Letters_SOW_8.26.22_NotSigned.docx]
+
+
+
+IS Assessment
+ =============
+ Hours for development: 40 IS hours + 3 ISD hours
+ Turnover Date : 05/18/2022
+ Sample to QA Date: 06/09/2022
+ Sample Approval Date: 06/28/2022 
+ Go live date : 07/12/2022
+
+
+
+Assessment Details (ISD):
+
+Add new statement type.
+
+3 Hr
+
+Timeline can match with IS. Need statement name to show on admin site tab and API.
+
+*Update (5/13/2022):* Per ticket #24323, comment #53, ARM letters will have its own email template also.
+
+Assessment Details (IS):
+ - Parallel required: (Yes)
+
+ - set up new application application for ARM notices
+
+ - Data file naming convention
+
+Example:
+
+IDCU_DL_ARM_<mmddyy>_<segment>#.7z.gpg
+
+
+
+Inside 7z file:
+
+LN_XRPCHG_?_<MMDDYYYY>.XML  <=== Data XML
+
+LN_XSINITADJ_?_<MMDDYYYY>.XML <=== Data XML
+
+
+
+IDCU_PERM_<MMDDYY>.txt <=== Cross Reference file for archival.
+
+
+ - Print, electronic & archival
+ - Setup processing script,format program, control file
+ - preprocessing script to parse the XML files to flat file.
+
+ - Though IDCU have provided the XML data files, to begin coding we will need the complete zipped and encrypted
+   submitted file that should contain:
+   - XML data files
+   - All secondary reference file.
+ - In looking at the mappings provided, in secion D "Rate Limits" paragraph, it appears to be incomplete. See attached.
+ - Notice Name
+ Rate and Payment Change
+ Scheduled Interest Rate Change
+ - Add "DO NOT MAIL" suppression similar to Escrow Analysis - Set MAIL_CODE to 1
+ - Print flat and mail back to CU
+ -Add address to SOW at time of update:
+ Idaho Central Credit Union
+ Information Systems
+ 4400 Central Way
+ Chubbuck, ID 83202
+ - Only process those accounts having the following tag: <Major>MTG</Major>
+ - Initial test datafile in /d/ftpbu/idcubu/test/.
+ LN_XRPCHG_1_03112022.XML.gpg
+ LN_XSINITADJ_1_03112022.XML.gpg
+
+ - Test file:
+
+|*File Name*|*Size*|*MD5*|
+|Test/IDCU_DL_ARM_051022.7z.gpg|9.92 kb|2215cc69612588342fceb4138bce8776|
+ - Daphne needs to provide SOW
+
+
+
+-IS Assessment-
+ -=============-
+ -Hours for development: 15 IS hours-
+ -Turnover Date : 05/09/2022-
+ -Sample to QA Date: 05/24/2022-
+ -Sample Approval Date: 05/27/2022-
+ -Go live date :06/07/2022-
+ -- 
+ -Assessment Details (IS):-
+
+-Setup new notices with XML data files-
+ -1. 5 hours for formatting-
+
+ -10 for preprocessing script to parse the XML files to flat file.-
+
+-Total programming hours 15.-
+
+-2. Though IDCU have provided the XML data files, to begin coding we will need the complete zipped and encrypted-
+
+  -submitted file that should contain:-
+
+   XML data files-
+
+   All secondary reference file.-
+
+-3. In looking at the mappings provided, in secion D "Rate Limits" paragraph, it appears to be incomplete. See attached.-
+
+-Notice Name-
+ -Rate and Payment Change-
+ -Scheduled Interest Rate Change-
+ --Test data file in /d/ftpbu/idcubu/test/-
+ -LN_XRPCHG_1_03112022.XML.gpg-
+ -LN_XSINITADJ_1_03112022.XML.gpg-
+
+
+author: JIRAUSER11101
+comment: Hi [~dyuen]
+
+According to the Mapping doc. These are the required fields that I have question
+B = <CurrentPrincipalAndInterestPmt> 
+C = <CurrentEscrowPmt>
+D = <CurrentTotalPmt> 
+F = <NewPrincipalAndInterestPmt>
+ G = <NewEscrowPmt>
+ H = <NewTotalPmt>
+
+these two files have all the fields. which I need to use to setup according to the jira description. 
+LN_XRPCHG_1_03112022.XML.gpg
+ LN_XSINITADJ_1_03112022.XML.gpg 
+
+but the xml files from Test/IDCU_DL_ARM_051022.7z.gpg doesn't have those fields.
+I just want to make sure those fields will be in the xml files.
+
+Thanks
+
+
+author: dyuen
+comment: Hi [~zhuoxinT], I have forwarded the above to IDCU to review and confirm.
+
+[~phoebe.george], FYI.
+
+
+author: william.kong
+comment: [~dyuen]/[~phoebe.george]: [~zhuoxinT]cannot start this project without an SOW. Timeline will need to be revisited once we have this deliverable. Thanks!
+
+
+author: dyuen
+comment: [~zhuoxinT], IDCU responded with the below:
+
+The initial files will be more accurate about the fields that will be included in the xml files. The files marked 051022 had been modified to show the MTG option in the fields and may have had other fields removed. That being said the format on the original files is correct and the ones from yesterday were more about getting the file structure corrected. I hope this answers any questions and let me know if any more arise.
+
+-----
+
+Does this answer/address your concern?
+
+Thanks
+
+
+author: JIRAUSER11101
+comment: [~dyuen] 
+ yes, so I will stick with the original filesLN_XRPCHG_1_03112022.XML.gpg and LN_XSINITADJ_1_03112022.XML.gpg.
+
+Thanks
+
+
+author: phoebe.george
+comment: [~dyuen] We finished creating the SOW with the items you've confirmed with the CU from this Jira ticket. There are still a handful of minor specifications that we would like to confirm. Can you update the client that this project will be moved to Implementation Team and we will be reaching out to the CU to setup a quick call to confirm some additional specs for the SOW.
+
+[~TunA] Can you still provide a new timeline based on possible IM turnover on 5/16 to the programmer with the SOW, etc?
+
+[~Juliana Vannik] FYI
+
+Thanks!
+
+
+author: JIRAUSER11101
+comment: [~dyuen] 
+
+I found the some missing fields on both test files.
+
+
+
+LN_XRPCHG_1_03112022.XML: 2 accounts
+fields that missing values:
+<IndexRateScheduleDesc/>
+<CurrentEscrowPmt/>
+<NewEscrowPmt/>
+
+
+LN_XSINITADJ_1_03112022.XML: 8 accounts
+account number: 716727993
+fields that missing values:
+<CurrentEscrowPmt/>
+<EstimatedNewEscrowPmt/>
+
+account number:716922324
+fields that missing values:
+<CurrentEscrowPmt/>
+<EstimatedNewEscrowPmt/>
+
+
+Can you please confirm with client?
+
+
+
+Thanks,
+
+Zhuoxin
+
+
+author: dyuen
+comment: [~phoebe.george] [~Juliana Vannik], ticket updated notifying IDCU this has been moved to your team.
+
+[~zhuoxinT], i added your question to the ticket as well. Please follow up with Phoebe/the assigned BA moving forward.
+
+Thanks!
+
+Daphne
+
+
+author: dyuen
+comment: [~zhuoxinT], IDCU responded:
+
+This is correct the Escrow fields will not matter for the ARM letters. It is normal that they are blank.
+
+
+author: JIRAUSER11101
+comment: [~dyuen]
+
+Accroding to the mapping file. they are required fields.
+So if escrow fields are empty, do we need to put any thing on that row?
+  
+!image-2022-05-13-15-32-15-181.png|width=572,height=364!
+
+
+
+Thanks
+
+
+author: phoebe.george
+comment: [~infocare]Joe, as discussed, can this current AC ticket be moved to be an IMPL ticket without losing the history of comments? Thanks!
+
+
+author: JIRAUSER11300
+comment: FYI recently updated SOW located here:
+
+http://sharepoint-svr/AS/Shared%20Documents/SOW%20Directory/IDCU%20-%20Idaho%20Credit%20Union%20(OSI)/SOW/IDCU_ARM_Letters_SOW_5.13.22_NotSigned.docx
+
+
+
+author: JIRAUSER11101
+comment: [~phoebe.george] [~Juliana Vannik]
+I want to confirm if we are good to use the same logo from the other idcu letters, since the logo from mock up file is not the same and it has color. Please see the screenshots.
+
+And in the description:Only process those accounts having the following tag: <Major>MTG</Major>
+I see MTG in[^LN_XSINITADJ_1_03112022.XML]
+However, there are 2 accounts in test file[^LN_XRPCHG_1_03112022.XML]and they all have<Major>CML</Major>.
+Please confirm that if we are only process those accounts with "MTG" for both of data files in the future.
+
+production:
+
+!image-2022-05-24-11-00-25-182.png|width=321,height=177!
+
+mock up file:
+!image-2022-05-24-11-02-31-098.png!
+
+
+
+
+author: phoebe.george
+comment: [~zhuoxinT] The black/white logo should be used to mirror the other letters. I confirmed their addendum pricing notes b/w.
+
+We will confirm the CML major type and will provide an update shortly.
+
+[~Juliana Vannik]FYI
+
+
+author: JIRAUSER11300
+comment: Hi [~zhuoxinT],
+
+These are the recent updates from the client:
+1.	Please use the e-form with the color logo, similar to Escrow Analysis statements.
+2.	Please add MTG major type for generating letters.
+
+Thank you!
+[~phoebe.george] FYI
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik] [~phoebe.george] 
+I am not quite understand "2. Please add MTG major type for generating letters."
+Correct me if I am wrong,
+The 'MTG' tag is from the data file. if there is 'MTG' in that account, then that should be generated.
+otherwise, we skip it. And this logic apply to both notices: Rate and Payment Change and Scheduled Interest Rate Change?
+
+And since client wants to mirror Escrow. Should I follow the same logic as what I found in Escrow?
+print, estmt => color [^Word Only - Mock-Up ARM Letter - XRPCHG.docx][^Word Only - Mock-Up ARM Letter - XSINITADJ.docx]
+archival => black and white.
+
+Thanks
+
+
+author: phoebe.george
+comment: [~zhuoxinT] You are correct for both items.
+
+Please also check for tag <Major>MTG</Major> - if present, we should generate the letter.
+
+So you should look for both tags in both notice files noted below - if present, generate the letter. If not equal to MTG or CML for this tag, do not generate the letter.
+
+<Major>MTG</Major>
+
+<Major>CML</Major>
+
+
+
+For the logo, you are correct, please follow same logic as Escrow as noted:
+
+print, estmt => color 
+ archival => black and white.
+
+Let us know if you have any other questions. Also, let us know based on these updates if any changes to the timeline are needed before we send to customer.
+
+
+
+Thanks!
+
+Phoebe
+
+[~Juliana Vannik] FYI
+
+
+
+
+author: JIRAUSER11101
+comment: [~phoebe.george]Thanks for the clarification. The timeline is ok for these updates.
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik] [~phoebe.george]
+
+Can we have another set of data files from client next week??
+
+
+
+Thanks
+
+
+author: JIRAUSER11300
+comment: Hi [~zhuoxinT],
+
+Just to clarify, do you need specific types of accounts in the test file? Or just one in the correct file names for testing?
+
+Thank you!
+Juliana
+
+[~phoebe.george] FYI
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik] 
+It would be better to have some accounts that are *not* <Major>MTG</Major> or <Major>CML</Major>.
+And some accounts with DO NOT MAIL.
+
+Thank you
+
+
+author: JIRAUSER11300
+comment: [~zhuoxinT], [~phoebe.george]
+
+Thank you for clarifying. I have informed the client and as soon as they provide the requested, I will update accordingly
+
+Thank you
+Juliana
+
+
+author: JIRAUSER11300
+comment: Hi [~zhuoxinT]
+
+The customer has provided the following information:
+The example file has been dropped to the Test FTP Folder.  
+File name:  IDCU_DL_ARM_06062022.7z.gpg
+
+Thank you!
+Juliana
+
+[~phoebe.george] FYI
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik] 
+ Please let the client know that the xml files fromIDCU_DL_ARM_06062022.7z.gpg have an issues.
+ Also, please confirm the data file naming convention with client,
+ IDCU_DL_ARM_*06062022*.7z.gpg orIDCU_DL_ARM_*060622*.7z.gpg
+<mmddyyyy> or <mmddyy>
+
+And place the fixed test data files in Test folder.
+
+Thanks
+ !image-2022-06-06-14-39-41-760.png|width=481,height=124!
+ !image-2022-06-06-14-40-22-462.png!
+
+
+author: JIRAUSER11300
+comment: [~zhuoxinT]
+
+I have informed the customer about issues with test files and will let you know as soon as they provide corrected data
+
+Please also find earlier requested DT_JOB_ID:
+IDCU| Letter - ARM (pilot) = 139225-C06.01-V22779
+IDCU| Letter - ARM (stage) = 133547-C06.01-V22719
+
+Thanks!
+Juliana
+
+[~phoebe.george] FYI
+
+
+author: JIRAUSER11300
+comment: [~zhuoxinT],
+
+The customer has corrected the name of the .gpg file to the proper IDCU_DL_ARM_060622.7z.gpg.
+As for the error, he could not locate that extra line anywhere. Was is possible it was produced during the decrypt process? 
+He has uploaded a new copy of the file to the test folder on the FTP 
+
+Please confirm 
+Thank you!
+
+Juliana
+
+[~phoebe.george] FYI
+
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik]
+
+ 
+We checked and we didn't see this issue on our end when we decrypting any file.
+Can you please ask the client to look into this issue our their end?
+
+Thanks
+
+
+author: JIRAUSER11300
+comment: [~zhuoxinT], [~Peter.Dang]
+
+I requested the customer to provide the raw test files to us. Please find below recent questions from them:
+
+Just confirming the error is coming from the words SUB on line 29? Or is it coming from there being a line 29? 
+I see line 29 on my side just not the SUB.
+
+Also a question for you about the OnBase ingestion part of the letters: 
+1) Do we know what the index file name will be that onbase will be grabbing? 
+2) Do we know the column headers and the order that they are in for the DIP process with onBase? 
+
+
+
+
+author: JIRAUSER11300
+comment: Good morning [~zhuoxinT],
+
+The customer informs they have located and corrected the issue. It was an issue with how they were getting the files.
+They dropped the file into the test FTP.
+
+Please let me know if that is better now
+
+Thank you!
+Juliana
+
+
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik]
+
+Please confirm the naming convention for the data file. They keep sending theIDCU_DL_ARM_??????.7z.gpg without the segment number.
+
+In description and SOW, I see this
+Example:
+
+IDCU_DL_ARM_<mmddyy>_<segment>#.7z.gpg
+
+
+
+Thanks
+
+
+author: JIRAUSER11300
+comment: Thank you, [~zhuoxinT], I will confirm the naming convention with them one more time and sorry for this.
+Can you confirm there is no error issue and they fixed it please?
+
+Thank you!
+Juliana
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik] 
+these is no error on the data file they sent this morning.
+
+Jun 8 09:13 IDCU_DL_ARM_060622.7z.gpg
+
+Thanks
+
+
+author: JIRAUSER11300
+comment: Good morning [~zhuoxinT],
+
+There is a question the customer is asking us below concerning the naming convention:
+
+
+Is the process as it stands now able to handle a zip file that could contain one LN_XRPCHG and up to 2 LN_XSINITADJ files?   
+If so, what should the file naming conventions be for the LN_XSINITADJ files since there will be two sets in the same zipped file for that days cycle?
+
+
+Could you please advise accordingly?
+Thank you,
+Juliana
+
+[~phoebe.george] FYI
+
+
+author: JIRAUSER11300
+comment: [~zhuoxinT],
+
+I am followup to check on the status of the samples.
+Please confirms if you can provide them as it is a due date of today. 
+
+Thank you,
+Juliana
+
+[~phoebe.george] FYI
+
+
+author: william.kong
+comment: [~Juliana Vannik]/[~phoebe.george]: We need to have a test file to review.
+
+
+
+Proposed file naming convention:
+
+LN_XSINITADJ_<SEG#>_MMDDYYYY.XML
+
+
+
+We need to analyze the contents to be sure we can support more than 1 file.
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik]
+the PERM file is not missing the account number
+
+File Name: IDCU_PERM_mmddyy.txt
+
+Delimiter: comma
+
+Sequence: <Account#>, <Member#>
+
+
+!image-2022-06-10-15-08-20-943.png|width=223,height=309!
+
+
+author: JIRAUSER11300
+comment: Hi [~zhuoxinT],
+As per [~phoebe.george]'s can you locate this file please  we included incorrect file name in the SOW to be used for cross referencing. 
+It should be IDCU_CrossRef_MMDDYYYY.txt
+For Escrow Analysis, this file arrives within the zipped file:
+
+    Outer File Name: * IDCU_EA_STMT_mmddyy.7z.gpg
+
+    Files contained within zipped files:
+    IDCU_CrossRef_MMDDYYYY.txt    
+
+Can you please confirm if you can locate this CrossRef file for EA?
+
+Thank you!
+Juliana
+ 
+
+
+author: JIRAUSER11300
+comment: Hi [~zhuoxinT],
+
+Please confirm if this is the full updated file name package:
+Outer File Name: *IDCU_DL_ARM_<mmddyy>_<segment>#.7z.gpg
+
+Files contained within zipped files:
+LN_XRPCHG_<SEG#>_<MMDDYYYY>.XML
+
+LN_XSINITADJ_<SEG#>_MMDDYYYY.XML
+NOTE: This file wont always have a segment 2 set in the zipped file, but it can be generated. We just want to make sure its not setup as a required file for processing (for segment 2).
+
+Thank you,
+Juliana
+
+[~phoebe.george] FYI
+
+
+author: JIRAUSER11300
+comment: [~zhuoxinT],
+
+The client has updated with the following:
+
+This was one of the comments from my reviewers. They also said that the margin was not supposed to be 0.00% but I think that might be an error in the data, rather than the code. 
+
+	idcudl200_LN_XRPCHG_print_sample
+           o	Wood, 980821
+                   	The second paragraph contains a sentence missing the index rate?  The sentence reads Under your loan agreement, your index rate is the (double space and blank  missing info) and your margin is 0.00000%.
+
+
+ !screenshot-1.png|thumbnail! 
+
+
+author: JIRAUSER11300
+comment: [~zhuoxinT] 
+There are a couple more follow up questions from the client:
+
+1. Could the column order for the index.txt file always be the same? Starting with First Name and ending with Employee.
+
+2. One final question for OnBase. Would it be possible to hard code either the description or the notice type as LON ARM Adjustment Notification?
+
+If this is not possible can they add an additional column labeled Doctype that is hardcoded as LON ARM Adjustment Notification?
+
+
+Thank you,
+Juliana
+
+
+
+[~phoebe.george] FYI
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik]
+For question about 1 or moreLN_XSINITADJ xml file.
+Yes, we have a plan to handle this. Per [~William.Kong], we have to get the data file to test it first.
+
+For question about idcudl200_LN_XRPCHG_print_sample.
+Yes, the 0.00000% is getting from the data file. There are couples fields are 0.00000%.
+and some fields are missing. That's why it nothing printed out in the position circled which isthe<IndexRateScheduleDesc>.
+That's why I request another data file.
+includes 2 xml files - 5 accounts each,
+
+perm file
+
+crossRef file
+
+!image-2022-06-15-12-59-10-636.png!
+
+
+author: william.kong
+comment: [~phoebe.george]/[~Juliana Vannik] : Please advise if the live date has changed from 6/20 to 6/27. [~zhuoxinT]stated that the live date has changed. Just wanted to make sure we have the correct live date.
+
+
+
+Bear in mind, we need at least 5 business days for Parallel and QA. I would assume approval date must be met by next Wednesday the latest. Please expedite getting a test file so the can wrap up this project by 6/27 if that is the new revised live date.
+
+
+author: tuna
+comment: Hi [~Juliana Vannik], [~phoebe.george],
+
+Just FYI. I spoke to [~zhuoxinT]. He showed me the IM Smartsheet for timeline.
+
+I adjusted the live date to 07/12/2022.
+
+
+
+
+
+Thanks,
+
+Tun
+
+
+
+
+
+
+
+
+author: JIRAUSER11300
+comment: [~zhuoxinT], the client has dropped a second batch of samples into the test ftp folder. 
+Please note the xrpchg file has a lot of accounts but none are MTG ARM. 
+The second file is the xsinitadj and has 5 arm letters. 
+There will be a bigger sample provided on Tuesday.
+
+Thank you,
+Juliana
+
+[~phoebe.george] FYI
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik] 
+The second test file: IDCU_DL_ARM_061722_1.7z.gpg. There are 2 "CML" accounts in XRPCHG. one account is missing lots of values.
+!image-2022-06-21-10-33-44-674.png|width=778,height=200!
+
+How many decimal places should we keep?
+
+Thanks
+
+
+author: JIRAUSER11300
+comment: [~zhuoxinT]
+
+Client has a sample file in the test FTP titled IDCU_DL_ARM_062122_1.7z.gpg. this has ARM letters in the XRPCHG job and two versions of the XSINITADJ job. This is the most accurate a true file will look. 
+
+As far as the decimal client asks to keep it to 3 places so 00.000% and just round up anything below. 
+
+Thank you,
+Juliana
+
+[~phoebe.george] FYI
+
+
+author: JIRAUSER11300
+comment: [~zhuoxinT] good morning,
+
+Would there be a need to use the cross ref file for posting the ARM letters if the member number is part of the data file? Here is the feedback from IDCU on this item:
+
+_I did have a question on the cross ref file. I was talking to my team about how to design it and they wanted me to check and see what you wanted in the cross ref file. Traditionally the cross ref file is there to provide information about account and member number that are not included in the files. However both are listed in the files for the ARM letters. If you could provide some guidance on that I would be appreciative._ 
+
+Thank you,
+
+Juliana
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik]
+If the member number is in the data file(the xml file). Our program can capture it. Then I don't think we need the cross ref file.
+But client has to let us know where/how we can find the corresponding member number on xml file
+
+
+author: JIRAUSER11300
+comment: [~zhuoxinT],
+
+IDCU confirmed that these are the tags to identify the Member Number per account to be used for posting electronically:
+
+In the XML files the Account number is notated by the tag <Account AcctNbr=
+The statement number is <PrimaryAcctNbr></ PrimaryAcctNbr >
+The Member number is <MemberNumber></MemberNumber>
+This is the same for both files.
+
+Thank you,
+Juliana
+
+[~phoebe.george] FYI
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik],
+
+We are going to turn over to QA next week.
+Do you want me to make this change right now?
+
+
+author: william.kong
+comment: [~zhuoxinT]/[~Juliana Vannik]/[~eric.yan]: After Zhuoxin make the member number updates, we have to re-post to pilot for client review. We want to make sure changing from Primary Number to Member Number to correct and there is no account number overlapping. Once done, client needs to also provide approvals on the pilot site as well too.
+
+
+
+
+
+
+author: william.kong
+comment: [~Juliana Vannik]: Approvals were due yesterday (6/28). Please advise status on client's approval.
+
+
+author: phoebe.george
+comment: [~William.Kong] [~zhuoxinT] [~TunA] During pilot site testing, IDCU reported an issue that is tied to how the job was assessed for setup. Juliana is setting up an internal meeting with IS and ISD (and the AC) tied to this project so we can determine how best to handle. This will impact the live date, but we will hold off on changing the live date until we meet internally by Friday. Thanks
+
+[~Juliana Vannik] FYI
+
+
+author: JIRAUSER11300
+comment: Hi [~zhuoxinT],
+
+The client asks to remove a line from the final letters for both xrpchg and xsinitadj. The line is misleading and was causing issues and the group decided it would be better to just remove it. I am not sure how difficult that would be but here is a snip of the lines for each xml
+
+
+ !screenshot-2.png|thumbnail!
+
+
+
+Also CU wants to verify which tag they were pulling for the increased or decreased percentage this should be coming from the Max Rate Change Up field on the XML file and had a couple issues with it showing up correct on the samples?
+
+
+
+Thank you,
+
+Juliana
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik] 
+Any update on this?
+
+
+author: JIRAUSER11300
+comment: Hi [~zhuoxinT] ,
+
+Client is still in the process of approving the final samples but confirmed everything looked good in the corrected areas. I will update the ticket as soon as get their response.
+
+Thank you,
+
+Juliana
+
+
+author: JIRAUSER11300
+comment: [~zhuoxinT], [~Igor.Khosid] , 
+
+Please note we have received a feedback/update from the client and there will be a certain delay from CU side.
+
+Once we meet with them on 7/15, we will discuss internally the new timeline dates with the team.
+
+Thank you,
+Juliana
+
+[~phoebe.george] FYI
+
+
+author: igor.khosid
+comment: Thanks, [~Juliana Vannik]
+
+
+author: tuna
+comment: Hi [~Juliana Vannik],
+
+Due date (07/12) is overdue. I will update due date to (07/29) for now. Please keep in mind, we normally need 2/3 days for QA and 5 days for parallel test after client final approval. So we need adjust LIVE date accordingly after approval.
+
+Thanks,
+
+Tun
+
+
+
+
+
+[~zhuoxinT], [~Igor.Khosid]
+
+
+author: JIRAUSER11300
+comment: Hi [~TunA],
+
+
+
+Thank you for the update!
+
+Yes, there is a certain delay with the project as per the client additional request, and as per my previous comment above, we are having internal meeting today to discuss the new dates for the project
+I will update the Story asap after it
+
+Thank you,
+
+Juliana
+
+
+author: JIRAUSER11300
+comment: [~TunA], [~zhuoxinT] 
+
+Please note that CU finally prefers the option to include the Advanced Online Proofing for the setup. 
+Could you confirm how many additional hours that would require from your side, and what could be the timeline for IS to be able to set it up, please?
+
+Thank you,
+Juliana
+
+[~phoebe.george], [~Igor.Khosid] FYI
+
+
+author: JIRAUSER11300
+comment: Good morning [~zhuoxinT] ,
+
+Following up with the previous comment, please note that the Major type to identify for the ARM letters should only reference MTG.
+
+Could you please confirm the time, by what date do you think you could finish this project from your side?
+
+Thank you,
+Juliana
+
+[~phoebe.george] FYI
+
+
+author: JIRAUSER11101
+comment: Hi [~Juliana Vannik]
+
+I will update that only printing the MTG major for ARM Letters.
+
+I am still working on the Advanced online proofing.
+Do we need the proofing sample on for ALOP?
+
+
+author: JIRAUSER11300
+comment: [~zhuoxinT],
+
+
+
+The client has just confirmed that yes, they would like to pilot the proofing module
+Please update me with the new date at your earliest convenience
+
+Thank you,
+Juliana
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik] 
+ I tested the AOLP, it is working correctly on pilot now. You can view the feature and ask for client approval.
+and only printing letter when found 'MTG' in Major tag from data file.
+ If everything is good, we can move forward.
+
+Thanks
+
+
+author: JIRAUSER11300
+comment: Thank you, [~zhuoxinT] ! Just to reconfirm, will the feature in production include the Approved button for CU to select for verification?
+
+Thank you,
+Juliana
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik]
+
+It looks like this on pilot. They will see these 2 button(Approved or disapproved) on the site for them to select.
+Also if you click on the 'envelope' button, you can see the proofing sample and the sorted list.
+
+!image-2022-07-21-15-58-03-709.png!
+
+
+author: JIRAUSER11300
+comment: Good morning [~zhuoxinT] ,
+
+Thank you for specifying! The client has confirmed that as far as they would have "Approved" and "Disapproved" buttons that works for them and we can move forward
+
+Thank you,
+Juliana
+
+[~phoebe.george] FYI
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik]
+Are we going to turn over to QA today?
+
+
+author: JIRAUSER11300
+comment: Hi [~zhuoxinT]
+
+We have received a below feedback from the client on the latest samples:
+
+
+
+_With the Ryssel sample it is pulling from the LN_XSINITADJ job and the new interest rate is incorrect_
+
+_ !7.27-1.png!_
+
+_From the xml file the new rate should be as follows,_
+
+_ !7.27-2.png!_
+
+_If it helps this is from the original mapping document for LN_XSINITADJ_
+
+_!7.27-3.png!_
+
+Thank you,
+Juliana
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik] 
+Fixed the issue,
+Please check email for new samples.
+
+Thanks
+
+
+author: JIRAUSER11300
+comment: Hi [~zhuoxinT] ,
+
+There is another update regarding the latest samples from the client:
+
+
+
+_Currently the letters are pulling the highlighted number from current balance where they need to be pulling from projprinbalance. For both letters:_
+
+*LN_XSINITADJ*
+
+ !7.28.-1.png!!7.28.-2.png!
+
+
+
+*LN_XRPCHG*
+
+ !7.28.-3.png!!7.28.-4.png!
+
+
+
+Please update accordingly
+Thank you,
+Juliana
+
+
+
+
+author: tuna
+comment: Hi [~Juliana Vannik], [~zhuoxinT],
+
+For sure, we cannot go LIVE today (due date: 7/29). I moved due date to 08/19 for now.
+
+Thanks,
+
+Tun
+
+
+
+
+author: JIRAUSER11300
+comment: Hi [~TunA], thank you for updating that!
+
+
+author: JIRAUSER11300
+comment: Hi [~zhuoxinT] ,
+
+There is another update on the final samples from the client below:
+ # A slight alignment change is needed to remove the extra spaces in the header box New Rate and Payment:
+
+!8.1-1.png!
+
+
+
+2. The final change is to add the projected due date for the new payment. This will help avoid confusion with the members the value comes from the XML tag <DueDate></DueDate> and they would like it to be position below the above box.
+
+For example:
+
+!8.1-2.png!
+
+Thank you!
+Juliana
+
+
+
+
+
+
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik] 
+I made the update and samples are sent to you via email.
+Thanks
+
+
+author: JIRAUSER11300
+comment: Hi [~zhuoxinT],
+
+Thank you for all the updates and prompt responses!
+
+There is another one, looks like the final update request from the client:
+
+For the sake of uniformity they would like the format of this column Principal and Interest to have a comma I the 4^th^ decimal place 1,111.11 as is the case in the other boxes.
+
+!8.2-1.png!
+
+
+
+Please update accordingly and thanks a lot!
+Juliana
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik] 
+updated, samples sent via email.
+This is only missing on letter 201.
+
+
+author: JIRAUSER11300
+comment: Hi [~zhuoxinT] ,
+
+The final samples are approved by the client. I renamed them and attach herewith:
+
+[^IS1112_IDSU_FAS_dl200_archival_08.03.22.pdf]
+
+[^IS1112_IDSU_FAS_dl200_XRPCHG_08.03.22.pdf]
+
+[^IS1112_IDSU_FAS_dl201_archival_08.03.22.pdf]
+
+[^IS1112_IDSU_FAS_dl201_XSINITADJ_08.03.22.pdf]
+
+
+
+We will be rescheduling QA for the new date. Please prepare for QA in the meantime.
+
+Thank you,
+Juliana
+
+
+
+[~phoebe.george] and [~Igor.Khosid] - FYI
+
+
+author: JIRAUSER11101
+comment: [~Igor.Khosid]
+ Parallel ID: 20220513113955
+ Currently in parallel: Yes
+ User: zhuoxinT
+ Description: IDCU ARM letters setup idcudlh
+ Date Submitted: 2022-05-13 11:40:13
+ Date Last Updated: 2022-08-01 14:46:54
+ Files:
+ 1) idcudl200_template.control
+ 2) idcudl201_template.control
+ 3) idcudlh_process.sh
+ 4) IDCUDL200.prj
+ 5) IDCUDL201.dfa
+ 6) IDCUDL200.dfa
+ 7) IDCUDL201.prj
+ 8) idcudl200.control
+ 9) idcudlh.control
+ 10) idcudlh_pdf.control
+ 11) idcudl201.control
+ 12) 2DSDARM.dfa
+ 13) 2DSDARM.prj
+
+DPVS:[^idcudlh121.print]
+ INDEX FILE:[^dlh_20220621_1_20220808_0937_idcu.txt]
+
+
+
+fyi: [~Juliana Vannik]
+
+
+author: JIRAUSER11700
+comment: [~Juliana Vannik]
+
+One thing caught my attention. In the mockups, the document name was right-aligned:
+
+!docname_mockup.png!
+but in the samples, it is not:
+!docname_sample.png!
+
+I get it that the customer approved, but it does not look quite right. Could you please check?
+
+
+
+
+author: JIRAUSER11300
+comment: Hi [~avannik],
+
+Thank you for the comment! I will verify with the client and let you know as soon as they get back with confirmation.
+
+Thank you,
+
+Juliana
+
+[~phoebe.george], [~Igor.Khosid] - FYI
+
+
+
+
+author: JIRAUSER11300
+comment: Hi [~zhuoxinT] ,
+
+Please make the new sample for client final approval with the update mentioned in the above comment by [~avannik] . 
+Client has just requested and approved it.
+Please make the update and have them proceed with QA.
+
+Please also generate new DPVSs for print samples.
+
+Thank you,
+
+Juliana
+
+
+
+[~phoebe.george], [~Igor.Khosid] FYI
+
+
+
+
+author: JIRAUSER11101
+comment: [~Igor.Khosid]
+
+NEW DPVS:[^idcudlh121_updated.print]
+new index file:[^dlh_20220621_1_20220811_1406_idcu.txt]
+
+^fyi [~Juliana Vannik]^
+
+
+author: JIRAUSER11300
+comment: [~avannik],
+
+The updated final statements are attached to this Story.
+
+
+Thank you [~zhuoxinT] !
+
+[~phoebe.george] , [~Igor.Khosid] - FYI
+
+
+author: JIRAUSER11300
+comment: [~avannik]
+
+Here are Drafts of Mapping files:
+
+[^IDCU_Mapping_Doc_XRPCHG.docx]
+
+[^IDCU_Mapping_Doc_XSINITADJ.docx]
+
+If you find any inconsistency, because we do not have the final version, please contact [~zhuoxinT]
+
+Thank you,
+
+Juliana
+
+[~Igor.Khosid]- FYI
+
+
+author: JIRAUSER11101
+comment: [^LN_XRPCHG_1_06212022.XML][^LN_XSINITADJ_1_06212022.xml][^LN_XSINITADJ_2_06212022.xml]
+
+[~avannik] 
+Here are the xml files.
+
+
+author: JIRAUSER11700
+comment: Print samples attached >>>[^IS-1112_IDCU_PrntSmpls_08152022.pdf]
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik] 
+ [^IS-1112_IDCU_PrntSmpls_08152022.pdf]
+The print sample is using default green color. I found the color combination in IDCU EA1. But its not using in output.
+Please confirm should I use the color combination to create a new sample or you can provide me the color combination from graphic team.
+Thanks,
+Zhuoxin
+
+FYI, [~avannik]
+
+
+author: JIRAUSER11700
+comment: [~zhuoxinT], we decided to leave it as it is because the customer did not care about the color, and fixing / re-approval will take time they don't have now.
+
+It's good to know we can fix it in case the customer changes their mind.
+
+BTW, it's not as bad as in that scan: high compression affected the color. This
+!logo - higher quality scan.jpg|thumbnail!
+is closer to reality.
+
+
+author: JIRAUSER11300
+comment: Hi [~zhuoxinT]
+
+Client has responded the following regarding this 'PrintBalance' question;
+ * _Thanks for the update. Looking at the data. The Principal Balance in the header needs to be CurrentPrinBalance and the balance under the table needs to be ProjPrinBalance. Sorry for any confusion. Let me know if this makes sense._
+
+Please proceed with the necessary updates.
+
+Thank you,
+ Juliana
+
+[~phoebe.george] , [~avannik] - FYI
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik] 
+Here are the latest sample.
+[^idcudl200.pdf][^idcudl201.pdf]
+
+fyi [~avannik]
+
+
+
+
+author: JIRAUSER11700
+comment: Good work, [~zhuoxinT], looks fixed.
+Kindly update https://jira.infoimageinc.com/browse/BT-195so I can close the issue.
+
+
+author: JIRAUSER11101
+comment: [~avannik]- [^IS-1112-QA Checklist.doc]
+
+[~Juliana Vannik]- QA completed. Please create the master parallel ticket.
+
+Thanks
+
+
+author: gthillaivel
+comment: [~zhuoxinT] [~avannik][~Juliana Vannik]
+
+Attached is the IS checklist
+ [^IS-1112_IDCU_IS_Checklist.pdf] 
+
+
+author: tuna
+comment: Hi [~Juliana Vannik], [~zhuoxinT],
+
+We missed due date (08/19) again. Do we have estimated new release date for this project? So I can adjust dates in IS upcoming list.
+
+Thanks,
+
+Tun
+
+
+
+
+
+
+author: JIRAUSER11300
+comment: Hi [~TunA] ,
+
+Yes, this is correct. The timeline for this project has been updated and targeted Live date changed to 8/29. I have updated this Story date accordingly.
+
+Thank you!
+
+Juliana
+
+
+author: JIRAUSER11300
+comment: Hi [~zhuoxinT] ,
+
+There is a question on the logo: is it a part of the e-form? And what stock code did you use for Tray 1?
+
+Thank you,
+
+Juliana
+
+[~phoebe.george] - FYI
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik] 
+Yes, there is a logo from eform, using the same one as IDUCEA1.
+Stock code using '4000' which is from the SOW.
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik] 
+any update on the Master parallel?
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik] [~avannik] 
+new DPVS with the PP1 and endorsement update :[^idcudlh121_0826.print]
+
+
+author: JIRAUSER11101
+comment: latest DVPS:[^idcudlh121_0829.print]
+This is the latest version. fixed the pp1=3547. OPS confirmed output is good. ready to release.
+
+
+author: JIRAUSER11101
+comment: [~TunA] 
+[^IS-1112_PROGRAM_TRANSFER_FORM.doc]
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik] 
+code released
+
+back up id:20220829152347
+
+
+author: JIRAUSER11300
+comment: Hi [~zhuoxinT] ,
+
+
+
+There is a question from the customer:
+
+When uploading the archives to onBase they came across a naming error that was causing some issues. They think it was caused by some of the issues they had with the file on Friday. They also say it wasnt hard to adjust the number and the files loaded correctly but CU wanted to make sure that this was not going to be an issue on future runs.
+
+!9.7-1.png!
+
+Please advise accordingly
+
+
+
+Thank you!
+
+Juliana
+
+
+author: JIRAUSER11300
+comment: [~zhuoxinT]
+
+Please find additional feedback from the client regarding my previous comment and advise accordingly:
+
+_In response to the file name between 200 and 201. The name doesnt matter so much as that the Index file was different from the actual file names. The way the onBase ingests the ARMS is it uses the Index file to fill in the prompts. Where the Index file said 200 then the file names said 201. We just need the file name to match what is in the index file._
+
+_Let me know if you have further questions._
+
+Thank you,
+Juliana
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik] 
+Can we make this update with all others on IS-1561?
+
+
+author: JIRAUSER11300
+comment: [~zhuoxinT],
+
+
+
+I would need to check it separately. I will get back shortly.
+
+Thank you
+
+Juliana
+
+
+
+
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik] 
+if need to do it separately, please create another Jira ticket for that.
+
+
+
+Thank you

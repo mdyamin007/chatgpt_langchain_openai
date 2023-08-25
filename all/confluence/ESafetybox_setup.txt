@@ -1,0 +1,41 @@
+title: ESafetybox setup
+body: ## infoScanner:
+
+  1. checkout/import the infoScanner-dharmi or the branch you need work on
+  2. open your window command and go to the folder where your project just created ..../infoScanner-dharmi, run the following command:  
+mvn eclipse:clean eclipse:eclipse -Dwtpversion=2.0
+
+  3. go back to eclipse, refresh the project, rebuild the project
+  4. setup an new server with tomcat for infoScanner
+    1. Please double check the server.xml for the ports, doc path and if you need https, please add the certificate path: ### ports: <Connector connectionTimeout="20000" port="8088" protocol="HTTP/1.1" redirectPort="8943"/> ### https: <Connector SSLEnabled="true" clientAuth="false" keystoreFile="C:\Users\lisa\certs\infoimage.jks" keystorePass="infoimage" maxThreads="150" port="8443" protocol="HTTP/1.1" scheme="https" secure="true" sslProtocol="TLS"/> ### url path: <Context docBase="infoScan-dharmi" path="/infoscanner" reloadable="true" source="org.eclipse.jst.j2ee.server:infoScan-dharmi"/></Host> ## with the above setting, the url are: ### http: <http://localhost:8088/infoscanner/> ### https: <https://localhost:8943/infoscanner/>
+  5. jetty server: if you prefer to user jetty server  
+mvn clean package -DskipTests=true -Dmaven.javadoc.skip=true  
+java -jar target/dependency/webapp-runner.jar target/infoscanner.war --port
+8088
+
+  
+
+## infoService:
+
+  1. very similar to infoScanner setup, however, for local setup, we need modify the following to your local full url:  
+1). web.xml:  
+<init-param>  
+<param-name>swagger.api.basepath</param-name>  
+<param-value>[https://vscan.infoimage.com:8943/infoservice/api&lt;/param-
+value](https://vscan.infoimage.com:8943/infoservice/api&lt;/param-value)>  
+</init-param>  
+2). index.htm:  
+window.swaggerUi = new SwaggerUi({  
+url: "<https://vscan.infoimage.com:8943/infoservice/api/api-docs>",
+
+    
+    
+    dom_id: "swagger-ui-container",
+
+  
+
+## Resin/hosts:
+
+  1. similar to how we setup other clients, however, we will need depends on two more folders ext-lib-box and ext-lib-box-api. Please refer to System A and \\\dell-2100\share\Lisa\resin-pro-4.0.20 for local configuration. # check out template from SVN, and you will need modify the ROOT/web-inf/conf/box.properties and msm/web-inf/conf/box.properties for the infoscanner and infoservice url.
+
+

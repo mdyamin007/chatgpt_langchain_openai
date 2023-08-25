@@ -1,0 +1,52 @@
+title: Checked the diff for DFA ,discrepancy in the fix with other EWBB fixes
+description: diff /home/test/isis/docdef/EWBBML41.dfa /home/isis/docdef/EWBBML41.dfa
+217c217
+<     ACCT_NUM = ACCT_NUM*1 ;
+---
+>     ACCT_NUM = RIGHT(ACCT_NUM,10, '')*1 ;
+
+
+
+author: gthillaivel
+comment: Issue is fixed now
+hs ~]$ diff /home/test/isis/docdef/EWBBML41.dfa /home/isis/docdef/EWBBML41.dfa
+101,108d100
+< LISTOUT OVER10D_ACCOUNT
+<   RECORD-FORMAT VARPC
+<   RECORD-DELIMITER X'0D0A'
+<   RECORD-LENGTH 2048
+<   CHANNEL-CODE NO
+<   TABLE-REF-CODE NO;
+<
+<
+225c217
+<     ACCT_NUM = ACCT_NUM*1 ;
+---
+>     ACCT_NUM = RIGHT(ACCT_NUM,10, '')*1 ;
+337,344d328
+<   IF LENGTH(ACCT_NUM)>10 ;
+<   THEN ;
+<     MESSAGE -1,0,'Alert: account number is more than 10 digits '!
+<      ACCT_NUM!' at sequence '!&SEQ_NUM;
+<     WRITERECORD  TO OVER10D_ACCOUNT ;
+<       PUT ACCT_NUM  START 1;
+<     ENDIO;
+<   ENDIF ;
+477,492d460
+<   IF $SYSTEM=='Windows' ;
+<   THEN ;
+<     :LOCAL_DIRECTORY ;
+<     OVER10D_ACCOUNT = 'C:\ISIS\afpds300\'!&PREFIX!'_over10d.bad' ;
+<   ELSE ;
+<     :PRODUCTION_DIRECTORY ;
+<     IF ENVIRONMENT('BADACCTS')<> '' AND ENVIRONMENT('BADACCTS')<>'BAD'
+<   'ACCTS' ;
+<     THEN ;
+<       OVER10D_ACCOUNT = ENVIRONMENT('BADACCTS') ;
+<     ELSE ;
+<       OVER10D_ACCOUNT = '/'!&D_DIR!'/'!&CID!'/!&JID!'/ ''!&PREFIX!'_o'
+<   'ver10d.dat' ;
+<     ENDIF ;
+<   ENDIF ;
+<   DUMMY = CHANGEENV('OVER10D_ACCOUNT',OVER10D_ACCOUNT) ;
+

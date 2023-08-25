@@ -1,0 +1,73 @@
+title: Apache ActiveMQ Installation and Configuration
+body:   * Install Apache ActiveMQ Installation by following below link:*
+
+    
+    
+    <http://activemq.apache.org/getting-started.html>
+    
+
+  * Now, Go to apache activemq installation directory:*
+
+> > Windows: C:\apache-activemq-5.10.0\
+
+> > Linux: /usr/local/apache-activemq-5.10.0/
+
+  * Go to conf directory, and open activemq.xml file.*
+
+  * Look for following block:*
+
+<broker xmlns="<http://activemq.apache.org/schema/core>"
+brokerName="localhost" dataDirectory="${activemq.data}">
+
+  
+  
+<destinationPolicy>  
+...  
+...  
+...  
+</destinationPolicy>
+
+    
+    
+    
+
+  * Add following entry, where queue is name of queue.*
+
+    
+    
+           <policyEntry queue="pilot-notification" prioritizedMessages="true" useCache="false" expireMessagesPeriod="0" queuePrefetch="1"/>
+    
+
+Change  **transportConnectors**  tag and add  **&
+wireFormat.maxInactivityDuration=0** after each transport connection.
+
+Example:
+
+<transportConnectors>  
+<!-- DOS protection, limit concurrent connections to 1000 and frame size to
+100MB \-->  
+<transportConnector name="openwire"
+uri="[tcp://0.0.0.0:61616?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600&amp;wireFormat.maxInactivityDuration=0](tcp://0.0.0.0:61616?maximumConnections=1000&wireFormat.maxFrameSize=104857600&wireFormat.maxInactivityDuration=0)"/>  
+<transportConnector name="amqp"
+uri="[amqp://0.0.0.0:5672?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600&amp;wireFormat.maxInactivityDuration=0](amqp://0.0.0.0:5672?maximumConnections=1000&wireFormat.maxFrameSize=104857600&wireFormat.maxInactivityDuration=0)"/>  
+<transportConnector name="stomp"
+uri="[stomp://0.0.0.0:61613?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600&amp;wireFormat.maxInactivityDuration=0](stomp://0.0.0.0:61613?maximumConnections=1000&wireFormat.maxFrameSize=104857600&wireFormat.maxInactivityDuration=0)"/>  
+<transportConnector name="mqtt"
+uri="[mqtt://0.0.0.0:1883?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600&amp;wireFormat.maxInactivityDuration=0](mqtt://0.0.0.0:1883?maximumConnections=1000&wireFormat.maxFrameSize=104857600&wireFormat.maxInactivityDuration=0)"/>  
+<transportConnector name="ws"
+uri="[ws://0.0.0.0:61614?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600&amp;wireFormat.maxInactivityDuration=0](ws://0.0.0.0:61614?maximumConnections=1000&wireFormat.maxFrameSize=104857600&wireFormat.maxInactivityDuration=0)"/>  
+</transportConnectors>
+
+# To start the ActiveMQ as daemon
+
+sudo bin/activemq start
+
+  
+
+# Apache ActiveMQ Web Console
+
+  * Web console is available at following location: *
+
+<http://localhost:8161/admin/>
+
+

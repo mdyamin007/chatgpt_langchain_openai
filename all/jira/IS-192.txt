@@ -1,0 +1,154 @@
+title: IDCU -[20444] [pvt] Update Cripple Image Logic
+description: IS Assessment
+ =============
+ Hours for development: 5
+ Turnover Date : 07/06/2021
+ 1st Sample to QA: 07/19/2021
+ Sample Approval Date: 07/26/2021
+ Go live date : 07/30/2021
+
+Assessment Details (IS):
+
+Update cripple image search logic to search 5 calendar days forward from the check date obtained from record 3000 for the check image.
+
+As for sample date, please generate a 6/30/2021 cripple before the logic is applied and the cripple report after it was applied so client can see the difference.
+
+
+author: jira_naru
+comment: Kris:
+
+I have changed the time line for this project.
+
+I will not be able to begin until Jul 9, so here are the new time line:
+
+1st Sample to QA: 07/19/2021
+Sample Approval Date: 07/26/2021
+Go live date : 07/30/2021
+
+
+author: JIRAUSER10911
+comment: Nar,
+
+
+
+Are we on track to have the sample by Monday 7/19?
+
+
+author: jira_naru
+comment: Kris:
+
+I think we are on schedule for Monday.
+
+I am running test now for cripple sample.
+
+
+author: jira_naru
+comment: Kris and QA:
+
+Attached are the cripple report for production and update to show the differences after applying the new image search logic.. These are your first round sample.
+
+[^idcums128.cripple.new.txt][^idcums130.cripple.production.txt]
+
+QA:
+
+Project exported to/d/iss/qa/IDCU/IDCUMS11.zip
+
+Parallel id20210716102751
+
+
+author: igor.khosid
+comment: Parallel ID: 20210716102751
+ Currently in parallel: Yes
+ User: nar
+ Description: IS-192_update_toCheckImage_searach
+ Date Submitted: 2021-07-16 10:27:54
+ Date Last Updated: 2021-07-16 10:27:54
+ Files:
+ 1) PRINT_CHK_HZ_IDCU.dfa
+
+
+author: igor.khosid
+comment: [~Kbittmann] [~jira_naru]
+
+QA test result: Pass and Sample ready for Customer review
+
+1. Parallel report
+Parallel ID: 20210716102751
+Currently in parallel: Yes
+User: nar
+Description: IS-192_update_toCheckImage_searach
+Date Submitted: 2021-07-16 10:27:54
+Date Last Updated: 2021-07-16 10:27:54
+Files:
+1) PRINT_CHK_HZ_IDCU.dfa
+
+2. Difference peord vs test
+<
+ SEGMENT DUMMY INLINE
+ POSITION 0 0 
+ IMPORT TIFFG4,TIFFNAME1, ''
+ WIDTH INCH(IMG_WIDTH) 
+ HEIGHT INCH(IMG_HEIGHT) 
+ SCALE;
+>
+ FOR CC
+ REPEAT 6 ;
+ /*IS-192: 07.16.2021*/
+ /*Search 5 days more if cannot find original check date*/
+ IF CC>1 ;
+ THEN ;
+ &ERROR = 0 ;
+ TMP_TIFFNAME1_BEGINNING = EXTRACT(TIFFNAME1,'_',1) ;
+ TMP_TIFFNAME1_CKDATE = EXTRACT(TIFFNAME1,'_',2) ;
+ TMP_TIFFNAME1_CKDATE_FORMATTED = 
+ SUBSTR(TMP_TIFFNAME1_CKDATE,3,2, '')!'.'!
+ SUBSTR(TMP_TIFFNAME1_CKDATE,1,2, '')!'.'!
+ SUBSTR(TMP_TIFFNAME1_CKDATE,5,4, '') ;
+ NEW_TIFFNAME1_CKDATE = CONVERT('PDECON','CALCDATE',
+ TMP_TIFFNAME1_CKDATE_FORMATTED!';+1') ;
+ NEW_TIFFNAME1_CKDATE_FORMATTED = 
+ EXTRACT(NEW_TIFFNAME1_CKDATE,'.',2)!
+ EXTRACT(NEW_TIFFNAME1_CKDATE,'.',1)!
+ EXTRACT(NEW_TIFFNAME1_CKDATE,'.',3) ;
+ TMP_TIFFNAME1_ENDING = EXTRACT(TIFFNAME1,'_',3)!'_'!
+ EXTRACT(TIFFNAME1,'_',4)!'_'!EXTRACT(TIFFNAME1,'_',5) ;
+ TIFFNAME1 = TMP_TIFFNAME1_BEGINNING!'_'!
+ NEW_TIFFNAME1_CKDATE_FORMATTED!'_'!
+ TMP_TIFFNAME1_ENDING ;
+ ENDIF ;
+ SEGMENT DUMMY INLINE
+ POSITION 0 0 
+ IMPORT TIFFG4,TIFFNAME1, ''
+ WIDTH INCH(IMG_WIDTH) 
+ HEIGHT INCH(IMG_HEIGHT) 
+ SCALE;
+ IF &ERROR==0 ;
+ THEN ;
+ CC = 6 ;
+ ENDIF ;
+ ENDFOR ;
+3. Compare prod vs test attached cripple reports
+
+
+author: william.kong
+comment: [~Kbittmann]: Per my update with [~jira_naru]just now, our understanding is that the live date is not today. Can you work with Nar next week to see when would be a good live date that works for both us and IDCU.  Thanks!
+
+
+author: JIRAUSER10911
+comment: [~Igor.Khosid] [~jira_naru] 
+
+
+
+Samples approved. How long will QA need to review this?
+
+
+author: igor.khosid
+comment: [~Kbittmann] [~jira_naru]
+
+*QA test result:*Pass and Status changed from QA In Progress to Request for Parallel.
+
+Please, attach IS checklist if parallel testing is required.
+
+
+author: jira_naru
+comment: Code release completed.

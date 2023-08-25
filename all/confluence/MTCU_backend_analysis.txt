@@ -1,0 +1,140 @@
+title: MTCU backend analysis
+body: MTCU has 4 backend process:
+
+  1. Doc
+  2. Insert
+  3. Enotice
+  4. Etax
+
+  
+
+###  **Doc process:**
+
+20 columns in the index file.
+
+The columns are:
+
+  1. JobType
+  2. PresentmentType
+  3. DocumentCode
+  4. FileName
+  5. ZipFileName
+  6. DocumentBeginDate
+  7. DocumentEndDate
+  8. ImageCount
+  9. AccountNumber
+  10. AccountType
+  11.  AccountSuffix
+  12.  AccountName
+  13.  SSN
+  14.  MessageID
+  15.  InsertID
+  16.  RegionCode
+  17.  CrippleFlag
+  18.  PostcardFlag
+  19.  Afp2webPM
+  20.  Afp2webIni
+
+  
+
+Mandatory field: JobType, PresentmentType, DocumentCode, Filename,
+ZipFilename, DocumentBeginDate, DocumentEndDate, AccountNumber, AccountName.
+
+####  **Business analysis:**  
+
+  1. sess_login_id is "!usr_id" (no migration needed)
+
+ **Database changes:**
+
+ **FIN_ACCOUNT:** type ->NA, Status-> A and all other fields. (If new account
+then insert, if account exists then update)
+
+ **USR_FIN_ACCOUNT:** ufa_status-> Active, e_notify -> Y
+
+ **USR:** usr_id, usr_name, usr_gender -> F
+
+ **USR_MAPPING:** Account number as CIF
+
+ **USR_SESSION:** sess_login_id = "!usr_id", sess_active_status -> active, dso
+
+ **Paperless:** p_new_status-> B, p_old_status -> N
+
+ **Paperless2:** p_latest_status -> B, p_old_status -> N
+
+ **Estmt_doc:** isviewed -> N, esd_doctype -> afp, stmt_type -> default
+
+ **Arch_File:** file_type, parent_path, file_name, storage_server (if new then
+insert otherwise update)
+
+###  **Enotice:**  
+
+5 column in index file:
+
+  1. Account_number
+  2. Type
+  3. AfpFileName
+  4. Date
+  5. AccountName.
+
+  
+
+ **Database Changes:**
+
+ **Enotice:** isviewed -> N, arch_file_id, ispostcard -> 0
+
+ **Fin_account:** type ->NA, Status-> A and all other fields. (If new account
+then insert, if account exists then update)
+
+ **Arch_File:** file_type, parent_path, file_name, storage_server
+
+ **Enotice (by document processing):**
+
+doc.enotice.createAccount = "false"
+
+ **FIN_ACCOUNT:** type ->NA, Status-> A and all other fields. (update other
+information provided in enotice index file)
+
+ **Enotice:** arch_file_id, isviewed -> N, ispostcard -> 0
+
+If accounts already exists then update it.
+
+ **Arch_File:** file_type, parent_path, file_name, storage_server (if new then
+insert otherwise update)
+
+  
+  
+
+###  **Etax process:**
+
+8 columns in the index file.  
+Mandatory columns: account number, type, afp File name, date, zipfilename
+
+Optional columns ->suffix, apptype, ssn  
+The columns are:
+
+  1.  AccountNumber
+  2. Type
+  3. AfpFileName
+  4. Date
+  5. Suffix
+  6. AppType
+  7. SSN
+  8. ZipFileName
+
+Optional field: suffix, apptype, ssn
+
+ **Database changes:**
+
+ **Etax:** etax_id, acct_id,etax_type, etax_stamp, arch_file_id, ssn (if new
+data then insert, otherwise update.)
+
+ **Paperless:** p_new_status-> B, p_old_status -> N
+
+ **Paperless2:** p_latest_status -> B, p_old_status -> N
+
+ **P_Job_Etax:** P_Job_id, Etax_id
+
+ **Arch_File:** Arch_file_id, File_type, Parent_path, File_name, Page_Count,
+storage_server (if new then insert otherwise update)
+
+

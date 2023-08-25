@@ -1,0 +1,547 @@
+title: Target Engine Design Doc
+body: **Table of Contents (TOC)**
+
+  *  **Table of contents**
+  * Target Engine Design Doc
+  * 1\. Introduction
+    * Purpose/Objective Summary
+  * 2\. Work Flow and Data Model
+    * 2.1 Add Campaign to Eligible Audience
+    * 2.2 ETL Process
+    * 2.3 Data Model
+    * 2.4 API Sample
+      * Add campaign to eligible audience
+        * Check transaction status
+    * 2.5 Performance
+
+  
+
+# 1\. Introduction
+
+  
+
+## Purpose/Objective Summary
+
+Objective:
+
+  * Add campaign to eligible audience data
+  * ETL process to update eligible audience data
+
+  
+  
+
+# 2\. Work Flow and Data Model
+
+  
+
+## 2.1 Add Campaign to Eligible Audience  
+
+### 2.1.1 API Call
+
+    
+    
+    [PUT] https://pd-dev6.infoimage.com:9580/targetengine/api/v1/audience/demo/campaign/?campaignId=23KRwdrc4ZYtLjZdg
+    
+    Response:
+
+{  
+    "message": "Eligible audience has been updated successfully.",  
+    "status": 200  
+}
+
+    
+    
+    
+
+  
+  
+
+## 2.2 ETL Process
+
+  * Read through each campaign and add new eligible audience
+  * Update campaign / offer status ( Active / Inactive / Expired )
+  * Scheduled Task: Running everyday at midnight ( 12:00 AM )
+
+  
+  
+
+## 2.3 Data Model
+
+### Audience
+
+    
+    
+    /* 1 */
+
+{  
+    "_id": ObjectId("58487977560f215d39c755b6"),  
+    "type": "CR",  
+    "num": "198",  
+    "suf": "40",  
+    "name": "ROBERT BURKE",  
+    "address1": "5 HALE ST",  
+    "city": "WEYMOUTH",  
+    "state": "MA",  
+    "zip": "021891042",  
+    "gender": "NA",  
+    "ssn": "023-28-5506",  
+    "fico": NumberLong(0),  
+    "num_suf": "19840",  
+    "age": 79,  
+    "birthdate": "09/30/1937",  
+    "cid": "demo"  
+}
+
+    
+    
+    /* 2 */
+
+{  
+    "_id": ObjectId("58487977560f215d39c755b7"),  
+    "type": "CR",  
+    "num": "199",  
+    "suf": "48",  
+    "name": "ROBERT BURKE",  
+    "address1": "5 HALE ST",  
+    "city": "WEYMOUTH",  
+    "state": "MA",  
+    "zip": "021891042",  
+    "gender": "NA",  
+    "ssn": "023-28-5506",  
+    "fico": NumberLong(0),  
+    "offers": "NA",  
+    "num_suf": "19848",  
+    "age": 79,  
+    "birthdate": "09/30/1937",  
+    "cid": "demo"  
+}
+
+    
+    
+    /* 3 */
+
+{  
+    "_id": ObjectId("58487977560f215d39c755b8"),  
+    "type": "CR",  
+    "num": "200",  
+    "suf": "49",  
+    "name": "ROBERT BURKE",  
+    "address1": "5 HALE ST",  
+    "city": "WEYMOUTH",  
+    "state": "MA",  
+    "zip": "021891042",  
+    "gender": "NA",  
+    "ssn": "023-28-5506",  
+    "fico": NumberLong(0),  
+    "offers": "NA",  
+    "num_suf": "19849",  
+    "age": 79,  
+    "birthdate": "09/30/1937",  
+    "cid": "demo"  
+}
+
+    
+    
+      
+    
+
+#### Eligible Audience
+
+    
+    
+    /* 1 */
+
+{  
+    "_id": "fcf039e0-c63f-11e6-87c3-56847afe9799",  
+    "cid": "demo",  
+    "audienceId": "58487977560f215d39c755b6",  
+    "campaignId": "23KRwdrc4ZYtLjZdg",  
+    "offerId": "pAW89rqAhMezmYyZM",  
+    "status": "active"  
+}
+
+    
+    
+      
+    
+
+### Campaign
+
+    
+    
+    /* 1 */
+
+{  
+    "_id": "23KRwdrc4ZYtLjZdg",  
+    "name": "test_test",  
+    "cid": "demo",  
+    "acceptance": "",  
+    "inquiries": "",  
+    "launchDate": "",  
+    "expirationDate": ISODate("2017-01-01T17:59:59.000Z"),  
+    "active": true,  
+    "offer": [  
+        {  
+            "id": "pAW89rqAhMezmYyZM",  
+            "name": "test_test",  
+            "offerDivCSS": "",  
+            "settings": {  
+                "directMail": {  
+                    "isDirectMail": false,  
+                    "timeframe": "",  
+                    "offerVersion": "",  
+                    "sliderValue": [],  
+                    "startingDate": "",  
+                    "frequencyInDays": "",  
+                    "specificDate": "",  
+                    "frequency": "Just once"  
+                },  
+                "email": {  
+                    "isEmail": true,  
+                    "timeframe": "",  
+                    "offerVersion": {  
+                        "a": 100  
+                    },  
+                    "sliderValue": [  
+                        100  
+                    ],  
+                    "startingDate": "",  
+                    "frequencyInDays": "",  
+                    "specificDate": "",  
+                    "frequency": "Just once"  
+                },  
+                "webMobile": {  
+                    "isWeb": false,  
+                    "offerVersion": "",  
+                    "sliderValue": []  
+                }  
+            }  
+        }  
+    ],  
+    "startDate": ISODate("2016-09-26T18:00:00.000Z"),  
+    "associations": [],  
+    "isTemplate": false,  
+    "campaignWorkFlowHtml": "",  
+    "targetingRuleIdList": [  
+        "ZvMTJg7QmaZdNZ7BJ"  
+    ]  
+}
+
+    
+    
+      
+    
+
+### Offer
+
+    
+    
+    /* 1 */
+
+{  
+    "_id": "23KRwdrc4ZYtLjZdg",  
+    "name": "test_test",  
+    "cid": "demo",  
+    "acceptance": "",  
+    "inquiries": "",  
+    "launchDate": "",  
+    "expirationDate": ISODate("2017-01-01T17:59:59.000Z"),  
+    "active": true,  
+    "offer": [  
+        {  
+            "id": "pAW89rqAhMezmYyZM",  
+            "name": "test_test",  
+            "offerDivCSS": "",  
+            "settings": {  
+                "directMail": {  
+                    "isDirectMail": false,  
+                    "timeframe": "",  
+                    "offerVersion": "",  
+                    "sliderValue": [],  
+                    "startingDate": "",  
+                    "frequencyInDays": "",  
+                    "specificDate": "",  
+                    "frequency": "Just once"  
+                },  
+                "email": {  
+                    "isEmail": true,  
+                    "timeframe": "",  
+                    "offerVersion": {  
+                        "a": 100  
+                    },  
+                    "sliderValue": [  
+                        100  
+                    ],  
+                    "startingDate": "",  
+                    "frequencyInDays": "",  
+                    "specificDate": "",  
+                    "frequency": "Just once"  
+                },  
+                "webMobile": {  
+                    "isWeb": false,  
+                    "offerVersion": "",  
+                    "sliderValue": []  
+                }  
+            }  
+        }  
+    ],  
+    "startDate": ISODate("2016-09-26T18:00:00.000Z"),  
+    "associations": [],  
+    "isTemplate": false,  
+    "campaignWorkFlowHtml": "",  
+    "targetingRuleIdList": [  
+        "ZvMTJg7QmaZdNZ7BJ"  
+    ]  
+}
+
+    
+    
+      
+    
+
+### Rule
+
+    
+    
+    /* 1 */
+
+{  
+    "_id": "ZvMTJg7QmaZdNZ7BJ",  
+    "name": "MP-60",  
+    "cid": "root",  
+    "description": "Menlo Park aged more than 60",  
+    "ruleGroup": [  
+        [  
+            {  
+                "field_key": "city",  
+                "attribute": "dd",  
+                "ruleType": "Standard",  
+                "operand": "Menlo Park",  
+                "operator": ""  
+            },  
+            {  
+                "field_key": "age",  
+                "attribute": "num",  
+                "ruleType": "Standard",  
+                "operand": "60",  
+                "operator": "<"  
+            }  
+        ],  
+        [  
+            {  
+                "field_key": "accountNumber",  
+                "attribute": "num",  
+                "ruleType": "Standard",  
+                "operand": "198",  
+                "operator": "="  
+            }  
+        ]  
+    ]  
+}
+
+    
+    
+      
+    
+
+### TransactionLog
+
+/* 1 */  
+{  
+    "_id": "646E9A7159017C8458E6FB69",  
+    "cid": "demo",  
+    "name": "ADD_CAMPAIGN_TO_ELIGIBLE_AUDIENCE",  
+    "status": "complete",  
+    "desc": "Add campaign to eligible audience",  
+    "type": "manual",  
+    "startTime": "2017.01.05.18.27.43",  
+    "endTime": "2017.01.05.18.27.45",  
+    "campaignId": "ALL"  
+}  
+/* 2 */  
+{  
+    "_id": "88CB9C715901DB2415DC1A61",  
+    "cid": "demo",  
+    "name": "ADD_CAMPAIGN_TO_ELIGIBLE_AUDIENCE",  
+    "status": "complete",  
+    "desc": "Add campaign to eligible audience",  
+    "type": "manual",  
+    "startTime": "2017.01.05.18.30.18",  
+    "endTime": "2017.01.05.18.30.23",  
+    "campaignId": "k3nf93krJ8h5JX3Fx"  
+}  
+/* 3 */  
+{  
+    "_id": "4AF59C7159019B114FD1B31D",  
+    "cid": "demo",  
+    "name": "ADD_CAMPAIGN_TO_ELIGIBLE_AUDIENCE",  
+    "status": "running",  
+    "desc": "Add campaign to eligible audience",  
+    "type": "manual",  
+    "startTime": "2017.01.05.18.30.28",  
+    "campaignId": "k3nf93krJ8h5JX3Fx"  
+}
+
+## 2.4 API Sample
+
+  
+  
+
+### Add campaign to eligible audience
+
+    
+    
+    [PUT] https://targetengine-dev.infoimageinc.com/targetengine/api/v1/audience/campaign?campaignId=k3nf93krJ8h5JX3Fx  
+      
+    
+
+{  
+    "message": "Update audience transaction has been started."  
+}
+
+    
+    
+      
+    
+
+  
+  
+
+#### Check transaction status
+
+    
+    
+    [GET] https://targetengine-dev.infoimageinc.com:443/targetengine/api/v1/transaction?transactionId=6B9206715901DCC8C624880F
+
+{  
+    "transactionId": "6B9206715901DCC8C624880F",  
+    "cid": "demo",  
+    "name": "ADD_CAMPAIGN_TO_ELIGIBLE_AUDIENCE",  
+    "status": "complete",  
+    "desc": "Add campaign to eligible audience",  
+    "type": "manual",  
+    "startTime": "2017.01.05.15.46.13",  
+    "endTime": "2017.01.05.15.46.13",  
+    "campaignId": "k3nf93krJ8h5JX3Fx"  
+}
+
+    
+    
+      
+    
+
+  
+
+## 2.5 Performance
+
+    
+    
+    Test 1:
+    Audience records: 386886 
+    Eligible Audience: 269
+    
+    db.getCollection('audience').find({ "city" : "WEYMOUTH", "cid" : "demo", age: { $gt: 20 } } )
+    
+    Rule:
+
+[  
+    [  
+        {  
+            "field_key": "age",  
+            "attribute": "number",  
+            "ruleType": "Standard",  
+            "operand": "20",  
+            "operator": ">"  
+        },  
+        {  
+            "field_key": "city",  
+            "attribute": "string",  
+            "ruleType": "Standard",  
+            "operand": "WEYMOUTH",  
+            "operator": "="  
+        }  
+    ]  
+]
+
+    
+    
+    Result:
+
+{  
+    "transactionId": "1FD361875A01EF05A41C3C20",  
+    "cid": "demo",  
+    "name": "ADD_CAMPAIGN_TO_ELIGIBLE_AUDIENCE",  
+    "status": "complete",  
+    "desc": "Add campaign to eligible audience",  
+    "type": "manual",  
+    "startTime": "2017.02.28.17.00.19",  
+    "endTime": "2017.02.28.17.03.29",  
+    "campaignId": "KjAFkzSadX3iCYR2a",  
+    "note": null  
+}
+
+    
+    
+    Test 2:
+    Eligible audience: 44037
+    
+    db.getCollection('audience').find( { $or: [  { "city" : "WEYMOUTH", "cid" : "demo", age: { $gt: 20 } } , { fico: { $gt: 800} } ] } )
+    
+    Rule:
+
+[  
+    [  
+        {  
+            "field_key": "age",  
+            "attribute": "number",  
+            "ruleType": "Standard",  
+            "operand": "20",  
+            "operator": ">"  
+        },  
+        {  
+            "field_key": "city",  
+            "attribute": "string",  
+            "ruleType": "Standard",  
+            "operand": "WEYMOUTH",  
+            "operator": "="  
+        }  
+    ],  
+    [  
+        {  
+            "field_key": "fico",  
+            "attribute": "number",  
+            "ruleType": "Standard",  
+            "operand": "800",  
+            "operator": ">"  
+        }  
+    ]  
+]
+
+    
+    
+    transaction:
+
+{  
+    "_id": "BF5F70875A0192FA8B028402",  
+    "cid": "demo",  
+    "name": "ADD_CAMPAIGN_TO_ELIGIBLE_AUDIENCE",  
+    "status": "complete",  
+    "desc": "Add campaign to eligible audience",  
+    "type": "manual",  
+    "startTime": "2017.02.28.17.16.13",  
+    "endTime": "2017.02.28.17.26.51",  
+    "campaignId": "KjAFkzSadX3iCYR2a"  
+}
+
+    
+    
+      
+    
+
+###  Attachments
+
+  
+
+  
+
+

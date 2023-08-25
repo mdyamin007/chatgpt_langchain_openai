@@ -1,0 +1,247 @@
+title: ETA Board Production Server Migration
+body:   
+
+## APT-GET package dependency
+
+  1. apache2
+  2. php5
+  3. libapache2-mod-php5
+  4. php5-odbc
+  5. php5-sybase
+  6. tdsodbc
+  7. php-pear
+  8. build-essential
+  9. libaio1
+  10. php5-gd
+  11. tomcat7
+  12. dos2unix // needed by dpvs.php
+  13. libdbi-perl
+
+Packages can be installed by following command:
+
+    
+    
+    apt-get install <package1> <package2> ... 
+
+  
+  
+
+## Setup the Apache Virtual Host
+
+  1. Add a new virtual host configuration file under /etc/apache2/sites-available
+  2. Conf file could be named as anything. (e.g. etaboard-prod)
+  3. Example content of the virtual host config file  
+
+    
+        <VirtualHost *:80>
+            DocumentRoot /var/www/etaboard-prod
+            ServerName etaboard.infoimage.com
+    
+            #DirectoryIndex login.php
+            RewriteEngine On
+            RewriteRule ^/$ /prod/login.php [L,R]
+    
+            <Directory />
+    
+                    Options Indexes FollowSymLinks MultiViews
+                    AllowOverride None
+                    Order allow,deny
+                    allow from all
+            </Directory>
+    
+            ErrorLog ${APACHE_LOG_DIR}/etaboard-prod-error.log
+    
+            # Possible values include: debug, info, notice, warn, error, crit,
+            # alert, emerg.
+            LogLevel warn
+    
+            CustomLog ${APACHE_LOG_DIR}/etaboard-prod-access.log combined
+    
+    </VirtualHost>
+    
+
+  4. (!) The 'prod' folder path is hardcoded in the php code to detect whether the setup is production or not. Hence it is important to keep the folder name 'prod' exactly as-is.
+
+  
+  
+
+## Put the ETA Board source code in place
+
+  1. Pull the source code of ETA Board from SVN
+  2. SVN Location: svn+ssh:[//@pd-tools.infoimage.com](mailto://pd-tools.infoimage.com)/srv/svn/etaboard/apache-php
+  3. Ensure the following folder are writable by the user running apache
+    1. dockets
+    2. pdf
+
+  
+  
+
+## Download Oracle Instant Client (Only if Oracle Client not already
+installed)
+
+  1. Download following package from: <http://www.oracle.com/technetwork/database/features/instant-client/index-097480.html>
+    1. BasicLite  
+(e.g. instantclient-basic-linux.x64-12.1.0.2.0.zip)
+
+    2. SDK  
+(e.g. instantclient-sdk-linux.x64-12.1.0.2.0.zip)
+
+  2. Install the Oracle Instant Client with following steps:  
+
+    
+        mkdir /opt/oracle
+    mv /home/ubuntu/Documents/*.zip /opt/oracle        # move the downloaded BasicLite & SDK files over
+    cd /opt/oracle
+    unzip \*.zip
+    ln -s instantclient_12_1 instantclient
+    cd instantclient
+    ln -s libclntsh.so.12.1 libclntsh.so               # setup the symlinks for some necessary libraries
+    ln -s libocci.so.12.1 libocci.so
+      
+
+  
+  
+
+## Setup OCI php-extension
+
+  1. Add ORACLE_HOME path value into /etc/environment if not already  
+
+    
+        ORACLE_HOME="/opt/oracle/instantclient"
+
+  2. Install OCI8 extension via PECL automatically  
+
+    
+        pecl install oci8
+    # enter "instantclient,/opt/oracle/instantclient" when prompt for ORACLE_HOME directory
+    echo extension=oci8.so >> /etc/php5/apache2/php.ini         # OR manually add the lines into ini files manually
+    echo extension=oci8.so >> /etc/php5/cli/php.ini
+    service apache2 restart
+      
+
+  3. Validate OCI8 extension is enabled by checking against phpinfo()
+
+## Extend session alive period
+
+  1. Open the /etc/php5/cli/php.ini
+  2. Update the value of following key  
+
+    
+        session.gc_maxlifetime = 36000
+
+  3. Restart apache service  
+
+    
+        sudo service apache2 restart
+
+  
+  
+
+## Setup ODBC connect for MSSQL connection
+
+  1. Update the /etc/odbc.ini  
+
+    
+        [datatrac]
+    Description     = DataTRAC Production DB
+    Driver          = FreeTDS
+    Server          = 10.8.8.28
+    Database        = datatrac_prd
+    Port            = 1433
+    tds_version     = 8.0
+    
+
+  2. Copy the standard odbcinst.ini file from FreeTDS installation.  
+
+    
+        cp /usr/share/tdsodbc/odbcinst.ini /etc/odbcinst.ini
+
+  
+OR add the content into /etc/odbcinst.ini if exist already.  
+
+    
+        [FreeTDS]
+    Description     = TDS driver (Sybase/MS SQL)
+    Driver          = libtdsodbc.so
+    Setup           = libtdsS.so
+    CPTimeout       =
+    CPReuse         =
+    
+
+  3. (!) If encounter connection issue like:  
+
+    
+        PHP Warning:  odbc_connect(): SQL error: [unixODBC][FreeTDS][SQL Server]Unable to connect to data source, SQL state S1000 in SQLConnect
+
+  
+Double check:
+
+    1. database name is correct
+    2. ETA machine have access to the MSSQL database server (maybe due to the 10.8.9.?? accessing 10.8.8.?? machine)
+
+  
+  
+
+## Deploy the Management Report on TOMCAT7
+
+  1. deploy the compiled webapp of MgmReport packages to /var/lib/tomcat7/webapps folder
+  2. Source code is stored in svn+<ssh://pd-tools.infoimage.com/srv/svn/etaboard/tomcat-webapp>
+
+  
+  
+
+## Setup the ssh key for scp operations between ETA and rh2(whatever it's
+trying to do)
+
+  1. Create the home folder of the user account that runs apache if not already created. (i.e. /home/apache or /home/www-data)
+    1. redhat's apache user is on /var/www by default.
+    2. ubuntu's www-data user is on /var/www by default.
+  2. Update the home folder of the user account that runs apache
+    1. Home folder could be changed in /etc/passwd
+    2. redhat's user is 'apache' by default
+    3. ubuntu's user is 'www-data' by default
+  3. Populate the private key and public key in a private location (i.e. NOT /var/www/html)
+  4. e.g. mkdir /home/www-data/.ssh
+  5. Place the private key and public key files there.
+  6. Test accessing rh2 using key file, ensure known_host is added
+  7. specify the $scp_id variable with the full path to the private key of 'apache' on rh2
+
+  
+  
+
+## Setup the DBD::Oracle for perl to connect to oracle database
+
+    
+    
+      
+    
+    
+    
+            bash>sudo cpan      // confirm installing cpan if first time using it
+            cpan>get DBD::Oracle      // pull the DBD Oracle package into ~/.cpan
+                                      // websense might have blocked cpan mirror sites and cause problem installing the source/package files
+            cpan>quit
+            bash>cd ~/.cpan/build/DBD-Oracle-1.64
+            bash>sudo perl Makefile.PL -V 12.1     // -V param value should match the oracle instant client version installed
+            bash>sudo make
+            bash>sudo make install
+            // validate oracle connection from perl is working
+        
+    
+    
+      
+    
+
+  
+  
+
+## Setup the JDBC and jTDS drivers for Tomcat
+
+  1. Download the JDBC Oracle driver: <http://www.oracle.com/technetwork/articles/oem/ucp-jdbc-tomcat-355431.html>
+    1. Download both the ojdbc6.jar and ucp.jar into $TOMCAT_HOME/lib
+    2. (default $TOMCAT_HOME is /usr/share/tomcat7)
+  2. Download the jTDS MSSQL Server driver: <http://sourceforge.net/projects/jtds/files/jtds/1.2.8/>
+    1. Extract the downloaded distribution zip file and copy the jtds-1.2.8.jar under $TOMCAT_HOME/lib
+  3. Restart the tomcat service
+
+

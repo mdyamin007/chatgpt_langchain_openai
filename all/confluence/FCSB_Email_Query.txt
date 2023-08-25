@@ -1,0 +1,33 @@
+title: FCSB Email Query
+body: FHNB (doesn't look in fin_account)
+
+SELECT DISTINCT esd.esd_id, ufa.usr_id, ufa.acct_id, ufa.email,
+u.usr_firstname, u.usr_lastname  
+FROM p_job_estmt j, estmt_doc esd, usr_fin_account ufa, usr u
+
+WHERE j.p_job_id = ?  
+AND j.esd_id = esd.esd_id  
+AND (esd.Status IS NULL OR esd.Status = ?)  
+AND esd.acct_id = ufa.acct_id  
+AND ufa.email is not null  
+AND u.usr_id = ufa.usr_id
+
+  
+
+FNBTSELECT DISTINCT esd.esd_id, ufa.usr_id, ufa.acct_id, ufa.email,
+u.usr_firstname, u.usr_lastname, fa.region  
+FROM p_job_estmt j, estmt_doc esd, usr_fin_account ufa, usr u, fin_account fa  
+WHERE j.p_job_id = ?  
+AND j.esd_id = esd.esd_id  
+AND (esd.Status IS NULL OR esd.Status = ?)  
+AND esd.acct_id = ufa.acct_id  
+AND ufa.email is not null  
+AND u.usr_id = ufa.usr_id  
+AND fa.acct_id=ufa.acct_id  
+AND fa.region = ?
+
+Region = AZ if orgName is fcb
+
+Region = TX if orgName is fnbt
+
+

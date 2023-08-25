@@ -1,0 +1,53 @@
+title: Elastic Search Deployments
+body: Some key points about Elasticsearch:
+
+  * A running Elasticsearch process is called a node.
+  * Nodes host shards, which are instances of Lucene.
+  * Primary Shards are updated first when data is written.
+  * Replica shards mirror primaries, are always stored on a different node,and are written to after the primary.
+  * Datasets are stored in an index, which is formed of one or more shards. Basically, a group of shards where each shard is holding part of the same dataset is an index.
+  * Main purpose of shard is to allow the index to horizontally scale. Like if we have a index called "nginx-access-logs" and it contains 120 thousands data, we can distribute them into multiple shards. If we scale it into three shards into three different nodes, each primary shard of each node will store 20 thousands.
+  * Nodes running on separate servers can be configured to create a cluster. Shards can be distributed across nodes in the cluster to provide fault tolerance.
+
+  
+
+By default, when we start Elasticsearch, it starts with a single node with one
+primary shard. If we have only one node, there will be no replica for the
+primary shard. As replica shards can never live on the same node as their
+primary.
+
+  
+
+  
+
+######  _Fig: Single Elastic search node_
+
+  
+
+  
+
+As we can see from the figure, shards are actually instance of Apache Lucene.
+There would be some segments inside apache lucene index. Segments are made of
+a data structure called inverted index where data is actually reside.
+
+ **Issue with single node:**
+
+  * Single node is not fault tolerant as if node goes down, data becomes unavailable.
+  * There will be no replica shards. So there is a chance to lose data.
+
+  
+
+To solve these, we must introduce additional nodes and create a cluster.
+
+  
+
+######  _Fig: Elasticsearch cluster with two nodes_
+
+  
+
+Above figure, we have two nodes in the cluster. Node 0 have one primary shard
+P0 and Node 1 have one primary shard P1. Replica of P0 is reside in node
+
+  
+
+

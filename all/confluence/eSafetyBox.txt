@@ -1,0 +1,136 @@
+title: eSafetyBox
+body: 
+    Add eSafety Box Feature Setting in infotrac
+    ===========================================
+    insert into FEATURE_DEFINITION (CODE,NAME,CREATED_TIME,PARENT_CODE,TYPE) values ('eSafetyBox','eSafetyBox',to_date('28-Sep-16','DD-MON-RR'),null,null);
+    Insert into FEATURE_DEFINITION (CODE,NAME,CREATED_TIME,PARENT_CODE,TYPE) values ('accessEBox','Access eSafetyBox',to_date('28-Sep-16','DD-MON-RR'),'eSafetyBox',null);
+    INSERT INTO "FEATURE_DEFINITION" (CODE, NAME, CREATED_TIME, PARENT_CODE, TYPE) VALUES ('accessSingleMember', 'Distribute to single member', TO_DATE('2017-01-01 10:40:32', 'YYYY-MM-DD HH24:MI:SS'), 'eSafetyBox', 'B');
+    INSERT INTO "FEATURE_DEFINITION" (CODE, NAME, CREATED_TIME, PARENT_CODE, TYPE) VALUES ('accessMltMbr', 'Distribute to Multiple members', TO_DATE('2017-01-01 10:40:32', 'YYYY-MM-DD HH24:MI:SS'), 'eSafetyBox', 'B');
+    INSERT INTO "FEATURE_DEFINITION" (CODE, NAME, CREATED_TIME, PARENT_CODE, TYPE) VALUES ('accessAllMember', 'Distribute to All members', TO_DATE('2017-01-01 10:40:32', 'YYYY-MM-DD HH24:MI:SS'), 'eSafetyBox', 'B');
+    INSERT INTO "FEATURE_DEFINITION" (CODE, NAME, CREATED_TIME, PARENT_CODE, TYPE) VALUES ('acsEbxRpt', 'Access ESafetybox Report', TO_DATE('2017-01-01 10:40:32', 'YYYY-MM-DD HH24:MI:SS'), 'eSafetyBox', 'B');
+    INSERT INTO "FEATURE_DEFINITION" (CODE, NAME, CREATED_TIME, PARENT_CODE, TYPE) VALUES ('accsDstbtFlHstrR', 'Access ESafetybox Distribution History (R)', TO_DATE('2017-01-01 10:40:32', 'YYYY-MM-DD HH24:MI:SS'), 'eSafetyBox', 'R');
+    INSERT INTO "FEATURE_DEFINITION" (CODE, NAME, CREATED_TIME, PARENT_CODE, TYPE) VALUES ('accsDstbtFlHstr', 'Access ESafetybox Distribution History', TO_DATE('2017-01-01 10:40:32', 'YYYY-MM-DD HH24:MI:SS'), 'eSafetyBox', null);
+    
+    Insert into BOX_TIER (CID,ADMIN_USER,TIER_LEVEL,MAX_FILE_SIZE,VAULT_SPACE,ALLOWED_FILE_TYPES,SECURITY_LEVEL,ALERT_PERCENTAGE,CID_TIER,TIER_DESCRIPTION,TIER_PRICE) values ('mtro','false',10,26214400,1073741824,'pdf,csv,htm,html,xls,xlsx,ppt,pptx,doc,docx,odp,ods,odt,rtf,txt,wdp,jpg,jpeg,png,gif,tif,tiff,bmp,avi,mov,flv,swf,mp3,mp4,wmv,wpd,zip,3gp',1,70,'mtro-10','Tier 1','$0.00/month');
+    Insert into BOX_TIER (CID,ADMIN_USER,TIER_LEVEL,MAX_FILE_SIZE,VAULT_SPACE,ALLOWED_FILE_TYPES,SECURITY_LEVEL,ALERT_PERCENTAGE,CID_TIER,TIER_DESCRIPTION,TIER_PRICE) values ('mtro','false',20,26214400,2147483648,'pdf,csv,htm,html,xls,xlsx,ppt,pptx,doc,docx,odp,ods,odt,rtf,txt,wdp,jpg,jpeg,png,gif,tif,tiff,bmp,avi,mov,flv,swf,mp3,mp4,wmv,wpd,zip,3gp',1,70,'mtro-20','Tier 2','$1.00/month');
+    Insert into BOX_TIER (CID,ADMIN_USER,TIER_LEVEL,MAX_FILE_SIZE,VAULT_SPACE,ALLOWED_FILE_TYPES,SECURITY_LEVEL,ALERT_PERCENTAGE,CID_TIER,TIER_DESCRIPTION,TIER_PRICE) values ('mtro','false',30,26214400,5368709120,'pdf,csv,htm,html,xls,xlsx,ppt,pptx,doc,docx,odp,ods,odt,rtf,txt,wdp,jpg,jpeg,png,gif,tif,tiff,bmp,avi,mov,flv,swf,mp3,mp4,wmv,wpd,zip,3gp',1,70,'mtro-30','Tier 3','$3.00/month');
+    Insert into BOX_TIER (CID,ADMIN_USER,TIER_LEVEL,MAX_FILE_SIZE,VAULT_SPACE,ALLOWED_FILE_TYPES,SECURITY_LEVEL,ALERT_PERCENTAGE,CID_TIER,TIER_DESCRIPTION,TIER_PRICE) values ('mtro','false',40,26214400,10737418240,'pdf,csv,htm,html,xls,xlsx,ppt,pptx,doc,docx,odp,ods,odt,rtf,txt,wdp,jpg,jpeg,png,gif,tif,tiff,bmp,avi,mov,flv,swf,mp3,mp4,wmv,wpd,zip,3gp',1,70,'mtro-40','Tier 4','$6.50/month');
+    
+    Create mongo DB schema in mongo sever which will be used by infoservice. 
+    =======================================================================
+    <DV/ST/PT/PN>_eSafetyBox
+    
+    Run SQL DDL File  (on all 3 Schemas CU/Bank/Default)
+    ===========================================
+    Run the DDL file present in SVN (svn+ssh://pd-tools.infoimage.com/srv/svn/infoservice/trunck/src/main/resources/eSafetyBox_DDL.sql)
+    Run the Trigger file present in SVN (svn+ssh://pd-tools.infoimage.com/srv/svn/infoservice/trunck/src/main/resources/eSafetyBox_Trigger.sql)
+    
+    To Set Up Tiers run below api in rest client or execure SQL statements(Present in DDL Statement)
+    ===============================================================================================
+    https://<host>/infoservice/api/v1/box/createTier/<cid>     POST API 
+    
+    {
+        "admin":"false",
+        "tier":"3",
+        "vaultSpace":"10737418240",
+        "maxFileSize":"52428800",
+        "allowedFileTypes":"pdf,csv,htm,html,xls,xlsx,ppt,pptx,doc,docx,odp,ods,odt,rtf,txt,wdp,jpg,jpeg,png,gif,tif,tiff,bmp,avi,mov,flv,swf,mp3,mp4,wmv,wpd,zip",
+        "alertPercentage":"70",
+        "securityLevel":"1" 
+    }
+    
+    InfoScanner set up 
+    ==================
+    
+    Make sure eset is installed on server machine and scan is set to true.
+    Add the proxy routing of infoscanner in apache / nginx set up.
+    Change the web.xml file of tomcat server to update the infoscanner URL.
+    
+    Info Service Config Property Changes.(/usr/local/tomcat/app-configs/infoservice/config.properties)
+    ==================================================================================================
+    
+    1. Add Mongo DB Database name
+    mongo.esafetyBox.db=ST_eSafetyBox
+    
+    2. Add Templates name for email notification and names should match with infotrac eSafety box templates.
+    boxTemplates.optIn=eSafetyBoxOptIn
+    boxTemplates.optOut=eSafetyBoxOptOut
+    boxTemplates.tierUpgrade=eSafetyBoxTierUpgarde
+    boxTemplates.distribution=eSafetyBoxDistribution
+    boxTemplates.closureNotification=eSafetyBoxClosure
+    boxTemplates.suspensionNotification = eSafetyBoxSuspension
+    boxTemplates.reactivationNotification = eSafetyReactivation
+    
+    3. Define the app id 
+    boxTemplates.appId=esafetybox
+    
+    4. Add Cron Expression to kick off the job to generate report (In Prod it will be 1st day of every month)
+    boxUsage.cron.expression=0 0/5 * * * ?
+    
+    Note* for reference http://www.quartz-scheduler.org/documentation/quartz-2.x/tutorials/crontrigger.html
+    
+    5. Add CID to SSO login list of cid's
+    sso.enabled.client=bink,aabk,abak,tpbk,nvcu,rabo,lbcu
+    
+    6. Add CID to list of cid's for which cron job would execute.
+    
+    # -------------------- CID-to-OraSchema Mapping ----------------
+    default=template
+    cu=lbcu
+    bank=rabo
+    
+    7. Set enviroment prefix for swift based on deployment of app
+    eSafetyBox.env=dev_ebox_
+    
+    8. Add passphrase for cid. This would be use to do encryption to upload files in swift server
+    demo.passphrase=cAstsqA9m77SyKf
+    
+    9.Property to schedule the trigger reports to generate for CID.
+    eSafetyBox.scheduler.list=mtro,lbcu
+    
+    Tempaltes creation on E-Notification tab
+    ========================================
+    Make sure we create those templates which are deifined in info service properties and make them active.
+    Note* if template is present and not active , then it can cause exception in enrolling for eSafety Box.  
+    
+    Post Deployment Check List
+    ==========================
+    
+    1. Check if there is container auto created in swift after first upload with below naming convention.
+    
+    infoservice.env + cid (i.e. stage_lbcu  when env is stage and cid is lbcu)
+    
+    2. Check if mongo collections has been populated with name box_file_folder and box_history
+    3. Check for cron job run and validate the if box_usage collection has been created after 1st run and reports are showing up
+    
+    Hierarchical Account Sharing
+    ========================
+    Create ESAFETYBOX_SHARING and sequence for ORM from DDL sql file.
+    
+    Closure Workflow Config Settings
+    ==========================
+    1) Expression to schedule the job with cron expression.
+    2) Each CID will have two properties each . one to specify the notification frequency (for example Once a day or once in 3 days etc.) and other to specify the Closing period i.e. cool off period in  number of days for account after it put to closure state.It will be move to closed status once it surpass closing period.
+    3).We have append CID name under CU/Bank property if we want to run scheduler to run against those cid.
+    4) Last one is template name to be used to send closure related notifications
+    
+    #Box Closure properties based upon cid
+    closureNotification.cron.expression=0 0/5 * * * ?
+    mtro.boxClosure.notificationFrequencyInDays=1
+    mtro.boxClosure.closingPeriodInDays=2
+    lbcu.boxClosure.notificationFrequencyInDays=1
+    lbcu.boxClosure.closingPeriodInDays=30
+    boxClosure.cu=mtro,lbcu
+    boxClosure.bank=
+    boxClosure.default=
+    boxTemplates.closureNotification=eSafetyBoxClosure
+    
+    
+
+  
+
+### Attachments
+
+250
+
+

@@ -1,0 +1,62 @@
+title: Review InfoSYNC Trigger Specifications
+description: None
+
+
+author: anwarh
+comment: [~William.Kong],
+
+My analysis:
+ # Our base URL Infosync is `/infosync/v1` so the standard URL will be something like this: `is-apps-prod.infoimageinc.com/infosync/v1/ftpscanner/`
+ # The endpoint will be a POST call with these three parameters:
+ ## cid
+ ## filename
+ ## md5
+ # flask standard uses an `app.cfg` file for configuration. We can use two of them, another one being `ftpscanner.cfg`
+ # In the code, I do see the exit code logic, but it is commented out, can you please check?
+
+
+{code:python}
+if str(sub_process_return_code) == '11':
+    msg = ( "ERROR[11]: The CID: " + serializer.data.get('cid') +
+            " and file name: " + serializer.data.get('filename') + 
+            " combination is not setup for FTP process auto trigger...\n\n" +
+            "Process output below: \n\n" +
+            sub_process_output)
+    return HttpResponseBadRequest(msg)
+elif str(sub_process_return_code) == '12':
+    msg = ( "ERROR[12]: The MD5 value: " + serializer.data.get('md5') +
+            " does not match the MD5 value of the file after transfer...\n\n" + 
+            "Process output below: \n\n" +
+            sub_process_output)
+    return HttpResponseBadRequest(msg)
+
+msg = ("Request Submitted Successfully! \n\n" +
+        "The return code is: " + str(sub_process_return_code) + "\n\n" +
+        "The terminal output is shown below: \n" +
+        str(sub_process_output))
+{code}
+Right now it runs in the background and while sends a response immediately.
+
+No exit code logic is used right now.
+
+
+
+
+author: william.kong
+comment: #1. Agreed. Let's use this URL. I will update the specs.
+
+#2. Agreed. These 3 parameters is fine. 
+
+#3. Agreed. Please call it ftpscanner.cfg
+
+#4. Based on the screen shot, I don't see it being commented out. 
+
+    I will need to talk with David to confirm a few things. In the meantime, I will update the BRIS-5 parent task on the 3 specifications that I confirmed ok. I+may+ add new logic requirements for item #4 after I speak with David.
+
+
+author: william.kong
+comment: Ok. For item #4, I spoke with David. It catches a HTTP != 200 response code. I will need to "add" email notification as well and will update the specifications.
+
+
+
+*ANWAR*: Please confirm if there are any more questions. If not, please mark this subtask completed since you completed reviewing the specifications. Now I would like you to work on coding and update BRIS-5 with you progress.

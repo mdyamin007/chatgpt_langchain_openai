@@ -1,0 +1,630 @@
+title: MSBK Migration Analysis
+body: # **ROOT:**
+
+ **Login Method**
+
+|
+
+diSSO (IFSFBShblogin.jsp)  
+  
+---|---  
+  
+ **Enrollment Step**
+
+|
+
+3 Steps  
+  
+ **Welcome Email**
+
+|
+
+Yes  
+  
+ **Menu**
+
+|
+
+  * Online Statements
+  * Disclosure
+  * Statement Back (disclosur.pdf)
+  * Profile
+  * Exit
+
+  
+  
+ **Account Types**
+
+|
+
+1, NA, X, M, X
+
+D=Checking,
+
+T=Time Deposit,
+
+L=Loans,
+
+S=Savings  
+  
+ **Statement Types**
+
+|
+
+default, enotice,etax  
+  
+ **Archival Period**
+
+|
+
+Default: 18,
+
+Enotice: 24, [28, if number of enotices are less than 10]
+
+Etax: 24  
+  
+ **Paperless Configuration**
+
+|
+
+NonSelective  
+  
+ **Unenrollment on DP change**
+
+|
+
+False. If dp is changed from paperless to paper, users are redirected to opt
+out page first to view statements of that account..  
+  
+ **Delivery Preference**
+
+|
+
+Paper=B, Paperless=E, Both=W  
+  
+ **Notification Preference**
+
+|
+
+Email  
+  
+ **NP Link Type**
+
+|
+
+byUfa (email is stored in UFA table)  
+  
+ **Batch Download**
+
+|
+
+N/A  
+  
+  
+
+###  **User-account Relation:**
+
+  * Many to many
+
+###  **Login methods:**
+
+###        diSSO:
+
+    *  **Mandatory fields:** password, user_fi_number, email, gmt, email, account number, account type.
+    * Search user by cif. If no user is available then it creates user and user_mapping data.
+    * It updates ufa links
+    * It searches the user profile in usr_session. If data doesn't exist in the usr_session table then it creates usr_session data for that user using sess_login_id as "!"usr_id. Otherwise **if** **sess_active_status is "invalid"** **then it throws an error called errorMessage_DISABLED_USER**.
+    * Email is updated from sso file.
+
+###  **Enrollment:**
+
+  1. Step 1 of 3: pdf view.
+  2. Step 2 of 3: E-Statement agreement.
+  3. Step 3 of 3: Delivery preferences and Notification preferences. Email field is non editable. **It is shown from preEnrollEmail (from UFA table) if it exists**. Otherwise it is shown from the sso file. Email is updated from sso file.  Account number, account holder name and application is also shown.
+
+Welcome email is sent after enrollment.
+
+### Online Statements:
+
+Statement table has 3 columns (Statement Date, Status, News and Notices)
+
+### E-Notices:
+
+Table has 3 columns (Notice Date, Status, Description)
+
+### E-Taxes:
+
+Table has 2 columns (Tax Date, Description)
+
+### Checks:
+
+Shows checks and archived checks. Table has 4 columns (Date, Check #,
+Amount,Images)
+
+###  **Home:**
+
+  * System maintenance information is shown according to the data in p_maintenance table.
+  * If the account status is "C" the user is redirected to the ClosedAcct page.
+
+  * If paperless status is **" B" or "S"** then the user is redirected to the opt-out page while the account is selected from account selector dropdown. 
+
+This feature is not supported in hypercube. In hypercube the user is
+unenrolled if DP is changed to paper.
+
+###  **Profile:**
+
+  * Delivery Preference:
+
+               1\. Paperless(E), Paper(B), Both(W)
+
+               2\. Delivery Preference is changeable. 
+
+  * Notification Options: Email
+  * Email Address: Not Editable
+  * It allows to update account nickname from profile page. Account nickname is referred to the description column of the usr_acct_type_mapping table.
+
+  
+
+##  **DSO:**
+
+  * Sign name (sess_login_id) and password are used to login.
+  * For first time login it redirects to a page called token_recovery. There ar two options there:
+
+            1\. I'm on a public computer. Please log me in without adding secure, unique device identifier.
+
+            2\. Please log me in and add this secure, unique device identifier on my computer.
+
+            If 2nd option is selected then it creates and stores the token into the usr_token table for that computer. And it doesn't redirect to the token recovery page in future login from that computer.
+
+  * Forget password and user registration feature is available.          
+  * DSO registration and Forget password option only works for **Loan account type**.
+  * Forget password recovery has 3 steps:
+
+            1\. Entering user id, account number
+
+            2\. Entering security hint questions answer and new password.
+
+            3\. Continue to login.
+
+  * DSO user registration has 4 steps.
+
+            1\. Terms and conditions agreement
+
+            2\. Entering account number, social security number, date of birth, security code.
+
+            3\. Entering sign in information (user id, password, security hint phrase).
+
+            4\. Delivery preference and notification preferences.
+
+  * Email is sent after DSO registration has been completed.
+
+  
+
+##  **MSM:**
+
+  *  **Account Management** :
+    * Search By Account Number:
+    * Search By Email Address
+    * After searching account admin can do following task:
+
+                        1\. Can change Delivery Preference [paperless(E), paper(B), Both(W), **None(S)** ]
+
+                        2\. Can brows paperless history
+
+                        3\. Can update email address 
+
+  * Statement types: 
+    * Default
+    * Analysis
+    * Mortgage
+    * Mortgage|attach
+    * Mortgage_2
+    * Mortgage_2|attach
+    * Mef|attach
+    * Loan
+    * Enotice
+    * Etax
+    * Welcome
+    * Optout
+    * Optin
+    * Reminder1
+    * reminder2
+  * Archival period: 
+
+   1\. Default: 24
+
+   2\. Enotice: 24
+
+   3\. Etax: 24
+
+  
+
+  *  **Account Creation:**
+
+  1. First enter user ssn and submit
+  2. Enter customer name, account number without leading zeros and account type.
+  3. You can add multiple accounts.
+  4. Click finish and then submit.
+
+  
+
+  *  **Email Proofing: [Notification type: email]**
+    * Online Statements
+    * Mortgage Statements
+    * MultiFamily Attachments
+    * MEF Attachments
+    * Loan Statements
+    * Online Notices
+    * eTaxes
+    * Retail Welcome
+    * Opt-Out to Paperless
+    * Opt-Out to Paperless and Paper
+    * First Reminder
+    * Second Reminder
+
+  
+
+  *  **Email Reminder:**
+
+          All Online Statement users will receive at most two email reminders if they have any unviewed Online Statement and haven't logged into Online Statement for a certain period of time. 
+
+          This page will allow you to set the time period of the first email reminder and the second email reminder.
+
+          The user, who qualifies the following requirements, will receive the first email reminder:
+
+                 1\. the user hasn't logged into Online Statement for the number of days that you specify below.
+
+        2\. the user has at least one unviewed Online Statement on the site.
+
+        3\. the user hasn't received any email reminder.
+
+  
+
+          The user, who qualifies the following requirements, will receive the second email reminder:
+
+                1.the user has received the first email reminder
+
+                2.since the user received the first email reminder, the user hasn't logged into Online Statement for the number of days that you specify below.
+
+  
+
+  *  **Insert Mgmt**
+
+             Marketing Insert Management - Upload Insert
+
+  
+
+  *  **Reports:**
+
+           
+
+  
+
+  *  **Profile:**
+
+            Admin users profile, can update first name, last name, password.
+
+  
+
+  *  **Admin:**
+
+            This page allows users to create, view, modify, and remove other users who have lower privileges.
+
+  *  **Exit**
+
+#  Backend analysis:
+
+MSBK has 6 backend process.
+
+  1. auth
+  2. afp
+  3. insert_range
+  4. enotice4
+  5. direct_enrollment
+  6. etax
+
+### Auth:
+
+  * Handler: MSBKAuthHandler
+  * Registrar: MsbkAuthRegistrar
+  * Index file format: tab separated data.
+  * Mandatory field: ACCT_NUM,APP_TYPE,LAST_NAME,FIRST_NAME,CIF_NUM,DOB
+  * App type must be "L". Auth process is only for Loan application.
+  * Searches user by cif number. If no user is found then it creates user and user mapping data. Otherwise the user's first name, last name, ssn are updated.
+  * Account number is searched by account number and type. If not found then new account is created. Otherwise, the account is updated.
+  * Paperless data is inserted for statement type default and mortgage.
+  * User fin account data is inserted.
+
+ **Database changes:**
+
+  1. Usr
+  2. Usr_Mapping
+  3. Fin_Account
+  4. Usr_Fin_Account
+  5. Paperless
+
+### AFP:
+
+  * Data: AfpStatementData8
+  * Registrar: MsbkEStmtRegistrar
+  * Index file format: afp_file|acct_num|begin_date|closing_date|page_count|acct_owner_name|SSN|Application Type|Message IDs for Market Link|Has_check|Insert ID|Region Code|Cripple Flag
+  * Optional field: SSN, application type, Message IDS, Insert ID
+  * If acct is null then it creates account. Otherwise it updates the account name of the existing account.
+  * It registrars statement.
+
+ **Database changes:**
+
+  1. Fin_Account
+  2. Estmt_Doc
+  3. Arch_File
+
+### Enotice4:
+
+  * Data: ENoticeData7
+  * Registrar: DefaultENotice4Registrar
+  * Index file format: L|acctNum|acctType|AcctName|afpName|letterCode|closingDate|imageCount|postCardFlag|zipFileName|region|L
+  * Mandatory field: L, acctNum, acctType, zipFileName, L
+  * Finds account, if account not found it creates new account.
+  * Global.autoregister is false so doesn't create usr_session data and usr_mapping data.
+  * Inserts entoice data to enotice table
+
+ **Database changes:**
+
+  1. Fin_Account
+  2. Enotice
+  3. Arch_File
+
+### Etax:
+
+  * Data: EtaxData3
+  * Registrar: ETaxRegistrar3
+  * Index file format: acctNum|type|afpFileName|date|suffix|appType|SSN/TAX_ID|INPUT_ZIP_FILENAME
+  * Optional field: suffix, apptype, ssn
+  * Finds account. etax.createAccount=false, so doesn't create account if no account is found.
+  * Inserts paperless data
+  * Inserts Etax data
+
+ **Database changes:**
+
+  1. Paperless
+  2. Etax
+  3. Arch_File
+
+### check_image:
+
+  * Handler: DefaultCheckImageHandler3
+  * Index file format: acctNum_acctType_checkDate_checkAmount_checkNum_traceNum_branchNum_tellerID_seqNum_checkSide.tif
+  * Creates new account.
+
+ **Database changes:**
+
+  1. Fin_Account
+  2. Account_Check_Image
+
+### Insert:
+
+  * Handler: RangeInsertHandler
+  * Registrar: InsertRegistrar
+  * Index file format: fileName|title|stmtType|beginDate|endDate
+  * Inserts data to insert_file table
+
+ **Database changes:**
+
+  1. Email_Attach
+  2. Ea_content
+  3. Insert_file
+
+###  **Data Migration:**
+
+  1. Sess_login_id is "!"usr_id
+  2. Has data in usr_mapping table
+  3. Stores email in Usr_Fin_Account table
+
+ **Email migration is needed.**
+
+  
+
+#  Analysis Summary (ROOT)
+
+ **Scope**
+
+|
+
+ **Feature**
+
+|
+
+ **Description**
+
+|
+
+ **Hypercube**
+
+|
+
+ **Note**  
+  
+---|---|---|---|---  
+  
+ **Enrollment (SSO)**
+
+|
+
+Updating Email
+
+|
+
+Email in USR_FIN_ACCOUNT table is updated from sso file.
+
+|  111 incomplete Supported  112 complete Not Supported |
+
+In hypercube, email is stored and updated in the Notification_Preference table  
+  
+Enrollment Information
+
+|
+
+1\. Pre-enroll email form UFA table is shown
+
+2\. The Account Owner's name is shown.
+
+|  37 incomplete Supported  38 complete Not Supported |
+
+1\. In hypercube email is shown from the notification_preference table.
+
+2\. Account owner's name is not shown.  
+  
+ **Enrollment (DSO)**
+
+|
+
+adding secure, unique device identifier
+
+|
+
+For first-time login two options are provided to add a secure key to the
+device from which the customer has logged in.
+
+|  39 incomplete Supported  40 complete Not Supported
+
+  
+
+|  
+  
+  
+DSO registration and Forget password
+
+|
+
+DSO registration and Forget password options work only for the Loan account
+type.
+
+|  41 incomplete Supported  42 complete Not Supported |
+
+No account type restriction is supported in hypercube DSO.  
+  
+ **Home Page**
+
+|
+
+System maintenance
+
+|
+
+System maintenance information is shown according to the data in p_maintenance
+table.
+
+|  43 incomplete Supported  44 complete Not Supported |  
+  
+  
+Account opt-out
+
+|
+
+For paperless status "B" or "S" users are redirected to the opt-out page.
+
+|  45 incomplete Supported  46 complete Not Supported |
+
+User is unenrolled for paperless status B  
+  
+ **Profile**
+
+|
+
+Updating Nickname
+
+|
+
+Nickname (description of  usr_acct_type_mapping table) can be updated
+
+|  47 incomplete Supported  48 complete Not Supported |  
+  
+**Online-Statements**|  
+|  Statement table has 3 columns (Statement Date, Status, News and Notices)|
+49 complete Supported  50 incomplete Not Supported |  
+  
+**E-Notices**|  
+|  Table has 3 columns (Notice Date, Status, Description)|  51 complete
+Supported  52 incomplete Not Supported |  
+  
+**E-Taxes**|  
+|  Table has 2 columns (Tax Date, Description)|  53 complete Supported  54
+incomplete Not Supported |  
+  
+**Checks**|  
+|  Shows checks and archived checks. Table has 4 columns (Date, Check #,
+Amount,Images)|  55 complete Supported  56 incomplete Not Supported |  
+  
+  
+**  
+  
+**
+
+# Analysis Summary (MSM)
+
+ **Scope**
+
+|
+
+ **Feature**
+
+|
+
+ **Description**
+
+|
+
+ **Infotrac**
+
+|
+
+ **Note**  
+  
+---|---|---|---|---  
+  
+Account management
+
+|
+
+Changing delivery preference
+
+|
+
+Can change Delivery Preference [paperless(E), paper(B), Both(W), None(S)]
+
+|  57 incomplete Supported  58 complete Not Supported |
+
+Delivery preference can't be changed to None(S)  
+  
+ **Account Creation**|  
+|  
+|  59 complete Supported  60 incomplete Not Supported |  
+  
+**Email Proofing**|  
+|  
+|  61 complete Supported  62 incomplete Not Supported |  
+  
+**Email Reminder**|  
+|  
+|  63 complete Supported  64 incomplete Not Supported |  
+  
+**Insert Mgmt**|  
+|  
+|  65 complete Supported  66 incomplete Not Supported |  
+  
+**Reports**|  
+|  
+|  67 complete Supported  68 incomplete Not Supported |  
+  
+**Profile**|  
+|  
+|  69 complete Supported  70 incomplete Not Supported |  
+  
+**Admin**|  
+|  
+|  71 complete Supported  72 incomplete Not Supported |  
+  
+  
+  
+
+

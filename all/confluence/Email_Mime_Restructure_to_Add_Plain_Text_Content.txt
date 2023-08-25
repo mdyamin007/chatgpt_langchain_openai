@@ -1,0 +1,112 @@
+title: Email Mime Restructure to Add Plain Text Content
+body: Hello Ben,
+
+I have implemented this feature across templateservice and notifyservice.
+
+I am trying to represent our previous and current mime message architecture.
+
+Previously we had -
+
+Now I have restructured it as follows -  
+  
+  
+  
+You will find more details about multipart/mixed here.
+
+<https://stackoverflow.com/questions/29539882/not-receiving-message-body-
+content-using-java-mail-api>
+
+Thanks
+
+Historical:
+
+ **Joe:**
+
+Hi Ben,
+
+The client wants to send a multipart mime email to support HTML content first,
+and a text only version for older clients and such.
+
+I'm not too familiar about how to go about this but based on some research it
+seems that will do.
+
+<http://www.enewsletterpro.com/articles/multi_part_mime_messages.asp>
+
+Thanks,
+
+Joe Chen
+
+ **Naim:**
+
+Hello Ben,
+
+Currently we have only text/html type of email body.
+
+We can have this type of feature where same email object will have 2 type of
+body one with text/plain and the other is text/html.
+
+Let me know, then I will do some POC around it.
+
+Thanks.
+
+ **Ben:**
+
+Naim,
+
+That means we need to combine contents from two templates into a single
+outbound email.  
+In the CSV, it carry one templateId per row only. We need to evaluate from the
+TemplateService, InfoTRAC E-Nofitication UI, CSV sample generation, PUI side
+of change of CSV construction, etc.
+
+Thanks.  
+\-------------------------  
+Naim,
+
+To make this easier, is it possible to just strip out all the HTML styling,
+and grab the textual content only and take that as the 'text/plain' version?
+
+Thanks.
+
+ **Naim:**
+
+I have done a little RND,
+
+Ben,
+
+While saving template we can get plain/text from tinymce, (which we are using
+for SMS template). i don't know if it is a good idea that we can introduce a
+new property names plainTextContent at template model where we can save the
+plain test version of the content.
+
+Also we can strip out all html tags on the fly, before sending the email. I
+have written some java codes with regex.
+
+Thanks
+
+ **Ben:**
+
+Exposing a 'plainTextContent' as optional value for each Template is probably
+a better idea.  
+But that means you will need to enhance the:  
+1\. InfoTRAC E-Notification UI: to accept plainTextContent if enabled. (need
+feature setting for this)  
+2\. Template Service API & Oracle DB schema: to CRUD the additional
+plainTextContent value  
+3\. Notification API: to send email body differently if plainTextContent is
+present.
+
+Trisha, the response to client is going to be "This will be an enhancement on
+the InfoTRAC roadmap, we are in R&D stage still, early evaluation shows we
+should able to do this in 2017, but exact ETA will beTBD until we are done
+with in-depth technical reviews"
+
+Thanks.
+
+  
+
+###  Attachments
+
+  
+
+

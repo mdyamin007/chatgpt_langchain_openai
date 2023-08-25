@@ -1,0 +1,881 @@
+title: EWBB - Setup Hong Kong eAdvice (eNotices) - Electronic Only
+description:     Prism Site need to be updated with eNotice tab.
+    Setup eNotice emails.
+    prefix: dnb
+    Letter Codes:
+        Transaction Advice = 301
+        Deposit Confirmation = 302
+        Remittance Advice Debit = 303
+        Remittance Advice Credit = 304
+        FX confirmation = 305
+    Enotices will be delivered via FTP and should be automatically triggered on the PUI.
+
+
+
+author: tai.trinh
+comment: enotice tabs on admin and estatement site
+
+check batchdownload feature to make sure it can be downloaded
+
+check opendate custom logic
+
+
+author: phoebe.george
+comment: [~tai.trinh] [~abdullah.baki] We have received this updated test index file as EWBB HK team is working on new test files - can you confirm if this index file is correct in file name/contents?
+
+[^dnb_10252021_1_11252021_1708_ewbb.txt]
+
+
+author: tai.trinh
+comment: [~abdullah.baki]Run the index on Pilot. It will complain about the zip files not being there, but at least, the parsing step will be completed and confirmed valid content.
+
+
+author: azad
+comment: [~tai.trinh],
+
+I've run the index on Pilot (jobid: 186384). The parsing steps were completed and no issue on content.
+
+Thanks
+
+Azad
+
+
+author: phoebe.george
+comment: [~Azad] [~tai.trinh] We received new test files from EWBB with the requested file name changes. Please see attached and confirm if they are good.
+
+
+
+Thank you!
+
+
+
+[^EWBB_HK_eNotice_Test_samples.zip]
+
+
+author: azad
+comment: Hi [~phoebe.george]
+
+I could not find the attached zip file on the ticket. Can you please re-upload?
+
+Thanks!
+
+
+author: shahadet.hossain
+comment: Hello [~phoebe.george],
+
+So far we found that the zip file name inside the index file doesn't match with the provided zip file name.
+
+Zip file name inside the index file:*ewbb_dnb_20220112_1.zip*
+
+Name of the Provided zip file:*ewbb_dnb_01122022_1.zip*
+
+
+
+
+author: phoebe.george
+comment: [~shahadet.hossain] Thank you, EWBB has been notified to correct and re-send. Thanks!
+
+
+author: phoebe.george
+comment: [~shahadet.hossain] [~Azad] [~tai.trinh] EWBB is working with their HK team to get new files sent. Because this may take time, Karen at EWBB is asking if we can manually update the file to MMDDYYYY and test for posting to pilot. She wants to confirm if any other issues with the posted version so that HK can address any additional changes needed all at one time. Let me know if possible to complete and target ETA (if 2/4 is possible). Thanks!
+
+
+author: shahadet.hossain
+comment: Hello [~phoebe.george],
+
+We have posted that cycle after updating the zip file name in the index file. The posting was successful in the pilot.
+
+
+
+
+author: phoebe.george
+comment: [~shahadet.hossain] Can you confirm if the posted eNotices should show up under an eNotice tab? I tried checking on Admin Site pilot and when through with customer through SSO pilot and we did not see a separate tab. Please confirm, thanks!
+
+
+author: azad
+comment: [~phoebe.george], [~shahadet.hossain]
+
+The issue was that the begin date and end date in the dnb index file was on wrong format (MMddyyyy). For that reason, in the database the closing_date was saved outside the archival range. As no statement was found on the archival period, the Admin Site did not show any enotice tab. For testing purpose, I changed the date on the database and was able to view the enotice statement on pilot Admin Site. Here is an screenshot. The client can search account with this account number and view the enotice on the pilot Admin Site.
+
+!Screenshot from 2022-02-09 21-58-37.png!
+
+The begin date and end date in the index file should be on yyyyMMdd format.
+
+Thanks.
+
+
+author: phoebe.george
+comment: Thanks for the feedback, I have informed EWBB. Thanks!
+
+
+author: phoebe.george
+comment: [~Azad] In talking with the customer, they are having their programmer update the index file to update the format of the date for the begin/end date.
+
+One request to see if this is possible - as the update to the index file will take some time, EWBB is asking if we can assist to test load the file into the pilot site by manually updating the format in the index file for begin/end date correctly.
+
+They have a separate team that needs to validate the display of the eNotices once posted to ensure it is displaying as expected. Although you provided a screenshot, they are hoping to review this site via their pre-prod SSO to access pilot. I know this is not a normal request, so let me know if this is possible - they ensured that the date format is being worked on to update so we can re-test that file accurately when it arrives. Thank you!
+
+
+author: azad
+comment: Hi [~phoebe.george]
+
+I've manually updated the date to correct format (20211201) and re-posted the index file. Please take a look.
+
+Thanks!
+
+
+author: phoebe.george
+comment: [~Azad] EWBB had some feedback. They are only able to view the notices on the Admin Portal - can you confirm if these should be visible on customer site pilot also?
+
+Separately, each of the eNotices posted have a description of 'Document' - but there should be specific eNotice descriptions based on notice name. These are the names (tied to the notice number):
+
+Transaction Advice = 301
+Deposit Confirmation = 302
+Remittance Advice Debit = 303
+Remittance Advice Credit = 304
+FX confirmation = 305
+
+
+author: azad
+comment: Hi [~phoebe.george]
+
+The description of 'Document' displays if the database does not have a description stored for that specific letter code. Provided letter codes (301, 302, 303, 304, 305) are stored with their respective descriptions. But all enotices in the processed dnb index file has letter code '002', which is not stored in the database. For this reason 'Document' is showing as default description.
+
+Also, about the issue for the enotices not showing in the customer pilot site, I am looking into it.
+
+Thanks
+
+Azad
+
+
+author: azad
+comment: [~phoebe.george]
+
+Can you try again, customer site should be able to show enotices now. Let me know if you can't view them yet.
+
+A point to be noted here, the accounts for which the enotices have been processed, do not have any user associated with them, as the process does not create user-account mapping for EWBB. So, if EWBB wants to view the enotices from the customer site, an AUTH process should be run for those accounts to be able to login in the site.
+
+Thanks
+
+Azad
+
+
+author: phoebe.george
+comment: [~Azad] I have updated the bank on this for testing. One item for feedback based on their pilot site review:
+
+Can the current 'eNotice' tab name be changed to: eAdvice
+
+
+
+Thank you,
+
+Phoebe
+
+
+author: azad
+comment: Hi [~phoebe.george]
+
+I've change the tab name to 'eAdvice'. Please have a look.
+
+Thanks!
+
+
+author: phoebe.george
+comment: [~Azad] [~Tin.Chak] EWBB would like to target to go live on 4/8 or 4/15 for this project.
+
+They are working on making the final necessary updates to their data files to fix the date format and index file notice codes.
+
+Please confirm if this new timeline will work for both target live dates:
+
+Provide final test files: 3/21
+
+InfoIMAGE to process/load to pilot: 3/22
+
+Final Pilot Approval: 3/25
+
+QA and Final Testing: 3/28 - 4/6
+
+Code release: 4/7
+
+Live date: 4/8
+
+
+
+Provide final test files: 3/28
+
+InfoIMAGE to process/load to pilot: 3/29
+
+Final Pilot Approval: 4/1
+
+QA and Final Testing: 4/4 - 4/13
+
+Code release: 4/14
+
+Live date: 4/15
+
+
+
+Thanks!
+
+Phoebe
+
+
+
+
+author: phoebe.george
+comment: [~Azad] [~Tin.Chak] I received the final test files from EWBB with the date and notice code updates. The file is too large to attach to the Jira story.
+
+Sean, do you have access to my AC secure share folder to download and forward to DSI? It's located in my AC secure share folder folder called: EWBB_Final_test_files_enotice.zip
+
+
+
+
+author: phoebe.george
+comment: [~Tin.Chak] [~Azad] Have you been able to pull these files noted in the previous comment for the new/final test files? Thanks!
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~Azad] I placed the file in /home/seanc in ca-pui-pi-01
+
+
+author: azad
+comment: Thank you[~Tin.Chak].
+
+[~phoebe.george], I've posted the file on pilot. Please have a look and let me know if you find any issue.
+
+Thanks!
+
+
+author: phoebe.george
+comment: [~Azad] EWBB provided the following feedback on the pilot site - can you confirm if the information they are requesting is dynamic based on the tab for the right panel changes?
+
+I let EWBB know that I believed this area was global for the site itself, but please confirm. Let me know if you can update the headers/tabs though as indicated on attached document. Thank you!
+
+
+
+[^EWBB_Pilot_Feedback_HK eAdvice_Validation_032322.docx]
+
+
+author: azad
+comment: Hi [~phoebe.george] [~Tin.Chak],
+
+Currently there are 3 view templates that are being used to display the statements(different list_inc.jspf pages). One for displaying the etaxes, one for the enotices and one for all the other statements like default, mmidas, HK etc. 
+The section heading and the right side disclosure panel changes can be done as these views are loaded for eNotice(eAdvice) tab only. So, other statement types won't get affected.
+
+
+So, we can change all the eNotices to eAdvices in this page. But here's an important thing to note that, as of now EWBB does not have enotices for any user and currently only Hong Kong users are going to have enotices. If we make these code changes, they will be reflacted for all the EWBB users who will have enotices in the future. That means, they will be restricted to view the tab and other headers and also the disclosure texts as "eAdvice", not enotice.
+
+Thanks!
+
+
+
+
+author: phoebe.george
+comment: [~Azad] Sorry for the delay, I just talked with EWBB on the feedback you provided.
+
+Can you confirm if there is a NEW eNotice setup in the future (separate from these HK eAdvice notices), if they are setup under a new application prefix and tab name, will these updates that are being requested still impact? Because these are 'PDF notices, they are not running through the current IS program for setup, so these would for sure be a different prefix for setup.
+
+[~Tin.Chak] FYI
+
+
+author: azad
+comment: Hi [~phoebe.george],
+
+I am not sure if there is any new eNotice setup (apart from HK eAdvice) in the future for EWBB. If there is then, these updates will impact the future eNotice setups. In the backend (PUI and Database), HK eAdvice and general eNotice are same in terms of statement type.
+
+The prefixes might be different for same statement type but the description (for HK it is 'eAdvice') is same for a particular statement type (for example enotice). So if we change the enotice description to eAdvice, all future EWBB enotices will be called 'eAdvice' only.
+
+So in summary, we can't change the enotice page as per HK requirement. However, we can change them if there is no new eNotice setup for EWBB in the future.
+
+Note: previously I've updated the tab name to eAdvice. This update will have to be reverted back to eNotice also.
+
+[~Tin.Chak]FYI.
+
+Thanks!
+
+
+author: phoebe.george
+comment: [~Azad] Thanks for the update! I talked in depth with EWBB on this item tied to the 'eNotice' setup and future jobs. 
+
+[~Tin.Chak]FYI
+
+The bank would like to proceed with the following changes:
+ # Please update the header bar (item #1 from the original list) to read as: 'Notice' (instead of eNotice).
+ # Update the disclosure and contact information to the following:
+
+Important Disclosures:
+
+This is on online version of your bank document. You will receive an email when new document is available for viewing. 
+
+To view your document, you must have Adobe Acrobat Reader 6.0 or higher installed on your computer (click on the "Get Acrobat Reader" button below if you need to install it.)
+
+
+
+Need Help?
+
+If you are having trouble using this site, please contact Customer Care at 852.2218.9010, Monday through Friday 9:00AM to 5:30PM HKT.
+
+
+
+3. Please see remove the Account Reconciliation button/verbiag.
+
+4. See above for item #2 (includes updated contact information).
+
+
+
+Note, that EWBB is hoping we can still go live by end of April, I'm going to update the live date for now. But please let me know what the ETA for making these final changes, and I'll set a final due date for pilot site approval.
+
+Thank you!
+ Phoebe
+
+
+author: azad
+comment: Hi [~phoebe.george]
+
+Thanks for the feedback. I can make those changes and deploy to Pilot on Friday as tomorrow we have a holiday.
+
+[~Tin.Chak]If those changes seems okay to you then please let me know and I can put it on Pilot by Friday.
+
+Thanks
+
+Azad
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: Hi Azhar,
+
+Please go ahead and make the changes that were requested.
+
+
+author: azad
+comment: Hi [~phoebe.george] [~Tin.Chak]
+
+I've made the changes on Pilot site. Please have a look and let me know if anything needs to be updated.
+
+I'm attaching two screenshots (customer and admin site) for reference.
+
+Thanks.
+
+Azad
+
+!ewbb_root.png!
+
+!ewbb_msm.png!
+
+
+author: phoebe.george
+comment: [~Azad] Sorry for the confusion, for the 'tab' update, can we keep this as eAdvice noted in screenshot below? 
+
+!image-2022-04-15-09-17-52-031.png!
+
+The change to 'Notice' was for this header only:
+
+!image-2022-04-15-09-18-36-322.png!
+
+Thanks!
+
+Phoebe
+
+
+
+
+author: azad
+comment: HI [~phoebe.george],
+
+I've updated the site. Please have a look.
+
+FYI, [~Tin.Chak]
+
+Thanks!
+
+
+author: phoebe.george
+comment: [~Azad] Thank you, we are pending final approval on the pilot site based on the latest changes.
+
+Separately though, EWBB has sent a final test file to load to the pilot site so they can review the final updates made to their scripting as well for the data files.
+
+I have attached here - can these be loaded to pilot?
+
+Also, in order to automate their file transmission, they are asking if we can accept a file name with the hour time stamp, example would be: ewbb_dnb_MMDDYYYY_1_1_hhmmss.zip.pgp
+
+
+
+[^dnb_04112022_1_04122022_1422_ewbb.txt]
+
+
+author: azad
+comment: Hi [~phoebe.george],
+
+I'll run the attached file on pilot.
+
+Also, Current configuration will not accept a file name like this (ewbb_dnb_MMDDYYYY_1_1_hhmmss.zip). We need to change the configuration on Scanner to accept this.
+
+Thanks
+
+
+author: azad
+comment: Hi [~phoebe.george],
+
+I've run the file on pilot (jid ref# 187790).
+
+The file parsed successfully but it failed as there is not zip file present in the appropriate directory. Please provide me the zip file and I will try again.
+
+Thanks!
+
+
+author: azad
+comment: Hi [~phoebe.george]
+
+I've run the index file _dnb_04112022_1_04122022_1422_ewbb.txt_ on Pilot. Please have a look and let me know if anything is needed.
+
+Thnaks
+
+Azad
+
+
+author: phoebe.george
+comment: Thank you! EWBB is reviewing the pilot for final approval.
+
+They would like to move forward with the outer file name change, this will allow them to fully automate file transmission. Here is the file name: ewbb_dnb_MMDDYYYY_1_1_hhmmss.zip.pgp
+
+Let me know if any issues to move forward with this final change. Thank you!
+
+
+author: azad
+comment: [~shahadet.hossain], please set up the ftp scanner so that it will take the zip file as named asPhoebe mentioned on the previous comment.
+
+Also [~phoebe.george], I've run the_dnb_04222022_1_04252022_1002_ewbb.txt_ index file on Pilot server (jid ref#187858). Please have a look.
+
+Thanks
+
+Azad
+
+
+author: phoebe.george
+comment: [~Azad] Thank you! One other separate question came up from EWBB, not sure if you are able to answer this.
+
+_We had setup a monthly accumulate enrollment report to be pushed to the HK side for eStatement. So with the eAdvice rollout, HK team would like to ask if this report can be sent daily? And I want to verify that if a user havent enroll to eStatement but they want to review eAdvice first, will the enrollment be captured in the enrollment report?_
+
+[~Tin.Chak] Not sure if you can assist to help answer above question from EWBB as it ties to their eAdvice/notice setup.
+
+
+author: shahadet.hossain
+comment: [~Azad], I have updated FTP scanner to accept the file names such asewbb_dnb_MMDDYYYY_1_1_hhmmss.zip
+
+[~phoebe.george]will it be a *.zip.pgp* file or *.zip* file? We have updated and tested for *.zip*file.
+
+
+author: phoebe.george
+comment: [~Azad] [~shahadet.hossain] There is one final cosmetic change for the pilot site, EWBB would like to update the following:
+ # Update the eAdvice page display with a minor update  change the Important Disclosures to Important Messages: on the right side of the landing page.
+
+!image-2022-05-19-08-39-01-293.png!
+
+Once updated, they will do a final check and provide approval on the site. If you are able to update tomorrow, they can provide final approval targeted for 5/23.
+
+Once approved, they are also finalizing their automation for file transmission (as the previous test files were sent directly to me). They would like about 5 days of file transmission, and asked if we can post some of these to pilot once transmitted to confirm automation.
+
+
+
+Based on this, let me know if any questions, or if you feel we can target a live date for 6/3.
+
+
+
+Thank you,
+
+Phoebe
+
+
+author: phoebe.george
+comment: [~Azad] [~shahadet.hossain] Wanted to confirm if the previous comment update can be done on pilot? I was hoping to get final approval today, but let me know if this can be updated for final approval by tomorrow? Thanks!
+
+
+author: azad
+comment: Hi [~phoebe.george],
+
+The Disclosure verbiage update is deployed to Pilot. Also, if we get the files via automated file transmission, we can post some of those on Pilot.
+
+[~shahadet.hossain]If you have anything to add please let us know.
+
+Thanks
+
+
+author: kericapote
+comment: [~Azad] InfoImage team should have received one HK eAdvice file named ewbb_dnb_06062022_1_1_161732.zip on June 6 around 4:17PM PT. Please help to confirm the file receipt and provide an ETA on when the file will be posted to the Pilot eStatement system.
+
+Thanks!
+
+Keri
+
+
+author: azad
+comment: Hi [~Tin.Chak],
+
+Can you suggest where might I find the zip file that Keri noted on the previous comment?
+
+[~shahadet.hossain]FYI.
+
+Thanks
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~Azad] You can get the file in /d/FTPBU/ftpbu/ewbbbu/HK from the prod PUI server. Usually files sent from the client will be in /d/FTPBU/ftpbu/
+
+
+author: shahadet.hossain
+comment: Hello [~Tin.Chak] ,
+
+The file is in pgp format(ewbb_dnb_06062022_1_1_1617*42.zip.pgp* - 42 instead of 32 at the end of the file name). The way we did setup the configuration in the scanner, it would accept zip files only. Do we need to decrypt the file manually and then upload in the scanner?
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~shahadet.hossain] Please setup the scanner to expect the file to be .zip.pgp and post on pilot.
+
+
+author: kericapote
+comment: [~shahadet.hossain] EWBB sent another file to post. Please post asap.
+
+The June 7 file is ewbb_dnb_06072022_1_1_174416.zip.
+
+Thanks!
+
+
+author: shahadet.hossain
+comment: [~kericapote]The file (ewbb_dnb_06072022_1_1_174420.zip.pgp) has been posted in the pilot.
+
+
+
+Thanks
+
+
+author: kericapote
+comment: [~shahadet.hossain] is the 6/6 file posted, too?
+
+
+author: shahadet.hossain
+comment: [~kericapote]No. Should I post that as well ?
+
+
+author: kericapote
+comment: [~shahadet.hossain] yes, please. It is not a duplicate of the 6/7 file is it?
+
+
+author: shahadet.hossain
+comment: [~kericapote]Client drop another file just a few minutes ago. Please find the attached screenshot. The one from6/7(Marked Green) is posted. I will be posting the 6/6 and 6/8 files soon.
+
+
+
+ !Screenshot 2022-06-08 173835.jpeg!
+
+
+author: shahadet.hossain
+comment: [~kericapote]Posted all three files.
+
+
+
+Thanks
+
+
+author: kericapote
+comment: [~shahadet.hossain] thanks!
+
+
+author: phoebe.george
+comment: [~shahadet.hossain] We received another file for posting to pilot site today via FTP:
+
+hk/ewbb_dnb_06092022_1_1_161337.zip.pgp
+
+Can you post to pilot also?
+
+[~Tin.Chak] Can you confirm if this has to be copied for DSI to access to post to pilot?
+
+Thanks!
+
+
+author: shahadet.hossain
+comment: [~phoebe.george]posted the file "ewbb_dnb_06092022_1_1_161337.zip.pgp"
+
+
+
+Thanks
+
+
+author: phoebe.george
+comment: [~shahadet.hossain] Sorry, one more file to post to pilot for EWBB HK eAdvice.
+
+hk/ewbb_dnb_06102022_1_1_103707.zip.pgp
+
+Thanks!
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~phoebe.george] You don't need to copy the files for DSI to post to pilot. I already directed them on how to get those files.
+
+
+author: shahadet.hossain
+comment: [~phoebe.george]I have posted the file "ewbb_dnb_06102022_1_1_103707.zip.pgp" in pilot.
+
+
+
+Thanks
+
+
+author: phoebe.george
+comment: [~shahadet.hossain] I have received approval on the pilot site from EWBB for this project.
+
+They will be sending their first production file on 6/30/22. I would like to check if we can target code release either 6/27 or 6/28.
+
+Let me know if possible and next steps to prepare for final QA and/or parallel testing.
+
+[~Tin.Chak] FYI.
+
+Also, I am updating the SOW and will include the link once completed. Thanks!
+
+
+author: azad
+comment: [~phoebe.george] Thanks for the update.
+
+I have started working on updating the Stage environment for this project. Then I will pass the ticket to QA with dnb index file and also an AUTH file to do SSO.
+
+Also [~shahadet.hossain]and I will work on updating the Production Scanner.
+
+I believe we can meet the target date 6/27 or 6/28.
+
+[~Tin.Chak] [~rifat.mahmud]FYI.
+
+Thanks
+
+Azad
+
+
+author: phoebe.george
+comment: [~Azad] Can you provide an update on preparing for QA? Thanks!
+
+
+author: azad
+comment: [~phoebe.george],
+
+I have updated the stage environment to process dnb files and the customer site updates are also done.
+
+I am requesting QA for this ticket.
+
+
+
+To QA,
+
+Please process the following sample file on stage for EWBB hong kong e-Advices.
+
+_dnb_06102022_1_06112022_0135_ewbb.txt_
+
+The file will be processed with Document process with theParallel Run and theBy Pass Dt_jobId search checked.
+
+To view the customer site, and Auth process should be run with this accounts in order to login.
+
+Please let me know if you need any help with preparing the Auth file or any issues.
+
+Thnaks
+
+Azad
+
+
+
+
+author: azad
+comment: To QA,
+
+I have run an Auth process for the accounts on_dnb_06102022_1_06112022_0135_ewbb.txt_, so that we can login to customer site for testing. All 4 accounts from the index file are mapped with the same cif number:*1709054*.Use this cif to login to customer site stage to view the eAdvices.
+
+[~phoebe.george] [~Tin.Chak]FYI.
+
+Thanks!
+
+
+
+
+author: phoebe.george
+comment: [~Azad] The first live file will be arriving on 6/30, so will request once QA is done if we can complete code release for this by EOD (our time) on 6/29.
+
+Thanks!
+
+
+author: igor.khosid
+comment: [~phoebe.george] [~Azad]
+The provided index file contains information for the only one letter (303) instead of all 4
+Please provided index file with all 4 letters
+
+
+author: igor.khosid
+comment: [~Azad]
+Any updates on the new index file?
+
+[~phoebe.george] - FYI
+
+
+author: azad
+comment: [~Igor.Khosid]
+
+I had made this test file from the previous provided index file with all letters. I did not change the account numbers so that we don't have to run another Auth process. Please run the file and check on both Customer and Admin site.
+
+*_dnb_06112022_1_06122022_0135_ewbb.txt_*
+
+Run the job by bypassing the dt job id and parallel run checked.
+
+[~phoebe.george]FYI
+
+Thanks
+
+
+author: igor.khosid
+comment: [~Azad]
+As per above descriptions, the letters names should be as follow:
+
+Transaction Advice = 301
+Deposit Confirmation = 302
+Remittance Advice Debit = 303
+Remittance Advice Credit = 304
+FX confirmation = 305
+However, all processed on-stage letters on the Admin site are the same.
+"Remittance Advice Debit" also the content of the letters - are the same
+
+[~phoebe.george] - wondering if you have the mock ups?
+
+
+author: azad
+comment: [~Igor.Khosid],
+
+I've run the file now. Document date is June 11, 2022. Account and letter mapping is following:
+ * 000028 = 301
+ * 100786 = 302
+ * 602279 = 303
+ * 602519 = 304
+ * 603022 = 305
+
+All the statements content are same. I did not have different types of letter sample. So I've used same type documents as mock up and processed with different letter codes, just to test the functionality and presentment from both Customer and Admin site.
+
+For this reason, all of those documents content are same like "Remittance Advice Debit" - as those are actually 303 type letter.
+
+[~phoebe.george]FYI
+
+Thanks
+
+
+author: phoebe.george
+comment: [~Azad] We received a test file today called: ewbb_dnb_06272022_1_1_161824.zip
+
+It has multiple notice types - can you access this to process to stage for Igor so he can check additional notice types?
+
+[~Igor.Khosid] The location of the file is in the new AC secure share folder: V:\dsi_eservices\ewbb_dnb_06272022_1_1_161824.zip
+
+File name: ewbb_dnb_06272022_1_1_161824 (this file is decrypted by DP already)
+
+Let me know if you can access so you can see what the PDF looks like for posting.
+
+Thanks,
+
+Phoebe
+
+
+author: igor.khosid
+comment: Thank you, [~phoebe.george]
+Yes - I have access and can see the files
+
+[~Azad] - please generate and provide an index file
+
+
+author: azad
+comment: [~Igor.Khosid]
+
+The file_dnb_06272022_1_06282022_0705_ewbb.txt_ is posted to Stage via Scanner. Job id:194360. Please check and let me know if you need anything.
+
+[~phoebe.george] [~Tin.Chak]FYI
+
+Thanks
+
+
+author: igor.khosid
+comment: QA - completed
+Tested with in the following records:
+Transaction Advice = 301
+Deposit Confirmation = 302
+Remittance Advice Debit = 303
+Remittance Advice Credit = 304
+FX confirmation = 305
+
+
+[06/29/2022 04:09:09] Insert enotice for acctNum: [301951] Closing date: [Mon Jun 27 00:00:00 PDT 2022] Letter Code: [301]
+[06/29/2022 04:09:09] Insert enotice for acctNum: [304278] Closing date: [Mon Jun 27 00:00:00 PDT 2022] Letter Code: [301]
+[06/29/2022 04:09:09] Insert enotice for acctNum: [600210] Closing date: [Mon Jun 27 00:00:00 PDT 2022] Letter Code: [301]
+
+[06/29/2022 04:09:07] Insert enotice for acctNum: [602820] Closing date: [Mon Jun 27 00:00:00 PDT 2022] Letter Code: [302]
+[06/29/2022 04:09:07] Insert enotice for acctNum: [602820] Closing date: [Mon Jun 27 00:00:00 PDT 2022] Letter Code: [302]
+[06/29/2022 04:09:07] Insert enotice for acctNum: [602908] Closing date: [Mon Jun 27 00:00:00 PDT 2022] Letter Code: [302]
+
+[06/29/2022 04:09:09] Insert enotice for acctNum: [601297] Closing date: [Mon Jun 27 00:00:00 PDT 2022] Letter Code: [303]
+[06/29/2022 04:09:09] Insert enotice for acctNum: [601506] Closing date: [Mon Jun 27 00:00:00 PDT 2022] Letter Code: [303]
+[06/29/2022 04:09:09] Insert enotice for acctNum: [601581] Closing date: [Mon Jun 27 00:00:00 PDT 2022] Letter Code: [303]
+
+[06/29/2022 04:09:09] Insert enotice for acctNum: [603633] Closing date: [Mon Jun 27 00:00:00 PDT 2022] Letter Code: [304]
+[06/29/2022 04:09:09] Insert enotice for acctNum: [603637] Closing date: [Mon Jun 27 00:00:00 PDT 2022] Letter Code: [304]
+[06/29/2022 04:09:09] Insert enotice for acctNum: [603673] Closing date: [Mon Jun 27 00:00:00 PDT 2022] Letter Code: [304]
+
+[06/29/2022 04:09:07] Insert enotice for acctNum: [100859] Closing date: [Mon Jun 27 00:00:00 PDT 2022] Letter Code: [305]
+[06/29/2022 04:09:07] Insert enotice for acctNum: [301118] Closing date: [Mon Jun 27 00:00:00 PDT 2022] Letter Code: [305]
+[06/29/2022 04:09:07] Insert enotice for acctNum: [601581] Closing date: [Mon Jun 27 00:00:00 PDT 2022] Letter Code: [305]
+
+
+author: azad
+comment: [~phoebe.george] [~Tin.Chak]
+
+Code is released to Production
+
+Thanks
+
+
+author: shun.kuwashima
+comment: [~Azad] EWBB does not have email approval for their other apps, yet it is enabled for enotice.  This caused some issues around email sending, I manually approved it in the database so we can send those out. Can you perhaps update the code and disable email approval so that the approval status no longer shows for only the enotice template?
+
+Also I didn't see any test enotice email jobs on lower environments. Please make sure to test emails for any new app setup so that we can catch these issues before releasing to production.
+
+[~Tin.Chak] fyi
+
+
+author: azad
+comment: Thank you [~Shun.Kuwashima]. I've updated the code. Email approval is now disabled for enotice.
+
+
+author: shun.kuwashima
+comment: Thanks [~Azad], can you also deploy that to dev and stage so that we can maintain consistency between environments?
+
+
+author: azad
+comment: [~Shun.Kuwashima]dev and stage environments are also updated.
+
+
+author: phoebe.george
+comment: [~Azad] Not sure if you are able to check anything on your end, but EWBB reported an issue with the eAdvice. I created ticket #30845 if you can view on Team Support, but I assigned to Shun to research. Thanks!
+
+
+author: shun.kuwashima
+comment: [~Azad] Per the client's last response on 7/20 around 10:54am PT, the issue resolved itself. I tried looking into it but I was not able to find anything related to it. Can you double check? Below is a few users and timestamps of when they experienced the blank page issue for the eAdvice tab:
+
+Account Number: 601440 / Timestamp: 7/20/2022 09:42 HKT (7/19 6:42PM PT)
+User Identifier 008928862
+
+Account Number: 601297, 601119, 601173, 601492, 601170 / Timestamp: 7/20/2022 11:29 HKT (7/19 8:29PM PT)
+User Identifier: 184078879
+
+
+author: azad
+comment: HI [~Shun.Kuwashima]
+
+I rechecked the logs and did not find any differences to make out the cause of this issue. Also, I am seeing the team-support ticket is also being closed.
+
+If this issue occurs again we can recheck then.
+
+I am moving this ticket to done. Let me know if any issue occurs.
+
+[~phoebe.george] [~Tin.Chak]fyi.
+
+Thanks
+
+Azad

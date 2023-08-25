@@ -1,0 +1,72 @@
+title: Architecture Overview
+body:   
+
+## Preliminary TKCU Q&A
+
+  1. Provide TKCU with the technical documentation revolving the how we encrypt and store eSafety box content:
+    1. What is the encrypt method we use?  
+ **Ans.:**  AES-256 encryption. on each file level. files eventually will be
+stored in swift as object store. Hence files cannot be read directly even got
+a copy of the files from file system.
+
+    2. Does the password used in the eSafety box act as a seed value for the encryption of the files?  
+ **Ans.:**  no, using Org-id & user-id as seed value. (Lisa will double check
+and confirm)  
+<notice>LZ: For the login password, we are hashing
+"${orgId}.${usrId}|${passwor}" with "SHA-1". For password in eSafety box, we
+are using MD5 to hash the ${password} with ${usr_id} as seed.</notice>
+
+    3. Are the files saved on shared storage or they separated in our SAN environment?  
+ **Ans.:**  They are in shared location right now, all in single swift
+deployment (multi-node), but not SAN disk anymore.
+
+    4. Would like to see the file storage architecture on how their data is stored.  
+ **Ans.:**  Dharmi will show an architecture doc around the
+Swift+OpenStack+RESTful_API+VirusScan
+
+  2. Provide TKCU with the technical documentation on our password requirements:  
+ **Ans.:**  Instead of providing too much flexibility to allow each CID to
+implement it's own password policy, we would provide a pre-set of 3 policy so
+that they can pick and choose:
+
+strongest| 8 characters, alpha + numeric + special char + min 1 upper & 1
+lower  
+---|---  
+stronger| 8 characters, alpha + numeric + special char  
+strong| 8 characters, alpha + numeric  
+    1. Are passwords changed periodically?  
+ **Ans.:**  no. maintaining password expiration policy is annoying for both
+user and service providers.
+
+    2. What are the minimum password requirements?  
+ **Ans.:**  see above
+
+    3. Can the CU define the strength of the password requirements?  
+ **Ans.:**  see above
+
+    4. How is the password stored? (i.e. What is the encryption method at?)  
+ **Ans.:**  one-way hashed value in oracle db. i.e. cannot be reverse-hashed
+to see original password
+
+  3. The following are follow-up questions that the customer was looking for a response to:
+    1. Can we disable the eSafety box password feature? The CU is concerned w/ supporting end-users with the management of passwords.  
+ **Ans.:**  yes, need some additional coding. might not be in first release,
+but soon after.
+
+    2. Can the define the password requirements at the time implementation?  
+ **Ans.:**  see above of pre-set password requirements
+
+    3. Can they have both home banking and standalone solution?  
+ **Ans.:**  Per confirmation of Kim, the answer was yes.
+
+    4. What's the average pricing model that FI's typically charge their end users?  
+ **Ans.:**  Kim would answer this one.
+
+  
+
+## Architecture Document
+
+pls see the below link  
+<http://develop.infoimage.com/attachments/download/921/InfoIMAGE%20Storage%20infrastructure.docx>
+
+

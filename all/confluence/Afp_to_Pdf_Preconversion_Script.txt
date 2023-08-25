@@ -1,0 +1,208 @@
+title: Afp to Pdf Preconversion Script
+body: ## Goal:
+
+To identify all the large-sized afp files of a specific time range and
+manually convert them into PDFs so that the front end users don't have to wait
+for long during statement viewing. If no time range is specified, this script
+will convert all the large-sized afp files found on database. This script
+would accomplish the Pre-Conversion that would be done on the Processing UI,
+but did not happen for some reason.
+
+In this script, **those afp files whose page count is >= 200, are considered
+as large-sized afp's.**
+
+## Objective:
+
+  * After converting the large-sized afp's via this script, two tables will be affected.
+    *  **ARCH_FILE:   **Two columns will be updated.
+
+      1. FILE_TYPE
+
+      2. FILE_NAME
+
+    *  **ESTMT_DOC:** Two columns will be updated.
+      1. ESD_FILENAME
+      2. ESD_DOC_TYPE
+  * For example, For EDCU, following changes will be visible in ARCH_FILE and ESTMT_DOC table (environment: pilot) :
+
+CID| Before Conversion| After Conversion  
+---|---|---  
+EDCU|
+
+#### ARCH_FILE :
+
+FILE_TYPE: afp
+
+FILE_NAME: edcums1_09302017_35673_7755.afp
+
+#### ESTMT_DOC :
+
+ESD_DOC_TYPE: afp
+
+ESD_FILENAME: edcums1_09302017_35673_7755.afp
+
+  
+
+  
+
+|
+
+#### ARCH_FILE :
+
+FILE_TYPE: pdf
+
+FILE_NAME: pdf-
+archive/prod/edcums1-09302017/edcums1_09302017_35673_7755_20210405-05_38_44.358.pdf
+
+#### ESTMT_DOC :
+
+ESD_DOC_TYPE: pdf
+
+ESD_FILENAME: pdf-
+archive/prod/edcums1-09302017/edcums1_09302017_35673_7755_20210405-05_38_44.358.pdf  
+  
+  
+
+## Workflow:
+
+  * Loop through the cid list.
+  * Find the large-sized afp files i.e. page_count>=200 within the time range( _ **if provided**_ ) for that cid.
+  * Loop through the afp files one by one and send them to Wrapper Service API with necessary information i.e. file name, zip file name,storage server, stmtType etc. Wrapper Service API will convert that AFP to a PDF.
+  * After getting the pdf from API, compare the page count between the afp file(page count from database) and the pdf file. If both page count doesn't match, an error will be thrown and it will be tracked on log files. In this case, pdf will be not saved on PV-NAS, and ESTMT_DOC and ARCH_FILE table will not be updated. 
+  * If the page count matches and testmode=false, this pdf buffer will be written on PV-NAS, and ARCH_FILE and ESTMT_DOC table will be updated with file type and file name.
+  * After converting all the large sized afp's for a cid, close the database connection for that cid and go to the next iteration of the cid list. The number of afp files found and converted pdf's will be tracked in log file.
+  * Same procedure will be repeated for all of the cid's in the cid list.
+
+## Configurations setup to run the script:
+
+  *  **resources/config.conf**  : This file contains the configurable credentials. The following fields are configured in this config file:
+
+Field Name| Format| Requirement| Functionality| Note  
+---|---|---|---|---  
+ **CID_LIST**|
+
+Comma seperated value.
+
+For example:
+
+CID_LIST=acbk,gecu,ewbb
+
+| Must Have| It determines for which CID's we want to convert the large sized
+afp files. If this field is not provided, script will not convert anything and
+terminate.| N/A  
+ **start.date**|
+
+yyyy-MM-dd
+
+For example:
+
+start.date=2009-01-01
+
+| Optional|
+
+Indicates the starting time range to identify the large sized afp files. If
+this field is provided, it means, pull those large sized afp files starting
+from this date to closing time range(if provided).
+
+If this field is not provided, it means, there is no specific starting time
+range. Script will pull all the large sized afp files whatever found on
+database till the closing time range(if provided).
+
+|
+
+If, **both start.date and end.date are privided** , all those large sized afp
+files whose closing date is within this time range will be pulled from
+database and converted to pdf. i.e. **start.date <= afp closing_date <=
+end.date**
+
+if start.date is not provided, identify and convert those afp files whose **
+closing_date <= end.date**
+
+if end.date is not provided, identify and convert those afp files whose **
+closing_date >= start.date**
+
+if **both start.date and end.date are not provided** , there is no time range.
+All the large sized afp's will be pulled from database and converted to pdf.  
+  
+ **end.date**|
+
+yyyy-MM-dd
+
+For example:
+
+start.date=2020-12-31
+
+| Optional| Indicates the end time range to identify the large sized afp
+files.
+
+If this field is provided, it means, pull those large sized afp files till
+this date.
+
+If this field is not provided, it means, there is no specific closing time
+range. Script will pull all the large sized afp files from starting time
+range(if provided) to present time.  
+  
+ **testmode**|
+
+true or false
+
+For example:
+
+testmode=true or,
+
+testmode=false
+
+| Must Have|
+
+If, testmode=true, script will not write the pdf buffer on PV-NAS and will not
+update ARCH_FILE and ESTMT_DOC table with the updated file type and file name.
+
+If testmode=false, pdf buffer will be written on PV-NAS and ARCH_FILE and
+ESTMT_DOC table will be updated with the updated file type and file name.
+
+| N/A  
+  
+ **Sample config.conf file:**
+
+config.conf
+
+testmode=false
+
+start.date=2009-01-01
+
+end.date=2020-12-31
+
+CID_LIST=snfb,ewbb,edcu,htbk
+
+  
+
+  *  **resources/api.prop:** This file contains the wrapperService api url. (The following api url is for pilot)
+
+api.prop
+
+com.infoimage.apiurl.wrapperService=<http://wrapperservice-common-
+pilot.infoimageinc.com/v1/document/>
+
+  
+
+  *  **system.prop:** This file contains database credentials along with some other system properties.
+
+## Script logs:
+
+Logs will be maintained in two files.
+
+  *  **logs/Updatelog.log:** This log file will contain the general logs of the script. 
+  *  **errorlog.txt:**  This file will contain orgName,fileName and esd_id only for those afp files which were not converted into PDF's.
+
+## How to run this script:
+
+ **Compile:  ** javac -cp .:./lib/* *.java
+
+ **Run:           **java -cp .:./lib/* Preconversion
+
+    
+    
+      
+    
+
+

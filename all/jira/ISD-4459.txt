@@ -1,0 +1,41 @@
+title: 19311 - GECU - Estatement Enrollment Issue on Android
+description: *Per client:*
+
+We are seeing a "Sorry...technical difficulties" error for an Enrolled-then-unenrolled user in Android under the Business Banking Statements SSO. The error is *only occurring in Android, not iPhone.*
+
+This is about the enrolled-then-unenrolled user seeing an error in Android under Statements SSO.
+
+At 2:13pmEST on 3/30, Enrolled-then-unenrolled-in-statements User ID Damian**** sees "Sorry...technical difficulties" error in Android.
+ At 2:19pmEST on 3/30, Enrolled-then-unenrolled-in-statements User ID Damian**** sees expected enrollment page in iOS.
+ " I unenrolled from eStatements and now I am being prompted with an error instead of the registration screen on the Android. iPhone prompted the correct registration process."
+
+
+
+*Also from GECU:*
+
+I see from the page layout, that the site is attempting to display a PDF inline in the page. Looks like they are attempting to use their own PDF renderer. Interesting, have not seen anyone try that before.
+
+The vendor needs to debug the code on their site / figure out why the error page is coming up, which is caused by the following error that is detected by the Android WebView:
+
+net::ERR_FAILED on url [https://estmts.gecu-ep.org/enroll/dummystatement.pdf]
+
+The net::ERR_FAILED can come from a resource not found error: /favicon.ico:1 Failed to load resource: the server responded with a status of 404 (Not Found)
+
+Chrome debugger is showing the following in the console:
+
+pdf.js:6211 The provided value 'moz-chunked-arraybuffer' is not a valid enum value of type XMLHttpRequestResponseType.
+ supportsMozChunkedClosure @ pdf.js:6211
+
+
+
+Client uses this type of webview:android.webkit.WebView
+
+https://developer.android.com/guide/webapps/webview
+
+
+author: shun.kuwashima
+comment: Pending screenshots from client facing team
+
+
+author: shun.kuwashima
+comment: Attached screenshots from client

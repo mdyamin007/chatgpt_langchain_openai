@@ -1,0 +1,107 @@
+title: Tomcat
+body: # Object Structure (per Apache Tomcat official documentation)
+
+  *  **Server** \- "A  **Server**  element represents the entire Catalina servlet container."
+    *  **Service** \- "A  **Service**  element represents the combination of one or more  **Connector**  components that share a single Engine component for processing incoming requests. One or more  **Service**  elements may be nested inside a [Server](https://tomcat.apache.org/tomcat-5.5-doc/config/server.html) element."
+      *  **Connector  **
+        *  **HTTP**
+        *  **AJP**
+      *  **Engine** \- "The  **Engine**  element represents the entire request processing machinery associated with a particular Catalina Service. It receives and processes  _all_  requests from one or more  **Connectors** , and returns the completed response to the Connector for ultimate transmission back to the client."
+        *  **Host  **\- "The  **Host**  element represents a  _virtual host_ , which is an association of a network name for a server (such as "demodev.infoimageinc.com" with the particular server on which Catalina is running."
+          * **Context  **\- "The  **Context**  element represents a  _web application_ , which is run within a particular virtual host. Each web application is based on a  _Web Application Archive_  (WAR) file, or a corresponding directory containing the corresponding unpacked contents."
+      *  **Nested Components**
+        *  **Global Resources**
+        *  **Loader**
+        *  **Manager**
+        *  **Realm**
+        *  **Resources**
+        *  **Valve**
+
+#  Directories
+
+ **$CATALINA_HOME/** : the base directory of the Tomcat server
+
+\--- **conf/** : contains all server configurations
+
+\------ **$ENGINE/** : configuration folder for the Engine. For us, it's the
+Catalina folder, as we have only defined one engine: Catalina.
+
+\--------- **$HOST/** : configuration folder for each host in the Engine. E.g.
+demodev.infoimageinc.com
+
+\--- **webapps/** (or i3webapps): contain the application directories, a.k.a.
+appBase
+
+\----- **$APPLICATION/** (e.g. demo): a specific appBase
+
+\-------- **ROOT/** : contains the code and libraries for the eStatement site.
+Technically, this is our main app. This is  **NOT** the code that actually
+runs the site. Tomcat uses these to generate servlet code in  **work**.
+
+\----------- **META-INF/** : contains application-level configuration that
+will override corresponding host-level configuration
+
+\----------- **WEB-INF/** : contains application-level configuration that will
+override corresponding host-level configuration
+
+\-------------- **classes** : contains all of our compiled back-end code
+
+\-------- **msm/** : contains the code and libraries for the Admin site.
+Technically, this is provided as a secondary servlet of the main app (ROOT).
+
+\-------- **ROOT.war** : the war file that will be unpacked to create
+**ROOT**
+
+\-------- **msm.war** : the war file that will be unpacked to create  **msm**
+
+\--- **work/**
+
+\------ **$ENGINE/**
+
+\--------- **$HOST/** : this where the actual code that runs our sites live.
+
+\------------ **_/:** this contains the code for main servlet (ROOT). For
+visibility purposes, this folder will now be referred to as
+**[underscore]/**.
+
+\------------ **msm/** : this contains the code for the msm servlet
+
+\------------ **ROOT/** : empty folder; Tomcat might have created this due to
+the existence of a ROOT folder in **webapps/$APPLICATION** , but since ROOT is
+being built as the base app, it's in **[underscore]/**  instead.
+
+# Life Cycle
+
+ **Server Start**
+
+  1. Configurations in ${CATALINA_HOME}/conf are read
+  2. if **unpackWARs  **config is true, Tomcat will unpack wars 
+    1. otherwise, Tomcat will use the existing  **$APPLICATION/** folders
+  3. using the configurations, code, and libraries in  **webapps/$APPLICATION/** , Tomcat creates code in  **work/**  
+
+ **Server Running**
+
+  1. if  **reloadable** is true, Tomcat will watches changes to all code and classes and reload the application if there's a change. Automatic reload only works for JSP files and static elements like HTML or CSS.
+    1. This is why Java changes won't be read. We have to trigger a manual reload; or
+    2.  **reloadable** won't unpack wars, so it is not sufficient to deploy new wars to the server only  
+
+      1. Currently, we are deleting the application folders, so that Tomcat have to rebuild them. Tomcat will then unpack the new wars.
+        * This causes downtime when the application folders are deleted. Tomcat detects a "change" and reload an empty app. 
+    3. There is known issue with jars that live outside the application folders. 
+      1. These jars are loaded by the common/shared class loaders. Their update can only be read after a full restart.
+
+ **Server Stop**
+
+  1. all servlets are killed
+
+  
+
+# Utilizing the Tomcat App Manager
+
+# Custom Error Pages
+
+  1. While the server is up, we can define alternate error pages for HTTP and Exceptions in web.xml
+  2. While the server is up, a custom error page can also be defined per webapps. 
+  3. While the server is down, we have to use the proxy to resolve, such as Apache Web Server 
+
+

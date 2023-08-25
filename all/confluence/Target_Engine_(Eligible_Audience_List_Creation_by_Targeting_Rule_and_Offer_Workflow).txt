@@ -1,0 +1,240 @@
+title: Target Engine (Eligible Audience List Creation by Targeting Rule and Offer Workflow)
+body: For better understanding the targeting rules and it's collection structure
+please follow the [Targeting Rule
+Specs](https://confluence.infoimageinc.com/display/PD1/Targeting+Rule+Specifications)
+wiki  
+  
+
+  
+
+## Purpose/Objective Summary
+
+  1. Determining the audience list based on provided targeting rules for a campaign (Applicable for all appIDs e.g. "Marketing", "Offer")
+  2. Determining the eligible audience from the filtered audiences based on the offer workflow provided in a campaign (Applicable for appID "offer" only)
+
+  
+
+## Determining the audience list based on provided targeting rules for a
+campaign (Applicable for all AppIDs)
+
+First to filter the first set of audiences based on the provided targeting
+rules in a campaign we will create a query string instead of looping through
+the whole audience list. Inside a campaign we can attach different set of
+target rules which will be operating as or operations between them. For
+example in the following campaign image we have two targeting rules ('Age>116'
+and 'Citizens of Big Apple') attached to one campaign. So the campaign will be
+eligible for both people from New York city and members who aged more than 116
+
+  
+
+  
+
+Now, inside a targeting rule there might be multiple rule groups. Under a rule
+group there can be multiple rules.
+
+  
+
+In the above targeting rule there are three rule groups.
+
+In one individual rule group the rules will be 'and' conditions. So the first
+rule group in the image will pick citizens of California who are more than 25
+years old and their credit score is more than 500.  
+Between different rules groups the condition will be 'or' operation. So all
+audiences who passes different rule groups will be eligible for this targeting
+rule.
+
+Validating the campaign dates and based on the provided rules we will create a
+custom mongo query which will fetch the audience list who are eligible for
+this campaign.
+
+Following is the proposed workflow for filtering the audience list based on
+provided targeting rules.
+
+  
+  
+
+  
+
+## Determining the eligible audience from the filtered audiences based on the
+offer workflow provided in a campaign (Will work for appID "offer"
+only)[](https://i3dev.easyredmine.com/projects/offermgmt/wiki/Target_Engine_\(Eligible_Audience_List_Creation_by_Targeting_Rule_and_Offer_Workflow\)#Determining-
+the-eligible-audience-from-the-filtered-audiences-based-on-the-offer-workflow-
+provided-in-a-campaign-Will-work-for-appID-offer-only)
+
+Once we have the audience list we will have to loop through it to process each
+of them individually for their actions on different offers.
+
+The screenshot refers to an example of an offer workflow for a campaign.
+
+  * Inforeach's campaign creation UI won't allow the users to create a loop of offers. So if the user creates a path between two offers which may make a connection to it's predecessor offer, infoReach UI won't allow it.
+  * The campaign creation UI won't allow an offer to create the same event to multiple offers. For example, from the image 'Form 1' offer cannot add another offer to 'Accepted' event as it already has 'Form 2' offer for that event.
+
+Following is the proposed workflow for creating the audience list from the
+filtered audience list by offer workflow.
+
+  
+
+ **This is how the end result audience JSON will look like**
+
+{  
+    "_id": "e305cb30-94a2-11e7-a13b-323137363832",  
+    "cid": "mtro",  
+    "appID": "offer",  
+    "audienceId": "58df241bb7cd1f2fa4271d1c",  
+    "campaignId": "3ZdCX2otoERApBTXd",  
+    "offerId": ""  
+}
+
+  
+
+  
+
+## API Endpoints
+
+Now, to achieve the mentioned workflow, we have the following API endpoints.
+
+  
+ **TargetRules**
+
+ **POST** /v1/targetRules/{cid}/targetRulesUIJson/  
+Parameters : cid, targetingRuleUIJson, appID  
+Description : Store the provided json so it can be used later to build the
+dynamic targeting rule UI. ( [Targeting Rule Specifications - Populating new-
+rule UI from client settings
+json](https://i3dev.easyredmine.com/projects/offermgmt/wiki/Targeting_Rule_Specs#section-3)
+)  
+Response in success : The inserted targeting rule object
+
+ **GET** /v1/targetRules/{cid}/targetRulesUIJson/  
+Parameters : cid, appID  
+Description : Get the stored targetingRuleUIJson by cid and appID  
+Response in success : The requested tagetingRule array
+
+ **POST** /v1/targetRules/{cid}/targetingRuleGroup/  
+Parameters : cid, appID, name, description, targetingRuleGroup  
+Description : Store the provided rule group with cid and appID ( [Targeting
+Rule Specifications - Data structure for storing target
+rules](https://i3dev.easyredmine.com/projects/offermgmt/wiki/Targeting_Rule_Specs#section-5)
+)  
+Response in success : The stored tagetingRuleGroup object
+
+ **PUT** /v1/targetRules/{cid}/targetingRuleGroup/  
+Parameters : cid, appID, name, description, targetingRuleGroupID,
+targetingRuleGroup  
+Description : Update the provided rule group by cid and appID  
+Response in success : The updated tagetingRuleGroup object
+
+ **DELETE** /v1/targetRules/{cid}/targetingRuleGroup/  
+Parameters : cid, appID, targetRuleID  
+Description : Success response
+
+ **GET** /v1/targetRules/{cid}/targetingRuleGroup/  
+Parameters : cid, appID, offset, limit  
+Description : Get the stored rule group by cid and appID  
+Response in success : The requested array of tagetingRuleGroup objects
+
+  
+
+ **Campaigns**
+
+ **POST** /v1/campaigns/{cid}/campaign/  
+Parameters : cid, appID, campaignJson  
+Description : Store the provided campaign ([Targeting Rule Specifications -
+Data structure for storing target
+rules](https://i3dev.easyredmine.com/projects/offermgmt/wiki/Targeting_Rule_Specs#section-6))  
+Response in success : Stored campaign object
+
+ **PUT** /v1/campaigns/{cid}/campaign/  
+Parameters : cid, appID, campaignID, campaignJson  
+Description : Update the provided campaign by cid, campaignID, appID  
+Response in success : Updated campaign object
+
+ **GET** /v1/campaigns/{cid}/campaign/  
+Parameters : cid, appID, offset, limit, campaignID  
+Description : Get array of required campaign objects  
+Response in success : Array of requested campaign objects
+
+ **PUT** /v1/campaigns/{cid}/activateCampaign/  
+Parameters : cid, appID, campaignID  
+Description : Activate the campaign and start the making the filtered audience
+transaction process  
+Response in success : TransactionID
+
+ **Transactions**  
+ **GET** /v1/transaction/{cid}/  
+Parameters : cid, appID, TransactionID  
+Description : Get the status of the transaction process  
+Response in success : Success/Failed/Pending
+
+ **Audiences**  
+ **GET** /v1/audience/{cid}/getAudienceByCid/  
+Parameters : cid, offset, limit  
+Description : Get the audience list by cid  
+Response in success : array of audience objects
+
+ **GET** /v1/audience/{cid}/getEligibleAudienceByFilters/  
+Parameters :  
+Required : cid, appID, offset, limit,  **detailsLevel (1 or 2)**  
+Optional : CampaignID, OfferID, RuleGroupID  
+Description : Get the audience list by cid and appID.  
+Response in success : array of audience objects.
+
+ **If detailsLevel is 1**
+
+{  
+    "_id": "e305cb30-94a2-11e7-a13b-323137363832",  
+    "cid": "mtro",  
+    "appID": "offer",  
+    "audienceId": "58df241bb7cd1f2fa4271d1c",  
+    "campaignId": "3ZdCX2otoERApBTXd",  
+    "offerId": "",  
+    "status": "active"  
+}
+
+    
+    
+      
+    
+
+  
+ **If detailsLevel is 2**
+
+{  
+    "_id": "e305cb30-94a2-11e7-a13b-323137363832",  
+    "cid": "mtro",  
+    "appID": "offer",  
+    "audienceId": "58df241bb7cd1f2fa4271d1c",  
+    "campaignId": "3ZdCX2otoERApBTXd",  
+    "offerId": "",  
+    "status": "active"   
+    "cifNumber": "746",  
+    "maritalStatus": null,  
+    "modifiedTs": NumberInt(1491009664),  
+    "phoneWork": "16177701492",  
+    "creditScore": null,  
+    "addr2": null,  
+    "currBranch": "17",  
+    "city": "QUINCY",  
+    "zip": "02169",  
+    "employeeFlag": null,  
+    "dateOfBirth": ISODate("1938-01-29T00:01:00.000+0000"),  
+    "state": "MA",  
+    "modifiedBy": "pd-dev6",  
+    "createdTs": NumberInt(1491009664),  
+    "email": "nahid.rahman@[dsinnovators.com](http://dsinnovators.com)",  
+    "phone": "6507013188",  
+    "ssn": "025289627",  
+    "name2": null,  
+    "createdBy": "pd-dev6",  
+    "creditLimit": null,  
+    "branchCode": NumberInt(17),  
+    "name": "KATHLEEN DALY",  
+    "gender": null,  
+    "fico": null,  
+    "age": NumberInt(79),  
+    "subscription": "Subscribed"  
+}
+
+  
+
+

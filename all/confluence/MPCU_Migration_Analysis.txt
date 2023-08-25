@@ -1,0 +1,888 @@
+title: MPCU Migration Analysis
+body:   
+
+Document Status|
+
+YellowDRAFT  
+  
+---|---  
+Document Owner|  
+  
+  
+
+# Maps Credit Union
+
+32circle
+
+##  ** _ROOT_**
+
+  
+|  
+  
+---|---  
+ **Login Method**|  sso7, SingleSignOn7Servlet  
+ **Enrollment Step**|  2 (Disclosure and Consent, PDF Verification)  
+ **Welcome Email**|  NA  
+ **Menu**|  Statements, Disclosure, Account Reconciliation, Profile, Exit  
+ **Account Types**|
+
+NA  
+  
+ **Statement Types**|  default, etax  
+ **Archival Period**|
+
+default = 13
+
+etax = 24  
+  
+ **Paperless Configuration**|  Non-Selective  
+ **On DP Change**|
+
+Tab closes. Go through enrollment on the next login.  
+  
+ **Delivery Preference**|
+
+Paperless - E (Currently Receiving e-Documents.)
+
+Paper - B (Paper option is not being shown. Instead a "Change" button is
+shown. This will opt-in the account to paper)  
+  
+ **Notification Preference**|  Email only  
+ **NP Link Type**|  byUsr (uses CONTACT_INFO table)  
+ **Batch Download  **| N/A  
+ **Schema**|  CU  
+ **User-Account Relation**|
+
+One to One  
+  
+### Database
+
+ **USR_SESSION** : account number as sess_login_id, has dso date.  
+**USR_MAPPING** : No record.  
+ **NOTIFICATION_PREFERENCE** : No record.
+
+### Account Types and Description
+
+NA
+
+### Login Method
+
+  *  **Vendor** : ORCCSSO
+  *  **Mapped Servlet** : SingleSignOn7Servlet
+  *  **Hash Method** : MD5
+  *  **createLogin** : true
+  *  **updateEmail** : true
+
+Data is generated with organization id and account number.
+
+Data along with or without email address is submitted to /ORCCSSO, which is
+mapped to SingleSignOn7Servlet. It returns a key.
+
+The key is submitted to /orcc_hblogin.jsp page and if everything is
+satisfactory then redirected to /home.jsp page.
+
+### SSO (sso7)
+
+  1.  **Only account number is needed for successful SSO, email is not mandatory.**
+  2. Email is not mandatory for successful SSO. But if not passed, then email will not be saved/updated in the CONTACT_INFO table. **If new account logins and email is not passed, then keygen and sso exchange will be successful but in /home.jsp, as optout page will appear, it will get a null pointer error as the CONTACT_INFO table has null email address.  **
+  3. Searches USR, USR_SESSION table by sess_login_id as account number.
+  4. If not found, 
+    1. Will not search for login(USR_SESSION) as no user exists, there shouldn't be any login. So, it will create a new login. See #5(b).
+  5. If found,
+    1. Create new FIN_ACCOUNT record if necessary and save to the database  [acct_owner_name = acctNum, status = A]
+    2. Create new PAPERLESS record if necessary and save to the database [stmtType = default, modifiedBy = 1, oldStatus = N, newStatus = B]
+    3. Create new CONTACT_INFO record. It will be saved if email is passed during sso. 
+    4. Creates new USR record and save to the database. 
+    5. Create new USR_FIN_ACCOUNT record and save to the database. [status = active]
+    6. Create new USR_SESSION record. [sess_login_id as account number, dso date]. **After that the dso date is set to null**. 
+    7. Creates new USR_SESSION record **without** dso/sso date. Does not save the record yet. It will be saved after generating the sso_key.  
+    1. Searches login(USR_SESSION) by usr_id. 
+    2. If not found, create a new login. 
+    3. The login will be saved with the key as sso_key and returned.
+  6. Email is updated during SSO if passed during SSO. If it is not passed it will not be updated.  [ in web.xml, updateEmail = true ]
+  7. After submitting the key, 
+    1. Last login date is set to session, which will be used in enotice pop reminder feature. 
+    2. The user profile is searched by this sso_key in the USR_SESSION table. 
+    3. If the user profile is not found, error is raised and redirected to /signoff.jsp page. 
+    4. If the user profile is found, set sso_key to null in the USR_SESSION table.
+    5. As REMINDER_OPTION is true,  set first_reminder_date and second_reminder_date to null in the REMINDER_STATUS table. 
+    6. Set sso date if null. 
+  8. Redirects to /home.jsp page.
+
+### DSO
+
+  1. In /login.jsp page, the user has to provide **loginId** (account number as sess_login_id in the USR_SESSION table), **password** and **email**. Those are submitted to /signon.jsp.
+  2. In /signon.jsp page, 
+    1. sess_active_status has to be **active** or **new** or **pending**.  
+    2. dso column should have date.
+    3. password has to match.
+    1. Finds the user by loginId (as sess_login_id) from the USR_SESSION table.
+    2. If the user is found and all of the following criteria are met, then the user will be successfully authenticated. 
+    3.  Update the CONTACT_INFO table with the email address provided during login. 
+    4. As REMINDER_OPTION is true,  set first_reminder_date and second_reminder_date to null in the REMINDER_STATUS table. 
+  3. Redirects to /home.jsp page.
+
+Though DSO functionalities are working fine, there are some concerns:
+
+  * No DSO user creation from both ROOT and MSM sites. 
+  * No DSO enrollment. 
+  * After checking the activity log for the last 6-7 days, we have found 2-3 hits on /login.jsp followed by /signon.jsp pages, which indicates successful login via DSO. 
+  * Client feature list indicates that MPCU does not have DSO. 
+
+### **Leading Zero Account**
+
+Account numbers are trimmed off leading zeros during SSO.
+
+### Welcome Email
+
+NA
+
+###  **Enrollment**
+
+Two steps:
+
+  1. Disclosure and Consent:
+    1. Terms and Conditions are shown. 
+    2. Has to give consent on receiving e-statements. 
+    3. Clicking the "Accept" button will redirect to the next step. 
+  2. PDF Verification:
+    1. Sample PDF is shown to check if the user can view it. 
+    2. If the "I can not view the statement" button is clicked, an exit notice is shown. This page has two buttons: "Go to Adobe's download page" and "Return to previous page". 
+    3. If the "I can view the statement" button is clicked, proceed to the home page.
+
+### Enrollment Logic
+
+  * The sso exchange page redirects the user to the /home.jsp page. From there the check for enrollment is done in the /events.jsp page. 
+  *  **If paperless status for this account is not "E", then the enrollment is triggered.**
+  * SSO date is not being checked to determine enrollment. 
+  * Successful enrollment does not send any welcome message.
+
+### Statement Types & Archival Period
+
+Two types of statements are
+
+  * ESTMT_DOC: default ==> 24
+  * ETAX: etax ==> 84
+
+### Delivery Preference
+
+  * Paper = B, Paperless = E, New = N.
+  * Going paper does not trigger enrollment automatically. 
+  * If the user goes to paper, the browser tab will be automatically closed after 10 seconds. After that the next time the user will login to the site, he/she has to go through enrollment. 
+
+### Notification Preference
+
+  * Only Email is supported. No SMS. 
+  * Uses CONTACT_INFO table. 
+  * Email is auto updated by SSO if email is provided. Also, saved(old) accounts which do not have an email in the CONTACT_INFO table an update email form (see screenshot below) will appear before redirecting to the home page. See the screenshot below.
+
+### Paperless Configuration
+
+Non-selective. Can't assign different emails to different statement types.
+
+### NP Link Type
+
+byUSR. Uses CONTACT_INFO table.
+
+### Menu Tabs
+
+  * Statements
+    * default and etax.
+    * Does not show account number.
+    * Shows view/not-view status.
+    * Has inserts. Shows only for default statements. 
+    * Viewing check option is disabled. Though a servlet (ImageServlet) is configured in web.xml. 
+  * Disclosure
+    * Disclosure opens in a new tab and shows a jsp page (disclosureVerbiage.jspf).
+  * Account Reconciliation
+    * Opens in a new tab and shows an HTML form (acct_recon.html), which can be edited and then printed out.
+  * Profile 
+    * A box is shown with Delivery Preference and Email Address. 
+    *  **Delivery preference is only changeable from paperless to paper.**
+      *  **Paperless (E)** : Currently Receiving e-Documents.
+      *  **Paper (B)** : Paper option is not being shown. Instead a "Change" button is shown. This will opt-in the account to paper.
+    * Notification Preference is not shown. 
+    * Can not change Email Address from profile page. 
+  * Exit
+    * A confirmation prompt is shown. 
+
+* * *
+
+## _**MSM**_
+
+### Account Management
+
+  1. Can search for an account by account number and email address. 
+  2. Shows Account Number, Account Name, Email Address, Paperless Status, Delivery Preference, Paperless History and Statements. 
+  3. Can change delivery preferences. **Only changeable from paperless to paper.  **
+  4. Can view paperless status history. 
+  5. No statement reassignment. 
+
+  
+
+### Email Proofing
+
+  1. Email notification templates:
+    1. e-Statements
+    2. e-Tax
+    3. Password Update
+    4. AI User Removal
+  2. Keywords: 
+    1.  **MEMBER (Account Name)**
+    2.  **TAX_LIST**
+    3.  **ADMIN_FULLNAME** (Pass update and AI User Removal)
+  3. Can upload email content from a file.
+
+### Upload Inserts
+
+  1. Inserts available for only e-Statements (default type)
+  2. PDF file only. File size limit 1.5 MB. 
+  3. Closing date and Date range. 
+
+  
+
+### Reports
+
+  1. Latest Stats: not available in InfoTRAC 
+  2. User Login Activity
+  3. AI Login Activity
+  4. AI User Activity
+  5. AI User Modification Activity Report
+  6. Email Address Collection
+  7. Paperless
+
+### Administration
+
+  1. Can change admin user's credentials. 
+  2. Can create/view/modify/remove other users that have lower privileges.
+  3. Roles: 
+    1. Admin Superusers
+    2. Admin Managers
+    3. Admin Users
+    4. Admin Guests
+
+### Exit
+
+Exits the MSM site with a confirmation page.
+
+### **Concerns/Confusions about MSM**
+
+  1. Email Proofing: 
+    1. No support for the keyword: ADMIN_FULLNAME
+    2. Can't upload content from the local machine. 
+  2. Reports: Latest Stats report is not available in InfoTRAC.
+
+* * *
+
+##  _ **PUI**_
+
+### BACKEND PROCESSES
+
+  1. acctlookup
+  2. afp
+  3. etax
+  4. ecl
+
+### Settings
+
+  * global.multipleStmtType=true
+  * global.multipleDocType=false
+  * global.enableAccountType=false
+  * global.autoRegister=true
+  * global.enableAccountLookup=true
+  * global.ssoKey=mpcu
+
+### Statement Types and Index file prefix
+
+  * global.ms1=default
+  * global.pa1=default
+
+### ACCTLOOKUP Process
+
+#####  **Flags**
+
+  * acctlookup.classPath=com.infoimage.processing.application.acctlookup.handler.DefaultAcctLookupHandler
+  * acctlookup.delimitor=\t
+
+####  **Handler:** **DefaultAcctLookupHandler**
+
+#### Process
+
+  * Get all records in the ACCT_NUM_LOOKUP table for an organization and delete them all. 
+  * Get old and new account numbers from the index file, remove leading zeros (if any).
+  * If no old_acct_num and new_acct_num combination are not found, insert into ACCT_NUM_LOOKUP table.
+
+### AFP Process
+
+#####  **Flags**
+
+  * afp.compression=false
+  * afp.isZipped=true
+  * afp.copyZipBuffer=65536
+  * afp.storage.path=b
+  * afp.preprocess.step.1=acctlookup
+  * afp.default.automatedEmailNotification=true
+
+####  **Data: AfpStatementData9**
+
+  1. Each line in the process file must contain 12/13/14/15 fields. 
+  2. FIelds: **_fileName_** _|_ ** _acctNum_** _|_ ** _beginDate_** _|_ ** _closingDate_** _|_ ** _numOfPages_** _|_ ** _acctName_** _| SSN | appType | messageIds | hasCheckStr | insertId | regionCode | crippleFlag | zipFileName_
+
+####  Registrar: MessageEStmtRegistrar3
+
+  1. ACCT LOOKUP is a pre-process for AFP. After parsing through the index file and before registering the data, this pre-process is run.
+    1. The one that is mapped with a new account number, get the "new_acct_num" and replace the "old_acct_num" in the data object with the new account number from the database table. 
+    2. The one which is mapped with itself will not get any modification. 
+    1. For each account number, go through the ACCT_NUM_LOOKUP table to find if the account number has an entry. 
+    2. If found, then there should be 2 entries. One is mapped with a new account number and the other is mapped with itself.  
+    3. For both accounts, the ESTMT_DOC table will get statement values inserted/updated. 
+    4. So, for each row in the AFP index file, there might be 2 records with same file name in the ESTMT_DOC table. 
+  2. Fetch account from FIN_ACCOUNT by account number and type.
+  3. Always creates a new account if not found. 
+  4. As autoRegister is true, it will create a new user profile. And map the user with the account. 
+  5. If account exists,
+    1. Check the **_acctName_** provided by the index file. If it does not match with the account name in the database, update it in the FIN_ACCOUNT table. 
+    2. Does not update account name if the name is either "MEMBER" or "CUSTOMER". 
+  6. Inserts Paperless record: 
+    1. If no record is found, create a new Paperless record: Old = N, New = B.
+    2. If the statement type is not default, create a new record for default statement type. 
+  7. Inserts statement data in ESTMT_DOC, ARCH_FILE and ESTMT_FILE. 
+  8. Inserts record in P_JOB_ESTMT.
+
+#####  **Database Inserts**
+
+  1. FIN_ACCOUNT: status -- "A"
+  2. USR
+  3. USR_SESSION: sess_login_id -- account number, dso -- date
+  4. USR_FIN_ACCOUNT: status -- "active"
+  5. PAPERLESS: old -- "N", new -- "B"
+  6. ESTMT_DOC, ARCH_FILE, ESTMT_FILE
+  7. P_JOB_ESTMT
+
+  
+
+### ETAX Process
+
+#####  **Flags**
+
+  * etax.compression=false
+  * etax.preprocess.step.1=acctlookup
+  * etax.createAccount=false
+  * etax.isZipped=true
+  * etax.copyZipBuffer=32768
+  * global.etax.needApproval=false
+  * etax.automatedEmailNotification=true
+
+####  **Data: ETaxData3**
+
+  1. Fields: **acctNum** | **type** | **afpFileName** | **date** | suffix | appType | ssn | **zipFileName**  
+  2. As isZipped is true, the total field has to be 8.
+
+#### Registrar: ETaxRegistrar3
+
+  1. Fetch account from FIN_ACCOUNT table by account number and type. 
+  2. If the account is not found, **will not create a FIN_ACCOUNT record**. 
+  3. Though **autoRegister** is true, **if an account is found, it will not create any user profile.**  
+  4. Insert paperless record for both "default" and "etax". 
+  5. Inserts etax data in ETAX and ARCH_FILE.
+  6. Inserts into P_JOB_ETAX.
+  7. Insert into the P_JOB_EMAIL table with auto send true. 
+
+##### **Database Inserts**
+
+  1. PAPERLESS: old -- "N", new -- "B"
+  2. ARCH_FILE, ETAX
+  3. P_JOB_ETAX
+  4. P_JOB_EMAIL
+
+### ECL Process
+
+#####  **Flags**
+
+  * ecl.classPath=com.infoimage.processing.application.ecl.handler.DefaultEclHandler4
+  * ecl.purge=false
+  * ecl.append=false
+  * ecl.delimiter=|
+  * ecl.clientType=cu
+  * ecl.combination=AcctNum,Email
+  * ecl.totalColumns=2
+
+####  **Handler: DefaultEclHandler4**
+
+  1. Each line must contain 2 fields. 
+  2. Field: **_acctNum_** _|_ ** _email_**  
+  3. Account number will be trimmed off leading zero(s). 
+
+#### Process
+
+  1. Get ci_id and usr_id from FIN_ACCOUNT, USR_FIN_ACCOUNT and USR table by organization name and account number. 
+  2. If ci_id or usr_id is not found, throws an error indicating that the user does not exist.
+  3. Insert into the CONTACT_INFO table with ci_id, ci_email_addr. 
+  4. Update USR and set ci_id. 
+
+##### **Database Inserts**
+
+  1. CONTACT_INFO
+
+  
+
+### Undeliverable Report
+
+#####  **Flags**
+
+  * undeliverableReport.classPath=com.infoimage.processing.application.file.upload.handler.bounceback.CUUndeliverableReport
+  * undeliverableReport.deBug=false
+  * undeliverableReport.method=client_pickup
+  * undeliverableReport.clientPickupPath=/d/SECURE3/Usr/MPCU/client_pickup
+  * undeliverableReport.notifyClient=true
+  * undeliverableReport.insertToDB=true
+  * undeliverableReport.email.subject=MPCU: Undeliverable Report Available
+  * undeliverableReport.email.recipients=statements@[mapscu.com](http://mapscu.com)
+  * undeliverableReport.email.bcc_recipients=dp@[infoimageinc.com](http://infoimageinc.com)
+  * undeliverableReport.email.templatePath=/com/infoimage/processing/application/file/upload/email/client_pickup4.txt
+  * undeliverableReport.pickup_time=5
+  * undeliverableReport.mailersvr.host=ha_zimbra
+  * undeliverableReport.emailServer.cluster=true
+  * undeliverableReport.mailersvr.user=mapscu
+  * undeliverableReport.mailersvr.password=creditunion
+  * undeliverableReport.senderEmailAddress=mapscu@[mailerserver.com](http://mailerserver.com)
+  * undeliverableReport.paperless_status.update=false
+  * undeliverableReport.email_status.update=true
+  * undeliverableReport.email.to_be_processed=Inbox
+  * undeliverableReport.email.message_id=ci_id
+  * undeliverableReport.email.start_flag=<!-- Message Number:
+  * undeliverableReport.email.end_flag=-->
+  * undeliverableReport.email.pui_usr_id=1
+  * undeliverableReport.email.accts_to_skip=0
+  * undeliverableReport.email.server=zimbra
+
+####  **Handler: CUUndeliverableReport**
+
+  1. Grab email servers from the database (HA_SERVER table). For MPCU, emailServer = [mailpost.infoimageinc.com](http://mailpost.infoimageinc.com)
+  2. Retrieve all bounceback emails from this mail server. 
+    1. For each message, insert into the EMAIL_ERR table with org_id, acct_number as sess_login_id, email_address and current timestamp.
+    2. As paperless_status.update is false, it will not set paperless status to "B". 
+    3. As email_status.update is true, it will update the CONTACT_INFO table to set ci_is_eaddr1_valid to "N". 
+  3. Generates the report that looks for em_last_modified_date, which should be the same date that the process is being run. 
+    1. Queries from the EMAIL_ERR and FIN_ACCOUNT table to generate report data. 
+  4. As insertToDB is true, it will insert report data into the SUMMARY_REPORT table. 
+  5. Encrypt the file with pgp encryption. 
+  6. As notifiyClient is true,
+    1. Get template from templatePath (from conf file).
+    2. Send the mail through PostOffice.
+
+ **Flags needed for BouncebackReportAPI**
+
+  * bounceBackReportAPI.classPath=com.infoimage.processing.application.file.upload2.bouncebackReport.ReportGenerator
+  * bounceBackReportAPI.paperless_status.update=false
+  * bounceBackReportAPI.email.invalidate=true
+  * bounceBackReportAPI.email.invalidate.status="B"
+
+  
+
+### Client Paperless Report
+
+#####  **Flags**
+
+  * clientPaperlessReport.classPath=com.infoimage.processing.application.file.upload.handler.ClientPaperlessReport2
+  * clientPaperlessReport.method=client_pickup
+  * clientPaperlessReport.clientPickupPath=/d/SECURE3/Usr/MPCU/client_pickup
+  * clientPaperlessReport.notifyClient=true
+  * clientPaperlessReport.email.subject=MPCU: Paperless Report Available
+  * clientPaperlessReport.email.recipients=statements@[mapscu.com](http://mapscu.com)
+  * clientPaperlessReport.email.templatePath=/com/infoimage/processing/application/file/upload/email/client_pickup5.txt
+  * clientPaperlessReport.file.delimiter=,
+  * clientPaperlessReport.file.reportTimeRange=1
+  * clientPaperlessReport.file.reportFormat=acctType|acctNum|paperlessStatus|modifiedDate
+  * clientPaperlessReport.file.timeZone=US/Pacific
+
+####  **Handler: ClientPaperlessReport2**
+
+  1. Will not save report data to SUMMARY_REPORTS table. (uploadToInfoTRAC is false)
+  2. As notifyClient is true, it will send email. And the email will be sent via PostOffice.
+
+ **Query for MPCU client paperless report**
+
+>  _SELECT  _
+>
+>  _     fa.acct_number AS acctNum, fa.acct_owner_name AS acctName, fa.type AS
+> acctType, _
+>
+>  _     p2.p_latest_status AS paperlessStatus, p2.p_modified_date AS
+> modifiedDate, _
+>
+>  _     p2.stmt_type AS stmtType,_
+>
+>  _     CASE WHEN um.cif_num is not null THEN um.cif_num_
+>
+>  _         WHEN usr_firstname is not null THEN usr_firstname_
+>
+>  _         ELSE 'InfoIMAGE'_
+>
+>  _     END as modifiedBy_
+>
+>  _FROM Fin_Account fa, Paperless2 p2_
+>
+>  _     LEFT JOIN Usr_Mapping um on p2.p_modified_by = um.usr_id_
+>
+>  _     LEFT JOIN Usr u on p2.p_modified_by = u.usr_id and usr_firstname like
+> 'mpcu\\\\_%'     escape '\\\'_
+>
+>  _WHERE fa.org_id = getorgid(?)_
+>
+>  _     AND fa.acct_id = p2.acct_id_
+>
+>  _     AND p2.stmt_type = ?_
+>
+>  _     AND p2.p_modified_date BETWEEN ? AND ?_
+>
+>  _     ORDER BY p2.p_modified_date ASC;_
+
+  
+
+### Email Processing
+
+####  **Flags**
+
+  * email.default.needApproval=false
+  * afp.default.automatedEmailNotification=true
+  * etax.automatedEmailNotification=true
+
+#### ESTMT Handler: EStmtEmailHandler5
+
+Get recipients who satisfies the following criteria:
+
+  1. ESTMT_DOC: _status_ is null or "9", _esd_email_status_ is null
+  2. CONTACT_INFO: _ci_email_addr_ is not null
+  3. USR: _ci_id_ is not null
+  4. PAPERLESS2: _p_latest_status_ is one of "E", "U" or "W", _stmt_type_ is "default"
+
+#### ETAX Handler: ETaxEmailHandler4
+
+Get recipients who satisfies the following criteria:
+
+  1. ETAX: _status_ is null or "9", _esd_email_status_ is null
+  2. CONTACT_INFO: _ci_email_addr_ is not null
+  3. USR: _ci_id_ is not null
+  4. PAPERLESS2: _p_latest_status_ is one of "E" or "U", _stmt_type_ is "default"
+  5. P_ETAX_EMAIL: _etax_id_ is not null
+
+####  **Configuration needed to send via API**
+
+  * notification.isSendEmailViaAPI=true
+  * notification.isEmailManageByEstmt=false
+
+* * *
+
+## Analysis Summary (ROOT)
+
+Scope| Feature| MPCU Business| Hypercube| Note  
+---|---|---|---|---  
+SSO| User Enrollment Logic|
+
+  *  **If paperless status for this account is not "E", then the enrollment is triggered.**
+  * SSO date is not being checked to determine enrollment. 
+  * Successful enrollment does not send any welcome message.
+
+|  48 complete **Alternatively Supported** 49 incomplete Not Supported
+
+  
+
+|
+
+In Hypercube, a user goes through enrollment if he/she never logged in via SSO
+(no date in sso column).
+
+Client will use default (sso date based) enrollment logic.
+
+  
+  
+  
+Enrollment Step 1| Disclosure & Consent|  53 complete **Supported** 54
+incomplete Not Supported |  
+  
+Enrollment Step 2| Verify PDF Viewing|  55 complete **Supported** 56
+incomplete Not Supported |  
+  
+Misc|
+
+  * Email is updated via SSO if provided. 
+  * No DSO date will be saved. 
+
+|  59 complete **Supported** 60 incomplete Not Supported |
+
+  * Can be supported by  _ssoUserUpdate_ flag.
+
+  
+DSO|  
+|
+
+  * No DSO user creation from both ROOT and MSM sites. 
+  * No DSO enrollment. 
+  * After checking the activity log for the last 6-7 days, we have found 2-3 hits on /login.jsp followed by /signon.jsp pages, which indicates successful login via DSO. 
+  * In the USR_SESSION table, we have found maximum session records have dso date. This records may had been put by AFP process. Also, the SSO process does not explicitly sets the dso date to null. For this reason, those dso dates persist to this day. 
+  * Client feature list indicates that MPCU does not have DSO.
+
+Although, one can successfully perform dso login by providing
+loginId(sess_login_id), password and email address.
+
+|  5 complete **Needs Feedback** | Need confirmation whether MPCU will have
+DSO or not.  
+User Account Relation|  
+|  
+|  
+|  
+  
+Menu| Tab (Statements, eTax)| Shows viewed/unviewed status for Mortgage and
+Analysis Statements. |  61 incomplete Supported 62 complete **Not Supported**
+| Hypercube currently does not show any viewed/unview status.(Low priority)  
+Tab (Disclosure)| Disclosure opens in a new tab and shows a jsp page
+(disclosureVerbiage.jspf).|  64 complete **Supported** 65 incomplete Not
+Supported |  
+  
+Tab (Account Reconciliation)| Opens in a new tab and shows an HTML form
+(acct_recon.html), which can be edited and then printed out.|  6 complete
+**Supported** 7 incomplete Not Supported |  
+  
+Tab (Profile)|
+
+  * Can change Delivery Preference from Paperless to Paper only.
+  * Paper option is not being shown. Instead a "Change" button is shown to go from paperless to paper. 
+  * Going paper will close the browser window in 10 seconds. User will go through enrollment next time he/she logins and will be forcefully enrolled to receive e-Statements. 
+  * Can not change Email Address. 
+  * Verbiage:
+    *  **Paperless (E)** : Currently Receiving e-Documents.
+    *  **Paper option is not being shown.  **
+
+|  8 complete **Needs Feedback** |
+
+In hypercube, enabling the "unenrollOnDeliveryPreferenceChange" and
+"forcePaperlessOnEnroll" flags will support the scenario to force enroll while
+shift to paper.
+
+  
+  
+  
+Exit|  
+| Exits the ROOT site with a confirmation page.|  
+|  
+  
+  
+  
+
+## Analysis Summary (MSM)
+
+Scope| Features| MPCU Business| InfoTRAC | Note  
+---|---|---|---|---  
+Account Management| Account Search|
+
+Search for an account by account number and email address.
+
+|  72 complete **Supported** 73 incomplete Not Supported |  
+  
+Data Display|
+
+  1. Shows Account Number, Account Name, Email Address, Paperless Status, Delivery Preference, Paperless History and Statements. 
+  2. Can view paperless status history. 
+  3. No statement reassignment.
+
+|  74 complete **Supported** 75 incomplete Not Supported |  
+  
+Changing Delivery Preference|
+
+Can change delivery preferences. **Only changeable from paperless to paper.
+**
+
+|  76 complete **Supported** 77 incomplete Not Supported |  
+  
+Changing Email Address| Can't change email address. But can save email address
+if not present in the database. |  78 complete **Supported** 79 incomplete Not
+Supported | In Hypercube, email address will always be present in the
+Notification_Preference table.  
+Email Proofing| Templates|
+
+  1. e-Statements
+  2. e-Tax
+  3. Password Update
+  4. AI User Removal
+
+|  80 complete **Supported** 81 incomplete Not Supported |  
+  
+Keywords|
+
+  1.  **MEMBER (Account Name)**
+  2.  **TAX_LIST**
+  3.  **ADMIN_FULLNAME** (Pass update and AI User Removal)
+
+|  84 complete **Supported** 85 incomplete Not Supported | No support for
+ADMIN_FULLNAME keyword in InfoTRAC.  
+Upload Template| Can upload email content from a file.|  86 incomplete
+Supported 87 complete **Not Supported** |
+
+InfoTRAC does not provide support to upload email content from file stored in
+storage.
+
+Minor issue.  
+  
+Upload Inserts| Statements with insert|
+
+  1. Inserts available for only e-Statements (default type)
+  2. PDF file only. File size limit 1.5 MB. 
+  3. Closing date and Date range.
+
+|  88 complete **Supported** 89 incomplete Not Supported |  
+  
+Reports| Available Reports|
+
+  1. Latest Stats
+  2. User Login Activity
+  3. AI Login Activity
+  4. AI User Activity
+  5. AI User Modification Activity Report
+  6. Email Address Collection
+  7. Paperless
+
+|  90 complete **Supported** 91 incomplete Not Supported | Latest Stats is not
+available in InfoTRAC  
+Administration|  
+|
+
+  1. Can change admin user's credentials. 
+  2. Can create/view/modify/remove other users that have lower privileges.
+  3. Roles: 
+    1. Admin Superusers
+    2. Admin Managers
+    3. Admin Users
+    4. Admin Guests
+
+|  92 complete **Supported** 93 incomplete Not Supported |  
+  
+Exit|  
+| Exits the MSM site with a confirmation page.|  
+|  
+  
+  
+  
+
+  
+
+## Analysis Summary (PUI)
+
+Process| Prefix| Backend Business| Mismatch with Hypercube Business| Changes
+Needed  
+---|---|---|---|---  
+Acctlookup|
+
+  
+
+|
+
+Handler: DefaultAcctLookupHandler
+
+  * Get all records in the ACCT_NUM_LOOKUP table for an organization and delete them all. 
+  * Get old and new account numbers from the index file, remove leading zeros (if any).
+  * If no old_acct_num and new_acct_num combination are not found, insert into ACCT_NUM_LOOKUP table.
+
+|
+
+  
+
+|
+
+  
+  
+  
+Afp| ms1, pa1|
+
+Data: AfpStatementData9
+
+Registrar: MessageEStmtRegistrar3
+
+Afp files should be processed by Doc if the client will migrate to Hypercube
+
+|
+
+  1. Sets DSO date in USR_SESSION table.
+  2. Sets account number as sess_login_id in USR_SESSION table.
+  3. Does not put records in USR_MAPPING table. 
+
+|
+
+Use HypercubeEStmtRegistrar.
+
+If Afp is moved to Doc, then the following flags are needed:
+
+  1. global.nullDsoTime=true
+  2. global.acctNumAsLoginId=false
+  3. doc.compression=true
+  4. doc.preprocess.step.1=acctlookup
+
+  
+Etax| etax|
+
+Data: ETaxData3
+
+Registrar: ETaxRegistrar3
+
+| Current configuration does not support Hypercube business.| Etax process
+does not create any accounts or users. So, no changes needed.  
+Ecl|  
+|
+
+Handler: DefaultEclHandler4
+
+  1. Get ci_id and usr_id from FIN_ACCOUNT, USR_FIN_ACCOUNT and USR table by organization name and account number. 
+  2. If ci_id or usr_id is not found, throws an error indicating that the user does not exist.
+  3. Insert into the CONTACT_INFO table with ci_id, ci_email_addr. 
+  4. Update USR and set ci_id. 
+
+  
+
+|
+
+Puts data in CONTACT_INFO table.
+
+|
+
+Add the following flags to put email in the NOTIFICATION_PREFERNECE table.
+
+global.email.storage=notifyPref  
+  
+Reports|  
+|
+
+  1. Undeliverable Email Report
+  2. Client Paperless Report
+
+|  
+| Should be moved to Bounceback Report  
+Email|  
+|
+
+ESTMT Handler: **EStmtEmailHandler5**
+
+ETAX Handler **:** **ETaxEmailHandler4**
+
+|  
+|
+
+Should be moved to NotifyPrefEmailHandlers.
+
+Also, the following flags are needed:
+
+  * notification.isSendEmailViaAPI=true
+  * notification.isEmailManageByEstmt=false
+
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+

@@ -1,0 +1,113 @@
+title: RH2 - Parallel: BANB NSF failed to process
+description: [~William.Kong]: Please see tail end of logging printed to screen:
+
+
+
+/home/test/master/isisdisk_daily.sh banbdns s /z/daily/banbdns/banbdns114.txt 1
+
+new online proofing check flags .....
+new online proofing url is http://is-apps-stage.infoimage.com/infosync/v1
+working directory is /z/daily/banbdns/
+looking for log file with error of wrong start page
+ /home/test/master/get_infotrac.pl banb dns
+DBI connect('PARALLEL','isparallel',...) failed: ORA-01017: invalid username/password; logon denied (DBD ERROR: OCISessionBegin) at /home/test/master/Setdb2.pm line 82
+Couldn't connect to database : ORA-01017: invalid username/password; logon denied (DBD ERROR: OCISessionBegin) at /home/test/master/Setdb2.pm line 82.
+/home/test/master/isisdisk_daily.sh: line 510: [: too many arguments
+/home/test/master/isisdisk_daily.sh: line 513: /: Is a directory
+cp: cannot stat `/z/daily/banbdns/*.???.afp': No such file or directory
+Converting all AFP print files to PDF ....
+Calling perl /home/test/master/pdf_print_sample.pl /z/pdf_afp/banb/banbdns/print_sample/afp/ /z/pdf_afp/banb/banbdns/print_sample/pdf/ prod ..../home/test/master/pdf_print_sample.pl, Can't locate /z/pdf_afp/banb/banbdns/print_sample/afp/
+find: /z/pdf_afp/banb/banbdns/print_sample/pdf/: No such file or directory
+No PDF print sample was generated. Please confirm!
+SMTP RCPT command failed:
+5.1.1 <Email_Test>: Recipient address rejected: User unknown in local recipient table
+
+at /home/test/master/daily_mail2.pl line 128
+cp: cannot stat `/z/daily/banbdns/banbd*.???.afp': No such file or directory
+Error: Incorrect declaring new object. Missing database name
+USAGE: new Setdb(test|prod)
+cp: cannot create regular file `/z/share/alice/daily/banb/10/banbd*.print.080114': No such file or directory
+cp: cannot stat `/z/daily/banbdns/*.sepprint': No such file or directory
+cp: cannot stat `/z/daily/banbdns/*.sepprint': No such file or directory
+/z/daily/banbdns/banbd*.print
+SMTP RCPT command failed:
+5.1.1 <Email_Test>: Recipient address rejected: User unknown in local recipient table
+
+at /home/test/master/daily_mail2.pl line 128
+banb process .... completed
+/z/daily/banbdns/banbd*.print
+SMTP RCPT command failed:
+5.1.1 <Email_Test>: Recipient address rejected: User unknown in local recipient table
+
+at /home/test/master/daily_mail2.pl line 128
+cripple percentage: 0
+Moving /z/daily/banbdns/banbdn001.bad to /z/daily/banbdns/BANB_NSF_crippled_rpt_101420.txt
+zipping /z/daily/banbdns/BANB_NSF_crippled_rpt_101420.txt.zip
+ adding: BANB_NSF_crippled_rpt_101420.txt (deflated 74%)
+copying /z/daily/banbdns/BANB_NSF_crippled_rpt_101420.txt.zip to /z/infoftps3/BANB/client_pickup/
+SMTP RCPT command failed:
+5.1.1 <Email_Test>: Recipient address rejected: User unknown in local recipient table
+
+at /home/test/master/daily_mail2.pl line 128
+
+
+
+
+
+
+author: william.kong
+comment: [~glenn.grimes]: Sorry Glen! I forgot to remove the old database IP address when we switched systems yesterday. Can you retest?
+
+
+author: glenn.grimes
+comment: [~William.Kong] Overall the reprocessing looks to have run fine and it did process to completion (numbers seem to be matching as well); however, the following errors did get sent to log file:
+
+
+
+oper1@rh2 banbdns> grep -i 'error' *log*
+banbdns114.log:Error when calling API curl -X POST http://is-apps-stage.infoimage.com/infosync/v1/infotrac/online_proofing/extended_mail_tracking/proc_id/693553/cid/banb/user_id/oper1 -H accept: application/json -H Content-Type: application/json -d \{ state: submitted, type: full, message: Request to insert, full_txt_name: banbdns11420201015092355.txt}
+banbdns114.log:Error: /home/test/master/trigger_tracking_by_rec.pl /z/isd_share/banb/print_fileid/banbdns11420201015092355.txt
+banbdns114.log:apy call is curl -X PUT http://is-apps-stage.infoimage.com/infosync/v1/infotrac/online_proofing/extended_mail_tracking/proc_id/693553/cid/banb/user_id/oper1 -H accept: application/json -H Content-Type: application/json -d \{ state: warning, message: Communication error between print process & IndexFileProcessor, warning_code: 102, warning_desc: Unable to submit the job to indexfileprocessor}
+banbdns114.log:Error when calling API curl -X PUT http://is-apps-stage.infoimage.com/infosync/v1/infotrac/online_proofing/extended_mail_tracking/proc_id/693553/cid/banb/user_id/oper1 -H accept: application/json -H Content-Type: application/json -d \{ state: warning, message: Communication error between print process & IndexFileProcessor, warning_code: 102, warning_desc: Unable to submit the job to indexfileprocessor}
+
+
+author: william.kong
+comment: [~glenn.grimes]: Thanks for reporting this issue.
+
+
+
+
+
+[~shailendrar] & [~anil.dasa]: Is the {color:#de350b}*staging/parallel*{color} indexfileprocess not available or down? Please advise.
+
+
+author: anil.dasa
+comment: [~William.Kong]
+
+Stage environment is not ready for infotrac and indexFileProcess. We are waiting for port access to run application.
+
+
+author: anil.dasa
+comment: [~davidt]
+
+Do you have any ticket for network team to give port access to stage? We have created a smart sheet for port access.
+
+
+author: william.kong
+comment: [~glenn.grimes]:
+
+
+
+Please re-test this in*parallel.* Once completed please update Parallel smartsheet:
+
+[https://app.smartsheet.com/sheets/Gxwc79WFwW3wxqc2QJPvrp22CQrgf3Qgjv4R7pF1]
+
+
+
+
+author: glenn.grimes
+comment: [~William.Kong] I have reprocessed this job, everything ran fine and I did not see any errors appearing in the log. I went ahead and passed this in the parallel smartsheet.
+
+
+author: william.kong
+comment: [~glenn.grimes]: Thanks for the update! I'm closing the ticket out now.

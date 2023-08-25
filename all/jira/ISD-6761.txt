@@ -1,0 +1,488 @@
+title: MVCU - [26115][pvt] eTax XREF File Setup
+description: Description: eTax XREF File Setup for FICS and Corelation Taxes
+
+Description/Assessment:
+
+IS Assessment
+ =============
+ Hours for development: 5 IS hours
+
+Assessment Details (IS):
+ =================
+
+Create post processing script to duplicate 1099INT etax index file and testing for etax posting with ISD
+
+(reference to fnbk_etax_idx_duplicate.pl)
+
+Add link for etax index duplicate script
+
+/d/tax/prep/mvcu/mvcu_etax_post_handle_1099i.pl -> /home/master/mvcu_etax_idx_duplicate.pl
+
+1099INT data file must have only one combine Rec-B for each member.
+
+Use only SSN# to get all member# and post same tax form to all member#.
+
+Note: Tax form cannot display account# in box. Because the box cannot fit multiple account#.
+
+client will send two separate xref files - one for FICS data file and the other for Corelation data file.
+
+xref file will have two fields (SSN#|Member#)
+
+example:
+
+SSN#|Member#
+
+123456779|12345
+
+123456779|123456
+
+123456779|1234567
+
+Timeline:
+
+Turnover to IS 4/4/22
+
+Sample to QA: 8/29/22
+
+Sample to client: 8/31/22
+
+Sample approval: 9/5/22
+
+Parallel: 9/07/22
+
+LIVE DATE: 9/14/22
+
+
+
+ISD:
+
+enable etax.createAccount, etax.isSharingAfps
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~phoebe.george] Can you add the ISD estimate (1hr)? Thanks.
+
+
+author: shun.kuwashima
+comment: [~eric.yan] Please take care of this
+
+
+author: eric.yan
+comment: https://jira.infoimageinc.com/browse/IS-983
+
+
+author: phoebe.george
+comment: Still pending confirmation on some IS items; updating due date to 6/13/22.
+
+
+author: JIRAUSER10906
+comment: [~eric.yan]
+
+Hi Eric, please post the following index file to pilot:etax_1099int_12312021_311_05192022_125022_mvcu
+
+Thanks!
+
+
+author: JIRAUSER10906
+comment: [~eric.yan]
+
+We may come across a situation with the client's Corelation data file in which we cannot populate the account number. In this case, would it be okay for us to use a dummy account number  such as "NA", "0",or "99999" for the first field 'Account Number' in the etax index file?
+
+
+author: eric.yan
+comment: [~phoebe.george], [~SamV2021]
+
+Could you ask PC to turn on estmt job tracking. It's showing posting error now.
+
+"Online Proofing Approval: Job requires Approval but ESTMTJOBTRACKING is not Y"
+
+
+author: phoebe.george
+comment: [~eric.yan] This has been enabled by PC.
+
+Does [~SamV2021] need to reprocess now that this is enabled?
+
+
+author: eric.yan
+comment: [~SamV2021],
+
+yes, please reprocess and the index file should auto post. Let me know when it's finished reprocessing.
+
+
+author: JIRAUSER10906
+comment: [~eric.yan]
+
+Reprocessed the FICS data file as segment 11 instead of segment 1 (since FICS should be ran as segment 11). Index file:etax_1099int_12312021_3111_05242022_133327_mvcu.txt
+
+Please check if the index file has been posted to pilot successfully.
+
+
+author: eric.yan
+comment: [~SamV2021],
+
+It's still showing the same error for ESTMTJOBTRACK.
+
+[ERROR] Online Proofing Approval: Job requires Approval but ESTMTJOBTRACKING is not Y
+
+
+
+One thing I noticed is that the dt_job_id reads999999-C01.01-V21966, but this should be seg 11.
+
+
+
+
+author: JIRAUSER10906
+comment: [~eric.yan]
+
+Thanks for catching that. I have reprocessed again.
+
+Is it still showing the same error for ESTMTJOBTRACK? Thanks!
+
+
+author: eric.yan
+comment: [~SamV2021]
+
+Yes, I'm still seeing the same error. I've sent an email to PC to confirm and CC you in it.
+
+
+author: JIRAUSER10906
+comment: [~eric.yan]
+
+I have changed the VID to match what was provided by PC and reprocessed in parallel.
+
+Please check again. Thanks!
+
+
+author: eric.yan
+comment: [~SamV2021]
+
+It's posted now.
+
+[~phoebe.george],
+
+Some accounts are posted, eg.1110237596
+
+Some didn't post because they are new accounts. Should I enable creating accounts for new accounts?
+
+
+author: JIRAUSER10906
+comment: [~eric.yan]
+
+Please post the following index file for the data file from their other core (Keystone Corelation) to pilot:etax_1099int_12312021_311_05272022_040240_mvcu
+
+Note that since the client's data file does not contain account numbers in fields 21-40, we are populating the account number for them during preprocessing using the cross reference file provided by the client and the TIN in the data file. There are many TINs that exist in the data file that do not exist in the cross reference (910 out of 25375). For these accounts, an account number of '' is being used in the etax index file. Is this okay to be used as a dummy value?
+
+[~phoebe.george]
+
+I am still waiting on updated cross reference files (pipe-delimited, fixed file naming convention, and in .txt format) from the client so that I can finalize the code to be sent to QA for review. I am also attaching a log of TINs [^mvcu_1099int_corelation_011922_0952_nonmatch_report.log]found in the test data file MVCU_1099INT_Corelation_011922_0952_PROD.txt.pgp that do not exist in the cross reference last provided "Keystone Cross Reference File.xlsx.pgp". This log will later be sent as a report to the client.
+
+
+author: JIRAUSER10906
+comment: [~eric.yan] [~phoebe.george]
+
+Any updates?
+
+Thanks!
+
+
+author: eric.yan
+comment: [~phoebe.george],
+
+The new index file was already posted, but it needs to be approval and released on infotrac stage.
+|999999-C11.01-V22607|Tax - Keystone 1099 I|
+
+[~SamV2021], FYI
+
+
+author: JIRAUSER10906
+comment: [~eric.yan]
+
+There were issues with the output for the Keystone 1099INT that was posted. I have addressed these issues and have reprocessed in staging.
+
+Please post the following index file to pilot:etax_1099int_12312021_311_06052022_184506_mvcu.csv
+
+Thanks!
+
+
+author: eric.yan
+comment: [~SamV2021]:
+
+I think the file was processed in staging and it's posted already.
+
+For pilot, you might need to processing in pilot for posting because it' requires dt_job_id for approval.
+
+"[ERROR] Online Proofing Approval: Job requires Approval but missing DT_JOB_ID"
+
+[~phoebe.george],
+
+You could approve the latest sample on infotrac and view them now.
+
+
+author: JIRAUSER10906
+comment: [~eric.yan]
+
+For posting the index file to pilot, could you post it manually by bypassing the the dt_job_id?
+
+
+author: eric.yan
+comment: [~SamV2021]
+
+Yes I could! It's posted now.
+
+
+
+[~phoebe.george]
+
+The sample is ready for viewing on pilot, no approval needed sicne dt_job_id is bypassed.
+
+
+author: eric.yan
+comment: [~phoebe.george],
+
+Is there any update from the client?
+
+
+author: eric.yan
+comment: [~phoebe.george],
+
+Could you provide a new live date since it's past due and pending client response.
+
+
+author: JIRAUSER10906
+comment: [~eric.yan]
+
+Hi Eric, can you please post the following index files to pilot:
+ * *1098 Keystone Corelation:* etax_1098_12312021_311_08252022_153838_mvcu
+ * *1098 FICS:*etax_1098_12312021_311_08252022_155132_mvcu
+
+Please also bypass DT_JOB_ID if needed.
+
+
+author: eric.yan
+comment: [~SamV2021], [~phoebe.george],
+
+
+
+*1098 Keystone Corelation:*etax_1098_12312021_311_08252022_153838_mvcu
+
+Posting gives errors: "AFP file does not exist inside the Zip file" for all accounts;
+
+*1098 FICS:*etax_1098_12312021_311_08252022_155132_mvcu
+
+Most accounts do not exist in the database, please advise if I should turn on creating new account for posting.
+
+
+
+
+author: phoebe.george
+comment: [~eric.yan] Yes, please enable for new account to be created for posting this. This will not normally be the case in production because these are live member numbers that exist in production today. However, they most likely don't exist in pilot because this is the first time we're posting for eTax. Thanks!
+
+
+author: eric.yan
+comment: [~phoebe.george],
+
+*1098 FICS:*etax_1098_12312021_311_08252022_155132_mvcu has been successfully posted.
+
+Sample accoutns:
+
+1000185092
+
+1000186251
+
+
+
+[~SamV2021]
+
+*1098 Keystone Corelation:*etax_1098_12312021_311_08252022_153838_mvcu didn't post because it's using the same cycle and seg # as the othe job "311". So the afp files get overwritten. Please rerun using a different segment per the job procedure file.
+
+
+author: JIRAUSER10906
+comment: [~eric.yan]
+
+Hi Eric,
+
+Please try posting this instead for *1098 Keystone Corelation:*etax_1098_12312021_312_08292022_095556_mvcu.txt
+
+Thanks!
+
+
+author: eric.yan
+comment: [~SamV2021], [~phoebe.george],
+
+1098 Keystone is also posted.
+
+100003560
+
+100371190
+
+
+author: JIRAUSER10906
+comment: [~eric.yan]
+
+Hi Eric, can you please post the following index file to pilot:
+ * *1098 Keystone Corelation:*etax_1098_12312021_311_09082022_144727_mvcu
+
+This e-tax index file was produced with the latest update made.
+
+Thanks,
+Sam
+
+
+author: eric.yan
+comment: [~SamV2021],
+
+The index file is posted.
+
+100003560
+
+100371190
+
+150 afp files are reported not in the zip file. I've attached the log here and it's error code 112.
+
+
+
+
+author: JIRAUSER10906
+comment: [~eric.yan]
+
+Hi Eric, is appears to me that error code 112 occurs for entries in the e-tax index file that are duplicated using the cross reference file provided by the client. When I check to see if the individual afp exists in the zip file, it is there.
+
+Take for example line#74 in the index file:
+
+*30123170|1|mvcu_12312021_25107330_991.afp|12312021|||483741363|mvcu_1098_12312021_311_0.zip;*
+
+The afp referenced there  mvcu_12312021_25107330_991.afp  exists in the zip file. However, a different entry which references this exact afp, line #69:
+
+*25107330|1|mvcu_12312021_25107330_991.afp|12312021|||483741363|mvcu_1098_12312021_311_0.zip;*
+
+did not generate any error per the log. Is it possible that this error code 112 is being generated when the same individual afp is being referenced by another account number, rather than it not being in the zip file?
+
+As long as the statements are viewable for both accounts above, we should be good.
+
+Thanks,
+Sam
+
+
+author: eric.yan
+comment: [~phoebe.george],
+
+There's a flag that needs to be turned on in order to post the same statements to different accounts. But just as a reminder, It has the potential consequence of posting the wrong statements to the wrong accounts. Please confirm if this flag to be turned on.
+
+
+
+[~SamV2021]
+
+FYI
+
+
+author: phoebe.george
+comment: [~eric.yan] I'm confirming with MVCU and will provide an update.
+
+Thank you,
+
+Phoebe
+
+
+author: phoebe.george
+comment: [~eric.yan] Please enable this flag in pilot for posting the duplicate accounts. Please confirm once done.
+
+Thank you,
+
+Phoebe
+
+
+author: eric.yan
+comment: [~phoebe.george],
+
+*1098 Keystone Corelation*has been reposted succesfully, please advise the client to review.
+
+
+author: JIRAUSER10906
+comment: [~eric.yan]
+
+Hi Eric, per client and Phoebe's request, I have changed the FICS tax process to post to a different account number (Keystone account number instead of FICS Loan Number). Please post the following index files to pilot and ensure that the flag to post the same statement to different accounts is enabled:
+ 1098 FICS:etax_1098_12312021_3111_10042022_232534_mvcu
+ 1099-INT FICS: etax_1099int_12312021_3111_10042022_232535_mvcu
+
+Here are a couple Keystone Acct#s that are present in both index files:
+ * 70255479
+ * 43137890
+
+[~phoebe.george] 
+ Phoebe, please note that for both FICS 1098 and 1099I, there are FICS Loan Numbers in the data file in which there no match in the xref. So, there are many accounts in the etax index file that are still posted to the FICS Loan Number. In order to post all accounts to the Keystone Acct#, the xref would have to contain every FICS Loan Number that is present in the IRS data file.
+
+Please also review the most recent 1098 Keystone Corelation posting since the flag for posting the same statement to duplicate accounts has been enabled.
+
+Thanks,
+ Sam
+
+
+author: phoebe.george
+comment: [~eric.yan] Can you confirm if you were able to post the new index files that Same provided? Thanks!
+
+
+author: eric.yan
+comment: [~phoebe.george], [~SamV2021],
+
+Both index files are posted.
+
+
+author: phoebe.george
+comment: [~eric.yan] [~SamV2021] Please note that MVCU has reviewed accounts and so far look good. I noted the above items from Sam's previous comment and pending a response on that.
+
+[~SamV2021] If you have time, can you send me 1-2 accounts that were not part of the XREF file for the FICS side? Thanks!
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+Here are a couple accounts (FICS Loan #s) that were present in the data file, but not in the FICS XREF file:
+
+1098:mvcu_1098_FICS_012022_0911_PROD.001.pgp
+ * 1000243398
+ * 993333268
+
+1099-INT:mvcu_1099_FICS_011322_1127_PROD.001.pgp
+ * 417149604
+ * 620236845
+
+Thanks,
+Sam
+
+
+author: phoebe.george
+comment: [~eric.yan] When MVCU was trying to look up accounts that were flagged as 'duplicate', they are getting the following error message - the error displayed when they were trying to pull up the tax form itself, but were able to get into the pilot site as normal.
+
+!image-2022-10-19-08-57-40-942.png!
+
+
+
+[~SamV2021] MVCU is asking how may accounts did not have a match in the xref file; they cannot yet tell what is causing the examples to be left off the file, and hoping to confirm how many total so they can ensure they query correctly for the xref file to fix this issue.
+
+
+
+Thanks,
+
+Phoebe
+
+
+author: phoebe.george
+comment: [~eric.yan] Have you had a chance to take a look at this error when trying to pull up the PDF? Thanks!
+
+
+author: eric.yan
+comment: [~phoebe.george],
+
+What account number did the client check? I've checked a few on the pilot site and all etax forms are able to load. What does it by "flagged duplicate"?
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+Hi Phoebe, here are the total number of instances in each data file (1098 and 1099i) where there was no match in the FICS XREF file:
+
+mvcu_1098_FICS_012022_0911_PROD.001.pgp  1772 accounts
+
+mvcu_1099_FICS_011322_1127_PROD.001.pgp  5 accounts
+
+

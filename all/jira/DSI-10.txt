@@ -1,0 +1,667 @@
+title: NCR - SSO Upgrade
+description: Add new SSO. See attached specs
+
+
+author: dipak.mondal
+comment: Hi Joe,
+
+Will it be a new auth method or update any existing method? Which cid is going to use it?
+
+
+author: admin
+comment: Fnbk will be the first one. But still use demo for testing. What do you mean new Auth method. This is a new SSO
+
+
+author: dipak.mondal
+comment: Hi Joe,
+
+For every sso we have a auth method such as {{digitalInsightV1}} , BB. So currently fnbk is using {{digitalInsightV1}} so this might be an enhancement of this method. is it?
+
+
+author: shahadet.hossain
+comment: No Dipak. This will be a new method. Any client should be able to use this method and do SSO. So far, you can test with DEMO. After testing we may need to change the current method of FNBK.
+
+
+author: dipak.mondal
+comment: Hi Joe,
+
+These params are need to clarify :
+
+In Data Exchange section params and their value represents?
+
+FI_ID:  This field is the DI internal ID for the subject Financial Institution?
+USER_ID: The ID of the subject  user on the Financial Institutions host processing system?
+
+In User Accounts Data xml section params and their value represents?
+
+id:    ?
+hostValue:   ?
+displayValue:    ?
+billPayValue:    ?
+pfmValue:     ?
+rdcAccountValue:    ?
+rawHostValue:     ?
+
+
+author: admin
+comment: FI_ID is constant for a given CID.
+
+
+
+Well be getting samples requests to verify the other information. I would say most of the values you put there (id, hostValue,etc) wont be used by us so we can ignore those.
+
+
+author: admin
+comment: Pasting the timeline here
+
+1/14  1/31: Discuss and finalize SSO specification.
+
+2/1  2/25: Development
+
+2/25  2/28: Onshore testing and configuration
+
+3/1  4/12: Integration testing with NCR
+
+4/15  5/3: FNBK SSO testing
+
+5/8  Live
+
+
+author: dipak.mondal
+comment: sample ncr sso and sso method structure
+
+<h2>DEMO</h2>
+
+<form method="post" action="[http://localhost:3000/ssoKeyGen?"|http://localhost:3000/ssoKeyGen?%22]>
+
+FI_ID : <input name="FI_ID" value="12345">
+
+<br/>
+
+USER_ID : <input name="USER_ID" value="1111222233">
+
+<br/>
+
+USER_ACCOUNTS XML<input type="text" name="USER_ACCOUNTS" value="<Accounts><account><type>DD</type><nickName>Checking1</nickName><accountNumber>123451</accountNumber></account><account><type>NA</type><nickName>Checking</nickName><accountNumber>12345</accountNumber></account></Accounts>">
+
+{code}<br/>{code}
+SESSION_ID : <input name="SESSION_ID" value="54488111111sfsgdfgd">
+
+<br/>
+
+{code}  Password : <input name="password" value="fh1A8*pPn">{code}
+<br/>
+
+CID : <input name="cid" value="demo">
+
+<br/><br/>
+
+<input type="submit">
+
+</form>
+
+<form action="[http://localhost:3000/ssoExchange?"|http://localhost:3000/ssoExchange?%22] method="post">
+
+<input type="hidden" name="cid" placeholder="Enter key" value="demo">
+
+<input type="text" name="key" placeholder="Enter key" value="">
+
+<input type="submit">
+
+</form>
+
+
+
+
+
+"ncr": \{
+
+{code} "password": "fh1A8*pPn",
+
+ "usrAutoCreate":"y",
+
+ "acctAutoCreate":"y",
+
+ "checkPrimaryUser":"n",
+
+ "removeUFA": "y",
+
+ "acctTypeRequired": "n",
+
+ "captureAcctDesc":"y"{code}
+\}
+
+I just used sample value for all input params
+
+please have a look and give me a feedback.
+
+
+author: dipak.mondal
+comment: Hi Joe,
+
+Please check latest updated sso file and sso method structure for GUID
+
+
+
+{code:html}<h2>DEMO</h2>
+
+<form method="post" action="http://localhost:3000/ssoKeyGen?">
+
+FI_ID : <input name="FI_ID" value="12345">
+
+<br/>
+
+USER_ID : <input name="USER_ID" value="1111222233">
+
+<br/>
+
+USER_ACCOUNTS XML<input type="text" name="USER_ACCOUNTS" value="<Accounts><account><type>DD</type><nickName>Checking1</nickName><accountNumber>123451</accountNumber></account><account><type>NA</type><nickName>Checking</nickName><accountNumber>12345</accountNumber></account></Accounts>">
+<br/>
+
+SESSION_ID : <input name="SESSION_ID" value="54488111111sfsgdfgd">
+
+<br/>
+GUID : <input name="GUID" value="ykovmkjizpu-so4drewuh4ckqkjkwvdbob-yiunrtwq">
+
+<br/>
+User Type : <input name="user_type" value="P">
+
+<br/>
+Password : <input name="password" value="fh1A8*pPn">
+
+<br/>
+
+CID : <input name="cid" value="demo">
+
+<br/><br/>
+
+<input type="submit">
+
+</form>
+
+<form action="http://localhost:3000/ssoExchange?" method="post">
+
+<input type="hidden" name="cid" placeholder="Enter key" value="demo">
+
+<input type="text" name="key" placeholder="Enter key" value="">
+
+<input type="submit">
+
+</form>{code}
+
+
+
+
+
+{code:json}"ncr": {
+      "password": "fh1A8*pPn",
+      "usrAutoCreate":"y",
+      "acctAutoCreate":"y",
+      "checkPrimaryUser":"n",
+      "removeUFA": "y",
+      "acctTypeRequired": "y",
+      "delimiterNotRequireForSubuser": true,
+      "captureAcctDesc":"y"
+    }{code}
+
+
+
+
+author: dipak.mondal
+comment: 
+
+{code:javascript},
+        'ssoKeyGen.ncr': function (params, cid, mergedProperties, method) {
+        	var fi_id = params.FI_ID;
+            if(fi_id == ""){
+               return false;
+            }
+            var xml = params.USER_ACCOUNTS;
+            xml = xml.replace(/[\t\v\f\r\u00a0\u2000-\u200b\u2028-\u2029\u3000\n]+/g,"");
+            var accountList={};
+            try{
+                xml2js;
+                accountList = xml2js.parseStringSync(xml);
+            } catch (e){
+                logger.error(cid + " serverMethods/auth.js :: ssoKeygen.ncr - XML parser is not defined or Error while parsing xml in ncr method.");
+                return false;
+            }
+            var password = params.password;
+            if (mergedProperties['ssoMethod'][method].password == password){
+                logger.info(cid + " serverMethods/auth.js :: ssoKeyGen.ncr - Password match found ");
+                var encryptedToken,userId;
+                var currentDateTime = new Date();
+                var userType = params.user_type;
+                var subUserId = params.GUID;
+                var primaryUserId = params.USER_ID;
+                var delimiterNotRequired = mergedProperties['ssoMethod'][method].delimiterNotRequireForSubuser;
+                currentDateTime = +currentDateTime.setSeconds(currentDateTime.getSeconds() + Meteor.App.TOKEN_VALIDITY_TIME);
+                var paramJson = {};
+                var accounts = [];
+                var catchDsc = mergedProperties['ssoMethod'][method]['captureAcctDesc'];
+                var isCatchDsc = false;
+                if(catchDsc)  {
+                    isCatchDsc = catchDsc.toUpperCase() == "Y"?true:false;
+                }
+                _.each(accountList.Accounts.account, function (item) {
+                	if(isCatchDsc) {
+                        accounts.push({
+                            "acctNum": item.accountNumber[0],
+                            "acctType": item.type[0],
+                            "acctDesc": item.nickName[0]
+                        });
+                    }else {
+                        accounts.push({
+                            "acctNum": item.accountNumber[0],
+                            "acctType": item.type[0]
+                        });
+					}
+                });
+                if(userType == "N"){
+                    if(delimiterNotRequired) {
+                        userId = subUserId;
+                        paramJson.isSecondary = "Y";
+                    } else {
+                        userId = primaryUserId + "|" + subUserId;
+                    }
+                    paramJson.checkPrimaryUser = mergedProperties['ssoMethod'][method]['checkPrimaryUser'];
+
+                } else{
+                    userId = primaryUserId;
+                    primaryUserId = "";
+                    paramJson.checkPrimaryUser = "n";
+                }
+                paramJson.userId = userId;
+                paramJson.primaryUserId = primaryUserId;
+                paramJson.cid = cid;
+                paramJson.loginType = Meteor.App.findLoginType(mergedProperties, method);
+                paramJson.time = currentDateTime;
+                paramJson.kaToken  = params.SESSION_ID;
+                paramJson.removeUFA = mergedProperties['ssoMethod'][method]['removeUFA'];
+                paramJson.acctAutoCreate = mergedProperties['ssoMethod'][method]['acctAutoCreate'];
+                paramJson.usrAutoCreate = mergedProperties['ssoMethod'][method]['usrAutoCreate'];
+                paramJson.captureAcctDesc = catchDsc;
+                paramJson.accNo = accounts;
+                Meteor.call("keyGen.encryptForCid", JSON.stringify(paramJson), cid, function (error, cipherText) {
+                    encryptedToken = cipherText
+                });
+                return encryptedToken;
+            } else{
+                logger.error(cid + " serverMethods/auth.js :: ssoKeyGen.ncr :: Password does not match");
+                return false;
+            }
+        }{code}
+
+
+
+
+author: samira.iffat
+comment: A. currently for user Type P   and for example CiF :123  , user is created with CIF without pipeline.
+
+Query 
+
+# In primary Flag in usr mapping table will there be a  P ?
+
+
+
+B. currently for user Type N   and for example CiF :123 user is created  and cif with pipeline  like ( userid | GUID) 
+
+Query :
+
+1. In primary Flag in usr mapping table will there be a  S
+
+2. As it is a subuser, is this is the subuser of the Primary user earlier created?  will there be any relation in user_tree table.
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi Samira, Ive talked to Joe, and he told me that this should follow the same logic as bottomline. 
+
+
+
+There should be an S in the primary user flag field when user is of type S.
+
+
+
+Thanks
+
+
+author: dipak.mondal
+comment: Based on below api request a sub user is creating without any primary user. Is that correct flow or it is mandatory to have a primary user before creating a sub user?
+
+{code}2019-04-17 15:18:36:6750 - info: demo server/methods.js :: ssoEnrollmentApi {"accounts":[{"acctNum":"449944","acctType":"DD","acctDesc":"Checking1"},{"acctNum":"553214","acctType":"NA","acctDesc":"Checking"}]} 1111222299|ykovmkjizts-No4drewuh4ckqkjkwvdbob-yiunrtwq y y 10.1.0.177 N byUfa n y 1111222299 y y
+2019-04-17 15:18:36:6750 - info: demo server/methods.js :: ssoEnrollmentApi https://devapi.infoimageinc.com/infoservice/api/v1/user/demo/account/enrollment?cif=1111222299|ykovmkjizts-No4drewuh4ckqkjkwvdbob-yiunrtwq&acctAutoCreate=y&usrAutoCreate=y&acctLookup=N&npLinkType=byUfa&updateHoldStatus=n&checkPrimaryUser=y&primaryUser=1111222299&removeUFA=y&captureAcctDesc=y&isSecondary=y
+2019-04-17 15:18:38:0930 - info: demo server/methods.js :: ssoEnrollmentApi - Accounts from sso updated successfully{code}
+
+
+
+
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi,
+
+By default, the primary user needs to exist, but its not mandatory.
+
+It should be a config setting.
+
+
+
+Thanks\!
+
+
+author: dipak.mondal
+comment: [^sso-local.html]
+
+New NCR sso file for one way login instead of submitting generated key
+
+
+author: admin
+comment: We just had a troubleshooting call with NCR. Well need to make some changes on our end. The field USER_ACCOUNTS is not actually where the XML data will be sent. It will actually be under the XML_DATA attribute. Ive attached the AttributeStatement.xml with the test sample that will be coming into infoimage. Can we get the SSO updated to support that?
+
+
+
+Also NCR confirmed that the userid attribute will be the CIF number and they will make an update to include the SSN in the userInfo as well. We may need to utilize that field for the NEFCU setup. Ive updated the JIRA ticket as well with the sample XML.
+
+
+author: dipak.mondal
+comment: Hi Joe,
+
+I have made some changes based on your sample xml file on ncr auth method. Looks like given account list xml are not well formated and after converting json we are having following json.
+
+Given XML CDATA:
+
+
+
+{code:xml}<userInfo>
+	<userGUID>ef2785b5e5004233b8cd8ed558bc03c5</userGUID>
+	<userID>tpvcerts1</userID>
+	<name>Ferris Bueller</name>
+	<email>sf250134@ncr.com</email>
+	<phoneNumber></phoneNumber>
+</userInfo>
+<accounts>
+	<number1>0008572</number1>
+	<description1>Happy Savings</description1>
+	<type1>SAVINGS</type1>
+	<number2>0008599</number2>
+	<description2>Emergency Savings</description2>
+	<type2>SAVINGS</type2>
+	<number3>0075</number3>
+	<description3>Daily Checking</description3>
+	<type3>CHECKING</type3>
+	<number4>912685</number4>
+	<description4>Business Checking</description4>
+	<type4>CHECKING</type4>
+	<number5>18694</number5>
+	<description5>Health  Emer Checking 2</description5>
+	<type5>CHECKING</type5>
+	<number6>19595</number6>
+	<description6>Money  Market</description6>
+	<type6>MONEY_MARKET</type6>
+	<number7>19023</number7>
+	<description7>Child Savings</description7>
+	<type7>SAVINGS</type7>
+	<number8>18697</number8>
+	<description8>Ferris's Checking</description8>
+	<type8>CHECKING</type8>
+	<number9>31123</number9>
+	<description9>Quote Checking</description9>
+	<type9>CHECKING</type9>
+	<number10>172023</number10>
+	<description10>TEST CHECKING</description10>
+	<type10>CHECKING</type10>
+	<number11>10</number11>
+	<description11>ATM1 - Checking</description11>
+	<type11>CHECKING</type11>
+	<number12>11</number12>
+	<description12>ATM2 - Checking</description12>
+	<type12>CHECKING</type12>
+	<number13>170000000</number13>
+	<description13>Savings 1</description13>
+	<type13>SAVINGS</type13>
+	<number14>209000000</number14>
+	<description14>Savings 2</description14>
+	<type14>SAVINGS</type14>
+	<number15>270000000</number15>
+	<description15>Savings 3</description15>
+	<type15>SAVINGS</type15>
+	<number16>09</number16>
+	<description16>CHECKING ACCOUNT</description16>
+	<type16>CHECKING</type16>
+	<number17>323219</number17>
+	<description17>Line of Credit</description17>
+	<type17>LINE_OF_CREDIT_LOAN</type17>
+	<number18>4334131080000054</number18>
+	<description18>Visa  asiv</description18>
+	<type18>CREDIT_CARD_LOAN</type18>
+	<number19>200479160</number19>
+	<description19>Mortgage  Loan</description19>
+	<type19>MORTGAGE_LOAN</type19>
+	<number20>2012001076</number20>
+	<description20>Mortgage  Loan 2</description20>
+	<type20>MORTGAGE_LOAN</type20>
+	<number21>302389920</number21>
+	<description21>Mortgage  Loan 3</description21>
+	<type21>MORTGAGE_LOAN</type21>
+	<number22>8881316</number22>
+	<description22>Visa</description22>
+	<type22>CREDIT_CARD_LOAN</type22>
+	<number23>8881317</number23>
+	<description23>MasterCard</description23>
+	<type23>CREDIT_CARD_LOAN</type23>
+	<number24>5454570010000133</number24>
+	<description24>Amex</description24>
+	<type24>CREDIT_CARD_LOAN</type24>
+</accounts>{code}
+
+Converted Accounts JSON:
+
+
+
+{code:json}[{
+	"number1": ["0008572"],
+	"description1": ["Happy Savings"],
+	"type1": ["SAVINGS"],
+	"number2": ["0008599"],
+	"description2": ["Emergency Savings"],
+	"type2": ["SAVINGS"],
+	"number3": ["0075"],
+	"description3": ["Daily Checking"],
+	"type3": ["CHECKING"],
+	"number4": ["912685"],
+	"description4": ["Business Checking"],
+	"type4": ["CHECKING"],
+	"number5": ["18694"],
+	"description5": ["Health  Emer Checking 2"],
+	"type5": ["CHECKING"],
+	"number6": ["19595"],
+	"description6": ["Money  Market"],
+	"type6": ["MONEY_MARKET"],
+	"number7": ["19023"],
+	"description7": ["Child Savings"],
+	"type7": ["SAVINGS"],
+	"number8": ["18697"],
+	"description8": ["Ferris's Checking"],
+	"type8": ["CHECKING"],
+	"number9": ["31123"],
+	"description9": ["Quote Checking"],
+	"type9": ["CHECKING"],
+	"number10": ["172023"],
+	"description10": ["TEST CHECKING"],
+	"type10": ["CHECKING"],
+	"number11": ["10"],
+	"description11": ["ATM1 - Checking"],
+	"type11": ["CHECKING"],
+	"number12": ["11"],
+	"description12": ["ATM2 - Checking"],
+	"type12": ["CHECKING"],
+	"number13": ["170000000"],
+	"description13": ["Savings 1"],
+	"type13": ["SAVINGS"],
+	"number14": ["209000000"],
+	"description14": ["Savings 2"],
+	"type14": ["SAVINGS"],
+	"number15": ["270000000"],
+	"description15": ["Savings 3"],
+	"type15": ["SAVINGS"],
+	"number16": ["09"],
+	"description16": ["CHECKING ACCOUNT"],
+	"type16": ["CHECKING"],
+	"number17": ["323219"],
+	"description17": ["Line of Credit"],
+	"type17": ["LINE_OF_CREDIT_LOAN"],
+	"number18": ["4334131080000054"],
+	"description18": ["Visa  asiv"],
+	"type18": ["CREDIT_CARD_LOAN"],
+	"number19": ["200479160"],
+	"description19": ["Mortgage  Loan"],
+	"type19": ["MORTGAGE_LOAN"],
+	"number20": ["2012001076"],
+	"description20": ["Mortgage  Loan 2"],
+	"type20": ["MORTGAGE_LOAN"],
+	"number21": ["302389920"],
+	"description21": ["Mortgage  Loan 3"],
+	"type21": ["MORTGAGE_LOAN"],
+	"number22": ["8881316"],
+	"description22": ["Visa"],
+	"type22": ["CREDIT_CARD_LOAN"],
+	"number23": ["8881317"],
+	"description23": ["MasterCard"],
+	"type23": ["CREDIT_CARD_LOAN"],
+	"number24": ["5454570010000133"],
+	"description24": ["Amex"],
+	"type24": ["CREDIT_CARD_LOAN"]
+}]{code}
+
+Problem is accounts array length only one with one object but that should be 24 length with 24 objects. Is it the final xml format then we have to think any other way to manipulate it. I have checked-in my changes in hypercube svn branch. The chance is only in auth.js file. I will do further changes after vacation.
+
+
+author: dipak.mondal
+comment: New sso file based on new sample xml.
+
+[^sso-local (b1c4a463-c50e-4f41-ab13-a8109abee16c).html]
+
+
+
+
+author: admin
+comment: NCR made updates on their end. Take a look at the SAML Response.txt attachment for the updated request
+
+
+
+
+author: dipak.mondal
+comment: I have started working on it
+
+
+author: dipak.mondal
+comment: Hi Joe,
+
+Here is new sso file based on new SAML response and code is checked in both branch and trunk.
+
+Here is few differences between specification and last response sample:
+
+1: XML_DATA was optional in specification but it contains userInfo such as userId, userGUID, name, email, phone as xml data in response sample
+
+2: name,email,phone was not in specification.
+
+3:  SESSION_ID is missing in response sample
+
+[^sso-local(2).html]
+
+
+
+
+author: dipak.mondal
+comment: Hi Joe,
+
+
+
+as SAML requested data is following format which is an encrypted data. I think we have to decrypt it using the same process that the process is used to encrypt it. I could not find any information from their provided files. I tried to decrypt using Crypto AES process but no solution. All other code will still remain and this decryption is needed before our current code.
+
+  \{"SAMLResponse":"PHNhbWxwOlJlc3BvbnNlIFZlcnNpb249IjIuMCIgSUQ9IlJ6ZWxrYzFLZGQyd2RWZS1ybVdBTzBXa3JuRyIgSXNzdWVJbnN0YW50PSIyMDE5LTA2LTE5VDE3OjUxOjQzLjUwNVoiIHhtbG5zOnNhbWxwPSJ1cm46b2FzaXM6bmFtZXM6dGM6U0FNTDoyLjA6cHJvdG9jb2wiPjxzYW1sOklzc3VlciB4bWxuczpzYW1sPSJ1cm46b2FzaXM6bmFtZXM6dGM6U0FNTDoyLjA6YXNzZXJ0aW9uIj5wZmQucWFsMS5kaWdpdGFsaW5zaWdodC5jb208L3NhbWw6SXNzdWVyPjxzYW1scDpTdGF0dXM+PHNhbWxwOlN0YXR1c0NvZGUgVmFsdWU9InVybjpvYXNpczpuYW1lczp0YzpTQU1MOjIuMDpzdGF0dXM6U3VjY2VzcyIvPjwvc2FtbHA6U3RhdHVzPjxzYW1sOkFzc2VydGlvbiBJRD0iZnV5aTdlVFZfN20uamJlMXhJZGJIRW1CSDR6IiBJc3N1ZUluc3RhbnQ9IjIwMTktMDYtMTlUMTc6NTE6NDMuNjI2WiIgVmVyc2lvbj0iMi4wIiB4bWxuczpzYW1sPSJ1cm46b2FzaXM6bmFtZXM6dGM6U0FNTDoyLjA6YXNzZXJ0aW9uIj48c2FtbDpJc3N1ZXI+cGZkLnFhbDEuZGlnaXRhbGluc2lnaHQuY29tPC9zYW1sOklzc3Vlcj48ZHM6U2lnbmF0dXJlIHhtbG5zOmRzPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwLzA5L3htbGRzaWcjIj4KPGRzOlNpZ25lZEluZm8+CjxkczpDYW5vbmljYWxpemF0aW9uTWV0aG9kIEFsZ29yaXRobT0iaHR0cDovL3d3dy53My5vcmcvMjAwMS8xMC94bWwtZXhjLWMxNG4jIi8+CjxkczpTaWduYXR1cmVNZXRob2QgQWxnb3JpdGhtPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxLzA0L3htbGRzaWctbW9yZSNyc2Etc2hhMjU2Ii8+CjxkczpSZWZlcmVuY2UgVVJJPSIjZnV5aTdlVFZfN20uamJlMXhJZGJIRW1CSDR6Ij4KPGRzOlRyYW5zZm9ybXM+CjxkczpUcmFuc2Zvcm0gQWxnb3JpdGhtPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwLzA5L3htbGRzaWcjZW52ZWxvcGVkLXNpZ25hdHVyZSIvPgo8ZHM6VHJhbnNmb3JtIEFsZ29yaXRobT0iaHR0cDovL3d3dy53My5vcmcvMjAwMS8xMC94bWwtZXhjLWMxNG4jIi8+CjwvZHM6VHJhbnNmb3Jtcz4KPGRzOkRpZ2VzdE1ldGhvZCBBbGdvcml0aG09Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvMDQveG1sZW5jI3NoYTI1NiIvPgo8ZHM6RGlnZXN0VmFsdWU+RzdPT09FUER5NGV0MDF4Y1NPTW1aOHRiMUtnRjJLRDhRRUlxTnJmU0NsRT08L2RzOkRpZ2VzdFZhbHVlPgo8L2RzOlJlZmVyZW5jZT4KPC9kczpTaWduZWRJbmZvPgo8ZHM6U2lnbmF0dXJlVmFsdWU+CnFiR05wbkJPTlE2MzV3NEwxM1huNjFWUURMTjU4UFJkTmZPQnljblpLUmZXcU5HRUVoSEVNSTZvbzQyL1MzYXdaMlhtMDI1dStEclEKY3gxNWdaejh6SnZqSHJQQk1LdmZKNnZUbFRJWmczdzZrWjBZTDV5QVlPY1c0MGhQRWZWNDdBTmthbHM2S0UycUozbFgwNUxHTnNHcAovVjFmY1Fzdkc5NmFQRE0yL3BMRjhCN0NJb3dLZmFJRWlDa0g5Mk0rNElnYXJyZjJXQkozWUVuZFZyNVNKdEhSRXFhRjlPdHRPUHV2ClpUWmlobTFUK3g1YXh5VllXbU1CTnc4SngzRm1nUkV1V0l0RmFpK2xyQ2wzWGdyWjdjRERwT0gxOVF3bm1aWElqeWVqMTh5WFJSQisKcWcycElxT2ZuTEFOeEVDUmw3dEh0aDkrZTRjV0xFQXAvYjFGN3c9PQo8L2RzOlNpZ25hdHVyZVZhbHVlPgo8ZHM6S2V5SW5mbz4KPGRzOlg1MDlEYXRhPgo8ZHM6WDUwOUNlcnRpZmljYXRlPgpNSUlHZWpDQ0JXS2dBd0lCQWdJUUJ1aWdoYzNoekk2UTh6aWt1QlpRdnpBTkJna3Foa2lHOXcwQkFRc0ZBREJOTVFzd0NRWURWUVFHCkV3SlZVekVWTUJNR0ExVUVDaE1NUkdsbmFVTmxjblFnU1c1ak1TY3dKUVlEVlFRREV4NUVhV2RwUTJWeWRDQlRTRUV5SUZObFkzVnkKWlNCVFpYSjJaWElnUTBFd0hoY05NVGd3T0RFM01EQXdNREF3V2hjTk1Ua3hNREUyTVRJd01EQXdXakNCc3pFTE1Ba0dBMVVFQmhNQwpWVk14RXpBUkJnTlZCQWdUQ2tOaGJHbG1iM0p1YVdFeEdUQVhCZ05WQkFjVEVGZGxjM1JzWVd0bElGWnBiR3hoWjJVeEpEQWlCZ05WCkJBb1RHMFJwWjJsMFlXd2dTVzV6YVdkb2RDQkRiM0p3YjNKaGRHbHZiakVqTUNFR0ExVUVDeE1hVUc5M1pYSmxaQ0JDZVNCRWFXZHAKZEdGc0lFbHVjMmxuYUhReEtUQW5CZ05WQkFNVElIQm1aQzF6YVdkdUxuRmhiREV1WkdsbmFYUmhiR2x1YzJsbmFIUXVZMjl0TUlJQgpJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBdGZmM05oRVF3MkdlVEdvSTk3RzI4dDcvcGx6TENCZTlrQmF5CnE5a25xRDJPQzB5T3JmVDY1TUdtSGpxOFByR1pHUjd4SWdlUDI4MmxpK003MUlUUGpzK3RueStuakNCdjUzR2RSVys1RHFSRXRlSlMKc3lVUzV5ZFhaUGN1SEJDRlM2Zy9sRXZvanNiT2VlUW9DTWlNZlMycWZDODFIZFZxcHNpUWlRTUM1a3NiR0tBZEZQSGQxSy90eDBPWApJWXNRUm1VV1U0R042c1NPOCt1WWZFL2R5QzRmWUdkLzBMU1Zrd1lHWnViVFZLNWU4NHBsYU5PWWJDNXJTSE9peUFKVE12WGFVOFBQCjJvb2JwM3ZZRFJ4SXN2ai92UFp0elNKcVNZYWhYU1hLK3FQM3lPY05meDlCbFdRYWdra0VnNnNLUkpmSEZDUjBKbmduU29qZHdUT1IKVFFJREFRQUJvNElDN1RDQ0F1a3dId1lEVlIwakJCZ3dGb0FVRDRCaEhJSXhZZFV2S09lTlJqaTBMT0hHMmVJd0hRWURWUjBPQkJZRQpGTTBjWjhNckl5K2thdWM2RnUrWStqblN6TEtoTUNzR0ExVWRFUVFrTUNLQ0lIQm1aQzF6YVdkdUxuRmhiREV1WkdsbmFYUmhiR2x1CmMybG5hSFF1WTI5dE1BNEdBMVVkRHdFQi93UUVBd0lGb0RBZEJnTlZIU1VFRmpBVUJnZ3JCZ0VGQlFjREFRWUlLd1lCQlFVSEF3SXcKYXdZRFZSMGZCR1F3WWpBdm9DMmdLNFlwYUhSMGNEb3ZMMk55YkRNdVpHbG5hV05sY25RdVkyOXRMM056WTJFdGMyaGhNaTFuTmk1agpjbXd3TDZBdG9DdUdLV2gwZEhBNkx5OWpjbXcwTG1ScFoybGpaWEowTG1OdmJTOXpjMk5oTFhOb1lUSXRaell1WTNKc01Fd0dBMVVkCklBUkZNRU13TndZSllJWklBWWI5YkFFQk1Db3dLQVlJS3dZQkJRVUhBZ0VXSEdoMGRIQnpPaTh2ZDNkM0xtUnBaMmxqWlhKMExtTnYKYlM5RFVGTXdDQVlHWjRFTUFRSUNNSHdHQ0NzR0FRVUZCd0VCQkhBd2JqQWtCZ2dyQmdFRkJRY3dBWVlZYUhSMGNEb3ZMMjlqYzNBdQpaR2xuYVdObGNuUXVZMjl0TUVZR0NDc0dBUVVGQnpBQ2hqcG9kSFJ3T2k4dlkyRmpaWEowY3k1a2FXZHBZMlZ5ZEM1amIyMHZSR2xuCmFVTmxjblJUU0VFeVUyVmpkWEpsVTJWeWRtVnlRMEV1WTNKME1Ba0dBMVVkRXdRQ01BQXdnZ0VGQmdvckJnRUVBZFo1QWdRQ0JJSDIKQklIekFQRUFkd0M3MmQrOEg0cHh0Wk9VSTVlcWtudEhPRmVWQ3F0UzZCcVFsbVEyamg3UmhRQUFBV1ZGTURHYUFBQUVBd0JJTUVZQwpJUURrWmRKbjdsKzVjdUN2VGMxSUJoV2JQR1JuQmx6bEYwaWRNNXZXKzZoSjVRSWhBSUx5Tk5BMFIvQ2tuUnB5MUMvZ3dCcTBiVHd4CmE4OTQzTzFjbDBMcWhNRmVBSFlBaDNXLzUxbDgrSXhEbVYrOTgyNy9WbzFIVmpiL1NyVmd3YlRxLzE2Z2d3OEFBQUZsUlRBeGZ3QUEKQkFNQVJ6QkZBaUVBdDBlRG1BUis3MDlyWFBZY3VpOU9NbU1GMjV1eml0YmRSTmFlcFpEMmNmSUNJRkxtT0YrWkg2ckZCL2JrZTZRbAp6WDRBYnE4bEVmVDg0NVYvQ0FXbmVuWG9NQTBHQ1NxR1NJYjNEUUVCQ3dVQUE0SUJBUUIrd2lNVHJoeUJhRmFsSWVVbFRBUWFza01lCkNYQ0o1TjdPUm96YmxnMkR6OTdWcy9DSU9vZDJ1Y3dLRmhyL243RmgrSzVjaDNodUVoOHB1cHFxSTNUSU12UzJmV0hrS21aVjF0V3QKYjJYNkI2YVJXOGJta0plYStIYzAzaE83UXJ1R3cza0VTU3pmWU84T3JnRmQ1QXd3MStvVEFUbXpzUG5sMTlFWmZiSzJ1c3RtZURTLwowRTFlRU5ONXVBWkR1czROcVFaa1dEbFZjQUJ0WGNLWE9SemF5aUg0elUzR2hoNTl0WVNaNnV6SG55REc3dkE0UUpFTnhkWUhMOGVkCjFxZE9EdjZhN3JKaFBYU093SDdnTnBJTlJUTmUwU0pRUGd0Z3pRaUJJZ3BSMDc5KzA1dkpqd3FGMm5YeVZ2WnFJMVlLUE5RTGpkS2MKY295UUpDMEIwcW1CCjwvZHM6WDUwOUNlcnRpZmljYXRlPgo8L2RzOlg1MDlEYXRhPgo8ZHM6S2V5VmFsdWU+CjxkczpSU0FLZXlWYWx1ZT4KPGRzOk1vZHVsdXM+CnRmZjNOaEVRdzJHZVRHb0k5N0cyOHQ3L3BsekxDQmU5a0JheXE5a25xRDJPQzB5T3JmVDY1TUdtSGpxOFByR1pHUjd4SWdlUDI4MmwKaStNNzFJVFBqcyt0bnkrbmpDQnY1M0dkUlcrNURxUkV0ZUpTc3lVUzV5ZFhaUGN1SEJDRlM2Zy9sRXZvanNiT2VlUW9DTWlNZlMycQpmQzgxSGRWcXBzaVFpUU1DNWtzYkdLQWRGUEhkMUsvdHgwT1hJWXNRUm1VV1U0R042c1NPOCt1WWZFL2R5QzRmWUdkLzBMU1Zrd1lHClp1YlRWSzVlODRwbGFOT1liQzVyU0hPaXlBSlRNdlhhVThQUDJvb2JwM3ZZRFJ4SXN2ai92UFp0elNKcVNZYWhYU1hLK3FQM3lPY04KZng5QmxXUWFna2tFZzZzS1JKZkhGQ1IwSm5nblNvamR3VE9SVFE9PQo8L2RzOk1vZHVsdXM+CjxkczpFeHBvbmVudD5BUUFCPC9kczpFeHBvbmVudD4KPC9kczpSU0FLZXlWYWx1ZT4KPC9kczpLZXlWYWx1ZT4KPC9kczpLZXlJbmZvPgo8L2RzOlNpZ25hdHVyZT48c2FtbDpTdWJqZWN0PjxzYW1sOk5hbWVJRCBGb3JtYXQ9InVybjpvYXNpczpuYW1lczp0YzpTQU1MOjEuMTpuYW1laWQtZm9ybWF0OnVuc3BlY2lmaWVkIj50cHZjZXJ0czE8L3NhbWw6TmFtZUlEPjxzYW1sOlN1YmplY3RDb25maXJtYXRpb24gTWV0aG9kPSJ1cm46b2FzaXM6bmFtZXM6dGM6U0FNTDoyLjA6Y206YmVhcmVyIj48c2FtbDpTdWJqZWN0Q29uZmlybWF0aW9uRGF0YSBSZWNpcGllbnQ9Imh0dHBzOi8vZGVtb3BpbG90LmluZm9pbWFnZWluYy5jb20vc3NvT25lV2F5TG9naW4iIE5vdE9uT3JBZnRlcj0iMjAxOS0wNi0xOVQxNzo1Njo0My42MjZaIi8+PC9zYW1sOlN1YmplY3RDb25maXJtYXRpb24+PC9zYW1sOlN1YmplY3Q+PHNhbWw6Q29uZGl0aW9ucyBOb3RCZWZvcmU9IjIwMTktMDYtMTlUMTc6NDY6NDMuNjI2WiIgTm90T25PckFmdGVyPSIyMDE5LTA2LTE5VDE3OjU2OjQzLjYyNloiPjxzYW1sOkF1ZGllbmNlUmVzdHJpY3Rpb24+PHNhbWw6QXVkaWVuY2U+aW5mb2ltYWdlLmRpZ2l0YWxpbnNpZ2h0LnRlc3Q8L3NhbWw6QXVkaWVuY2U+PC9zYW1sOkF1ZGllbmNlUmVzdHJpY3Rpb24+PC9zYW1sOkNvbmRpdGlvbnM+PHNhbWw6QXV0aG5TdGF0ZW1lbnQgU2Vzc2lvbkluZGV4PSJmdXlpN2VUVl83bS5qYmUxeElkYkhFbUJINHoiIEF1dGhuSW5zdGFudD0iMjAxOS0wNi0xOVQxNzo1MTo0My41OTZaIj48c2FtbDpBdXRobkNvbnRleHQ+PHNhbWw6QXV0aG5Db250ZXh0Q2xhc3NSZWY+dXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOmFjOmNsYXNzZXM6dW5zcGVjaWZpZWQ8L3NhbWw6QXV0aG5Db250ZXh0Q2xhc3NSZWY+PC9zYW1sOkF1dGhuQ29udGV4dD48L3NhbWw6QXV0aG5TdGF0ZW1lbnQ+PHNhbWw6QXR0cmlidXRlU3RhdGVtZW50PjxzYW1sOkF0dHJpYnV0ZSBOYW1lPSJYTUxfREFUQSIgTmFtZUZvcm1hdD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOmF0dHJuYW1lLWZvcm1hdDpiYXNpYyI+PHNhbWw6QXR0cmlidXRlVmFsdWUgeHNpOnR5cGU9InhzOnN0cmluZyIgeG1sbnM6eHM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hIiB4bWxuczp4c2k9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIj48IVtDREFUQVs8dXNlckluZm8+IDx1c2VyR1VJRD5lZjI3ODViNWU1MDA0MjMzYjhjZDhlZDU1OGJjMDNjNTwvdXNlckdVSUQ+PHVzZXJJRD50cHZjZXJ0czE8L3VzZXJJRD48bmFtZT5GZXJyaXMgQnVlbGxlcjwvbmFtZT48ZW1haWw+c2YyNTAxMzRAbmNyLmNvbTwvZW1haWw+PHBob25lTnVtYmVyPjwvcGhvbmVOdW1iZXI+PC91c2VySW5mbz5dXT48L3NhbWw6QXR0cmlidXRlVmFsdWU+PC9zYW1sOkF0dHJpYnV0ZT48c2FtbDpBdHRyaWJ1dGUgTmFtZT0icGFzc3dvcmQiIE5hbWVGb3JtYXQ9InVybjpvYXNpczpuYW1lczp0YzpTQU1MOjIuMDphdHRybmFtZS1mb3JtYXQ6YmFzaWMiPjxzYW1sOkF0dHJpYnV0ZVZhbHVlIHhzaTp0eXBlPSJ4czpzdHJpbmciIHhtbG5zOnhzPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYSIgeG1sbnM6eHNpPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZSI+ZmgxQTgqcFBuPC9zYW1sOkF0dHJpYnV0ZVZhbHVlPjwvc2FtbDpBdHRyaWJ1dGU+PHNhbWw6QXR0cmlidXRlIE5hbWU9InVzZXJfdHlwZSIgTmFtZUZvcm1hdD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOmF0dHJuYW1lLWZvcm1hdDpiYXNpYyI+PHNhbWw6QXR0cmlidXRlVmFsdWUgeHNpOnR5cGU9InhzOnN0cmluZyIgeG1sbnM6eHM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hIiB4bWxuczp4c2k9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIj5QPC9zYW1sOkF0dHJpYnV0ZVZhbHVlPjwvc2FtbDpBdHRyaWJ1dGU+PHNhbWw6QXR0cmlidXRlIE5hbWU9IlVTRVJfQUNDT1VOVFMiIE5hbWVGb3JtYXQ9InVybjpvYXNpczpuYW1lczp0YzpTQU1MOjIuMDphdHRybmFtZS1mb3JtYXQ6YmFzaWMiPjxzYW1sOkF0dHJpYnV0ZVZhbHVlIHhzaTp0eXBlPSJ4czpzdHJpbmciIHhtbG5zOnhzPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYSIgeG1sbnM6eHNpPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZSIvPjwvc2FtbDpBdHRyaWJ1dGU+PHNhbWw6QXR0cmlidXRlIE5hbWU9IlVTRVJfSUQiIE5hbWVGb3JtYXQ9InVybjpvYXNpczpuYW1lczp0YzpTQU1MOjIuMDphdHRybmFtZS1mb3JtYXQ6YmFzaWMiPjxzYW1sOkF0dHJpYnV0ZVZhbHVlIHhzaTp0eXBlPSJ4czpzdHJpbmciIHhtbG5zOnhzPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYSIgeG1sbnM6eHNpPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZSI+dHB2Y2VydHMxPC9zYW1sOkF0dHJpYnV0ZVZhbHVlPjwvc2FtbDpBdHRyaWJ1dGU+PHNhbWw6QXR0cmlidXRlIE5hbWU9IkZJX0lEIiBOYW1lRm9ybWF0PSJ1cm46b2FzaXM6bmFtZXM6dGM6U0FNTDoyLjA6YXR0cm5hbWUtZm9ybWF0OmJhc2ljIj48c2FtbDpBdHRyaWJ1dGVWYWx1ZSB4c2k6dHlwZT0ieHM6c3RyaW5nIiB4bWxuczp4cz0iaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEiIHhtbG5zOnhzaT0iaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEtaW5zdGFuY2UiPkRJMzYzMzwvc2FtbDpBdHRyaWJ1dGVWYWx1ZT48L3NhbWw6QXR0cmlidXRlPjxzYW1sOkF0dHJpYnV0ZSBOYW1lPSJLRUVQX0FMSVZFX1VSTCIgTmFtZUZvcm1hdD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOmF0dHJuYW1lLWZvcm1hdDpiYXNpYyI+PHNhbWw6QXR0cmlidXRlVmFsdWUgeHNpOnR5cGU9InhzOnN0cmluZyIgeG1sbnM6eHM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hIiB4bWxuczp4c2k9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIj5odHRwczovL3d3dy5pcWEwMTkuY29tL3RvYi9saXZlL3VzcC1jb3JlL2FwcC9sYXVuY2g/Y29kZT1waW5nPC9zYW1sOkF0dHJpYnV0ZVZhbHVlPjwvc2FtbDpBdHRyaWJ1dGU+PHNhbWw6QXR0cmlidXRlIE5hbWU9ImNpZCIgTmFtZUZvcm1hdD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOmF0dHJuYW1lLWZvcm1hdDpiYXNpYyI+PHNhbWw6QXR0cmlidXRlVmFsdWUgeHNpOnR5cGU9InhzOnN0cmluZyIgeG1sbnM6eHM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hIiB4bWxuczp4c2k9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIj5kZW1vPC9zYW1sOkF0dHJpYnV0ZVZhbHVlPjwvc2FtbDpBdHRyaWJ1dGU+PC9zYW1sOkF0dHJpYnV0ZVN0YXRlbWVudD48L3NhbWw6QXNzZXJ0aW9uPjwvc2FtbHA6UmVzcG9uc2U+"}
+
+ 
+
+
+author: dipak.mondal
+comment: [^SAML Response.xml]
+
+I have checked -in code for NCR decoding issue. Please use this xml file for testing. Currently code is workable . I could not manage time to check few validations like saml response status check, certificate check. i will do it later if current code testing is done.   I have added a new meteor package for base64 decoding {{ostrio:base64@=1.0.0}}. Please update meteor packages, auth.js and util.js files to make it workable. Please let me know anyone find any issues
+
+
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi Dipak, can you provide your testing code?
+
+Ive let NCR know they can test hitting the site again, but would like information on how testing is happening on our end.
+
+
+
+Thanks\!
+
+
+author: dipak.mondal
+comment: Hi Ethan,
+
+I encoded my given xml using Base64.encode(samlXML) to make it as SAMLResponse and got following key. Then made it as a SAMLResponse based on current pilot log and replaced requestData value using SAMLResponse instead of this.request.body for testing in mainRoutes.js file hence we dont have actual SAMLResponse {{requestData = this.request.body;}} . But saml can request our server in previous way and it will work. If you need more info you can knock me on skype
+
+\{"SAMLResponse":"PHNhbWxwOlJlc3BvbnNlIAogICAgVmVyc2lvbj0iMi4wIiAKICAgIElEPSJtQ19YQWlwV2tlNXJSd3dBVUZPN01KX2N6bEMiIAogICAgSXNzdWVJbnN0YW50PSIyMDE5LTA2LTE4VDE2OjU1OjExLjY5OFoiIAogICAgeG1sbnM6c2FtbHA9InVybjpvYXNpczpuYW1lczp0YzpTQU1MOjIuMDpwcm90b2NvbCI+CiAgICA8c2FtbDpJc3N1ZXIgCiAgICAgICAgeG1sbnM6c2FtbD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOmFzc2VydGlvbiI+cGZkLnFhbDEuZGlnaXRhbGluc2lnaHQuY29tCiAgICA8L3NhbWw6SXNzdWVyPgogICAgPHNhbWxwOlN0YXR1cz4KICAgICAgICA8c2FtbHA6U3RhdHVzQ29kZSAKICAgICAgICAgICAgVmFsdWU9InVybjpvYXNpczpuYW1lczp0YzpTQU1MOjIuMDpzdGF0dXM6U3VjY2VzcyIvPgogICAgPC9zYW1scDpTdGF0dXM+CiAgICA8c2FtbDpBc3NlcnRpb24gCiAgICAgICAgSUQ9Ik9rdmVNS0k2N0MtR2RoLWlCek81S2tOaE1aRiIgCiAgICAgICAgSXNzdWVJbnN0YW50PSIyMDE5LTA2LTE4VDE2OjU1OjExLjgzMVoiIAogICAgICAgIFZlcnNpb249IjIuMCIgCiAgICAgICAgeG1sbnM6c2FtbD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOmFzc2VydGlvbiI+CiAgICAgICAgPHNhbWw6SXNzdWVyPnBmZC5xYWwxLmRpZ2l0YWxpbnNpZ2h0LmNvbTwvc2FtbDpJc3N1ZXI+CiAgICAgICAgPGRzOlNpZ25hdHVyZSAKICAgICAgICAgICAgeG1sbnM6ZHM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvMDkveG1sZHNpZyMiPgogICAgICAgICAgICA8ZHM6U2lnbmVkSW5mbz4KICAgICAgICAgICAgICAgIDxkczpDYW5vbmljYWxpemF0aW9uTWV0aG9kIAogICAgICAgICAgICAgICAgICAgIEFsZ29yaXRobT0iaHR0cDovL3d3dy53My5vcmcvMjAwMS8xMC94bWwtZXhjLWMxNG4jIi8+CiAgICAgICAgICAgICAgICA8ZHM6U2lnbmF0dXJlTWV0aG9kIAogICAgICAgICAgICAgICAgICAgIEFsZ29yaXRobT0iaHR0cDovL3d3dy53My5vcmcvMjAwMS8wNC94bWxkc2lnLW1vcmUjcnNhLXNoYTI1NiIvPgogICAgICAgICAgICAgICAgPGRzOlJlZmVyZW5jZSAKICAgICAgICAgICAgICAgICAgICBVUkk9IiNPa3ZlTUtJNjdDLUdkaC1pQnpPNUtrTmhNWkYiPgogICAgICAgICAgICAgICAgICAgIDxkczpUcmFuc2Zvcm1zPgogICAgICAgICAgICAgICAgICAgICAgICA8ZHM6VHJhbnNmb3JtIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgQWxnb3JpdGhtPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwLzA5L3htbGRzaWcjZW52ZWxvcGVkLXNpZ25hdHVyZSIvPgogICAgICAgICAgICAgICAgICAgICAgICA8ZHM6VHJhbnNmb3JtIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgQWxnb3JpdGhtPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxLzEwL3htbC1leGMtYzE0biMiLz4KICAgICAgICAgICAgICAgICAgICA8L2RzOlRyYW5zZm9ybXM+CiAgICAgICAgICAgICAgICAgICAgPGRzOkRpZ2VzdE1ldGhvZCAKICAgICAgICAgICAgICAgICAgICAgICAgQWxnb3JpdGhtPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxLzA0L3htbGVuYyNzaGEyNTYiLz4KICAgICAgICAgICAgICAgICAgICA8ZHM6RGlnZXN0VmFsdWU+WE44Z3VlOGkvdHdSRis0dEpicGFkY0EvCiAgICAgICAgICAgICAgICAgICAgICAgIHV4eEdnMGljUm03Wk1XTGxwaEU9CiAgICAgICAgICAgICAgICAgICAgPC9kczpEaWdlc3RWYWx1ZT4KICAgICAgICAgICAgICAgIDwvZHM6UmVmZXJlbmNlPgogICAgICAgICAgICA8L2RzOlNpZ25lZEluZm8+CiAgICAgICAgICAgIDxkczpTaWduYXR1cmVWYWx1ZT4KUVYvSzY2MGlnYXNqSlJocGR4MU1YUTE1RC9nNHpPdCttVzVlRnJFQUQ5THdicmNPQ2NheVo4VktydTN6U1prZjBaNmtzZDZnMVF6UgpBMGNOYXNsTDlzQnhaYlhsM0t3RTBBNW9EQ2tKUnFsMVFBSnl5bHRSQVJZVUl3b0Fwdk5yNlpUZCs0Z0Y4NVBySVpWYUlpM29ZY3V3CnAxUnFhQzZkamFrMUR5Y1hRbVhKQnFDNG56dDg2cjZqYnE3OEJCYU1Ycjljb0pNcU1iVGl1QUdQNTVjeTBpU0syTFVXY3BaQm9xcXUKNmw3Y3NFZjNGcEtUSHI5TFptMDZQQmVvanp1Z3dHMUJUbmlIeGRoWU9xaGJ1UXBKRE5SZUNXc1ZVTGJvWmVqWjVjVk5JZjhBQjlSUQpIUmJVSUNoYkU5VTNiK2RVbFRBYy8KICAgICAgICAgICAgICAgIFQ2aUp4YnBQZ0RBdWllcU13PT0KCiAgICAgICAgICAgIDwvZHM6U2lnbmF0dXJlVmFsdWU+CiAgICAgICAgICAgIDxkczpLZXlJbmZvPgogICAgICAgICAgICAgICAgPGRzOlg1MDlEYXRhPgogICAgICAgICAgICAgICAgICAgIDxkczpYNTA5Q2VydGlmaWNhdGU+Ck1JSUdlakNDQldLZ0F3SUJBZ0lRQnVpZ2hjM2h6STZROHppa3VCWlF2ekFOQmdrcWhraUc5dzBCQVFzRkFEQk5NUXN3Q1FZRFZRUUcKRXdKVlV6RVZNQk1HQTFVRUNoTU1SR2xuYVVObGNuUWdTVzVqTVNjd0pRWURWUVFERXg1RWFXZHBRMlZ5ZENCVFNFRXlJRk5sWTNWeQpaU0JUWlhKMlpYSWdRMEV3SGhjTk1UZ3dPREUzTURBd01EQXdXaGNOTVRreE1ERTJNVEl3TURBd1dqQ0JzekVMTUFrR0ExVUVCaE1DClZWTXhFekFSQmdOVkJBZ1RDa05oYkdsbWIzSnVhV0V4R1RBWEJnTlZCQWNURUZkbGMzUnNZV3RsSUZacGJHeGhaMlV4SkRBaUJnTlYKQkFvVEcwUnBaMmwwWVd3Z1NXNXphV2RvZENCRGIzSndiM0poZEdsdmJqRWpNQ0VHQTFVRUN4TWFVRzkzWlhKbFpDQkNlU0JFYVdkcApkR0ZzSUVsdWMybG5hSFF4S1RBbkJnTlZCQU1USUhCbVpDMXphV2R1TG5GaGJERXVaR2xuYVhSaGJHbHVjMmxuYUhRdVkyOXRNSUlCCklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF0ZmYzTmhFUXcyR2VUR29JOTdHMjh0Ny9wbHpMQ0JlOWtCYXkKcTlrbnFEMk9DMHlPcmZUNjVNR21IanE4UHJHWkdSN3hJZ2VQMjgybGkrTTcxSVRQanMrdG55K25qQ0J2NTNHZFJXKzVEcVJFdGVKUwpzeVVTNXlkWFpQY3VIQkNGUzZnL2xFdm9qc2JPZWVRb0NNaU1mUzJxZkM4MUhkVnFwc2lRaVFNQzVrc2JHS0FkRlBIZDFLL3R4ME9YCklZc1FSbVVXVTRHTjZzU084K3VZZkUvZHlDNGZZR2QvMExTVmt3WUdadWJUVks1ZTg0cGxhTk9ZYkM1clNIT2l5QUpUTXZYYVU4UFAKMm9vYnAzdllEUnhJc3ZqL3ZQWnR6U0pxU1lhaFhTWEsrcVAzeU9jTmZ4OUJsV1FhZ2trRWc2c0tSSmZIRkNSMEpuZ25Tb2pkd1RPUgpUUUlEQVFBQm80SUM3VENDQXVrd0h3WURWUjBqQkJnd0ZvQVVENEJoSElJeFlkVXZLT2VOUmppMExPSEcyZUl3SFFZRFZSME9CQllFCkZNMGNaOE1ySXkra2F1YzZGdStZK2puU3pMS2hNQ3NHQTFVZEVRUWtNQ0tDSUhCbVpDMXphV2R1TG5GaGJERXVaR2xuYVhSaGJHbHUKYzJsbmFIUXVZMjl0TUE0R0ExVWREd0VCL3dRRUF3SUZvREFkQmdOVkhTVUVGakFVQmdnckJnRUZCUWNEQVFZSUt3WUJCUVVIQXdJdwphd1lEVlIwZkJHUXdZakF2b0MyZ0s0WXBhSFIwY0RvdkwyTnliRE11WkdsbmFXTmxjblF1WTI5dEwzTnpZMkV0YzJoaE1pMW5OaTVqCmNtd3dMNkF0b0N1R0tXaDBkSEE2THk5amNtdzBMbVJwWjJsalpYSjBMbU52YlM5emMyTmhMWE5vWVRJdFp6WXVZM0pzTUV3R0ExVWQKSUFSRk1FTXdOd1lKWUlaSUFZYjliQUVCTUNvd0tBWUlLd1lCQlFVSEFnRVdIR2gwZEhCek9pOHZkM2QzTG1ScFoybGpaWEowTG1OdgpiUzlEVUZNd0NBWUdaNEVNQVFJQ01Id0dDQ3NHQVFVRkJ3RUJCSEF3YmpBa0JnZ3JCZ0VGQlFjd0FZWVlhSFIwY0RvdkwyOWpjM0F1ClpHbG5hV05sY25RdVkyOXRNRVlHQ0NzR0FRVUZCekFDaGpwb2RIUndPaTh2WTJGalpYSjBjeTVrYVdkcFkyVnlkQzVqYjIwdlJHbG4KYVVObGNuUlRTRUV5VTJWamRYSmxVMlZ5ZG1WeVEwRXVZM0owTUFrR0ExVWRFd1FDTUFBd2dnRUZCZ29yQmdFRUFkWjVBZ1FDQklIMgpCSUh6QVBFQWR3QzcyZCs4SDRweHRaT1VJNWVxa250SE9GZVZDcXRTNkJxUWxtUTJqaDdSaFFBQUFXVkZNREdhQUFBRUF3QklNRVlDCklRRGtaZEpuN2wrNWN1Q3ZUYzFJQmhXYlBHUm5CbHpsRjBpZE01dlcrNmhKNVFJaEFJTHlOTkEwUi9Da25ScHkxQy9nd0JxMGJUd3gKYTg5NDNPMWNsMExxaE1GZUFIWUFoM1cvNTFsOCtJeERtVis5ODI3L1ZvMUhWamIvU3JWZ3diVHEvMTZnZ3c4QUFBRmxSVEF4ZndBQQpCQU1BUnpCRkFpRUF0MGVEbUFSKzcwOXJYUFljdWk5T01tTUYyNXV6aXRiZFJOYWVwWkQyY2ZJQ0lGTG1PRitaSDZyRkIvYmtlNlFsCnpYNEFicThsRWZUODQ1Vi9DQVduZW5Yb01BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQit3aU1Ucmh5QmFGYWxJZVVsVEFRYXNrTWUKQ1hDSjVON09Sb3pibGcyRHo5N1ZzL0NJT29kMnVjd0tGaHIvbjdGaCtLNWNoM2h1RWg4cHVwcXFJM1RJTXZTMmZXSGtLbVpWMXRXdApiMlg2QjZhUlc4Ym1rSmVhK0hjMDNoTzdRcnVHdzNrRVNTemZZTzhPcmdGZDVBd3cxK29UQVRtenNQbmwxOUVaZmJLMnVzdG1lRFMvCjBFMWVFTk41dUFaRHVzNE5xUVprV0RsVmNBQnRYY0tYT1J6YXlpSDR6VTNHaGg1OXRZU1o2dXpIbnlERzd2QTRRSkVOeGRZSEw4ZWQKMXFkT0R2NmE3ckpoUFhTT3dIN2dOcElOUlROZTBTSlFQZ3RnelFpQklncFIwNzkrMDV2Smp3cUYyblh5VnZacUkxWUtQTlFMamRLYwpjb3lRSkMwQjBxbUIKPC9kczpYNTA5Q2VydGlmaWNhdGU+CiAgICAgICAgICAgICAgICA8L2RzOlg1MDlEYXRhPgogICAgICAgICAgICAgICAgPGRzOktleVZhbHVlPgogICAgICAgICAgICAgICAgICAgIDxkczpSU0FLZXlWYWx1ZT4KICAgICAgICAgICAgICAgICAgICAgICAgPGRzOk1vZHVsdXM+CnRmZjNOaEVRdzJHZVRHb0k5N0cyOHQ3L3BsekxDQmU5a0JheXE5a25xRDJPQzB5T3JmVDY1TUdtSGpxOFByR1pHUjd4SWdlUDI4MmwKaStNNzFJVFBqcyt0bnkrbmpDQnY1M0dkUlcrNURxUkV0ZUpTc3lVUzV5ZFhaUGN1SEJDRlM2Zy9sRXZvanNiT2VlUW9DTWlNZlMycQpmQzgxSGRWcXBzaVFpUU1DNWtzYkdLQWRGUEhkMUsvdHgwT1hJWXNRUm1VV1U0R042c1NPOCt1WWZFL2R5QzRmWUdkLzBMU1Zrd1lHClp1YlRWSzVlODRwbGFOT1liQzVyU0hPaXlBSlRNdlhhVThQUDJvb2JwM3ZZRFJ4SXN2ai92UFp0elNKcVNZYWhYU1hLK3FQM3lPY04KCiAgICAgICAgICAgICAgICAgICAgICAgICAgICBmeDlCbFdRYWdra0VnNnNLUkpmSEZDUjBKbmduU29qZHdUT1JUUT09CgogICAgICAgICAgICAgICAgICAgICAgICA8L2RzOk1vZHVsdXM+CiAgICAgICAgICAgICAgICAgICAgICAgIDxkczpFeHBvbmVudD5BUUFCPC9kczpFeHBvbmVudD4KICAgICAgICAgICAgICAgICAgICA8L2RzOlJTQUtleVZhbHVlPgogICAgICAgICAgICAgICAgPC9kczpLZXlWYWx1ZT4KICAgICAgICAgICAgPC9kczpLZXlJbmZvPgogICAgICAgIDwvZHM6U2lnbmF0dXJlPgogICAgICAgIDxzYW1sOlN1YmplY3Q+CiAgICAgICAgICAgIDxzYW1sOk5hbWVJRCAKICAgICAgICAgICAgICAgIEZvcm1hdD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6MS4xOm5hbWVpZC1mb3JtYXQ6dW5zcGVjaWZpZWQiPnRwdmNlcnRzMQogICAgICAgICAgICA8L3NhbWw6TmFtZUlEPgogICAgICAgICAgICA8c2FtbDpTdWJqZWN0Q29uZmlybWF0aW9uIAogICAgICAgICAgICAgICAgTWV0aG9kPSJ1cm46b2FzaXM6bmFtZXM6dGM6U0FNTDoyLjA6Y206YmVhcmVyIj4KICAgICAgICAgICAgICAgIDxzYW1sOlN1YmplY3RDb25maXJtYXRpb25EYXRhIAogICAgICAgICAgICAgICAgICAgIFJlY2lwaWVudD0iaHR0cHM6Ly9kZW1vcGlsb3QuaW5mb2ltYWdlaW5jLmNvbS9zc29PbmVXYXlMb2dpbiIgCiAgICAgICAgICAgICAgICAgICAgTm90T25PckFmdGVyPSIyMDE5LTA2LTE4VDE3OjAwOjExLjgzMVoiLz4KICAgICAgICAgICAgPC9zYW1sOlN1YmplY3RDb25maXJtYXRpb24+CiAgICAgICAgPC9zYW1sOlN1YmplY3Q+CiAgICAgICAgPHNhbWw6Q29uZGl0aW9ucyAKICAgICAgICAgICAgTm90QmVmb3JlPSIyMDE5LTA2LTE4VDE2OjUwOjExLjgzMVoiIAogICAgICAgICAgICBOb3RPbk9yQWZ0ZXI9IjIwMTktMDYtMThUMTc6MDA6MTEuODMxWiI+CiAgICAgICAgICAgIDxzYW1sOkF1ZGllbmNlUmVzdHJpY3Rpb24+CiAgICAgICAgICAgICAgICA8c2FtbDpBdWRpZW5jZT5pbmZvaW1hZ2UuZGlnaXRhbGluc2lnaHQudGVzdDwvc2FtbDpBdWRpZW5jZT4KICAgICAgICAgICAgPC9zYW1sOkF1ZGllbmNlUmVzdHJpY3Rpb24+CiAgICAgICAgPC9zYW1sOkNvbmRpdGlvbnM+CiAgICAgICAgPHNhbWw6QXV0aG5TdGF0ZW1lbnQgCiAgICAgICAgICAgIFNlc3Npb25JbmRleD0iT2t2ZU1LSTY3Qy1HZGgtaUJ6TzVLa05oTVpGIiAKICAgICAgICAgICAgQXV0aG5JbnN0YW50PSIyMDE5LTA2LTE4VDE2OjU1OjExLjczN1oiPgogICAgICAgICAgICA8c2FtbDpBdXRobkNvbnRleHQ+CiAgICAgICAgICAgICAgICA8c2FtbDpBdXRobkNvbnRleHRDbGFzc1JlZj51cm46b2FzaXM6bmFtZXM6dGM6U0FNTDoyLjA6YWM6Y2xhc3Nlczp1bnNwZWNpZmllZDwvc2FtbDpBdXRobkNvbnRleHRDbGFzc1JlZj4KICAgICAgICAgICAgPC9zYW1sOkF1dGhuQ29udGV4dD4KICAgICAgICA8L3NhbWw6QXV0aG5TdGF0ZW1lbnQ+CiAgICAgICAgPHNhbWw6QXR0cmlidXRlU3RhdGVtZW50PgogICAgICAgICAgICA8c2FtbDpBdHRyaWJ1dGUgCiAgICAgICAgICAgICAgICBOYW1lPSJYTUxfREFUQSIgCiAgICAgICAgICAgICAgICBOYW1lRm9ybWF0PSJ1cm46b2FzaXM6bmFtZXM6dGM6U0FNTDoyLjA6YXR0cm5hbWUtZm9ybWF0OmJhc2ljIj4KICAgICAgICAgICAgICAgIDxzYW1sOkF0dHJpYnV0ZVZhbHVlIAogICAgICAgICAgICAgICAgICAgIHhzaTp0eXBlPSJ4czpzdHJpbmciIAogICAgICAgICAgICAgICAgICAgIHhtbG5zOnhzPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYSIgCiAgICAgICAgICAgICAgICAgICAgeG1sbnM6eHNpPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZSI+CiAgICAgICAgICAgICAgICAgICAgPCFbQ0RBVEFbPHVzZXJJbmZvPjx1c2VyR1VJRD5lZjI3ODViNWU1MDA0MjMzYjhjZDhlZDU1OGJjMDNjNTwvdXNlckdVSUQ+PHVzZXJJRD50cHZjZXJ0czE8L3VzZXJJRD48bmFtZT5GZXJyaXMgQnVlbGxlcjwvbmFtZT48ZW1haWw+c2YyNTAxMzRAbmNyLmNvbTwvZW1haWw+PHBob25lTnVtYmVyPjwvcGhvbmVOdW1iZXI+PC91c2VySW5mbz5dXT4KICAgICAgICAgICAgICAgIDwvc2FtbDpBdHRyaWJ1dGVWYWx1ZT4KICAgICAgICAgICAgPC9zYW1sOkF0dHJpYnV0ZT4KICAgICAgICAgICAgPHNhbWw6QXR0cmlidXRlIAogICAgICAgICAgICAgICAgTmFtZT0iVVNFUl9BQ0NPVU5UUyIgCiAgICAgICAgICAgICAgICBOYW1lRm9ybWF0PSJ1cm46b2FzaXM6bmFtZXM6dGM6U0FNTDoyLjA6YXR0cm5hbWUtZm9ybWF0OmJhc2ljIj4KICAgICAgICAgICAgICAgIDxzYW1sOkF0dHJpYnV0ZVZhbHVlIAogICAgICAgICAgICAgICAgICAgIHhzaTp0eXBlPSJ4czpzdHJpbmciIAogICAgICAgICAgICAgICAgICAgIHhtbG5zOnhzPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYSIgCiAgICAgICAgICAgICAgICAgICAgeG1sbnM6eHNpPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZSI+CiAgICAgICAgICAgICAgICAgICAgPCFbQ0RBVEFbPEFjY291bnRzPjxhY2NvdW50Pjx0eXBlPlNWPC90eXBlPjxuaWNrTmFtZT5IYXBweSAmYW1wOyBTYXZpbmdzPC9uaWNrTmFtZT48YWNjb3VudE51bWJlcj4wMDA4NTcyPC9hY2NvdW50TnVtYmVyPjwvYWNjb3VudD48YWNjb3VudD48dHlwZT5TVjwvdHlwZT48bmlja05hbWU+RW1lcmdlbmN5IFNhdmluZ3M8L25pY2tOYW1lPjxhY2NvdW50TnVtYmVyPjAwMDg1OTk8L2FjY291bnROdW1iZXI+PC9hY2NvdW50PjxhY2NvdW50Pjx0eXBlPkNIPC90eXBlPjxuaWNrTmFtZT5EYWlseSBDaGVja2luZzwvbmlja05hbWU+PGFjY291bnROdW1iZXI+MDA3NTwvYWNjb3VudE51bWJlcj48L2FjY291bnQ+PGFjY291bnQ+PHR5cGU+Q0g8L3R5cGU+PG5pY2tOYW1lPkJ1c2luZXNzIENoZWNraW5nPC9uaWNrTmFtZT48YWNjb3VudE51bWJlcj45MTI2ODU8L2FjY291bnROdW1iZXI+PC9hY2NvdW50PjxhY2NvdW50Pjx0eXBlPkNIPC90eXBlPjxuaWNrTmFtZT5IZWFsdGggJmFtcDsgRW1lciBDaGVja2luZyAyPC9uaWNrTmFtZT48YWNjb3VudE51bWJlcj4xODY5NDwvYWNjb3VudE51bWJlcj48L2FjY291bnQ+PGFjY291bnQ+PHR5cGU+U1Y8L3R5cGU+PG5pY2tOYW1lPk1vbmV5ICZhbXA7IE1hcmtldDwvbmlja05hbWU+PGFjY291bnROdW1iZXI+MTk1OTU8L2FjY291bnROdW1iZXI+PC9hY2NvdW50PjxhY2NvdW50Pjx0eXBlPkNIPC90eXBlPjxuaWNrTmFtZT5DaGlsZCBTYXZpbmdzPC9uaWNrTmFtZT48YWNjb3VudE51bWJlcj4xOTAyMzwvYWNjb3VudE51bWJlcj48L2FjY291bnQ+PGFjY291bnQ+PHR5cGU+Q0g8L3R5cGU+PG5pY2tOYW1lPkZlcnJpcyZhcG9zO3MgQ2hlY2tpbmc8L25pY2tOYW1lPjxhY2NvdW50TnVtYmVyPjE4Njk3PC9hY2NvdW50TnVtYmVyPjwvYWNjb3VudD48YWNjb3VudD48dHlwZT5DSDwvdHlwZT48bmlja05hbWU+JnF1b3Q7UXVvdGUmcXVvdDsgQ2hlY2tpbmc8L25pY2tOYW1lPjxhY2NvdW50TnVtYmVyPjMxMTIzPC9hY2NvdW50TnVtYmVyPjwvYWNjb3VudD48YWNjb3VudD48dHlwZT5DSDwvdHlwZT48bmlja05hbWU+VEVTVCBDSEVDS0lORzwvbmlja05hbWU+PGFjY291bnROdW1iZXI+MTcyMDIzPC9hY2NvdW50TnVtYmVyPjwvYWNjb3VudD48YWNjb3VudD48dHlwZT5DSDwvdHlwZT48bmlja05hbWU+QVRNMSAtIENoZWNraW5nPC9uaWNrTmFtZT48YWNjb3VudE51bWJlcj4xMDwvYWNjb3VudE51bWJlcj48L2FjY291bnQ+PC9BY2NvdW50cz5dXT4KICAgICAgICAgICAgICAgIDwvc2FtbDpBdHRyaWJ1dGVWYWx1ZT4KICAgICAgICAgICAgPC9zYW1sOkF0dHJpYnV0ZT4KICAgICAgICAgICAgPHNhbWw6QXR0cmlidXRlIAogICAgICAgICAgICAgICAgTmFtZT0idXNlcl90eXBlIiAKICAgICAgICAgICAgICAgIE5hbWVGb3JtYXQ9InVybjpvYXNpczpuYW1lczp0YzpTQU1MOjIuMDphdHRybmFtZS1mb3JtYXQ6YmFzaWMiPgogICAgICAgICAgICAgICAgPHNhbWw6QXR0cmlidXRlVmFsdWUgCiAgICAgICAgICAgICAgICAgICAgeHNpOnR5cGU9InhzOnN0cmluZyIgCiAgICAgICAgICAgICAgICAgICAgeG1sbnM6eHM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hIiAKICAgICAgICAgICAgICAgICAgICB4bWxuczp4c2k9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIj5QCiAgICAgICAgICAgICAgICA8L3NhbWw6QXR0cmlidXRlVmFsdWU+CiAgICAgICAgICAgIDwvc2FtbDpBdHRyaWJ1dGU+CiAgICAgICAgICAgIDxzYW1sOkF0dHJpYnV0ZSAKICAgICAgICAgICAgICAgIE5hbWU9IlVTRVJfSUQiIAogICAgICAgICAgICAgICAgTmFtZUZvcm1hdD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOmF0dHJuYW1lLWZvcm1hdDpiYXNpYyI+CiAgICAgICAgICAgICAgICA8c2FtbDpBdHRyaWJ1dGVWYWx1ZSAKICAgICAgICAgICAgICAgICAgICB4c2k6dHlwZT0ieHM6c3RyaW5nIiAKICAgICAgICAgICAgICAgICAgICB4bWxuczp4cz0iaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEiIAogICAgICAgICAgICAgICAgICAgIHhtbG5zOnhzaT0iaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEtaW5zdGFuY2UiPnRwdmNlcnRzMQogICAgICAgICAgICAgICAgPC9zYW1sOkF0dHJpYnV0ZVZhbHVlPgogICAgICAgICAgICA8L3NhbWw6QXR0cmlidXRlPgogICAgICAgICAgICA8c2FtbDpBdHRyaWJ1dGUgCiAgICAgICAgICAgICAgICBOYW1lPSJGSV9JRCIgCiAgICAgICAgICAgICAgICBOYW1lRm9ybWF0PSJ1cm46b2FzaXM6bmFtZXM6dGM6U0FNTDoyLjA6YXR0cm5hbWUtZm9ybWF0OmJhc2ljIj4KICAgICAgICAgICAgICAgIDxzYW1sOkF0dHJpYnV0ZVZhbHVlIAogICAgICAgICAgICAgICAgICAgIHhzaTp0eXBlPSJ4czpzdHJpbmciIAogICAgICAgICAgICAgICAgICAgIHhtbG5zOnhzPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYSIgCiAgICAgICAgICAgICAgICAgICAgeG1sbnM6eHNpPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZSI+REkzNjMzCiAgICAgICAgICAgICAgICA8L3NhbWw6QXR0cmlidXRlVmFsdWU+CiAgICAgICAgICAgIDwvc2FtbDpBdHRyaWJ1dGU+CiAgICAgICAgICAgIDxzYW1sOkF0dHJpYnV0ZSAKICAgICAgICAgICAgICAgIE5hbWU9IktFRVBfQUxJVkVfVVJMIiAKICAgICAgICAgICAgICAgIE5hbWVGb3JtYXQ9InVybjpvYXNpczpuYW1lczp0YzpTQU1MOjIuMDphdHRybmFtZS1mb3JtYXQ6YmFzaWMiPgogICAgICAgICAgICAgICAgPHNhbWw6QXR0cmlidXRlVmFsdWUgCiAgICAgICAgICAgICAgICAgICAgeHNpOnR5cGU9InhzOnN0cmluZyIgCiAgICAgICAgICAgICAgICAgICAgeG1sbnM6eHM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hIiAKICAgICAgICAgICAgICAgICAgICB4bWxuczp4c2k9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIj5odHRwczovL3d3dy5pcWEwMTkuY29tL3RvYi9saXZlL3VzcC1jb3JlL2FwcC9sYXVuY2g/CiAgICAgICAgICAgICAgICAgICAgY29kZT1waW5nCiAgICAgICAgICAgICAgICA8L3NhbWw6QXR0cmlidXRlVmFsdWU+CiAgICAgICAgICAgIDwvc2FtbDpBdHRyaWJ1dGU+CiAgICAgICAgPC9zYW1sOkF0dHJpYnV0ZVN0YXRlbWVudD4KICAgIDwvc2FtbDpBc3NlcnRpb24+Cjwvc2FtbHA6UmVzcG9uc2U+"}
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi Dipak,
+
+Eric at NCR was able to hit our site when sending in an unencrypted SAML assertion, but once testing with an XML encrypted SAML assertion they werent able to hit the site.
+
+I forwarded his response to you and Shahadet through email. Can you look into the XML decryption link he provided?
+
+
+
+Thanks guys\!
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: Hi Dipak,
+
+With the decryption of the XML, can you test it using a self-signed certificate that you create yourself?  That also means you need to encrypt the XML with your own public key and be able to decrypt it when its passed over in the SSO request.
+
+Thank,
+
+Sean
+
+
+author: dipak.mondal
+comment: [^NCR settings.pdf]
+[^NCR settings.docx]
+
+NCR setup related files
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi Naim,
+
+
+
+So well be using the same SSL moving on, so we wont need to change that.
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi Dipak, can you share with me a working test html page to hit the site with NCR SSO?
+
+
+author: dipak.mondal
+comment: [^sso-local(2) (fd1207a3-6c48-4816-b6de-77395f37c997).html]
+
+Can you try it?
+
+
+author: dipak.mondal
+comment: NCR related documents
+
+[^NCR doc.docx]
+
+
+author: dipak.mondal
+comment: [^NCR doc.pdf]

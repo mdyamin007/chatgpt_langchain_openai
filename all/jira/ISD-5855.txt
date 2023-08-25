@@ -1,0 +1,171 @@
+title: EWBB - Black Knight Mortgage Core Setup: Escrow Analysis eStatements
+description: Estimate: 5 hours.
+
+We'll work with Print timeline. 
+
+ 
+
+For the Developer:
+    Set up Mortgage application: new tab, email template.
+    Add account mapping to ext_type_mapping: ML -> 05. 
+    Add description for ML into doc_desc: Mortgage.
+    Resource from IS.
+
+
+
+author: JIRAUSER10906
+comment: [~Azad]
+
+Please upload the attached index file[^ml4_04152021_1_20211214_1704_ewbb.txt] to pilot.
+
+This index file was produced from parallel environment with the staging DT_JOB_ID rather than on pilot, but it should be good.
+
+Thanks!
+
+
+author: azad
+comment: Hi [~phoebe.george], [~SamV2021],
+
+ml4 index file has wrong date format MMddyyyy. It should be yyyyMMdd.
+
+Thanks.
+
+
+author: JIRAUSER10906
+comment: [~Azad] [~phoebe.george]
+
+Hi, I have reprocessed and attached the new index file:[^ml4_20210415_1_20211220_1023_ewbb.txt]
+
+Thanks!
+
+
+author: azad
+comment: [~phoebe.george] [~SamV2021]
+
+ml4 is posted.
+
+Thanks!
+
+
+
+
+author: phoebe.george
+comment: [~Azad] I noted on a separate Jira ticket, but EWBB had previously approved the pilot site.
+
+QA is in progress on the IS story. Please prepare your items in preparation for parallel testing, I'll be submitting this once QA is completed.
+
+I will update each of the Jira ISD stories with this same update tied to this project. Thanks!
+
+
+author: shun.kuwashima
+comment: [~Azad] EWBB has API, however I don't see the new mortgage statement type in the InfoConfig properties on all lower environments. Can you confirm?
+
+Also I noticed that on both the admin site and sso stage, the Application is showing as 'Unknown' rather than 'Mortgage'. Can you take a look? For stage sso, I manually tied acct 9180734 to CIF 1709054 in order to validate, so you can use it as well. Attaching screenshots stage_unknown_sso.PNG and stage_unknown_admin.PNG
+
+
+author: azad
+comment: Hi [~Shun.Kuwashima]
+
+Sean was to confirm us about whether EWBB uses the InfoSERVICE-jaas or not. He confirmed us the previous day and I have configured mortgage on dev, pilot and stage.
+
+And the account description is showing 'Unknown' instead of 'Mortgage' is because no AUTH process is run for those accounts.I've manually updated the "sub_type" value from null to "ML" in the FIN_ACCOUNT table for the account 9180734 and got the 'Mortgage' description on both admin and sso stage. Attaching screenshots stage_mortgage_sso.png and stage_mortgage_admin.png
+
+Thanks!
+
+
+
+
+author: shun.kuwashima
+comment: Thanks [~Azad], I can see the Mortgage description as well. 
+
+Regarding the API, were you able to verify on stage? On the swagger page, I tested using document V1 on pilot and was able to see mortgage populated from the test URL, however I just see 'no content' when I do the same thing on stage. I used this acct on both pilot and stage: 9180734
+
+
+author: azad
+comment: Hi [~Shun.Kuwashima]
+
+I couldn't verify the InfoSERVICE-jaas instance as currently I don't have the username and password which is required to make the api call. The configuration is same as InfoSERVICE. I've tried infoservice-common-stage swagger page and get 'no content' for the account9180734. But if I try the test url generated from the swagger page ([infoservice-common-stage-documentv1|http://ca-infotrac-st-01.infoimageinc.com:8580/infoservice/api/v1/document/ewbb/search/all?acctNum=9180734&acctType=05&includeClosed=true&searchCriteria=%255B%257B%2522key%2522%3A%2522startDate%2522%2C%2522operator%2522%3A%2522%3D%2522%2C%2522operand%2522%3A%25222021-01-10%2522%257D%2C%257B%2522key%2522%3A%2522endDate%2522%2C%2522operator%2522%3A%2522%3D%2522%2C%2522operand%2522%3A%25222022-02-10%2522%257D%255D&vendor=infoimage]) in the browser, I am getting response.
+
+I think no-content issue is related to swagger, the setup is okay. Nevertheless I will make sure.
+
+Thanks!
+
+
+author: azad
+comment: Hi [~Shun.Kuwashima]
+
+I tried search/all api on the InfoSERVICE-jaas ([api-pui-stage-documentV2|http://ca-apipui-st-01.infoimageinc.com:8480/infoservice/api/v2/document/ewbb/search/all?acctNums=blYTOIdc5tSkmKSSCJGzaQ&acctTypes=05&searchCriteria=[\{%22key%22:%22startDate%22,%22operator%22:%22=%22,%22operand%22:%222021-01-10%22},\{%22key%22:%22endDate%22,%22operator%22:%22=%22,%22operand%22:%222022-02-10%22}]&includeInserts=Y&includeClosed=true&vendorId=infoimage]) stage instance today for the account 9180734 provided the username and password.
+
+I got the response with one statement of type mortgage. I am attaching the screenshot here. For any issue, please let me know.
+
+For 'no-content' issue on swagger, if it is a GET api, try posting the api-url in the browser to be sure a response is served.
+
+Thanks. !Screenshot from 2022-03-22 19-39-19.png!
+
+
+author: shun.kuwashima
+comment: Great, Thanks [~Azad]! I'll be passing along the parallels.
+
+
+author: azad
+comment: To QA,
+
+Process _*ml4_20210415_1_20211220_1023_ewbb.txt*_ to test Escrow Analysis. ml4 will be processed via Document processing.
+
+Index file and zip file are already on place. Run the job with 'Parallel Run' checked to process on test mode.
+
+For testing purpose, doc process will create account if new.
+
+Thanks!
+
+
+author: nprimak
+comment: [~Azad] [~Igor.Khosid]
+
+Index file failed to process, processing ref# 192420
+
+
+author: azad
+comment: Hi [~nprimak]
+
+The job failed becausedt_job_id is missing from dataTrac(IS) database. Please run the job with "By Pass Dt_jobId search" flag checked.
+
+Thanks!
+
+
+author: nprimak
+comment: [~Azad] [~Igor.Khosid] [~phoebe.george] 
+
+I processed by passing dt_job_id successfully.
+
+I still have questions:
+ * I found only 2 accounts from processed file with same processing date April 15. 2021 as on pilot IS-599 and same header on a statement, but on pilot each account has multiple pages, on staging very short, no info (compare pilot acc# 9193050, staging acc# 9175422)
+ * Should I SSO page, it is in attachment in a story
+
+Thank you,
+
+Natasha
+
+
+
+
+author: azad
+comment: Hi [~nprimak]
+ # Those are two different loan statements as the loan number is different on each document. You can ignore the statement contents as there is a higher chance that the files are not authentic. In production this should not happen as the files will be authentic.
+ # You can SSO into EWBB. For that you have to run an Auth process with the cif you want to SSO.
+
+Thanks
+
+
+author: nprimak
+comment: [~Azad] [~phoebe.george] 
+
+Verified Escrow Account disclosure statement on staging Admin site.
+
+SSO is working but I did not verify statements on SSO site, accounts from processed index file don't have cif number in DB.
+
+Usually we verify statements only on Admin site, releasing story based on qa tests and comments above
+
+Thank you,
+
+Natasha

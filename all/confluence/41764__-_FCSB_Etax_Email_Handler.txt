@@ -1,0 +1,175 @@
+title: 41764  - FCSB Etax Email Handler
+body:   
+
+  
+
+Target release| Release name or number  
+---|---  
+Epic| Link to related Jira epic or feature  
+Document status|
+
+GreenDone  
+  
+Document owner|  
+  
+Designer|  
+  
+Developers|  
+  
+QA| Lead tester  
+  
+  
+
+## Goals
+
+  * Set up Etax Email for FCSB
+
+## Background and strategic fit
+
+We need to fix FCSB email handler so that their emails for eTaxes will be sent
+out correctly; using NP table.
+
+## Assumptions
+
+  * There are 3 different cases for recipients: FHNB, FNBT, and FCB. FNBT and FCB are both under cid fnbt. 
+  * Emails are only sent out once per email per account if the account is on E or W. (One account can have multiple emails if the addresses are different)
+  * Emails won't be sent out to restricted NP records.
+  * Emails won't be sent out if we have already sent out emails for the etax
+  * We will be using the NotifyPrefEmailRecipient.
+  * Reference FCSBEstmtEmailHandler.
+
+## Requirements
+
+#| Title| User Story| Importance| Notes  
+---|---|---|---|---  
+1| Query for FHNB| Define Query for FHNB|  _Must Have_|
+
+SELECT DISTINCT e.etax_id, ufa.usr_id, ufa.acct_id, u.usr_firstname,
+u.usr_lastname  
+FROM p_job_etax j, etax e, usr_fin_account ufa, usr u, paperless2 p  
+WHERE j.p_job_id = ?  
+AND j.etax_id = e.etax_id  
+AND (e.Status IS NULL OR e.Status = ?)  
+AND e.acct_id = ufa.acct_id  
+AND u.usr_id = ufa.usr_id  
+AND ufa.acct_id = p.acct_id  
+AND p.p_latest_status != 'B';
+
+  * j.p_job_id = jobID parameter
+  * e.Status = ETax.APPROVED
+
+  
+2| Query for FNBT| Define Query for FNBT |  _Must Have_|
+
+SELECT DISTINCT e.etax_id, ufa.usr_id, ufa.acct_id, u.usr_firstname,
+u.usr_lastname, fa.region  
+FROM p_job_etax j, etax e, usr_fin_account ufa, usr u, fin_account fa,
+paperless2 p  
+WHERE j.p_job_id = ?  
+AND j.etax_id = e.etax_id  
+AND (e.Status IS NULL OR e.Status = ?)  
+AND e.acct_id = ufa.acct_id  
+AND u.usr_id = ufa.usr_id  
+AND fa.acct_id=ufa.acct_id  
+AND fa.region = ?  
+AND fa.acct_id = p.acct_id  
+AND p.p_latest_status != 'B';
+
+  * j.p_job_id = jobID parameter
+  * e.Status = ETax.APPROVED
+  * fa.region = 'TX'
+
+  
+3| Query for FCB| Define Query for FCB|  _Must Have_|  Same as FNBT, but
+fa.region = 'AZ'  
+4| public EmailRecipient[] getRecipients (String jobId)| function to return
+the email recipients to the processing job|  _Must Have_|
+
+  * Paperless status does not need to be checked because the new query is joined with the paperless2 table and filters out all accounts on Paper ('B')
+  * The specific recipient to use is NotifyPrefEmailRecipient
+  * Reference FcsbEstmtEmailHandler
+
+  
+5| private Set<String> getAlreadySentEmails(String jobId)| function to return
+emails already sent|  _Must Have_|
+
+SELECT DISTINCT Email  
+FROM P_Job_Etax pje, P_Etax_Email pee, etax e  
+WHERE pje.P_Job_Id = ?  
+AND pje.etax_Id = pee.etax_Id  
+AND pee.etax_Id = e.etax_Id  
+AND (e.Status IS NULL OR e.Status = ?)
+
+  * j.p_job_id = jobID parameter
+  * e.Status = ETax.APPROVED
+
+  
+6| private String setRegion (String orgName)| function to return the region|
+_Must Have_|
+
+  * fcb return "AZ"
+  * fnbt return "TX"
+
+  
+7| private String getEmails(String userId, String accountId, String orgId)|
+function to return the emails of a user/account pair; will filter out
+restricted emails|  _Must Have_|
+
+SELECT notification_preference_id, email_address FROM notification_preference
+WHERE usr_id=? ORDER BY notification_preference_id
+
+  * user_id = userId parameter
+  * Will only return emails that are not restricted
+
+Possible results:
+
+  1. "": no email addresses or all email addresses are stricted
+  2. "email1": email1 is not restricted; and email2 DNE or is restricted
+  3. "email2": email2 is not restricted; and email1 is restricted
+  4. "email1,email2": email1 and email2 are not restricted 
+
+Not restricted => restriction entry exists in the restriction table  
+  
+8|
+
+public EmailRecipient createSampleEmailRecipient (String acctNum, String
+acctName, String emailAddr)
+
+| function to return a sample recipient for Admin Site and PUI use|  _Must
+Have_|  reference the same function in NotifyPrefEmailHandler  
+9| public void formatEmail(PostOffice po, EmailRecipient er)| function to
+format email|  _Must Have_|  reference the same function in
+NotifyPrefEmailHandler  
+10| public String formatEmailContent(EmailRecipient er)| function to format
+email without PostOffice|  _Must Have_|
+
+  * Support account number and tax list keyword (reference EtaxEmailHandler2)
+  * Should append a salutation ("Dear ____," , reference EtaxEmailHandler2)
+  * Use standard keywords: $sdv_txt_acctNum and $sdv_txt_eTaxList  
+
+    * FCSB isn't using these, but we should set it up in case they want it in the future
+
+  
+11| Admin Site| Verify that sample email works on Admin Site|  _Must Have_|
+There may be some code changes required on the Admin Site proofing.  
+  
+## User interaction and design
+
+Include any mockups, diagrams or visual designs relating to these
+requirements.
+
+## Questions
+
+Below is a list of questions to be addressed as a result of this requirements
+document:
+
+Question| Outcome  
+---|---  
+(e.g. How we make users more aware of this feature?)| Communicate the decision
+reached  
+  
+## Not Doing
+
+  * List the features discussed which are out of scope or might be revisited in a later release.
+
+

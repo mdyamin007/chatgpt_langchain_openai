@@ -1,0 +1,593 @@
+title: MPCU - [29671][pvt] Mail PAPER and  Archive for 1099INT, 1099A, 1099C, 1099MISC, 1098 Tax Forms
+description: IS Assessment
+=============
+Hours for development: 10 IS hours (no ISD hours required)
+
+(customized archival setup: 7 hours + remove all account paper suppression to print and mail: 3 hours)
+Turnover Date : 08/10/2022
+Sample to QA Date: 09/02/2022
+Approval Date: 09/07/2022 
+Go live date : 09/15/2022
+Engineering resource: Zhuoxin T
+
+Assessment Details (IS):
+- Parallel required: (Yes)
+- Remove suppression codes to mail as normal (in mpcu_tax_acct_to_mbr.pl)
+- Setup Archival for following tax forms: 1098, 1099A, 1099C,1099MISC, 1099INT (Combined)
+
+- The Index file for the Combined 1099INT should list ALL Account numbers ( references the one same PDF.
+- Use following archival specifications:
+
+Standard individual PDFs tax archival specification
+
+=====================================
+
+- Index file naming convention:
+{cid}TAX.txt
+Example,
+MPCUTAX.txt
+
+- Index file content (Pipe delimited):
+Account Number|SSN Number|Account Name|Tax Year|Tax Form Type|PDF File Name
+example,
+12345|222334444|GREEN COMMUNITY DEVELOPMENT LLC|2022|1098|12345-2019-1.pdf
+
+- Individual PDF file naming convention:
+AccountNumber-TaxYear-SequenceNumber.pdf
+example:
+12345-2019-1.pdf
+57890-2014-2.pdf
+
+- Zip file naming convention for index file and the individual PDF files.
+{cid}_{formType}_{CycleSegment}.zip
+e.g.
+mpcu_1098_031.zip
+
+
+author: JIRAUSER11101
+comment: Hi [~dawnl]
+I am not able to find any data file for 1099A.
+Can you please get it from client?
+
+And can you get the DT_JOB_ID for mpcu 1099misc on parallel?
+Thanks
+
+
+author: dawnl
+comment: Hi [~zhuoxinT],
+
+IsDT_JOB_ID the test job ID? If yes, just use 999999.
+
+Thanks.
+
+
+author: dawnl
+comment: Hi [~zhuoxinT],
+
+Client has uploaded MPCU_1099A_010715_0958_PROD.IRF to the TEST folder.
+
+Thanks.
+
+
+author: JIRAUSER11101
+comment: [~dawnl] 
+for the request on the index file,
+we can do like this. Correct me if I am wrong.
+The member number can have multiple accounts, but they are all combined to 1099i, so they are pointing to 1 pdf.
+
+*Member Number|Account Number|SSN|Account Name|Tax Year|Tax Form Type|PDF File Name*
+74656|7465630|204024812|1860 NEWBERG LLC|2021|1099INT|74656_1099INT_2021_1.pdf
+84251|2004066213|540401058|A L WALL|2021|1099INT|84251_1099INT_2021_2.pdf
+974609|2002028172|826297429|AARON J LEDER|2021|1099INT|974609_1099INT_2021_3.pdf
+974609|2003988910|826297429|AARON J LEDER|2021|1099INT|974609_1099INT_2021_3.pdf
+986450|2004416326|605222928|ALANA J SISCO|2021|1099INT|986450_1099INT_2021_4.pdf
+101010|1010109|544581610|CATHERINE A COLLINS|2021|1099INT|101010_1099INT_2021_5.pdf
+101010|10101000|544581610|CATHERINE A COLLINS|2021|1099INT|101010_1099INT_2021_5.pdf
+101010|2003477968|544581610|CATHERINE A COLLINS|2021|1099INT|101010_1099INT_2021_5.pdf
+101010|8170001010109|544581610|CATHERINE A COLLINS|2021|1099INT|101010_1099INT_2021_5.pdf
+
+
+author: dawnl
+comment: [~zhuoxinT],
+
+Do you want client to answer your question above?
+
+[~TunA],
+
+Can you check Zhuoxin's comment above and make sure it is correct?
+
+
+author: JIRAUSER11101
+comment: [~dawnl] 
+Yes. please ask client see if this is what they want.
+Thanks
+
+
+author: dawnl
+comment: [~zhuoxinT],
+
+Client confirmed this.
+
+*Member Number|Account Number|SSN|Account Name|Tax Year|Tax Form Type|PDF File Name*
+74656|7465630|204024812|1860 NEWBERG LLC|2021|1099INT|74656_1099INT_2021_1.pdf
+84251|2004066213|540401058|A L WALL|2021|1099INT|84251_1099INT_2021_2.pdf
+974609|2002028172|826297429|AARON J LEDER|2021|1099INT|974609_1099INT_2021_3.pdf
+974609|2003988910|826297429|AARON J LEDER|2021|1099INT|974609_1099INT_2021_3.pdf
+986450|2004416326|605222928|ALANA J SISCO|2021|1099INT|986450_1099INT_2021_4.pdf
+101010|1010109|544581610|CATHERINE A COLLINS|2021|1099INT|101010_1099INT_2021_5.pdf
+101010|10101000|544581610|CATHERINE A COLLINS|2021|1099INT|101010_1099INT_2021_5.pdf
+101010|2003477968|544581610|CATHERINE A COLLINS|2021|1099INT|101010_1099INT_2021_5.pdf
+101010|8170001010109|544581610|CATHERINE A COLLINS|2021|1099INT|101010_1099INT_2021_5.pdf
+
+
+author: JIRAUSER11101
+comment: [~Igor.Khosid] 
+ Parallel ID: 20220810140803
+ Currently in parallel: Yes
+ User: zhuoxinT
+ Description: MPCU IS-1329 Mail PAPER and Archive for 1099INT, 1099A, 1099C, 1099MISC, 1098 Tax Forms
+ Date Submitted: 2022-08-10 14:09:01
+ Date Last Updated: 2022-08-22 14:17:53
+ Files:
+ 1) 1099IGEN_21.dfa
+ 2) mpcu_customized_archival.pl
+ 3) mpcutax_1098gen_pdf.control
+ 4) mpcutax_1099cgen_pdf.control
+ 5) mpcu_tax_acct_to_mbr.pl
+ 6) mpcutax_1099igen_pdf.control
+ 7) mpcutax_1099agen_pdf.control
+ 8) mpcutax_1099miscgen_pdf.control
+ 9) cdtax.control
+ 10) tax_archival_key.control
+
+DPVS:[^mpcu99a131.print][^mpcu99c131.print][^mpcu99i131.print][^mpcu99m131.print][^mpcu098131.print]
+archival sample:[^MPCU_1099A_311_2014.zip][^MPCU_1099C_311_2014.zip][^MPCU_1099MISC_311_2014.zip]
+these two file are oversized, placed to\qa\MPCU\is1329 :[^MPCU_1098_311_2014.zip][^MPCU_1099I_311_2014.zip]
+
+
+author: berezinez
+comment: [~zhuoxinT]
+
+please advise, what is the password for the zip files.
+
+
+author: JIRAUSER11101
+comment: [~berezinez] 
+pw:MPCU_tax3s_0403
+
+
+author: berezinez
+comment: [~zhuoxinT] [~dawnl]
+
+QA pass, ready for client approval.
+
+
+author: dawnl
+comment: [~zhuoxinT],
+
+Can you copyMPCU_1098_311_2014.zip andMPCU_1099I_311_2014.zip to ac secure shared (\\dell-2100) \Dawn\MPCU?
+
+
+author: berezinez
+comment: [~zhuoxinT] [~dawnl]
+
+Is there any update on this story?
+
+[~zhuoxinT]have you seen the last Dawn's comment?
+
+Can you copyMPCU_1098_311_2014.zip andMPCU_1099I_311_2014.zip to ac secure shared (
+dell-2100) \Dawn\MPCU?
+
+
+author: dawnl
+comment: [~zhuoxinT],
+
+Here is the feedback from client:
+
+"The indexes in these 4 files look good.
+
+MPCU_1098_311_2014.zip
+MPCU_1099C_311_2014.zip
+MPCU_1099I_311_2014.zip
+MPCU_1099MISC_311_2014.zip
+
+There is an issue with the index file forMPCU_1099A_311_2014.zip. Why are the account numbers missing in the index file?
+
+"
+
+
+author: JIRAUSER11101
+comment: [~dawnl] 
+There is an issue on data. The 1099A data we received from client has tax-year '2014'.
+Can we request a data for '2021'? I can generate another sample for that.
+Thanks
+
+[^MPCU_1099A_010715_0958_PROD.IRF]
+
+
+!Annotation 2022-09-13 082051.png!
+
+
+author: dawnl
+comment: [~zhuoxinT],
+
+Can you make sure thatthe account number will be in the archive file when a current 1099A file is provided? See the feedback from client:
+
+"Maps is not able to provide 1099A from 2021. The last time Maps had a 1099A reporting was for tax year 2014. However, we may receive one at any time.
+
+Please assure Maps that the account number will be in the archive file when a current 1099A file is provided."
+
+
+
+
+author: JIRAUSER11101
+comment: [~dawnl] 
+I can manually modify the data and test it.
+I will attach the sample once its done.
+
+
+author: JIRAUSER11101
+comment: [~dawnl]
+Because our script will look at the tax year on the data to select different DFA file to process.
+The 2014 version DFA has different set up. That's why we don't see the account number on the first sample.
+
+Here's the output after modified the year on the data.
+[^MPCU_1099A_311_2021.zip][^1099a_MPCUTAX_modified.txt]
+
+
+author: dawnl
+comment: [~zhuoxinT]- client approved the samples. Please request QA. Can you provide the new timeline? Thanks.
+
+
+author: JIRAUSER11101
+comment: [~berezinez]
+this is the DVPS for 1099a after modified the data: [^mpcu99a131_modified.print]
+[^IS-1329-QA Checklist.doc]
+
+
+author: JIRAUSER11101
+comment: [~dawnl]
+sorry, since this is approved. It just depends on QA and Master parallel.
+
+Thank you
+
+
+author: berezinez
+comment: [~dawnl] [~zhuoxinT]
+
+QA is completed, IS checklist attached.
+
+[^IS_1329_MPCU_IS_Checklist.pdf]
+
+
+author: JIRAUSER11101
+comment: [~dawnl]
+For the master parallel, Is it ok to use the modified data to test?
+if no, please advise what to use.
+Please create the master parallel ticket
+Thanks
+
+
+author: dawnl
+comment: [~zhuoxinT],
+
+For print sample request, please provide the print ranges and the specific file such as 4.2o1 etc.
+
+It is ok to use the modified data to test
+
+Thanks.
+
+
+author: dawnl
+comment: [~zhuoxinT]- MPT #33212 has been assigned to you. Thanks.
+
+
+author: JIRAUSER11104
+comment: Print samples >>>[^IS-1329_MPCU_PrntSmpls_09162022.pdf]
+
+
+author: tuna
+comment: Hi [~dawnl]
+
+Due date (09/15) is overdue. Do we have estimated new release date for this project? If yes, please let [~zhuoxinT] knows.
+For now, I will postpone live date to (10/10).
+
+Thanks
+
+Tun
+
+
+author: dawnl
+comment: [~zhuoxinT]- can you release the update? thanks.
+
+
+author: JIRAUSER11101
+comment: [~dawnl] 
+what is the status for this?
+
+
+author: dawnl
+comment: [~zhuoxinT]- for invalid address, If it says"No PDF via FTP for standard set ups". Dose it mean the statements with invalid address will not be included in PDF archival?
+
+
+author: JIRAUSER11101
+comment: [~dawnl] 
+I am not sure what this means, but this job is to add the archival for MPCU tax.
+
+
+author: dawnl
+comment: [~zhuoxinT] - so all tax forms will have archival regardless if the address is valid or not, right?
+
+
+author: JIRAUSER11101
+comment: [~dawnl] 
+yes, right.
+
+
+author: dawnl
+comment: [~zhuoxinT],
+
+Here is client's feedback for invalid address:
+
+"If one of the following is entirely missing, please PRINT & send to Maps CU (MPCU):
+ * House Number
+ * Street Name
+ * City
+ * State
+ * Zip code
+
+"
+
+Do you need to add code to insure that?
+
+Thanks.
+
+
+author: JIRAUSER11101
+comment: [~dawnl] 
+I need to discuss with Tun. I will get back to you after that.
+
+
+author: JIRAUSER11101
+comment: [~dawnl] 
+
+We can handle the invalid address letter. But to determine whether it is invalid or not, we use the USPS software. It will look at the whole address. not just street or city.
+
+We do need to add more codes on.
+We can add the misc_type='rtm', then our program can Print and Return entire output flat to MPCU for those invalid address account.
+
+Please update the SOW and let me know if you want me to do that.
+
+It would be print and ship to client on SOW 3.11.
+
+Thanks
+
+
+author: JIRAUSER11101
+comment: [~dawnl]
+Any update on this?
+Do we need to add the handling for invalid address?
+
+
+author: dawnl
+comment: [~zhuoxinT]- I have discussed with Jessica, we will use the standard roles. No need to add any more codes. I will provide the SOW. Thanks.
+
+
+author: JIRAUSER11101
+comment: [~dawnl] 
+Ok.
+When is good to release it?
+
+
+author: tuna
+comment: Hi [~dawnl],
+
+Due date (10/18) is overdue. Do we have estimated new release date for this project? Please let [~zhuoxinT] knows as soon as possible.
+
+Thanks,
+
+Tun
+
+
+
+[~Jessica]
+
+
+author: dawnl
+comment: [~Jessica],
+
+We are still pending client's response regarding "CRID & MID" and "endorsement".
+
+Can we release without those information?
+
+Thanks
+
+
+author: dawnl
+comment: [~TunA],
+
+Can IS provide theVersion ID (VID) NumberandApplication (APP) Number for SOW ? We need these numbers for the SOW before we can release the change.
+
+Thanks.
+
+
+author: dawnl
+comment: [~zhuoxinT] [~TunA],
+
+Updated SOW[http://sharepoint-svr/AS/Shared%20Documents/SOW%20Directory/MPCU%20-%20Maps%20Credit%20Union/SOW/MPCU_Tax_Print_SOW.docx]
+
+Thanks.
+
+
+author: JIRAUSER11101
+comment: [~dawnl]
+Is there any code update we need to add?
+
+
+author: dawnl
+comment: [~zhuoxinT] [~TunA]
+
+Can you review the SOW to make sure everything is covered ?
+
+Also this following is from OPS.
+|MPCU's MID has been added to our Informed Visibility data feed schedule with the USPS for mail tracking. Please use STID 041 and MID 903315689 in the IMB.|
+
+
+author: tuna
+comment: Hi [~dawnl],
+
+Due date (10/18) is overdue. Do we have estimated new release date for this project? 
+If yes, please let [~zhuoxinT] knows. For now, I will postpone live date to (11/18).
+
+Thanks
+
+Tun
+
+
+
+
+author: JIRAUSER11101
+comment: [~dawnl] 
+update:
+ endorsement set to "R"
+misc_type='rtm'
+also IMB is using the MID and STID now.
+sample zipped and placed toAC Secure shared/Dawn/MPCU/1108
+
+
+author: dawnl
+comment: [~zhuoxinT]- sent sample to OPS to review and verity.
+
+
+author: dawnl
+comment: [~zhuoxinT],
+
+Here is the feedback from Calvin:
+
+"The Endorsement & IMB is coded correctly for 1099A, 1099C, 1099INT, 1099MISC and 1098.
+
+Is 1099INT supposed to be stock code 4000 regular white? It's coded 4006 (2-line perf). It looks like a non-standard tax form.
+
+"
+
+Can you check 1099INT?
+
+
+
+
+author: JIRAUSER11101
+comment: [~dawnl]
+ On SOW:
+ # *Material for print:* Plain White, 24# 2-line perforated paper (form 4006). #10 In-house Tax dbl window envelope (form 4404)
+
+I didnt change anything on this and this is default for all standard tax.
+
+
+author: dawnl
+comment: [~zhuoxinT]- please request QA to check the update. Thanks.
+
+
+author: JIRAUSER11101
+comment: [~Igor.Khosid] [~berezinez] 
+We've added more updates to this project.
+endorsement set to "R"
+misc_type='rtm'
+also IMB is using the MID and STID now.
+
+
+*Sample, DPVS, and archival are zipped and placed to ISS/QA/MPCU/is1329/1108*
+
+Please redo the test.
+ Parallel ID: 20221026112904
+ Currently in parallel: Yes
+ User: zhuoxinT
+ Description: IS1329 mpcu setup print and archival
+ Date Submitted: 2022-10-26 11:29:31
+ Date Last Updated: 2022-11-09 10:17:14
+ Files:
+ 1) 1099IGEN_21.dfa
+ 2) mpcu_customized_archival.pl
+ 3) mpcutax_1098gen_pdf.control
+ 4) tax_archival_key.control
+ 5) mpcutax_1099cgen_pdf.control
+ 6) mpcu_tax_acct_to_mbr.pl
+ 7) mpcutax_1099igen_pdf.control
+ 8) mpcutax_1099agen_pdf.control
+ 9) mpcutax_1099miscgen_pdf.control
+ 10) cdtax.control
+ *11) tax_endorsement.control **NEW*
+ *12) tax_infotrac.control **NEW*
+
+Thanks
+
+
+author: berezinez
+comment: [~zhuoxinT] [~dawnl]
+
+QA is completed, the changes look good.
+
+
+author: JIRAUSER11101
+comment: [~dawnl]Do we need to do the Master parallel test again?
+
+
+author: dawnl
+comment: [~zhuoxinT]- MPT#35828 has been assigned to you. Thanks.
+
+
+
+
+
+
+author: JIRAUSER11101
+comment: [~dawnl]
+ Please use the DPVS in AC Secure shared\Dawn\MPCU\1108\mpcu_tax_1108 to request the print sample also.
+I also zipped here:[^DPVS_1108.zip]
+
+
+author: dawnl
+comment: [~zhuoxinT]- print sample request sent to OPS.
+
+
+author: dawnl
+comment: [~berezinez]- print samplesare ready in the IS Box. Thanks.
+
+
+author: JIRAUSER11104
+comment: [~berezinez]
+Print samples:
+ [^IS-1329_MPCU_1099-MISC_PrntSmpls_11152022.pdf] 
+ [^IS-1329_MPCU_1099-INT_PrntSmpls_11152022.pdf] 
+ [^IS-1329_MPCU_1099-C_PrntSmpls_11152022.pdf] 
+ [^IS-1329_MPCU_1099-A_PrntSmpls_11152022.pdf] 
+ [^IS-1329_MPCU_1098_PrntSmpls_11152022.pdf] 
+
+
+author: JIRAUSER11101
+comment: [~dawnl] 
+Per OPS, parallel passed. When can we release this?
+After that, we need [~Tevis Mak]to merge the code for 2022 forms.
+Please advise.
+Thanks
+
+
+author: dawnl
+comment: [~zhuoxinT]- can you release it today 11/16? Thanks.
+
+
+author: JIRAUSER11101
+comment: [~TunA] 
+[^IS-1329_PROGRAM_TRANSFER_FORM.doc]
+
+
+author: JIRAUSER11101
+comment: [~dawnl] 
+code released
+backup id:20221116115139
+
+
+
+[~Tevis Mak] 
+Please merge code to 1099IGEN_22.dfa
+
+Thanks

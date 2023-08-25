@@ -1,0 +1,118 @@
+For job_type 'e':
+Read master list and save account number (this will be put by dp manually in /z/pdf_afp/ffin/ffinms2/master_list/ . This is an example of FFIN_CD_Master_List)
+Create cd pdf index file (UPPER(&PREFIX)!'_PDF_INX.lis' )
+Create cd check image index file (UPPER(&CID)!'_IMG.lis' )
+BEFOREFIRSTDOC:
+  IF &JOB_TYPE=='e' ;
+  THEN ;
+    IF $SYSTEM=='Windows' ;
+    THEN ;
+      :LOCAL_DIRECTORY ;
+      &PATH_SLASH = '\' ;
+      &CD_MASTER_LIST = 'C:\ISIS\data\COBZ_CD_Master_List.txt' ;
+    ELSE ;
+      :PRODUCTION_DIRECTORY ;
+      &PATH_SLASH = '/' ;
+      &CD_MASTER_LIST = '/'!&D_DIR!'/pdf_afp/'!&CID!'/'!&PREFIX!'/master_list/'!UPPER(&CID)!'_CD_Master_List.txt' ;
+    ENDIF ;
+    FOR TC
+      REPEAT 2 ;
+      TC_ENTRY = CONVERT('PDECON','READLINE',&CD_MASTER_LIST) ;
+      IF TC_ENTRY=='EOF' ;
+      THEN ;
+        NULL = CONVERT('PDECON','READCLOSE',&CD_MASTER_LIST) ;
+        TC = 3 ;
+      ELSE ;
+        &ACC_ARR_IND = &ACC_ARR_IND+1 ;
+        &ACC_ARR[&ACC_ARR_IND] = EXTRACT(TC_ENTRY,X'09',2) ;
+        TC = 1 ;
+      ENDIF ;
+    ENDFOR ;
+    TODAY_YEAR = $ACTTIME_YEAR ;
+    TODAY_MON = RIGHT($ACTTIME_MON,2,'0') ;
+    TODAY_DAY = RIGHT($ACTTIME_DAY,2,'0') ;
+    TODAY_DATE = TODAY_MON!TODAY_DAY!TODAY_YEAR ;
+    &COMM_CD_IDX_FILE = UPPER(&PREFIX)!'_PDF_INX.lis' ;
+    &COMM_CD_IMG_FILE = UPPER(&CID)!'_IMG.lis' ;
+    IF &PATH_SLASH=='/' ;
+    THEN ;
+      &CD_PATH = '/'!&D_DIR!'/'!&CID!'/' ;
+      OUTTEMP2 = &CD_PATH!&COMM_CD_IDX_FILE ;
+      DUMMY = CHANGEENV('CDIDXFILE',OUTTEMP2) ;
+      &IMG_PATH = '/'!&D_DIR!'/'!&CID!'/' ;
+      OUTTEMP3 = &IMG_PATH!&COMM_CD_IMG_FILE ;
+      DUMMY = CHANGEENV('CDIMGFILE',OUTTEMP3) ;
+    ELSE ;
+      &PDF_PATH = 'c:\isis\afpds300\' ;
+      OUTTEMP1 = &PDF_PATH!&STMT_TYPE_FILE ;
+      DUMMY = CHANGEENV('PDFIDXFILE',OUTTEMP1) ;
+      OUTTEMP2 = &PDF_PATH!&COMM_CD_IDX_FILE ;
+      DUMMY = CHANGEENV('CDIDXFILE',OUTTEMP2) ;
+      OUTTEMP3 = &PDF_PATH!&COMM_CD_IMG_FILE ;
+      DUMMY = CHANGEENV('CDIMGFILE',OUTTEMP3) ;
+    ENDIF ;
+  ENDIF ;
+DOC (any ):
+ For each check image that are going to be displayed we need to build some comma delimited fields(Primary Account Number, Secondary Account Number, Check Date, Check Number, Check Amount, Tiff File Name, Transcode, Sequence Number) 
+All this 8 field needs to be present even if empty otherwise commercial cd program will not work.
+   FRONT_IMAGE_NAME = 'cobz'!'_'!CHECK_ACCOUNT_NUMBER!'_'!
+       CHECK_DATE!'_'!CHECK_SEQUENCE!'_F.tif' ;
+      BACK_IMAGE_NAME = 'cobz'!'_'!CHECK_ACCOUNT_NUMBER!'_'!
+       CHECK_DATE!'_'!CHECK_SEQUENCE!'_B.tif' ; 	
+      CD_FRONT_IMAGE = ACCOUNT_NUM*1!','!CHECK_ACCOUNT_NUMBER!','!
+       CHECK_DATE!','!CHECK_SERIAL!','!CHECK_AMOUNT!','!
+       FRONT_IMAGE_NAME!','!CHECK_TRAN_CODE!','!CHECK_SEQUENCE ;
+      CD_BACK_IMAGE = ACCOUNT_NUM*1!','!CHECK_ACCOUNT_NUMBER!','!
+       CHECK_DATE!','!CHECK_SERIAL!','!CHECK_AMOUNT!','!
+       BACK_IMAGE_NAME!','!CHECK_TRAN_CODE!','!CHECK_SEQUENCE ;
+	CHECK_COUNT = CHECK_COUNT + 1
+	CD_CHECK_IMAGE_ARRAY[CHECK_COUNT] = CD_BACK_IMAGE
+	CHECK_COUNT = CHECK_COUNT + 1
+	CD_CHECK_IMAGE_ARRAY[CHECK_COUNT] = CD_BACK_IMAGE ;
+PRINT_DOC:
+Create an index for cd pdf index file
+And indexes for each check image( that will be displayed) for cd check image index file
+	 IF &JOB_TYPE=='e' ;
+	  THEN ;
+	  /****************** cd step ********************/
+	    COMM_CD = SEARCHFIRST(&ACC_ARR,ACCOUNT_NUM) ;
+	    IF COMM_CD>0 ;
+	    THEN ;
+	      WRITERECORD  TO CDIDXFILE ;
+	        PUT PDF_FILE_NAME!'|'!ACCOUNT_NUMBER_WITHOUT_LEADING_ZERO!'|'!
+	           E_END_DATE!'|'!ACCOUNT_NAME  START 1;
+	      ENDIO;
+	      IF &CHK_IMAGE_CT>0 ;
+	      THEN ;
+	        FOR I
+	          REPEAT &CHK_IMAGE_CT ;
+	          WRITERECORD  TO CDIMGFILE ;
+	           PUT CD_CHECK_IMAGE_ARRAY[I]  START 1;
+	          ENDIO;
+	        ENDFOR ;
+	      ENDIF ;
+	    ENDIF ;
+	ENDIF ;
+So with those 2 index files a cd will be produced where for an account the statement and all the check images used in that statement.
+GROUPINDEX:
+  IF &JOB_TYPE=='e' ;
+  THEN ;
+    GROUPINDEX PDF_FILE_NAME = PDF_FILE_NAME ;
+  ENDIF ;
+  ENDGROUP ;
+Example:
+PDF_INX.lis
+6323774_10_11242020.pdf|6323774|11242020|SULLIVAN COUNTY INDIANA|9
+IMG.lis
+6323774,6323774,11242020,800102529,5000,ffin_6323774_11242020_5000_800102529_F.tif,,79
+6323774,6323774,11242020,800102529,5000,ffin_6323774_11242020_5000_800102529_B.tif,,79
+6323774,6323774,11242020,910053850,15100,ffin_6323774_11242020_15100_910053850_F.tif,,80
+6323774,6323774,11242020,910053850,15100,ffin_6323774_11242020_15100_910053850_B.tif,,80
+6323774,6323774,11242020,910053848,17100,ffin_6323774_11242020_17100_910053848_F.tif,,81
+6323774,6323774,11242020,910053848,17100,ffin_6323774_11242020_17100_910053848_B.tif,,81
+6323774,6323774,11242020,800070894,31000,ffin_6323774_11242020_31000_800070894_F.tif,,82
+6323774,6323774,11242020,800070894,31000,ffin_6323774_11242020_31000_800070894_B.tif,,82
+6323774,6323774,11242020,910055931,15000,ffin_6323774_11242020_15000_910055931_F.tif,,83
+6323774,6323774,11242020,910055931,15000,ffin_6323774_11242020_15000_910055931_B.tif,,83
+References: ffinms2
+[embeddoc url="https://kb.dsinnovators.com/wp-content/uploads/2017/10/Commercial-CD-Setup-Guide.pdf" download="all" viewer="browser"]

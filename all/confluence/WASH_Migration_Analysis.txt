@@ -1,0 +1,721 @@
+title: WASH Migration Analysis
+body:   
+
+Document Status|
+
+Greendone  
+  
+---|---  
+Document Owner|
+
+  
+  
+  
+
+# Washington Trust Bank
+
+32circle
+
+#  **Frontend:**
+
+##  **ROOT**
+
+  
+|  
+  
+---|---  
+ **Client Name**|  Washington Trust Bank  
+ **Schema**|  Bank  
+ **Login Method**|
+
+  * net-teller (hblogin.jsp)
+  * bbssoexchange (bbsso.SSOExchangeServlet)
+
+  
+ **Enrollment Step**|
+
+Based on the SSO date and DSO date
+
+  * 3 Steps
+
+  
+ **Welcome Email**|  N/A  
+ **Menu**|
+
+  * Monthly Statements
+  * Loan
+  * Account Analysis
+  * eNotice
+  * Batch Download Documents
+  * Disclosure
+  * Profile
+  * Exit
+
+  
+ **Account Types**|
+
+  * D
+  * T
+  * L
+  * S
+
+  
+ **Statement Types**|
+
+  * default (Monthly Statements)
+  * loan (Loan)
+  * analysis (Account Analysis)
+  * enotice (eNotice)
+
+  
+ **Archival Period**|
+
+  * Default: 84
+  * Loan: 84
+  * Analysis: 84
+  * Enotice: 84
+
+  
+ **Paperless Configuration**|  Non-Selective  
+ **Delivery Preference**|
+
+  * Paperless Statements Only (E)
+  * Paper Only (B)
+  * Both Paperless and Paper (W)
+
+  
+ **Notification Preference**|  Email-only  
+ **NP Link Type**|  byUFA  
+ **Batch Download  **| Yes  
+ **DSO login**|  N/A  
+ **User-Account Relation**|  Many to Many  
+  
+###  **Database Migration**
+
+ **USR_SESSION** : !usr_id used as sess_login_id. So no need to migrate.
+
+ **USR_MAPPING** : Inserted data into for a new user. So no need to migrate.
+
+ **NOTIFICATION_PREFERENCE** : Inserted data into NP table for new user. So no
+need to migrate.
+
+###  **SSO (signlesignon7)**
+
+####  **net-teller (hblogin.jsp):**
+
+  * Get the UniqueId from the request and UniqueId can't be null/empty. UniqueId works as **vendor_user_id** of **USR_SESSION** table.
+  * Get the ConnectionString from the request and ConnectionString can't be null/empty. ConnectionString is the hash of UniqueId, FI_Number, SharedKey, DateTimeValue.
+  * If sso date is not null redirect to **/home.jsp** page otherwise:-
+    * If the dso date is null redirect to **/enroll/test.jsp** page which is 3 steps of enrollment and the user can update the delivery preference in step 3 of 3.
+
+ **bbhblogin (LoginServlet):**
+
+  * EmailUpdate=true, isPrimaryCifRequired=false, hasAcctType=true, hasSecondEmail=false, pswd=W@sH3L0!vM, acctLogic=addRemove, userTypeLookup=true,  
+userTypeUpdate=true, userTypeValidList=Y,N, useSSOAcctType=true,
+combineCIF=true, insertADsc=true, insertSourceInUFA=true
+
+  * Fields: **gmt** , **pwd** , **user_type** , **compCif** , **compEmail** , **timeout** , **vendorUserId** , email, email2, SMS number, carrierId, combinedCIF, **acctNum** , anum, astat, searchCif,  **adsc** , **atype,**
+    * Remove leading zeros for acctNum.
+    * Maximum two emails are allowed.
+  * Find PrimaryUser from **USR_MAPPING** table by org_ig, cif_num, primary_user_flag="S". If PrimaryUser is null then CreateUser  with firstName="Customer", expirationDate=null, type="P'.
+    * Insert into **USR_MAPPING** table with org_id, cif_num, usr_id.
+  * Search PrimaryUser again into the USR_MAPPING table by org_id, cif_num, primary_user_flag="S".
+  * Find subUser from **USR_SESSION** and **USR_MAPPING** table by org_id, cif_num, vendor_user_id. 
+    * If subUser is null set ssoKey=combineCIF where combineCIF = compCif + "|" \+ vendorUserId.
+      * Insert into the **USR** table.
+      * Insert into **USR_MAPPING** table with org_id, cif_num, usr_id, primary_User_flag="S".
+      * Insert into the **USR_TREE** table with parentUserId, childUserId.
+    * Set user_type.
+  * Update the UFALinks
+    * Lists the _primaryUser_ accounts and _subUser_ accounts.
+    * Find account by org_id, acct_num, type from the FIN_ACCOUNT table.
+      * If account is not found search by org_id and acct_num.
+      * If subUser is not found into the account object, Set userId and acctId combined with USR_FIN_ACCOUNT and FIN_ACCOUNT. If found insert into the USR_FIN_ACCOUNT.
+    * If email exists into the database and is given new eamil then update the old email by new eamil. If doesn't eaxist email then insert email into the **NOTIFICATION_PREFERENCE** table.
+    * Find usr_acct from **USR_ACCT_TYPE_MAPPING** table by usr_id, acct_id, stmtType="default".
+      * If not found Insert into USR_ACCT_TYPE_MAPPING table with usr_id, accr_id, stmtType="default', acctType, acctTypeDesc. Otherwise update.
+  * Find UserProfile if not found create new user with name, orgid, orgName, details, vebdorUserId, ssoKey, loginName=!usrId, password, status="new", DSO=null.
+  * Set ssoKey and store into the database.
+
+ **bbssoexchange (bbsso.SSOExchangeServlet):**
+
+  * hasMultipleAcct=true, passSsoType=true, acctPopup=true
+  * Get ssoKey from the request and check ssoKey validation.
+  * If SSO date is not null and status="active" forword to **/home.jsp** page otherwise forword to **/enroll/test.jsp** page.
+
+###  **Enrollment**
+
+  * The user goes through the enrollment based on the following conditions:
+    1. If the user never login via sso, so the SSO date is null and the DSO date is null then goes through 3 steps of enrollment.
+  *  **Enrollment Step 1:** Pdf View.
+
+  *  ****
+  *  **Enrollment Step 2:  **
+
+    * Agree to sign up for Washington Trust Bank eStatements or Decline to go back.
+  *  ****
+  *  **Enrollment Step 3:  **
+
+    * The user can choose the delivery preference Paperless Statements Only or Paper Only or Both Paperless and Paper.
+    * Deliver preference can change for all accounts at a time Or can change for the individual account.
+    * Notification Preference Email Only.
+    * Email Address Non-editable.
+  *  **  
+**
+
+###  **Menu Tabs**
+
+  *  **Monthly Statements:**
+    * Shows statements: Date, Status, Monthly Inserts.
+    * When clicking on statement date open a statement details in the new tab.
+    * View Account: Here shows the account description in the dropdown menu from the **USR_ACCT_TYPE_MAPPING** table.
+    * 
+
+  
+
+  *  **Loan:**
+    * Shows statement: Date, Status, Monthly Inserts.
+    * When clicking on statement date open a statement details in the new tab.
+    * View Account: Here shows the account description in the dropdown menu from the **USR_ACCT_TYPE_MAPPING** table.
+    * 
+
+  
+
+  *  **Account Analysis:**
+    * Shows statement: Date, Status, Monthly Inserts.
+    * When clicking on statement date open a statement details in the new tab.
+    * View Account: Here shows the account description in the dropdown menu from the **USR_ACCT_TYPE_MAPPING** table.
+    * 
+
+  
+
+  *  **eNotice:**
+    * Shows statement: Date, Status, Description.
+    * When clicking on statement date open a statement details in the new tab.
+    * View Account: Here shows the account description in the dropdown menu from the **USR_ACCT_TYPE_MAPPING** table.
+    *  ****
+
+  
+
+  *  **Batch Download Documents:**
+    * Shows all the documents for both are active and closed accounts.
+    * 
+
+  
+
+  *  **Disclosure:**
+    * When clicking on the disclosure menu open the Welcome to Online Statements page (disclosure.jsp) into the new tab.
+    * By clicking the Close button close the disclosure page.
+    * 
+
+  
+
+  *  **Profile**
+    * Showing Email address and Delivery Preference and Notification Preference for all accounts.
+    * Delivery Preference can be updated.
+    * Notification Preference Email only: Non-updatable
+    * Email Address: Non-editable
+    * 
+
+  
+
+  *  **Exit:**
+    * When clicking on the Exit menu redirect the logout.jsp page and showing confirmation option for logout or not.
+    * 
+
+  
+
+* * *
+
+##  **Processing UI**
+
+### BACKEND PROCESSES
+
+WASH has 3 processes,
+
+  1. AUTH
+  2. DOC
+  3. ETAX
+
+### Settings
+
+  * global.multipleStmtType=false
+  * global.multipleDocType=false
+  * global.autoRegister=false
+  * global.enableAccountType=true
+  * global.ssoKey=wash
+
+### Statement Types and Index file prefix
+
+  *  **global.ds1** =default
+  *  **global.pa1** =default
+  *  **global.aa1** =analysis
+  *  **global.ml1** =loan
+  *  **global.ml2** =loan
+  *  **global.ml3** =loan
+  *  **global.ml4** =loan
+  *  **global.dla** =enotice **  
+**
+
+### AUTH Process
+
+Flags:
+
+  * auth.classPath=com.infoimage.processing.application.auth.handler.WashAuthHandler
+  * auth.grouping=false
+  * auth.netteller.providerName=InfoIMAGE7308
+  * auth.thresholdvalue=10
+
+#### Handler: WashAuthHandler
+
+  * Can't have 12 fields.
+  * Fields: **netTeller** , cashManagement, ssn, **firstName** , **lastName** , **acctNum** , **appType** , acctFullName, **acctStatus** , pseudoName, **businessAdmin** , emailAddress.
+  * Remove all leading zeros from acctNum.
+  * AcctNum must be number only.
+
+** **Bold** indicates all are mandatory fields.
+
+#### Registrar: WashAuthRegistrar
+
+  * Find user by org_id and cif_num from the USR_MAPPING table. If user not found:-
+    * Create a new user if this is an active user. Insert data into **USR_MAPPING** table with org_id, cif_num, usr_id.
+  * Update data into the **USR** table with ssn, birthDate, gender, maritalStatus, firstName, lastName, middleName, ciId, promoCode, createdBy, expirationDate=null, source, type.
+  * Find _UserProfile_ by org_id, vendor_user_id, user_id from the **USR_SESSION** and **USR  **tables. If user not found:-
+    * Create a new user with name=usrId, orgId, orgName, details, vendorUserId, SSOKey=null, loginName, password, status="new", DSO=null, SSO=null and Insert into USR_SESSION table.
+  * Find account by org_id, acct_number, type from the **FIN_ACCOUNT** table. If account not found:-
+    * Create a new account with org_id, acct_num, type, acct_name, last_modified and Insert into the FIN_ACCOUNT table.
+    * If the status is null or doesn't match with the previous acctStatus then set Update the status by acctStatus.
+  * Find paperless by acct_id and stmt_type from the **PAPERLESS2** table. If paperless not found:-
+    * Insert data into the **PAPERLESS** table with acctId, modifiedBy="1", modifiedDate, newStatus="B", oldStatus="N", stmtType="default".
+  * find_usr_acct from the **USR_ACCT_TYPE_MAPPING** by usr_id, acct_id, stmtType="default", letterType="0".
+    * If pseudoName not null and find_usr_acct not found Insert into USR_ACCT_TYPE_MAPPING table with usr_id, acct_id, stmtType=default", acctType="0", acctTypeDesc=pseudoName.
+    * If pseudoName not null and find_usr_acct found Update into USR_ACCT_TYPE_MAPPING table with usr_id, acct_id, stmtType=default", acctType="0", acctTypeDesc=pseudoName.
+    * If pseudoName is null  Remove from the USR_ACCT_TYPE_MAPPING table by usr_id and acct_id.
+  * Find UFAs from the **USR_FIN_ACCOUNT** and **FIN_ACCOUNT** by usr_id and org_id. If UFAs not null:-
+    * Get the accounts from the FIN_ACCOUNT table by acct_id.
+      * If acct_num and acct_type already exist in the FIN_ACCOUNT then remove this account from the UFAs array.
+      * If acct_num and acct_type doesn't exist in the FIN_ACCOUNT then Insert data into the FIN_ACCOUNT table with usr_id, acct_id, status="pre_reg", timestamp.
+  * If Email is not null then get the np_array from the **NOTIFICATION_PREFERENCE** table:-
+    * If in the np_array user is active and email is empty or doesn't match with the index file email then update email into the NP table.
+    * If in the np_array user is not active and email exists then set emailAddress="" and emailStatus="N".
+      * If smsStatus is not null and smsStatus="Y" update the user into the NP table otherwise delete the user from the NP table.
+    * If np_array is empty and the user is active Insert data into the NP table with email, modifiedBy="1".
+
+Database Changes: USR, USR_MAPPING, USR_SESSION, FIN_ACCOUNT, USR_FIN_ACCOUNT,
+PAPERLESS, USR_ACCT_TYPE_MAPPING, NOTIFICATION_PREFERENCE.
+
+### DOC Process
+
+Flags:
+
+  * doc.default.estmtselinsert=true
+  * doc.enotice.createAccount=true
+  * doc.hasSelectivePaperless=true
+
+ **Handler** :  **DataHandler**
+
+####  Registrar: AfpRegistrar
+
+  * autoRegistrar=false, enableAccountType=true, acctLookup=false, nullDsoTimeStamp=false, acctNumAsLogin=false.
+  * Find fin account by acctNum and acctType into the **FIN_ACCOUNT** table. If not found, create a new fa with orgId, acctNum, acctname, acctType, lastModified=current date, status="A".
+  * If fa found with a different acctName or acctName is neither "MEMBER" nor CUSTOMER", update acct_owner_name and lastModified=current time.
+  * Insert paperless.
+    * Search for paperless by acctId and stmtType into the PAPERLESS2 table. If not found, create a new one and insert. with modifiedBy="1", modifiedDate=currentDate, oldStatus="N", newStatus="B",stmtType.
+    * If **stmtType is not "default"**, search for paperless by acctId and stmtType="default". If not found, create a new one and insert with modifiedBy="1", oldStatus="N", newStatus="B",  **stmtType= "default".**
+    * Insert entry into **ESTMT_DOC** , **ESTMT_FILE** and **ARCH_FILE** tables.
+    * Insert data into **P_JOB_ESTMT** table with p_job_id and esd_id.
+
+Database Changes: FIN_ACCOUNT, PAPERLESS, ESTMT_DOC, P_JOB_ESTMT, ARCH_FILE,
+ESTMT_FILE.
+
+#### Registrar: EnoticeRegistrar
+
+  * createAccount=true, hasSelectivePaperless=true, nullDsoTime=false, acctNumAsLogin=false, autoRegister=false.
+  * Find account from FIN_ACCOUNT table:-
+    * If not found insert data into FIN_ACCOUNT table with org_id, account_name, account_number, account_type (if acct_type not null).
+    * If found, Update accountOwnerName except "MEMBER", "CUSTOMER" and "USER" by acct_id.
+  * Search paperless from the PAPERLESS2 table:-
+    * If not found Insert into PAPERLESS table with acct_id, modifiedBy="1", modifiedDate=currentDate, newStatus="B", oldStatus="N", stmtType.
+  * Insert data into the ARCH_FILE and ENOTICE tables.
+  * Insert into the P_JOB_ENOTICE table with p_job_id and enotice_id.
+
+Database Changes: FIN_ACCOUNT, PAPERLESS, ARCH_FILE, ENOTICE, P_JOB_ENOTICE.
+
+### ETAX Process
+
+Note:
+
+  * Don't have eTax statement on the root site.
+  * Last eTax process at  **2017-11-07** and then undo the process.
+
+### Email Notification Process
+
+Flags:
+
+  * email.hiddenMessage=esd_id
+  * email.default.needApproval=false
+  * email.default.resetApproval=false
+  * email.enotice.needApproval=false
+  * email.enotice.resetApproval=false
+  * email.loan.needApproval=false
+  * email.loan.resetApproval=false
+  * email.ira.needApproval=false
+  * email.ira.resetApproval=false
+  * email.analysis.needApproval=false
+  * email.analysis.resetApproval=false
+  * email.etax.needApproval=false
+  * notification.isSendEmailViaAPI=true
+  * notification.isEmailManageByEstmt=false
+
+#### Handler: NotifyPrefEmailHandler
+
+  * isSelectiveTemplate=false, isSelectiveMailServer=false, isSendEmailViaAPI=true, isEmailManageByEstmt=false, attachmentFeature=false, isSendViaAPI=true.
+  * If notifyPref not found update notifyPref with notificationStatus="N", emailStatus="N", emailAttachmentStatus="N", smsStatus="N".
+
+### Reports
+
+The backend process has 2 reports,
+
+  1. Enrollment Report
+  2. Paperless Report
+
+ **Enrollment Report**
+
+  *  **Handler:** EnrollmentReportCU
+    * enrollment.pgpRecipient=istech@watrust.com
+
+ **Paperless Report**
+
+  *  **Handler:** DefaultPaperlessReportBank
+  *  **Renderer:** DefaultPaperlessReportRenderBank
+
+  
+
+* * *
+
+## Analysis Summary (ROOT)
+
+Scope| Feature| WASH Business| Hypercube| Note  
+---|---|---|---|---  
+  
+ **Enrollment(SSO)**
+
+|  User enrollment|
+
+  * The user goes through the enrollment based on the following conditions:
+    1. If the user never login via sso, so the SSO date is null and the DSO date is null then goes through 3 steps of enrollment.
+
+|  15036 complete  Supported  15037 incomplete Not Supported 15038 incomplete
+Supported alternatively |  
+  
+Enrollment Step 1| Pdf View.|  15876 complete Supported  15877 incomplete Not
+Supported 15878 incomplete Supported alternatively |  
+  
+Enrollment Step 2|
+
+  * Agree to sign up for Washington Trust Bank eStatements or Decline to go back.
+
+|  15879 complete Supported  15880 incomplete Not Supported 15881 incomplete
+Supported alternatively |  
+  
+Enrollment Step 3|
+
+  * The user can choose the delivery preference Paperless Statements Only or Paper Only or Both Paperless and Paper.
+  * Notification Preference Email Only.
+  * Email Address Non-editable.
+
+|  15882 complete Supported  15883 incomplete Not Supported 15884 incomplete
+Supported alternatively |  
+  
+  
+  * Deliver preference can change for all accounts at a time Or can change for the individual account.
+
+|  15891 incomplete Supported  15892 incomplete Not Supported 15893 complete
+Supported alternatively | Currently, we support moving all the accounts to
+electronic only( **allPaperlessChangable** )  
+  
+  * Note for "additional fees for the paper preference" **[See here](https://confluence.infoimageinc.com/download/attachments/114000388/Screenshot%20from%202021-12-09%2018-47-39.png?version=1&modificationDate=1639054993818&api=v2&effects=border-simple,blur-border)**
+
+|  15900 incomplete Supported  15901 complete Not Supported 15902 incomplete
+Supported alternatively |  
+  
+**Statements**|
+
+  * Monthly Statements
+  * Loan
+  * Account Analysis
+  * eNotice
+
+  
+
+|
+
+  
+
+  * Statement Date
+  * Status
+  * Monthly Inserts
+
+Note: For eNotice, Instead of _Monthly Inserts_ can be _Description_.
+
+|  15039 complete Supported  15040 incomplete Not Supported 15041 incomplete
+Supported alternatively |  
+  
+  
+View Account:
+
+Here shows the account description in the dropdown menu from the
+**USR_ACCT_TYPE_MAPPING** table.
+
+|  15042 complete  Supported  15043 incomplete Not Supported 15044 incomplete
+Supported alternatively |
+
+Using the **nickNamePreferredOverAcctNum**  
+  
+  * Disclosure verbiage
+
+|
+
+  
+
+|  15045 complete  Supported  15046 incomplete Not Supported 15047 incomplete
+Supported alternatively |  
+  
+**Batch Download Documents**|  
+|  Shows all the documents for both are active and closed accounts.|  15048
+complete  Supported  15049 incomplete Not Supported 15050 incomplete Supported
+alternatively |  
+  
+**Profile**|  Delivery Preference|
+
+  * The user can update the delivery preference.
+
+|  15051 complete  Supported  15052 incomplete Not Supported 15053 incomplete
+Supported alternatively |  
+  
+Notification Preference|
+
+  * Notification Preference email only and Non-editable.
+
+|  15885 complete  Supported  15886 incomplete Not Supported 15887 incomplete
+Supported alternatively |  
+  
+Email Address|
+
+  * Fetch email from the NOTIFICATION_PREFERENCE table.
+
+|  15054 complete  Supported  15055 incomplete Not Supported 15056 incomplete
+Supported alternatively |
+
+  
+  
+  
+  * Email address is Non-editable.
+
+|  15057 complete  Supported  15058 incomplete Not Supported 15059 incomplete
+Supported alternatively |  
+  
+  
+  * Note for "additional fees for the paper preference" **[See here](https://confluence.infoimageinc.com/download/attachments/114000388/Screenshot%20from%202021-12-09%2018-47-39.png?version=1&modificationDate=1639054993818&api=v2&effects=border-simple,blur-border)**
+
+|  15903 incomplete  Supported  15904 complete Not Supported 15905 incomplete
+Supported alternatively |  
+  
+**Disclosure**|  
+|
+
+  * Open the Welcome to Online Statements page (disclosure.jsp) into the new tab.
+
+|  15060 complete  Supported  15061 incomplete Not Supported 15062 incomplete
+Supported alternatively |  
+  
+**Exit**|  
+|  Logs out a user by showing a confirmation page.|  15063 complete  Supported
+15064 incomplete Not Supported 15065 incomplete Supported alternatively |  
+  
+  
+  
+
+## Analysis Summary (MSM)
+
+  * WASH uses InfoTRAC.
+
+## Analysis Summary (PUI)
+
+Process and Reports| Prefix| Backend Business| Mismatch with Hypercube
+Business| Changes Needed| Note  
+---|---|---|---|---|---  
+AUTH|
+
+  
+
+|
+
+#### Handler: WashAuthHandler
+
+  * Can't have 12 fields.
+  * Fields: **netTeller** , cashManagement, ssn, **firstName** , **lastName** , **acctNum** , **appType** , acctFullName, **acctStatus** , pseudoName, **businessAdmin** , emailAddress.
+  * Remove all leading zeros from acctNum.
+  * AcctNum must be number only.
+
+** **Bold** indicates all are mandatory fields.
+
+#### Registrar: WashAuthRegistrar
+
+  * Find user by org_id and cif_num from the USR_MAPPING table. If user not found:-
+    * Create a new user if this is an active user. Insert data into **USR_MAPPING** table with org_id, cif_num, usr_id.
+  * Update data into the **USR** table with ssn, birthDate, gender, maritalStatus, firstName, lastName, middleName, ciId, promoCode, createdBy, expirationDate=null, source, type.
+  * Find _UserProfile_ by org_id, vendor_user_id, user_id from the **USR_SESSION** and **USR  **tables. If user not found:-
+    * Create a new user with name=usrId, orgId, orgName, details, vendorUserId, SSOKey=null, loginName, password, status="new", DSO=null, SSO=null and Insert into USR_SESSION table.
+  * Find account by org_id, acct_number, type from the **FIN_ACCOUNT** table. If account not found:-
+    * Create a new account with org_id, acct_num, type, acct_name, last_modified and Insert into the FIN_ACCOUNT table.
+    * If the status is null or doesn't match with the previous acctStatus then set Update the status by acctStatus.
+  * Find paperless by acct_id and stmt_type from the **PAPERLESS2** table. If paperless not found:-
+    * Insert data into the **PAPERLESS** table with acctId, modifiedBy="1", modifiedDate, newStatus="B", oldStatus="N", stmtType="default".
+  * find_usr_acct from the **USR_ACCT_TYPE_MAPPING** by usr_id, acct_id, stmtType="default", letterType="0".
+    * If pseudoName not null and find_usr_acct not found Insert into USR_ACCT_TYPE_MAPPING table with usr_id, acct_id, stmtType=default", acctType="0", acctTypeDesc=pseudoName.
+    * If pseudoName not null and find_usr_acct found Update into USR_ACCT_TYPE_MAPPING table with usr_id, acct_id, stmtType=default", acctType="0", acctTypeDesc=pseudoName.
+    * If pseudoName is null  Remove from the USR_ACCT_TYPE_MAPPING table by usr_id and acct_id.
+  * Find UFAs from the **USR_FIN_ACCOUNT** and **FIN_ACCOUNT** by usr_id and org_id. If UFAs not null:-
+    * Get the accounts from the FIN_ACCOUNT table by acct_id.
+      * If acct_num and acct_type already exist in the FIN_ACCOUNT then remove this account from the UFAs array.
+      * If acct_num and acct_type doesn't exist in the FIN_ACCOUNT then Insert data into the FIN_ACCOUNT table with usr_id, acct_id, status="pre_reg", timestamp.
+  * If Email is not null then get the np_array from the **NOTIFICATION_PREFERENCE** table:-
+    * If in the np_array user is active and email is empty or doesn't match with the index file email then update email into the NP table.
+    * If in the np_array user is not active and email exists then set emailAddress="" and emailStatus="N".
+      * If smsStatus is not null and smsStatus="Y" update the user into the NP table otherwise delete the user from the NP table.
+    * If np_array is empty and the user is active Insert data into the NP table with email, modifiedBy="1".
+
+Database Changes: USR, USR_MAPPING, USR_SESSION, FIN_ACCOUNT, USR_FIN_ACCOUNT,
+PAPERLESS, USR_ACCT_TYPE_MAPPING, NOTIFICATION_PREFERENCE.
+
+|
+
+  
+
+|
+
+  
+
+|  
+  
+DOC|
+
+  *  **ds1** =default
+  *  **pa1** =default
+  *  **aa1** =analysis
+  *  **ml1** =loan
+  *  **ml2** =loan
+  *  **ml3** =loan
+  *  **ml4** =loan
+  *  **dla** =enotice
+
+|
+
+ **Handler** :  **DataHandler**
+
+####  Registrar: AfpRegistrar
+
+  * autoRegistrar=false, enableAccountType=true, acctLookup=false, nullDsoTimeStamp=false, acctNumAsLogin=false.
+  * Find fin account by acctNum and acctType into the **FIN_ACCOUNT** table. If not found, create a new fa with orgId, acctNum, acctname, acctType, lastModified=current date, status="A".
+  * If fa found with a different acctName or acctName is neither "MEMBER" nor CUSTOMER", update acct_owner_name and lastModified=current time.
+  * Insert paperless.
+    * Search for paperless by acctId and stmtType into the PAPERLESS2 table. If not found, create a new one and insert. with modifiedBy="1", modifiedDate=currentDate, oldStatus="N", newStatus="B",stmtType.
+    * If **stmtType is not "default"**, search for paperless by acctId and stmtType="default". If not found, create a new one and insert with modifiedBy="1", oldStatus="N", newStatus="B",  **stmtType= "default".**
+    * Insert entry into **ESTMT_DOC** , **ESTMT_FILE** and **ARCH_FILE** tables.
+    * Insert data into **P_JOB_ESTMT** table with p_job_id and esd_id.
+
+Database Changes: FIN_ACCOUNT, PAPERLESS, ESTMT_DOC, P_JOB_ESTMT, ARCH_FILE,
+ESTMT_FILE.
+
+#### Registrar: EnoticeRegistrar
+
+  * createAccount=true, hasSelectivePaperless=true, nullDsoTime=false, acctNumAsLogin=false, autoRegister=false.
+  * Find account from FIN_ACCOUNT table:-
+    * If not found insert data into FIN_ACCOUNT table with org_id, account_name, account_number, account_type (if acct_type not null).
+    * If found, Update accountOwnerName except "MEMBER", "CUSTOMER" and "USER" by acct_id.
+  * Search paperless from the PAPERLESS2 table:-
+    * If not found Insert into PAPERLESS table with acct_id, modifiedBy="1", modifiedDate=currentDate, newStatus="B", oldStatus="N", stmtType.
+  * Insert data into the ARCH_FILE and ENOTICE tables.
+  * Insert into the P_JOB_ENOTICE table with p_job_id and enotice_id.
+
+Database Changes: FIN_ACCOUNT, PAPERLESS, ARCH_FILE, ENOTICE, P_JOB_ENOTICE.
+
+|
+
+  
+
+|
+
+  
+
+|  
+  
+ETAX|
+
+  
+
+|
+
+  
+
+|  
+|  
+|
+
+  * Don't have eTax statement on the root site.
+  * Last eTax process at  **2017-11-07** in the production and then undo the process.
+
+  
+Email Notification|
+
+  * isSendEmailViaAPI=true
+  * isEmailManageByEstmt=false
+
+|
+
+#### Handler: NotifyPrefEmailHandler
+
+  * isSelectiveTemplate=false, isSelectiveMailServer=false, isSendEmailViaAPI=true, isEmailManageByEstmt=false, attachmentFeature=false, isSendViaAPI=true.
+  * If notifyPref not found update notifyPref with notificationStatus="N", emailStatus="N", emailAttachmentStatus="N", smsStatus="N".
+
+|  
+|  
+|  
+  
+Reports|
+
+  * enrollment.method=client_pickup
+  * enrollment.notifyClient=true
+  * enrollment.email.recipients=infoimage@watrust.com
+  * enrollment.pickup_time=5
+  * enrollment.queryName=SELECT_ENROLL_STATUS_NT_MULTIPLE_VENDOR
+  * enrollment.pgpRecipient=istech@watrust.com
+
+|
+
+Enrollment Report
+
+|  
+|  
+|  
+  
+  
+  * paperlessReport.stmtType1=default,
+  * paperlessReport.stmtType2=default,enotice
+
+|
+
+Paperless Report
+
+  *  **Handler:** DefaultPaperlessReportBank
+  *  **Renderer:** DefaultPaperlessReportRenderBank
+
+|  
+|  
+|  
+  
+  
+  
+
+

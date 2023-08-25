@@ -1,0 +1,343 @@
+title: Design Doc of Hypercube Cookie Validation
+body: ## **Introduction**
+
+Validate cookie in every request from the hypercube site to check if the user
+modified the cookie from the browser side.
+
+This doc will represent the changes in hypercube to support this.
+
+##  **Purpose/Objective Summary**
+
+Currently, if any user modified the cookie value (e.g. CIF, CID, Username) for
+a valid client domain and tries to bypass into another CIF or CID then they
+can access some of the other's CSS, Icon, etc.
+
+Also if the user enters a valid CIF number in SSO or Username in DSO for any
+CID in a cookie against userId or loginId, then they will be able to access
+that user's data. There is no proper cookie token validation in the hypercube.
+
+The main objective of this update is to validate the cookie in every request
+by decrypting the stored cookie token and check with the cookie's CIF, CID, or
+Username whether these are modified/changed.
+
+As hypercube has the encrypted token in the cookie where it contains the CIF
+and CID information securely for SSO, so by decrypting that token using a
+server-side method it can be checked for SSO.
+
+But for DSO login we also have to store an encrypted token in the cookie after
+that will have the actual CID and Username.
+
+If the values mismatched, that means the user modified/changed the cookie from
+the browser side. So, the hypercube will log out, expire the cookie, and land
+on a warning template page for that user.
+
+Hypercube will print the details of the actual and modified data in the log
+file for future investigation.
+
+##  **Scope**
+
+### In-Scope
+
+  1. Identify before route function.
+  2. Decrypt the cookie token by calling a server-side method
+  3. Check the cookie's CIF and CID with the decrypted token CIF and CIF value
+
+# Requirements
+
+### Business Requirements & Use Cases
+
+ID
+
+|
+
+Title
+
+|
+
+Details  
+  
+---|---|---  
+BR_01|
+
+Validate hypercube cookie in every request
+
+  
+
+|
+
+Validate cookie in every request from the hypercube site to prevent the user
+from modifying cookie from the browser side and access other CIF and CID.  
+  
+BR_01| Log the information during this incident.| Log the user IP, actual
+cookie, and modified cookie on hypercube if someone ty to access hypercube
+after modified the cookie from the browser side.  
+  
+### Functional Requirements & Use Case For SSO and DSO
+
+ID
+
+|
+
+Title
+
+|
+
+Details  
+  
+---|---|---  
+FR_01| Create a new encrypted token after successful dso login with cid, login
+id, login type, time by calling  **keyGen.encryptForCid** , and set this token
+in the cookie. As previously in dso login, there was just the time in the
+cookies token. |  **keyGen.encryptForCid** server-side function returns the
+encrypted text which takes paramJson with cid, login id, login type, time, and
+CID as the parameters.  
+FR_02|
+
+Decrypt the cookie token by calling a server-side method
+
+    
+    
+    keyGen.decryptForCid
+
+|  **keyGen.decryptForCid**  server-side function returns the decrypted text
+which takes stored cookie token and CID as the parameters.  
+FR_03|
+
+Write a logical code for checking the CID and CIF with the decrypted token
+value.  
+
+|
+
+Check the cookie's CIF and CID with decrypted token value and store
+authenticate results in a variable.  
+  
+FR_04| Get CID from CidProperties collection rather than the cookie
+appSession| To use actual CID for DSO MFA Send Token, Forget Password, Forget
+Username  
+FR_05|
+
+Log on hypercube server by calling a server-side method
+
+    
+    
+    suspiciousActivity()
+
+| To print user IP, actual cookie, and modified cookie on the hypercube server
+log.  
+  
+## QA/Test Requirements
+
+ID
+
+|
+
+Title
+
+|
+
+Details  
+  
+---|---|---  
+TR_01| Test hypercube routing by modifying the cookie's CID or CIF values from
+the browser for both DSO and SSO| Try to access other clients or CIF by
+modifying the cookie from the browser side. Reload or route after cookie
+modified.  
+TR_02| Test all kind of hypercube functionality | To ensure that everything is
+working as previously after the update.  
+TR_03| Cross Clients testing| Run hypercube automation scripts for every
+client to ensure that everything is working as previously after the update.  
+  
+## Code changes
+
+  1. Decrypt the cookie''s token and write logical code for checking CIF, CID
+
+Project file path
+
+|
+
+Method Scope
+
+|
+
+Changes
+
+|
+
+Comments  
+  
+---|---|---|---  
+/client/views/login/dsoLogin.js|
+
+    
+        'click .login',
+
+|
+
+Call  **keyGen.encryptForCid**  server-side function with paramJson and CID.
+
+paramJson will contain cid, login Id, login type and time and set that new
+encrypted token in the cookie.
+
+| To get an encrypted token from and store that token in the cookie for DSO.  
+/client/config/router.js|
+
+    
+        Router.before
+
+| Call **keyGen.decryptForCid  **server-side function with token and CID.| To
+get a decrypted text from the cookie's token.  
+/client/config/router.js|
+
+    
+        Router.before 
+
+| Write logical code for checking cookie's CID, CIF with decrypted value.| To
+store authenticate value for further logout activity.  
+/client/config/router.js| Router.before| Route the user to
+**logoutCookieExpired  **URL to show an error page if any mismatches found in
+CID, CIF, or Username.| To show the error page on the hypercube and expires
+cookie from the browser.  
+/client/config/router.js| Router.before| Add  **'logoutCookieExpired' ,
+'recoverId', 'cantViewPDF', 'dsoEnrollDisable'** route in the except list.| To
+remove these routes from cookie validation.  
+/client/views/password-reset/resetPasswordVerification.js|
+
+    
+        'submit #registerForm',  
+    
+    
+        'click .getToken',  
+    
+    
+        'click .resendToken',  
+    
+    
+        'click .validateToken'
+
+| var mergedProperties = (CidProperties.findOne()) ? CidProperties.findOne() :
+{"cid": ""};| Get actual CID from CidProperties collection.  
+client/views/recoverLoginId/recoverLoginIdVerification.js|
+
+    
+        'submit #registerForm',  
+    
+    
+        'click .recoverId'
+    
+          
+    
+
+| var mergedProperties = (CidProperties.findOne()) ? CidProperties.findOne() :
+{"cid": ""};| Get actual CID from CidProperties collection.  
+/client/views/login/dsoLogin.js|
+
+    
+        'click .getToken',  
+    
+    
+        'click .resendToken',  
+    
+    
+        'click .validateToken'
+
+| var mergedProperties = (CidProperties.findOne()) ? CidProperties.findOne() :
+{"cid": ""};| Get actual CID from CidProperties collection.  
+client/views/enrollment/dso/enrollVerifyUser.js|
+
+    
+        'submit #registerForm'
+
+| var mergedProperties = (CidProperties.findOne()) ? CidProperties.findOne() :
+{"cid": ""};| Get actual CID from CidProperties collection.  
+server/methods.js|
+
+    
+        'suspiciousActivity()'
+
+| Print IP, actual and modified cookie by ****logger.info  ****
+
+    
+        this.connection.clientAddress
+
+| To log information during the incedent.  
+  
+  
+
+  2. Clear hypercube periodical heartbeat interval that route to logout if the user has  no interaction for 10min 
+
+Project file path
+
+|
+
+Method Scope
+
+|
+
+Changes
+
+|
+
+Comments  
+  
+---|---|---|---  
+/client/lib/startup.js|
+
+    
+        Meteor.startup()
+
+|
+
+Check cookie before route user to the logout page. If there is no cookie that
+means the cookie was modified and expired from the browser and the user is on
+the error page. So no need to route the logout page because that will show
+modified cid's logout pages.
+
+| Keep users on error pages even if the user has no interaction for 10min and
+clear hypercube periodical heartbeat interval for further interaction
+detection.  
+  
+# Summarized Change Log
+
+Date
+
+|
+
+Who
+
+|
+
+Changes  
+  
+---|---|---  
+16/10/2020| Sadman Anik| Creation  
+27/10/2020| Sadman Anik| DSO new token create  
+4/11/2020|
+
+Sadman
+
+Anik
+
+|
+
+Changed logout URL
+
+and Clear interval  
+  
+  
+
+# Feedback / Question / Answers
+
+Question
+
+|
+
+Answer  
+  
+---|---  
+  
+|  
+  
+  
+  
+
+

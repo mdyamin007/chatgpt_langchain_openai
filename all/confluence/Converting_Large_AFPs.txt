@@ -1,0 +1,90 @@
+title: Converting Large AFPs
+body: # Converting Large AFPs
+
+Info  
+P-UI will automatically convert AFPs larger than (afp.convert.cutoff) pages to
+PDFs when posting cycles to help speed up statement load time on the site.
+However, there is a known limitations where Afp2web has issues when converting
+these large AFPs.  
+Here is an walkthrough of how to deal with manual conversion requests and how
+to post to PUI. I will be using the example below to illustrate the steps. If
+you only need to know how to manually convert, please skip to  **Step 5**
+
+Sample support email request:  
+  
+  
+
+  
+
+## 1\. Pull up the PUI logs for Ref#1489711. Note the  **index file**  name
+and  **log file**  location (see
+highlighted)[](https://i3dev.easyredmine.com/projects/estmt20/wiki/ConvertLargeAfp#1-Pull-
+up-the-PUI-logs-for-Ref1489711-Note-the-index-file-name-and-log-file-location-
+see-highlighted)
+
+  
+
+## 2\. Search the log for "Failed to convert PDF" to find the records.
+Sometimes the logs pulled directly from PUI will be slow, so it's recommended
+to pull up the  **log file**  directly and search through a text
+editor.[](https://i3dev.easyredmine.com/projects/estmt20/wiki/ConvertLargeAfp#2-Search-
+the-log-for-Failed-to-convert-PDF-to-find-the-records-Sometimes-the-logs-
+pulled-directly-from-PUI-will-be-slow-so-its-recommended-to-pull-up-the-log-
+file-directly-and-search-through-a-text-editor)
+
+  
+3\. Find the corresponding AFP in the  **index file**. Repeat Step 3 as
+necessary[](https://i3dev.easyredmine.com/projects/estmt20/wiki/ConvertLargeAfp#3-Find-
+the-corresponding-AFP-in-the-index-file-Repeat-Step-3-as-necessary)
+
+  
+  
+
+  
+
+## 4 Copy paste the line into a new .txt file. Use the same name as the
+**index file**  you're pulling the record from, but rename the last 4 digits
+to 9999. Save the .txt file in the client's Production Input folder
+(\\\10.8.9.23\input\I3\process-
+files\\[CID]\\)[](https://i3dev.easyredmine.com/projects/estmt20/wiki/ConvertLargeAfp#4-Copy-
+paste-the-line-into-a-new-txt-file-Use-the-same-name-as-the-index-file-youre-
+pulling-the-record-from-but-rename-the-last-4-digits-to-9999-Save-the-txt-
+file-in-the-clients-Production-Input-folder-108923inputI3process-filesCID)
+
+  
+  
+  
+
+  
+
+## 5\. Change the file extension from* .AFP* to  **.PDF**. This will let the
+PUI know which file to pull.
+
+## 6\. Now it's time to actually convert the AFP. SSH into preprocessing03
+(10.8.9.63). Username: isd Password: m... Run the following command. AFP
+FOLDER is [CID][PREFIX]-[MMDDYYYY]. The MMDDYYY digit in the beginning of the
+index file. In my example it is ewbbms1-04042017
+
+    
+    
+    python /home/master/afp2pdf.py direct InputFilename=/d/isd_input/indiv_afp/[CID]/afp-archive/[AFP FOLDER]/[AFP FILE] OutputFilePath=/d/isd_input/indiv_afp/[CID]/afp-archive/[AFP FOLDER]/
+    
+    Ex.
+    python /home/master/afp2pdf.py direct InputFilename=/d/isd_input/indiv_afp/ewbb/afp-archive/ewbbms1-04042017/ewbbms1_03312017_5400004824_1005.afp OutputFilePath=/d/isd_input/indiv_afp/ewbb/afp-archive/ewbbms1-04042017/
+    python /home/master/afp2pdf.py direct InputFilename=/d/isd_input/indiv_afp/ewbb/afp-archive/ewbbms1-04042017/ewbbms1_03312017_5400004824_1033.afp OutputFilePath=/d/isd_input/indiv_afp/ewbb/afp-archive/ewbbms1-04042017/
+    
+
+  
+  
+
+## 7\. When the files are completed, you will see a 200 message. Go ahead and
+manually post the index file you created to PUI after all the AFPs are
+converted  
+
+  
+
+###  Attachments
+
+  
+
+

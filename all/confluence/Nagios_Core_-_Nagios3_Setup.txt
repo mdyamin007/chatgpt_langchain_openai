@@ -1,0 +1,475 @@
+title: Nagios Core - Nagios3 Setup
+body:   
+
+## 1\. Introduction
+
+Nagios is an open source host, service and network monitoring tool. It let's
+you manage different types of services and hosts running on different
+operating systems like linux, netware, windows etc. It's configured within
+text files and managed with a web browser.
+
+tip. Refer below URL having installation instructions for Nagios3:  
+<https://help.ubuntu.com/community/Nagios3>  
+The official homepage is <http://nagios.org/>
+
+Nagios offers below services/features for the server monitoring:
+
+#.| Website Monitoring| Database Monitoring| Operating System Monitoring|
+Application Monitoring| Application Server Monitoring| Storage Monitoring  
+---|---|---|---|---|---|---  
+1.| URL Monitoring| Database Monitoring| Linux Monitoring| Linux Service
+Monitoring| Tomcat/Apache Monitoring| Storage Monitoring  
+2.| HTTP Monitoring| MySQL Monitoring| Ubuntu Monitoring| Linux Process
+Monitoring| Java Monitoring| Filesystem Monitoring  
+3.| SSL Certificate Monitoring|  
+|  
+|  
+| Mule Service Monitoring| Disk Monitoring  
+  
+ **Note:**  Blue colored text represents services configured/deployed on the
+Nagios server.
+
+Mule Test Server (PD-DEV1) Configuration
+
+* * *
+
+Host Current Status
+
+* * *
+
+Services Current Status
+
+* * *
+
+  
+  
+
+## 2\. Configuration
+
+  * Nagios 3's configuration files are located in /etc/nagios3
+    * If you need to add new hosts or make changes to existing ones you can find them at: /etc/nagios3/conf.d
+  * All the plugin's are located at: /etc/nagios-plugins/config
+  * Additional, Plugins also located under the folder: /usr/lib/nagios/plugins/
+  * Email Configuration:  
+/etc/nagios3/conf.d/contacts_nagios2.cfg file has email-id for broadcast email
+alerts. The line to set this configuration is:  
+email root@localhost
+
+    
+    
+    -------------------------------------------------------------------------------------
+    /etc/nagios3/conf.d/pd-dev1.cfg  on server: pd-tools (10.8.9.56)
+    -------------------------- pd-dev1.cfg ----------------------------------------------
+    define host{
+            use                     generic-host            ; Name of host template to use
+            host_name               pd-dev1
+            alias                   mule_test
+            address                 10.8.9.57
+        notifications_enabled           1
+        process_perf_data        1
+          event_handler_enabled           1       ; Host event handler is enabled
+            flap_detection_enabled          1       ; Flap detection is enabled
+            failure_prediction_enabled      1       ; Failure prediction is enabled
+            process_perf_data               1       ; Process performance data
+            retain_status_information       1       ; Retain status information across program restarts
+            retain_nonstatus_information    1       ; Retain non-status information across program restarts
+            check_command                   check-host-alive
+            max_check_attempts              10
+            notification_interval           0
+            notification_period             24x7
+            notification_options            d,u,r
+            contact_groups                  admins
+            }
+    
+    # Define a service to check the disk space of the root partition
+    # on the local machine.  Warning if < 20% free, critical if
+    # < 10% free space on partition.
+    
+    define service{
+            use                             generic-service         ; Name of service template to use
+            host_name                       pd-dev1
+            service_description             Disk Space
+            check_command                   check_all_disks!20%!10%
+            }
+    
+    # Define a service to check the number of currently logged in
+    # users on the local machine.  Warning if > 20 users, critical
+    # if > 50 users.
+    
+    define service{
+            use                             generic-service         ; Name of service template to use
+            host_name                       pd-dev1
+            service_description             Current Users
+            check_command                   check_users!20!50
+            }
+    
+    # Define a service to check the number of currently running procs
+    # on the local machine.  Warning if > 250 processes, critical if
+    # > 400 processes.
+    
+    define service{
+            use                             generic-service         ; Name of service template to use
+            host_name                       pd-dev1
+            service_description             Total Processes
+        check_command                   check_procs!250!400
+            }
+    
+    # Define a service to check the load on the local machine. 
+    
+    define service{
+            use                             generic-service         ; Name of service template to use
+            host_name                       pd-dev1
+            service_description             Current Load
+        check_command                   check_load!5.0!4.0!3.0!10.0!6.0!4.0
+            }
+    # check HTTP service.
+    define service {
+            use                             generic-service
+            host_name                       pd-dev1
+            service_description             HTTP
+            check_command                   check_http
+    }
+    --------------------- services_nagios2.cfg --------------------------------------------------------
+    # check MySQL servers.
+    define service {
+            hostgroup_name                  mysql-servers
+            service_description             MySQL
+            check_command                   check_mysql_cmdlinecred!nagios!secret!$HOSTADDRESS
+            use                             generic-service
+            notification_interval           10 ; set > 0 if you want to be renotified
+            contact_groups                  admins
+    }
+    
+    --------------------- contacts_nagios2.cfg -----------------------------------------
+    define contact{
+            contact_name                    ntripathi
+            alias                           Niraj Tripathi
+            service_notification_period     24x7
+            host_notification_period        24x7
+            #service_notification_options    w,u,c,r
+            service_notification_options    w,u,c,r,f,s
+            #host_notification_options       d,r
+            host_notification_options       d,u,r,f,s
+            service_notification_commands   notify-service-by-email
+            host_notification_commands      notify-host-by-email
+            email                           niraj.tripathi@infoimageinc.com
+            }
+    ###############################################################################
+    ###############################################################################
+    #
+    # CONTACT GROUPS
+    #
+    ###############################################################################
+    ###############################################################################
+    
+    # We only have one contact in this simple configuration file, so there is
+    # no need to create more than one contact group.
+    
+    define contactgroup{
+            contactgroup_name       admins
+            alias                   Nagios Administrators
+            members                 root, ntripathi
+            }
+    
+    --------------------- hostgroups_nagios2.cfg ---------------------------------------
+    # MySQL hostgroup.
+    define hostgroup {
+            hostgroup_name  mysql-servers
+                    alias           MySQL servers
+                    members         pd-dev1
+            }
+    -------------------------------------------------------------------------------------
+    
+
+  
+  
+
+### 2.1 Machine-specific .cfg files
+
+The first thing to do is to create a specific .cfg file for each machine you
+need to add. Without these .cfg files, Nagios will not be able to see the
+machines - this is critical for being able to group machines by service.  
+  
+
+  
+
+### 2.2 Setting up the groups
+
+If you look in /etc/nagios3/conf.d you will find a file called
+hostgroups_nagios2.cfg (NOTE: The "2" is not a typo. For some reason the
+configuration files have not been renamed to reflect the migration from 2 to
+3.) This is the file in charge of grouping machines together by service. A
+typical entry will look like:
+
+    
+    
+    # A list of your Debian GNU/Linux servers
+     define hostgroup {
+        hostgroup_name  debian-servers
+        alias           Debian GNU/Linux Servers
+        members         localhost, Elive, courtney-desktop
+    }
+    
+
+Now, do the same for all of your SSH servers, by adding in any hosts that
+serve up ssh to clients. It's done the same way. In the
+/etc/nagios3/hostgroups_nagios2.cfg file you will all all hosts to the ssh-
+servers section.
+
+Once you have added all your hosts to your groups, you have to make sure you
+restart Nagios in order for the changes to take effect.  
+Restart the nagios daemon to enable the new configuration using below command:
+
+    
+    
+    $ sudo /etc/init.d/nagios3 restart
+    
+
+  
+You can now view your groups in your browser.
+
+  
+
+* * *
+
+  
+  
+
+### 2.3 Configure alerts for email and contact groups
+
+notice. It is assumed that working email SMTP server IP/name is available to
+configure the Nagios configuration.
+
+ **2.3.1 Defining your contact**
+
+The first item to tackle is to define your contact. This is done with the file
+/etc/nagios3/conf.d/contacts_nagios2.cfg.  
+In this file you will see a section that looks like:
+
+    
+    
+    define contact{
+       contact_name {USERNAME}
+       service_notification_period 24x7
+       host_notification_period 24x7
+       service_notification_options w,u,c,r,f,s
+       host_notification_options d,u,r,f,s
+       service_notification_commands notify-service-by-email
+       host_notification_commands notify-host-by-email
+       email {email@localhost}
+     }
+    
+
+  
+
+Where all text above in {USERNAME} and {email} is user-specific.
+
+tip.  **NOTE:**  You will want to add a new  _define_  for each administrator
+that needs to be contacted via email. And make sure you  _define_  each user
+with his or her email address in the define.
+
+Before you move on, it would be good to restart Nagios to make sure your
+definitions are correct. If there is an error you will get a warning in the
+output of the start command.
+
+ **2.3.2 Define your contact group**
+
+In that same file you will also find a spot to group users together in contact
+groups. This comes in very handy because you can then define a set of users
+(administrators) who will only get warnings for certain services or certain
+hosts.
+
+To define a group add an entry like so:
+
+    
+    
+    define contactgroup {
+        contactgroup_name       admins
+        alias                   Web Server Adminstrators
+        members                {USERNAME1}, {USERNAME2}
+     }
+    
+
+  
+
+Where {USERNAME1} and {USERNAME2} are members for this group.
+
+tip.  **NOTE:**  the usernames in this group MUST be defined in the define
+contact section above. If they are not, Nagios will throw errors when it
+attempts to start.
+
+ **2.3.3 Attach groups to services**
+
+Finally you need to attach your groups to services. As you can see, above, I
+have created a  **admins**  group.  
+It should be above that this group should be added to a corresponding service
+in the file /etc/nagios3/conf.d/services_nagios2.cfg.  
+In this file you will have created an entry like:
+
+    
+    
+    define service {
+        hostgroup_name http-servers
+        service_description  HTTP
+        check_command  check_http
+        use generic-service
+        notification_interval 0
+        ## append line here for the contact_groups
+     }
+    
+
+To this entry you will want to add the line:
+
+contact_groups admins
+
+Now when you restart Nagios anytime there is an issue with one of the HTTP
+servers, only the contact group you have assigned will be notified.
+
+* * *
+
+  
+  
+
+### 2.4 Add a device
+
+Within the /etc/nagios3/conf.d directory you will see a number of .cfg files.
+These are the files Nagios uses to dictate what is see and how it acts upon
+what it see. For every device you want to use, I find it best to add a .cfg
+file.  
+So let's create the file  **/etc/nagios3/conf.d/pd-dev1.cfg**. The contents of
+this fill will look like what you see in attachced file.
+
+As you can see there are a few directives here. The directives are as follows:
+
+  *  **check_command**  \- The command used to check the status of the device.
+  *  **max_check_attempts**  \- How many times will Nagios retry the status check.
+  *  **check_period**  \- How often are the checks made.
+  *  **process_perf_data**  \- Enable the processing of performance data.
+  *  **retain_nonstatus_information**  \- Enable the retention of non-status information across reboots.
+  *  **notification_interval**  \- How often are notifications sent to inform the administrator this host is not okay.
+  *  **notification_period**  \- How often are notifications sent out.
+  *  **notification_options**  \- The options shown are w - send notifications on "warning" state, u - send notifications on "unknown" state,  
+and "r" \- send notifications when a service stops flapping (when a service
+changes frequently).
+
+tip. Once you have created this file save it and restart Nagios with the
+command  **sudo /etc/init.d/nagios3 restart**  command.  
+Now take a look at your Nagios page and you will see the new device you just
+added.
+
+ **Define Service and Command for MySQL Monitoring**
+
+    
+    
+    # 'check_mysql' command definition
+    define command{
+            command_name    check_mysql
+        command_line    /usr/lib/nagios/plugins/check_mysql -H '$HOSTADDRESS$'
+    }
+    
+    # 'check_mysql_cmdlinecred' command definition
+    define command{
+        command_name    check_mysql_cmdlinecred
+        command_line    /usr/lib/nagios/plugins/check_mysql -H '$HOSTADDRESS$' -u '$ARG1$' -p '$ARG2$'
+    }
+    
+    # 'check_mysql_database' command definition
+    define command{
+        command_name    check_mysql_database
+        command_line    /usr/lib/nagios/plugins/check_mysql -d '$ARG3$' -H '$HOSTADDRESS$' -u '$ARG1$' -p '$ARG2$'
+    }
+    
+
+  
+
+* * *
+
+  
+  
+
+## 3\. Server Details
+
+  1. pd-tools [10.8.9.56]  
+Nagios3 is installed on this box. Refer given below URL for Nagios Admin
+console:  
+
+    
+        http://pd-tools.infoimage.com/nagios3/
+    user-id= nagiosadmin 
+    
+
+  2. pd-dev1 [10.8.9.57] - Mule Test Server
+  3. mule [10.8.9.54] - Mule Production Server
+
+ **Test Email Sending from UBUNTU Box**
+
+In order for Nagios to be able to send out alerts via email, the machine
+housing Nagios has to be able to send those alerts out.  
+You can check that by using the mail command like so:
+
+    
+    
+    mail email@address -s TEST
+    
+
+  
+Where email@address is an actual address you can use for testing.
+
+  * Once you enter that line, hit  **Enter**  and then  **type some random text**.
+  * When you're done typing hit  **< Ctrl>d** and then Enter.
+  * The mail should send away. If not you will have to troubleshoot your mail server.
+
+ **landscape-sysinfo**
+
+  * If you need a quick and simple information, ubuntu has a tool called landscape-sysinfo
+  * This will print out: system load, hard-disk usage, memory usage, no of processes, and ip addresses of you box
+  * Just enter in your console: $ landscape-sysinfo
+  * Sample Output:  
+
+    
+         System load:  0.19               Processes:           175
+      Usage of /:   6.3% of 251.44GB   Users logged in:     2
+      Memory usage: 65%                IP address for eth0: 10.8.9.57
+      Swap usage:   28%
+    
+      Graph this data and manage this system at https://landscape.canonical.com/
+    
+
+* * *
+
+  
+  
+
+## 4\. Mule (Prod) Server Configuration Details
+
+tip. Nagios Server URL:  
+[http://netmonitor.infoimage.com](http://netmonitor.infoimage.com/)
+
+  * Version: Nagios Core 3.4.1
+  * Server placed under monitoring script: Mule Prod (10.8.9.54) Server and Apche2 (10.8.11.22) Server
+
+  * Given below diagram shows Nagios monitoring configuration details for the above mentioned boxes.
+
+* * *
+
+* * *
+
+  
+  
+
+## 5\. References
+
+<http://nagios.org/>  
+<http://nagiosplugins.org/>  
+<http://exchange.nagios.org/>  
+<https://help.ubuntu.com/10.04/serverguide/nagios.html>
+
+* * *
+
+  
+
+### Attachments
+
+  
+
+

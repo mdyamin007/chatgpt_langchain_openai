@@ -1,0 +1,824 @@
+title: SSCU Setup Analysis
+body:   
+
+Docuement Status|
+
+YellowDRAFT  
+  
+---|---  
+Docuement Owner|  
+  
+# SSCU - SAFE Credit Union
+
+# 32
+
+* * *
+
+## ROOT
+
+  
+|  
+  
+---|---  
+ **Login Method**|  DI. BL and Q2 are not used  
+ **Enrollment Step**|  2 (1. Disclosure+Email Update, 2. PDF Verification)  
+ **Welcome Email**|  Feature exists. But code is commented out. (This feature
+is not supported for this client)  
+ **Menu**|  eStatements, eNotices, eTax, Check, Profile  
+ **Account Types**|  N/A  
+ **Statement Types**|  Default, Heloc, Visa, Mortgage, Enotice, Etax  
+ **Archival Period**|
+
+Default, Heloc, Visa, Mortgage, Etax = 36
+
+Enotice = 4  
+  
+ **Paperless Configuration**|  Non-Selective  
+ **On DP Change**|  Opt-out page  
+ **Delivery Preference**|
+
+Paperless = E (Currently enrolled in eStatements)
+
+Paper = B (Cancel eStatements)  
+  
+ **Notification Preference**|  Email  
+ **NP Link Type**|  byUFA  
+ **Batch Download  **| N/A  
+ **Schema**|  CU  
+ **User-Account Relation**|
+
+1 User - 1 Account  
+  
+### Database
+
+ **USR_SESSION** : Account number as SESS_LOGIN_ID. DSO gets value. Needs
+migration.  
+ **USR_MAPPING** : No data in USR_MAPPING. Needs migration  
+ **NOTIFICATION_PREFERENCE** : Uses NP table. Previously CI was used. Only
+Production db seems to get migrated (NP).
+
+### Login Method
+
+From web.xml, 3 login method found (DI, BL and Q2).
+
+  * BottomLineSSO LoginServlet is absent in the infoimage jar.
+  * Q2 url is not excluded in the filter class.
+  * Only DI is usable. 
+
+### SSO (DI)
+
+  * Only account number (user_fi_number) is needed for successful SSO.
+  * Email is not updated through SSO. 
+  * Always creates a new account if not found. 
+  * Sets account number as sess_login_id.
+  * Sets date in DSO. 
+
+### DSO
+
+N/A
+
+###  **Leading Zero Account**
+
+  * Does not use leading zero accounts.
+  * Leading zero accounts can SSO.
+  * Does not trim leading zero(s).
+
+### Welcome Email
+
+Welcome email feature exists but the code to send welcome email is blocked
+(commented-out).
+
+###  **Enrollment**
+
+Two Steps:
+
+  1. Disclosures & Delivery Preference
+  2. PDF Verification
+
+In both step, Reconciliation and Agreement links are shown above footer.
+
+### Enrollment Logic:
+
+  * Enrollment triggers if P_LATEST_STATUS got the value 'B' in PAPERLESS2 table. 
+  * Does not check SSO null in the USR_SESSION table. 
+  * If enrollment triggers, opt-out page is shown. 
+
+  
+
+  
+
+|  
+  
+---|---  
+  
+|  
+  
+  
+
+  
+
+### Statement Types & Archival Period
+
+Type| Description| Archival  
+---|---|---  
+Default| Member| 36  
+Heloc| Home Equity| 36  
+Visa| Visa Credit Card| 36  
+Mortgage| Mortgage| 36  
+Enotice| eNotice| 4  
+Etax| eTax| 36  
+  
+### Delivery Preference
+
+  * Paper = B, Paperless = E, New = N
+  * Going paper triggers enrollment. 
+  * Delivery preference uses different verbiage. Paperless: Currently enrolled in eStatements and Paper: Cancel eStatements.
+  * InfoSERVICE API is called after updating the delivery preference. 
+
+### Notification Preference
+
+  * Only Email is supported. No SMS. 
+  * Uses NOTIFICATION_PREFERENCE table. 
+  * Previously CONTACT_INFO table was used (before 2017-08). Production db got a NP migration. Staging, Pilot and Dev db does not. 
+
+### Paperless Configuration
+
+Non-Selective. Can't assign different emails for different statement types.
+
+### NP Link Type
+
+byUFA. Both USR_ID and ACCT_ID are saved in the NP table.
+
+### Menu Tabs
+
+  1. eStatements
+  2. eNotices
+  3. eTax
+  4. Check
+  5. Profile
+
+  * No account number is shown.
+  * Tabs are shown always. (whether the tab has statement or not).
+  * Different disclosures on every tab (without Profile).
+  * In eStatements and eNotices tab, view/not-view status is shown. 
+  * In Profile tab, Reconciliation and Agreement links are displayed above footer. 
+
+|  
+  
+---|---  
+  
+|  
+  
+  
+
+### Concerns about ROOT
+
+  1. Welcome email feature exists but the code to send welcome email is blocked (commented-out).
+  2. Going paper does not log out the user. Instead shows an "opt-out" page in the statement tab. This page contains the disclosure verbiage and two input fields for email and email confirmation. 
+  3. InfoSERVICE API is called after updating delivery preference. 
+  4. This client is shifted from CONTACT_INFO to NOTIFICATION_PREFERENCE table. But migration is only done in Production database.
+
+  
+
+* * *
+
+## MSM
+
+### Account Management
+
+  1. Can search for an account by account number and email address. 
+  2. Shows Member Name (User name), Account Number, Account Name, Delivery Preference, Notification Options, Email Address, Paperless History and Statements. 
+  3. Can change email address and delivery preferences. 
+
+### Email Proofing
+
+  1. Email notification templates:
+    1. Member (default)
+    2. Home Equity (heloc)
+    3. Visa Credit Card (visa)
+    4. Mortgage (mortgage)
+    5. eNotices (enotice)
+    6. eTax (etax) 
+    7. Welcome
+  2. Keywords: 
+    1.  **$** **sdv_txt_userName**  
+    2.  **$sdv_txt_eNoticeList**  
+    3.  **$sdv_txt_eTaxList**  
+
+Can upload email content from a file.
+
+### Upload Inserts
+
+Inserts available for: Member (default), Home Equity (heloc), Visa Credit Card
+(visa) and Mortgage (mortgage).
+
+### Marketing Promo Email
+
+### Reports
+
+  1. Latest Stats: not available in InfoTRAC 
+  2. User Login Activity
+  3. AI Login Activity
+  4. AI User Activity
+  5. Email Address Collection
+  6. Paperless
+
+### Administration
+
+  1. Can change admin user's credentials. 
+  2. Can create/view/modify/remove other users that have lower privileges.
+
+### eStatment Account Creation
+
+  1. Creates a new eStatement account and attaches a new user to the account.
+  2. Saves leading zero account number without leading zero(s). USR_SESSION table saves account number as SESS_LOGIN_ID with leading zero(s). 
+
+### Exit
+
+Exits the MSM site with a confirmation page.
+
+  
+
+  
+
+### Concerns about MSM
+
+  1. It is not possible to create a new account with leading zero(s) from MSM site. It trims the leading zero(s) and saves in the FIN_ACCOUNT table. But in the USR_SESSION table, it saves the account number with leading zero(s) as sess_login_id. Also, from the ROOT site, account creation with leading zero is possible. 
+  2. In Email Proofing, user can upload email content from a file. This feature is not in InfoTRAC. 
+
+  
+
+  
+
+  
+
+* * *
+
+## PUI
+
+### BACKEND PROCESSES
+
+SSCU has 5 processes,
+
+  1. AFP
+  2. ENOTICE4
+  3. ETAX
+  4. CHECK_INDEX
+  5. ECL
+
+### Statement Types and Index file prefix
+
+  *  **global.ms1** =default
+  *  **global.mv1** =visa
+  *  **global.me1** =heloc
+  *  **global.me2** =heloc
+  *  **global.ml1** =mortgage
+  *  **global.tax** =etax
+
+ESTMT Type| Prefix| Process to Use  
+---|---|---  
+default| ms1| AFP  
+visa| mv1| AFP  
+heloc| me1| AFP  
+heloc| me2| AFP  
+mortgage| ml1| AFP  
+default| ms1_check| CHECK_INDEX  
+enotice| sscu_afp_enotice| ENOTICE4  
+etax| tax| ETAX  
+  
+#### Global Settings
+
+  * global.multipleStmtType=true
+  * global.multipleDocType=false
+  * global.autoRegister=true
+  * global.enableAccountType=false
+  * global.acctNumHasLeadingZeros=false
+
+### AFP
+
+#### Data: AfpStatementData9
+
+  1. Each line in the process file must contain 12/13/14/15 fields. 
+  2. FIelds: **_fileName_** _|_ ** _acctNum_** _|_ ** _beginDate_** _|_ ** _closingDate_** _|_ ** _numOfPages_** _|_ ** _acctName_** _| SSN | appType | messageIds | hasCheckStr | insertId | regionCode | crippleFlag | zipFileName_  .
+  3. If present, crippleFlag must have a value of either "C" or "R". 
+
+ ****Bold** indicates mandatory fields.
+
+#### Registrar: MessageEStmtRegistrar3
+
+  1. Always creates a new account if not found. 
+  2. As autoRegister is true, it creates a new user profile. 
+    1. Sets DSO date in USR_SESSION.  
+    2. Sets account number as sess_login_id. 
+    3. Insert in USR_FIN_ACCOUNT. 
+  3. If account is found
+    1. Check the **_acctName_** provided by the index file. If it does not match with the account name in the database, update it in the FIN_ACCOUNT table. 
+    2. Updates the first name in the USR table. 
+    3. Does not update account name if the name is either "MEMBER" or "CUSTOMER". 
+  4. Inserts Paperless record: 
+    1. If no record is found, create a new Paperless record: Old = N, New = B.
+    2. If the statement type is not default, create a new record for default statement type. 
+  5. Inserts statement data in ESTMT_DOC, ARCH_FILE and ESTMT_FILE. 
+  6. As imageMessage is true for all statement types:
+    1. Insert record in MESSAGE_AREA, M_MESSAGE, ESTMT_MSG_DETAIL, ESTMT_MSG.
+  7. Inserts record in P_JOB_ESTMT.
+
+Database inserts:
+
+  * FIN_ACCOUNT: status -- "A"
+  * USR_SESSION: DSO -- date
+  * USR_FIN_ACCOUNT: status -- "active"
+  * PAPERLESS: old -- "N", new -- "B"
+
+#### Mismatch with Hypercube Business
+
+  * sess_login_id=acctNum instead !usrId. 
+  * DSO date not null. 
+  * No entry in USR_MAPPING table.
+
+  
+
+  
+
+### ENOTICE4
+
+  * Does not check file name prefix. 
+  * Process file contains header and footer.
+  * Header: 
+    * Header must contain 4 fields.
+    * Fields: **_H_** _| Process_ID | CID |_ ** _H_**
+  * Footer: 
+    * Footer must contain 4 fields. 
+    * Fields: **_F_** _| Total_Count | Total_Image_Count |_ ** _F_** _._
+
+#### Flags:
+
+  * enotice4.createAccount = true.
+  * enotice4.isZipped = true.
+  * global.enotice.needApproval = false.
+  * enotice4.acctTypeRequired = false.
+  * global.nullDsoTimeStamp = false. 
+
+#### Data: ENoticeData7
+
+  1. Each line in the process file must contain 11 or 12 fields. 
+  2. First(Record Type) and last(Record Terminator) field must be "L". 
+  3. Fields: **_L_** _| acctNum | acctType | acctName | afpFileName | type | closingDate | imageCount | postCardFlag |_ ** _zipFileName | L_**  
+  4. If the account name is not present in the index file, the account number will be set as the account name after masking the first 2 or 4 characters. 
+  5.  postCardFlag value has to be 0 or 1 or null. 
+
+** **Bold** indicates mandatory fields.
+
+#### Registrar: DefaultENotice4Registrar
+
+  1. If no account is found, create a new account, as createAccount is true.  
+  2. As autoRegister is true, it creates a new user profile. 
+    1. If no record is found, create a new Paperless record: Old = N, New = B.
+    1. As nullDsoTimeStamp is false, it sets the DSO date in USR_SESSION. 
+    2. Sets account number as sess_login_id. 
+    3. Insert in USR_FIN_ACCOUNT. 
+    4. Inserts Paperless record: 
+  3. If account is found
+    1. Check the **_acctName_** provided by the index file. If it does not match with the account name in the database, update it in the FIN_ACCOUNT table. 
+    2. Updates the first name in the USR table. 
+    3. Does not update account name if the name is either "MEMBER" or "CUSTOMER" or "USER". 
+  4. Insert another Paperless record for "enotice". 
+  5. Inserts enotice data in ENOTICE and ARCH_FILE.
+  6. Inserts record in P_JOB_ENOTICE. 
+  7. Inserts record in P_ENOTICE_COUNT. 
+
+Database inserts:
+
+  * FIN_ACCOUNT: status -- "A"
+  * USR_SESSION: DSO -- date
+  * USR_FIN_ACCOUNT: status -- "active"
+  * PAPERLESS: old -- "N", new -- "B"
+
+#### Mismatch with Hypercube Business
+
+  * sess_login_id=acctNum instead !usrId. 
+  * DSO date not null. 
+  * No entry in USR_MAPPING table.
+
+### ETAX
+
+#### Flags:
+
+  * etax.createAccount=false
+  * etax.skipReplacement=false
+  * etax.isSharingAfps=false
+  * etax.fmvnotice.needApproval=true
+  * global.etax.needApproval=true
+  * etax.isZipped=true
+  * etax.compression=false
+
+#### Data: ETaxData3
+
+  1. Each line must contain 8 fields. 
+  2. FIelds: **_acctNum_** _|_ ** _type_** _|_ ** _afpFileName_** _|_ ** _date_** _| suffix | appType | ssn |_ ** _zipFileName  _**
+
+** **Bold** indicates mandatory fields.
+
+#### Registrar: ETaxRegistrar3
+
+  1. Fetch account from FIN_ACCOUNT table. 
+  2. If account not found: returns. 
+  3. If account is found: inserts Paperless record
+    1. If no record is found, create a new Paperless record: Old = N, New = B.
+  4. Inserts etax data in ETAX and ARCH_FILE.
+  5. Inserts into P_JOB_ETAX.
+
+#### Mismatch with Hypercube Business
+
+No mismatch
+
+### CHECK_INDEX
+
+#### Flags:
+
+  * check_index.registeredUserOnly=false
+  * check_index.multipleStmtType=false
+  * check_index.hasFinAcctType=false
+  * check_index.countOnceEachEntry=false
+
+#### Handler: DefaultCheckImageHandler2
+
+  1. Each line in the process file must contain exactly 6 fields. 
+  2. Fields: **_acctNum_** _|_ ** _checkAcctNum_** _|_ ** _number_** _|_ ** _checkDate_** _|_ ** _amount_** _|_ ** _checkType_** ** **
+  3. checkDate length has to be 10. Format: MM/dd/yyyy.
+
+** **Bold** indicates mandatory fields.
+
+#### Registrar: CheckImageRegistrar
+
+  1. Fetch account by account number. 
+  2. Insert into ACCOUNT_CHECK_IMAGE table.
+  3. Insert into P_JOB_CHECK table.  
+
+Database Inserts:
+
+  * ACCOUNT_CHECK_IMAGE
+  * P_JOB_CHECK
+
+#### Mismatch with Hypercube Business
+
+No mismatch
+
+### ECL
+
+#### Flags:
+
+  * global.email.storage=notifyPref
+  * global.emailUserAcctRef=false
+  * ecl.append=false
+  * ecl.purge=false
+  * global.acctNumHasLeadingZeros=false
+
+#### Handler: DefaultEclHandler3
+
+  1. Each line must contain 2 fields. 
+  2. Field: **_acctNum_** _|_ ** _email_**
+
+** **Bold** indicates mandatory fields.
+
+#### Process:
+
+  1. Fetch USR_FIN_ACCOUNT by account number. 
+  2. If not found, throws an error.
+  3. Fetch NP record by both user id and account id. 
+  4. If not found:
+    1. Sets email address from data. 
+    2. Saves the new NP in NOTIFICATION_PREFERENCE table.
+  5. If found:
+    1. Replace old email address with the email address from data if emails are different. 
+    2. Saves the new NP in NOTIFICATION_PREFERENCE table.
+
+  
+
+### BACKEND REPORTS
+
+### Undeliverable Report
+
+#### Flags:
+
+  * undeliverableReport.method=client_pickup
+  * undeliverableReport.notifyCilent=true
+  * undeliverableReport.insertToDB=true
+  * undeliverableReport.pgpRecipient=opspc@savecu.org
+  * undeliverableReport.host=ha_zimbra
+  * undeliverableReport.emailServer.cluster=true
+  * undeliverableReport.paperless_status.update=false
+  * undeliverableReport.email_status.update=true
+  * undeliverableReport.email.pui_usr_id=1
+
+#### Handler: upload.handler.bounceback.CUUndeliverableReport
+
+#### Process:
+
+  1. Grab email servers from database (table: HA_SERVER). For SSCU, emailServer = mailpost.infoimageinc.com
+  2. Retrieve all bounceback emails from this mail server.
+    1. For each message, insert into EMAIL_ERR table with org_id, acct_number as sess_login_id, email_address and current timestamp. 
+    2. As paperless_status.update is false, will not set paperless status to "B".
+    3. As email_status.update is true, will update CONTACT_INFO table to set ci_is_eaddr1_valid to "N". 
+  3. Generates the report that looks for em_err_last_modified_date, which should be the same date that the process is being run. 
+    1. Queries from EMAIL_ERR and FIN_ACCOUNT table to generate report data. 
+  4. As insertToDB is true, will insert report data into SUMMARY_REPORT table. 
+  5. Encrypt the file with pgp encryption. 
+  6. As notifyClient is true, email.recipients flag should be true to send email. (which is commented out in conf file)
+    1. Get template from templatePath (from conf file).
+    2. Sends the mail through Post office. 
+
+  
+
+### Client Paperless Report
+
+#### Flags:
+
+  * clientPaperlessReport.classPath=com.infoimage.processing.application.file.upload.handler.ClientPaperlessReport2
+  * clientPaperlessReport.method=client_pickup
+  * clientPaperlessReport.notifyClient=true
+  * clientPaperlessReport.file.delimiter=,
+  * clientPaperlessReport.file.reportTimeRange=0
+  * clientPaperlessReport.file.reportFormat=acctType|acctNum|paperlessStatus|modifiedDate
+  * clientPaperlessReport.file.timeZone=US/Pacific
+
+#### Handler: ClientPaperlessReport2
+
+  1. Will not save report data to SUMMARY_REPORTS table. (uploadToInfoTRAC is false)
+  2. As notifyClient is true, it will send email. Email will be sent via PostOffice. 
+
+  
+
+  
+
+### Paperless Report
+
+#### Flags:
+
+  * paperlessReport.stmtType1=default
+  * paperlessReport.stmtType2=default,enotice
+
+#### Handler: DefaultPaperlessReport2
+
+#### Renderer: DefaultPaperlessReportRender
+
+  
+
+### InfoXchange Transaction Report
+
+#### Flags:
+
+  * infoXchangeTransReport.classPath=con.infoimage.processing.application.file.upload.handler.InfoXchangeTransReport
+  * infoXchangeTransReport.email.recipients=Digital.Banking@safecu.org
+  * infoXchangeTransReport.method=client_pickup
+  * infoXchangeTransReport.clientPickupPath=/d/SECURE3/Usr/SSCU/client_pickup
+  * infoXchangeTransReport.email.templatePath=/com/infoimage/processing/application/file/upload/email/client_pickup4.txt
+  * infoXchangeTransReport.email.subject=SSCU: Your InfoXchange Failed Transaction Report is Available for Download
+  * infoXchangeTransReport.pickup_time=5
+  * infoXchangeTransReport.daysBack=1
+
+#### Handler: InfoXchangeTransReport
+
+  1. Returns all failed transactions in given time period with Pathway request and response. 
+  2. Report headers: Transaction ID, UpdatedOn, Surname, ClientID, AcctNumber, FlagIndicator, StatusCode, TransactionStatus, Pathway Request, Pathway Response
+  3. Call to InfoSERVICE API to get the report. 
+  4. Path: [GET] /account/sscu/pathwayfailedreport/csv/download
+  5. daysBack=1 means, get the last 1 day of the data from the start date. Time period is one day. 
+
+#### Report Image from PILOT
+
+  
+
+* * *
+
+##  ** _Analysis Summary (ROOT)_**
+
+Scope| Feature| SSCU business| Hypercube| Note  
+---|---|---|---|---  
+ **SSO**|  User Enrollment logic|
+
+Goes through enrollment based on paperless status (if in paper).
+
+|  120 complete Supported  121 incomplete Not Supported |
+
+In Hypercube, a user goes through enrollment if he/she never logged in via
+SSO. It does not depend on the account's paperless status.
+
+ **Client will use default (sso date based) enrollment logic. Migration needed
+to put sso date in USR_SESSION table.**  
+  
+Enrollment Step 1| E statement Disclosure & Email Update.|  122 complete
+Supported  0 incomplete Not Supported | In Hypercube, those are two different
+steps. If this client will move to Hypercube, Email Update will be done in
+enrollment step 3.  
+Enrollment Step 2|
+
+PDF View Verficiation
+
+|  1 complete Supported  2 incomplete Not Supported |  
+  
+  
+Calls a pathway API (<http://infoservice-
+common.infoimageinc.com/api/v1/account>) to update delivery preference with
+the following parameters:
+
+org_id, acct_number, acct_name, acct_status, paperless_status and
+email_address.
+
+|  
+|  **InfoSERVICE should handle the delivery preference update.**  
+Enrollment Step 3| N/A  
+Additional Links | Reconciliation and Agreement links are shown above footer.|
+123 complete Supported  124 incomplete Not Supported 125 incomplete Needs
+Feedback | Those links can be shown in footer. That means they will be present
+on every page.  
+Welcome Email | Welcome email feature exists but the code to send welcome
+email is blocked (commented-out). |  126 complete Supported  127 incomplete
+Not Supported 128 incomplete Needs Feedback |
+
+Is the client still billed for welcome email? If yes, then welcome email
+feature will be provided.
+
+**N.B - We Will not support Welcome Email(They don't have this feature)**  
+  
+ **Statement   page**| Tab (eStatements) |
+
+  * Shows default statements. 
+  * Has inserts.
+  * View/Not-view status is shown beside each statement.
+
+|  27 incomplete Supported  28 complete Not Supported | Hypercube currently
+does not show any view/not-view status.  
+Tab (eNotices)|
+
+  * Shows enotices. 
+  * View/Not-view status is shown beside each statement.
+
+|  153 incomplete Supported  154 complete Not Supported | Hypercube currently
+does not show any view/not-view status.  
+ **Profile (SSO)**  
+  
+  
+  
+  
+|  Notification Preference|
+
+  * Can update email.
+  * No 2nd email. 
+
+|  33 complete Supported  34 incomplete Not Supported |  
+  
+Delivery Preference|
+
+  * Can change to Electronic or Paper.
+  * Can not select both. 
+
+|  37 complete Supported  38 incomplete Not Supported |  
+  
+  
+  * If changed to paper, user is not logged out, instead goes to optout page (Disclosure & Email Update) which also the enrollment step 1. (Triggers enrollment **automatically** if eStatement tab is selected)
+
+|  39 complete Supported  40 incomplete Not Supported |
+
+Slightly different from Hypercube business. i.e. in Hypercube, if Delivery P
+reference changes to paper, user will just be logged out with an confirmation
+modal. **It  will not trigger enrollment automatically**.
+
+N.B - Not an issue  
+  
+Calls a pathway API (<http://infoservice-
+common.infoimageinc.com/api/v1/account>) to update delivery preference with
+the following parameters:
+
+org_id, acct_number, acct_name, acct_status, paperless_status and
+email_address.
+
+|  
+|  **InfoSERVICE should handle the delivery preference update.**  
+Additional Links and Different verbiage|
+
+Delivery type selection radio buttons use different verbiage.
+
+Paperless radio button verbiage: Currently enrolled in eStatements.
+
+Paper radio button verbiage: Cancel eStatements.
+
+|  41 complete Supported  42 incomplete Not Supported |
+
+Currently Hypercube uses those verbiages like this,
+
+Paperless: **Electronic** and Paper: **Paper**.
+
+Hypercube is not configured to change those verbiages.  
+  
+Reconciliation and Agreement links are displayed above footer. |  43 complete
+Supported  44 incomplete Not Supported |
+
+Those links can be shown in the footer. That means they will be present on
+every page.
+
+N.B - not an issue  
+  
+ **Exit**|  N/A  
+  
+  
+
+##  ** _Analysis Summary (MSM)_**
+
+Scope| Feature| SSCU| InfoTRAC| Note  
+---|---|---|---|---  
+ **Account Management**  
+  
+|  Account Search|
+
+Search for an account by account number and email address.
+
+|  89 complete Supported  90 incomplete Not Supported |  
+  
+Data Display|
+
+Shows Member Name (User name), Account Number, Account Name, Delivery
+Preference, Notification Options, Email Address, Paperless History and
+Statements.
+
+|  91 complete Supported  92 incomplete Not Supported |  
+  
+Changing Delivery Preference| Can change email address and delivery
+preferences.|  93 complete Supported  94 incomplete Not Supported |  
+  
+**E-Mail Proofing**|  Templates|
+
+  1. Member (default)
+  2. Home Equity (heloc)
+  3. Visa Credit Card (visa)
+  4. Mortgage (mortgage)
+  5. eNotices (enotice)
+  6. eTax (etax) 
+  7. Welcome
+
+|  109 complete Supported  110 incomplete Not Supported |  
+  
+Keywords|
+
+  1. $sdv_txt_userName 
+  2. $sdv_txt_eNoticeList 
+  3. $sdv_txt_eTaxList 
+
+|  168 complete Supported  169 incomplete Not Supported |  
+  
+Upload Template| Can upload email content from a file. |  170 incomplete
+Supported  171 complete Not Supported | InfoTRAC does not provide support to
+upload email content from file stored in storage. (minot)  
+ **Upload Inserts**|  Statements with insert|
+
+  1. Member (default)
+  2. Home Equity (heloc)
+  3. Visa Credit Card (visa)
+  4. Mortgage (mortgage)
+
+|  111 complete Supported  112 incomplete Not Supported |  
+  
+**Marketing Promo Email**|  
+|  
+|  113 complete Supported  114 incomplete Not Supported |  
+  
+**Reports**|  Available reports|
+
+  1. Latest Stats
+  2. User Login Activity
+  3. AI Login Activity
+  4. AI User Activity
+  5. Email Address Collection
+  6. Paperless
+
+|  115 complete Supported  116 incomplete Not Supported | Latest Stats report
+is not available in InfoTRAC.  
+ **Administration**|  
+|
+
+  1. Can change admin user's credentials. 
+  2. Can create/view/modify/remove other users that have lower privileges.
+
+|  117 complete Supported  118 incomplete Not Supported |  
+  
+**eStatement Account Creation**|  
+|
+
+  1. Creates a new eStatement account and attaches a new user to the account.
+  2. Saves leading zero account number without leading zero(s). 
+  3. USR_SESSION table saves account number as SESS_LOGIN_ID with leading zero(s). 
+
+|  119 incomplete Supported  172 complete Not Supported |
+
+InfoTRAC save !usr_id as SESS_LOGIN_ID in USR_SESSION table.
+
+N.B - Need data migration.  
+  
+ **Exit**|  
+|  Logs out the user. |  173 complete Supported  174 incomplete Not Supported
+|  
+  
+  
+  
+
+

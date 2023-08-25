@@ -1,0 +1,246 @@
+title: RHS - Prod:  FRST Daily Letter A Database Issue
+description: [~William.Kong]
+
+FRST Daily Letter A - Archival Error - looks like it cannot connect to the database and is erroring out:
+
+
+
+Documents Processed: 7007
+Images Processed: 7544
+Suppressed Documents: 0
+Suppressed Images: 0
+dt_job_id: 161472-C17.01-V20411
+doc_count: 7007
+img_count: 7544
+doc_sup: 0
+img_sup: 0
+Traceback (most recent call last):
+ File "/home/master/afp2pdf.py", line 186, in <module>
+ main(sys.argv)
+ File "/home/master/afp2pdf.py", line 51, in main
+ conversion_type(mapped_args)
+ File "/home/master/afp2pdf.py", line 100, in index_file_build_process
+ process_instance.post_process()
+ File "/mnt/nfs_prod_home/master/afp2pdf_index_file_builder.py", line 53, in post_process
+ self.reporter.update_entry(dt_job_id = self.dt_job_id, doc_count = self.data['document_count'], img_count = self.data['image_count'], doc_sup = self.data['sup_doc_count'], img_sup = self.data['sup_img_count'])
+ File "/mnt/nfs_prod_home/master/afp2pdf_report_handler.py", line 65, in update_entry
+ conn2 = cx_Oracle.connect(self.configs['user'], self.configs['password'], self.dsn)
+cx_Oracle.DatabaseError: ORA-28000: the account is locked
+
+Error. Failed to create archival. Exiting
+
+
+author: rogelio_jira
+comment: Will,
+
+
+
+The processed exit with this error - Error. Failed to create archival. Exiting
+
+
+
+Archival was not created.
+
+
+
+
+
+Thanks,
+Rogelio
+
+
+author: william.kong
+comment: [~rogelio_jira]; Thanks for submitting this issue. I will need more time to provide resolution. Jun is setting up a separate database to address this issue so that we do not have to temporarily re-write the code to only support Brisbane.
+
+
+
+I will keep this ticket assigned to me for now.
+
+Thanks!
+
+
+
+
+
+-- Will
+
+
+author: jasramos
+comment: [~William.Kong] reprocess 10:21am -10:57am
+
+Please see below for tail end of processing screen.
+
+
+Compressing 760663-5_19.pdf
+Compressing 763649-1_2.pdf
+Compressing 768739-5_3.pdf
+Compressing FirstRepublicBank_IL_Letters_09172020.txt
+Compressing IL_Letters_Batch_Recon_09172020.txt
+
+Everything is Ok
+perl /home/master/sftp_put.pl --host smft.firstrepublic.com --usr infoimage --pwd ST1nf0@0913 --dir /IL_Letters/Prod /d/pdf_afp/frst/frstdly/szip//*.zip
+Connecting to ftp host: infoimage@smft.firstrepublic.com ...
+ssh: connect to host smft.firstrepublic.com port 22: Connection timed out
+Unable to connect to remote host smft.firstrepublic.com: SSH slave exited unexpectedly with error code 1
+Error within program: sftp_put.pl
+
+*/d/daily/frst/frstd117.log*
+
+*/*d/daily/frst/frstd117.log:Error: /home/master/trigger_tracking_by_rec.pl /d/isd_share/frst/print_fileid/frstd11720201014102644.txt
+/d/daily/frst/frstd117.log:apy call is curl -X PUT http://is-apps-prod.infoimage.com/infosync/v1/infotrac/online_proofing/extended_mail_tracking/proc_id/2268749/cid/frst/user_id/oper1 -H accept: application/json -H Content-Type: application/json -d \{ state: warning, message: Communication error between print process & IndexFileProcessor, warning_code: 102, warning_desc: Unable to submit the job to indexfileprocessor}
+
+
+
+
+
+
+author: william.kong
+comment: [~anil.dasa] and [~shailendrar]: Can you review the error message InfoSYNC is providing. It looks like it is not able to submit. Is the indexfileprocess up in brisbane?
+
+
+author: anil.dasa
+comment: [~William.Kong]
+
+ca-jobtrack-pr-01 indexFileprocess was down earlier. I have made application up now. Can you try to submit job now.
+
+
+author: william.kong
+comment: [~anil.dasa]: Thanks for the update. Unfortunately we cannot re-test as we are moving license to test a different server. I will keep this ticket open for the next week or two.
+
+
+author: william.kong
+comment: [~rogelio_jira]: Can you please re-test this job in production? We have activated the production license last night on RHS to resume testing.
+
+
+author: rogelio_jira
+comment: [~William.Kong]
+
+The reprocessed DPVS is not good did not have the breakdown of the print files.
+
+!image-2020-10-27-10-20-00-072.png!
+
+This is also showing at the end of the processed:
+
+!image-2020-10-27-10-20-49-608.png!
+
+
+
+Thanks,
+Rogelio
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~rogelio_jira]: Thanks for reporting this issue!
+
+
+
+[~Terrence.Tong]: Can you please have someone else to work on this ticket? Eric is OOO so i don't know who to research to the two issues.
+
+Two concerns I have:
+
+
+
+#1. I thought our production code in Brisbane was commented out to+not+ send files to client; Please have our team comment out the code first (see screenshot #2 from previous comment).
+
+
+
+#2. Please have team research why dpvs does not have break down (see screenshot #1 above.)
+
+
+author: terrence.tong
+comment: Ernest,
+
+Does the following error has to do with ACE?
+
+ !screenshot-1.png|thumbnail! 
+
+frstd117.c1bmcok is empty
+
+
+I also disable all the sftp from frst_process.sh
+
+
+author: william.kong
+comment: [~ernestw]: Can you review this ticket also?
+
+
+
+
+author: william.kong
+comment: [~ernestw]: Thanks for the assistance! The bb-rhs2:/d/ncoa_dirs was not pointing to ca-rhstore-pr-01:/d/ncoa_dirs/. So the last few reported issues a few weeks ago was related to it.
+
+
+
+[~rogelio_jira]: Please re-test.
+
+
+author: rogelio_jira
+comment: [~William.Kong]
+
+
+
+Reprocessing is good now - DVPS is with breakdown but we still cannot scan the job in datatrac.
+
+
+
+!image-2020-10-27-13-56-06-533.png!
+
+
+
+!image-2020-10-27-13-55-30-560.png!
+
+
+author: william.kong
+comment: [~Terrence.Tong]: Please update ticket once you have a resolution with Mimi, PC and/or Rogelio on the DataTRAC scanning problem.
+
+
+author: william.kong
+comment: [~rogelio_jira]: Looks like this scanning issue is resolved per the following ticket:
+
+
+
+https://jira.infoimageinc.com/browse/IBTL-156
+
+
+
+Can you please verify and update smartsheet when you are done today? Thanks!
+
+
+author: rogelio_jira
+comment: [~William.Kong]
+
+
+
+I was able to scan the job now in 10.4.32.166:
+
+
+
+!image-2020-10-30-11-08-55-599.png!
+
+
+author: william.kong
+comment: [~rogelio_jira]: Thanks Rogelio! Would you be able to update Smartsheet row 2 if everything look ok?
+
+
+
+[https://app.smartsheet.com/sheets/x6R94h2pc4fxFj7FPHHrhm7M9pXhPJcXRhhRwqQ1]
+
+
+
+
+author: rogelio_jira
+comment: [~William.Kong]
+
+
+
+Smartsheet has been updated.
+
+
+author: william.kong
+comment: [~rogelio_jira]: Thanks Rogelio! I'll close this ticket out.

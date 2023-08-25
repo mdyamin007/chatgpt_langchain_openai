@@ -1,0 +1,190 @@
+title: secure4 & secure5:  Temp FTP Server Create Request
+description: #1. Please clone 10.4.10.10 server into secure5 (10.4.10.205):
+
+!image-2020-10-01-16-57-00-217.png!
+
+
+
+
+
+
+
+
+
+#2. Please fix Brisbane DNS. Right now Brisbane DNS is set to 10.4.11.205 when it is supposed to be 10.4.10.205
+
+
+
+
+
+#3. For 10.4.10.10, please rename hostname to secure4 and update IP address to 10.4.10.58:
+
+!image-2020-10-01-16-58-37-946.png!
+
+
+
+
+
+
+
+#4. Please assign ticket to Prem.
+
+
+
+#5. [~premraj.patil]: Can you copy and +*append*+ the fw setting that you current have of 10.4.10.10 to 10.4.10.58 and 10.4.10.205? Afterward, you can delete the fw setting of 10.4.10.10
+
+Please re-assign ticket back to me.
+
+
+
+#6: [~William.Kong]: Update Brisbaner server list to remove 10.4.10.10:
+
+!image-2020-10-01-17-01-39-182.png!
+
+
+
+
+
+
+author: william.kong
+comment: 
+
+[~davidt]: FYI. These are the actions we will take. Afterwards we can close ticket BRIS-175
+
+
+author: hesham.hanna
+comment: changed the original oneca-s4ftptest-dv-01 ip from 10.4.10.10 to 10.4.10.58cloned the original one to ca-s5ftptest-dv-01 with ip 10.4.10.205waiting till we agree with the names
+
+
+author: kent.chan
+comment: Will- It appears that all tasks above are complete. DNS has been fixed, access lists are in place, and Hesham has cloned the server per your instructions. PLease close the ticket if this is complete.
+
+
+author: william.kong
+comment: [~kent.chan]: I'm able to ssh into the system. Both system has the exact same hostname. But i can work through it since these two servers are temporary. I'll close it out after i get the samba configured for David's servers. His servers needs CIFS access to these two boxes:
+
+
+
+!image-2020-10-02-08-57-37-105.png!
+
+
+author: william.kong
+comment: [~davidt]: Can you test secure4 and secure5 and see if can access / view the share folders. Also note, the secure4 and secure5 DNS are updated in Brisbane side by Kent.
+
+
+
+
+author: trang809
+comment: I am still getting the error when I tried to access from the ftpbu 10.4.20.35 server.
+
+
+
+!image-2020-10-02-09-25-02-120.png!!image-2020-10-02-09-25-28-967.png!
+
+
+author: william.kong
+comment: [~kent.chan] and [~premraj.patil]: The NFS ports are not opened? Did you guys copyand +*append*+ the fw setting that you current have of 10.4.10.10 to 10.4.10.58 and 10.4.10.205? Afterward, you can delete the fw setting of 10.4.10.10.
+
+
+
+If you deleted the fw settings for 10.4.10.10, then here were the servers the needed port nfs port access:
+
+ca-isis-pr-##
+
+ca-preproc-pr-##
+
+
+
+Per David: port 445 needs to be opened as well.
+
+10.4.20.35
+
+
+author: kent.chan
+comment: Dave- CIFS from ftpbu to the ftp servers is working now, somehow the rule didn't save when I edited the rule for some reason earlier
+
+
+
+Will- The NFS ports are open between the ca-isis-pr and ca-preproc-pr servers and ca-s*ftp-pr servers.
+
+!image-2020-10-02-11-47-15-169.png!
+
+!image-2020-10-02-11-47-49-542.png!
+
+
+author: william.kong
+comment: [~kent.chan] and [~premraj.patil]: Port 111 is not opened. Can you open this RPC port too? NFS requires this port 111 also to be opened.
+
+
+author: hesham.hanna
+comment: Those are the names and the ip's
+
+ca-s4ftp-pr-01.infoimageinc.com [10.4.10.58]
+
+ca-s5ftp-pr-01.infoimageinc.com [10.4.10.205]
+
+
+author: william.kong
+comment: [~kent.chan]: Per Prem. Since this is a DMZ firewall setting, can you please open up RPC port 111 in order for NFS port to work? Thanks!
+
+
+
+Also I cannot ssh into these two servers10.8.11.205 from ca-isis-pr-03:
+
+!image-2020-10-02-13-02-51-212.png!
+
+
+author: kent.chan
+comment: Will- port 111 is open for both s4 and s5 FTP servers (did not need to make changes):
+
+!image-2020-10-02-15-26-24-799.png!
+
+Port 22 is NOW open for s4 and s5 servers
+
+!image-2020-10-02-15-27-24-762.png!
+
+The only access port not open for the ftp servers is RDP and you do not need it from the sources you specified.
+
+
+
+
+author: kent.chan
+comment: Will- Per your comment:
+
+"
+
+Also I cannot ssh into these two servers10.8.11.205 from ca-isis-pr-03:
+
+!image-2020-10-02-13-02-51-212.png! "
+
+
+
+Why do you need to connect to these servers from BB?
+
+
+author: william.kong
+comment: [~kent.chan]: ssh access is a one time deal so that I can help configure the folders (i.e. create NFS & CIFS access); Normally you guys own these servers to configure ftp services, create ftp accounts, update nfs / cifs access etc...; 
+
+
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~kent.chan]: My bad sorry! I had the headache with the comment above!!! I did not realize i put a screenshot of menlo ip address. Per our conversation, everything is good.
+
+i will check and inform David to test after I made the last edit on this secure5 temp server.
+
+
+author: trang809
+comment: Ok, I am able to access this now on FTPBU. Will have the team test other VM.
+
+
+
+
+author: william.kong
+comment: Closing this ticket now that we confirmed that it is working

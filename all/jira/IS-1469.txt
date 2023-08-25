@@ -1,0 +1,162 @@
+title: EQBK - Account Analysis PDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+
+Processing Scripts to modify:
+ /home/master/eqbkma1_process.sh
+
+Data Files to use:
+
+
+
+*NOTE*: This job runs on RH2. Since we are migrating from RHS to RH2, we should test all options so that we can do afpcompare and also ensure there is no errors in the processing logs.
+
+
+
+*Additional Note:*
+
+Looks like the DFA code is invoking PDFi generation if my research is correct.
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~anwarh]: This project also needs an assignee as well too.
+
+
+author: anwarh
+comment: Hi [~William.Kong],
+
+Parallel ID: 20220925183208
+ production cycle: 09/10
+
+Data files:
+ /z/dsi_pdfi_testing/eqbkma1/data/EQBK_AA_09102022.txt
+
+old zips: /z/dsi_pdfi_testing/eqbkma1/old/
+ new zips: /z/dsi_pdfi_testing/eqbkma1/new/
+
+Notes:
+ * You'll see a known issue where afp2pdf removes ',' from the index file
+ * Also, you will see a 1 file difference, that's because the old script also zipped two additional files HOLD_mail...pdf and Invalid_address...pdf (If anyone exists). According to SOW script should directly copy to the client pickup, which it does. But there is nothing mentioned to put them also in the archive zip. I think this is kind of a bug. 
+
+Thanks,
+ Anwar
+
+
+author: william.kong
+comment: [~anwarh]: Thanks for confirm where the issue lies with the afp2pdf.py global bug that just deletes ',' characters. Since this is a global bug and pre-existing, I will need to revisit with the team to pursue a longer term fix. I don't think this global bug should prevent us from continuing with this project.
+
+
+
+As for issue #2, let's keep theEQBK_AA_HoldMail_09102022.pdf file in the zip so that we do not eliminate this existing behavior. If SOW did not tell us whether or not to keep theEQBK_AA_HoldMail_09102022.pdf file and we are currently doing so, let's retain this logic for now. Can the script be updated to include it? Will it cause any check & balancing issue if it include the hold file?
+
+
+
+Please advise tomorrow when time permits. For now, i will change the status to "In Progress" until I get confirmation on issue #2 is adjusted.
+
+
+author: william.kong
+comment: Per discussing with [~anwarh] , yes, it is possible to still include theEQBK_AA_HoldMail_<MMDDYYYY>.pdf; However, the current script uses preprocessing02 old afp2web client to convert the pdf. It is agreed to switch to the standard afp2pdf.py python direct call version. The agreement is to not use the custom /home/keep/eqbkma1.ini, but the /home/afp2web/afp2web.ini standard. But, please pass the custom parameter PDFSecurity=',83vTE1vG,128,0';
+
+
+
+
+
+
+author: william.kong
+comment: [~anwarh]: Can we target to get this logic updated this week?
+
+
+author: anwarh
+comment: [~William.Kong], this has been fixed.
+New archival at:/z/pdf_afp/eqbk/eqbkma1/
+
+
+author: william.kong
+comment: [~anwarh]: Looks good! I do see the extra pdf file and the script update to include the custom PDFSecurity flag mentioned in the comment above.
+
+
+
+[~Igor.Khosid]/[~Andrey.Kutsenko]: The files are in:
+
+
+
+ca-unittest-pr-02:/d/pdf_compare/eqbkma1_prod
+
+ca-unittest-pr-02:/d/pdf_compare/eqbkma1_parallel
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: Just a courtesy reminder, please review this QA Request when time permits.
+
+
+author: JIRAUSER11104
+comment: QA is in progress.
+Ran script:
+{code:sh}[andreyK@ca-unittest-pr-02 pdf_compare]$ perl pdf_compare.pl eqbkma1_prod eqbkma1_parallel result_
+eqbkma1 -pixels 6 -threads 16{code}
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+Test result:
+{quote}Total PDF Files Scanned: 2273
+allowedDifferenceInPercentPerPage: 6:
+Thread Count: 16
+
+Total PDF Files with Differences: 1
+Start Time: Wed Oct 26 17:19:48 PDT 2022
+Finish Time: Wed Oct 26 18:00:08 PDT 2022{quote}
+
+
+author: william.kong
+comment: [~anwarh]: Can you please prep the file transfer form so that we can ask YaMee or Leo to assist with the code release by Nov 9.
+
+
+author: anwarh
+comment: Hi [~yameelee]/[~rodriguez],
+
+Transfer form:  [^IS-1469 EQBK Transfer Form.doc] 
+
+Code is in:
+*/d/is/cvs/xfer/anwarH_backup/is-1469*
+
+Can you please move them into /d/is/cvs/xfer/anwarH/ and then release?
+
+Thanks,
+Anwar
+
+[~William.Kong]
+
+
+
+author: yameelee
+comment: [main@rhs ~]$ ll /d/is/cvs/xfer/anwarH_backup/is-1469
+ls: /d/is/cvs/xfer/anwarH_backup/is-1469: No such file or directory
+
+
+
+[~anwarh]: Please check.
+
+
+author: anwarh
+comment: Hi [~yameelee],
+Seems like I placed the files in "IS-1469" instead of 'is-1469'.
+Please check again in here:/d/is/cvs/xfer/anwarH_backup/is-1469
+Thanks

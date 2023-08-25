@@ -1,0 +1,85 @@
+If a project has check images then the e-statement should not be posted if the cripple percentage is higher than the maximum allowed rate.
+When running the processing script with all options(n), to prevent e-statement from posting after paper option with a high cripple rate, we need to set the value of
+g_cripple_reportto the path of the cripple report, and
+g_max_cripple_numto the maximum allowed cripple percentage.
+in the control file
+Then export g_cripple_report and g_max_cripple_num in the control file. See the below necums3 control file for example.
+cid="necu"                               
+jid="ms3"                                
+prefix="${cid}${jid}"
+dir="${d_dir}/${cid}/"
+job_name="GROUP_STATEMENT"
+group_type="d1"
+firm_name="NASSAU_EDUCATORS_FEDERAL_CREDIT_UNION"
+prod_type="STM"
+jde="DUP1"
+jdl="ISISLI"
+start_cmd="$jde,$jdl"
+split_num="10000"
+profile="/home/isis/userisis/pdec.prf"
+ppmf="/home/isis/userisis/default.lbp"
+ppmf_form="F1STMT"
+samp_flag="sam"
+ver_pos="2.95"
+hor_pos="1.5"
+two_d_bar="y"
+newzipsep="y"
+format_dfa="NECUMS31"
+ind_pdf_format_dfa="NECUMS31"
+pdf_format_dfa="NECUMS31"
+print_dfa="NECUMS12"
+format="duplex"
+isis_version="717"
+PP1="3498"
+PP2="3501"
+PP3="3500"
+misc_type="rpt"
+misc_delivery="manual"
+new_envelope_structure="y"
+ENV1="4412"
+ENV2="4412"
+ENV3="4408"
+ENV4="4411"
+hvy_cnt="15"
+cover_ovl="STMTC1"
+endorsement_type="R"
+new_move_afp=1
+afp_split_count=20000
+new_e_index=1
+#infotrac
+infotrac="m"
+estmt_trac="y"
+track_by_rec="y"
+#message manager
+msg_mgr_t2="y" 
+total_msg_area="2"
+#img_msg_area="1"
+#Online proofing
+olp="y"
+olp_prf_file="n"
+olp_divert="n"
+olp_auto_rel="y"
+olp_int_dlist=<code>grep ^olp_maillist ${home_env}/${keep_dir}/maillist/${cid}_mail.lis | cut -d"=" -f2</code>
+e_automate="e4"
+afp2web_version="v4"
+texas="y"
+g_cripple_report="${dir}CRIPPLE.dat"
+g_max_cripple_num="3"
+#fixed
+tiffdir="${d_dir}/prep/necu/tiff/"
+prf_p1_ovl="EMPTY"
+prf_p2_ovl="EMPTY"
+if [ ${testmode} -a ${testmode} = "y" ]; then
+     profile="/home/test/isis/userisis/pdec.prf"
+     ppmf="/home/test/isis/userisis/default.lbp"
+fi
+cycleno=${1}<code>grep PROC_DATE: ${home_ins}/insert/${prefix}.ins | cut -d " " -f2 | cut -c3-4</code>     
+fn=${dir}${prefix}${cycleno}
+mail_full_serv='ASE3'
+supprefix="$prefix$cycleno"
+export dir fn supprefix total_msg_area msg_mgr_t2 img_msg_area hvy_cnt g_cripple_report g_max_cripple_num
+How it works:
+When the processing script is running, the move_afp_threads.sh script is called from isisdisk.sh.
+The move_afp_threads.sh call cripple_checker() function from func_set2.sh if the g_cripple_report is set on the control file and the cripple report is produced in the path specified in the g_cripple_report value. see below screenshot from move_afp_threads.sh.
+The cripple_checker() function sets the high_cripple_flag="y"and export it. see the below cripple_checker() function
+The move_afp_threads.sh skips e-statement triggering if it finds $high_cripple_flag is "y".

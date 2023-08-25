@@ -1,0 +1,912 @@
+title: eStatement Server List
+body: This page will contains instruction to validate if the services is running on
+each VM and how to start it if needed.
+
+# Healthcheck
+
+* * *
+
+For front-end applications such as InfoTRAC, the application URL can be
+accessed to validate that the service is up and running.
+
+For back-end applications such as API, there are heartbeat URL that can be
+acessed via the web browser. Curl can also be used to access the heartbeat.
+
+Only the production URLs are provided, but they can be altered for the lower
+environment.
+
+For all applications that use systemctl, one check that can be done is: sudo
+systemctl status [service].
+
+# Server List
+
+* * *
+
+Most servers follow the format
+[Location]-[Application]-[Environment]-[Instance Number].infoimageinc.com.
+
+##### Location
+
+  1. ca: California
+  2. tx: Texas
+
+##### Environment
+
+  1. dv: Development
+  2. pi: Pilot
+  3. st: Staging
+  4. pr: Production
+
+In the table below, the .infoimageinc.com will be ommitted to reduce column
+widths.
+
+## Front-end Applications
+
+Application| Production| Pilot| Staging| Development| Startup/Shutdown|
+Important URL| Log Location  
+---|---|---|---|---|---|---|---  
+  
+InfoTRAC
+
+|
+
+ca-infotrac-pr-01  
+ca-infotrac-pr-02
+
+|
+
+ca-infotrac-pr-01  
+ca-infotrac-pr-02
+
+| ca-infotrac-st-01| ca-infotrac-dv-01|
+
+sudo systemctl start tomcat9.0.45-jdk8-infotrac
+
+sudo systemctl stop tomcat9.0.45-jdk8-infotrac
+
+|
+
+<http://ca-infotrac-pr-01.infoimageinc.com:8380/login.do>  
+<http://ca-infotrac-pr-02.infoimageinc.com:8380/login.do>
+
+| /usr/local/docker/tomcat9.0.45-jdk8-infotrac/logs  
+Hypercube|
+
+ca-hypercube-pr-01  
+ca-hypercube-pr-02  
+ca-hypercube-pr-03  
+ca-hypercube-pr-04
+
+|
+
+ca-hypercube-pi-01  
+ca-hypercube-pi-02
+
+| ca-hypercube-st-01| ca-hypercube-dv-01|
+
+sudo systemcl start meteor-hypercube
+
+sudo systemcl stop meteor-hypercube
+
+|
+
+Healthcheck is by CID  
+http://[cid]prod.infoimageinc.com/heartbeat
+
+ _Response:_ {"service":"OK"}
+
+|
+
+/var/log/meteor/hypercube
+
+ **For Staging**  
+/var/log/meteor/hypercube-stage  
+  
+Prism|
+
+ca-prism-pr-01  
+ca-prism-pr-02
+
+|
+
+ca-prism-pi-01  
+ca-prism-pi-02
+
+| ca-prism-st-01| ca-prism-dv-01|
+
+sudo systemcl start prism-default  
+sudo systemcl start prism-bank  
+sudo systemcl start prism-cu  
+  
+sudo systemcl stop prism-default  
+sudo systemcl stop prism-bank  
+sudo systemcl stop prism-cu  
+
+|
+
+Healthcheck is by CID  
+http://[cid]prod.infoimageinc.com/heartbeat.jsp
+
+ _Response:_ [{"status": 200},{"message":"Alive"}]
+
+| /usr/local/tomcat/tomcat-default/logs  
+/usr/local/tomcat/tomcat-bank/logs  
+/usr/local/tomcat/tomcat-cu/logs  
+PUI|
+
+ca-pui-pr-01  
+ ~~ca-pui-pr-02~~ (NOT USED)
+
+| ca-pui-pi-01| ca-pui-st-01| ca-pui-dv-01|
+
+sudo processing_ui.sh start
+
+sudo processing_ui.sh stop
+
+| <http://pui-prod.infoimageinc.com/login.jsp>|
+
+/usr/local/tomcat/tomcat-processing/logs  
+  
+/usr/local/processing-ui/logs  
+/usr/local/processing-ui/station/logs
+
+  
+  
+  
+Jenkins| ca-utils-pr-01| N/A| N/A| N/A|
+
+sudo systemctl start tomcat-jenkins
+
+sudo systemct stop tomcat-jenkins
+
+| <https://jenkins.infoimageinc.com/login?from=%2F>|  **Tomcat Logs**  
+/usr/local/tomcat/tomcat-jenkins/logs  
+  
+Jira
+
+Confluence
+
+| ca-jira-pr-01| N/A| N/A| ca-jira-dv-01|
+
+sudo systemctl start jira-confluence
+
+sudo systemctl stop jira-confluence
+
+|
+
+[https://jira.infoimageinc.com/](https://jira.infoimageinc.com/secure/Dashboard.jspa)
+
+<https://confluence.infoimageinc.com/>
+
+|
+
+ **Tomcat Logs  
+** /var/atlassian/application-data/jira/logs  
+/var/atlassian/application-data/confluence/logs **  
+**
+
+ **Application Logs  
+** /opt/atlassian/jira/logs  
+/opt/atlassian/confluence/logs  
+  
+## Back-end Applications
+
+Application| Production| Pilot| Staging| Development| Startup/Shutdown|
+Important URL| Log Location  
+---|---|---|---|---|---|---|---  
+Infoservice API|
+
+ca-infotrac-pr-01  
+ca-infotrac-pr-02
+
+ca-hypercube-pr-01  
+ca-hypercube-pr-02  
+ca-hypercube-pr-03  
+ca-hypercube-pr-04
+
+|
+
+ca-infotrac-pr-01  
+ca-infotrac-pr-02
+
+ca-hypercube-pi-01  
+ca-hypercube-pi-02
+
+|
+
+ca-infotrac-st-01
+
+ca-hypercube-st-01
+
+|
+
+ca-infotrac-dv-01
+
+ca-hypercube-dv-01
+
+|
+
+sudo systemctl start infoservice
+
+sudo systemctl stop infoservice
+
+|
+
+<https://infoservice-common.infoimageinc.com/api/v1/esign/heartbeat>  
+<http://ca-infotrac-
+pr-01.infoimageinc.com:8580/infoservice/api/v1/esign/heartbeat>  
+<http://ca-infotrac-
+pr-02.infoimageinc.com:8580/infoservice/api/v1/esign/heartbeat>  
+  
+<https://infoservice-hypercube.infoimageinc.com/api/v1/esign/heartbeat>  
+<http://ca-hypercube-
+pr-01.infoimageinc.com:8580/infoservice/api/v1/esign/heartbeat>  
+<http://ca-hypercube-
+pr-02.infoimageinc.com:8580/infoservice/api/v1/esign/heartbeat>  
+<http://ca-hypercube-
+pr-03.infoimageinc.com:8580/infoservice/api/v1/esign/heartbeat>  
+<http://ca-hypercube-
+pr-04.infoimageinc.com:8580/infoservice/api/v1/esign/heartbeat>
+
+ _Response:_ {'message': 'alive'}  
+  
+[https://infoservice-
+common.infoimageinc.com/api/v1/account/demo/search?keywordType=acctNum&restrictedAccess=false&keyword=123457&searchType=exact](https://infoservice-
+common.infoimageinc.com/api/v1/account/demo/search?keywordType=acctNum&restrictedAccess=false&keyword=123457&searchType=exact)
+
+| /usr/local/tomcat/infoservice/logs  
+Infoservice JAAS API| ca-apipui-pr-01  
+ca-apipui-pr-02  
+ca-apipui-pr-03  
+ca-apipui-pr-04|
+
+ca-apipui-pi-01  
+ca-apipui-pi-02
+
+| ca-apipui-st-01| ca-apipui-dv-01|
+
+sudo systemctl start infoservice-jass
+
+sudo systemctl stop infoservice-jass
+
+|  
+| /usr/local/tomcat/infoservice-jass/logs  
+Notifyservice|
+
+ca-infotrac-pr-01  
+ca-infotrac-pr-02
+
+ca-apipui-pr-01  
+ca-apipui-pr-02  
+ca-apipui-pr-03  
+ca-apipui-pr-04
+
+ca-inforeach-pr-01  
+ca-inforeach-pr-02
+
+|
+
+ca-infotrac-pi-01  
+ca-infotrac-pi-02
+
+ca-apipui-pi-01  
+ca-apipui-pi-02
+
+ca-inforeach-pi-01  
+ca-inforeach-pi-02
+
+|
+
+ca-infotrac-st-01
+
+ca-apipui-st-01
+
+ca-inforeach-st-01
+
+|
+
+ca-infotrac-dv-01
+
+ca-apipui-dv-01
+
+ca-inforeach-dv-01
+
+|
+
+sudo systemctl start notifyservice-templateservice
+
+sudo systemctl stop notifyservice-templateservice
+
+|
+
+<https://notifyservice-common.infoimageinc.com/api/v1/notification/heartbeat>  
+<http://ca-infotrac-
+pr-01.infoimageinc.com:8080/notifyservice/api/v1/notification/heartbeat>  
+<http://ca-infotrac-
+pr-02.infoimageinc.com:8080/notifyservice/api/v1/notification/heartbeat>  
+  
+<http://notifyservice-pui.infoimageinc.com/api/v1/notification/heartbeat>  
+<http://ca-apipui-
+pr-01.infoimageinc.com:8080/notifyservice/api/v1/notification/heartbeat>  
+<http://ca-apipui-
+pr-02.infoimageinc.com:8080/notifyservice/api/v1/notification/heartbeat>  
+<http://ca-apipui-
+pr-03.infoimageinc.com:8080/notifyservice/api/v1/notification/heartbeat>  
+<http://ca-apipui-
+pr-04.infoimageinc.com:8080/notifyservice/api/v1/notification/heartbeat>  
+
+<http://notifyservice-
+inforeach.infoimageinc.com/api/v1/notification/heartbeat>  
+<http://ca-inforeach-
+pr-01.infoimageinc.com:8080/notifyservice/api/v1/notification/heartbeat>  
+<http://ca-inforeach-
+pr-02.infoimageinc.com:8080/notifyservice/api/v1/notification/heartbeat>  
+
+ _Response:_ {"message": "Service is alive"}
+
+| /usr/local/docker/notifyservice-templateservice/logs  
+Templateservice|
+
+ca-infotrac-pr-01  
+ca-infotrac-pr-02
+
+ca-apipui-pr-01  
+ca-apipui-pr-02  
+ca-apipui-pr-03  
+ca-apipui-pr-04
+
+ca-inforeach-pr-01  
+ca-inforeach-pr-02
+
+|
+
+ca-infotrac-pi-01  
+ca-infotrac-pi-02
+
+ca-apipui-pi-01  
+ca-apipui-pi-02
+
+ca-inforeach-pi-01  
+ca-inforeach-pi-02
+
+|
+
+ca-infotrac-st-01
+
+ca-apipui-st-01
+
+ca-inforeach-st-01
+
+|
+
+ca-infotrac-dv-01
+
+ca-apipui-dv-01
+
+ca-inforeach-dv-01
+
+|
+
+sudo systemctl start notifyservice-templateservice
+
+sudo systemctl stop notifyservice-templateservice
+
+|
+
+<https://templateservice-
+common.infoimageinc.com/api/v1/notiftmplmgmt/heartbeat>  
+<http://ca-infotrac-
+pr-01.infoimageinc.com:8080/templateservice/api/v1/notiftmplmgmt/heartbeat>  
+<http://ca-infotrac-
+pr-02.infoimageinc.com:8080/templateservice/api/v1/notiftmplmgmt/heartbeat>
+
+<http://templateservice-pui.infoimageinc.com/api/v1/notiftmplmgmt/heartbeat>  
+<http://ca-apipui-
+pr-01.infoimageinc.com:8080/templateservice/api/v1/notiftmplmgmt/heartbeat>  
+<http://ca-apipui-
+pr-02.infoimageinc.com:8080/templateservice/api/v1/notiftmplmgmt/heartbeat>  
+<http://ca-apipui-
+pr-03.infoimageinc.com:8080/templateservice/api/v1/notiftmplmgmt/heartbeat>  
+<http://ca-apipui-
+pr-04.infoimageinc.com:8080/templateservice/api/v1/notiftmplmgmt/heartbeat>
+
+<http://templateservice-
+inforeach.infoimageinc.com/api/v1/notiftmplmgmt/heartbeat>  
+<http://ca-inforeach-
+pr-01.infoimageinc.com:8080/templateservice/api/v1/notiftmplmgmt/heartbeat>  
+<http://ca-inforeach-
+pr-02.infoimageinc.com:8080/templateservice/api/v1/notiftmplmgmt/heartbeat>  
+
+ _Response:_ {"message": "Service is alive"}
+
+| /usr/local/docker/notifyservice-templateservice/logs  
+Posterservice|
+
+ca-infotrac-pr-01  
+ca-infotrac-pr-02
+
+ca-hypercube-pr-01  
+ca-hypercube-pr-02  
+ca-hypercube-pr-03  
+ca-hypercube-pr-04
+
+|
+
+ca-infotrac-pr-01  
+ca-infotrac-pr-02
+
+ca-hypercube-pi-01  
+ca-hypercube-pi-02
+
+|
+
+ca-infotrac-st-01
+
+ca-hypercube-st-01
+
+|
+
+ca-infotrac-dv-01
+
+ca-hypercube-dv-01
+
+|
+
+sudo systemctl start posterservice
+
+sudo systemctl stop posterservice
+
+| <http://posterservice-common.infoimageinc.com/api/v1/heartbeat>  
+<http://ca-infotrac-
+pr-01.infoimageinc.com:8050/posterservice/api/v1/heartbeat>  
+<http://ca-infotrac-
+pr-02.infoimageinc.com:8050/posterservice/api/v1/heartbeat>  
+  
+<http://posterservice-hypercube.infoimageinc.com/api/v1/heartbeat>  
+<http://ca-hypercube-
+pr-01.infoimageinc.com:8050/posterservice/api/v1/heartbeat>  
+<http://ca-hypercube-
+pr-02.infoimageinc.com:8050/posterservice/api/v1/heartbeat>  
+<http://ca-hypercube-
+pr-03.infoimageinc.com:8050/posterservice/api/v1/heartbeat>  
+  
+ _Response:_ {"message":"{\"message\": \"Service is alive\"}"}|
+/usr/local/docker/posterservice/logs  
+Afp2Web|
+
+ca-afp2web-pr-01  
+ca-afp2web-pr-02
+
+ca-afp2web-pr-03  
+ca-afp2web-pr-04
+
+| ca-afp2web-dv-01  
+ca-afp2web-dv-02| ca-afp2web-dv-01  
+ca-afp2web-dv-02| ca-afp2web-dv-01  
+ca-afp2web-dv-02|  
+|
+
+<http://afp2web-common.infoimageinc.com/services/version>  
+<http://ca-afp2web-pr-01.infoimageinc.com:8040/services/version>  
+<http://ca-afp2web-pr-02.infoimageinc.com:8040/services/version>  
+[http://ca-afp2web-pr-03.infoimageinc.com:8040/services/version](http://ca-
+afp2web-pr-01.infoimageinc.com:8040/services/version)  
+[http://ca-afp2web-pr-04.infoimageinc.com:8040/services/version](http://ca-
+afp2web-pr-02.infoimageinc.com:8040/services/version)
+
+ _Response:_  
+AFP2web Server  
+a2wsVersion: "1.5.15 [Built for Linux 64-bit on Nov  8 2018 at 12:35:45]"
+
+| /usr/local/docker/afp2web/logs  
+Wrapperservice|
+
+ca-wrapper-pr-01  
+ca-wrapper-pr-02  
+ca-wrapper-pr-03
+
+| ca-wrapper-pi-01  
+ca-wrapper-pi-02| ca-wrapper-dv-01  
+ca-wrapper-dv-02| ca-wrapper-dv-01  
+ca-wrapper-dv-02|
+
+sudo systemctl start wrapperservice
+
+sudo systemctl stop wrapperservice
+
+|
+
+<https://wrapperservice-common.infoimageinc.com/heartbeat>  
+<http://ca-wrapper-pr-01.infoimageinc.com:8040/wrapperservice/heartbeat>  
+<http://ca-wrapper-pr-02.infoimageinc.com:8040/wrapperservice/heartbeat>
+
+ _Response_ : {"message": "Service is alive"}
+
+  
+
+<https://wrapperservice-common.infoimageinc.com/swagger-ui.html>[  
+](https://wrapperservice-common.infoimageinc.com/swagger-ui.html)Individual
+server:  
+<http://ca-wrapper-pr-01.infoimageinc.com:8040/wrapperservice/swagger-ui.html>  
+<http://ca-wrapper-pr-02.infoimageinc.com:8040/wrapperservice/swagger-ui.html>  
+<http://ca-wrapper-pr-03.infoimageinc.com:8040/wrapperservice/swagger-
+ui.html>[  
+](http://ca-wrapper-pr-03.infoimageinc.com:8040/wrapperservice/swagger-
+ui.html)
+
+| /usr/local/docker/wrapperservice/logs  
+ClickTrack Common|
+
+ca-hypercube-pr-01  
+ca-hypercube-pr-02  
+ca-hypercube-pr-03  
+ca-hypercube-pr-04
+
+|
+
+ca-hypercube-pi-01  
+ca-hypercube-pi-02
+
+| ca-hypercube-st-01| ca-hypercube-dv-01|  
+|
+
+<https://clicktrack-common.infoimageinc.com/heartbeat>  
+<http://ca-hypercube-pr-01.infoimageinc.com:3005/heartbeat>  
+<http://ca-hypercube-pr-02.infoimageinc.com:3005/heartbeat>  
+<http://ca-hypercube-pr-03.infoimageinc.com:3005/heartbeat>  
+[http://ca-hypercube-pr-04.infoimageinc.com:3005/heartbeat](http://ca-
+hypercube-pr-03.infoimageinc.com:3005/heartbeat)
+
+ _Response:_ {"status":"OK"}
+
+|  
+  
+ClickTrack InfoReach| ca-inforeach-pr-01  
+ca-inforeach-pr-02| ca-inforeach-pi-01  
+ca-inforeach-pi-02| ca-inforeach-st-01| ca-inforeach-dv-01|  
+|
+
+ _Request  
+_[https://clk.infoimageinc.com/heartbeat](http://ca-inforeach-
+pr-01.infoimageinc.com:8010/heartbeat) _  
+_[http://ca-inforeach-pr-01.infoimageinc.com:8280/heartbeat](http://ca-
+inforeach-pr-02.infoimageinc.com:8280/heartbeat)[  
+](http://ca-inforeach-pr-01.infoimageinc.com:8010/heartbeat)<http://ca-
+inforeach-pr-02.infoimageinc.com:8280/heartbeat>
+
+ _Response:_ {"status":"OK"}
+
+|  
+  
+InfoPDFService|
+
+ca-elk-pr-01  
+ca-elk-pr-02
+
+|  
+|  
+|  
+|  
+|
+
+<http://info-pdf-service-common.infoimageinc.com/api/v1/heartbit>  
+<http://ca-elk-pr-01.infoimageinc.com:3002/api/v1/heartbit>  
+<http://ca-elk-pr-02.infoimageinc.com:3002/api/v1/heartbit>
+
+ _Response_ : hola!
+
+|  
+  
+Contextual Search| ca-elk-pr-01  
+ca-elk-pr-02|  
+|  
+|  
+|  
+|
+
+<http://contextualsearch-common.infoimageinc.com/api/v1/index/heartbeat>  
+<http://ca-elk-
+pr-01.infoimageinc.com:8280/contextualsearch/api/v1/index/heartbeat>  
+<http://ca-elk-
+pr-02.infoimageinc.com:8280/contextualsearch/api/v1/index/heartbeat>  
+
+ _Response_ : N/A (HTTP Status 200)
+
+|  
+  
+Index File Processor| ca-jobtrack-pr-01  
+ca-jobtrack-pr-02|  
+|  
+|  
+|  
+|
+
+ **NOT AVAILABLE**
+
+<http://indexfileprocessor-common.infoimageinc.com/api/v1/index/heartbeat>  
+<http://ca-jobtrack-
+pr-01.infoimageinc.com:8980/indexFileProcess/api/v1/index/heartbeat>  
+<http://ca-jobtrack-
+pr-02.infoimageinc.com:8980/indexFileProcess/api/v1/index/heartbeat>
+
+ _Response_ : N/A (HTTP Status 200)
+
+|  
+  
+USPSScan| ca-jobtrack-pr-01  
+ca-jobtrack-pr-02|  
+|  
+|  
+|  
+|
+
+<http://uspsscan-common.infoimageinc.com/v1/api/heartbeat>  
+<http://ca-jobtrack-
+pr-01.infoimageinc.com:8180/uspsscanservice/v1/api/heartbeat>  
+<http://ca-jobtrack-
+pr-02.infoimageinc.com:8180/uspsscanservice/v1/api/heartbeat>
+
+ _Response:_ {"data":"I am alive","message":"successful","status":"OK"}
+
+|  
+  
+InfoScanner| ca-elk-pr-01  
+ca-elk-pr-02|  
+|  
+|  
+|  
+|
+
+<http://infoscanner-common.infoimageinc.com/api/v1/heartbeat/check>  
+<http://ca-elk-pr-01.infoimageinc.com:8060/infoscanner/api/v1/heartbeat/check>  
+<http://ca-elk-pr-02.infoimageinc.com:8060/infoscanner/api/v1/heartbeat/check>  
+ _Response_ : {"status":"OK"}
+
+  
+
+|  
+  
+InfoPUB| ca-inforeach-pr-01  
+ca-inforeach-pr-02| ca-inforeach-pi-01  
+ca-inforeach-pi-02| ca-inforeach-st-01| ca-inforeach-dv-01|  
+|
+
+[https://infopub.infoimageinc.com/heartbeat](http://ca-inforeach-
+pr-01.infoimageinc.com:8010/heartbeat)  
+[http://ca-inforeach-pr-03.infoimageinc.com:8020/heartbeat](http://ca-
+inforeach-pr-01.infoimageinc.com:8010/heartbeat)  
+[http://ca-inforeach-pr-04.infoimageinc.com:8020/heartbeat](http://ca-
+inforeach-pr-01.infoimageinc.com:8010/heartbeat)
+
+ _Response:_ {"status":"OK"}
+
+|  
+  
+InfoReach| ca-inforeach-pr-01  
+ca-inforeach-pr-02| ca-inforeach-pi-01  
+ca-inforeach-pi-02| ca-inforeach-st-01| ca-inforeach-dv-01|  
+|
+
+ _Request_  
+<http://ca-inforeach-pr-01.infoimageinc.com:8010/heartbeat>  
+[http://ca-inforeach-pr-02.infoimageinc.com:8010/heartbeat](http://ca-
+inforeach-pr-01.infoimageinc.com:8010/heartbeat)
+
+ _Response_ _:_ {"status":"OK"}
+
+|  
+  
+InfoReach Print| ca-inforeach-pr-01  
+ca-inforeach-pr-02| ca-inforeach-pi-01  
+ca-inforeach-pi-02| ca-inforeach-st-01| ca-inforeach-dv-01|  
+|
+
+[http://inforeachprint.infoimageinc.com/heartbeat](http://ca-inforeach-
+pr-01.infoimageinc.com:8010/heartbeat)  
+[http://ca-inforeach-pr-01.infoimageinc.com:8030/heartbeat](http://ca-
+inforeach-pr-01.infoimageinc.com:8010/heartbeat)  
+[http://ca-inforeach-pr-02.infoimageinc.com:8030/heartbeat](http://ca-
+inforeach-pr-01.infoimageinc.com:8010/heartbeat)
+
+ _Response:_ {"status":"OK"}
+
+|  
+  
+Targeting Engine| ca-inforeach-pr-01  
+ca-inforeach-pr-02| ca-inforeach-pi-01  
+ca-inforeach-pi-02| ca-inforeach-st-01| ca-inforeach-dv-01|  
+|
+
+[http://targetengine.infoimageinc.com/heartbeat](http://ca-inforeach-
+pr-01.infoimageinc.com:8010/heartbeat)  
+[http://ca-inforeach-
+pr-01.infoimageinc.com:8680/targetengine/heartbeat](http://ca-inforeach-
+pr-02.infoimageinc.com:8680/targetengine/heartbeat)[  
+](http://ca-inforeach-pr-01.infoimageinc.com:8010/heartbeat)<http://ca-
+inforeach-pr-02.infoimageinc.com:8680/targetengine/heartbeat>
+
+ _Response:_ {"status":"OK"}
+
+|  
+  
+  
+## Proxies
+
+Served Application| Proxy Application| Production| Pilot| Staging|
+Development| Startup/Shutdown| Log Location  
+---|---|---|---|---|---|---|---  
+  
+InfoTRAC
+
+| Nginx (Dev/Pilot)  
+Apache (Stage/Prod)| ca-proxy-pr-07  
+ca-proxy-pr-08| ca-extproxy-pi-05  
+ca-extproxy-pi-06| ca-intproxy-st-01| ca-extproxy-pi-05  
+ca-extproxy-pi-06|
+
+ **Apache  
+** sudo systemctl start apache2
+
+sudo systemctl stop apache2
+
+ **Nginx  
+** sudo systemctl start nginx
+
+sudo systemctl stop nginx
+
+|
+
+ **Apache**  
+/var/log/apache2
+
+ **Nginx  
+** /usr/local/docker/nginx/logs  
+  
+Hypercube| Nginx|
+
+ca-proxy-pr-09  
+ca-proxy-pr-10
+
+ca-proxy-pr-17  
+ca-proxy-pr-18
+
+| ca-extproxy-pi-07  
+ca-extproxy-pi-08| ca-intproxy-st-02| ca-extproxy-pi-07  
+ca-extproxy-pi-08|
+
+sudo systemctl start nginx
+
+sudo systemctl stop nginx  
+  
+
+|
+
+ **Dev/Pilot  
+** /usr/local/docker/nginx/logs
+
+ **Stage/Prod**  
+/var/log/nginx  
+  
+Prism| Nginx (Dev/Pilot)  
+Apache (Stage/Prod)|
+
+ca-proxy-pr-01  
+ca-proxy-pr-02
+
+ca-proxy-pr-03  
+ca-proxy-pr-04
+
+ca-proxy-pr-05  
+ca-proxy-pr-06
+
+ca-proxy-pr-07  
+ca-proxy-pr-08
+
+ca-proxy-pr-11  
+ca-proxy-pr-12
+
+ca-proxy-pr-13  
+ca-proxy-pr-14
+
+ca-proxy-pr-15  
+ca-proxy-pr-16
+
+| ca-extproxy-pi-05  
+ca-extproxy-pi-06| ca-intproxy-st-01| ca-extproxy-pi-05  
+ca-extproxy-pi-06|
+
+ **Apache  
+** sudo systemctl start apache2
+
+sudo systemctl stop apache2
+
+ **Nginx  
+** sudo systemctl start nginx
+
+sudo systemctl stop nginx
+
+|
+
+ **Apache**  
+/var/log/apache2
+
+ **Nginx  
+** /usr/local/docker/nginx/logs  
+  
+Infoservice| Nginx (Dev/Pilot)  
+Apache (Stage/Prod)| ca-proxy-pr-03  
+ca-proxy-pr-04| ca-extproxy-pi-05  
+ca-extproxy-pi-06| ca-intproxy-st-01| ca-extproxy-pi-05  
+ca-extproxy-pi-06|
+
+ **Apache  
+** sudo systemctl start apache2
+
+sudo systemctl stop apache2
+
+ **Nginx  
+** sudo systemctl start nginx
+
+sudo systemctl stop nginx
+
+|
+
+ **Apache**  
+/var/log/apache2
+
+ **Nginx  
+** /usr/local/docker/nginx/logs  
+  
+Infoservice JAAS| Nginx (Dev/Pilot)  
+Apache (Stage/Prod)| ca-proxy-pr-03  
+ca-proxy-pr-04| ca-extproxy-pi-05  
+ca-extproxy-pi-06| ca-intproxy-st-01| ca-extproxy-pi-05  
+ca-extproxy-pi-06|
+
+ **Apache  
+** sudo systemctl start apache2
+
+sudo systemctl stop apache2
+
+ **Nginx  
+** sudo systemctl start nginx
+
+sudo systemctl stop nginx
+
+|
+
+ **Apache**  
+/var/log/apache2
+
+ **Nginx  
+** /usr/local/docker/nginx/logs  
+  
+Jenkins|  
+|  
+|  
+|  
+|  
+|  
+|  
+  
+  
+Jira
+
+Confluence
+
+| Nginx|
+
+ca-extproxy-pi-05  
+ca-extproxy-pi-06
+
+| N/A| N/A| N/A|
+
+sudo systemctl start nginx
+
+sudo systemctl stop nginx
+
+| /usr/local/docker/nginx/logs  
+  
+  
+
+

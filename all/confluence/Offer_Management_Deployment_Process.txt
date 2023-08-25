@@ -1,0 +1,197 @@
+title: Offer Management Deployment Process
+body: **Step-01:**  
+Checkout code from SVN. The SVN url is:  
+**svn+ssh:[//username@12.189.22.102](mailto://username@12.189.22.102):422/srv/svn/inforeach/trunk**
+
+ **Step-02:**  
+ **1\. Install LDAP**
+
+ **sudo apt-get update**  
+ **sudo apt-get install slapd ldap-utils**
+
+ **sudo dpkg-reconfigure slapd**
+
+There are quite a few new questions that will be asked as you go through this
+process. Let's go over these now:
+
+  * Omit OpenLDAP server configuration?  **No**
+  * DNS domain name?
+    * This option will determine the base structure of your directory path. Read the message to understand exactly how this will be implemented.
+    * This is actually a rather open option. You can select whatever "domain name" value you'd like, even if you don't own the actual domain. However, if you have a domain name for the server, it's probably wise to use that.
+    * For this guide, we're going to select  **[infoimageinc.com](http://infoimageinc.com)**  for our configuration.
+  * Organization name?
+    * This is, again, pretty much entirely up to your preferences.
+    * For this guide, we will be using  **example**  as the name of our organization.
+  * Administrator password?
+    * As I mentioned in the installation section, this is your real opportunity to select an administrator password. Anything you select here will overwrite the previous password you used.
+  * Database backend?  **HDB**
+  * Remove the database when slapd is purged?  **No**
+  * Move old database?  **Yes**
+  * Allow LDAPv2 protocol?  **No**
+
+At this point, your LDAP should be configured in a fairly reasonable way.
+
+ **2\. Steps to install phpldapadmin:**
+
+ **sudo apt-get install phpldapadmin**
+
+ **3\. Steps configure phpldapadmin to openldap:**
+
+Begin by opening the main configuration file with root privileges in your text
+editor:  
+ **sudo nano /etc/phpldapadmin/config.php**
+
+In this file, we need to add the configuration details that we set up for our
+LDAP server. Start by looking for the host parameter and setting it to your
+server's domain name or public IP address. This parameter should reflect the
+way you plan on accessing the web interface:  
+ **$servers- >setValue('server','host','server_domain_name_or_IP');**
+
+Next up, you'll need to configure the domain name you selected for your LDAP
+server. Remember, in our example we
+[selectedtest.com](http://selectedtest.com). We need to translate this into
+LDAP syntax by replacing each domain component (everything not a dot) into the
+value of a dc specification.
+
+All this means is that instead of writing [test.com](http://test.com), we will
+write something like dc=infoimageinc,dc=com. We should find the parameter that
+sets the server base parameter and use the format we just discussed to
+reference the domain we decided on:  
+ **$servers- >setValue('server','base',array('dc=infoimageinc,dc=com'));**
+
+We need to adjust this same thing in our login bind_id parameter. The cn
+parameter is already set as "admin". This is correct. We just need to adjust
+the dc portions again, just as we did above:  
+ **$servers- >setValue('login','bind_id','cn=admin,dc=infoimageinc,dc=com');**
+
+The last thing that we need to adjust is a setting that control the visibility
+of warning messages. By default phpLDAPadmin will throw quite a few annoying
+warning messages in its web interface about the template files that have no
+impact on the functionality.
+
+We can hide these by searching for the hide_template_warning parameter,
+uncommenting the line that contains it, and setting it to  **" true"**:  
+ **$config- >custom->appearance['hide_template_warning'] = true;**
+
+This is the last thing that we need to adjust. You can save and close the file
+when you are finished.
+
+ **4\. Steps to start/stop openldap:**
+
+To Start sldap:
+
+ **sudo /etc/init.d/slapd start**
+
+To Stop sldap:
+
+ **sudo /etc/init.d/slapd stop**
+
+To Restart sldap:
+
+ **sudo /etc/init.d/slapd restart**
+
+ **5\. Steps to login in LDAP:**  
+Go to <http://localhost/phpldapadmin/>  
+baseDN: cn=admin,dc=infoimageinc,dc=com  
+password: whatever password you provided earlier
+
+ **6\. Add admin user to update schema in LDAP:**
+
+ **sudo nano /etc/ldap/slapd.d/cn=config/olcDatabase\=\\{0\\}config.ldif**
+
+Add this two lines at the end of the file  
+olcRootDN: cn=admin,cn=config  
+olcRootPW: yourPassword
+
+Run :  **sudo /etc/init.d/slapd restart**
+
+To test :  
+ **ldapwhoami -H ldapi:/// -D "cn=admin,cn=config" -x -w yourPassword**  
+If this command return : 'dn:cn=admin,cn=config' then admin user creation id
+done !!
+
+ **7\. Add custom Object(user and client) in LDAP:**  
+Download all the files attached and keep in your home directory.
+
+  * client.schema
+  * user.schema
+  * objectCreationShellScript.sh
+
+ **8\. Import dump in  LDAP:**  
+Download all the file
+
+  * dbDump_27_06_16.ldif
+
+when you logged in phpldapadmin you can see the following screen, click import
+from left icon panel and paste the following code and click proceed:
+
+dn: dc=infoimageinc,dc=com  
+dc: infoimageinc  
+o: InfoIMAGE Inc.  
+objectclass: top  
+objectclass: dcObject  
+objectclass: organization
+
+  
+
+Then click import again and browse the  **dbDump_27_06_16.ldif**  file from
+left icon panel and click proceed
+
+ **Step-03:**  
+After downloading the code from SVN, Go to  **settings.json**  and change the
+following service urls:
+
+"MONGO_URL": "<mongodb://118.179.200.181:27017/offerMgmt>",  
+"OFFER_MGMT_HOST_IP": "<http://118.179.200.181>",  
+"OFFER_MGMT_HOST_IP_WITH_PORT":"<http://118.179.200.181:3000>",  
+"EVENTRACK_SERVICE_BASE_URL":"<http://118.179.200.181:8888/>",  
+"TEMPLATE_SERVICE_BASE_URL":"<http://103.4.147.142:9080/templateservice/api/v1>",  
+"NOTIFICATION_SERVICE_BASE_URL":"<http://103.4.147.142:9080/notifyservice/api/v1>",  
+"INFOSCANNER_SERVICE_BASE_URL":"<http://103.4.147.142:9080/infoscanner/api/v1>",  
+"ACTIVE_MQ_HOST": "103.4.147.142",  
+"ACTIVE_MQ_HTTP_PORT": "61613",  
+"ACTIVE_MQ_USERNAME": "",  
+"ACTIVE_MQ_PASSWORD": "",  
+"LDAP_SERVER_HOST_IP":"118.179.200.181",  
+"LDAP_SERVER_PORT":"389",  
+"LDAP_SERVER_BASE_DN":"dc=infoimageinc,dc=com",  
+"LDAP_SERVER_ROOT_PASSWORD":"infoImageAdmin",  
+"LDAP_SERVER_SEARCH_ROOT_OU":"dc=infoimageinc,dc=com",  
+"LDAP_SERVER_BIND_DN":"cn=admin,dc=infoimageinc,dc=com",  
+"LDAP_SERVER_CLIENT_BASE_DN":"ou=CLIENTS,dc=infoimageinc,dc=com",  
+"LDAP_SERVER_FEATURE_BASE_DN":"ou=FEATURE-DEFINITION,dc=infoimageinc,dc=com",  
+"LDAP_SERVER_INFOTRACK_FEATURE_BASE_DN":"ou=INFOTRACK-FEATURES,ou=FEATURE-
+DEFINITION,dc=infoimageinc,dc=com"
+
+  
+
+go to /trunk/.meteor/packages  
+and comment the line by adding a hash(#) at the beginning of the line:  
+ **npm-container**
+
+Now go to trunk folder and give the command:
+
+sudo MONGO_URL='<mongodb://mongoDbHostIp:27017/offerMgmt>' meteor --settings
+settings.json
+
+After downloading all the packages meteor will start at default port 3000  
+Now browse:
+
+  
+<http://localhost:3000/>
+
+  
+
+##  Attachments
+
+  
+
+250
+
+250
+
+250
+
+250
+
+

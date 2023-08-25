@@ -1,0 +1,124 @@
+title: InfoSync Manual Docker Deployment
+body: For the initial deployment to a new server follow these steps:
+
+  1. Install Docker
+  2. Install Docker Compose
+  3. Get / Build the InfoSync Docker Image
+  4. Create InfoSync container
+  5. Test / Check logs
+
+## Install Docker
+
+Depending on the Server OS, follow these instructions from the official docker
+guide.
+
+  1. [Ubuntu](https://docs.docker.com/engine/install/ubuntu/)
+  2. [CentOS/Red Hat](https://docs.docker.com/engine/install/centos/)
+
+## Install Docker Compose
+
+[Follow these instructions](https://docs.docker.com/compose/install/#install-
+compose-on-linux-systems)
+
+## Get / Build the InfoSync Docker Image
+
+You can build a new image from the source code or you can pull the image with
+the correct tag name.
+
+Docker images are stored on the InfoImage
+**[Harbor](https://harbor.infoimageinc.com/)** Docker registry.  
+InfoSync Repository link:
+<https://harbor.infoimageinc.com/harbor/projects/14/repositories/infosync>
+
+## Build the image
+
+InfoSync follows semantic versioning for release. This true for git tag and
+docker tag.  
+This means the version you find in GitLab's tags can also be found inside the
+Harbor repository.
+
+In order to build the current version,
+
+  * Clone/download the correct **branch** / **tag**.
+
+[GitLab
+Branches](https://gitlab.infoimageinc.com/infoimage/infosync/-/branches)  
+[GitLab Tags](https://gitlab.infoimageinc.com/infoimage/infosync/-/tags)
+
+  * Extract/cd into the folder you just downloaded/cloned.
+
+  * Execute the following command with the current tag name
+
+  
+
+shellConfluencetrue
+
+  
+
+  * If the build succeeds, you should see the new image in `docker images` command's output.
+
+## Or Pull the image
+
+Or you can pull the correct image from Harbor docker registry.
+
+  * First Login: `docker login harbor.infoimageinc.com -u <username> -p password`
+  * Pull: `docker pull harbor.infoimageinc.com/infosync/infosync:<version>`
+
+## Prepare Compose file
+
+You can simply run the image using `docker run ...` command. But this is
+strongly discouraged for future maintenance and for better readability.
+
+  * Create a file named `docker-compose.yml` in the folder `/usr/local/docker/infosync-<environment>/` with the following content.  
+The location of the folder can be anything, but this the convention we follow.
+
+ymlRDarkdocker-compose.ymltrue
+
+ **Note:** `docker` process has sudo access(unless specified otherwise), it
+can access any file, so the file permission will not matter here. (permission
+will be same inside the container)  
+ **Note:** This path `/var/log/infosync-<environment>/` needs to be created
+first.  
+ **Note:** `<host_port>` will be the port that will be accessible from outside
+the host.
+
+## Prepare the config files
+
+This files will change from version to version. Please follow the release docs
+for more information.
+
+But in general, we have these
+
+#### app.cfg
+
+pyRDarkapp.cfgtrue
+
+ **Note:** `datatrac` database URL specified here is the latest one and has
+diverged from an older version.
+
+## Create Container
+
+Go into the `/var/log/infosync-<environment>/` directory and execute `docker-
+compose up -d` .  
+This will create the container. If the container exists it will recreate it.
+
+## Logs
+
+InfoSync container writes logs both in the stdout and in the file.  
+You will be able to see it by `docker-compose logs -f --tail=1`.  
+Or `tail -f /var/log/infosync-<environment>/infosync.log` if you mounted the
+log dir.
+
+## Test
+
+InfoSync container has a prob inside that checks the API health in 1 min
+interval. You will be able to see any error occurred in the logs.  
+Also note that right after the container is created will see some error for
+the first few seconds, ignore those.
+
+## Conclusion
+
+For the exact database credentials and third party service URLs, please check
+the existing environments. I excluded them here for the security purpose.
+
+

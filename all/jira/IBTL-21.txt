@@ -1,0 +1,206 @@
+title: Mailer.pm & SumChecker.pm Code Fix Request:  TS# 9511
+description: *Specification #1:*
+
+Move /home/keep/Perl/Mailer.pm and /home/keep/Perl/SumChecker.pm to /home/master/ directory.
+
+
+
+
+
+*Specification #2:*
+
+**
+
+For all the code below, remove the following lines of code:
+
+BEGIN
+
+{  push @INC, "$ENV\\{home_env}
+
+/$ENV\{keep_dir}/Perl/";
+
+}
+
+
+
+
+
+Here is what I grepped from the code base:
+
+
+
+*+Mailer.pm+*
+
+
+
+grep -irH 'use Mailer' /home/master/*.pl
+
+/home/master/albk_de_process.pl:use Mailer;
+
+/home/master/apcuml2_get_ms_sample.pl:use Mailer;
+
+/home/master/asic_cnf_process.pl:use Mailer; #this is the class that does the email
+
+/home/master/bbva_stmt_process.pl:use Mailer; #this is the class that does the email
+
+/home/master/bozbds1_preprocess.pl:use Mailer;
+
+/home/master/bozbds1_process.pl:use Mailer;# Mail class
+
+/home/master/bozbds1_split_datafiles.pl:use Mailer;# Mail class
+
+/home/master/bozbds2_preprocess.pl:use Mailer;
+
+/home/master/bozbds2_process.pl:use Mailer;# Mail class
+
+/home/master/cccu_process.pl:use Mailer;
+
+/home/master/check_start_page_dl.pl:use Mailer; #this is the class that does the email
+
+/home/master/check_start_page_edcu.pl:use Mailer; #this is the class that does the email
+
+/home/master/edcu_stmt_visa_process.pl:use Mailer;
+
+/home/master/ewbb_dl_process.pl:use Mailer;
+
+/home/master/fpab_stmt_process.pl:use Mailer; #this is the class that does the email
+
+/home/master/get_ffdm_cashacct_sample.pl:use Mailer;
+
+/home/master/get_ffdm_equity_sample.pl:use Mailer;
+
+/home/master/get_oscu_sample.pl:use Mailer;
+
+/home/master/get_proofing_from_list.pl:use Mailer;
+
+/home/master/get_rabo_sample.pl:use Mailer;
+
+/home/master/get_sccu_heloc_sample.pl:use Mailer;
+
+/home/master/get_wfcumv1_sample.pl:use Mailer;
+
+/home/master/get_wtcu_sample.pl:use Mailer;
+
+/home/master/misPdfRpt.pl:use Mailer;
+
+/home/master/oabkms1_process.pl:use Mailer; #this is the class that does the email
+
+/home/master/pdnb_de_process.pl:use Mailer;
+
+/home/master/pdnb_dl_process.pl:use Mailer;
+
+/home/master/rabo_bms_stmt_xml_process.pl:use Mailer;
+
+/home/master/rabo_dl_process.pl:use Mailer;
+
+/home/master/rabo_ds_process.pl:use Mailer;
+
+/home/master/raboms1_xml_conv.occur.pl:use Mailer;
+
+/home/master/raboms1_xml_process.pl:use Mailer;
+
+/home/master/rabo_rvm_process.pl:use Mailer;
+
+/home/master/uncb_dda_process.pl:use Mailer; #this is the class that does the email
+
+/home/master/uncb_stmt_process.pl:use Mailer; #this is the class that does the email
+
+/home/master/wfcuml1_process.pl:use Mailer;
+
+/home/master/wfcuml1_split_datafiles.pl:use Mailer;
+
+/home/master/wfcumv1_preprocess.pl:use Mailer;
+
+/home/master/wfcumv1_process.pl:use Mailer;
+
+/home/master/wfcumv1_split_datafiles.pl:use Mailer;
+
+
+
+
+
+[williamK@rhs2 ~]$ grep -irH 'use SumChecker' /home/master/*.pl
+
+/home/master/albk_de_process.pl:use SumChecker;
+
+/home/master/apcuml2_get_ms_sample.pl:use SumChecker;
+
+/home/master/apcuml4_get_ms_sample.pl:use SumChecker;
+
+/home/master/clcumv2_decrypt.pl:use SumChecker; #the class or module that does the checksum
+
+/home/master/cycums1_process.pl:use SumChecker; #the class or module that does the checksum
+
+/home/master/get_ffdm_cashacct_sample.pl:use SumChecker;
+
+/home/master/get_ffdm_equity_sample.pl:use SumChecker;
+
+/home/master/get_oscu_sample.pl:use SumChecker;
+
+/home/master/get_proofing_from_list.pl:use SumChecker;
+
+/home/master/get_rabo_sample.pl:use SumChecker;
+
+/home/master/get_sccu_heloc_sample.pl:use SumChecker;
+
+/home/master/get_wfcumv1_sample.pl:use SumChecker;
+
+/home/master/get_wtcu_sample.pl:use SumChecker;
+
+/home/master/gocu_indiv_process.pl:use SumChecker; #the class or module that does the checksum
+
+/home/master/pdnb_de_process.pl:use SumChecker;
+
+/home/master/pdnb_dl_process.pl:use SumChecker;
+
+/home/master/sacumv1_decrypt.pl:use SumChecker; #the class or module that does the checksum
+
+/home/master/stltms2_process.pl:use SumChecker; #the class or module that does the checksum
+
+/home/master/uncb_stmt_process.pl:use SumChecker; #this is the class or module that does the checksum
+
+/home/master/wfcuml1_split_datafiles.pl:use SumChecker;
+
+/home/master/wfcumv1_split_datafiles.pl:use SumChecker;
+
+
+author: william.kong
+comment: [~Terrence.Tong]: Can you please assign someone to work on this fix? We put a temporary fix to restore the perl modules back in /home/keep. But I prefer to put the Perl Modules in the /home/master location so that we have source code management.
+
+
+
+The perl scripts above needs to be updated as well unless they are no longer active clients.
+
+
+
+If they are no longer active clients, we should also purge and remove the code source code management by using the newcvs_remove.pl script that will "mark" these files to be deleted in CVS.
+
+
+
+
+
+
+author: terrence.tong
+comment: There are 48 programs in perl_mailer_program_list.txt [^perl_mailer_program_list.txt] 
+
+William,
+
+Can you create an in-house JEF
+
+
+author: william.kong
+comment: [~Terrence.Tong]: I've created the JEF yesterday.  Apparently I did not click "add" in the comment to this ticket yesterday to inform you of the JEF number. Here it is:
+
+
+
+[https://track.infoimageinc.com/issues/44153]
+
+
+
+
+
+
+
+
+author: william.kong
+comment: Tien completed this task on 7/8.

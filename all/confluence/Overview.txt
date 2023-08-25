@@ -1,0 +1,76 @@
+title: Overview
+body: If there is a bill and you create a payment for it the payment would get
+logged into payments table .
+
+Payment table
+
+  
+| Status|  
+| Type  
+---|---|---|---  
+  
+| 0 : new N  
+127 : success S  
+-128 : Failed F  
+1 : Pending P  
+2 : cancelled C|  
+| pod :Payment On-demand  
+schdule:scheduled payment  
+recurring:recurring payment  
+otp:one time payment  
+One time| 0 to 127 /-128| Last processed date column is updated when status
+changes| otp  
+By request(Ondemand) - same day| 0 to 127/-128| "| pod  
+By Request future date| 1 to 2/127/-128| "| schdule  
+Auto pay future| 1 to 2/127/-128| "| recurring  
+  
+\- all payment related data is coming from index file, index file has bill
+related data. (only in the case of auto payment min due is coming from balance
+sheet)
+
+\- in the UI only when you add payment funds can you set up a payment method (
+auto, by request(default)
+
+\- all payments should get logged in [authorize.net](http://authorize.net)
+site  
+(payments sent over right away or payments triggered by the pre-scheduled
+payments scheduler)  
+o  **Processed** : Payment has been successfully submitted to Authorize.Net.
+May still require 24 to 72 hours for funds to reflect on statement balance.  
+o  **Pending** : Payment is tied to a bill and is scheduled to be submitted to
+Authorize.Net for a future date. Pending payments may be cancelled before the
+submit date. After the submit date, pending payments may change to a
+Processed, Failed or Open status.  
+o  **Failed** : Payment was not processed by Authorize.Net. Possible reasons
+may include: expired credit card, etc.  
+o  **Cancelled** : Payment has been elected not to be submitted to
+Authorize.Net. Possible reasons may include: patient made a By Request payment
+and afterwards saw that there was a scheduled auto-payment that he/she may
+have forgotten about, so he/she cancelled a pending payment  
+o  **Open** : An issue between the connection from the PayeBill system to the
+Authorize.Net system occurred, preventing the transaction to be processed
+fully. There is a possibility that the transaction was processed on
+Authorize.Net's system, but the connection was lost before the PayeBill system
+got a successful response code.
+
+Payment Methods  
+[Authorize.net](http://Authorize.net) is the payment vendor for the convergent
+hospitals  
+all authorize logic is in > public class AuthorizePayBillServiceImpl extends
+DefaultPayeBillServiceImpl{
+
+By request and one time payments need to have bill to do any payments. The
+bill need not be recent. As long as the seed has a bill they can make
+payments.
+
+Autopayment job looks a recent bills processed to decide if it needs to be set
+up for autopay or not.
+
+\- in production Payments for future date or day of payment does not get sent
+over to Authorize.Net until 10 AM.
+
+Where are credit cards info stored  
+ Funds table  
+ Primary_funds has primary fund info
+
+

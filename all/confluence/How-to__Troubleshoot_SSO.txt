@@ -1,0 +1,180 @@
+title: How-to: Troubleshoot SSO
+body: # Relevant Information
+
+* * *
+
+Information| Relevance  
+---|---  
+Unique User Identifier (UUID)|
+
+This value can be used to search in the eStatement logs.
+
+This value can be used to query as the cif_num in the usr_mapping table.  
+  
+Email Address|
+
+This value can be used to search in the eStatement logs.
+
+This value may be used to query the table that stores email address for the
+client, which will lead to the user.  
+  
+Account Number(s)|
+
+This value can be used to query the fin_account table to find all joined
+users.
+
+This value can be used to validate that the user found by other methods is the
+correct user, i.e. the user is linked to the accounts reported by the client.  
+  
+Time of Occurrence| This value can be used to narrow down where to look in the
+logs, and/or audit data tables.  
+  
+  
+
+# Relevant Data Tables
+
+* * *
+
+## eStatement Database
+
+Table| Relevance  
+---|---  
+USR_MAPPING| Used to search for the user by UUID. Non-existence may indicate
+an issue.  
+FIN_ACCOUNT|
+
+Used to search for the account(s). Non-existence may indicate an issue.
+
+If the client has account type, the wrong account type may indicate an issue.  
+  
+USR_FIN_ACCOUNT| Links user to accounts, which is useful for research.  
+  
+NOTIFICATION_PREFERENCE  
+USR_FIN_ACCOUNT  
+CONTACT_INFO
+
+| Contains the email address that can be queried.  
+PAPERLESS2| Delivery preference may affect whether the user can access
+eStatement.  
+USR_SESSION|
+
+Contains last login date.
+
+Contains enrollment status (SSO and DSO).  
+  
+LOG_RECORD|
+
+Contains sso action, and view statement action.
+
+Existence of view statement action after the reported time of occurrence may
+indicate that the user is no longer affected by the issue.  
+  
+AUDIT_LOG_(CID)|
+
+Audit log for the specific CID. Stores various action relating to the user and
+account.
+
+This can be used to research changes to certain values like paperless status,
+email address, or user-account relationship (addition/removal of ufas).  
+  
+EXT_ACCT_TYPE_MAPPING| Mapping from external types passed in the SSO request
+from the OLB to internal InfoIMAGE account types. This is typical for clients
+who have OLB with NCR.  
+  
+  
+
+# Services/Applications/Processes
+
+* * *
+
+Name| Relevance  
+---|---  
+Hypercube|
+
+Hosts the eStatement Site for Hypercube clients.  
+  
+Prism|
+
+Hosts the eStatement Site for Prism clients.  
+  
+Infoservice| Handles the backend operations for Hypercube clients.  
+Proxy| Proxies the external requests to the Hypercube/Prism applications.  
+Oracle DB| The eStatement database stores the relevant processes.  
+MongoDB| Some issues may be due to missing data in the PN_ClientProperties
+table, under the specific CID.  
+  
+Auth File Processing
+
+Enrollment File Processing
+
+| For SSO that relies on InfoIMAGE ingesting data from the client, these
+processes handle the creation and updating of data. The data provided by the
+client may be incorrect, or a bug may exists in the process.  
+  
+  
+
+### Common Issues
+
+ssoKeyGen Failure
+
+  
+
+### Situation:
+
+  1. Failure during SSO KeyGen.
+
+### Potential Issue:
+
+  1. Missing data hash.
+  2. Missing email address.
+  3. Data Hash is incorrectly constructed.
+    1. Wrong password.
+    2. Wrong client code, if applicable.
+  4. Wrong URL (using Production for Pilot or vice versa).
+  5. Site certificate has expired. Client need to provide a new certificate to Network.
+  6. URL is not available for external clients. Network will need to update DNS.
+  7. For clients where user-account relationships is defined solely by a PUI process (Auth/Enrollment), the user may not be in the latest file, or the latest file is not yet processed.
+  8. Clients may have some sort of mapping that is not functioning as expected, potentially due to incorrect SSO Data or missing data in the mapping file (PUI processed).
+    1. Mapping Account 1 to Account 2 (most likely ext_id_mapping)
+    2. Mapping Account Type A to Account Type B (ext_type_mapping table or FinAcctDesc object for some Prism clients)
+    3. Mapping CIF A to Account 1, 2, 3 (most likely ext_id_mapping)
+
+  
+---  
+  
+  
+
+  
+
+ssoExchangeFailure
+
+  
+
+### Situation:
+
+  1. Failure during SSO Exchange.
+
+### Potential Issue:
+
+  1. Wrong URL.
+  2. URL is not available for external client. Network will need to update DNS.
+  3. Issue is actually with ssoKeyGen, which did not return a key. However, OLB is blindly taking the error page returned by ssoKeyGen and passing it as a key.
+  4. Site certificate has expired. Client need to provide a new certificate to Network.
+  5. User is not linked to any accounts. 
+    1. createAcct is false, and the list of accounts provided by the OLB currently do not exist in the database.
+      1. Issue may be with PUI process, or the user/account is newly created, and InfoIMAGE hasn't processed any data yet.
+      2. Issue may be with the SSO KeyGen Request itself.
+        * Is the OLB sending the correct account types?
+        * If there are account type mappings, is the OLB sending account types that InfoIMAGE does not have a mapping for?
+  6. User does not exist.
+    1. createUser is false, and the CIF_NUM provided by the OLB currently do not exist in the database.
+      1. Issue may be with PUI process, or the user is too new and will be processed in the next file.
+
+  
+---  
+  
+  
+
+  
+
+

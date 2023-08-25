@@ -1,0 +1,232 @@
+title: Tokenization and Data Handling
+body: # Preface
+
+* * *
+
+InfoIMAGE processes various data files that come from both internal and
+external sources. Due to the business and services that InfoIMAGE provides,
+the data in the files are, for the most part, predictable. In most cases,
+there will be an account number and an account owner name. When dealing with
+enrollment, there should be email addresses, etc. In essence, the types of
+data that InfoIMAGE has to handle are static. Therefore, to optimize
+efficiency, there should be a shared framework with which each line in an
+index file is processed and tokenized. Then, each individual process would
+only need to concern with what to do with the data.
+
+ **Disclaimer** : This is not a widely used framework. This framework is
+created for ease of use, and should be used for new processes. Standardization
+of old processes should consider using this framework if possible. Logic are
+decoupled into variouses interfaces, so that support for additional data types
+can be easily added.
+
+# Data Structure
+
+* * *
+
+## Token
+
+This is a token:
+
+java
+
+## DataType
+
+DataType is an enum of all the possible types of data. This is not an
+absolutely comprehensive list. More can be added as the need arise for new
+processes or when existing processes are refactored.
+
+(com.infoimage.processing.common.data.DataType)
+
+## PseudoDataType
+
+PseudoDataType is an enum of all the possible pseudo types of data. These
+PseudoDataType is defined to let the DataMapper know how to map an existing
+Token of a specific DataType to a new Token with a new DataType, e.g. TIN
+Token to CIF Token.
+
+(com.infoimage.processing.common.data.mapper.PseudoDataType)
+
+# Header
+
+* * *
+
+This is a wrapper class for a List<DataType>, defining the order in which the
+data should show up in a given input line.
+
+## HeaderBuilder
+
+ **Interface**|  HeaderBuilder  
+---|---  
+ **Factory**|  HeaderBuilderFactory  
+ **Flag**|  [processName].headers.builder=[Builder Name]  
+  
+The HeaderBuilder encapsulates the strategy for building the Header.
+
+Implementation| Builder Name| Description  
+---|---|---  
+ConfigHeaderBuilder| Config|
+
+Build the Header based on the configuration defined in the client's properties
+file. This is the default builder returned by the factory if no flag is
+defined.
+
+An additional flag need to be defined:
+
+  * [processName].headers=[comma-delimited list of datatype names (reference the DataType Enum for the String value)]
+
+  
+FileHeaderBuilder| File|
+
+Build the Header based on the first line inside the index file.
+
+Requirements:
+
+  1. The delimiter for the Header must be the same as the delimiter for the rest of the file.
+  2. The name of each column must be exactly as defined by InfoIMAGE with no variation/exception.
+    * Columns with names that cannot be recognized will be ignored. This means that it is okay for clients to provide extra data.
+
+  
+  
+## HeaderValidator
+
+ **Interface**|  HeaderValidator  
+---|---  
+ **Factory**|  HeaderValidatorFactory  
+ **Flag**|  [processName].headers.validator=[Validator Name]  
+  
+The HeaderValidator encapsulares the strategy for validating the Header.
+
+Implementation| Builder Name| Description  
+---|---|---  
+DefaultHeaderValidator| Default|
+
+Validate the Header based on the valid data types and required data types
+provided by the process. The validator will also validate some additional
+columns based on existing configurations, e.g. Account Type column should
+exist if Account Number column exists and account type is enabled for the
+client.  
+  
+  
+
+# DataCollector
+
+* * *
+
+ **Interface**|  DataCollector  
+---|---  
+ **Factory**|  DataCollectorFactory  
+ **Flag**|  [processName].data.collector=[Collector Name]  
+  
+The DataCollector interface will collect data from a given input line. There
+are two phases of data collection that is encapsulated: tokenization and data
+mapping. The tokenization step tokenizes the line. The data mapping step may
+introduce additional tokens by mapping some of the raw tokens into another
+data type, e.g. TIN -> CIF. The Default DataCollector uses the Tokenizer and
+DataMapper to take care of the two steps respectively.
+
+Implementation| Builder Name| Description  
+---|---|---  
+DefaultDataCollector| Default|
+
+Tokenize the input line using a Tokenizer. Then pass the tokens to a
+DataMapper to map additional values.  
+  
+  
+
+# Tokenizer
+
+* * *
+
+ **Interface**|  LineTokenizer  
+---|---  
+ **Factory**|  LineTokenizerFactory  
+ **Flag**|  [processName].tokenizer=[Tokenizer Name]  
+  
+The Tokenizer interface encapsulates the tokenization logic. The Tokenizer
+will split a given input line into a map from the DataType to the String token
+value by following the rubric defined by the Header.  **There is no need to
+use directly the Tokenizer** **, the Collector will instantiatiate the
+Tokenizer in its logic.**
+
+The Tokenizer should be instantiated by using the LineTokenizerFactory. The
+Tokenizer that is returned is dependent on the flag defined in the client's
+configuration file.
+
+Currently, there are two ways to tokenize an input line:
+
+Implementation| Tokenizer Name| Description  
+---|---|---  
+DelimiterLineTokenizer| Delimiter|
+
+Tokenize the input line by splitting a defined delimiter. This is the default
+Tokenizer returned by the factory if no flag is defined.  
+  
+FixedPositionLineTokenizer| FixedPosition|
+
+Tokenize the input line by taking a substring of the input line based on the
+defined positions of each token, e.g. Token A is at position 0 to 10.
+
+One additional flag need to be defined:
+
+  * [processName].headers.widthRubric=[comma-delimited list of the widths of each data in the same order as the Header .headers configuration]
+
+  
+  
+  
+
+# DataMapper
+
+* * *
+
+ **Interface**|  DataMapper  
+---|---  
+ **Factory**|  DataMapperFactory  
+ **Flag**|  [processName].data.mapper=[Mapper Name]  
+  
+The DataMapper interface will generate a new Token with a true DataType given
+the PseudoDataType and the map of all currently existing Tokens.
+
+Implementation| Builder Name| Description  
+---|---|---  
+DefaultDataMapper| Default|
+
+Map the pseudo values using the provided map of existing Tokens based on the
+staticly defined pseudo -> true mapping in PseudoDataType.
+
+One additional flag need to be defined:
+
+  * [processName].data.pseudo.values=[comma-delimited list of the pseudo value names]
+
+  
+  
+  
+
+# Data Handling
+
+* * *
+
+For all Data Types that are possible in an index file, there should be a
+corresponding Data Handler, e.g. emails will have an EmailDataHandler. This is
+to ensure that all data are handled in the same way across all processes, and
+reduce the need to rewrite the same logic over and over again. For example,
+email validation is implemented in various different places, each with their
+own regular expressions. This leads to redundancy, and also inconsistency,
+where an email address can be valid for one process but not another.
+
+## DataHandler
+
+java
+
+DataHandlerFactory
+
+Since DataHandlers are varied, and the way to instantiate them can be vastly
+different. In order to have a simple interface for the client, the
+DataHandlerFactory will take care of instantiating all the DataHandlers. That
+way, the client program does not need to know how to instantiate the
+DataHandler; only how to use the interface.
+
+The DataHandlerFactory can return a Map<DataType,DataHandler> given the
+ProcessingContext, and the Header, which will include all the possible
+DataTypes that the process will encounter.
+
+

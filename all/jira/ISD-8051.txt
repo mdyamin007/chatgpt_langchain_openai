@@ -1,0 +1,108 @@
+title: OFCU - [29833][pvt] Combine Insert Management and e Insert Management Tabs on InfoTRAC
+description: Infoconfig
+conf file
+
+
+author: kdishroon
+comment: [~Shun.Kuwashima] Shun - Please assign this Jira story and confirm the dates are ok.
+
+
+author: shun.kuwashima
+comment: [~kdishroon] I'll work on this project, dates are ok.
+
+[~thomasY] [~jun] Let me know when you guys have estatement index files so I can verify it posts correctly on lower environments.
+
+
+
+
+author: shun.kuwashima
+comment: Internal: Enabled selective inserts for default, loc, and visa in conf files and turned on inserts in infoconfig on all lower environments.
+
+
+author: thomasy
+comment: [~Shun.Kuwashima] These are the same ones from my jira. Let me know if you need new ones.
+
+Staging Index:me1_08312022_1_09282022_1304_ofcu.txt
+
+Pilot index:me1_08312022_1_09282022_1325_ofcu.txt
+
+
+author: shun.kuwashima
+comment: [~thomasY] I tried posting these files to stage, but it doesnt appear to have any piece code values. Is this expected for loc? I'm also not sure if their current index file format supports piece codes, so we may need to switch them over to doc processing (or whichever the newer one is called on your end).
+
+
+author: jun
+comment: [~Shun.Kuwashima],
+
+Can you try this index on stage?
+
+1. mv1_20220815_1_20221010_1522_ofcu.txt
+
+The insert for mv1 is in bin 2. But value is 0 because I don't have an account list to use for samples.
+
+2. ms1_20220831_1_20221010_1519_ofcu.txt
+
+The insert for ms1 is in bin 1. But value is 0 because I don't have an account list to use for samples.
+
+
+author: shun.kuwashima
+comment: Hi [~jun],
+
+1. For mv1_20220815_1_20221010_1522_ofcu.txt, I'm getting an error "infoTrac_flag is on but dt_job_id is missing from dataTrac(IS) database". Can you check if there's anything missing on your end?
+
+2. For ms1_20220831_1_20221010_1519_ofcu.txt, the index file is missing the imageCount between the closingDate and acctnumber. Here's an example:
+Statements|PDF|001|ofcums1_20220831_88094_1.afp|ofcums1_22_1_20221010_1519_0.zip|20220801|20220831||88094|||KEVIN P MANALATOS||1021564,1021565|0,0,0,0,0|||||
+
+
+author: jun
+comment: [~Shun.Kuwashima]
+
+Here is new ms1:ms1_20220831_1_20221031_1707_ofcu.txt
+
+I still need to fix mv1.
+
+
+author: shun.kuwashima
+comment: ms1_20220831_1_20221031_1707_ofcu.txt posted successfully on stage.
+
+
+author: thomasy
+comment: [~Shun.Kuwashima]Converted the index format to the new format. Can you see if this works:
+
+me1_20220930_1_20221102_1943_ofcu.txt
+
+
+author: shun.kuwashima
+comment: [~thomasY] Yup it works, was able to post it successfully on stage and I can view statements/inserts on infotrac stage.
+
+
+author: jun
+comment: [~Shun.Kuwashima]
+
+Here is the index file
+
+mv1_20220815_1_20221107_0939_ofcu.txt
+
+
+author: shun.kuwashima
+comment: Hi [~jun],
+
+I was able to run the index file, however there is an odd interaction with the piece code.
+
+For some reason, we have logic that skips inserting the piece code into our database if the piece code is not between 6000-7000 or not above 9999. The mv1 index file contains code 4403, so it does not fit the criteria and thus it is not inserting. Can we possibly use a new piece code value? These days I think new piece codes are usually around 33000-34000. 
+
+
+author: jun
+comment: [~Shun.Kuwashima],
+
+Is 4403 an insert coming from bin 1? I think that one is print only. Maybe that's why it skips it. I think we should leave it alone since bin 1 is an existing insert.
+
+The new insert for mv1 in this update should be in bin 2.
+
+
+author: shun.kuwashima
+comment: [~jun] Oh ok, 4403 is in bin 1. It's the only non-zero piece code that I see in the index file so that's why I assumed to check that. Currently I don't see any piece codes in bin 2.
+
+
+author: shun.kuwashima
+comment: Posted new file mv1_20220815_1_20221115_1141_ofcu.txt successfully, piece code in bin 2 present and works as intended. Statements and inserts are viewable on stage.

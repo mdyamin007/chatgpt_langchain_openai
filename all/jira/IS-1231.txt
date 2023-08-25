@@ -1,0 +1,140 @@
+title: APCU - Letter - PMI Notices PDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133600-C00.01-V21814
+
+Processing Scripts to modify:
+ apcuyl1_process.sh
+
+Data Files to use:
+ no file
+
+
+
+*NOTE*: This job runs on RH2 server. Since we are migrating from RH2 server to RHS, please test ALL job_sel options to ensure RHS can run with error messages in the processing log files.
+
+
+
+
+author: rony
+comment: Assining back to [~William.Kong]since this is redtitan job.
+
+
+author: tuna
+comment: Per Terrence, assigned to[~jira_naru]and updated live date to 08/31.
+
+Thanks,
+
+Tun
+
+
+
+[~William.Kong]
+
+
+author: jira_naru
+comment: QA:
+
+Project exported to:/d/iss/qa/APCU/APCUYL11.zip
+
+Parallel id:20220721171440
+
+
+author: william.kong
+comment: [~Igor.Khosid]/[~jira_naru]/[~OIR]: Looks like the production folder no longer has the zip file and PDF file. I have now way to compare between production and parallel.
+
+
+
+*TERRENCE/NAR*: Any suggestions we can do? Should we roll back the original program and run it so that we can compare? In the meantime, I'm going to back up a copy of Nar's parallel file to ca-isis-pr-04 so that we can draw a decision.
+
+
+author: jira_naru
+comment: [~William.Kong]:
+
+I will backup the current PDF produce by afp2web in parallel and run pdfi in parallel.
+
+I will let you know the locations once completed.
+
+
+author: jira_naru
+comment: [~William.Kong]:
+
+PDFI verison location:
+
+/z/pdf_afp/apcu/apcuyl2/pdf/
+
+
+
+afp2web version location:
+
+/z/pdf_afp/apcu/apcuyl1/pdf/
+
+
+author: william.kong
+comment: [~jira_naru]: Sorry to do this you, but I added one additional requirement to test and make sure this program can run via RHS server instead of RH2. Please ensure there is no error message.
+
+
+author: william.kong
+comment: Hi[~jira_naru],
+
+When you are caught up, can you re-test on RHS server to confirm that it is able to run on RHS server since the goal is to also migrate to RHS server as well.
+
+
+
+Thanks!
+
+
+
+ Will
+
+
+author: william.kong
+comment: [~jira_naru]: Please also advise status on this project as well too. Thanks!
+
+
+author: jira_naru
+comment: [~William.Kong]:
+
+Test run on RHS completed Aug 31, no issues.
+
+Waiting for QA to complete.
+
+
+author: JIRAUSER11104
+comment: Hi [~jira_naru] please provide the path to the files (PDFI verison location).
+
+
+author: jira_naru
+comment: [~Andrey.Kutsenko]:
+
+PDFI PDFs are here:
+
+/z/pdf_afp/apcu/apcuyl1_pdfi/pdf/
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+Test result - PASSED.
+{quote}[andreyK@ca-isis-pr-04 pdf_compare]$ cat ./result_apcuyl1/pdf_compare_rpt.txt
+Total PDF Files Scanned: 25
+allowedDifferenceInPercentPerPage: 8:
+Thread Count: 32
+
+Total PDF Files with Differences: 0
+Start Time: Tue Sep 13 16:35:57 PDT 2022
+Finish Time: Tue Sep 13 16:36:09 PDT 2022{quote}
+
+
+author: jira_naru
+comment: Code release completed.

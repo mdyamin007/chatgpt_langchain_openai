@@ -1,0 +1,437 @@
+title: ELCU - StmtPDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133563-C01.01-V21366
+
+Processing Scripts to modify:
+ elcums1_process.sh
+
+Data Files to use:
+ "ELCU_STMT.EOM.20210501.zip.pgp, ELCU_STMT.RGE.20210501.zip.pgp"
+
+
+
+*CUSTOM LOGIC FOR ELCUMS1:*
+
+**Add the following argument to the afp2pdf.py index_build_multicore; elcums1 has eStatement so we should match the quality and results with their eStatement version hence requesting adding the following argument since PDF archival has color as well.
+
+Colorspace=RGB
+
+
+
+*NOTE*: This program runs on RH2 and will need to be tested on RHS server since we are going to migrate RH2 to RHS server.
+
+
+
+
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+This is an in-house project. We are converting pdfi to afp2pdf. In pdfi style pdf and index file for archival were created from dfa but now it will be from the script.
+
+Parallel id:20210524063544
+
+ELCUMS11.zip is in qa folder.
+
+Archival sample is/z/dsi_pdfi_testing/elcums1/split_by_count/new/ELCU_STMT.EOM.20220602 folder generated fromELCU_STMT.EOM.20210228.zip.pgp.
+
+Let me know if you need anything else.
+
+
+
+Thanks
+
+Rony
+
+.
+
+
+
+
+author: igor.khosid
+comment:    Parallel ID: 20210524063544
+   Currently in parallel: Yes
+   User: ronyD
+   Description: ELCU pdfi
+   Date Submitted: 2021-05-24 06:35:51
+   Date Last Updated: 2022-06-19 12:55:48
+   Files:
+      1) elcums1_pdf.control
+      2) elcums1_process.sh
+      3) elcums1.control
+      4) ELCUMS11.dfa
+
+
+author: rony
+comment: Hi [~Igor.Khosid] 
+
+[^elcums1202.print]print 4.2o1 file, there is only one account.
+
+
+
+Thanks
+
+
+author: william.kong
+comment: [~rony]: Please ensure ELCUMS1 is ran on the same server as prod. When doing the afpcompare, we noticed that the afp file has a significant amount of shifting. So I compared /home/keep/elcums1.ran with /home/test/keep/elcums1.ran and noticed that you ran parallel in rhs2 instead of rh2. I'm thinking the papyrus version is significantly different causing such a large shifting of data:
+
+
+
+I showed [~Igor.Khosid]a prototype PDF comparison tool and noticed a huge shift in the positioning:
+
+\\ca-isshare-01.infoimageinc.com\ac-secure-share\is\williamK\elcums1_pdf_compare.zip
+
+If you unzip the file above, you will see thediff_elcums1_541003289745_05312022_82185.pdf.pdf result diff file. Look at how much vertical spacing difference it is. I do expect some shifting of data, but not this much.
+
+
+
+Can you re-run in parallel on rh2 so that we can re-analyze this job again?
+
+
+
+
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+Would you please check again with pdf compare to check if the result is better?
+
+Thanks
+
+
+author: william.kong
+comment: [~rony]: I hate to ask this, but can you run again in parallel, but this time with rh2 using the new afp2pdf program. The data still looks shifted and I'm curious as to why their is still a vertical line space discrepancy.
+
+
+
+(see attachment:diff_elcums1_43071501_05312022_2127.pdf.pdf)
+
+
+author: rony
+comment: Hi [~William.Kong]
+
+
+
+Will you please check again? I processed in rh2.
+
+
+
+Thanks
+
+Rony
+
+
+author: igor.khosid
+comment: As per Rony's message from 07.05. 2022
+Parallel sample is in /z/dsi_pdfi_testing/elcums1/split_by_count/new/ELCU_STMT.EOQ.20220701 and production version is in /z/dsi_pdfi_testing/elcums1/split_by_count/old/ELCU_STMT.EOQ.20220701.
+Generated from ELCU_STMT.EOQ.20220701.zip.pgp.
+
+
+
+author: igor.khosid
+comment: As per Rony's email
+0705 processing done. /z/pdf_afp/elcu/elcums1/zip/
+
+
+author: william.kong
+comment: [~rony]: I've tested comparing via pdf_compare.pl utility with the latest version in with theColorspace=RGB option to afp2pdf. Because PDFi version color is slightly different, the pdf_compare.pl utility complained all the PDFs. This is expected b/c of the color difference. At least with theColorspace=RGB option, it matches with the eStatement version. The next steps is with QA team to do the other QA checks.
+
+
+
+[~Igor.Khosid]: Results are in a different server:
+
+ca-isis-dv-02:/x/pdf_compare/result_elcums1 # We can discuss separately on how to send these file and b/c all the files are different with this tool on how to QA.
+
+
+
+Total PDF Files Scanned: 6000
+allowedDifferenceInPercentPerPage: 5:
+Thread Count: 16
+
+Total PDF Files with Differences: {color:#de350b}*6000*{color}
+WARNING: We did not compare ALL the pdfs!
+ pdf_compare.pl will only process the first 6000 pdf files out of the total 85224 pdfs
+Start Time: Wed Jul 20 14:32:06 PDT 2022
+Finish Time: Wed Jul 20 21:34:31 PDT 2022
+
+
+author: william.kong
+comment: [~rony]: Sorry to do this to you! But can you also run the print & eStatement job on RHS to test runnablility? I will also want to run afpcompare to be 100% sure it is backwards compatible on RHS server.
+
+
+author: rony
+comment: Hi [~William.Kong] [~Igor.Khosid]
+
+Ran successfully in rhs for all options.
+
+
+
+Thanks
+
+
+author: rony
+comment: Hi [~William.Kong] [~Igor.Khosid]
+
+Anything to do next here?
+
+
+
+Thanks
+
+
+author: william.kong
+comment: [~rony]: Extreme apologies again! As mentioned last thursday, I will need to ask for to run the+3rd+ and final time in paralllel for cycle 7/31/2022. We did not have the production AFP file b/c of a bug in the global isisdisk.sh script. We fixed it on 7/29 so we definitely have it backed up now in /d/afpformat/2412972_elcums1231.afp
+
+
+
+Please use this data file:
+
+[williamK@rhs2 pdf]$ /home/util/get_processed_filename.pl elcu 2412972
+ cid: elcu
+ jid: ms1
+ proc_id 2412972
+ file_name: {color:#de350b}ELCU_STMT.RGE.20220731.zip.pgp{color}
+ md5 9d5e7784aa7ace2e108948f540a64d5e
+
+
+
+I took the liberty to copy the file to/z/infoftp_int/osiw/elcu/ so that it can be scanned.
+
+
+
+Can you please change Jira ticket status back to "QA Request" since we need to redo the test results again.
+
+
+
+[~Igor.Khosid]: FYI.
+
+
+
+
+author: william.kong
+comment: [~rony]: Would you please see if you can reprocess this application one more time in parallel with a more current data file? Please see my comment above.
+
+
+author: william.kong
+comment: [~rony]: Can you get this reprocessed so that we can get this application knocked out. We are just pending reprocessing from you. Thanks!
+
+
+author: rony
+comment: Hi [~William.Kong]
+
+/z/pdf_afp/elcu/elcums1/zip/elcu_ms1_07052022_f001.zip.
+
+
+
+Sorry I didn't update the insert file proc date which is why the zip file naming the date is 07052022.
+
+
+
+[~Igor.Khosid]
+
+
+author: william.kong
+comment: Thanks [~rony]! I'm going to run afpcompare which will take a couple of hours.
+
+
+
+
+
+[~Andrey.Kutsenko]: Will you be assigned to review this? If so, I've copied the parallel and prod pdf files to:
+
+ca-isis-pr-04:/d/pdfcompare/elcums1_prod (original)
+
+ca-isis-pr-04:/d/pdfcompare/elcums1_parallel (new)
+
+
+
+Thanks!
+
+
+
+-- Will
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]/[~berezinez]/[~Igor.Khosid]: The AFP compare took more than 24 hours to run, but fortunately it was successful. Please advise who can test the pdf compare and the rest of the normal QA process for this project. (see previous comment for the pdf folder location)
+
+*/d/iss/afp_compare/Summary_Diff_2412972_elcums1231.afp_result.log:*
+
+
+afpcompare stdout log: /x/afpcompare/elcums1/prod/../2412972_elcums1231.afp.stdout_0.log
+
+NO Difference found in 2412972_elcums1231.afp_1_3108_diff.xml
+
+Compared /x/afpcompare/elcums1/prod/2412972_elcums1231.afp vs /x/afpcompare/elcums1/parallel/709464_elcums1105.afp
+
+
+
+Start Time: Mon Aug 22 14:59:03 PDT 2022
+Finish Time: Mon Aug 22 15:23:24 PDT 2022
+
+***********************************************************************
+
+
+Total Page Count: /x/afpcompare/elcums1/prod/2412972_elcums1231.afp (3108)
+Total Page Count: /x/afpcompare/elcums1/parallel/709464_elcums1105.afp (3108)
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: Sorry for the delay! I've been troubleshooting elcums1 since you reported the numerous differences Tuesday evening.
+
+I've added an exclusion list file to ignore certain areas in the PDF statements (e.g. logo, upper red bar, and Page 1 middle bar).
+
+You can see the command I used in /d/pdf_compare/elcums1.sh
+
+
+
+*/d/pdf_compare/result_elcums1/pdf_compare_rpt.txt:*
+
+{{Total PDF Files Scanned: 2651}}
+{{allowedDifferenceInPercentPerPage: 15:}}
+{{Thread Count: 32}}{{Total PDF Files with Differences: 13}}
+{{Start Time: Thu Aug 25 11:27:59 PDT 2022}}
+{{Finish Time: Thu Aug 25 11:46:58 PDT 2022}}
+
+
+
+Please review the rest and see if there is any other QA issues with this project.
+
+
+
+
+author: JIRAUSER11104
+comment: Thanks, [~William.Kong]
+I ran the script:
+{code:sh}[andreyK@ca-isis-pr-04 pdf_compare]$ perl pdf_compare.pl elcums1_prod elcums1_parallel result_elcums1 -pixels 15 -threads 32 -exclusion elcums1.json{code}
+I'll let you know the results later.
+
+
+author: JIRAUSER11104
+comment: Hi [~William.Kong], please take a look.
+
+{code:title=Test result:|borderStyle=solid}
+Total PDF Files Scanned: 2651
+allowedDifferenceInPercentPerPage: 15:
+Thread Count: 32
+
+Total PDF Files with Differences: 13
+Please review the directory in /d/pdf_compare/result_elcums1 directory & /d/pdf_compare/result_elcums1/pdf_compare_rpt.txt report to see all the PDF differences
+Start Time: Thu Aug 25 15:54:43 PDT 2022
+Finish Time: Thu Aug 25 16:13:42 PDT 2022
+{code}
+
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: It matches the results I had so I believe it is good. Please continue the rest of the QA process and confirm all else is good or not. Thanks!
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+
+
+author: william.kong
+comment: [~rony]: Can you please prep the program transfer form so that we can plan the release on Monday? Thanks!!!
+
+
+author: rony
+comment: Hi [~TunA] 
+
+Need to release.
+
+[^IS_PROGRAM_TRANSFER_FORM.doc]
+
+
+
+[~William.Kong]
+
+[~Andrey.Kutsenko]
+
+
+
+Thanks
+
+
+author: tuna
+comment: Hi [~rony],
+
+Following codes have been released.
+
+Thanks,
+
+Tun
+
+
+
+20220826162059 08/26/2022 ronyD IS-1195 ELCU - StmtPDFi Conversion to AFP2PDF Python [InHse]
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/ronyD/
+total 672
+-rwxrwxrwx 1 ronyD DSI 174218 Aug 26 16:13 ELCUMS11.dfa
+-rwxrwxrwx 1 ronyD DSI 1341 Aug 26 16:13 elcums1.control
+-rwxrwxrwx 1 ronyD DSI 474 Aug 26 16:13 elcums1_pdf.control
+-rwxrwxrwx 1 ronyD DSI 28552 Aug 26 16:13 elcums1_process.sh
+
+
+
+
+
+[~William.Kong]
+
+
+author: rony
+comment: Hi [~TunA]
+
+Would you please release these 2 procs file:
+
+elcums1.procs flcums1.procs
+
+
+
+I didn't update the procs file properly to instruct to run this from rhs now and replace the pdfi with e option.
+
+
+
+[~William.Kong]
+
+Thanks
+
+
+
+
+author: tuna
+comment: Hi [~rony],
+
+Following procs files have been released.
+
+Thanks,
+
+Tun
+
+
+
+20220902115944 09/02/2022 ronyD procs files update for IS-1195 ELCU - StmtPDFi Conversion to AFP2PDF Python [InHse][oper1@rhs ~]$ ll /d/is/cvs/xfer/ronyD/
+total 96
+-rwxrwxrwx 1 ronyD DSI 3662 Sep 2 11:53 elcums1.procs
+-rwxrwxrwx 1 ronyD DSI 2447 Sep 2 11:53 flcums1.procs
+
+
+
+[~William.Kong]
+
+

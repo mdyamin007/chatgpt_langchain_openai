@@ -1,0 +1,799 @@
+title: eSafetyBox AI drop Design Document
+body: # Introduction
+
+  
+
+## Purpose/Objective Summary
+
+The three main pieces of functionality to be developed based on this
+documentation:  
+1) Financial Institution(FI) can drop a doc to End User(EU)'s eSafetyBox  
+2) eStmt/eSafeBox Enrollment/Account Closure  
+3) DB Migration from Oracle DB to Cassandra(including data model change)  
+  
+
+## Scope
+
+  
+
+### In Scope
+
+Component| Details| Need For| Resource needed  
+---|---|---|---  
+AI-drop capability| backend database + app logic changes to support "Sending
+file from Admin to Member(s)"| Business| Lin: 5 weeks  
+Acct Enroll & Closure| Update the eSafetyBox Acct status state life-cycle to
+support newly drafted state-diagram| Business| Lin: 3 weeks  
+Virus Scan Engine re-design & integration| Change the architecture of how
+Virus Scan Engine is utilized.  
+Affect how new files are uploaded correspondingly.  
+Also need to adjust application to support off-line scanning| Engr.
+Functional| Lisa: 4 weeks  
+Swift Integration| Setup Swift environment  
+Update eSafetyBox code to CRUD files with Swift| Engr. Scalability| Lisa+Lin:
+3 weeks each  
+Cassandra Integration| Utilize Cassandra to handle 'File' and 'Activity Log'
+entity records| Engr. Scalability| Dharmi+Lin: 3 weeks  
+Member Acct Mgmt| If building the AI-drop functionality in InfoTRAC, we need
+to build the Member Acct. Mgmt functionality in InfoTRAC.| Ripple of InfoTRAC|
+Niraj: 5 weeks  
+eSafetyBox Reports| If building the AI-drop functionality in InfoTRAC, we need
+to rebuild the eSafetyBox status report, access report, usage report in
+InfoTRAC.| Ripple of InfoTRAC| Lin: 2 weeks  
+Admin User Mgmt| Building this in InfoTRAC introduce complexity of sync-ing
+"Admin User accounts in InfoTRAC" & "Admin User accounts in eStmt DB".
+Synchronization might not be trivial especially when both InfoTRAC and eStmt
+AI are active.| Ripple of InfoTRAC| Pending actual design: maybe ~2 weeks  
+Two-way Drop Func| backend database + app logic changes to support "Send
+Back"| Business| Lin: 2 weeks  
+  
+  
+
+### Functionality break-down between InfoTRAC and eStmt AI
+
+InfoTRAC| eStmt AI  
+---|---  
+eSafetyBox Admin Drop-files {TODO}|  
+  
+eSafetyBox Member Acct Query {TODO}| eStmt Member Acct Query  
+  
+| eStmt Member Statement views  
+  
+| Email Proofing  
+  
+| Email Reminders  
+eSafetyBox usage reports {TODO}| eStmt usage reports  
+  
+  
+  
+
+### Out-of-Scope
+
+The financial institution's end users who receive files from Administrators
+will not be able to 'respond' or send files back to the financial
+institution's administrator at this time. This '2-way' file sending will
+likely be added soon.  
+  
+
+## Assumptions
+
+Supported Browsers: Internet Explorer 8+, Firefox 3.5+, Safari 5+ and the
+latest version of Chrome.  
+  
+
+## Dependencies
+
+Cassandra libs and Kundera libs  
+\---------------------------------------------------  
+lucene-core-3.5.0.jar  
+jts-1.11.jar  
+persistence-api-2.0.jar  
+libthrift-0.7.0.jar  
+cassandra-thrift-1.2.0.jar  
+avro-1.4.0-cassandra-1.jar  
+cassandra-all-1.2.0.jar  
+cassandra-clientutil-1.2.0.jar  
+commons-pool-1.6.jar  
+scale7-core-1.3.jar  
+scale7-pelops-1.3-1.1.x.jar  
+lucene-analyzers-3.0.2.jar  
+kundera-cassandra-2.5.jar  
+kundera-core-2.5.jar  
+java-uuid-generator-3.1.3.jar
+
+eSafetyBox API libs  
+\-------------------  
+jackson-core-asl-1.9.11.jar  
+jackson-jaxrs-1.9.11.jar  
+jackson-mapper-asl-1.9.11.jar  
+jackson-xc-1.9.11.jar  
+jersey-client-1.17.1.jar  
+jersey-core-1.17.1.jar  
+jersey-multipart-1.17.1.jar  
+lombok.jar  
+  
+
+# Requirements
+
+  
+
+## Business Requirements & Use Cases
+
+ **TODO:**   **(Required)**  List out all needs/requirement from business/end-
+user perspective. Assign an ID for each requirement/use-case item for easier
+reference in future
+
+Please see attached file for screen shots: eSafetyBox AI Drop Screen
+Shots.pptx
+
+ID| Title| Details| ScreenMock| Importance  
+---|---|---|---|---  
+BRQ-01| Generic Search box| (example)  
+ **Requirement:**  Instead of showing a drop-down to ask user to choose what
+attribute to search against,  
+just have a simple search box that will search against all potential
+attributes like name/email/address/phone.  
+ **Use Case:**  enter "ben" into search box, search results returned should
+include both record of "Ben
+[Chan/bchan@infoimage.com](mailto:Chan/bchan@infoimage.com)" as well as "Jim
+[Wong/jwong@bigben.com](mailto:Wong/jwong@bigben.com)"| <attach file>| one of
+following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+BRQ-02| ...| ...| ...| ...  
+  
+  
+
+## Functional Requirements & Use Cases
+
+ID| Title| Details| Bus. Req. Ref.| Importance  
+---|---|---|---|---  
+FRQ-01| Search Function|  
+ **Requirement:**  
+\- Search by account number  
+\- Search by end user name  
+\- Search by email address  
+\- If no search results found, display a message  
+ **Use Case:**|  
+<optional>| P0-Show Stopper  
+FRQ-02| Email Template & Notification|  
+ **Requirement:**  
+ **Use Case:**|  
+<optional>| P1-Show Stopper  
+FRQ-03| Create eStmt Acct|  
+ **Requirement:**  
+\- Interface to enter first name, last name, last 4-digit of SSN, email and
+acct number  
+\- Once AI create estmt acct, end user will receive an email with hyperlink to
+member site  
+\- End user goes to member site to verify authentication  
+\- Display estmt Terms & Conditions  
+\- Collect user id, password, security question/answer to finish estmt
+enrollment  
+ **Use Case:**|  
+<optional>| P1-High  
+FRQ-04| Close eStmt Acct|  
+ **Requirement:**  
+\- Make it configurable to have options: AI can close end user's estmt with or
+without closing end user's eSafetyBox  
+\- Close eStmt acct and close eSafetyBox together  
+a)Display close eStmt acct and close eSafetyBox service message  
+b)Close eStmt acct together with eSafetyBox service  
+c)End user can still log into member site, but can't see eStmt tab  
+d)The procedure to close eSafetyBox will be the same as the procedure defined
+in FRQ-07  
+\- Close eStmt acct without closing eSafetyBox  
+a)Display close eStmt acct service message  
+b)Close eStmt acct together with eSafetyBox service  
+c)End user can still log into member site, but can't see eStmt tab  
+d)End user can access eSafetyBox as usual  
+ **Use Case:**|  
+<optional>| P1-High  
+FRQ-05| eSafetyBox Acct Enroll|  
+ **Requirement:**  
+\- Interface to enter first name, last name, last 4-digit of SSN, email and
+acct number  
+\- Once AI create eSafety acct, end user will receive an email with hyperlink
+to member site  
+\- End user goes to member site to verify authentication  
+\- Display eSafetyBox Terms & Conditions  
+\- Collect user id, password, security question/answer, file password to
+finish eSafetyBox enrollment  
+\- This logic could be consolidated with FRQ-03 during implementation  
+ **Use Case:**|  
+<optional>| P1-High  
+FRQ-06| eSafetyBox Acct Suspend|  
+ **Requirement:**  
+\- Financial Institution on InfoTRAC  
+a)Display suspend eSafetyBox service message (Are you sure to suspend user
+XXX)  
+b)Once suspend eSafetyBox the status in BOX_CURRENT_STATUS table will be
+marked as "lockout". Will also log it to BOX_HISTORY_STATUS.  
+c)AI can re-active eSafetyBox, after suspension (no enrollment flow needed).
+The status in BOX_CURRENT_STATUS table will be marked as "active". Will also
+log it to BOX_HISTORY_STATUS.  
+\- End User on Member Site  
+a)End user will receive an email regarding the eSafetyBox suspension, required
+member to call financial institution to re-active  
+b)When end user logs into member site and clicks on eSafetyBox tab, the
+suspension message will be shown(... end user needs to call financia
+institution), and end user can't access eSafetyBox contents  
+c)During suspension period, the end user can't access eSafetyBox while
+clicking on Profile tab  
+d)If the end user fails to contact financial institution during the grace
+period(configurable), the eSafetyBox will be closed and the files will be
+permanently purged. End user will receive email if it happens.  
+e)In eStmt DB, table BOX_CURRENT_STATUS column status will be marked as
+"inactive". Will also log it to BOX_HISTORY_STATUS.  
+ **Use Case:**|  
+<optional>| P1-High  
+FRQ-07| eSafetyBox Acct Closure|  
+ **Requirement:**  
+\- Financial Institution on InfoTRAC  
+a)Display close eSafetyBox service message  
+b)Once closed, send email on weekly base to end user to inform that eSafetyBox
+is going to close on mm/dd/yyyy (after grace period), unless the end  
+user closes eSafetyBox  
+d)Financial institution can re-active eSafetyBox, after closing eSafetyBox  
+\- End User on Member Site  
+a)End user will receive an email regarding the eSafetyBox closure  
+b)When end user logs into member site, the end user will see a message at the
+top of the screen indicating the date when their account will be closed. The
+end user will be advised to download all the files needed before closing
+eSafetyBox.  
+c)End user can access eSafetyBox as usual during the grace period  
+d)End user can go to Profile to opt out eSafetyBox  
+e)Once opting out eSafetyBox, display a message to confirm opting out  
+f)Once click YES button, the status in BOX_CURRENT_STATUS table will be marked
+as "inactive" and all the files will be purged permanently  
+ **Use Case:**|  
+<optional>| P1-High  
+FRQ-08| AI Send File to End User(s)|  
+ **Requirement:**  
+\- Financial Institution on InfoTRAC  
+a)Interface to enter file name, description file location  
+b)Message confirmation before sending the file to member's eSafetyBox  
+c)If AI needs to upload file to multiple users, display file upload box for
+the selected acct list.  
+d)DB update to reflect AI drop file and AI drop folder for each member, as
+well as upload acct list.  
+e)Send email notification to end user(s) about AI file upload.  
+ **Use Case:**|  
+<optional>| P1-High  
+FRQ-09| End User(s) View AI Sent File|  
+ **Requirement:**  
+\- End User on Member Site  
+a)User interface update: display msg & display Received Folder for AI drop
+files  
+b)AI files in Received folder will have different operation compared with
+member's files. For example, AI file can't be deleted, can't be changed
+access, etc.  
+c)AI file doesn't count into member's eSafetyBox size, therefore it's not
+showing in eSafetyBox usage report. But if the AI file gets moved to member's
+folder, it will be treated as member's file.  
+ **Use Case:**|  
+<optional>| P1-High  
+FRQ-10| View AI Sent File History|  
+ **Requirement:**  
+\- Display the report with the following 4 data points  
+a)Date  
+b)Time  
+c)File (original file name or file name entered by financial institution)  
+d)Sent to (one end user, all users, and selected users)  
+ **all users and selected users will be the link to show the actual list of
+accounts  
+*Use Case:**|   
+<optional>| P1-High  
+FRQ-11| Reset Login Password for End User|  
+ **Requirement:**  
+\- Financial Institution on InfoTRAC  
+a)Reset password will trigger sending an email to end user  
+\- End User on Member Site  
+a)Receive email with hyperlink to direct to member site  
+b)Verify authorization  
+c)Reset password  
+ **Use Case:**|  
+<optional>| P1-High  
+FRQ-12| View eSafetyBox Status History|  
+ **Requirement:**  
+\- Display the report with the following 3 data points  
+a)Status(active/inactive/lockout)  
+b)Access Time  
+c)Modified By (end user or financial institution)  
+ **Use Case:**|  
+<optional>| P1-High  
+FRQ-13| View eSafety Access History|  
+ **Requirement:**  
+\- Display the report with the following 2 data points  
+a)Access Time  
+b)Remote IP  
+ **Use Case:**|  
+<optional>| P1-High  
+FRQ-14| View eSafety Usage Report|  
+ **Requirement:**  
+\- eSafetyBox Usage Summary  
+a)Month  
+b)# of Users  
+c)Space Used  
+d)Billable Space  
+\- eSafetyBox Usage Details for a Specific Mouth  
+a)User Name  
+b)Space Used  
+c)Allocate Space  
+d)Status  
+e)Active Period  
+\- Report Download on .txt or .cvs format  
+ **Use Case:**|  
+<optional>| P1-High  
+FRQ-15| Virus Scan Engine Redesign & Integration|  
+ **Requirement:**  
+\- Change the architecture of how Virus Scan Engine is utilized.  
+\- Affect how new files are uploaded correspondingly.  
+\- Also need to adjust application to support off-line scanning  
+ **Use Case:**|  
+<optional>| P1-High  
+FRQ-16| Swift Integration|  
+ **Requirement:**  
+\- Setup Swift environment  
+\- Update eSafetyBox code to CRUD files with Swift  
+ **Use Case:**|  
+<optional>| P1-High  
+  
+  
+
+## Performance & Scalability Requirements (SLA)
+
+ **TODO: (Required)**  List out all needs/requirement from Performance
+perspective. Associate them with an ID for easier reference
+
+ID| Title| Details| Importance  
+---|---|---|---  
+PRQ-01| Fast Search response| (example)  
+ **Requirement:**  All Search operation should return results within 100ms.  
+ **Use Case:**  <enter if applicable>| one of following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+PRQ-02| ...| ...| ...  
+  
+  
+
+## QA/Test Requirements
+
+ **TODO:**   **(Required)**  List out all needs/requirement from QA/Testing
+perspective. Associate them with an ID for easier reference
+
+ID| Title| Details| Importance  
+---|---|---|---  
+TRQ-01| Selectable Search Box element| (example)  
+ **Requirement:**  The search textbox AND the 'Search' button need to tagged
+with 'id' value so that Selenium could select it for entering value and
+subsequent submit  
+ **Use Case:**  Rely on Selenium to submit random search terms and capture
+response time as well as validation search results| one of following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+TRQ-02| ...| ...| ...  
+  
+* * *
+
+  
+  
+
+# Design
+
+  
+
+## Architecture & Workflow Diagram
+
+eSafetyBox AI Drop Class Diagram  
+See attached diagram: eSafetyBox AI Drop Class Diagram.jpg
+
+eSafetyBox Enroll & Closure Diagram Change  
+See attached diagram: eSafetyBox Enroll and Closure Diagram.JPG  
+  
+
+## Data Model changes (ER diagram & ddl.sql)
+
+eSafetyBox ER Diagram  
+See attached diagram: eSafetyBox ER Diagram.JPG
+
+Oracle DB Tables  
+See attached diagram: Oracle DB.JPG
+
+Oracle DB Tables Details  
+existing eSafetyBox table box_billing_info  
+Name Null Type  
+\------------------ -------- -----------  
+ORG_NAME NOT NULL VARCHAR2  
+USR_ID NOT NULL NUMBER  
+FLAG NOT NULL VARCHAR2  
+BILL_MONTH NOT NULL DATE  
+MAX_TIER NUMBER  
+ACTUAL_SPACE NUMBER  
+RAW_SPACE NUMBER  
+BHISTORY_STATUS_ID NUMBER  
+TIER_START DATE  
+TIER_END DATE  
+CREATED_TIME DATE  
+P_JOB_ID NUMBER  
+LOCKOUT_START DATE
+
+existing eSafetyBox table box_current_status  
+Name Null Type  
+\------------ -------- -------------  
+USR_ID NOT NULL NUMBER  
+FLAG NOT NULL VARCHAR2  
+QUESTION NOT NULL VARCHAR2  
+ANSWER NOT NULL VARCHAR2  
+PASSWORD NOT NULL VARCHAR2  
+STATUS NOT NULL VARCHAR2  
+TIER NUMBER  
+BSTATUS_ID NOT NULL NUMBER  
+CREATED_TIME DATE  
+ALERT VARCHAR2  
+MODIFIED_BY NUMBER  
+CID VARCHAR2
+
+existing eSafetyBox table box_history_status  
+Name Null Type  
+\------------------ -------- -------------  
+USR_ID NOT NULL NUMBER  
+FLAG NOT NULL VARCHAR2  
+QUESTION NOT NULL VARCHAR2  
+ANSWER NOT NULL VARCHAR2  
+PASSWORD NOT NULL VARCHAR2  
+STATUS NOT NULL VARCHAR2  
+TIER NUMBER  
+TIME TIMESTAMP  
+BHISTORY_STATUS_ID NOT NULL NUMBER  
+MODIFIED_BY NUMBER
+
+existing eStmt table usr  
+Name Null Type  
+\----------------- -------- -------------  
+USR_ID NOT NULL NUMBER  
+USR_SSN VARCHAR2  
+USR_BIRTHDATE DATE  
+USR_GENDER VARCHAR2  
+USR_MARITALSTATUS VARCHAR2  
+USR_FIRSTNAME NOT NULL VARCHAR2  
+USR_LASTNAME VARCHAR2  
+USR_MIDDLENAME VARCHAR2  
+CI_ID NUMBER  
+USR_SUFFIX VARCHAR2  
+PROMO_CODE VARCHAR2  
+CREATED_BY VARCHAR2  
+SOURCE VARCHAR2  
+EXPIRATION_DATE DATE  
+TYPE VARCHAR2
+
+existing eStmt table usr_session  
+Name Null Type  
+\-------------------- -------- -------------  
+ORG_ID NOT NULL NUMBER  
+USR_ID NOT NULL NUMBER  
+SESS_LASTLOGIN DATE  
+SESS_PERMISSIONS NOT NULL NUMBER  
+SESS_LOGIN_ID NOT NULL VARCHAR2  
+SESS_PASSWORD NOT NULL VARCHAR2  
+SESS_PW_HINT_PHRASE VARCHAR2  
+SESS_PW_HINT_ANS VARCHAR2  
+SESS_ACTIVE_STATUS VARCHAR2  
+SESS_PW_CHANGED_DATE DATE  
+SESS_PW_EXPIRATION VARCHAR2  
+SESS_LOGIN_FAILED DATE  
+SESS_FAILED_COUNTER NUMBER  
+FILE_PASSWORD VARCHAR2  
+SESS_TOTAL_FAILS NUMBER  
+SSO_KEY VARCHAR2  
+SSO DATE  
+DSO DATE  
+VENDOR_USER_ID VARCHAR2  
+PASSWORD_STATUS VARCHAR2
+
+existing eStmt table contact_info  
+Name Null Type  
+\------------------ -------- -------------  
+CI_ID NOT NULL NUMBER  
+CI_ADDR1 VARCHAR2  
+CI_ADDR2 VARCHAR2  
+CI_ADDR3 VARCHAR2  
+CI_CITY VARCHAR2  
+CI_STATE VARCHAR2  
+CI_ZIPCODE VARCHAR2  
+CI_COUNTRY VARCHAR2  
+CI_DAYPHONE VARCHAR2  
+CI_NIGHTPHONE VARCHAR2  
+CI_MOBILEPHONE VARCHAR2  
+CI_FAX_NUMBER VARCHAR2  
+CI_EMAIL_ADDR VARCHAR2  
+CI_EMAIL_ADDR2 VARCHAR2  
+CI_IS_EADDR1_VALID VARCHAR2  
+CI_IS_EADDR2_VALID VARCHAR2  
+CI_COMPANY VARCHAR2
+
+existing eStmt table fin_account  
+Name Null Type  
+\--------------------- -------- -------------  
+ACCT_ID NOT NULL NUMBER  
+ORG_ID NOT NULL NUMBER  
+ACCT_NUMBER NOT NULL VARCHAR2  
+ACCT_OWNER_NAME NOT NULL VARCHAR2  
+ACCT_OWNER_CONTACT_ID NUMBER  
+TYPE NOT NULL VARCHAR2  
+LAST_MODIFIED DATE  
+STATUS VARCHAR2  
+SUB_TYPE VARCHAR2  
+SOURCE VARCHAR2  
+PRODUCT_TYPE VARCHAR2  
+CUSTOM1 VARCHAR2  
+REGION VARCHAR2  
+OPEN_DATE DATE
+
+existing eStmt table usr_fin_account  
+Name Null Type  
+\-------------------- -------- -------------  
+UFA_ID NOT NULL NUMBER  
+USR_ID NOT NULL NUMBER  
+ACCT_ID NOT NULL NUMBER  
+UFA_STATUS NOT NULL VARCHAR2  
+UFA_REGISTRATIONDATE NOT NULL DATE  
+EMAIL VARCHAR2  
+EXPIRATION_DATE DATE  
+SOURCE VARCHAR2  
+VIEWABLE VARCHAR2
+
+Cassandra DB Column Families  
+See attached diagram: Cassandra DB.JPG
+
+Cassandra DB Column Families Details  
+column family BOX_FILE_FOLDER  
+------------  
+id  
+access_level  
+file_desc  
+file_orig_name(same as file_name)  
+file_path  
+file_type(pdf, txt, etc...)  
+folder_name(if it's ai file, mark as "Inbox")  
+created_dt  
+last_view_dt  
+modified_dt  
+option(value as one_acct, multiple_accts, all_accts)  
+cnt(# of files in the folder)  
+size(if the type is "file", it's the file size; otherwise, it's the folder
+size)  
+status  
+type(file, folder, ai_file, acct_file)  
+cid  
+usr_id  
+ai_usr_id  
+acct_num  
+email  
+first_name  
+last_name
+
+A1.Box_Member_File  
+\------------------  
+id  
+access_level  
+file_desc  
+file_orig_name  
+file_path  
+file_type  
+folder_name  
+created_dt  
+last_view_dt  
+modified_dt  
+size  
+status(pending, error, verified, etc)  
+type(file)  
+cid  
+usr_id
+
+A2.Box_AI_File(AI)  
+\------------------  
+id  
+file_desc  
+file_orig_name  
+file_path  
+file_type  
+folder_name(SentBox)  
+created_dt  
+last_view_dt  
+modified_dt  
+option(one_acct, multiple_accts, all_accts)  
+size  
+status(sent,recall)  
+type(ai_file)  
+cid  
+ai_usr_id
+
+A3.Box_AI_File(Member)  
+\----------------------  
+id  
+access_level(Standard)  
+file_desc  
+file_orig_name  
+file_path  
+file_type  
+folder_name(InBox/SentBox)  
+created_dt  
+last_view_dt  
+modified_dt  
+size  
+status(unread,viewed,responded,nobox,dupbox)  
+type(symlink)  
+cid  
+usr_id  
+ai_usr_id  
+acct_num  
+email  
+first_name  
+last_name
+
+A4.Box_Acct_File(AI)  
+\--------------------  
+id  
+file_orig_name  
+file_path  
+file_type(txt)  
+created_dt  
+size  
+type(acct_file)  
+cid  
+ai_usr_id
+
+A5.Box_Folder  
+\-------------  
+id  
+access_level  
+folder_name  
+created_dt  
+last_view_dt  
+modified_dt  
+cnt  
+size  
+type(folder)  
+cid  
+usr_id
+
+column family BOX_LOG_RECORD  
+-----------  
+id  
+event_type  
+location  
+log_time  
+message  
+new_value  
+old_value  
+remote_ip  
+status  
+usr_id  
+cid  
+*index will be usr_id and cid  
+  
+
+## Application component functional details
+
+ **TODO:**   **(Required if involve big architectural change)**  List out the
+key class/method created/changed for this project. Highlight the changed
+portion (e.g. additional param for a method)
+
+ **Overview:**   **TODO:**  Provide an overview of what changes if not already
+illustrated in the Architecture diagram above
+
+Component| Class| Method| Params| Comments  
+---|---|---|---|---  
+...| ...| ...| ...| ...  
+  
+  
+
+## Integration Points & Interface
+
+ **TODO: (If Applicable)**  List out Integration Points and corresponding
+interface
+
+From Component| To Component| Details| Error Handling  
+---|---|---|---  
+InfoTRAC| PUI| DT_JOB_ID need to be synchronized by...| If DT_JOB_ID during
+PUI processing is not found in ...  
+  
+* * *
+
+  
+  
+
+# Additional Use Cases
+
+ **Here are some additional Use Cases that came up during iterative
+development life-cycle for phase 1** :
+
+1) End User file send (back) to admin - Inbox and Outbox concept  
+2) AI recall of an uploaded file  
+3) AI dashboard with all files sent  
+4) AI drill down view of which users each file was sent to, and which users
+viewed/downloaded file  
+5) Email notification when end user receives a file  
+6) Report to show AI user which member has eSafetyBox.  
+7) Nagios inegration to monitor load, traffic, CPU, memory, volume of usage,
+event tracking etc  
+8) Access eSafetyBox web app through mobile device, such as IOS, Android etc  
+9) Member can share document to another member (Phase 2)  
+10)Multi-tenant solution for eSafetyBox  
+\- eSafetyBox itself is a stand-alone application  
+\- template management to separate css styles from .jsp  
+11)Send secure message, not just secure document (Phase 2)  
+12)AI can undo sent file action, if the member hasn't viewed the file yet
+
+* * *
+
+  
+
+# Summarized Change Log
+
+Date| Who| Changes to Design Doc  
+---|---|---  
+6/24/2013| Lin H| Added class diagram, UI screen shots, ER diagram, data
+models, enroll&closure state diagram, and libraries dependency  
+6/21/2013| Lin H| Added more 'Additional Use Cases'  
+6/21/2013| Kim M| Added 'Additional Use Cases'  
+3/18/2003| Lin H| Added 'Functional Requirements & Use Cases'  
+3/11/2013| Ben C| Added some TODO notes and examples  
+3/08/2013| Ben C| Initial Draft  
+  
+* * *
+
+  
+  
+
+# Sign-Off
+
+Group| Date| Who| Comment  
+---|---|---|---  
+Product Manager (Business)|  
+|  
+|  
+  
+Account Service (AS)|  
+|  
+|  
+  
+Dev./Impl. Manager (Technical)|  
+|  
+|  
+  
+Production Control (PC)|  
+|  
+|  
+  
+Data Processing (DP)|  
+|  
+|  
+  
+Accounting/Invoicing|  
+|  
+|  
+  
+  
+  
+  
+
+# Appendix
+
+<add as you need>
+
+### Attachments
+
+250250250250250250250
+
+

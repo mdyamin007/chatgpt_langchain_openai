@@ -1,0 +1,180 @@
+title: HTBK - [34219][pvt][in-house] DP - HTBK DDA&SAV EOM Comm_CD error 
+description: When Anwar worked on this for pdfi to afp2pdf, he also incorrectly changed the file name of the IMG list & PDF INX list passed in for each COMMERCIAL_CD.pl call. He removed an underscore between the jid and date for the PDF INX and removed an underscore between cid and date for the IMG list. Please see below and have him correct.
+
+
+
+For every COMMERCIAL_CD.pl call in the HTBK DDA SCRIPT:
+
+${cid}${jid}${mmdd}${yyyy}_PDF_INX.lisneeds to be changed to${cid}${jid}_${mmdd}${yyyy}_PDF_INX.lis
+
+${cid}${mmdd}${yyyy}_IMG.lisneeds to be changed to${cid}_${mmdd}${yyyy}_IMG.lis
+
+
+
+Update 10/5; from comment 15:
+
+Looks like there is another issue, this time in the*DFA*. The file*HTBKDS2_PDF_INX.lis*being generated is empty. The reason for this is because the variable "*OUT_NAME_PDF*" was removed while removing all the pdfi logic for afp2pdf conversion. This variable is used for the pdf name during the writerecord call to the*HTBKDS2_PDF_INX.lis*, hence the blank*HTBKDS2_PDF_INX.lis*file.
+
+
+
+I ran the*EOM*files on parallel and if you take a look at the log file*/z/htbk/htbkds21018.log*, you will see*"Variable 'OUT_NAME_PDF' used without declaration"*45 times. Then if you look at*/z/htbk/HTBKDS2_PDF_INX.lis*you will see 45 blank lines for each time it attempted to write to*HTBKDS2_PDF_INX.lis*.
+
+
+
+Please correct this and re-test on parallel, also I highly suggest you run the*EOM*files for testing because that is when CD's are produced, all other cycles usually do NOT yield CD's and will purposely generate a blank lis file.
+
+
+
+After correcting the*OUT_NAME_PDF*issue, the*HTBKDS2_PDF_INX.lis*file should have entries, I tested this in my local set up. However you may still encounter issues when running comm cd, if you do then you will need to backtrack all the changes made for afp2pdf conversion, I did a diff and there are many. Again, please test with the EOM files, they are in /z/download/osiw/htbk/dda/ and I have listed them below:
+
+
+
+!https://app.na3.teamsupport.com/dc/1888578/images/505322f5-1849-4ff1-a9c2-2ef9231ade5c.png!
+
+
+author: anwarh
+comment: Hi [~Igor.Khosid],
+
+Parallel ID: 20221004123958
+
+Thanks,
+Anwar
+
+
+author: igor.khosid
+comment:    Parallel ID: 20221004123958
+   Currently in parallel: Yes
+   User: anwarH
+   Description: IS-1662 HTBK - [34219][pvt][in-house] DP - HTBK DDA&SAV EOM Comm_CD error
+   Date Submitted: 2022-10-04 12:40:02
+   Date Last Updated: 2022-10-04 13:00:46
+   Files:
+      1) htbk_dda_process_2.sh
+
+
+author: igor.khosid
+comment: QA - completed
+Script updated
+<ssh -o BatchMode=yes ${LOGNAME}@preprocessing02 "export testmode=$testmode;. ${home_master}/master/env_init.sh; perl ${home_master}/master/COMMERCIAL_CD.pl ${cid}${jid}${mmdd}${yyyy}_PDF_INX.lis ${cid}${mmdd}${yyyy}_IMG.lis $comm_cd_test_flag"
+>ssh -o BatchMode=yes ${LOGNAME}@preprocessing02 "export testmode=$testmode;. ${home_master}/master/env_init.sh; perl ${home_master}/master/COMMERCIAL_CD.pl ${cid}${jid}_${mmdd}${yyyy}_PDF_INX.lis ${cid}_${mmdd}${yyyy}_IMG.lis $comm_cd_test_flag"
+
+<echo -e "manually run this command if cripple rate approved: ssh -o BatchMode=yes ${LOGNAME}@preprocessing02 export testmode=$testmode;. ${home_master}/master/env_init.sh; perl ${home_master}/master/COMMERCIAL_CD.pl ${cid}${jid}${mmdd}${yyyy}_PDF_INX.lis ${cid}${mmdd}${yyyy}_IMG.lis $comm_cd_test_flag"
+>echo -e "manually run this command if cripple rate approved: ssh -o BatchMode=yes ${LOGNAME}@preprocessing02 export testmode=$testmode;. ${home_master}/master/env_init.sh; perl ${home_master}/master/COMMERCIAL_CD.pl ${cid}${jid}_${mmdd}${yyyy}_PDF_INX.lis ${cid}_${mmdd}${yyyy}_IMG.lis $comm_cd_test_flag"
+
+<ssh -o BatchMode=yes ${LOGNAME}@preprocessing02 "export testmode=$testmode;. ${home_master}/master/env_init.sh; perl ${home_master}/master/COMMERCIAL_CD.pl ${cid}${jid}${mmdd}${yyyy}_PDF_INX.lis ${cid}${mmdd}${yyyy}_IMG.lis $comm_cd_test_flag"
+---
+>ssh -o BatchMode=yes ${LOGNAME}@preprocessing02 "export testmode=$testmode;. ${home_master}/master/env_init.sh; perl ${home_master}/master/COMMERCIAL_CD.pl ${cid}${jid}_${mmdd}${yyyy}_PDF_INX.lis ${cid}_${mmdd}${yyyy}_IMG.lis $comm_cd_test_flag"
+
+
+author: anwarh
+comment: Hi [~yameelee]/[~rodriguez],
+
+Transfer form: [^IS-1662 HTBK Transfer Form.doc]
+
+Code is in:
+ */d/is/cvs/xfer/anwarH_backup/is-1662*
+
+Can you please move them into /d/is/cvs/xfer/anwarH/ and then release?
+
+Thanks,
+ Anwar
+
+[~dyuen]
+
+
+author: rodriguez
+comment: [~anwarh]You have the following (please image below) in */d/is/cvs/xfer/anwarH/*
+
+*!image-2022-10-04-15-27-58-385.png!*
+
+
+author: anwarh
+comment: Hi [~rodriguez],
+
+Please coordinate with[~TunA].
+He is also releasing some changes.
+
+Thanks.
+
+
+author: rodriguez
+comment: [~anwarh] [~dyuen] [~TunA] [~yameelee]I have released code, backup ID =20221004160542
+
+
+author: anwarh
+comment: From: [~rodriguez]
+
+Looks like there is another issue, this time in the DFA. The file HTBKDS2_PDF_INX.lis being generated is empty. The reason for this is because the variable "OUT_NAME_PDF" was removed while removing all the pdfi logic for afp2pdf conversion. This variable is used for the pdf name during the writerecord call to the HTBKDS2_PDF_INX.lis, hence the blank HTBKDS2_PDF_INX.lis file.
+
+ 
+
+I ran the EOM files on parallel and if you take a look at the log file /z/htbk/htbkds21018.log, you will see "Variable 'OUT_NAME_PDF' used without declaration" 45 times. Then if you look at /z/htbk/HTBKDS2_PDF_INX.lis you will see 45 blank lines for each time it attempted to write to HTBKDS2_PDF_INX.lis.
+
+ 
+
+Please correct this and re-test on parallel, also I highly suggest you run the EOM files for testing because that is when CD's are produced, all other cycles usually do NOT yield CD's and will purposely generate a blank lis file.
+
+ 
+
+After correcting the OUT_NAME_PDF issue, the HTBKDS2_PDF_INX.lis file should have entries, I tested this in my local set up. However you may still encounter issues when running comm cd, if you do then you will need to backtrack all the changes made for afp2pdf conversion, I did a diff and there are many. Again, please test with the EOM files, they are in /z/download/osiw/htbk/dda/ and I have listed them below:
+
+
+author: anwarh
+comment: Hi [~Igor.Khosid],
+
+As per TS comment #15
+Parallel id: 20221006034331
+
+Data file used: /z/download/osiw/htbk/dda/HERITAGEFINCORP.54099.EOM.HERI.10012022.zip.pgp
+
+HTBKDS2_PDF_INX.lis, HTBK_IMG.lis files looks ok now. 
+
+Thanks.
+
+
+author: igor.khosid
+comment:    Parallel ID: 20221006034331
+   Currently in parallel: Yes
+   User: rakibulH
+   Description: fixed based on IS-1662 #TS 34219fixed based on IS-1662 #TS 34219
+   Date Submitted: 2022-10-06 03:48:20
+   Date Last Updated: 2022-10-06 03:48:20
+   Files:
+      1) HTBKDS21.dfa
+
+
+author: igor.khosid
+comment: *Diff HTBKDS21.dfa prod vs test*
+<         PUT OUT_NAME_PDF!'|'!PRIMARY_ACCT_NUM!'|'!
+---
+>         PUT  ''!PRIMARY_ACCT_NUM!'_DDA_'!CHANGE(STMT_END_DATE,'-',
+>             '')!'_'!&SEQ_NUM!'.pdf'!'|'!PRIMARY_ACCT_NUM!'|'!
+
+
+
+author: anwarh
+comment: Hi [~rodriguez],
+
+Can you please release this fix too. 
+
+Transfer form: [^IS-1662 HTBK Transfer Form.doc]
+
+Code is in:
+ */d/is/cvs/xfer/anwarH_backup/is-1662*
+
+Please move them into /d/is/cvs/xfer/anwarH/ and then release?
+
+Thanks,
+Anwar
+
+[~dyuen]
+
+
+author: rodriguez
+comment: [~anwarh] [~dyuen]Code has been released, backup ID =20221006110034
+
+[~dyuen] FYI,DP will need to rerun archival and HTBK will receive another set for EOM
+
+I did a test and confirm CD's were generated:
+
+!image-2022-10-06-11-03-15-332.png!

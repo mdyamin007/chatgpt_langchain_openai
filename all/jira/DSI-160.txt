@@ -1,0 +1,337 @@
+title:  7418 / 41930 - FCSB DI login instead of SingleSignOnServlet analysis + development
+description: Please check what are the differences between current FCSB login and DI login. If we use DI instead of SingleSignOnServlet, is the front end going to behave exactly as before? Please analyze without having to change the i3-core code, how to support DI instead of  SingleSignOnServlet. If current i3-core code can't support the consistency that we require, then we might need to go with the front end jsp page route. Otherwise we can go with web.xml route.
+
+
+author: moshiur.rahman
+comment: [~rifat.mahmud] [~abdullah.baki]
+
+For DI login, two jsp pages has been added in root folder.
+ * IFSBBhblogin.jsp
+ * IFSBBssoexchange.jsp
+
+In sso file,mandatory fields:
+ * user_fi_number (cif),
+ * pswd(password)
+ * gmt
+ * comp_timeout
+
+SSO business logic:
+ * Must provide a valid CIF number.
+ * Inserts into np table if not exists already.
+ * Email wont be updated from sso file.
+ * If sso date is null and np table already has an entry for that user and a separate email is given, its added as a new entry in np table. This email is shown as Email Address2 in front-end.
+ * Np will have at most two entries for a user.
+ * Email cant be updated from root site.(enrollment and profile page)
+
+Three enrollment steps
+ *  Step1: pdf show
+ *  Step2: e-statement disclosure agreement
+ *  Step3: delivery preference and email show
+
+
+author: sharmina.rahman
+comment: FHNB's DI setup has been tested.
+
+Feedback:
+ * Email field should be mandatory.
+ * No use for gmt field, not required to make it a mandatory field
+ * Email gets inserted after enrollment, after that no update is possible from front end or through sso.
+ * If sso is null, and one email is available, if new email is found, it inserts new record.
+ * Supports two emails per usr_id, not more than two
+ * no update through sso once np is inserted
+
+no visual change in front-end when any changes is submitted in profile even if there is no email, and check box is selected, no error is given
+ 
+PS:
+ * tested in local environment.
+ * Please find the attached test case.
+
+
+author: sharmina.rahman
+comment: FNBT's DI setup has been tested.
+
+Feedback:
+ * email field changed to a mandatory field.
+ * If any account number is passed through sso, that specific account will be selected in dropdown.
+ * No use for gmt field, not required to make it a mandatory field
+ * Email gets inserted after enrollment, after that no update is possible from the front end or through sso.
+ * If sso is null, and one email is available, if a new email is found, it inserts a new record.
+ * Supports two emails per usr_id, not more than two
+ * no update through sso once np is inserted
+ * no visual change in front-end when any changes is submitted in profile.
+ * even if there is no email, and checkbox is selected, no error is given
+
+PS:
+ * tested in local environment.
+ * Please find the attached test case.
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi Sharmina, can we have the changes committed and tested onto the development environment as well?
+
+And once that's finished and tested, let me know!
+
+
+
+Also, how are the account numbers in the acct drop down list/selector sorted?
+
+The previous SSO method sorted it by account number.
+
+The implementation team is asking.
+
+
+
+Thanks,
+
+Let me know if you have any questions
+
+
+author: moshiur.rahman
+comment: Hi [~Ethan.Yu],
+The account numbers in the acct drop down list/selector are sorted by acct_number. For DI login, same query is being used to show the account numbers as SSO. The query sorts the accounts by acct_number.
+
+We don't have permission to deploy code on dev environment. We can deploy code on pilot.
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Yes, please deploy onto pilot if that's the case.
+
+Thanks!
+
+
+author: moshiur.rahman
+comment: I have committed the code for both FHNB and FNBT on trunk.
+
+*Change in files:*
+
+ROOT/enroll/optoutAll.jsp
+ ROOT/enroll/ssoOptoutAll.jsp
+ ROOT/enroll/ssoRegister.jsp
+ ROOT/include/security.jspf
+ ROOT/pending/optoutAll.jsp
+ ROOT/pending/ssoOptoutAll.jsp
+ ROOT/pending/ssoRegister.jsp
+ ROOT/profile/token_recovery_action.jsp
+ ROOT/profile/token_recovery.jsp
+ ROOT/selectAcct.jsp
+ ROOT/WEB-INF/web-dev.xml
+ ROOT/IFSBBhblogin.jsp (Newly Added)
+ ROOT/ IFSBBssoexchange.jsp (Newly Added)
+
+In the web-dev.xml, the param-value (password) for both FHNB and FNBT has been set.
+
+*FHNB:*
+ <context-param>
+      <param-name>com.infoimage.security.ssignonpw</param-name> 
+      <param-value>F)*($JGrls</param-value> 
+      <description>Single-signon password</description>
+ </context-param>
+
+*FNBT:*
+ <context-param>
+      <param-name>com.infoimage.security.ssignonpw</param-name>
+      <param-value>j@FJf+05sQ</param-value>
+      <description>Single-signon password</description>
+ </context-param>
+
+In database, AUTH_CLASSNAME column of AUTHENTICATOR table must be: com.infoimage.util.security.auth.DefaultAuthContext
+
+Thanks,
+ Moshiur
+
+
+author: moshiur.rahman
+comment: Hi [~Ethan.Yu] ,
+ I have added a wiki page link. In that documentation, everything has been described in details about development.
+
+Thanks,
+ Moshiur
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi, Can you update the wiki page link to explain what the gmt value should hold, as well as the comp_timeout value?
+
+
+
+Thanks!
+
+
+author: mamunur.rashid
+comment: Hi, [~Ethan.Yu]
+
+I have updated the wiki page. You can find the description of *gmt* and *comp_timeout* value under the heading"required fields in sso file".
+
+
+author: moshiur.rahman
+comment: Hi [~Ethan.Yu]
+ There is some update in two pages regarding DSO login. I have updated the wiki page. For both FHNB and FNBT, updated code are committed on trunk. This changes will go along with DI. Please pull the code from trunk before testing.
+
+Updated pages are:
+
+ROOT/src/main/webapp/signon.jsp
+
+ROOT/src/main/webapp/profile/forget_pw_reset.jsp
+
+
+
+Thanks!
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi [~moshiur.rahman] [~rifat.mahmud] [~abdullah.baki],
+
+
+
+The work you've done currently was set up for bottom line bbSSO, instead of digital insight diSSO requirements.
+
+I've made some updates to FNBT's client code, but feel freel to revert them or use them.
+
+
+
+The client said this:
+
+We are passing : gmt,user_fi_number,email,timeout,pswd,account_number,anum,astat,atype,ausr,adsc. This matches how we have other FIs configured. Is there a reason FHNB would need to be different?
+
+
+
+Could you get this fix updated and ready by Thursday, 1/9?
+
+Will need to get this to client asap.
+
+
+
+Thanks!
+
+
+author: moshiur.rahman
+comment: Hi [~Ethan.Yu]
+
+I used BKFN as a reference while converting the login method from SSO to DI and BKFN uses DI. So, why do you think that *itsbottom line bbSSO*? I have seen your implementation that breaks few custom logic of FCSB. For example:
+ # np link type of FCSB is byUsr and it allows at most two np records per user but, in your code, in*IFSIBssoexchange.jsp*page you have searched by both usrId and acctId and inserted both usrId and acctId.
+ # It updates email during sso But, FCSB doesn't allow that. For reference, you can check my previous comment on this ticket.
+ # The parameters you've used*anum,astat,atype,ausr,adsc,* these parameters**are only used to create*DIBusinessAccount*list. But, you haven't used this list anywhere else.
+ # There is a check for tokens length in*IFSIBssoexchange.jsp* page. The logic is, if the length is not equals to 4, then it throws an exception. But, the token you have generated has length 6. Thats why I couldn't login. Were you able to login using your implementation?
+ # You didn't pass *selected_acct* and *selected_acct_type*from SSO file. This account is selected in the account drop down list by default(previous SSO business).
+
+Thanks!
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi [~moshiur.rahman],
+
+
+
+The parameters you're taking in, in the Product Requirements page you've provided are akin to those of Bottom Line bbSSO, comp_email, and comp in general stands for Business "company" logins.
+
+
+
+For a standard diSSO request, the parameters being passed in are those the client mentioned in my comment above. If the current code you have doesn't take in those parameters, the vendors' sso requests won't hit.
+
+
+
+I will revert my changes to FNBT, they were committed quickly as a means for testing to see whether we wanted to follow other diSSO Clients using the WEB-INF/web.xml files such as GCBK or HTBK. Feel free to ignore those, however, the changes for the intake parameters will need to be made.
+
+
+
+Let me know if you have questions, but if it's clear, please start on making the updates.
+
+
+
+Thanks
+
+
+author: moshiur.rahman
+comment: I have changed the parameters of SSO file to login.
+
+In sso file,mandatory fields:
+ * user_fi_number (cif),
+ * pswd(password)
+ * gmt
+ * timeout
+ * email
+
+Newly added fields :
+ * account_number, anum,astat,atype,ausr,adsc
+
+Removed fields:
+ # selected_acct
+ # selected_acct_type
+
+*Please find the sample sso file in the attachment*
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hey Moshiur,
+
+
+
+The SSO portion works pretty good overall now, but I noticed one thing regarding users with DSO date not null in the usr_sessions table.
+
+When a user with DSO date not null tries to SSO in (even if they have an SSO date as well), theerrorMessage_DSO_USER shows up.
+
+
+
+Is this restriction supposed to be true even in the case where the user's usr_session has a non-null SSO date, alongside a non-null DSO date?
+
+
+
+Just curious.
+
+
+
+Thanks!
+
+
+author: moshiur.rahman
+comment: Hi [~Ethan.Yu] ,
+The issue is fixed. Please have a look
+Thanks
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi Moshiur,
+
+
+
+I've actually reverted the change, I talked with Joe and he mentioned that users should only be able to log on through one method, either DSO ,or SSO, never both.
+
+
+
+In addition we've also changed the files/URLS To:
+
+[IFSIBhblogin.jsp|https://fnbtpilot.infoimageinc.com/IFSIBhblogin.jsp]
+
+[IFSIBssoexchange.jsp|https://fnbtpilot.infoimageinc.com/IFSIBssoexchange.jsp]
+
+
+
+Could you also help update the WIKI confluence page with these changes, as well as to the parameters.
+
+
+
+Thanks so much!
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi Moshiur,
+
+
+
+Here's an urgent request unfortunately:
+
+Can you see what changes would be needed to allow support to both SSO7 and DI SSO to be up and functional at the same time and get back to me?
+
+
+
+Thanks!
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Attached a text file presenting the FNBT PDF error. Thanks!
+
+
+author: moshiur.rahman
+comment: Hi [~Ethan.Yu] @isd
+We tried to reproduce this pdf issue by following the procedure you mentioned(blocking all cookies on Internet Explorer) as well as normally ssoing FNBT. We tried using the acctId you provided in the text file of the PDF error as well as different accctIds. We even login FNBT through an iframe and it worked. Every time we were able to see the pdf. Can you please provide us some more details about reproducing this issue? I am attaching the screenshot below.
+
+ !IE_pdf_test.PNG|thumbnail! 

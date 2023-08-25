@@ -1,0 +1,310 @@
+title: Notification Service Design Doc
+body: # Introduction
+
+## Purpose/Objective Summary
+
+The project is responsible to send notification in bulk. Notification can be
+email, sms.  
+  
+
+  
+
+# Design
+
+## Architecture & Workflow Diagram
+
+  
+  
+
+  
+
+## Key Components
+
+ **NEWLY INTRODUCED COMPONENTS**
+
+  
+
+### Data Transformers:
+
+  1. Able to pull record from different database, file system, and third party APIs.
+  2. Should be able to provide data in a uniformed structure/format as per the requirements needed from Notification Service
+  3. Should be able to pull data based on targeted criteria.
+
+  
+
+### ECM (Email Campaign Management):
+
+  1. Should be able to provide UI to create and customize template for email.
+  2. Able to provide HTML code.
+  3. Able to place place holders, targeted contents holders.
+  4. Eventually will be integrated into Campaign Manager (MM4.0) to include target-group criteria definition info
+
+### Notification RestAPI:
+
+  1. Able to receive request to for sending one or many notification.
+  2. Able to pull files from File Server.
+  3. Able to provide API for reports.
+  4. Able to provide API for unsubscribe users and click tracking.
+  5. Able to provide different reports for each job with different parameters.
+  6. Notification CSV Reader and Validator (Sub-Component):
+    1. Able to read csv, retrieve list of variables, and able to validate all the data.
+
+  
+
+### Messaging Server:
+
+  1. Responsible for queue the different job for process.
+  2. Able to provide priority queues to manage priorities.
+
+  
+
+### Message client and Receiver:
+
+  1. Client should be able to send job to messaging server, and assign priority for each job.
+  2. Receiver should be able to pull job from server, and forward to Notification Server.
+
+### Notification Processor:
+
+  1. Able to prepare notification.
+  2. Able to call corresponding helper in order to send notification.
+  3. Able to record reason why notification not being sent.
+  4. Able to support different helpers in future.
+  5. Able to embed click track url while preparing notification. (should be configurable for each cid)
+  6. Should be able to handle different log levels for job, and able to take decision based on different log level.
+  7. Upon completion of notification-job processing, it's responsible to trigger a callback to update the final job status (i.e. success OR failed) (Was labeled as 'broadcaster' before)
+  8. Email and SMS Helper (Sub-Component):
+    1. Email Helper should be able to send normal and encrypted emails.
+    2. SMS helper should be able to send sms, and designed that way it should be accept any new vendor with minimal changes.
+
+  
+
+### Zimbra Log Analyzer:
+
+  1. Able to retrieve bounce back email logs, and store it in database.
+  2. Also, able to retrieve email sent successfully logs in future. (if required)
+
+### Unsubscribe Handler
+
+  1. Able to provide unsubscribe functionality.
+  2. When this request appears, need to broadcast to cid that user has been unsubscribed.
+  3. Able to different categories for unsubscribe.
+  4. Once user has been unsubscribe, user will not get notification for that event.
+
+ **EXISTING COMPONENTS**
+
+  
+
+### eStatement WebApp:
+
+  1. Able to send on-demand email notifications. Examples:
+    1. enrollment welcome emails
+    2. opt-in/out confirmation
+
+  
+
+### eStatement PUI:
+
+  1. Responsible for processing recurring estatement data files
+  2. Able to send statement available notification.
+  3. Able to send Marketing promotion notification.
+  4. Able to send statement reminders.
+  5. Able to select different template based on size of attachment/statement.
+  6. Able to talk with Data Transformer to gather list of users.
+  7. Able to receive broadcast from Notification Service for job completion.
+
+  
+
+### Click Tracker
+
+  1. Able to track events like email being opened, or any image being clicked by storing in database.
+  2. Able to retrieve redirect URL from database, and redirect client to external page.
+
+  
+
+## Data Model
+
+Collections:
+
+    
+    
+    1. notification_job{
+    
+        id: ObjectId,
+        cid: text,
+        application: text,
+        priority: text,
+        csv_path: text,
+        created_dt: text,
+        status: text,
+    }
+    
+
+  
+
+    
+    
+    2. notification{
+    
+        id: ObjectId,
+        cid: text,
+        type: text,
+        from: text,
+        to: text,
+        csv_row: text,
+        attachments: Array,
+        isEncrypt: boolean,
+        created_dt: text,
+        send_dt: text,
+        click_track_url: text,
+            app_user_id: application user identifier,
+            user_id: user identifier from user collection,
+        notification_job_id: reference to notification_job collection,
+            template_id: Identifier for template. (receive from csv file.)
+    }
+    
+    
+    
+    3. notification_log{
+    
+        id: objectId,
+        notification_id: Reference to notification collection.
+        cid: text,
+        event_type: text,
+        created_dt: text,
+        message: text
+    }
+    
+    
+    
+    4. users{
+    
+        id: objectId,
+        application: text,
+        first_name: text,
+        last_name: text,
+        phone_number: bigint,
+        email: text,
+        account_number: text,
+        app_user_id: text,
+        unsubscribe_list: Array
+    }
+    
+
+**Questions:**
+
+1\. How should I able to get more than one template content in on single HTTP
+call? Can we store template in file system? OR Do we need different API to
+retrieve template content?
+
+2\. Click tracking: URL for email being opened or not will be placed by
+notification service.  
+However, if email contains multiple images and links on image, Should
+Notification Service should be able to track those link OR web applications?
+
+  
+
+## Application component functional details
+
+###  **REST API Specification:**
+
+ _1\. POST /v1/notification/{cid}_  : Create new notification.
+
+Query Parameter:
+
+Name| Type| Description| Required  
+---|---|---|---  
+type| String| type of notification. (email, sms, etc.)| true  
+from| String| sender email address/ phone number| true  
+to| String| receiver email address/ phone number| true  
+message| String| message need to be sent| true  
+isTemplate| boolean| flag to differentiate the message as template or actual
+messaage| true  
+dataFile| file| data file need be processed for fill out template| false  
+attachment| file| attachment need to be sent with notification.| false  
+isEncrypt| boolean| Need to encrypt the notification| true  
+  
+ _2\. GET /v1/notification/{cid}_  : Get the notification object.
+
+Query Parameter:
+
+Name| Type| Description| Required  
+---|---|---|---  
+notificationId| String| notification identifier for notification| false  
+type| String| type of notification. (email, sms, etc.)| false  
+from| String| sender email address/ phone number| false  
+to| String| receiver email address/ phone number| false  
+isEncrypt| boolean| Need to encrypt the notification| true  
+  
+  
+
+## Integration Points & Interface
+
+ **TODO: (If Applicable)**  List out Integration Points and corresponding
+interface
+
+From Component| To Component| Details| Error Handling  
+---|---|---|---  
+InfoTRAC| PUI| DT_JOB_ID need to be synchronized by...| If DT_JOB_ID during
+PUI processing is not found in ...  
+  
+* * *
+
+  
+[Edit this
+section](https://i3dev.easyredmine.com/projects/notifsvc/wiki/Notification_Service_Design_Doc/edit?section=22)
+
+## Questions
+
+  
+
+# Summarized Change Log
+
+Date| Who| Changes to Design Doc  
+---|---|---  
+6/09/2014| PShah| Added some TODO notes and examples  
+6/09/2014| PShah| Initial Draft  
+  
+* * *
+
+  
+
+# Sign-Off
+
+Group| Date| Who| Comment  
+---|---|---|---  
+Product Manager (Business)|  
+|  
+|  
+  
+Account Service (AS)|  
+|  
+|  
+  
+Dev./Impl. Manager (Technical)|  
+|  
+|  
+  
+Production Control (PC)|  
+|  
+|  
+  
+Data Processing (DP)|  
+|  
+|  
+  
+Accounting/Invoicing|  
+|  
+|  
+  
+  
+  
+
+##  Attachments
+
+  
+
+400
+
+  
+
+

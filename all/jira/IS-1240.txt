@@ -1,0 +1,255 @@
+title: IDCU - Stmt PDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133613-C00.01-V21301
+
+Processing Scripts to modify:
+ idcu_stmt_process.sh
+
+Data Files to use:
+ IDCU_STMT_043022.7Z.gpg
+
+
+
+*NOTE*: This job runs on RH2. Since we are migrating from RHS to RH2, we should test all options so that we can do afpcompare and also ensure there is no errors in the processing logs.
+
+
+author: JIRAUSER11105
+comment: Hi [~William.Kong]
+
+!idcu.JPG|thumbnail!!3.JPG|thumbnail!!idcustmt.JPG|thumbnail!
+
+there are some conditions of "e" option already on DFA which have some different layouts from "pdfi" option. Should we ignore the previous "e" option asthere is no "e" option was running in the processing script
+
+
+author: william.kong
+comment: [~Hamimul.Chowdhuri]: If the processing script does not invoke job_sel 'e', then yes, please migrate "pdfi" logic over to "e" option.
+
+
+author: william.kong
+comment: [~Hamimul.Chowdhuri]: Were you able to make progress on this project?
+
+
+author: JIRAUSER11105
+comment: Hi [~William.Kong],
+
+by far- generated PDF and index with afp2pdf using a small portion of data from the data file,
+
+to do- generate using Data fileIDCU_STMT_043022.7Z.gpg,
+
+     Checkthe zip file, PGP encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+
+author: william.kong
+comment: [~Hamimul.Chowdhuri]: It's been a few days now, any progress updates. We have to catchup and get this project completed in time.
+
+
+author: william.kong
+comment: Per[~anwarh]email on 9/13, the new revised live date is for 9/22.[~Hamimul.Chowdhuri], please do not miss this live date to submit to QA.
+
+
+author: anwarh
+comment: Hi [~William.Kong],
+
+Parallel ID: 20220923044642
+ production cycle: 08/31
+
+Data files:
+/z/dsi_pdfi_testing/idcums1/data/IDCU_STMT_083122.7Z.gpg
+
+old zips: /z/dsi_pdfi_testing/idcums1/old/
+ new zips: /z/dsi_pdfi_testing/idcums1/new/
+
+Notes:
+ * There was a wired issue with IDCUS6.OGL. It showed a green bar at the top that didn't appear in the pdfi or print, but when used in afp2web, it showed up. I had to remove it from the overlay. This is only used in pdfi/archival.
+
+Thanks,
+ Anwar
+
+
+author: william.kong
+comment: [~anwarh]: I visually looked at one of the pdf and it looks like afp2web does a better job rendering the content and it matches manually.
+
+However, I sorted and compared the 'index.txt' file and both are different. The production has encapsulated double quote (i.e. "), but the new parallel version does not.
+
+I sort both prod and parallel index file and removed the double-quotes from production version and compared. It matches up in terms of data integrity.
+
+
+
+Can you please fix it so that the parallel version also have the double quotes?
+
+
+
+Please update status when completed so that we can officially as QA to start this project.
+
+
+
+
+
+
+author: igor.khosid
+comment: [~William.Kong]
+Please do not set status to "QA failed"
+
+[~Andrey.Kutsenko] - please create a bug
+
+
+author: william.kong
+comment: [~anwarh]: Any ETA to get this quotation character corrected?
+
+
+author: anwarh
+comment: [~William.Kong], this has been fixed.
+New archival at:/z/pdf_afp/idcu/idcums1/
+
+
+author: william.kong
+comment: I noticed the zip file names did not match and is due to the insert file PROC_DATE was set to 032922 instead of 083122. This is a processing issue and not a logic issue.
+
+The index file is slightly different which is ok. Only some of the records last column, "EMPLOYEE FLAG', value is different for some record b/c different IDCU_PERM cross reference file was used. But the reported issue from my comment above is fixed where the double quote characters are in the index file now.
+
+The above two discrepancies are acceptable.
+
+
+
+[~Andrey.Kutsenko]/[~Igor.Khosid]: I've placed the updated files in:
+
+
+
+ca-unittest-pr-02:/d/pdf_compare/idcums1_parallel
+
+ca-unittest-pr-02:/d/pdf_compare/idcums1_prod
+
+
+
+
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: Just a courtesy reminder, please review this QA Request when time permits.
+
+
+author: JIRAUSER11104
+comment: QA is in progress.
+Ran script:
+{code:sh}[andreyK@ca-unittest-pr-02 pdf_compare]$ perl pdf_compare.pl idcums1_prod idcums1_parallel result_idcums1 -pixels 12 -threads 8 -maxfiles 2000 -regex 'IDCUSTMT_[0-9]+_<CUSTOM=[0-9]+>_[0-9]+.pdf'{code}
+
+
+author: JIRAUSER11104
+comment: QA is completed:
+PDF files in parallel look better and have a smaller size.
+{quote}Total PDF Files Scanned: 2000
+allowedDifferenceInPercentPerPage: 12:
+Thread Count: 8
+
+Total PDF Files with Differences: 1998
+WARNING:  We did not compare ALL the pdfs!
+          pdf_compare.pl will only process the first 2000 pdf files out of the total 335174 pdfs
+Start Time: Wed Oct 26 17:27:26 PDT 2022
+Finish Time: Wed Oct 26 20:37:10 PDT 2022{quote}
+
+
+author: william.kong
+comment: I spot checked some of the 1998 difference out of 2000. Main reason why 99.9% differences is because of the slight color differences and the dynamic positioning of the headers where I'm sure QA cannot ignore via the pdfcompare tool.
+
+
+
+In summary, I believe we can pass this+after+ we confirm 1 more item. I'm asking DP to help re-run this job using 10/31 EOM cycle with the message manager message. The test case used is 8/31 EOM and did not have an image.
+
+
+
+Once DP completes and helps with this exercise and I confirm that the message looks ok, then I will update this ticket to have Anwar release the File Transfer form.
+
+
+
+
+author: william.kong
+comment: [~anwarh]: This looks good. Please proceed with File Transfer form.
+
+
+
+Based on your zoom chat, we confirmed that PDF archivals does NOT include Message Manager graphics:
+
+IF &JOB_TYPE=='pdfi' ;
+
+THEN ;
+
+&MSG_MGR_FLAG = 0 ;
+
+ELSE ;
+
+&MSG_MGR_FLAG = 1 ;
+
+ENDIF ;
+
+
+
+
+author: anwarh
+comment: Hi [~TunA],
+
+Transfer form:  [^IS-1240 IDCU Transfer Form.doc] 
+
+Code is in:
+*/d/is/cvs/xfer/anwarH_backup/is-1240*
+
+Can you please move them into /d/is/cvs/xfer/anwarH/ and then release?
+
+Thanks,
+Anwar
+
+[~William.Kong]
+
+
+author: tuna
+comment: Hi [~anwarh],
+
+Following codes have been released.
+
+Thanks,
+
+Tun
+
+
+
+
+
+
+
+total 8 files
+
+20221114141702 11/14/2022 anwarH IS-1240 IDCU - Stmt PDFi Conversion to AFP2PDF Python [InHse]
+
+[main@rhs ~]$ ll /d/is/cvs/xfer/anwarH_backup/is-1240/
+ total 984
+ -rwxrwxrwx 1 anwarH DSI 299311 Nov 13 14:02 IDCUMS11.dfa
+ -rwxrwxrwx 1 anwarH DSI 408 Nov 13 14:02 idcums1_pdf.control
+ -rwxrwxrwx 1 anwarH DSI 174 Nov 13 14:02 idcums1_pdf_template.control
+ -rwxrwxrwx 1 anwarH DSI 5852 Nov 13 14:02 idcums1.procs
+ -rwxrwxrwx 1 anwarH DSI 5490 Nov 13 14:02 idcu_pdfi_zip.pl
+ -rwxrwxrwx 1 anwarH DSI 1292 Nov 13 14:02 IDCUS6.OGL
+ -rwxrwxrwx 1 anwarH DSI 25584 Nov 13 14:02 idcu_stmt_process.sh
+ -rwxrwxrwx 1 anwarH DSI 616 Nov 13 14:02 O1IDCUS6.OVL
+
+
+
+
+
+[~William.Kong]

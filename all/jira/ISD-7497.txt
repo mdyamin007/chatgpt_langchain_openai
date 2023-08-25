@@ -1,0 +1,164 @@
+title: SSCU - [30149][pvt] Enrollment Status update 
+description: SSCU - Enrollment Status update
+App: eSide
+
+*Description*: Setup month process to purge certain Online Banking profiles that no longer use their eStatements. A file with the account numbers will be
+provided. The provided file will be used to update the enrollment statuses from paperless to paper statements for those accounts?
+* The file will placed in the main FTP location.
+* File naming/forma: sscu_revertToPaper_MMDDYYYY.txt (Example: sscu_revertToPaper_06232022.txt)
+
+-3 hours for setup/testing.
+-File can be dropped off in the main FTP location.
+-File naming/format can be something like: sscu_revertToPaper_MMDDYYYY.txt
+
+Internal notes:
+processing.step.#=revert_to_paper
+revert_to_paper.classPath=com.infoimage.processing.application.revert_to_paper.ProcessingJob
+
+*Timeline*:
+ * Turnover: 7/28
+ * Sample: 8/5
+ * Approval: 8/9
+ * Live: 8/17
+ * Parallel (No)
+
+
+author: shun.kuwashima
+comment: [~barnetts] Revert to paper process is setup on pilot. I tested with a small number of accounts and it's working properly.
+
+For client approval, we can have the client provide us a sample file with accounts that are on electronic, either attached to the TS ticket or dropped off in the test folder on FTP. Once we receive it, I can manually run it and they can verify that the accounts were switched to paper. 
+
+Fyi the scanner automation is only setup on production, hence we cannot test having the client simply drop off the file and having it run automatically. However we can set that up on production once we go live with this.
+
+
+author: barnetts
+comment: Thank you [~Shun.Kuwashima],
+
+I am following up with SSCU
+
+
+author: barnetts
+comment: Hi [~Shun.Kuwashima],
+
+Per SSCU, 
+I've attached the test accounts. Once it is ran we will confirm on the pilot site that they've been updated to paperless.  [^InfoImage Test Accounts.xlsx] 
+
+Thanks, Barnett
+
+
+author: shun.kuwashima
+comment: Hi [~barnetts],
+
+We would prefer if they provided a .txt format instead, however I copy/pasted those accounts into a separate text file following the preferred naming convention (sscu_revertToPaper_08042022.txt) and it seems to have ran successfully. Please have them check on pilot.
+
+Also, our process skips the first line of the file so going forward if they could actually provide some kind of header in that first line, that would be great.
+
+Thanks,
+Shun
+
+
+author: barnetts
+comment: Thank you [~Shun.Kuwashima]
+
+
+author: barnetts
+comment: Hi [~Shun.Kuwashima] / [~Igor.Khosid]
+
+SSCU reviewed samples on the pilot site and confirmed all were converted to Paper statements.
+
+Thanks, Barnett 
+
+
+author: shun.kuwashima
+comment: Thanks, I will work on moving this to stage today. [~Igor.Khosid] I will provide another update with more instructions once it is ready for QA.
+
+
+author: shun.kuwashima
+comment: Hi [~Igor.Khosid], we are setting up the Revert to Paper process, which is a PUI process that takes in a list of account numbers and switches them to paper. Please help test by following the instructions below:
+
+1. Take a look at the list of accounts attached to this story (sscu_revertToPaper_08042022.txt) and verify that they are on electronic currently.
+2. On Stage PUI, run the above file by going to the very last step called 'Revert account numbers back to paper' (this file should already be in the directory for you to choose from).
+3. Check that the file processes successfully and verify that the accounts have been switched to paper.
+
+Let me know if there are any issues. Thanks!
+
+
+author: igor.khosid
+comment: [~Shun.Kuwashima]
+Thank you for the detailed instructions
+QA - completed, all accounts "Delivery Preferences - updated to "Receiving paper statements" form the "Receiving paperless statements"
+[08/08/2022 17:31:48] Data File: /d/INPUT-DEV/I3/process-files/sscu/sscu_revertToPaper_08042022.txt
+[08/08/2022 17:31:48] Processing account[297165]
+[08/08/2022 17:31:48] Updating paperless stmtType[default] -> 'B'
+[08/08/2022 17:31:48] Processing account[305994]
+[08/08/2022 17:31:48] Updating paperless stmtType[default] -> 'B'
+[08/08/2022 17:31:48] Processing account[325882]
+[08/08/2022 17:31:48] Updating paperless stmtType[default] -> 'B'
+[08/08/2022 17:31:48] StmtType[visa] - No Status change.
+[08/08/2022 17:31:48] Processing account[658554]
+[08/08/2022 17:31:48] Updating paperless stmtType[default] -> 'B'
+[08/08/2022 17:31:48] Processing account[402123]
+[08/08/2022 17:31:48] Updating paperless stmtType[default] -> 'B'
+[08/08/2022 17:31:48] Processing account[381186]
+[08/08/2022 17:31:48] Updating paperless stmtType[default] -> 'B'
+[08/08/2022 17:31:48] Processing account[282846]
+[08/08/2022 17:31:48] Updating paperless stmtType[default] -> 'B'
+[08/08/2022 17:31:48] StmtType[enotice] - No Status change.
+[08/08/2022 17:31:48] Processing account[653223]
+[08/08/2022 17:31:48] Updating paperless stmtType[default] -> 'B'
+[08/08/2022 17:31:48] StmtType[visa] - No Status change.
+[08/08/2022 17:31:48] Processing account[345794]
+[08/08/2022 17:31:48] Updating paperless stmtType[default] -> 'B'
+[08/08/2022 17:31:48] Processing account[310568]
+[08/08/2022 17:31:48] Updating paperless stmtType[default] -> 'B'
+
+
+
+author: shun.kuwashima
+comment: Thanks [~Igor.Khosid]
+
+[~barnetts] this has passed QA, we are on track for production release on 8/17.
+
+
+author: barnetts
+comment: Thank you [~Igor.Khosid]
+
+
+author: barnetts
+comment: Hi [~Shun.Kuwashima],
+
+Please advise if we can release early?
+
+Thanks, Barnett
+
+
+author: shun.kuwashima
+comment: Hi [~barnetts], yeah since this doesn't involve any code updates or server restarts, we can release this early. Did they want it released today?
+
+
+author: barnetts
+comment: Hi [~Shun.Kuwashima],
+
+Thank you for letting me know. Please release today.
+
+Thanks, Barnett 
+
+
+author: shun.kuwashima
+comment: [~barnetts] This is released to production now. I've also set up the scanner to automatically process the file when it is dropped off via their main FTP folder (note: if they drop it off in a subfolder instead, the automatic process will not work unless I update the scanner accordingly). For this to work, please ensure that the client formats the filename and the content correctly as follows:
+
+Filename convention: sscu_revertToPaper_MMDDYYYY.txt (i.e. sscu_revertToPaper_08152022.txt)
+
+File content requires a header line (i.e. Account) for the first line of the file, other than that they just need to list the account number only. Please ensure the first line does not contain an account number. Example file content below:
+
+Account
+111
+222
+333
+...
+
+Also just fyi I will be out the rest of today, so if there are any urgent questions/issues about this please pass it on to Sean. Thanks.
+
+
+author: barnetts
+comment: Thank you [~Shun.Kuwashima] 

@@ -1,0 +1,65 @@
+title: Stateless SSO integration with DI
+body: # Stateless SSO integration with Digital Insight
+
+  
+
+## BEFORE  
+
+### Overall Diagram
+
+  
+  
+
+### Workflow steps
+
+  1. End User access SSCU Online Banking site, whenever user hit the link to view eStatements
+  2. Request is routed to specific handling on DI servers
+  3. DI will submit a request directly from DI server to InfoIMAGE server with Account Number information
+  4. InfoIMAGE will generate a new unique token, register it into InfoIMAGE's application server session
+  5. The unique token is then returned to the DI server request.
+  6. DI would respond with a page-redirect to end-user's browser with the unique token as part of the URL query string parameter
+  7. When the redirected incoming request reach InfoIMAGE server, the request will carry the token passed-through by DI
+  8. InfoIMAGE validate the token sent along the query string parameter against the token value stored within InfoIMAGE's application server session
+
+  
+
+## STATELESS
+
+### Overall Diagram
+
+### Workflow steps (Only Orange step contents are changed)
+
+  1. End User access SSCU Online Banking site, whenever user hit the link to view eStatements
+  2. Request is routed to specific handling on DI servers
+  3. DI will submit a request directly from DI server to InfoIMAGE server with Account Number information
+  4. InfoIMAGE will generate a token based on a time-based encrypted (with secret passphrase) value of following:
+    * Account Number
+    * User ID
+    * Very Soon Token Expiration Timestamp (e.g. 10 seconds)
+  5. The encrypted token is then returned to the DI server request. To DI, context of the token doesn't matter as DI is only passing such value through for the redirected request
+  6. DI would respond with a page-redirect to end-user's browser with the unique token as part of the URL query string parameter
+  7. When the redirected incoming request reach InfoIMAGE server, the request will carry the token passed-through by DI
+  8. InfoIMAGE validate the token sent along the query string parameter by:
+    1. decrypting the value with secret passphrase (only InfoIMAGE knows)
+    2. validate against the expiration to ensure it is NOT a hijacked request from browser history (if any)
+    3. validate Account Number vs User ID match correctly
+    4. Set a renewed encrypted token value into End-User's browser cookie as a session-cookie
+  9. Subsequent requests will validate against the encrypted value inside cookie
+
+  
+
+### It is secure because:
+
+  1. Encrypted Token appears in the URL for initial SSO handshake request. All subsequent requests are validated through the encrypted value inside the browser cookie. Even though URL might get stored in Browser History, but the value will be valid for only a matter of seconds. It will expire before user even leave the computer
+  2. Cookie that carry encrypted value for subsequent requests are set as a Session-Cookie. It will automatically expire and purged upon closing of the browser window.
+  3. All requests & responses are done via HTTPS protocol
+
+  
+
+###  Attachments
+
+  
+
+250
+
+

@@ -1,0 +1,59 @@
+Format Group Definition:
+Format group definition is one of the most major windows in papyrus where we define format groups and various other things.
+Fig: FormatGroup Definitions window
+This is how it looks. There are various parts in FormatGroup Definition. We are going to go through these one by one.
+DEFINITIONS:
+In the Definitions block we define substitute tables. So what is a substitute table?
+SUBSTITUTE TABLE:
+Substitute table is a command where we map some source against some targets. So it is a key value pair array like table.
+Fig: substitute table.
+As you can see, the first input of this command is Table Name. What we want to call this substitute table. Then there's source and target. We can add value. We can also delete or change existing values by selecting the existing value. There is one thing to be concerned of, that is  the source and the target has to be the string . Basically it means, it has to be quoted with  this.
+Now come to the point, how do we use it? We use it by calling a function called Substitute.
+This function takes 2 parameters. First parameter is the table name & the second parameter is the source. So according to the picture above, MAJOR_MINOR_TABLE is the substitute table name & 2nd parameter is the source which is a 2 variables concatenated values.
+APPLICATION IO:
+Basically here we define how the Application Input Looks like. How the output is going to be & different kinds of fonts & color variables.
+There is one thing we must be concerned with about Application-Input-Format,
+That is Record Length. If the record length given is smaller than the input data line. Then you might fall on record limit exceeded error, as it wont create any memory for a string greater than this length.
+Color Definition:
+Color Definition is where we set up color variables. Which we can use throughout the application. We can set a new color variable or update an existing color variable through this command box. Color can be given through 2 ways, RGB & CMYK. also can be given in percentage values.
+Font Definition:
+Font definition is the command in which we set font as variable, so that we can use that font variable throughout the application.
+We can add a new font variable, edit existing variable through this command dialogue. Also there are two types of font: normal and outline font.
+We use this like saying the variable name instead of font name. Also if we don't say any font name or font variable then the default font will be used or the top most font of font definition will be used.
+in the upper case scenario it is HEADER_FONT.
+Format Group:
+Formatgroup is the most essential command in Format Group Definitions. This command is where we put all the page related information and also print at the end of done with the regular page printing.
+FormatGroup commands first level is Sheet Command, by which we tell the width and height of the sheet we are going to work with. Sheet Command takes Layer Command which also takes a command called LogicalPage . Every sheet has two faces, one is the front and another is back. Every face is called a logical page. By declaring 1st Logical Page we are saying.. We are going to work with the front side of the page. By declaring the 2nd Logical Page we are saying we are going to work with the back side of the page. So basically under each logical page whatever we do is going to get affected to the corresponding page (front or back). So we can say,
+Front = 1st Logicalpage.
+Back = 2nd Logicalpage.
+Here comes a tricky part. So basically if we have a formatGroup with only one Logicalpage then this will only work with the front page of the sheet which is called Simplex. If we have 2 Logicalpage then this will work with both front page and back page of the sheet which is called Duplex.
+Logical page has 2 commands. FOOTER & PRINT FOOTER.
+Footer:
+Footer is the part that runs at the end of the printing end of one logical page. So what is that meaning of that? That means if somewhat printing we face an overflow page, that this block of code is executed. If while printing an outline, it get overflowed then it will call footer after finishing the execution of outline block.
+There is some crucial information that is being calculated.
+These are -
+ACT_PAGES => This is basically total actual page count. Where the page stands for each side of the sheet. Calculated in both logical pages.
+&PHY_PAGES => This is basically the total sheet count. So it is calculated in logical page 1 block.
+&TTL_PAGES => This is the same as ACT_PAGES. So, Calculated in both logical page.
+STMT_PAGES => This is for counting the page count of the actual statement. As there are two things being printed. One is Statement from the data & another is Check image of checklist. So, Calculated in both logical pages.
+&PAGE_FROM => This is total page count for all statements. This is a global variable that does not get resetted for every statement. Calculated in both logical pages.
+&PAGE_FROM_HOLD => This is the statement page start number. So that we can say in grouped afp the 2nd statement starts from page 7 of the afp. Only calculated in logical page 1, under the condition of &ttl_pages==1 or &cur_page ==1.
+&GROUP_IMAGE_COUNT => This is basically the total logical page count, so it is the same as &TTL_PAGES. Calculated in both logical pages.
+&GROUP_SHEET_COUNT => This is basically the total sheet count, so it is the same as &PHY_PAGES. Calculated in logical page 1 only.
+&TRAY1_SHEET => This is basically the total Sheet that will get picked from Tray1. It depends on the scenario. Sometimes when it says first page from tray 1 then only for first page it will be calculated. so basically it will be calculated in logical page 1 under the condion of &ttl_pages==1 or &cur_page ==1.
+&TRAY2_SHEET => This is basically the total Sheet that will get picked from Tray2. Most of the case it is told that first page from tray 1 and other pages from tray 2. in that case it is calculated in logical page 2 & also in the else block of &ttl_pages==1 or &cur_page ==1.
+We also print backer in footer. When we print backer, in most cases we dont include backer in actual page count or display page count or both. We check if the first the first page footer is called through the &ttl_pages value 1, and then we call the next logical page to go back side of the page.. Then we print backer on that page. Also we reset margins on footer if necessary.
+PrintFooter:
+PRINTFOOTER get called when the end group is get called. So basically when we are done printing initial stuff on all the pages, we print page count on this block. Or for page 1 address block. Like in the upper image we have a condition cur_page==1.
+Backer Priniting:
+while printing backer there comes a lot of different variations of requirement. We code according to those variations.
+Like if we were told that the backer will be printed at last and also it won't get counted in total page because it will be a preprint. In that case we print backer in a different format group.
+in the above picture you see we used PRE_PRINT_BACKER_SIMPLEX format group which has no page counting related variable calculations. You might have questions in your brain what is pre print?
+Pre print means this design or text will be already printed on the pages. You can also say like watermark on paper. It's not clean white paper.
+In some cases we were told to print backer in the first page back side also not considering it in total page count as it will be a preprint & we know what pre print is right? So how do we do it? We simply use a formatGroup named Backer_duplex, you can name it whatever you want. In that formatGroup we have 2 logical page. But we calculate page counting in only logical page 1. When the Logical page 1 footer gets called we force it to go next logicalpage and so it goes to next logical page which is logical page 2 and prints backer. But it won't have any page counting. Then from that logical page 2, after we print backer we just use normal FormatGroup name backer duplex or simplex. where we do the calculation in usual way.
+In case you are thinking what is simplex and duplex, here what it is in simple term.
+Simplex means it will only print front side of each sheet of paper. It will never print on the back, so back side will be always empty.
+Duplex means it will print on both side of each sheet of paper.
+In some cases we print the backer also we include backer in page count but we don't show in page display number. what I meant by page display number is on top or bottom side of the page we most of the case display something like "Page 1 of 2" or "Page 2 of 2". where the first number is &cur_page and the second number is &ttl page.
+But as we said, we will include backer in the page count but we don't want to show it. In that case we also use a variable &display_page_count.Which will not get counted on the logical page where we are printing backer.
+PROJECT REFERENCE: WECUML1, SFCEMV4

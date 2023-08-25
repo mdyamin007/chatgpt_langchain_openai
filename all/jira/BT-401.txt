@@ -1,0 +1,108 @@
+title: SLCU address is empty in the statement
+description: It is at the bottom of the page:
+
+ !SLCU address missing.png!
+
+
+author: rony
+comment: Hi [~avannik]
+
+!image-2022-09-27-18-55-51-004.png|width=972,height=535!
+
+
+
+Hi [~avannik]actually the empty portion depends on if data file has value or not. If data file 200 record 02 field has value this portion will not be empty. And this is actually going in production, we didn't make any changes here.
+
+
+
+Thanks
+
+Rony
+
+
+
+
+author: JIRAUSER11700
+comment: [~rony]data file 200 record 02 field is empty in test data, I get this.
+
+This is exactly what could happen due to an error in data file conversion in the course of the migration, so that's why I'm posting this.
+
+Can I have some test data where this field is properly filled in?
+
+
+author: rony
+comment: Hi [~avannik]
+
+Sorry I couldn't find any data. I see file in production /d/slcu/es1/SELCO_EscrowAnalysis_11012021 , but this field also missing there.
+
+
+
+Thanks
+
+
+author: JIRAUSER11700
+comment: Alright, this issue is not really relevant to index files, let me take it elsewhere.
+
+
+author: JIRAUSER11700
+comment: [~kericapote], I need to assign this to you.
+
+The Papyrus document is good. The cause of the issue is that record 200 field 2 is missing in the data file that comes from the client.
+ And it should contain current address of SELCO besides PO Box. It is in the header, and affects all escrow statements.
+ I attach the beginning of the data file with one statement: [^SLCUES11 (sample).dat].
+
+It looks like the test data I use is the same as the production data. If so, it means the escrow statements we are sending for SLCU are defective.
+
+
+
+
+author: phoebe.george
+comment: [~avannik] Is this affecting entire file, or just the first record, etc. I saw that the escrow file was successfully processed in production last November 2021:
+
+
+
+!image-2022-09-29-10-01-42-010.png!
+
+
+
+[~rony] Should I try to request this production file to be recovered?
+
+Do these counts match your processed counts?
+
+[~kericapote] FYI
+
+Thanks,
+
+Phoebe
+
+
+author: JIRAUSER11700
+comment: [~phoebe.george]it is affecting the entire file. There is one record 200 at the beginning of the data file, and its fields' values are used in all statements.
+
+
+author: phoebe.george
+comment: [~avannik] [~rony] I had network recover the production files for the EA from last November and copied them to Rony's AC secure folder:
+
+
+
+!image-2022-09-29-12-10-26-644.png!
+
+
+author: rony
+comment: Hi [~phoebe.george] [~avannik]
+
+This is the same. There is no 02 field in 200 record.
+
+!image-2022-09-30-08-20-47-638.png|width=1000,height=253!
+
+
+
+[~phoebe.george] This will not effect the dpvs counts.[~avannik]pointed out that the formatting issue. See the image in the description section. From the current code, it is coming from field 02 of record 200.
+
+Do we have any production samples to review?
+
+
+
+Thansk
+
+

@@ -1,0 +1,131 @@
+title: AFP2Web HTML statement
+body: This confluence page provides some areas of development done for setting up
+HTML statements using afp2web server.
+
+  
+
+ _ **PUI and e-side updates:  **_
+
+Document processing(doc processing) supports posting of HTML statements from
+pui side. Document processing index file uses column called **Presentment Type
+**which has comma separated value to post HTML statement. This value will be
+stored in e-statement database.
+
+ _ **Infotrac UI changes:**_
+
+Infotrac will show HTML statement along with PDF statement when account search
+is done. Below screen shot shows same.
+
+  
+
+ **Infotrac pilot screen shot showing HTML and pdf statements for demo cid:**
+
+ _ **Hypercube:**_
+
+Hypercube will also show HTML statements similar to Infotrac UI. Prism clients
+don't support showing HTML statements.
+
+  
+
+ _ **AFP2web changes for showing HTML statement:**_
+
+Afp2web utility has an ability to convert afp file into pdf or html statement.
+Afp2web can use same resources that are used for pdf statements but need some
+extra steps to do for supporting web fonts. By default afp2web uses google
+fonts for showing html statement verbiage. In order to show our own fonts we
+have to upload fonts and update fonts json to use new fonts.
+
+  
+
+We store fonts and css styling for fonts on ngnix proxy servers. For pilot
+environment, we store fonts at  ca-extproxy-pi-03 and ca-extproxy-pi-04
+location under /var/www/hypercube-pilot/ folders fonts and css.
+
+  
+
+ **Sample HTML font files**
+
+  
+
+ **Sample HTML css files**
+
+  
+
+  
+
+After storing font css file and font file, we have to use this font location
+on afp2webserver. We have to update html.fontmap.json file.
+
+  * Location of html.fontmap.json is /usr/local/docker/afp2web (servers for lower environment are ca-afp2web-dv-01 and ca-afp2web.dv-02 )
+
+Content of html.fontmap.json file will look like below. We have to specify
+font family and font location which we have previously uploaded.
+
+  
+
+ _ **How to verify changes:**_
+
+After adding font file and updating afp2web configuration, we can verify if
+new font is working or not. We have to post statement on pui and view HTML
+statement from infotrac. We can inspect elements from script tag and verify if
+new css font is showing up or not.
+
+  
+
+ _ **Accounts used for testing on demo pilot:**_
+
+ _Font type                                 Account Number_
+
+fontlibary_italic.afp             999999
+
+fontlibary_bolditalic.afp      99999
+
+fontlibary_bold.afp             9999  
+
+fontlibary_normal.afp         999
+
+  
+
+ _ **How to add new HTML font?**_  
+
+Below are steps to add new font on pilot server.
+
+  * We need to store actual font file. Print team has provided font zip files to us. Unzipped fonts files are stored on ca-extproxy-pi-03.infoimageinc.com server and location is /home/adasa folder. In order to access fonts from a url, we need to store fonts under location /var/www/hypercube-pilot/fonts .  If we could not find required font in /home/adasa location, ignore next steps.
+  * Below is the command to copy font from /home/adasa to /var/www/hypercube-pilot/fonts folder. In below example, I have tried to copy Wingdings font. 
+  * Inside /home/adasa Wingdings folder, we have stylesheet.css file. Using this file, we have to create our own css file in /var/www/hypercube-pilot/css location. For wingdings example, css file will as wingdings.css.   We have to copy content and change as below.
+
+            Original content of style sheet. 
+
+             @font-face {  
+             font-family: 'Wingdings';  
+             src: url('Wingdings-Regular.woff2') format('woff2'),  
+             url('Wingdings-Regular.woff') format('woff');  
+             font-weight: normal;  
+             font-style: normal;  
+             font-display: swap;  
+              }
+
+          wingding.css content
+
+            @font-face {  
+             font-family: 'Wingdings';  
+             src: url(' **../fonts/** Wingdings-Regular.woff2') format('woff2'),  
+             url(' **../fonts/** Wingdings-Regular.woff') format('woff');  
+             font-weight: normal;  
+             font-style: normal;  
+             font-display: swap;  
+              }
+
+  * We have to repeat steps for adding fonts and css on ca-extproxy-pi-04.infoimageinc.com. Css and fonts will be accessible from link(<https://demopilot.infoimageinc.com/css/wingdings.css>)
+  * Next we have to use above created css file and url from afp2web servers.  We have to update html.fontmap.json file on ca-afp2web-dv-01.infoimageinc.com. Location of file is  /usr/local/docker/afp2web.
+  * We have to update file as below :
+
+           "Wingdings": {  
+           "font-family": "Wingdings",  
+           "font-location": "<https://demopilot.infoimageinc.com/css/wingdings.css>"  
+             }
+
+  * We have to update html.fontmap.json file on ca-afp2web-dv-02.infoimageinc.com as well.
+  * We can verify if newly added font is updated properly or not. Print team has provided 4 afp files which has all fonts inside afp as content. I have posted those afp files under demo cid and provided accounts in above section. Below is the screen shot of html statement. We have to inspect element and under head section, we can see if url is visible or not. 
+
+

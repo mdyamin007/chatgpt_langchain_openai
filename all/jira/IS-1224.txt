@@ -1,0 +1,468 @@
+title: TKCU - Stmt PDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133593-C00.01-V21351
+
+Processing Scripts to modify:
+ tkcu_stmt_process.sh
+
+prefix: *tkcums1*
+
+Data Files to use:
+ TKCU_STMT_043021.zip.pgp
+
+
+
+*PARALLEL:* REQUIRED!
+
+
+
+*NOTE (RUN ON RHS2)*: This job runs on RH2. Since we are migrating from RH2to {color:#de350b}*RHS2*{color}, we should test all options so that we can do afpcompare and also ensure there is no errors in the processing logs.
+
+
+
+*CUSTOM Coding Enhancements:*
+
+In light of 7/31 EOM Processing performance issue tkcu processing script.
+
+Item #1 (Clean Up pdf folder before creating new PDF archival)*:*
+
+In the regular tkcu_stmt_process.sh script, please update logic to clean and purge the $d_dir/pdf_afp/$cid/$cid$jid/pdf folder before kicking off the tkcums1_burn_dvd.pl. This is a standard SOP logic that the original developer did not do which is causing us to accumulate previous month's PDFs files.
+
+
+
+Item #2 (Improve 7za zipping performance issue):
+
+Please update/home/master/tkcums1_burn_dvd.pl script to do the following:
+
+The tkcums1_burn_dvd.pl currently reads the 3 argument list/d/pdf_afp/tkcu/tkcums1/pdf/tkcums1_dvd.lis which contains a list of all the pdf file names created in this cycle. This program loops through each record intkcums1_dvd.lis to make sure file exist and adds the file size of the all the PDFs to make sure it does not go over the DVD file size defined in $diskSize. As it is accumulating the file size, it is writing to a list called${listPath}$\{tempArr[0]} (i.e./d/pdf_afp/tkcu/tkcums1/zip/tkcu_ms1_07312022.tmp file. Thistkcu_ms1_07312022.tmp is used in the 7za command like so:
+
+
+
+7za a ${zipfile} @${zipTemp}
+
+
+
+If you run with a list of files, the 7za commands takes forever scanning the drive before starting to compress
+
+We need to modify the logic to do the following:
+
+1. As you are reading thetkcums1_dvd.lis, move all the individual pdf files to a subdirectory within/d/pdf_afp/tkcu/tkcums1/pdf/disk1
+
+(Note: disk# is dynamic so don't hard code it to disk1. (i.e. when the file size is reach, you will need to create directory name disk2 and so on....)
+
+
+
+2. Replace the`stat -c %s .....` related lines of code and use the native perl "my $size = -s $filename". Making a system call on each individual pdf file to get the file size is system resource intensive and slows down the program.
+
+
+
+3. Instead of writing the individual file names into${listPath}$\{tempArr[0]} i.e. tkcu_ms1_07312022.tmp , just insert one line as follows:
+
+/d/pdf_afp/tkcu/tkcums1/pdf/disk1/*.pdf
+
+This is much more efficient for 7za utility to handle versus outputting individual PDF filenames into this list.
+
+
+
+4. Remove logic to ssh over to rhs server to run the 7za command. The script can just run 7za locally. We do not require to go to another server to 7za.
+
+
+
+Item #3 (Support n option for job_sel):
+
+If there is time to fit this in, can you see if you can modify the processing script to support our standard n option that allows the DP operation to define what job_sel to run. Today they use b option that creates Print and eStatement. After the program finishes, the next day DP has to run thetkcu_stmt_process.sh script again to create the PDF archival. They want the standard feature with the 'n' option to define job_sel=s,f,e to tell the program to run all three options sequentially.
+
+If this is too much time to do, please let me know and we will schedule it in a different project.
+
+
+
+
+
+
+author: JIRAUSER11001
+comment: Hi[~Igor.Khosid]
+
+Parallel id:*20220727021009*
+
+*TKCUMS11.zip* is in qa folder.
+
+Archival sample is */z/dsi_pdfi_testing/tkcums1/new/tkcu_ms1_06212022_1.7z.pgp* folder generated from */z/dsi_pdfi_testing/tkcums1/data/TKCU_STMT_072622.zip.pgp*.
+
+Let me know if you need anything else.
+
+
+
+Thanks
+
+Shifath
+
+
+author: william.kong
+comment: Hi [~sadiqs],
+
+Can you run the full 6/30/2022 cycle in parallel? Per SOP, we need to test entire file and partial. In your development, you can always test partially, but when it comes to QA & Parallel, the entire+full+ data file must be used. We cannot test manipulated data files.
+
+
+author: william.kong
+comment: [~sadiqs]: Any updates on this request? EOM should wrap up today, so in your Wednesday morning, can you please re-run this cycle? Please advise.
+
+
+author: JIRAUSER11001
+comment: Hi [~William.Kong]
+
+I was having some issues while running the script with data file*TKCU_STMT_063022.zip.pgp*.
+
+should I use the updated data file which is currently in production*TKCU_STMT_073122.zip.pgp*? It's been processed for pdfi.
+
+
+
+thanks
+
+
+author: william.kong
+comment: [~sadiqs]: Sorry! We need to make additional coding update for this particular application. Just now, we found a performance bug with the 7za logic in the/home//master/tkcums1_burn_dvd.pl program (Please see updated description of work for additional coding updates).
+
+
+
+Also, please run this on RHS{color:#de350b}*2*{color} server instead of RHS or RH2. 
+
+
+
+To respond to your comment, after you make the additional enhancements,please go ahead. Please use 073122 cycle+tomorrow+.
+
+
+
+As a reminder, please run+all+ job_sel option (print, eStmt & archival) since we need to regress test b/c we will be migrating this application to use RHS*{color:#de350b}2{color}* server instead of of RHS or RH2.
+
+
+
+
+
+
+author: william.kong
+comment: [~sadiqs]: Any updates on getting this job re-ran with all options on RHS{color:#FF0000}*2*{color}
+
+
+author: william.kong
+comment: [~anwarh]/[~sadiqs]: Any updates on getting this re-ran on RHS{color:#FF0000}*2*{color}?
+
+
+author: william.kong
+comment: [~anwarh]/[~sadiqs]: We are nearing EOM. Can we get this completed by Monday with the additional change request mentioned above. I also have to fast track parallel as well too for this project to make it before EOM. Please advise.
+
+
+author: anwarh
+comment: Hi [~William.Kong]/[~Igor.Khosid],
+
+All of the changes requested are done.
+
+ Parallel ID: 20220727021009
+ Production pdfs (7za): /z/dsi_pdfi_testing/tkcums1/old/
+ Parallel pdfs: /z/dsi_pdfi_testing/tkcums1/new/
+ Datafile: /d/download/TKCU/TKCU_STMT_073122.zip.pgp
+
+Notes:
+ * 7za issue is being handled a bit differently. It creates a temporary dir "work" and reuses it for every iteration.
+ * changed to 'index_build_multicore', with worker num =16. (Huge number of pdfs)
+ * Unable to copy individual pdfs, use the 7z archives and extract somewhere else. /z/ dir is too slow for this.
+
+Thanks,
+ Anwar
+
+
+author: william.kong
+comment: [~anwarh]: I'm going to change the status to "In Progress".
+
+
+
+Please advise what you mean with the comment "Unable to copy individual pdfs, use the 7z archives and extract somewhere else. /z/ dir is too slow for this."
+
+Is coding working around this issue? I would prefer to test and ensure logic writes to /z/pdf_afp/tkcu/ folder to ensure it works. I noticed process is still running on rhs2 (i think). If it is indeed still running, please let us know when it is done so that we can verify that/z/pdf_afp/tkcu/tkcums1/zip folder does have the zip files created. In the meantime, I've changed the status to "In Progress". Please update the status again when process has been completed.
+
+
+
+Please advise.
+
+
+
+Thanks!
+
+
+
+ Will
+
+
+
+
+author: william.kong
+comment: [~anwarh]: Can you advise above?
+
+
+author: william.kong
+comment: [~anwarh]: As discussed yesterday, you were going to double-check if the processing was completed successfully or not. Please advise if your re-run is successful so that we can get this re-tested. Thanks!
+
+
+author: anwarh
+comment: Hi [~William.Kong], 
+
+You can test now. The process is complete and follows sop. 
+
+Notes: 
+* It takes almost a day and a half to run for all job types. Several hours for job type e. Where in prod, 7za itself takes multiple days, so the 7za issue seems fixed. 
+* worker_num for afp2pdf is *16*
+* Prod outputs 2 zip files where parallel only 1. This is because afp2web reduces pdf sizes by almost 1/3. 
+* The script in question, tkcums1_burn_dvd.pl is also used by two other processes, I've yet to test those. Let me know if that needs to be a separate ticket.
+tkcuml_process.sh
+tkcuys1_stmt_process.sh
+
+Thanks,
+Anwar
+
+
+
+
+
+
+author: william.kong
+comment: [~anwarh]: You already have another ticket for tkcuml1 ([IS-1464] TKCU - Mortgage PDFi Conversion to AFP2PDF Python [InHse] - Jira (infoimageinc.com))
+
+You can leverage that project to test the tkcums1_burn_dvd.pl program. Please test tkcuml1 on that project as well.
+
+
+
+In the meantime, I will take a quick look on this project and if it looks ready, I will advise Igor to get this into QA and for this project only we also need to have a formal parallel run to re-test by DP before releasing code. This project has a lot of code changes which will qualify for a full formal parallel run.
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~anwarh]: Can you compare the pdfs between prod & parallel?
+
+The following resource is missing:
+
+
+
+!image-2022-09-16-09-42-48-488.png!
+
+
+
+
+
+In addition, the message manager graphics is different too:
+
+!image-2022-09-16-09-44-32-230.png!
+
+
+
+For message manager graphics, Let's try re-running using 8/31/2022 (TKCU_STMT_*083122*.zip.pgp) data file instead so that we can pull the latest messages. Please run a tiny cycle first and ensure the graphics matches with production. I copied the data file to /z/infoftp_int/tkcu/STMT/ and should be scanned shortly.
+
+I've also did a backup of the production PDF archival for cycle 8/31/2022 in preparation for your fix and re-run of this newer production file.
+
+
+
+
+
+The following is the graphics file I see in production for cycle 8/31/2022:
+
+!image-2022-09-16-09-48-41-416.png!
+
+
+
+
+
+
+
+
+
+
+
+
+author: anwarh
+comment: Hi[~William.Kong],
+
+Not sure why the top bar was missing. That image had transparent pixels at the top and bottom but couldn't fix it simply by adding param PKEY=TRANSPARENT. 
+ But I fixed it by recreating that pseg by doing:
+ convert 300 -> TIF -> trim top and bottom transparent pixels -> convert back to a new pseg
+
+Seems like fixed except it's now a bit darker
+Message manager is also updated as prod.
+
+Process completed for all job sel. 
+old and new output in: /z/dsi_pdfi_testing/tkcums1/
+
+Thanks,
+ Anwar
+
+
+author: william.kong
+comment: Thanks [~anwarh]!
+
+
+
+[~Igor.Khosid]/[~Andrey.Kutsenko]: Please hold on until I give the green light to QA this. For some reason, the PDF compare gets stuck in the last 11 pdf files and i've been troubleshooting all afternoon yesterday.
+
+
+author: william.kong
+comment: [~Igor.Khosid]/[~Andrey.Kutsenko]: I finally able to fix the pdf_compare.pl script. It did not handle the leftover threads well and needed to provide a one-time setting on the java side..
+
+
+
+You will need to use the exclusion file that I created & a special system environment variable parallelProcessing=false; For some reason the java PDF compare cannot handle too many threads reading tkcu pdf files, so by using parallelProcessing=false, the java command will not run in parallel :
+
+*{color:#FF0000}export parallelProcessing=fal{color:#de350b}s{color}{color}{color:#de350b}e;{color}* perl pdf_compare.pl tkcums1_prod/ tkcums1_parallel/ result_tkcums1 -pixels 18 -threads 16 -maxfiles 500 -exclusion *{color:#FF0000}tkcums1.json{color}*
+
+Please do not go over 16 threads.
+
+
+
+*Files are located in:*
+
+ca-isis-pr-04:
+
+/d/pdf_compare/tkcums1_prod
+
+/d/pdf_compare/tkcums1_parallel
+
+
+
+*Here's my results using the command above:*
+
+Total PDF Files Scanned: 500
+allowedDifferenceInPercentPerPage: *18*:
+Thread Count: 16
+
+Total PDF Files with Differences: *10*
+Please review the directory in /d/pdf_compare/result_tkcums1 directory & /d/pdf_compare/result_tkcums1/pdf_compare_rpt.txt report to see all the PDF differences
+WARNING: We did not compare ALL the pdfs!
+ pdf_compare.pl will only process the first 500 pdf files out of the total 367879 pdfs
+Start Time: Mon Sep 19 18:36:48 PDT 2022
+Finish Time: Mon Sep 19 18:46:56 PDT 2022
+
+
+
+
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+Test result:
+{quote}
+Total PDF Files Scanned: 6000
+allowedDifferenceInPercentPerPage: 18:
+Thread Count: 16
+
+Total PDF Files with Differences: 142
+Please review the directory in /d/pdf_compare/result_tkcums1 directory & /d/pdf_compare/result_tkcums1/pdf_compare_rpt.txt report to see all the PDF differences
+WARNING:  We did not compare ALL the pdfs!
+          pdf_compare.pl will only process the first 6000 pdf files out of the total 367879 pdfs
+Start Time: Sun Sep 25 15:23:21 PDT 2022
+Finish Time: Sun Sep 25 17:25:05 PDT 2022
+{quote}
+
+
+author: JIRAUSER11104
+comment: Hi [~William.Kong] please take a look diff pdf files >>>  /d/pdf_compare/result_tkcums1
+If everything is fine, then I'll change the status to "QA Passed".
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: Sorry, i was OOO monday and tuesday. I just spot checked a few and it looks ok. Please update to Pass.
+
+In the meantime, i will ask AC to create a Parallel Run ticket so that we can test runnability.
+
+
+
+[~anwarh]: Just a heads up, I will ask AC to create Parallel Run ticket today. Please be prepared to fill it out tonight so that DP can test run in parallel one final time.
+
+
+
+
+
+
+author: JIRAUSER11104
+comment: [~William.Kong] [~anwarh]
+In this case, we need the IS checklist to send an MPT to PC.
+
+
+author: igor.khosid
+comment: [~anwarh]
+Please be sure to attach {color:red}IS checklist{color}. We are can't submit the {color:red}MPT {color}to PC without it.
+
+[~William.Kong] [~Andrey.Kutsenko] - FYI
+
+
+author: anwarh
+comment: [~Igor.Khosid], Here is the checklist:  [^IS-1224 Checklist.docx] 
+
+
+author: JIRAUSER11104
+comment: Thanks [~anwarh]
+IS checklist >>>  [^IS-1224_TKCU_Checklist.pdf] 
+
+
+author: anwarh
+comment: Hi [~William.Kong],
+
+Transfer form:  [^IS-1224 TKCU Transfer Form.doc] 
+
+Code is in:
+*/d/is/cvs/xfer/anwarH_backup/is-1224*
+
+Can you please move them into /d/is/cvs/xfer/anwarH/ and then release?
+
+Thanks,
+Anwar
+
+
+author: william.kong
+comment: Thanks [~anwarh]! Once parallel passes this morning, I will ask the team to release the code.
+
+
+author: jessica
+comment: [~William.Kong] the archival parallel passed, however the print parallel has not been updated. Please confirm if you are still waiting to release code.
+
+
+author: william.kong
+comment: [~jira_naru]: I just saw your email from [~terrencet]. Can you please help release this project?
+
+
+
+[~Jessica]: FYI.
+
+
+author: jira_naru
+comment: [~William.Kong] and [~anwarh] :
+
+Sure, but the code has to be checked into the develper's XFER folder before I can release.
+
+Let me know once that has been done.
+
+
+author: william.kong
+comment: [~jira_naru]: I copied the files [~anwarh]mentioned above from*/d/is/cvs/xfer/anwarH_backup/is-1224*to/d/is/cvs/xfer/anwarH/
+
+
+
+Please advise if this works.
+
+
+author: jira_naru
+comment: [~William.Kong]and [~anwarh]
+
+Code release completed.

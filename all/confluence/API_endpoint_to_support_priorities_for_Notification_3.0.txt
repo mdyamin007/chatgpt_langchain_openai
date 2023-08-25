@@ -1,0 +1,118 @@
+title: API endpoint to support priorities for Notification 3.0
+body:   * marked are newly added
+
+1\. Read Priority(s) (new)
+
+GET /v1/notiftmplmgmt/{clientId}/priority
+
+    
+    
+    Parameter    Description  
+        clientId    Client ID  
+        appId        Application ID  
+        stmtType    Statement Type  
+        status        Status ( Default: null, Possible Status: DRAFT,ACTIVE,INACTIVE,DELETED,ARCHIVE )  
+        details        If need template list
+
+2\. Insert Priority (new)
+
+POST /v1/notiftmplmgmt/{clientId}/priority
+
+    
+    
+    Parameter    Description  
+        clientId    Client ID  
+        body        TemplatePriority JSON
+
+3\. Update Priority (new)
+
+PUT /v1/notiftmplmgmt/{clientId}/priority
+
+    
+    
+    Parameter    Description  
+        clientId    Client ID  
+        appId        Application ID  
+        priorityId    Priority ID  
+        body        TemplatePriority JSON
+
+4\. Delete Priority (new)
+
+DELETE /v1/notiftmplmgmt/{clientId}/priority
+
+    
+    
+    Parameter    Description  
+        clientId    Client ID  
+        appId        Application ID  
+        priorityId    Priority ID
+
+5\. Read Template(s) (Modified)
+
+GET /v1/notiftmplmgmt/{clientId}/template
+
+    
+    
+    Parameter            Description  
+        clientId            Client ID  
+        appId                Application ID  
+        type                Template type ( Possible Status: email,sms )  
+        notifTemplateId        Template ID(s)  
+        notifTemplateName    Template Name  
+        sort                Template Sorting Column (Default:modifiedDate)  
+        order                Sorting Order ( Default:desc, Possible Order: asc,desc )  
+        skip                Skip Template then Fetch  
+        count                Total Template to Fetch      
+        status                Status ( Default: null, Possible Status: DRAFT,ACTIVE,INACTIVE,DELETED,ARCHIVE )  
+        commonTemplate        Is common template ( Default: false )  
+        priorityId            PriorityId *  
+        stmtType            Statement Type *
+
+Entity:  
+1\. Entity for priority (new)
+
+    
+    
+    TemplatePriority{  
+            "id":Integer,  
+            "appId":String,  
+            "clientId":String,  
+            "priorityName":String;  
+            "weight":Integer,  
+            "stmtType":String,  
+            "status":String,  
+            "tempalteList": List&lt;NotifTemplate&gt; (Conditional load on details parameter)  
+        }
+
+2\. Entity for template (modified)
+
+    
+    
+    NotifTemplate {  
+            "id":Integer,  
+            "appId":String,  
+            "clientId":String,  
+            "replyTo":String,  
+            "ccEmail":String,  
+            "bccEmail":String,  
+            "fromEmail":String,  
+            "fromName":String,  
+            "sampleRecipient":String,  
+            "commonTemplate":String,  
+            "replyToName":String,  
+            "plainContent":String,  
+            "tempVars":String,  
+            "subject":String,  
+            "status":String,  
+            "name":String,  
+            "type":String,  
+            "content":String,  
+            "modifiedBy":String,  
+            "createdDate":Date,  
+            "createdBy":String,  
+            "modifiedDate":Date,  
+            "priorityId":List&lt;TemplatePriority&gt; * (Question : 1. Want to keep one to one relation?)  
+            "targatingCampaign":String *  
+        }
+
+

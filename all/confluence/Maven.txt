@@ -1,0 +1,121 @@
+title: Maven
+body: Document which gives a good idea about how to convert and ant based project to
+maven project - <http://www.tech-juice.org/2012/04/10/converting-a-project-
+from-ant-to-maven/>  
+  
+
+### Reference Material
+
+  * <http://maven.apache.org/guides/getting-started/index.html>
+  * <http://www.avajava.com/tutorials/categories/maven>
+  * <http://maven.apache.org/settings.html>
+  * Maven pom.xml layout : <http://maven.apache.org/ref/3.0.4/maven-model/maven.html>
+  * Maven Dzone cheatsheat : <http://refcardz.dzone.com/refcardz/apache-maven-2>
+
+  
+  
+
+### Maven Project
+
+  * <http://java.sg/maven-standard-directory-layout/>
+
+  
+  
+
+### Maven Local Installation
+
+  * For running command like maven you would need to install maven. Following link gives a good idea on how to install it for your OS <http://www.sonatype.com/books/mvnref-book/reference/installation-sect-maven-download.html#_downloading_maven_2>. You can install maven anywhere eg. C:\apache-maven-3.0.4
+  * Maven commands- achieved with the help of maven plugins <http://maven.apache.org/plugins/index.html>
+
+    
+    
+      > mvn clean -- clean target
+      > mvn install -- is used to automatically install the project's main artifact (the JAR, WAR or EAR)
+      > mvn install -U  --
+      > mvn compile -- download dependency
+    
+
+  
+  
+
+### Maven Plugin for eclipse
+
+  * Help-> Install new software -> Work with: Indigo -> General Purpose Tools -> m2e
+  * Once you create a maven project in eclipse you would see the standard directory structure which maven typically is known for  
+> in the empty directory structure you would see a pom.xml right click run as
+> has options for maven clean,build etc  
+> dropped our source code just a few folders to start with
+> C:\workspace\maventest\infoimage\src\main\java } it will complain about some
+> missing jar that's when you do the dependency part  
+> settings.xml is not autocreated in eclipse since it is not a required file
+> unless we want to override the default settings ( when we set up a project
+> via eclipse using eclipses plugin you won't see this file )
+> <http://maven.apache.org/settings.html>
+
+  
+  
+
+#### Artifact dependency
+
+  * Useful windows utility to get checksum of your local version - <http://sourceforge.net/projects/checksumwindows/>
+  * Maven Respository  
+> By default Maven uses the central repository at
+> [repo.maven.apache.org/maven2](http://repo.maven.apache.org/maven2) to
+> download dependencies. Sometimes you need to include other Maven
+> repositories. You can do this by adding them to your pom.xml.  
+> Useful external repositories to find jars
+  * <https://repository.sonatype.org/index.html#welcome> \- this can be used to find artifactid and their versions, also provides the checksum etc
+  * <http://mvnrepository.com/artifact/> \- mavens site to find dependency
+  * the artifact jars names need to be  **artifactid-version.jar**  
+
+    
+           eg.<dependency>
+       <groupId>ojdbc</groupId>
+       <artifactId>ojdbc</artifactId>
+       <version>14</version>
+       <scope>test</scope>
+      </dependency>
+    
+
+  
+(Eg. Our internal jar name used be ojdbc14.jar, above dependency would
+expected a jar ojdbc-14.jar in the location, you might need to rename jar)
+
+ **External dependency**  \- if you remove the corresponding artifact folder
+in local repository .m2/ folder. Then do a "mvn compile" it will download the
+jar for you (in the repository folder you would see the corresponding
+jar(artifactid) folder getting created which will contain the jar
+
+ **Internal dependency**  - <http://charlie.cu.cc/2012/06/how-add-external-
+libraries-maven/>  
+follow instructions in this link and I created a "thirdPartyLib" folder. Use
+the command to create the directory structure, copy your jar over and rename
+it to the convention maven is following
+
+    
+    
+    C:\workspace\maventest\infoimage>mvn install:install-file -Dfile=C:\workspace\maventest\resin-pro\lib\shared\axiom-1.2.7.jar -DgroupId=org.apache.ws.c
+    ommons.axiom -DartifactId=axiom-api -Dversion=1.2.7 -Dpackaging=jar -DlocalRepositoryPath=ThirdPartyLib
+    
+
+  
+In above line thirdPartyLib is folder created in the base project directory
+same level as pom.xml.  
+When you run the above command you would notice that nothing is created in the
+.m2 local respository.  
+Entry in pom.xml for the internal repository is
+
+    
+    
+               <repository>
+                <id>3rdPartyLib</id>
+                <name>3rd party libraries used in compilation of infoimage.jar </name>
+                <url>file://${project.basedir}/thirdPartyLib</url>
+            </repository>
+    
+
+  
+
+  
+
+

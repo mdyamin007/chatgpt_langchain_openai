@@ -1,0 +1,121 @@
+title: MongoDB DR site setup
+body: # _Objective_
+
+Our objective is to set up a MongoDB disaster recovery(DR) site. The default
+setup is our primary server will on CA and TX be on standby. If some disaster
+occurs at the CA site, the TX server will act as primary. When CA is alive
+again, It will be primary and TX will act as secondary again.
+
+#  _Approach_
+
+We can achieve this mechanism in the following Three ways:
+
+  *  ** _Replicaset:_ **We can set up a mongo cluster with mongo nodes from CA and TX sites. CA nodes will always act as primary and Tx nodes will act as secondary. In case of disaster, TX nodes will act as primary.
+  *  ** _Data Directory Sync:_** We will sync the data of running CA mongo data directory to a TX server directory. We'll use a script that will run as corn job and sync the data directory. If CA fails, we'll up and run mongo server at TX site with the synced data directory
+  *  ** _Backup and Restore:_ ** We can keep taking incremental backups of the primary oplog. In case of primary server failure, we can restore the backups to our DR site. By default, MongoDB doesn't support incremental backup. We tried to create backup and restore it to another server, (in our case TX) using a service named [Percona Backup for Mongodb (PBM)](https://docs.percona.com/percona-backup-mongodb/). But we are not successful yet using this.
+
+#  _Replicaset Setup_
+
+  * ###  _ **Number of members in replicaset:**_
+
+    * Our initial cluster will consist of 5 nodes ( 4 data-bearing nodes, 1 arbiter).  2 nodes will reside on CA side, other 2 nodes will reside on TX side. We'll setup the arbiter in an isolated environment. 
+
+  
+
+    * The reason behind using 4 data bearing nodes is that, as we are designing for a Disaster Recovery site, It's assumed that CA will be down totally. In that scenario, If we use 1 node in CA, 1 node in TX, and CA is down, only 1 data-bearing node remains alive. But, a cluster must have at least 1 primary and 1 secondary node. So, If we have only 1 node alive, It can't be master. The cluster will then become read-only. No write operation can be done. 
+    * The reason behind placing the Arbiter in an isolated environment is fault tolerance which is described in one of the sections below. 
+
+  
+
+  *  ** _Primary Node Selection_**  
+
+    * The election for selecting the primary member in any replica set can be triggered for a variety of events. In our scenario, most likely the election will be triggered by the following 3 events:
+      * After initiating the replica set.
+      * Connection timeout for getting connected with the primary noded for the secondary nodes.
+      * Failed nodes get added to the cluster.
+
+               
+
+  *     * After the replica set is initiated, as we have even numbers of data-bearing nodes, there is a probability of a tie result in the primary node election. As every node has 1 vote by default. It might happen that no node has given its vote to another node. So, the election result can be 1-1-1-1. In this situation, no node can be primary. To break this tie, Arbiter comes into the picture. It doesn't hold any data. Its only task is to give its vote to break the tie. It's the tie-breaker. 
+    * All the five members ping each other at a time interval of 2 seconds. If the heartbeat doesn't return within 10 seconds, all the members mark that node as inaccessible. The remaining data-bearing nodes that have the highest priority calls for an election. The higher priority node is most likely to be elected as a primary.
+
+  
+
+  * ###  ** _Fault Tolerance:_**  
+
+    * Fault tolerance for a replica set is the number of members that can become unavailable and still leave enough members in the set to elect a primary.
+    * In the above replica set, If we consider that the CA site is totally down, there are another 3 voting members in the cluster to elect a new primary. The same scenario applies to TX. If TX goes down, 2 nodes from CA and 1 arbiter can elect a new primary. It means, In a 5 node replica set, fault tolerance is 2.  
+    * If the Arbiter was placed in either CA or TX, and for some disaster one of the data centers goes down, the number of remaining nodes in the cluster becomes two. In such a scenario, we can't ensure the election for the primary will succeed. Because there is a possibility of a tie in the election. 
+    * Though we know, an arbiter works as a tie-breaker in the election for the primary node, we can't add another arbiter in the cluster. Because, If we do so and the failed data center becomes online again, there will become two arbiters in the replicaset. As per official documentation of MongoDB, It's not recommended to deploy [more than one arbiter per replicaset](https://www.mongodb.com/docs/manual/core/replica-set-architectures/#:~:text=Don%27t%20deploy%20more%20than%20one%20arbiter%20per%20replica%20set.).
+
+  
+
+  *  _ **Write Concern :**_  
+
+    * Write concern represents the acknowledgment level of the nodes to treat any write operation as a success. 
+    * In our cluster, we'll set write concern as "majority". It means any write operation will be successful only when the majority number of data holding nodes (3 in our case) write the data onto their disk and acknowledge this operation. By doing so, we can ensure that the data has been written on at least one node on the TX site. So, If the CA data center totally goes down, the TX site can still serve the recent data.
+  *  _ **wtimeout:**_
+    * We need to set a wtimeout value in case of write concern "majority". Because, If any node is unreachable for some reason, and if data can't be written to at least 3 nodes, the write operation will be blocked indefinitely. By applying a wtimeout value, we can overcome this problem. MongoDB will show a timeout error and the write operation will not be blocked. 
+  *  _ **Read concern:**_
+    * Read concern of the cluster will be "majority" as well. "majority" means, for any read operation, the data which has been acknowledged by the majority of the nodes in the cluster will be fetched. 
+  *  _ **Data Synchronization:**_
+    * MongoDB uses two forms of data synchronization. 
+      *  **Initial sync** to populate new members with the full data set. Starting from MongoDB 4.4, we can configure the initial sync source by setting the [initialSyncSourceReadPreference](https://www.mongodb.com/docs/manual/reference/parameters/#mongodb-parameter-param.initialSyncSourceReadPreference) parameter while starting the mongod. The possible read preference modes are : primary, primaryPreferred, secondary, secondaryPreferred, nearest. We'll use the default initial sync source which is **primaryPreferred**.
+      *  **Replication** to apply ongoing changes to the entire data set. Starting from MongoDB 4.4, the _sync from source_ (from the server the secondary nodes copy logs) sends a continuous stream of oplog entries to the secondaries. In the older versions of MongoDB (prior to 4.4 version), secondary nodes used to fetch the oplog entires by issuing a fetch request to the _sync from source_ primary nodes. This new update of streaming replication reduces latency on write operations and staleness for reads from secondary nodes.
+
+#  _Data Directory Sync_
+
+  * In this approach, we'll use a script to sync the data directory of our CA and DR server (TX). 
+  * Initially, we'll keep TX offline. No mongo server will be run on TX site. Only data will be copied/synced from CA site to a directory of TX. 
+  * To sync the directory, we'll use a script that will run as a corn job. After a specific time interval, the script will scan the CA mongo data directory. If anything is modified i.e. new data added to this directory, It will copy/ sync those changed data to our TX server data directory. We'll use **rsync** in this script.
+  * In the following diagram, the plan is illustrated only for one mongo node. But, It'll work as the same for more than one node i.e. mongo-replica set.
+
+  * In the case of a disaster i.e. CA is down, we'll make the TX site online. We'll run mongo instances with the data directory that are already synced with our CA site. 
+  * The backup script is shown below.
+
+  
+
+backup_script.sh
+
+    
+    
+      
+    #!/bin/bash  
+      
+    set -o errexit  
+    set -o nounset  
+    set -eux pipefail  
+      
+    readonly DEST_SERVER= <IP_address_of_TX_server>  
+    readonly SSH_USER= <ssh_username_of_TX_server>  
+    readonly SSH_USER_PWD= <ssh_password_of_TX_server>  
+      
+    readonly SOURCE_DIR= <Data_directory_of_CA_mongo>  
+    readonly BACKUP_DIR="${SSH_USER}@${DEST_SERVER}:<Data_directory_of_TX_mongo>"  
+    readonly DATETIME="$(date '+%Y-%m-%d_%H:%M:%S')"  
+      
+    backup(){  
+       rsync -hvrPt  --delete \  
+      "${SOURCE_DIR}/" \  
+      --exclude=".cache" \  
+      "${BACKUP_DIR}"  
+        
+      timestamp=$(date +%d-%m-%Y--%H:%M:%S)  
+      echo "${timestamp} Backup Taken from ${SOURCE_DIR} to ${BACKUP_DIR}" >> log  
+    }  
+    echo ${SSH_USER_PWD} | ssh -tt ${SSH_USER}@${DEST_SERVER} " sudo -S chown -R ${SSH_USER} '<Data_directory_of_TX_mongo>'"  
+      
+    backup #calling backup method initially.  
+    while inotifywait -qqre modify "$SOURCE_DIR"; do  
+      backup #calling backup method if SOURCE_DIR modifed  
+    done
+
+  
+
+  
+
+#  _Backup and Restore_
+
+Not successful yet.
+
+

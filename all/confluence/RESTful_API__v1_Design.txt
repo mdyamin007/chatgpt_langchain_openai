@@ -1,0 +1,191 @@
+title: RESTful API /v1 Design
+body: ## API Authentication Details:
+
+  
+
+### From API Caller:
+
+  1. Following HTTP Header need to be passed
+
+ **HTTP Header Key**|  **Value Expected**|  **Comment**  
+---|---|---  
+client| CID value in lower case|  
+  
+version| version of secretKey| version number of secretKey used for
+encrypt/decrypt. Because secretKey could change over time, in case secretKey
+got compromised.  
+encryptedSecret| encrypted value of "cid|currentMilliTime|cipher_const"|
+<cid>|<timestamp in milli-second of standard unix time>|<shared constant in
+organization.cipher_const>  
+  
+  
+
+### How does API validate authentication:
+
+  1. current encryptedSecret check is done here:
+    1. financial/web/resources/AuthenticationResource.java : InfoService method to validate against the provided 'client', 'version', 'encryptedSecret' values as param
+    2. financial/service/AuthenticationService.java : method 'i3Auth' handle the actual validation
+
+  
+
+### How to construct the 'encryptedSecret'
+
+  1. concatenate following tokens with '|' as delimiter
+    1. cid in lower case
+    2. current unixtime in milli-second
+    3. cipher_const integer value provided by InfoIMAGE
+  2. reference to sample code below to encrypt the concatenated string from above step
+    1. concatenated string from step 1 becomes the 'strToEncrypt'
+    2. cipher_const is used as the 'iteration'
+
+  
+
+## Encryption Method:
+
+  
+
+### How to Encrypt the 'encryptedSecret' (in HTTP header) and 'Account
+Numbers' (in search criteria) before passing into API calls
+
+    
+    
+      
+    
+
+try {  
+    byte[] input = strToEncrypt.toString().getBytes("utf-8");  
+    byte[] salt = secretKey.getBytes("UTF-8");
+    
+    
+      
+      
+        // Constructs secret keys using the Password-Based Key Derivation Function  
+        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");  
+        //secretKey is the passphrase/password, essentially  
+        // Iteration count is the number of times that the password is hashed during the derivation of the symmetric key. The higher number, the more difficult it is to brute force the key. It is used together with the salt which is used to prevent against attacks using rainbow tables.  
+        // The key length is the length of the derived symmetric key. An AES key can be 128, 192 or 256 bits long. ref link 3 below.   
+        SecretKey tmp = factory.generateSecret(new PBEKeySpec(secretKey.toCharArray(), salt, iterations,  
+        256));  
+      
+        // specifies a secret key in a provider-independent fashion, AES in this case.  
+        SecretKeySpec skc = new SecretKeySpec(tmp.getEncoded(),  
+        "AES");  
+        // One of the standard Cipher transformations ref link 4 below  
+        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");  
+        cipher.init(Cipher.ENCRYPT_MODE, skc);  
+        byte[] cipherText = new byte[cipher.getOutputSize(input.length)  
+        ];  
+        int ctLength = cipher.update(input,  
+        0, input.length, cipherText,  
+        0);  
+        ctLength += cipher.doFinal(cipherText, ctLength);  
+        String query = Base64.encodeBase64URLSafeString(cipherText);  
+        return query;  
+    } catch (Exception e) {  
+        log.error("Error while encrypting :" + e);  
+        throw new CipherException("Error while encrypting : ",e);  
+    }
+    
+
+  
+
+### reference links to help understand above sample code:
+
+  1. <https://www.visa-asia.com/ap/sg/merchants/include/ais_bp_encryption.pdf>
+  2. <http://stackoverflow.com/questions/23293180/java-symmetric-ciphering-method>
+  3. <http://stackoverflow.com/questions/6126061/pbekeyspec-what-do-the-iterationcount-and-keylength-parameters-influence>
+  4. <http://docs.oracle.com/javase/7/docs/api/javax/crypto/Cipher.html>
+
+  
+
+## How to Pass Authentication Values
+
+  
+
+### Use HTTP Basic Authentication method
+
+  * Username = Client ID
+  * Password = Encrypted Token Value
+  * <http://en.wikipedia.org/wiki/Basic_access_authentication#Client_side>
+
+  
+  
+
+### Use Security Valve
+
+  * Version = 1 (passed as HTTP header)
+  * Rely on Security Valve to capture and pass over for JAAS LoginModule to pick up correct Secret Passphrase & CipherConst
+  * <http://java.sys-con.com/node/1876662>
+
+  
+
+## Immediate TODOs:
+
+  1. implement JAAS POC to include the actual decrypt & validate logic from financial/service/AuthenticationService.java
+    1. Reuse financial/service/AuthenticationService.java as-is if possible
+    2. Within financial/service/AuthenticationService.java:
+      1. we need to ensure the timestamp is checked. token should be valid for 10min max
+      2. 'orgKey' details are coming from Cassandra currently, let's update them to come from properties file instead. Reduce dependence on C* just for holding the secretKey/cipher_const. Especially now we decided to move to Mongo for rest of /document services.
+    3. Within util/CipherUtils.java:
+      1. cipher_const fetched from AuthenticationService.java is not utilized. 'iteration' value used inside util/CipherUtils.java is always the static integer 10000, not the value from organization.cipher_const. Need to fix this bug
+      2. increase the encryption length to 256
+  2. move all the mongo/swift based implementation of /document service over to /v2/document
+  3. implement GET /v1/document/search/all
+    1. make a proxy call to following servlet and return a full list of all documents (across all statement/notice/tax types) for a given account number
+    2. SVN of servlet: svn+<ssh://pd-tools.infoimage.com/srv/is_svn/branches/production/i3-core/com/infoimage/financial/security/intuit/ViewAccountServlet.java>
+    3. Example call: [https://10.8.11.208:11961/getAcct?USR=121234567&ACCT=166332&ATYP=1&STDT=20140501&ENDT=20141028&MAC=365047ac3ab02d403d7593ada62547ff&CTIME=1414545419589&MIID=451](https://10.8.11.208:11961/getAcct?USR=121234567&ACCT=166332&ATYP=1&STDT=20140501&ENDT=20141028&MAC=365047ac3ab02d403d7593ada62547ff&CTIME=1414545419589&MIID=451)
+      1. USR=121234567& (doesn't matter for our proxy call, put random value)
+      2. ACCT=166332& (account number)
+      3. ATYP=1& (always 1 for IDCU)
+      4. STDT=20140501&
+      5. ENDT=20141028&
+      6. CTIME=1414545419589& (micro time of current time)
+      7. MIID=451 (representing CID)
+      8. MAC=365047ac3ab02d403d7593ada62547ff& (encrypted using following method:)
+        1. privateKey = $m5bK31x!D
+        2. input (internal key) = USR + ACCT + ATYP + CTIME
+        3. algorithm = HmacMD5  
+
+                
+                                  
+                
+
+public String getHmacMD5(String privateKey, String input, String
+algorithm)throws Exception{  
+    byte[] keyBytes = privateKey.getBytes();  
+    Key key = new SecretKeySpec(keyBytes,  
+    0, keyBytes.length, algorithm);  
+    Mac mac = Mac.getInstance(algorithm);  
+    mac.init(key);  
+    return byteArrayToHex(mac.doFinal(input.getBytes()));  
+}
+
+                
+                                
+
+  4. implement GET /v1/document/pdf
+    1. make a proxy call to following servlet and return actual PDF for a given documentId
+    2. SVN of servlet: svn+<ssh://pd-tools.infoimage.com/srv/is_svn/branches/production/i3-core/com/infoimage/financial/security/intuit/ViewStatementServlet.java>
+    3. Example call: [https://10.8.11.208:11961/getStmt?USR=121234567&ACCT=166332&ATYP=1&CTIME=1414545419589&KEY=a0000000084518112&MIID=451](https://10.8.11.208:11961/getStmt?USR=121234567&ACCT=166332&ATYP=1&CTIME=1414545419589&KEY=a0000000084518112&MIID=451)
+      1. KEY=a0000000084518112 (documentId value from /getAcct servlet call above)
+      2. rest of params same as above
+  5. implement GET /v1/document/search/check
+    1. make a proxy call to following servlet and return all checks (data) for a given Account Number
+    2. SVN of servlet: svn+<ssh://pd-tools.infoimage.com/srv/is_svn/branches/production/i3-core/com/infoimage/financial/checkimage/CheckImageDataObject.java>
+    3. Example code from eStmt Webapp that does the check image searches:
+      1. \\\10.8.8.221\d\hosts\idcu\msm\check\checkimage.jsp at line 42  
+
+java.util.ArrayList
+al=CheckImageDataObject.findByAccountId_checktype_checkNumber(conn,acct.getPk(),
+startDate.getTime(), endDate.getTime());
+
+      2. Above code is using AccountId, our API input param will be AccountNumber though. Hence need to translate that before making the servlet call
+      3. We don't need to support other search criteria at this time, will support that when asked.
+      4. This call is from within eStmt webapp, hence might need to clone only the necessary portion over to API, skip out session/authentication check portion
+  6. implement GET /v1/document/image
+    1. make a proxy call to following servlet and return actual TIFF/JPEG/etc for a given checkId
+    2. SVN of servlet: svn+<ssh://pd-tools.infoimage.com/srv/is_svn/branches/production/i3-core/com/infoimage/financial/security/NorthWestCheckImageServlet.java>
+    3. Example call: <https://10.8.11.208:11841/msm/check/show_check.jsp?id=id%3D124754434%26x%3DzH8wjpE5x%252BlBSBMU2LTmOz5s9MQ%253D>
+      1. This call is from within eStmt webapp, hence might need to clone only the necessary portion over to API, skip out session/authentication check portion
+
+

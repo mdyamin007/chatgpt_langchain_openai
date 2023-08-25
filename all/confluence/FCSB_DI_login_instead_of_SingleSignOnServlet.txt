@@ -1,0 +1,86 @@
+title: FCSB DI login instead of SingleSignOnServlet
+body: ## **Objective**
+
+To change the login method of FCSB clients(FHNB and FNBT) from
+SingleSignOnServlet to DI
+
+##  **Assumption**
+
+After conversion from SingleSignOnServlet to DI,  login flow will not be
+affected. User will be able to login as before.
+
+##  **Development**
+
+For DI login, two jsp pages has been added in root folder
+
+  * IFSBBhblogin.jsp
+  * IFSBBssoexchange.jsp
+
+In case of DI login, required fields in sso file are:
+
+  * user_fi_number (CIF_NUMER)
+  * selected_acct (the account number which will be selected in the account drop down list)
+  * selected_acct_type
+  * pswd (password)
+  * comp_email (email)
+  * gmt
+  * comp_timeout
+
+Mandatory fields are: user_fi_number, pswd, comp_email, gmt
+
+  
+
+ **Change in files:**
+
+ROOT/src/main/webapp/enroll/optoutAll.jsp
+
+ROOT/src/main/webapp/enroll/ssoOptoutAll.jsp
+
+ROOT/src/main/webapp/enroll/ssoRegister.jsp
+
+ROOT/src/main/webapp/include/security.jspf
+
+ROOT/src/main/webapp/pending/optoutAll.jsp
+
+ROOT/src/main/webapp/pending/ssoOptoutAll.jsp
+
+ROOT/src/main/webapp/pending/ssoRegister.jsp
+
+ROOT/src/main/webapp/profile/token_recovery_action.jsp
+
+ROOT/src/main/webapp/profile/token_recovery.jsp
+
+ROOT/src/main/webapp/selectAcct.jsp
+
+ROOT/src/main/webapp/WEB-INF/web-dev.xml
+
+  
+
+ **Notes:**
+
+  * In the above jsp pages, sessionCtx is achieved by the following code: 
+
+                        String loginId = (String)session.getAttribute("loginId");  
+                        Organization organization=SecurityFactory.getOrgFromUniqueName(pageContext.getServletContext().getInitParameter(com.infoimage.http.servlet.Constants.KEY_UNIQ_NAME));  
+                        WebAuthContext auth=(WebAuthContext)AuthFactory.getInstance().getAuthContext((organization==null)?"system":organization.getName());  
+                        sessionCtx=auth.ssoLogin(loginId, com.infoimage.http.jsp.JspServletBridge.getWebContext(pageContext));
+
+  
+
+  * In web-dev.xml, the sso servlet is removed as we're not giving support of SSO anymore. 
+  * In database, AUTH_CLASSNAME column of AUTHENTICATOR table must be: com.infoimage.util.security.auth.DefaultAuthContext
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+

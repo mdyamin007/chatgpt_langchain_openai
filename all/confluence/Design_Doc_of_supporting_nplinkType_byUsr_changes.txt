@@ -1,0 +1,212 @@
+title: Design Doc of supporting nplinkType byUsr changes
+body: ## **Introduction**
+
+NplinkType "byUsr" support will no longer be considered from the API side. But
+it will be on hypercube as a flag property only to support the byUsr view for
+clients.
+
+This doc will represent the changes in hypercube to support this.
+
+##  **Purpose/Objective Summary**
+
+Support nplinkType byUsr changes on the hypercube side.
+
+##  **Scope**
+
+### In-Scope
+
+  1. Identify nplinkType related API 
+  2. Convert user put API data payload and param from byUsr to byUfa JSON structure. (ssoEnrollmentApi, updateUserAccountsApi)
+  3. Convert user get API result from byUfa to byUsr JSON structure for nplinkType byUsr client to support byUsr view on the hypercube. (userAccountsApiServer/userAccountsApi)
+  4. Store the converted result in the Mongo collection for further uses
+
+##  **Assumptions**
+
+  1. Able to handle byUsr from only hypercube side (API support will no longer be required)
+  2. Control byUsr data manipulation in hypercube side
+
+##  **Dependencies**
+
+  1. API maintenance to support nplinkType param to be by default "byUfa" for ssoEnrollmentApi and updateUserAccountsApi
+
+  
+
+##  **Related API Details  **
+
+ID| Title| URL| Method| Affected Parameter| Description  
+---|---|---|---|---|---  
+API_01| ssoEnrollmentApi| /infoservice/api/v1/user/{cid}/account/enrollment|
+PUT|
+
+body (account numbers),
+
+nplinkType
+
+|
+
+UPDATES account numbers at SSO keygen time  
+  
+API_02| userAccountsApiServer/userAccountsApi| /infoservice/api/v1/user/{cid}|
+GET|  
+| Get a User data  
+API_03| updateUserAccountsApi| /infoservice/api/v1/user/{cid}| PUT|
+
+body (account numbers),
+
+nplinkType
+
+| Update a User data  
+  
+  
+
+# Requirements
+
+### Business Requirements & Use Cases
+
+ID| Title| Details  
+---|---|---  
+BR_01| Support nplinkType "byUsr" changes|
+
+Support hypercube for the changes of nplinkType byUsr, which support will be
+removed from infoservice API to store UFA_ID, USR_ID, ACCT_ID in the
+NOTIFICATION_PREFERENCE database table.  
+  
+### Functional Requirements & Use Case
+
+ID| Title| Details  
+---|---|---  
+FR_01| Remove nplinkType param from ssoEnrollmentApi PUT API| By default
+nplinkType always will be byUfa in the infoservice API side if there is no
+nplinkType param in the ssoEnrollmentApi.  
+FR_02| Convert "byUfa" user data to "byUsr" user data JSON structure|
+
+userAccountsApiServer/userAccountsApi will always send user data as "byUfa"
+JSON structure. So it will be required to convert the hypercube nplinkType
+byUsr client's user data to "byUsr" user data JSON structure in
+(userAccountsApiServer/userAccountsApi) GET API call and store in the mongo
+collection to support byUsr view on the hypercube.  
+  
+FR_03| Convert user data payload to "byUfa"and remove nplinkType param for
+updateUserAccountsApi PUT API| During updateUserAccountsApi PUT call it will
+be required to convert the user payload data to the "byUfa" JSON structure for
+both nplinkType byUsr and byUfa clients. Also, remove nplinkType param from
+API URL to support byUFa as default in the infoservice side.  
+  
+  
+
+### JSON data conversation Requirement & Use Case
+
+ID| Title| Details| Converted user data  
+---|---|---|---  
+JDCR_01| "byUfa" to "byUsr"| For nplinkType "byUsr", notifyPref " [] JSON
+attribute stays outside of account list.|
+
+  
+
+textbyUsr JSON structuretrue
+
+  
+  
+  
+JDCR_02| "byUsr" to "byUfa"| For nplinkType "byUfa", notifyPref " [] JSON
+attribute stays in each account object of account list.|
+
+  
+
+textbyUfa JSON Structuretrue
+
+  
+  
+  
+  
+
+## QA/Test Requirements
+
+ID| Title| Details  
+---|---|---  
+TR_01| Test all hypercube clients| Run hypercube automation scripts for every
+client to ensure that everything is working as previously after the byUsr
+change support update.  
+  
+  
+
+## Code changes
+
+  1. Update on the hypercube
+
+Project file path| Method Name| Changes| Comments  
+---|---|---|---  
+hypercube/server/methods.js|
+
+    
+        ssoEnrollmentApi
+
+| Remove "nplinkType" parameter from API_01 URL| API will support nplinkType
+"byUfa" as default value  
+hypercube/server/methods.js|
+
+    
+        userAccountsApi
+
+| Convert user data and store in Mongo collection based on clients nplinkType
+"byUsr" properties after calling GET API_02| To support byUsr clients view on
+the hypercube  
+hypercube/server/methods.js|
+
+    
+        userAccountsApiServer
+
+| Convert user data and store in Mongo collection based on clients nplinkType
+"byUsr" properties after calling GET API_02| To support byUsr clients view on
+the hypercube  
+hypercube/server/methods.js|
+
+    
+        updateUserAccountsApi
+
+| Convert user data payload to "byUfa" for both byUsr and byUfa clients and
+remove "nplinkType" parameter during call PUt API_03|
+
+API will support nplinkType "byUfa" as default value  
+  
+  
+
+# Summarized Change Log
+
+Date| Who| Changes  
+---|---|---  
+11/7/2020| Sadman Anik| Creation  
+  
+  
+
+# Feedback / Question / Answers
+
+Question| Answer  
+---|---  
+  
+|  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+

@@ -1,0 +1,458 @@
+title: Offer Management Design Doc
+body: # Introduction
+
+## Purpose/Objective Summary
+
+ **TODO: (Required)**  
+  
+
+  
+
+## Scope
+
+ **TODO: (Required)**  List out the itemized features of what's inside/outside
+of the scope of current project/phase  
+  
+
+  
+
+### In-Scope
+
+  1. Generate or Register QR Code, Bar Code, and Alpha-numeric promo code.
+  2. Update meta-data of code.
+  3. Authenticate the code.
+  4. Provide the code at run-time dynamically.
+  5. Keep track of different event occurred for code.
+  6. Generate different reports based on different event.
+
+  
+
+### Out-of-Scope
+
+  
+
+# Requirements
+
+  
+  
+
+## Business Requirements & Use Cases
+
+ **TODO:**   **(Required)**  List out all needs/requirement from business/end-
+user perspective. Assign an ID for each requirement/use-case item for easier
+reference in future
+
+ID| Title| Details| ScreenMock| Importance  
+---|---|---|---|---  
+BRQ-01| Generic Search box| (example)  
+ **Requirement:**  Instead of showing a drop-down to ask user to choose what
+attribute to search against,  
+just have a simple search box that will search against all potential
+attributes like name/email/address/phone.  
+ **Use Case:**  enter "ben" into search box, search results returned should
+include both record of "Ben
+[Chan/bchan@infoimage.com](mailto:Chan/bchan@infoimage.com)" as well as "Jim
+[Wong/jwong@bigben.com](mailto:Wong/jwong@bigben.com)"| <attach file>| one of
+following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+BRQ-02| ...| ...| ...| ...  
+  
+  
+  
+
+## Functional Requirements & Use Cases
+
+ **TODO:**   **(Required)**  List out all needs/requirement from
+engineering/functional perspective. Associate them with an ID for easier
+reference
+
+ID| Title| Details| Bus. Req. Ref.| Importance  
+---|---|---|---|---  
+FRQ-01| Generic Search by Sphinx| (example)  
+ **Requirement:**  Instead of constructing the SQL statements for search,
+utilize Sphinx to help build the index and support such generic search.  
+ **Use Case:**  enter "ben" into search box, search results returned should
+include both record of "Ben
+[Chan/bchan@infoimage.com](mailto:Chan/bchan@infoimage.com)" as well as "Jim
+[Wong/jwong@bigben.com](mailto:Wong/jwong@bigben.com)"| <optional>| one of
+following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+FRQ-02| ...| ...| ...| ...  
+  
+  
+  
+
+## QA/Test Requirements
+
+ **TODO:**   **(Required)**  List out all needs/requirement from QA/Testing
+perspective. Associate them with an ID for easier reference
+
+ID| Title| Details| Importance  
+---|---|---|---  
+TRQ-01| Selectable Search Box element| (example)  
+ **Requirement:**  The search textbox AND the 'Search' button need to tagged
+with 'id' value so that Selenium could select it for entering value and
+subsequent submit  
+ **Use Case:**  Rely on Selenium to submit random search terms and capture
+response time as well as validation search results| one of following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+TRQ-02| ...| ...| ...  
+  
+* * *
+
+  
+  
+
+# Design
+
+  
+  
+
+## Architecture & Workflow Diagram-
+
+  
+  
+
+  
+
+## Key Components
+
+  1. Offer Management Service API
+    1. Code Generator (Interface), which can be implemented by different type of code generators.
+    2. Code Authentication
+    3. Unique code Generation library (Note: Apache RandomStringUtils will be good fit for this.).
+    4. API to support different reports.
+  2. Click Tracker
+    1. Establish receiver code to log the events into the Offer Management API
+  3. InfoTRAC MM
+    1. Update UI to support entering dynamic variables
+    2. Produce MM zip package according to the agreed syntax of the dynamic variables
+  4. Print Service
+    1. MM module need to be updated to accept the new zip format that carry dynamic variables
+    2. interpret and populate the specific variables with barcode/qrcode/unique-code as needed
+    3. capture all code generated and produce data file for subsequent batch processing to ingest data into offer management system
+
+  
+
+## Data Model
+
+ **Collection: offer_code**
+
+{  
+_id: system generated  
+app_name: text  
+cid: text  
+user_id: text  
+acct_num: text  
+offer_code: text (default 6 char)  
+type: text  
+url: text  
+exp_dt: timestamp  
+created_dt: timestamp  
+modified_dt: timestamp  
+}
+
+ **Collection: offer_code_log**
+
+{  
+_id: system generated  
+cid: text (denormalized over for report performance reason)  
+user_id: text (denormalized over for report performance reason)  
+acct_num: text (denormalized over for report performance reason)  
+offer_code: text (denormalized over for report performance reason)  
+type: text (denormalized over for report performance reason)  
+event: text  
+create_dt: timestamp  
+ip: text  
+browser_ua: text  
+}
+
+  
+
+## Application component functional details
+
+  
+
+###  **REST API Specification:**
+
+{TODO} transform the POST of code-generation/registration to an independent
+batch-process API
+
+ _1\. POST /v1/offer/code/{cid}_  : Generate or Register new code.
+
+Query Parameter:
+
+Name| Type| Description| Required  
+---|---|---|---  
+offerCode| text| unique code identifier for code. If omitted, offerCode will
+be generated| false  
+acctNum| text| acct_num of user for which code being generated.| true  
+usrId| text| user identifier of user for which code being generated.| false  
+type| text| type of the code. (qrcode, barcode, alphanum)| true  
+url| text| URL which will be placed inside the code.| true  
+expTimestamp| date| expiration date of code till code is valid.| false  
+appName| text| User who send the request to generate or register code.| true  
+  
+ _2\. PUT /v1/offer/code/{cid}/{codeId}_  : Update the code.
+
+Name| Type| Description| Required  
+---|---|---|---  
+acctNum| text| acct_num of user for which code being generated.| true  
+usrId| text| user identifier of user for which code being generated.| true  
+type| text| type of the code. (QR code, bar code, apha numeric code.)| true  
+url| text| URL which will be placed inside the code.| true  
+expTimestamp| date| expiration date of code till code is valid.| false  
+  
+ _3\. GET /v1/offer/code/{cid}_  : Retrieve meta data of code(s).
+
+Name| Type| Description| Required  
+---|---|---|---  
+codeId| text| code identifier| false  
+acctNum| text| acct_num of user for which code being generated.| false  
+usrId| text| user identifier of user for which code being generated.| false  
+  
+ _4\. GET /v1/offer/code/image/{cid}/{codeId}_  : Retrieve actual image
+
+Name| Type| Description| Required  
+---|---|---|---  
+acctNum| text| acct_num of user for which code being generated.| false  
+usrId| text| user identifier of user for which code being generated.| false  
+type| text| type of the code requested.| false  
+  
+ _5\. GET /v1/offer/code/validate/{cid}/{acctNum}/{offerCode}_  : Validate the
+offer code vs the account number
+
+ _6\. POST /v1/offer/event/{cid}/{offerCode}_  : Store event in database.
+
+Name| Type| Description| Required  
+---|---|---|---  
+acctNum| text| acct_num of user for which code being generated.| true  
+event| text| type of event occurred with code.| true  
+usrId| text| user identifier of user for which code being generated.| false  
+ip| text| ip address of machine accessing page.| false  
+browserUA| text| browser user agent value| true  
+  
+ _7\. GET /v1/offer/report/{cid}/_  : Get event informaiton.
+
+Name| Type| Description| Required  
+---|---|---|---  
+offerCode| text| offer code value.| false  
+acctNum| text| acct_num of user for which code being generated.| false  
+usrId| text| user identifier of user for which code being generated.| false  
+startDate| date| date range for report| false  
+endDate| date| date range for report| false  
+eventType| text| type of an event.(clicked, viewed, send)| false  
+codeType| text| type of the code.| false  
+location| text| location from where any event happened for code.| false  
+browserUA| text| type of browser being used.| false  
+  
+  
+  
+
+###  **Feature:**
+
+ _1\. GET /v1/feature/_  : To get all features.
+
+ _2\. GET /v1/feature/{featureId}/_  : Get feature by feature id/code.
+
+Name| Type| Description| Parameter Type| Required  
+---|---|---|---|---  
+featureId| text| feature code value.| Path| true  
+  
+ _3\. POST /v1/feature/_  : Create a new feature.
+
+Request Body: Feature JSON Object
+
+ _4\. PUT /v1/feature/_  : Update an existing feature.
+
+Request Body: Feature JSON Object
+
+ _5\. DELETE /v1/feature/{featureId}/_  : Delete a feature.
+
+Name| Type| Description| Parameter Type| Required  
+---|---|---|---|---  
+featureId| text| feature Id.| Path| true  
+  
+  
+  
+
+###  **Role:**
+
+ _1\. GET /v1/role/_  : To get all roles.
+
+ _2\. GET /v1/role/{clientId}/_  : Get client roles.
+
+Name| Type| Description| Parameter Type| Required  
+---|---|---|---|---  
+clientId| text| Client Id.| Path| true  
+userId| text| Client Id.| Query| false  
+  
+ _3\. POST /v1/role/{clientId}_  : Create a new role.
+
+Request Body: Role JSON Object
+
+ _4\. PUT /v1/role/{roleId}/_  : Update an existing role.
+
+Request Body: Feature JSON Object
+
+ _5\. DELETE /v1/role/{roleId}/_  : Delete a role.
+
+Name| Type| Description| Parameter Type| Required  
+---|---|---|---|---  
+roleId| text| role Id.| Path| true  
+  
+  
+  
+
+###  **Client:**
+
+ _1\. GET /v1/client/_  : To get all clients.
+
+ _2\. GET /v1/client/{clientId}/_  : Get client by client id/code.
+
+Name| Type| Description| Parameter Type| Required  
+---|---|---|---|---  
+clientId| text| Client Id.| Path| true  
+  
+ _3\. POST /v1/client/{clientId}_  : Create a new client.
+
+Request Body: Client JSON Object
+
+ _4\. PUT /v1/client/{clientId}/_  : Update an existing client.
+
+Request Body: Client JSON Object
+
+ _5\. DELETE /v1/client/{clientId}/_  : Delete a client.
+
+Name| Type| Description| Parameter Type| Required  
+---|---|---|---|---  
+clientId| text| role Id.| Path| true  
+  
+  
+  
+
+###  **User:**
+
+ _1\. GET /v1/user/_  : To get all users.
+
+ _2\. GET /v1/user/{userId}/_  : Get client by client id/code.
+
+Name| Type| Description| Parameter Type| Required  
+---|---|---|---|---  
+userId| text| User Id.| Path| true  
+  
+ _3\. POST /v1/user/{userId}_  : Create a new user.
+
+Request Body: User JSON Object
+
+ _4\. PUT /v1/client/{clientId}/_  : Update an existing client.
+
+Request Body: User JSON Object
+
+ _5\. DELETE /v1/user/{userId}/_  : Delete a user.
+
+Name| Type| Description| Parameter Type| Required  
+---|---|---|---|---  
+userId| text| user Id.| Path| true  
+  
+  
+  
+
+###  **Possible Reports:**
+
+  * Get report based on event(clicked, viewed, sent) and specified duration.
+  * Get List of users which have not clicked the code.
+  * Get List of users which have not viewed the code.
+  * Get report about percentage distribution about type of code utilized.
+  * Get report about utilization of code based over the time.
+  * Get report about geo/browser/device distribution of offer-code used/viewed/sent
+
+I think we can support more report. Based on the requirement, we may need add
+some more column or change the schema of collection.  
+  
+
+  
+
+## Integration Points & Interface
+
+ **TODO: (If Applicable)**  List out Integration Points and corresponding
+interface
+
+From Component| To Component| Details| Error Handling  
+---|---|---|---  
+InfoTRAC| PUI| DT_JOB_ID need to be synchronized by...| If DT_JOB_ID during
+PUI processing is not found in ...  
+  
+* * *
+
+  
+
+## Questions
+
+  
+
+# Summarized Change Log
+
+Date| Who| Changes to Design Doc  
+---|---|---  
+6/03/2014| PShah| Added some TODO notes and examples  
+6/03/2014| PShah| Initial Draft  
+  
+* * *
+
+  
+  
+
+# Sign-Off
+
+Group| Date| Who| Comment  
+---|---|---|---  
+Product Manager (Business)|  
+|  
+|  
+  
+Account Service (AS)|  
+|  
+|  
+  
+Dev./Impl. Manager (Technical)|  
+|  
+|  
+  
+Production Control (PC)|  
+|  
+|  
+  
+Data Processing (DP)|  
+|  
+|  
+  
+Accounting/Invoicing|  
+|  
+|  
+  
+  
+  
+  
+
+# Appendix
+
+  
+
+  
+
+  
+
+

@@ -1,0 +1,61 @@
+title: JOSS error when tomcat-api starts
+body: When tomcat-api getting restarted, we encounter failure with following error
+(even though we haven't done any code-change or config change):
+
+    
+    
+    2017-05-17 09:44:34 | INFO  | o.j.j.c.i.ClientImpl | JOSS / Creating real account instance
+    2017-05-17 09:44:34 | INFO  | o.j.j.c.i.ClientImpl | JOSS / * Allow caching: true
+    2017-05-17 09:44:34 | INFO  | o.j.j.c.i.ClientImpl | JOSS / Attempting authentication with tenant name: null, tenant ID: null, username: system:swift, Auth URL: http://10.8.14.40:8580/auth/v1.0/
+    2017-05-17 09:44:35 | INFO  | o.j.j.c.i.ClientImpl | JOSS / Successfully authenticated
+    2017-05-17 09:44:35 | INFO  | o.j.j.c.i.ClientImpl | JOSS / Applying preferred region: none
+    2017-05-17 09:44:35 | INFO  | o.j.j.c.i.ClientImpl | JOSS / Using TempURL hash prefix source: PUBLIC_URL_PATH
+    2017-05-17 09:44:35 | ERROR | o.j.j.c.i.c.AbstractCommand | JOSS / HTTP HEAD call http://10.8.14.40:8580/v1/AUTH_system, HTTP status 503, Error UNKNOWN
+    2017-05-17 09:44:35 | ERROR | o.j.j.c.i.c.AbstractCommand | * X-Auth-Token=AUTH_tkcbae86e6d1fc4323b7b66738a4e30a81
+    2017-05-17 09:44:35 | ERROR | o.j.j.c.i.c.AbstractCommand | * CONNECTION=Keep-Alive
+    2017-05-17 09:44:35 | INFO  | o.s.o.j.LocalContainerEntityManagerFactoryBean | Closing JPA EntityManagerFactory for persistence unit 'oracle_pu'
+    2017-05-17 09:44:35 | INFO  | o.s.o.j.LocalContainerEntityManagerFactoryBean | Closing JPA EntityManagerFactory for persistence unit 'mysql_pu'
+    2017-05-17 09:44:35 | INFO  | o.s.o.j.LocalContainerEntityManagerFactoryBean | Closing JPA EntityManagerFactory for persistence unit 'oracle_pu'
+    2017-05-17 09:44:35 | INFO  | o.s.o.j.LocalContainerEntityManagerFactoryBean | Closing JPA EntityManagerFactory for persistence unit 'cassandra_hc'
+    2017-05-17 09:44:36 | INFO  | o.s.o.j.LocalContainerEntityManagerFactoryBean | Closing JPA EntityManagerFactory for persistence unit 'cassandra_pu'
+    2017-05-17 09:44:37 | ERROR | o.s.w.c.ContextLoader | Context initialization failed
+    org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'documentResource': Injection of autowired dependencies failed; nested exception is org.springframework.beans.factory.BeanCreationException: Could not autowire field: com.infoimage.financial.service.DocumentService com.infoimage.financial.web.resources.DocumentResource.documentService; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'documentService': Injection of autowired dependencies failed; nested exception is org.springframework.beans.factory.BeanCreationException: Could not autowire field: private org.javaswift.joss.model.Account com.infoimage.financial.service.DocumentService.jossAccount; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'jossAccount' defined in class path resource [openstack-context.xml]: Instantiation of bean failed; nested exception is org.springframework.beans.factory.BeanDefinitionStoreException: Factory method [public org.javaswift.joss.model.Account org.javaswift.joss.client.factory.AccountFactory.createAccount()] threw exception; nested exception is Command exception, HTTP Status code: 503 => UNKNOWN
+            at org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor.postProcessPropertyValues(AutowiredAnnotationBeanPostProcessor.java:292) ~[spring-beans-4.0.2.RELEASE.jar:4.0.2.RELEASE]
+            at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.populateBean(AbstractAutowireCapableBeanFactory.java:1185) ~[spring-beans-4.0.2.RELEASE.jar:4.0.2.RELEASE]
+            at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:537) ~[spring-beans-4.0.2.RELEASE.jar:4.0.2.RELEASE]
+            at 
+    
+
+This is happening when tomcat is starting, it attempts to establish the JOSS
+connection.  
+JOSS is failing the connection because swift is actually not responding at
+this time.  
+Hence tomcat is behaving correctly in this case.
+
+To troubleshoot, I did following:
+
+  1. use the sample commands listed in wiki to test swift working or not.  
+`curl -v -H 'X-Auth-User: system:swift' -H 'X-Auth-Key: info141'
+<http://10.10.20.105:8080/auth/v1.0/>`  
+(sample only, need to replace IP and password)
+
+  2. the above is working fine, I thought swift is fine. However, after validation that esafetybox, esignature are all down. I'm doubting the swift is actually down. Hence test using following:  
+`swift -U system:swift -K info141 -A <http://10.10.20.105:8080/auth/v1.0>
+list`  
+(the curl in #1 can be called from anywhere, but this requires the swift
+client. Hence I needed to login to the swift server to run this command)  
+(this command is to list all containers exist in the swift cluster. this
+command is stuck and not able to return anything)
+
+  3. then I go check the swift log files by:  
+`tail -f /var/log/rsyncd.log /var/log/syslog /var/log/memcached.log`  
+(logs are scattered around, need to look at all 3 log files)  
+(from log, I found the replication is failing and swift is not able to access
+the mounted path /srv/node/sdb1)
+
+  4. Attempt to check the actual file path, and getting "Input/Output error" when doing 'ls'. Hence contacted Network Team.
+  5. The mount point probably got screwed up when the Network Team trying to recover the SAN. Swift server need to be rebooted to see if the mount point can be repaired. And it does after reboot
+  6. Redo the No.2 and No.3 to validate swift is actually responding properly
+  7. resume the service on webapp-prod* sides.
+
+

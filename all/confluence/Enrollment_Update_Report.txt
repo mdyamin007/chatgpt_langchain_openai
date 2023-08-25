@@ -1,0 +1,91 @@
+title: Enrollment Update Report
+body: **Name :**  Enroll Update Report  
+ **Package :**  com.infoimage.processing.application.file.upload2.  
+ **Referene Jef #:**  17083
+(<https://track.infoimageinc.com/issues/17083#note-96>)  
+ **Date:**  July 13, 2016
+
+## Overview
+
+This report generates information of the latest changes of paperless status
+for all accounts of a cid between the given number of days.  
+The number of days depends on the value of 'enrollupdate.numberofdays' key
+from 'PARAMETERS' column of 'P_REPORT' table. If no parameter is given for a
+particular cid, the default number of days is 7.  
+  
+
+## Setup Details:
+
+In  **processing.conf**  need to add the following configuration to indicate
+which processing job to call.
+
+ _ **// processing: EnrollUpdateReport**_  
+enrollUpdateReport.desc=Enroll Update Report  
+enrollUpdateReport.classPath=com.infoimage.processing.application.file.upload2.ProcessingJob  
+enrollUpdateReport.jobStatus=true  
+enrollUpdateReport.undoable=false
+
+In  **client.conf**  file following configuration need to be added to call the
+EnrollUpdateReportGenerator class:
+
+ _ **// EnrollUpdateReport**_  
+enrollUpdateReport.classPath=com.infoimage.processing.application.file.upload2.enrollUpdateReport.EnrollUpdateReportGenerator
+
+All the configuration of the report are read from the  **P_REPORT**  table of
+Database.
+
+  *  **P_REPORT**  table
+
+ **Coulumn Name**|  **Type**|  **UI Name**  
+---|---|---  
+ORG_NAME| VARCHAR2(25 BYTE)| CID  
+FILE_NAME| VARCHAR2(60 BYTE)| File Name  
+TITLE| VARCHAR2(255 BYTE)| Report Title  
+COMMAND| VARCHAR2(225 BYTE)| Command  
+PARAMETERS| BLOB| Parameters  
+FILE_CONTENT| VARCHAR2(255 BYTE)| File Content  
+FILE_HEADER| VARCHAR2(255 BYTE)| File Header  
+ENCRYPTION_TYPE| VARCHAR2(60 BYTE)| Encryption Type  
+ENCRYPTION_VALUE| VARCHAR2(255 BYTE)| Encryption Value  
+PICKUP_PATH| VARCHAR2(255 BYTE)| Pickup Path  
+FTP_FOLDER| VARCHAR2(255 BYTE)| FTP Folder  
+FTP_LOGIN| VARCHAR2(255 BYTE)| FTP Login  
+FTP_PASS| VARCHAR2(255 BYTE)| FTP Pass  
+CONFIRM_EMAIL| VARCHAR2(255 BYTE)| Confirm Email  
+CONFIRM_EMAIL_TEMPLATE| VARCHAR2(100 BYTE)| Confirm Email Template  
+CONFIRM_EMAIL_SUBJECT| VARCHAR2(100 BYTE)| Confirm Email Subject  
+  
+  
+
+  
+
+## Report Description:
+
+The report will include information of the latest changes of paperless status
+for all accounts of a cid between the given number of days prior to the
+processing date. The number of days depends on the value of
+'enrollupdate.numberofdays' key from 'PARAMETERS' column of 'P_REPORT' table.
+If no parameter is given for a particular cid, the default number of days is
+7.
+
+The report contains the following fields  
+ **Account #|Account Type|Delivery Preference|Modified Date**
+
+EnrollUpdateReportGenerator class is a implementation class of UploadHandler
+(com.infoimage.processing.application.file.upload2.UploadHandler) interface.
+From scheduler the command has to be 'enrollUpdateReport'. File name and
+Report title has no effect on the generated report.
+
+  *  **Expected Parameters :**
+
+ **Key Name**|  **Type**|  **Attribute**  
+---|---|---  
+enrollupdate.numberofdays| number| Optional (Default 7, if not provided)  
+  
+  
+
+  
+
+### Attachments
+
+

@@ -1,0 +1,57 @@
+title: divert-job-search
+body: # Divert Job Search
+
+Request Type | Endpoint  
+---|---  
+`GET` | _`/job-search/facility/<>/cid/<>/job_2d/<>/dt_job_id/<>`_  
+  
+## Steps
+
+  1. Checks `dt_job_id` exists in `tblRTWO_Cycle` table in PC/mssql database 
+    * if not found, throw `404` error
+  2. if found, match with provided `facility` with `tblRTWO_Cycle`.`DATACENTER`. 
+    * if doesn't match, throw `400` error
+  3. if matches, Lookup in `PROCESS_MAIN` table in `IS` Database, with following query
+
+Confluencepythontrue
+
+## Path Parameters
+
+Name | Description | Example  
+---|---|---  
+`facility` | DataTrac Data-center | `MP`/`TX`  
+`cid` | 4 digit customer id | `afcu`  
+`job_2d` | 3 digit job_2d code | `60g`  
+`dt_job_id` | dt job id | `122511-C13.01-V20327`  
+  
+## Response Code
+
+Code | Description  
+---|---  
+`200` | Data found  
+`400` | Data-center (Facility) Mismatch  
+`404` | Job missing in DataTrac or IS Database or in both  
+  
+## Example Request
+
+Confluenceshelltrue
+
+## Example Response
+
+`200` OK
+
+Confluencejsontrue
+
+* * *
+
+`404` NOT FOUND
+
+Confluencejsontrue
+
+* * *
+
+`400` BAD REQUEST
+
+Confluencejsontrue
+
+

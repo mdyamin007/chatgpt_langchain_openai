@@ -1,0 +1,133 @@
+title: Design and Code Review - 12/4/2012
+body:   
+
+### Author: Bhavani Sridharan, Reviewed by Lin Han, Ben Chan
+
+ **Feedback**
+
+  1. Init Pass - Every IndexFileRecord object to store its Criteria during time of creation (i.e. Init phase)
+  2. Test Case Generation per Msg Area - Pass 1 - reviewed implementation done - Test cases for ranges should include one value less than and one value more than the anchor point list boundaries
+  3. Defect: Range test cases were not being generated properly.  
+For example, for the 2 "same criteria"  
+Maturity Days~between~v:15:20  
+Maturity Days~between~v:60:90  
+in Message Area 1 of a sample index file, the test cases generated were:  
+60  
+69  
+90
+
+  4. Logic for Pass 3 discussed  
+The whole Attribute x Test Cases matrix (even if for one msg area) should NOT
+be loaded in memory. Logic to be devised without this and JSON object (output)
+to be written soon after one test case combination is evaluated.
+
+ **Sample output for current implementation - review of test case generation
+per msg area**
+
+  
+
+  
+
+    
+    
+    $$$$$$ Printing Criteria Per Message Area of index file $$$$$$ 
+    ^^^^^^^ Message Area :1 ^^^^^^^ 
+    AccountNumber~exclude~f:AccountNumbers.txt:776def8fe9ecf0f8338b3ed510933593 
+    ShareID~exclude~v:S00,S99,S123 
+    Zip~exclude~v:11111-99999 
+    Test cases for this message area: 
+    Attribute: AccountNumber 
+    A002 
+    A424 
+    A756 
+    A966 
+    Attribute: ShareID 
+    S00 
+    S123 
+    S434 
+    S99 
+    Attribute: Zip 
+    11111 
+    48348 
+    99999 
+    ^^^^^^^ End Message Area :1 ^^^^^^^ 
+    ^^^^^^^ Message Area :2 ^^^^^^^ 
+    Zip~include~v:99999 
+    Test cases for this message area: 
+    Attribute: Zip 
+    85562 
+    99999 
+    ^^^^^^^ End Message Area :2 ^^^^^^^ 
+    ^^^^^^^ Message Area :3 ^^^^^^^ 
+    AccountNumber~include~f:AccountNumbers1.txt:776def8fe9ecf0f8338b3ed510933593 
+    Zip~include~v:11111 
+    Test cases for this message area: 
+    Attribute: AccountNumber 
+    A254 
+    A424 
+    A576 
+    A756 
+    Attribute: Zip 
+    11111 
+    16834 
+    ^^^^^^^ End Message Area :3 ^^^^^^^ 
+    $$$$$$ End Printing Criteria Per Message Area of index file $$$$$$ Generated test cases per message area - program output 
+    ------------------------------------------------------- 
+    $$$$$$ Printing Criteria Per Message Area of index file $$$$$$ 
+    ^^^^^^^ Message Area :1 ^^^^^^^ 
+    AccountNumber~exclude~f:AccountNumbers.txt:776def8fe9ecf0f8338b3ed510933593 
+    ShareID~exclude~v:S00,S99,S123 
+    Zip~exclude~v:11111-99999 
+    Test cases for this message area: 
+    Attribute: AccountNumber 
+    A002 
+    A424 
+    A756 
+    A966 
+    Attribute: ShareID 
+    S00 
+    S123 
+    S434 
+    S99 
+    Attribute: Zip 
+    11111 
+    48348 
+    99999 
+    ^^^^^^^ End Message Area :1 ^^^^^^^ 
+    ^^^^^^^ Message Area :2 ^^^^^^^ 
+    Zip~include~v:99999 
+    Test cases for this message area: Attribute: Zip 
+    85562 
+    99999 
+    ^^^^^^^ End Message Area :2 ^^^^^^^ 
+    ^^^^^^^ Message Area :3 ^^^^^^^ 
+    AccountNumber~include~f:AccountNumbers1.txt:776def8fe9ecf0f8338b3ed510933593 
+    Zip~include~v:11111 
+    Test cases for this message area: 
+    Attribute: AccountNumber 
+    A254 
+    A424 
+    A576 
+    A756 
+    Attribute: Zip 
+    11111 
+    16834 
+    ^^^^^^^ End Message Area :3 ^^^^^^^ 
+    $$$$$$ End Printing Criteria Per Message Area of index file $$$$$$
+    Index File Used
+    ---------------
+    Message Area|Priority|Message Id|File Name|CheckSum|Custom1|Custom2|Custom3|Custom4|Custom5|Compound|Criteria1~Operator1~Value1|Criteria2~Operator2~Value2|Criteria3~Operator3~Value3|Criteria4~Operator4~Value4|Criteria5~Operator5~Value5
+    3|3|3270|ms1_AccountNumber_11.imp|71c39ce4806c2a15aa5a7779a00c38d8||||||AND|AccountNumber~include~f:AccountNumbers1.txt:776def8fe9ecf0f8338b3ed510933593
+    1|1|3267|ms1_AccountNumber_11.imp|71c39ce4806c2a15aa5a7779a00c38d8||||||AND|AccountNumber~exclude~f:AccountNumbers.txt:776def8fe9ecf0f8338b3ed510933593|ShareID~exclude~v:S00,S99,S123|Zip~exclude~v:11111-99999
+    1|2|3264|ms1_Default_12.imp|71c39ce4806c2a15aa5a7779a00c38d8|||||||Default
+    2|2|3265|ms1_Default_22.tif|e341924c6dbebf42f7ccb421b5b1c1ac|||||||Default
+    3|1|3269|ms1_Zip_31.imp|71c39ce4806c2a15aa5a7779a00c38d8||||||AND|Zip~include~v:11111
+    3|2|3266|ms1_Default_32.imp|71c39ce4806c2a15aa5a7779a00c38d8|||||||Default
+    2|1|3268|ms1_Zip_21.tif|e341924c6dbebf42f7ccb421b5b1c1ac||||||AND|Zip~include~v:99999
+    Total Messages:6  
+      
+      
+    
+    
+
+

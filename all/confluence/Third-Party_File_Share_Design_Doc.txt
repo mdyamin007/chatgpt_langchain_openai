@@ -1,0 +1,287 @@
+title: Third-Party File Share Design Doc
+body: # Introduction
+
+  
+
+## Purpose/Objective Summary
+
+Allow eSafetyBox user to share file to third-party users whom do not have
+account/login registered with eSafetyBox application.  
+  
+
+## Scope
+
+  
+
+### In-Scope
+
+  1. Allow file share on both file/folder level
+  2. Allow unregistered users to download file(s)
+  3. Single file could be shared among multiple third-party
+
+  
+
+### Out-of-Scope
+
+  1. Collaboration of file(s) is not needed at this time. i.e. no upload by third-party, no file modification, etc.
+
+  
+
+# Requirements
+
+  
+  
+
+## Business Requirements & Use Cases
+
+ **TODO:**   **(Required)**  List out all needs/requirement from business/end-
+user perspective. Assign an ID for each requirement/use-case item for easier
+reference in future
+
+ID| Title| Details| ScreenMock| Importance  
+---|---|---|---|---  
+BRQ-01| Generic Search box| (example)  
+ **Requirement:**  Instead of showing a drop-down to ask user to choose what
+attribute to search against,  
+just have a simple search box that will search against all potential
+attributes like name/email/address/phone.  
+ **Use Case:**  enter "ben" into search box, search results returned should
+include both record of "Ben
+[Chan/bchan@infoimage.com](mailto:Chan/bchan@infoimage.com)" as well as "Jim
+[Wong/jwong@bigben.com](mailto:Wong/jwong@bigben.com)"| <attach file>| one of
+following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+BRQ-02| ...| ...| ...| ...  
+  
+  
+  
+
+## Functional Requirements & Use Cases
+
+ **TODO:**   **(Required)**  List out all needs/requirement from
+engineering/functional perspective. Associate them with an ID for easier
+reference
+
+ID| Title| Details| Bus. Req. Ref.| Importance  
+---|---|---|---|---  
+FRQ-01| Generic Search by Sphinx| (example)  
+ **Requirement:**  Instead of constructing the SQL statements for search,
+utilize Sphinx to help build the index and support such generic search.  
+ **Use Case:**  enter "ben" into search box, search results returned should
+include both record of "Ben
+[Chan/bchan@infoimage.com](mailto:Chan/bchan@infoimage.com)" as well as "Jim
+[Wong/jwong@bigben.com](mailto:Wong/jwong@bigben.com)"| <optional>| one of
+following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+FRQ-02| ...| ...| ...| ...  
+  
+  
+  
+
+## Performance & Scalability Requirements (SLA)
+
+ **TODO: (Required)**  List out all needs/requirement from Performance
+perspective. Associate them with an ID for easier reference
+
+ID| Title| Details| Importance  
+---|---|---|---  
+PRQ-01| Fast Search response| (example)  
+ **Requirement:**  All Search operation should return results within 100ms.  
+ **Use Case:**  <enter if applicable>| one of following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+PRQ-02| ...| ...| ...  
+  
+  
+  
+
+## QA/Test Requirements
+
+ **TODO:**   **(Required)**  List out all needs/requirement from QA/Testing
+perspective. Associate them with an ID for easier reference
+
+ID| Title| Details| Importance  
+---|---|---|---  
+TRQ-01| Selectable Search Box element| (example)  
+ **Requirement:**  The search textbox AND the 'Search' button need to tagged
+with 'id' value so that Selenium could select it for entering value and
+subsequent submit  
+ **Use Case:**  Rely on Selenium to submit random search terms and capture
+response time as well as validation search results| one of following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+TRQ-02| ...| ...| ...  
+  
+* * *
+
+  
+  
+
+# Design
+
+  
+
+## Architecture & Workflow Diagram
+
+  
+  
+
+### Workflow walkthrough
+
+  1. File Owner initiate file-sharing
+    * Each file/folder in non-system folders (i.e. Inbox/Sent/Trash folders) could be shared with third-parties.
+    * Clicking on the 'Share' action button will initiate a server request to initiate the share capability
+  2. Unique Access-Link generated
+    * Only when a file/folder is explicitly shared (by File Owner clicking on the 'Share' action button), an unique link alias (i.e. AccessLink) is generated with default expiration date. The AccessLink would be a 10-char alpha-numeric string.
+  3. Access-Link visible to File Owner on UI, enter email/phone and click 'Send' to confirm sharing
+    * Newly created AccessLink will require File Owner to enter third-party's email (and phone if desire). File Owner could choose to change the default expiration date if desire.
+    * Existing AccessLink would be listed to allow user to extend expiration if needed.
+      * Email/Phone are not editable. If wrong value entered before, need to create new AccessLink with correct info.
+    * 'Send' button is enabled next to the AccessLink entry when proper email address is entered.
+      * 'Send' button is available for existing AccessLink as well in case email need to be resent to third-party
+    * Once File Owner reviewed info and ready to notify corresponding third-party, click on 'Send' button.
+  4. Email carrying the Unique Access-Link sent to Third-Party
+    * Once the 'Send' button is clicked, AccessLink is sent over to corresponding Third-Party recipient.
+  5. Third-Party click on AccessLink
+    * When accessing the AccessLink, first requested page will prompt user for the email address as first-level of security check.
+      * This is to prevent somebody get a hold of the AccessLink by overseeing a link/print/screen..etc.
+  6. Validate against the EMail-vs-AccessLink mapping & Expiration
+    * User entered email address is checked against database to ensure it matches because AccessLink is uniquely assigned to specific email address only.
+    * If email address entered matches, then user will be prompted for a choice of Email/SMS to receive the one-time-use access-token.
+      * If phone number was not provided by File Owner, then only the choice of Email would be available.
+      * Third-Party do NOT get to see/enter new email/phone info. The email/phone entered by File Owner would be masked & used only.
+    * 3 consecutive failed attempt of validation will disable the AccessLink automatically with specific 'Locked' status.
+  7. Send AccessToken over Email/SMS by choice
+    * Once user enter the choice, the FileAccess system will generate a one-time-use token and send over email/sms
+    * The token will be validate for 30 minutes by default. (configurable per CID)
+  8. Third-Party enter AccessToken
+    * Upon successful validation of the one-time-use AccessToken, an Encrypted cookie will be saved for current access session.
+      * Encrypted cookie will be saved a session cookie so that whenever browser window is closed, cookie automatically destroyed.
+      * Encrypted cookie will be comprised of BrowserUserAgentString, IP-Address, Current Access Session Expiration Timestamp
+      * Cookie is encrypted by SHA-256 with a secret key
+    * 3 consecutive failed attempt of validation will disable the AccessLink automatically with specific 'Locked' status.
+  9. Download File(s)
+    * Once all authentication checked successfully, Third-Party would be shown the file/folder associated with the AccessLink only
+      * Meaning even if same Third-Party is shared with two files from same File Owner, there should be two separate AccessLink. Each AccessLink can access the associated single file only.
+      * If File Owner would like to share multiple files to a Third-Party with a single AccessLink, FileOwner could place all files needed within a single folder and share the folder.
+    * When Third-Party download the file(s), all download event are logged into the system as history records
+    * All the history records will be available to File Owner's regular eSafetyBox History tab.
+  10. File Owner receive email notification about the download event (by profile preference)
+    * Whenever a file is downloaded, an email notification would be sent to File Owner.
+    * An option is exposed in File Owner's profile to control whether an email notification should be sent or not
+
+  
+  
+
+## Data Model changes (ER diagram & ddl.sql)
+
+New Table to associate with BOX_FILE_FOLDER column family
+
+ **Column Name**|  **Type**|  **Desc**  
+---|---|---  
+file_id| text| FK to the file/folder record  
+email| text| email address of third-party that the file/folder to be shared
+with  
+phone| text| phone number to be used for SMS purpose if needed (optional)  
+link| text| unique link generated to be placed inside email body to allow
+specific third-party user to access file  
+link_expiry| timestamp| expiration timestamp of the link, default to be 30
+days. configurable by CID  
+token| text| temporary token generated for authentication use. Token need to
+be MD5 encoded as a one-way authentication value  
+token_expiry| timestamp| expiration timestamp of the temporary token, default
+to be 30 minutes. configurable by CID  
+  
+## Application component functional details
+
+ **TODO:**   **(Required if involve big architectural change)**  List out the
+key class/method created/changed for this project. Highlight the changed
+portion (e.g. additional param for a method)
+
+ **Overview:**   **TODO:**  Provide an overview of what changes if not already
+illustrated in the Architecture diagram above
+
+Component| Class| Method| Params| Comments  
+---|---|---|---|---  
+...| ...| ...| ...| ...  
+  
+  
+  
+
+## Integration Points & Interface
+
+ **TODO: (If Applicable)**  List out Integration Points and corresponding
+interface
+
+From Component| To Component| Details| Error Handling  
+---|---|---|---  
+InfoTRAC| PUI| DT_JOB_ID need to be synchronized by...| If DT_JOB_ID during
+PUI processing is not found in ...  
+  
+  
+  
+
+# Summarized Change Log
+
+Date| Who| Changes to Design Doc  
+---|---|---  
+3/11/2013| Ben C| Added some TODO notes and examples  
+3/08/2013| Ben C| Initial Draft  
+  
+  
+  
+
+# Sign-Off
+
+Group| Date| Who| Comment  
+---|---|---|---  
+Product Manager (Business)|  
+|  
+|  
+  
+Account Service (AS)|  
+|  
+|  
+  
+Dev./Impl. Manager (Technical)|  
+|  
+|  
+  
+Production Control (PC)|  
+|  
+|  
+  
+Data Processing (DP)|  
+|  
+|  
+  
+Accounting/Invoicing|  
+|  
+|  
+  
+  
+  
+
+# Appendix
+
+<add as you need>
+
+### Attachments
+
+  
+
+

@@ -1,0 +1,64 @@
+title: RHS:  /home/master Oracle Environment Variable Code Cleanup
+description: I noticed the following codes are exporting the following environment variables and overloading/hardcoding the Oracle Path:
+
+
+
+$TNS_ADMIN
+
+$ORACLE_HOME
+
+
+
+We should not overload the paths and should be defined in each users profile setting instead. Besides, the current paths defined in the linux user profile settings are+newer+ than what's overloaded in the code.
+
+
+
+The following variable needs to be revisited:
+
+$PATH
+
+Please perform code review. Why do we need to overload the PATH system variable? I don't see any reason for it and I think it needs to be removed. Please review first to make sure my+opinion+ is correct.
+
+
+
+Here's is a list of all the codes that references the scenarios above:
+
+
+
+
+{noformat}
+*no* further _formatting_ is done here
+/home/master/fcsb_daily_process.sh: export TNS_ADMIN=/home/oracle/oracle/product/10.2.0/client_1/network/admin/home/master/fcsb_daily_process.sh: export TNS_ADMIN=/home/oracle/oracle/product/10.2.0/client_1/network/admin/home/master/fcsb_daily_process.sh: export ORACLE_HOME=/home/oracle/oracle/product/10.2.0/client_1/home/master/fcsb_dda_process_rh2.sh: export TNS_ADMIN=/home/oracle/oracle/product/10.2.0/client_1/network/admin/home/master/fcsb_dda_process_rh2.sh: export ORACLE_HOME=/home/oracle/oracle/product/10.2.0/client_1/home/master/fcsb_dda_process_rh2.sh:  export PATH=/usr/bin:/bin:/usr/local/bin:/usr/X11R6/bin:/opt/postware/adm:/opt/postware/ace:/opt/opttechsort:.:/isiscomm/l3/lib:/opt/postware/adm:/opt/postware/ace::/home/oracle/oracle/product/10.2.0/client_1/bin:/home/oracle/oracle/product/10.2.0/client_1/network/admin::/home/neil/bin/home/master/fcsb_saving_process_rh2.sh: export TNS_ADMIN=/home/oracle/oracle/product/10.2.0/client_1/network/admin/home/master/fcsb_saving_process_rh2.sh: export ORACLE_HOME=/home/oracle/oracle/product/10.2.0/client_1/home/master/fcsb_saving_process_rh2.sh:  export PATH=/usr/bin:/bin:/usr/local/bin:/usr/X11R6/bin:/opt/postware/adm:/opt/postware/ace:/opt/opttechsort:.:/isiscomm/l3/lib:/opt/postware/adm:/opt/postware/ace::/home/oracle/oracle/product/10.2.0/client_1/bin:/home/oracle/oracle/product/10.2.0/client_1/network/admin::/home/neil/bin/home/master/keys_process_tt.sh: export TNS_ADMIN=/home/oracle/oracle/product/10.2.0/client_1/network/admin/home/master/keys_process_tt.sh: export ORACLE_HOME=/home/oracle/oracle/product/10.2.0/client_1/home/master/keys_process_tt.sh:  export PATH=/usr/bin:/bin:/usr/local/bin:/usr/X11R6/bin:/opt/postware/adm:/opt/postware/ace:/opt/opttechsort:.:/isiscomm/l3/lib:/opt/postware/adm:/opt/postware/ace::/home/oracle/oracle/product/10.2.0/client_1/bin:/home/oracle/oracle/product/10.2.0/client_1/network/admin::/home/neil/bin/home/master/psfa_process.sh:    export TNS_ADMIN=/home/oracle/oracle/product/10.2.0/client_1/network/admin/home/master/psfa_process.sh:    export ORACLE_HOME=/home/oracle/oracle/product/10.2.0/client_1/home/master/psfa_process.sh:    export PATH=/usr/bin:/bin:/usr/local/bin:/usr/X11R6/bin:/opt/postware/adm:/opt/postware/ace:/opt/opttechsort:.:/isiscomm/l3/lib:/opt/postware/adm:/opt/postware/ace::/home/oracle/oracle/product/10.2.0/client_1/bin:/home/oracle/oracle/product/10.2.0/client_1/network/admin::/home/neil/bin/home/master/psfa_process_test.sh:    export TNS_ADMIN=/home/oracle/oracle/product/10.2.0/client_1/network/admin/home/master/psfa_process_test.sh:    export ORACLE_HOME=/home/oracle/oracle/product/10.2.0/client_1/home/master/psfa_process_test.sh:    export PATH=/usr/bin:/bin:/usr/local/bin:/usr/X11R6/bin:/opt/postware/adm:/opt/postware/ace:/opt/opttechsort:.:/isiscomm/l3/lib:/opt/postware/adm:/opt/postware/ace::/home/oracle/oracle/product/10.2.0/client_1/bin:/home/oracle/oracle/product/10.2.0/client_1/network/admin::/home/neil/bin/home/master/psfa_usps_process.sh:    export TNS_ADMIN=/home/oracle/oracle/product/10.2.0/client_1/network/admin/home/master/psfa_usps_process.sh:    export ORACLE_HOME=/home/oracle/oracle/product/10.2.0/client_1/home/master/psfa_usps_process.sh:    export PATH=/usr/bin:/bin:/usr/local/bin:/usr/X11R6/bin:/opt/postware/adm:/opt/postware/ace:/opt/opttechsort:.:/isiscomm/l3/lib:/opt/postware/adm:/opt/postware/ace::/home/oracle/oracle/product/10.2.0/client_1/bin:/home/oracle/oracle/product/10.2.0/client_1/network/admin::/home/neil/bin/home/master/psfa_usps_process_test.sh:    export TNS_ADMIN=/home/oracle/oracle/product/10.2.0/client_1/network/admin/home/master/psfa_usps_process_test.sh:    export ORACLE_HOME=/home/oracle/oracle/product/10.2.0/client_1/home/master/psfa_usps_process_test.sh:    export PATH=/usr/bin:/bin:/usr/local/bin:/usr/X11R6/bin:/opt/postware/adm:/opt/postware/ace:/opt/opttechsort:.:/isiscomm/l3/lib:/opt/postware/adm:/opt/postware/ace::/home/oracle/oracle/product/10.2.0/client_1/bin:/home/oracle/oracle/product/10.2.0/client_1/network/admin::/home/neil/bin
+
+
+{noformat}
+
+
+The are the program files from the list above:
+
+
+{noformat}
+/home/master/fcsb_daily_process.sh
+/home/master/fcsb_dda_process_rh2.sh
+/home/master/fcsb_saving_process_rh2.sh
+/home/master/keys_process_tt.sh
+/home/master/psfa_process.sh
+/home/master/psfa_process_test.sh
+/home/master/psfa_usps_process.sh
+/home/master/psfa_usps_process_test.sh{noformat}
+Of all the code above, I+think+ only the fcsb code is being used. Ideally if we had the other CVS check-in/out program completed to perform deletes, you can just delete the unused code w/o needing to clean it up.
+
+
+
+When project is done, I will run the following linux command to confirm that there is no more references to what is identified above:
+{noformat}
+grep -irH 'oracle' /home/master/* | grep -v DBI | grep 'export'{noformat}
+
+
+
+author: peter.dang
+comment: we don't need to export the oracle path. The scripts that has these path export are no longer used.
+
+
+author: william.kong
+comment: Let's get the CVS check in/out program project worked on so that we can delete this code that is no longer used from our repository.

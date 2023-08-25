@@ -1,0 +1,175 @@
+title: Correlation
+body: General Information
+
+  * Core system is called Keystone
+  * XML data file format
+  * Currently only applies to Credit union not banks
+  * Same global XML tags across all applications (monthly statement, daily notices, loan coupon, maturity notice etc)
+
+Every data file would have  **< envelope>, <person>, <address> **tags
+
+ **< envelope>** belongs to one customer and can include multiple statements
+or notices.  Multiple **< statement>** or **< notices**> onside the <
+**envelope** > means that it needs to be sent together in 1 envelope or as 1
+PDF.  _ **(confirm with client)**_
+
+  * There are usually three categories of mailing address-Residential, Business, Mailing. Confirm with client if there are multiple address in a record, use Mailing first? Usually, default Address Method is set to 'Mailing, then Residence, then Business'. In other words, when an account level address does _not_ exist and there is a residence _and_ mailing person level address, the mailing address would be used. 
+  * There are instances where a statement or notice to NOT have any **< address>** tag. Usually this means it is a bad address/ no mail and need to be suppressed from printing and mailing.
+  * Some address might have  **< additionalAddressLine>** tag that need to be included in the mailing address. Search this tag in the data file or confirm with client if the tag is being used.
+  * Suppression flag is represented by  **< statementMailGroupSerial>** and  **< statementMailGroupDescription>** tag. 
+  * Electronic statements will have **< eStatementOption>** = E-statement only
+  * The <epilogue> tag at the end  of the data file contains all the necessary record count tags that we can use to validate record count
+  * Ex: <<epilogue type="c">
+
+<envelopeCount>51284</envelopeCount>  
+<statementCount>51284</statementCount>  
+<accountCount>51284</accountCount>  
+<accountMailStatementOnlyCount>31636</accountMailStatementOnlyCount>  
+<accountEStatementOnlyCount>19648</accountEStatementOnlyCount>  
+<shareCount>84290</shareCount>  
+<loanCount>15622</loanCount>
+
+</epilogue>
+
+Statements
+
+  * Member Statement might contain , Savings, Checking , Certificate, loan Product types
+  * Example of data file: 
+  * Deposits accounts will be within the <share type> tag while loan accounts will be in the <loan type> tag
+  * Any closed accounts will have a <closeDate> tag
+  * Each Member statement Account data will be within **< envelope>**
+  * Each new Product will be within <subAccount>
+  * In Keystone,  the format of transaction descriptions in the data file are not based solely on <description> tag but built from a combination of other XML tags. In most cases, there are no <description> tag.
+
+Examples:
+
+<transaction type="a">
+
+<transactionSerial>90059780</transactionSerial>  
+<monetarySerial>90059781</monetarySerial>  
+<postingDate>2021-03-31</postingDate>  
+<category option="D">Deposit</category>  
+<source option="V">Dividend</source>  
+<grossAmount>0.02</grossAmount>  
+<principal>0.02</principal>  
+<newBalance>252.52</newBalance>  
+<apyeRate>0.090</apyeRate>  
+<apyeAverageBalance>252.50</apyeAverageBalance>  
+<apyePeriodStartDate>2021-03-01</apyePeriodStartDate>  
+<apyePeriodEndDate>2021-03-31</apyePeriodEndDate>
+
+</transaction>
+
+In the example above, the transaction description could be: < **category
+option >** +  < **source option >** \+ < **apyeRate** >
+
+  * Each client might have a different requirements on what to construct as transaction descriptions. Example of transaction description construct logic: 
+
+  
+
+Notices
+
+  * Keystone only support certain notice types. Mostly collection/delinquent account notices, and certificate notices. Example of collection data file: 
+  * Some notices might have to be pulled from Monthly statement data files.
+  * The collection notices can contain multiple type delinquent and negative balance notices. The type of the delinquent notice is determined by the < **collectionNoticeCount** > or < **collectionNoticeTypeSerial** > tag.
+  * the current way the Delinquent Loan Notices are setup in KeyStone don't seem to line up with the notices InfoImage is expecting. The notice count in KeyStone is dependent on days between notices, not necessarily actual days delinquent. For instance, if a loan becomes delinquent a notice will be set 11 days after the initial delinquency. If 20 days later the loan is still delinquent, a second notice will be sent (notice count = 2).
+
+  
+
+ **Collection Notice Definition (Notice Count)**
+
+|
+
+ **Days Between Notices**
+
+|
+
+ **Equivalent Days Delinquent**  
+  
+---|---|---  
+  
+1
+
+|
+
+11
+
+|
+
+11  
+  
+2
+
+|
+
+20
+
+|
+
+31  
+  
+3
+
+|
+
+9
+
+|
+
+40  
+  
+4
+
+|
+
+10
+
+|
+
+50  
+  
+5
+
+|
+
+11
+
+|
+
+61  
+  
+6
+
+|
+
+19
+
+|
+
+80  
+  
+7
+
+|
+
+5
+
+|
+
+85  
+  
+8
+
+|
+
+5
+
+|
+
+90  
+  
+  
+
+  
+
+

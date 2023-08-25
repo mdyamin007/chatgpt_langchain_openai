@@ -1,0 +1,147 @@
+title: Target Engine Pentaho Integration
+body: # **Design**
+
+  
+
+## Architecture & Workflow Diagram  
+
+  
+  
+
+## Pentaho Data Integration ( PDI )
+
+  
+  
+
+### 1.1 Pentaho kettle API intergration
+
+Add Pentaho plugins to Tomcat runtime arguments
+
+-DKETTLE_PLUGIN_BASE_FOLDERS="/usr/local/pentaho/PDI_5S/data-integration/pluginsfF
+    
+    
+      
+    
+
+  
+
+  
+
+### 1.2 Run Pentaho transformation and job
+
+(1). Run Pentaho job from command line
+
+C:\Program Files\PDI\pdi-ce-4.4.0-stable\data-integration>kitchen.bat
+/file:C:\\_pentaho_workspace\dev_rabo_sample\insert_new_offer_to_audience.kjb
+/level:Basic
+
+    
+    
+      
+    
+    
+
+(2) Run Pentaho job use Kettle API.
+
+KettleEnvironment.init();  
+String workingDir = System.getProperty("user.dir");  
+String filename =
+"C:\\\_pentaho_workspace\\\dev_rabo_sample\\\insert_new_offer_to_audience.kjb";  
+JobMeta jobMeta = new JobMeta(filename, null);  
+Job job = new Job(null, jobMeta);  
+job.start();  
+job.waitUntilFinished();  
+if (job.getErrors()!=0) {  
+    System.out.println("Error encountered!");  
+}  
+Result result = job.getResult();  
+System.out.println("result: " + result);
+
+    
+    
+      
+    
+
+  
+
+  
+
+### 1.3 Sample Transformation
+
+ **1.3.1 Multiple Input Resource**
+
+ **Update FICO Score**  
+
+ **1.3.2 Insert new offer to eligible audience**  
+
+ **Set Variables**  
+
+ **Insert new offer to audience (ktr)**  
+
+ **Get variables in transformation**  
+
+ **1.3.3 Custom JS**
+
+Rule Processor  
+
+Insert new offer to eligible audience  
+
+ **1.3.4 Audience Data**  
+  
+  
+
+  
+
+# Blocker
+
+    
+    
+    1. Got "JSON is not defined" error only for execute jobs from API.
+       Pentaho "Json Input" step only support limited data types, need to convert json String to a java object in custom Java Script file.
+    
+    2. Got plugins not found error if run Pentaho job/transformation outside it's directory, it is a Pentaho bug and marked as fixed by Pentaho team, but the same thing is happening again on later versions. 
+    <http://jira.pentaho.com/browse/PDI-5076>
+    
+    E.g.
+    Unable to load class for step/plugin with id [MongoDbInput]. Check if the plugin is available in the plugins subdirectory of the Kettle distribution.
+    
+    3. Pentaho PDI output has limited data types, need to do conversion for JSON type.
+    
+    
+
+  
+
+# Q & A
+
+    
+    
+    Q: **XXXXXX?**  
+     A:
+
+  
+  
+
+# Notes
+
+Each record to have offered campaign id and date range (In Process)  
+Javascript able to accept multiple variables from rule xml (Done)  
+Able to get Operator key and keyvalue from UI for rule processor to create the
+rule - javascript transformation - store own rule definitions.  
+Inforeach/pentaho db records  
+Campaign xml transformation (  
+Rule xml transformation  
+Kick off pentaho job - command line
+
+Data normalization schma which will be the input for Taregtting engine/Pentaho
+
+  
+
+##   Attachments
+
+  
+
+
+
+  
+
+

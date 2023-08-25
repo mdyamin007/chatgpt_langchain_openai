@@ -1,0 +1,316 @@
+title: New Client Setup.
+body: ## Deliverable's Checklist
+
+Deliverable| CID| Where to make the change  
+---|---|---  
+Agree on a Client ID|  
+|  
+  
+API Login ID and transaction key.| [Authorize.net](http://Authorize.net)|
+setup sql  
+Apply for Merchant ID - Authorize.Net settings need to be configured to be the
+same as CVHS (CRCM - Veronica).  
+Only support credit card payments for VISA, Mastercard, Discover. No ACH
+payments.| [Authorize.net](http://Authorize.net)| Client needs to set this up  
+Domain name| eg. [howard.estatemnt.com](http://howard.estatemnt.com)|
+resin.xml  
+nordis.soap.action_url| Nordis| web.xml  
+Most of the times all these values have been same for all the clients so far  
+nordis.soap.server_url|  
+| "  
+nordis.Uname| Nordis| "  
+nordis.accCode| Nordis| "  
+nordis.CID| Nordis| "  
+nordis.Utype| Nordis| "  
+nordis.email| Nordis| "  
+A-record domain name (.[estatemnt.com](http://estatemnt.com))  
+\- [eg.howard.estatemnt.com](http://eg.howard.estatemnt.com)|  
+| we use the certificate in IIS  
+Archival period|  
+| setup sql, host/root( msm)/include/define.jsp  
+Hospital display name/email address/phone number/address|  
+| host/root( msm)/include/define.jsp  
+Digital logo file|  
+| host\ROOT ( msm)\images  
+Member Site color scheme - take from hospital website.  
+Get hospital website for reference|  
+| host\ROOT ( msm)\styles\payebill.css  
+Sample of each statement/letter type (w/o confidential data)|  
+| ROOT\dso\dsoSample.pdf (drop pdf here with this name)  
+EBPP opt-out disclosure content - can it be the same as prev payebill
+hospitals?|  
+| ROOT\paperless\paperless.jsp  
+"Encrypted Balance Sheet sent through FTP  
+(Naming convention: ClientID_balance.MM-DD-YYYY.TXT.gpg) - "|  
+| used in PUI  
+"Encrypted Index File sent through FTP  
+(Naming convention: ClientID_AppID.MM-DD-YYYY.XML.gpg) - "|  
+| user in PUI  
+Email notification content/subject line .  
+Can it be same as previous clients|  
+| Content needs to be copied from another client and modified if new client
+needs it  
+Payment Plan Thresholds (optional)  
+Example:  
+$0-$300.99 => up to 3 months  
+$301-600.99 => up to 6 months  
+$601-1200.99 => up to 9 months  
+$1201-$1500.99 => up to 12 months  
+$1501+ => up to 18 months"|  
+|  **CID**  PayeBillPlan.java (i3core)  
+Preachival Index file containing 2 weeks of data needed during staging|  
+|  
+  
+Post Non-Seed Accounts Bills Y/N|  
+| hosts\cvhs\ROOT\detail\stmt_detail.jsp  
+hosts\cvhs\ROOT\home.jsp  
+payebill.bill.postOnlySeedBill = false in cid.conf file (PUI)  
+Client title name ( how it appears on the title bar of the browser)|  
+| host/root( msm)/include/define.jsp  
+Client display name could be same as title|  
+| host/root( msm)/include/define.jsp  
+Client Customer Service Number|  
+| host/root( msm)/include/define.jsp  
+Client Contact address|  
+| host/root( msm)/include/define.jsp  
+  
+  
+  
+
+## Windows setup
+
+All files are located here  
+Dell-2100\ISD\Projects\PayeBill\40-Development\New_Setup_offshore  
+  
+
+### DB setup
+
+  * Run the payebill setup sql using . [Setup SQL](https://i3dev.easyredmine.com/projects/payebill/wiki/Setup_SQL)
+  * Populate the data which typically PUI process will do [PUI SQL](https://i3dev.easyredmine.com/projects/payebill/wiki/PUI_SQL)
+
+  
+
+### HOST setup
+
+  * Copy the payebill JSP folder (from codebase tar) provided to C:\hosts folder i.e. C:\hosts\payebill
+  * Open the file C:\hosts\cid\msm\WEB-INF\web.xml  
+Do not change the following payebill to your cid:  
+<context-param>  
+<param-name>com.infoimage.dtd</param-name>  
+<param-value>d:/hosts/CID/ROOT/dtd/payebill.dtd</param-value>  
+<description>The full file path of DTD</description>  
+</context-param>
+
+If the PayeBill client falls under the Nordis-Convergent umbrella, keep the
+following variables the same (used to pull PDF statements from Nordis eXpresso
+system):  
+nordis.Uname: AH84C  
+nordis.accCode: 7f7d9ec3-9744-4cd3-95ee-d5417915daaa  
+nordis.CID: 90  
+nordis.email: [dsamuilov@nordisdirect.net](mailto:dsamuilov@nordisdirect.net)
+
+    
+        Replace nordis.Uname, nordis.CID, nordis. accCode, nordis.email if the PayeBill falls under a different Nordis client. This should be part of the deliverables.  Variables will not be needed    if PayeBill client does not come from Nordis partnership.
+
+  * Same thing as above applies to C:\hosts\cid\ROOT\WEB-INF\web.xml
+
+  
+
+### RESIN SETUP
+
+  * Stop your local resin  
+Copy payebill service folder to  **resin_location** \conf\service\payebill  
+Rename payebill to your CID (e.g. huhs)
+
+  *  **resin_location** \conf\service\huhs\loggin.conf in this file change  
+logger.payebill to logger.CID (e.g. logger.huhs)
+
+  * Open resin.xml
+    * Add this entry  
+copy this part to estmt cluster section in resin.xml  
+
+<host id="template" root-directory="*hostlocation*/hosts/template">  
+<host-alias-regexp>.*: 9381</host-alias-regexp>  
+     <web-app id="/" document-directory="ROOT">  
+    <access-log path="../log/access.log" rollover-period="1D" />  
+    <stdout-log path="../log/stdout.log" rollover-period="1D"   
+        timestamp="[%m/%d/%y %H:%M:%S] " />  
+    <stderr-log path="../log/stderr.log" rollover-period="1D"   
+        timestamp="[%m/%d/%y %H:%M:%S] " />  
+</web-app>  
+<web-app id="/msm" document-directory="msm">  
+    <access-log path="../log-msm/access.log" rollover-period="1D" />  
+    <stdout-log path="../log-msm/stdout.log" rollover-period="1D"   
+        timestamp="[%m/%d/%y %H:%M:%S] " />  
+<stderr-log path="../log-msm/stderr.log" rollover-period="1D"  
+        timestamp="[%m/%d/%y %H:%M:%S] " />  
+</web-app>  
+</host>
+
+        
+                  
+
+    * Replace template with cid
+    * port number 9381 to your new port number for this client.
+    * Make and entry like below to your list of servers in your cluster. Replace port with your value eg. 11861 is the port of huhs  
+
+<http address="*" port="11861">  
+                <jsse-ssl self-signed-certificate-name="resin118611@localhost" />  
+        </http>
+        
+                   
+
+### Front End Customizations for the Client
+
+  1. Replace the client-specific Nordis configurations in hosts/CID/ROOT/WEB-INF/web.xml and hosts/CID/msm/WEB-INF/web.xml if the PayeBill client does not fall under the Convergent (CRCM) umbrella. You can reuse the same variables for all Nordis PayeBill set-ups.  
+a. nordis.Uname  
+b. nordis.accCode  
+c. nordis.CID  
+d. nordis.email
+
+  2. Email notification content through AI site Email Proofing module [Email Content](https://i3dev.easyredmine.com/projects/payebill/wiki/Email_Content)
+  3. Client contact information in /msm/include/define.jsp and /ROOT/include/define.jsp
+  4. Turn off ACH payments in /ROOT/include/define.jsp if applicable  
+private final boolean SUPPORT_ACH_PAYMENT = false;
+
+  5. Set the correct ARCHIVAL_PERIOD in /ROOT/include/define.jsp
+  6. Replace logos and color schemes on AI site and Member Site through host-static style sheets. Looking at jsp you can find out where the logo should be placed.  
+root/styles/payebill.css is the style she where colors need to be changed as
+per the client
+
+  7. Remove "Patient Rights Summary" and/or "Privacy Policy" links in /ROOT/footer.jsp if necessary
+  8. Customize enrollment opt-out verbiage. Ex: removed verbiage pertaining to ACH payments if it does not apply.
+  9. Put the right sample pdf file in the right location - huhs\ROOT\dso
+
+### Java Customizations for Client
+
+Some of these files might have already been covered in previous steps.
+
+  1. I3-Core Code  
+a. /i3-core/com/infoimage/financial/payment/plan/PlanFactory.java  add your
+cid  
+b. /i3-core/com/infoimage/financial/payment/plan/CIDPayeBillPlan.java  create
+a class for clients payment plan  
+c. /i3-core/com/infoimage/financial/payment/vendor/PaymentVendor.java  add
+your cid here  
+d. /i3-core/com/infoimage/util/security/UserServiceFactory.java. add your cid
+here
+
+  2. Processing-UI Code  
+a. / processing-
+ui/com/infoimage/processing/application/auth/AuthRegistrarFactory.java  add
+yr cid here  
+b. / processing-
+ui/com/infoimage/processing/application/payebill/CustomizedEntryPointFactory.java
+ add your cid here  
+c. / processing-
+ui/com/infoimage/processing/application/accounting2/ReportHandlerFactory.java
+ add your cid here
+
+  3. Dp.jar - need to change only when doing production deployment  
+a. /dp-dev/dp/com/infoimage/dp/scanner/handler/PayebillFileHandler.java  add
+your CID here in the subCids string array. - this is for handling the
+automation of file processing when in production.
+
+  4. Infoimage-Commons Code  
+/infoimage-commons/com/infoimage/constants/OrganizationEnum.java  add your
+CID here
+
+  
+
+### Processing-ui setup:
+
+a. If no folder structure has been created on input_dev, please create
+"\\\10.8.8.216\input\I3\process-files\${CID}\" and "b.
+\\\10.8.8.216\input\I3\process-files-backup\${CID}\".  
+b. Copy \processing-ui\conf\payebill.conf to \processing-ui\conf\${CID}.conf
+and make customization if needed.  
+c. modify "hosts\processing\Root\applications\selectOrg.jsp" to include ${CID}
+for processing.  
+d. Add an entry for your new client at
+"hosts\processing\Root\Report2\select.jsp" for the Accounting Report.  
+e. Add you ${CID} to "\processing-ui\schedule\payebill_cid.txt" for payebill
+paperless, payebill_preSchPayment and payebill_autoPayment will pick your
+client up when release to production.  
+f. Release the infoimage.jar and processing-ui.jar and etc.  
+  
+
+### Scanner setup:
+
+If you have local scanner setup, you can test it locally by replace dp.jar
+under your scanner folder.  
+  
+
+### Deployment
+
+  1. Build processing jar and infoimage.jar and deploy it to resin/ext_lib_estmt .
+  2. Start Resin
+  3. JSP changes don't need a deployment make the change and you should see it right away.
+
+  
+
+### Other helpful information
+
+  1. Authorizenet
+
+    * How payments are procesed at Authorize <http://developer.authorize.net/payments101/>
+    * <b> Test site account info <b>  
+URL: <https://test.authorize.net/>  
+Login: lisa_zhang@infoimageinc  
+Password: Infoimage3  
+answer to secret question : test  
+email: [lisa.zhang@infoimageinc.com](mailto:lisa.zhang@infoimageinc.com) ,
+[ben.chan@infoimageinc.com](mailto:ben.chan@infoimageinc.com)  
+password is valid for about 90-120 days.  
+It might ask to set answer to another secret question at some point
+
+    * all payebill clients have an account on the live site(SOW should have this info)  
+[https://account.authorize.net](https://account.authorize.net/)  
+eg.  Authorize.Net website: <https://account.authorize.net/>  
+  Authorize.Net Login: Convergent3434  
+  Authorize.Net Password: Password3434  
+  Merchant ID: 1055968  
+  API Login ID: 92ej8LX9  
+  Transaction Key: 24yd73r7nUX8Td4j  
+this info is also stored in the paymentvendorurl table  
+INSERT INTO PAYMENTVENDORURL  
+VALUES (pvu_id_seq.nextval, getOrgId('lbhs'), 'AUTHORIZE',
+'com.infoimage.authorize.api', 'mode=live_mode|ennvir=production', '92ej8LX9',
+'24yd73r7nUX8Td4j');
+
+    *  _By Request and Autopayments makes use of the CIM module._  When in live mode in production when you add a credit card and profile is created at and saved a authorize's end. This also involves a test transaction of status voided get created on authorize end for an amount of 0 dollars. If you click on this transaction the description would mention something like "test transaction for ValidateCustomerPaymentProfile"  
+Exp for this from authorizes site is given below.  
+ **ValidateCustomerPaymentProfile**  
+This method is used to check a customer payment profile by generating a test
+transaction for it. The merchant must be signed up for the CIM service to use
+it.  
+During creation of the payment profile from within the Merchant Interface, if
+"Perform credit card authorization before saving data." is not checked , then
+a $1.00 Test Mode transaction will be submitted to verify that the credit
+information is in a valid format. This Test Mode transaction does not show on
+the customer's credit card statement, but it will generate a transaction
+receipt e-mail to the merchant. The test transaction will only verify that the
+credit card information is in the correct format--it will not verify that it
+is a valid card. To verify the card, you must check the box next to "Perform
+credit card authorization before saving data."
+
+  2. Test Credit Cards
+
+Card| Number| Length  
+---|---|---  
+MasterCard| 5123460000000007| 16  
+Visa| 4111111111111111| 16  
+Amex| 378282246310005| 15  
+Diners| 38520000023237| 14  
+Discover| 6011931000000026| 16  
+JCB| 3530111333300000| 16  
+Solo| 6759280000000008| 16  
+Switch| 6759050000000005| 16  
+  
+Use any expiry in the future nothing beyond Month8/Year32
+
+### Attachments
+
+250
+
+

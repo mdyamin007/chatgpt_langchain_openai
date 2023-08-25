@@ -1,0 +1,287 @@
+title: How-to: Set Up a Hypercube Client
+body: # Gather Information
+
+* * *
+
+Reference the  for the client that is being setup. This should have all the
+information necessary to setup the client. If during the setup, certain
+information is determined to be lacking, bring up the concern during an
+eServices meeting. The document can be edited to include the information going
+forward.
+
+## InfoTRAC Standard
+
+An InfoTRAC/Hypercube setup should be standardized. For certain processes,
+that mean using the Standard Handlers, and/or Registrars.
+
+  1. Applications
+    1. Admin Portal is InfoTRAC.
+    2. eStatement Portal is Hypercube.
+  2. Database
+    1. Emails and other notification information are stored in NOTIFICATION_PREFERENCE.
+    2. User enrollments are determined by SSO and DSO dates in USR_SESSION table. These values should be null by default (older setup tend to insert values into DSO.
+      1. The SESS_LOGIN_ID for non-DSO users should be '![usr_id]', e.g. for a user with USR_ID 12345, the SESS_LOGIN_ID will be '!12345'.  
+    3. All users should have a USR_MAPPING record. The CIF_NUM is the unique ID that is known to the client.
+  3. PUI Processes
+    1. Document Processing for eStatement and eNotice.
+    2. StandardAuthHandler and StandardAuthRegistrar/StandardFullAuthRegistrar for Auth Processing.
+    3. StandardEnrollmentHandler and StandardEnrollmentRegistrar for Enrollment Processing.
+    4. NotifyPrefEmailHandler and NotifyPrefEmailRecipient for emails. Emails are sent via API.
+    5. DefaultReport for Accounting Report.
+
+# Setting Up the Database
+
+* * *
+
+## Oracle DB
+
+  1. Insert into the ORGANIZATION table to define the new client.
+    1. First insert into the default schema. 
+
+      1.   
+
+sqlQuerytrue
+
+  
+
+      2. The CID is the 4-letter acronym assigned to the client by InfoIMAGE.
+
+      3. The Client's Display Name is the Financial Institution's full name that is used for their branding.
+      4. The Client's Site Alias is the domain that will be used for the Production site. This value has no usage besides being an easy way to reference the information.
+      5. The Schema Name is the name of schema that the client's data will reside. 
+    2. Then insert into the other schemas, using the same ORG_ID that was used to create the entry in the default schema. The reason this must be done is because the initial search will be done at random to figure out which schema the client's data is in. Therefore, all schema must have an organization record to query the Schema Name, which must be consistent across all schemas.
+      1.   
+
+sqlQuerytrue
+
+  
+
+    3. Create the audit log table for the client. This table is used to log various database updates that can be used for research later.
+
+  
+
+      1.   
+
+sqlQuerytrue
+
+  
+
+## Mongo DB
+
+  1. Insert client properties into DV/PT/ST/PN_ClientProperties. These properties will be used by Infoservice.
+    1. After InfoConfig update, this should not longer be necessary. The properties can be defined in InfoConfig itself.
+    2. Keep the statements name consistent across these properties, Hypercube, InfoTRAC, and PUI. Usually, the client will have a preference what the values for each statement type should be.
+    3.   
+
+textExampletrue
+
+  
+
+# Setting up Hypercube
+
+* * *
+
+## Hypercube Code
+
+  1. Pull hypercube code from SVN repository.  
+
+    1. The main_dev branch is currently the development branch that is used for dev and pilot.
+    2. For production, a tag will need to be created from the latest tag.
+  2. Add folder path  **private/assets/[CID]/propertie** **s**
+    1. Create  **properties.json** under this path.
+    2. This will no longer be necessary when InfoConfig is live.
+      1. For a fast way to get started on InfoConfig, follow this base setup: . 
+  3. Update the  **properties.json  **file as per the client requirements. See .
+    1. Initial setup typically require: login method, enrollment steps, menu, account type (default NA if setup doesn't have account types), statement types, and archival period.
+    2. Reference the appropriate SSO Integration Guide to set up the SSO connections. See the Online Banking Integration Guides section in . 
+      1. If client's SSO method(s) do not already exist, will need to develop the method(s). Discuss with a Senior Engineer.
+  4.  Add folder path  **public/assets/[CID]**. The purpose of this directory is to save static UI files such as HTML, CSS, and image files.
+    1. Create the subfolders  **css** ,  **fonts** ,  **images** ,  **js** , and  **resource**.
+      1. If copied from an existing client,  _ **make sure to remove ALL branding related to the copied client. It is unprofessional for a client to see branding that belongs to another client!**_
+  5. Add to  **settings_dev.json** the following key-value pairs.
+    1.  **" [CID].authCipher": "Washington"**
+
+ ** "[CID].authConst": "600"**
+
+    2. The file for pilot, stage, and prod are **settings_pilot.json** ,  **settings_stage.json** , and  **settings_prod.json** respectively.
+  6. Add the CID to the  **Meteor.App.CID_TO_LOAD_PROPERTIES  **array in the file **lib/allConstants/constants.js** **.**
+
+## Enable SSO
+
+  1. Go to <https://gitlab.infoimageinc.com/configuration-management/server-configs-dev/-/blob/master/ca-hypercube-dv-01/infoservice/app-configs/infoservice/config.properties>.
+  2. Open up the Web IDE.
+  3. Add the new client CID to the **sso.enabled.client** configuration.
+  4. Repeat step (3) for the  **config.properties** file for other relevant servers.
+  5. Commit the changes and build the Jenkins job (only  **copyAppConfigs** is necessary).
+
+## Setting up the SSO Test Page
+
+This is important for testing and validation. See .
+
+## Local Testing
+
+The steps below is for a Windows machine. Substitute certain commands and file
+paths for Mac or Unix equivalent.
+
+  1. Install Meteor: <https://www.meteor.com/developers/install>
+  2. Create this folder path **C:\var\log\meteor\hypercube**.
+  3. Go to the workspace where the meteor code is located locally: .../[Hypercube Project Name]/. Let this be  **hypercube_root**. 
+  4. Edit the file hypercube_root/.meteor/packages, and delete "npm-container".
+  5. Go to hypercube_root.
+  6. Run the command: set NODE_TLS_REJECT_UNAUTHORIZED=0
+  7. Run the command: meteor run --settings=settings_dev.json.
+    1. Can use other settings JSON file like pilot or stage. However,  **NEVER USE PROD**. 
+  8. The first run will most likely result only in the necessary packages being installed. Run the command in step 7 again. 
+  9. The site should be up and running. Use the SSO Test Page to access the site locally by selecting the Local environment.
+
+## Deploying to the Servers
+
+See .
+
+# Setting up InfoTRAC
+
+* * *
+
+  1. Login to Infotrac and click on **Client Management.**
+  2. Click on the **Create New Client** link.
+  3. Enter information for that client and click submit.
+  4. Set up the features based on the setup specification, and/or SOW.
+    1. In the **Account Management Properties** text box provide the JSON of different flags.  **This will be managed by InfoConfig on Dev/Pilot**.
+      1. Open up the Developer Tools. The text box has a "readonly" element that needs to be deleted to become editable.
+      2. Copy the configurations from an existing client and change it according to the new client.
+    2. The E-Notification Template fields will need the exact same names that are defined in the PUI configuration file.
+      1. Again here, it's best to keep the names consistent between all different sets of configuration (Hypercube, PUI, InfoTRAC statement names) so that the setup is simple and easy to configure.
+      2. There are unique templates that serve specific purposes, where a very specific name must be used:
+        * Welcome: this template is for welcome emails for clients who are configured to send out welcome emails when the user logs in for the first time.
+    3. For  **Administrative Reports** , these are the standard reports that should always be enabled:
+      1. Statements Posted
+      2. Paperless Enrollment
+      3. Email Collection
+      4. Login Summary
+      5. Notification Sent
+      6. Insert Clicks
+      7. Admin Login Activity
+      8. User Enrollment Report.
+
+# Setting up the Proxy and DNS
+
+* * *
+
+Email Network (MCIT) to set up the proxy and DNS for the Hypercube URLs.
+
+ **TO-DO: Link to Proxy Setup Guide. This is only for reference/last resort.
+Network should be taking care of this task.**
+
+# Setting up the PUI
+
+* * *
+
+## Code
+
+For a standard setup, coding should not be necessary. Use the standard
+handlers and registrars.
+
+### Organization Enum
+
+The OrganizationEnum class in the infoimage-commons code base will need to be
+updated to include the new client CID. This is used for the front-end of the
+PUI to determine the list of active CIDs.
+
+## Setting up the Configuration File
+
+  1. Create a new [CID].conf file.
+  2. Set up the configuration based on the needed processes.
+
+### Internal Paperless Report
+
+Configure the internal paperless report to be used by Print for print
+suppression.
+
+  1. In **infoimage.conf** , add the new CID to  **paperless.cids.**
+  2. In the [CID].conf, add the paperlessReport configuration for each statement type, even if the client does not have selective paperless.
+    1. paperlessReport.stmtType[i]=[name],[stmt_type of paperless record to use]
+
+Example
+
+The example below is for a client who does not have selective paperless, so
+both the default and loan statements share the same default paperless record.
+
+paperlessReport.stmtType1=default,default  
+paperlessReport.stmtType2=loan,default
+
+We generate two files, so that the Print team can code the print suppression
+based on separate files. If the client does ever opt to have selective
+paperless for loan, the Print team will not need to make any changes. The
+configuration can be updated to:
+
+paperlessReport.stmtType2=loan,loan
+
+The exact same filename will be generated for the Print team, but the content
+will change.
+
+  
+
+## Setting up Notifyservice (API Emails)
+
+  1. Go to <https://gitlab.infoimageinc.com/configuration-management/server-configs-dev/-/blob/master/ca-infotrac-dv-01/notifyservice-templateservice/app-configs/notifyservice/notifyservice.properties>.
+  2. Configure the passphrase for the new client.
+    1.  **TO-DO  **example of the passphrase config
+  3. Repeat step (2) for the other relevant servers.
+  4. Commit the changes and build the Jenkins job (only  **copyAppConfigs** is necessary).
+
+## Setting up the Report Scheduler
+
+ **TO-DO** : Confluence Page for how to set up Report Scheduler.
+
+## Setting up the FTS Emails
+
+ **TO-DO** : Confluence Page for how to set up the FTS Emails.
+
+# Setting up the Scanner
+
+* * *
+
+ **TO-DO** : Confluence Page for how to set up the Scanner.
+
+# Other Database Tasks
+
+* * *
+
+## AGEOUT Table
+
+  1. In the Production database, records must be inserted into the AGE_OUT table.
+  2. The supported stmt_types are estatement, enotice, and etax.
+    1. For estatement, use the longest archival period out of all the different estatement stmt_types (among default, loan, mortgage, etc). 
+
+## DOC_DESC Table
+
+  1. Insert the doc_desc for enotices if applicable.
+  2. All estatements should also have a doc_desc record with default type code 001 (which is what being used in the Document Processing index files).
+    1. Again the description here should match what's configured on Hypercube, InfoTRAC, and PUI.
+    2. Different type codes from one statement type can be used if the setup calls for such a scenario.
+
+## EXT_TYPE_MAPPING Table
+
+  1. If external account types need to be mapped to internal account types during SSO, insert the records into the EXT_TYPE_MAPPING table.
+
+# Other Modules/Features/Miscellaneous Items
+
+* * *
+
+## Pre-Enrollment
+
+  1. The Enrollment Process can be configured to run the Pre-Enrollment file.
+    1. If the client already has an Enrollment File that will be part of the setup, it's best to use the same configuration and file format to simplify the setup.
+  2. Note whether the client wants the users to go through the Enrollment steps even if the accounts are already on Electronic. If yes, the  **nullSSO** config must be set to true.
+
+## Pre-Ingestion
+
+  1. If the clients provide the data files to specs, the Scanner can be configured to run the Pre-Ingestion files.
+  2. After processing the files, clean out the data to save space.
+    1. E:/download on FTPBU
+    2. indiv_afp in INPUT
+    3. index files in backup location
+
+## Email Domain Whitelisting for Pilot
+
+

@@ -1,0 +1,123 @@
+title: Message Manager error handling
+body: This page is updating message manager module on Infotrac product. Current
+Infotrac code is showing generic exception message on browser UI whenever
+message module encounters an exception. While create a message campaign, there
+are some calls to print side script for generating sample and approving
+campaign. Some times we encounter issue when paper side script or resources
+are not appropriate. In this case UI will not show appropriate message and
+developers has to verify logs to know issue.
+
+Below screen shot shows that there was an exception when approving a campaign
+on pilot for client FNBT.  It shows generic exception. Goal is to show
+appropriate error message on UI.
+
+  
+
+ ** _Log trace:_**
+
+2020-04-13 14:03:38 INFO  AbstractZipFileGenerator:51 - adding
+fnbt_ms1_03012020_04302020.txt to zip file,
+checksum=46a2ef5d301e8c100261bcc128326854
+
+2020-04-13 14:03:38 INFO  CommandGenerator:96 - Send command to IS:
+/home/master/approve_sample_msgid.sh fnbt ms1
+"1|fnbt_ms1_03012020_04302020.zip" 03012020 04302020 DDA 2
+
+2020-04-13 14:03:38 INFO  AbstractViewStmtController:93 - Send IS command
+/home/master/approve_sample_msgid.sh fnbt ms1
+"1|fnbt_ms1_03012020_04302020.zip" 03012020 04302020 DDA 2 to 10.8.9.71:3490
+
+2020-04-13 14:03:41 INFO  AbstractViewStmtController:110 - Reply from IS:
+[5|unable to copy afp to preprocessing server ]
+
+2020-04-13 14:03:41 INFO  AbstractViewStmtController:122 - Please contact IS
+team to solve the IS server issue.
+
+2020-04-13 14:03:41 ERROR ReviewStmtController:222 - unable to copy afp to
+preprocessing server
+
+java.lang.Exception: unable to copy afp to preprocessing server
+
+                at com.infoimage.infotrac.msgMgr.web.AbstractViewStmtController.sendCommand(AbstractViewStmtController.java:126)
+
+  
+
+Screen shot after code fix :
+
+  
+
+Logs for above screen shot:
+
+2020-05-26 09:49:39 INFO AbstractZipFileGenerator:51 - adding
+wecu_mv1_04242020_04242020.txt to zip file,
+checksum=934e64616f4c7b5c01e5264b487972d8  
+2020-05-26 09:49:39 INFO CommandGenerator:96 - Send command to IS:
+/home/test/master/approve_sample_msgid.sh wecu mv1
+"1|wecu_mv1_04242020_04242020.zip" 04242020 04242020 Visa 2  
+2020-05-26 09:49:39 INFO AbstractViewStmtController:87 - Send IS command
+/home/test/master/approve_sample_msgid.sh wecu mv1
+"1|wecu_mv1_04242020_04242020.zip" 04242020 04242020 Visa 2 to 10.8.9.61:3490  
+2020-05-26 09:49:43 INFO AbstractViewStmtController:104 - Reply from IS:
+[format 1|wecu_Visa_04242020_04242020.pdf ]  
+2020-05-26 09:49:43 INFO AbstractViewStmtController:116 - Please contact IS
+team to solve the IS server issue.  
+2020-05-26 09:49:43 ERROR PreviewStmtController_30:238 - format
+1|wecu_Visa_04242020_04242020.pdf  
+java.lang.Exception: format 1|wecu_Visa_04242020_04242020.pdf  
+at
+com.infoimage.infotrac.msgMgr.web.AbstractViewStmtController.sendCommand(AbstractViewStmtController.java:122)  
+at
+com.infoimage.infotrac.msgMgr.web.PreviewStmtController_30.handleRequestInternal(PreviewStmtController_30.java:203)  
+at
+org.springframework.web.servlet.mvc.AbstractController.handleRequest(AbstractController.java:153)  
+at
+org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter.handle(SimpleControllerHandlerAdapter.java:48)  
+at
+org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:925)  
+at
+org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:856)
+
+  
+
+Screen shot 2 :
+
+  
+
+Screen shot 2 log trace:
+
+2020-05-26 11:47:09 INFO CommandGenerator:96 - Send command to IS:
+/home/master/approve_sample_msgid.sh banb ds1
+"1|banb_ds1_12022019_12022019.zip" 12022019 12022019 DDA-Heloc 2  
+2020-05-26 11:47:09 INFO AbstractViewStmtController:87 - Send IS command
+/home/master/approve_sample_msgid.sh banb ds1
+"1|banb_ds1_12022019_12022019.zip" 12022019 12022019 DDA-Heloc 2 to
+10.8.9.71:3490  
+2020-05-26 11:47:29 INFO AbstractViewStmtController:104 - Reply from IS:
+[5|unable to copy afp to preprocessing server ]  
+2020-05-26 11:47:29 INFO AbstractViewStmtController:116 - Please contact IS
+team to solve the IS server issue.  
+2020-05-26 11:47:29 ERROR PreviewStmtController_30:238 - unable to copy afp to
+preprocessing server  
+java.lang.Exception: unable to copy afp to preprocessing server  
+at
+com.infoimage.infotrac.msgMgr.web.AbstractViewStmtController.sendCommand(AbstractViewStmtController.java:120)  
+at
+com.infoimage.infotrac.msgMgr.web.PreviewStmtController_30.handleRequestInternal(PreviewStmtController_30.java:203)  
+at
+org.springframework.web.servlet.mvc.AbstractController.handleRequest(AbstractController.java:153)  
+at
+org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter.handle(SimpleControllerHandlerAdapter.java:48)  
+at
+org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:925)  
+at
+org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:856)  
+at
+org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:920)  
+at
+org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:827)  
+at javax.servlet.http.HttpServlet.service(HttpServlet.java:650)  
+at
+org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:801)  
+at javax.servlet.http.HttpServlet.service(HttpServlet.java:731)
+
+

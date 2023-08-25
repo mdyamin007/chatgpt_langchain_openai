@@ -1,0 +1,180 @@
+title: Apache proxy migration to HAproxy
+body:   
+
+  
+
+  
+
+## **INFOTRAC**
+
+We have introduced a new endpoint for all the prism clients to call from HA
+proxy for checking if that node is still accessible from the proxy level.
+
+The endpoint is
+
+**/[heartbeat.do](http://heartbeat.do) **(ex.
+[_https://infotrac.infoimageinc.com/heartbeat._](https://flcu.infoimageinc.com/heartbeat.jsp)
+_do_ ).
+
+  
+
+This page only checks if this page is accessible from the proxy level.
+Additionally, this endpoint will also support a query param
+"?includeDBCheck=true"
+
+(ex.
+[_https://infotrac.infoimageinc.com/heartbeat._](https://flcu.infoimageinc.com/heartbeat.jsp)
+_do_[
+_?includeDBCheck=true_](https://flcu.infoimageinc.com/heartbeat.jsp?includeDBCheck=true)
+).
+
+  
+
+If this param is passed from the proxy, it will check if the application can
+access the database by executing a select query on the " **DUAL** " table".
+
+To achieve this we are introducing a new controller which will  several return
+response code based on the query params and the availability of the infotrac
+
+application.
+
+  
+
+ **Endpoint Response Details:  **
+
+ **Response Status code**
+
+|
+
+ **Resolution**  
+  
+---|---  
+  
+200
+
+|
+
+Application is running  
+  
+500
+
+|
+
+Database or other dependencies may not available  
+  
+404
+
+|
+
+Application is not available  
+  
+  
+
+##  
+ **PRISM**
+
+  
+
+We have introduced a new endpoint for all the prism clients to call from HA
+proxy for checking if that node is still accessible from the proxy level.
+
+The endpoint is **/heartbeat.jsp** (ex.
+[_https://flcu.infoimageinc.com/heartbeat.jsp_](https://flcu.infoimageinc.com/heartbeat.jsp)
+). This page only checks if this page is accessible from the proxy level.
+
+Additionally, this endpoint will also support a query param
+"?includeDBCheck=true (ex.
+[_https://flcu.infoimageinc.com/heartbeat.jsp?includeDBCheck=true_](https://flcu.infoimageinc.com/heartbeat.jsp?includeDBCheck=true)
+).
+
+If this param is passed from the proxy, it will check if the application can
+access the database by executing a select query on the " **Organization** "
+table for that specific client. For example, "Select * from Organization Where
+org_id=getordid('flcu')".
+
+For this, we had to change the filter class of the clients who go through the
+filter for each request, for other clients we just added the **heartbeat.jsp**
+page on the ROOT side.
+
+There is also a heartbeat to check if msm is accessible ex.
+<https://flcu.infoimageinc.com/msm/heartbeat.jsp>
+
+  
+
+From the HA proxy following endpoint will be called and the following response
+will be generated:
+
+ **Endpoint  **
+
+|
+
+ **Response Status code**
+
+|
+
+ **Resolution**  
+  
+---|---|---  
+  
+/heartbeat.jsp
+
+|
+
+200
+
+|
+
+Application is Running  
+  
+/heartbeat.jsp
+
+|
+
+404
+
+|
+
+Application is Not Running  
+  
+/heartbeat.jsp? _includeDBCheck=true_
+
+|
+
+200
+
+|
+
+Application is  Running and Apllication Can communicate with DB  
+  
+/heartbeat.jsp? _includeDBCheck=true_
+
+|
+
+500
+
+|
+
+Application is Running and Application Can Not communicate with DB  
+  
+/heartbeat.jsp? _includeDBCheck=true_
+
+|
+
+404
+
+|
+
+Application is Not Running  
+  
+/msm/heartbeat.jsp| 200| Application is Running  
+/msm/heartbeat.jsp| 404| Application is not Running  
+  
+  
+
+ **HAProxy**
+
+HAProxy configuration can be found here.
+
+250
+
+

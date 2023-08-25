@@ -1,0 +1,112 @@
+title: KYCU - Letter - Daily NoticePDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133588-C30.01-V21727
+
+Processing Scripts to modify:
+ kycudla_process.sh
+
+Data Files to use:
+ KYCU_DN_06102022.zip.pgp
+
+
+
+*NOTE*: This job runs on RH2. Since we are migrating from RHS to RH2, we should test all options so that we can do afpcompare and also ensure there is no errors in the processing logs.
+
+
+author: anwarh
+comment: Hi [~William.Kong],
+
+Parallel ID: 20221012053546
+production cycle: 09/23
+
+Data files:
+/z/dsi_pdfi_testing/kycudla/data/KYCU_DN_09232022.zip.pgp 
+
+old zips: /z/dsi_pdfi_testing/kycudla/old/
+new zips: /z/dsi_pdfi_testing/kycudla/new/
+
+Notes: 
+* The date in the index file will be different as it takes the system
+
+Thanks,
+Anwar
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]/[~Igor.Khosid]: As Anwar stated, the date is going to be different. Outside of that the index file content is good.
+
+
+
+I've placed the files in:
+
+ca-unittest-pr-02:/d/pdf_compare/kycudla_prod/
+
+ca-unittest-pr-02:/d/pdf_compare/kycudla_parallel/
+
+
+
+[~Andrey.Kutsenko]: The PDF specifications for this application has spaces in the PDF file names. If you run into PDF compare issues again, please don't hesitate to let me know again (i.e. compare utility complains differences, but you don't see diff pdf files in the result folder). Thanks!
+
+
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: Just a courtesy reminder, please review this QA Request when time permits.
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+Ran script:
+{code:sh}[andreyK@ca-unittest-pr-02 pdf_compare]$ perl pdf_compare.pl kycudla_prod/ kycudla_parallel/ result_kycudla -pixels 5 -threads 16{code}
+Result:
+{quote}Total PDF Files Scanned: 296
+allowedDifferenceInPercentPerPage: 5:
+Thread Count: 16
+
+Total PDF Files with Differences: 0
+Start Time: Wed Oct 26 10:17:36 PDT 2022
+Finish Time: Wed Oct 26 10:20:45 PDT 2022{quote}
+
+
+author: william.kong
+comment: [~anwarh]: Please prep File Transfer form. QA just passed this project today. I will set due date for 10/27/2022
+
+
+author: anwarh
+comment: Hi [~yameelee]/[~rodriguez],
+
+Transfer form: [^IS-1220 KYCU Transfer Form.doc]
+
+Code is in:
+ */d/is/cvs/xfer/anwarH_backup/is-1220*
+
+Can you please move them into /d/is/cvs/xfer/anwarH/ and then release?
+
+Thanks,
+ Anwar
+
+[~William.Kong]
+
+
+author: william.kong
+comment: [~TunA]: Can you help with the code release later today when time permits now that EOM is over.
+
+
+author: yameelee
+comment: [~William.Kong]& [~anwarh]
+
+
+
+code released. backup id:**20221114112110

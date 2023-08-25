@@ -1,0 +1,208 @@
+title: Hypercube - Enhance singleSignOn with AccountLookup
+description: singleSignOn; NOT singlesignon
+
+--Alternatively, if there's not many cids using singleSignOn, we can do a one time update to update the name of this method to singleSignOn7. I do not like the fact that we have two different methods with the same name, but just different capitalization (not good design).
+
+
+
+Enhance the method to have the account lookup by CIF logic that SEFC has for DI and BL. Logic should remain the same:
+ # Use CIF to look up account list from ext id mapping table with API
+ # Filter out account list from SSO using the list returned by the API
+
+For subuser, the logic should be the same. the primary cif is still the number that will be used to filter. Then the CIF|login_id will be passed to userEnrollmentAPI for user enrollment.
+
+
+author: tai.trinh
+comment: Hi [~sadman anik],
+
+What is the status on this?
+
+Also, there's an additional thing we have to account for, which may or may not already be there. SEFC has requested that subusers do not have the ability to change delivery preference. I'm not sure if this is already supported with BL SSO and the logic is already there?
+
+If not, we'll need to develop a way to identify the subuser to disable their ability to change delivery preference. When SSOing in from this new endpoint, they should have a user type of N and then they should also have a login_id to identify themselves (the primary user would not have a login_id).
+
+Thanks,
+Tai
+
+
+author: sadman anik
+comment: Hi [~tai.trinh],
+
+I am working on it. AccountLookUp part is done already. I have some questions regarding the business logic that sub-user will not be able to change DP.
+
+Currently, there is no logic like this for sub-user that they can not change the delivery preference. SEFC is using BB and DI and, BB and DI have no sub-user business logic.
+
+There is one way that we can identify that the user is a sub-user for SEFC, from the user get API we can check if CIF has "|" delimiter in it. If there is "|" in CIF then we can be sure that this is a sub-user. But there is a concern. Hypercube has a flag named "delimiterNotRequireForSubuser" if this is true then CIF number will not have "|" even if it's a sub-user. This flag is not used for SEFC but we have to consider this concern for future purposes.
+
+Another way to confirm sub-user is if the user-get API response with some information about sub-user like *"userType": "N/P"* then we can be sure about sub-user.
+
+
+
+Let me know what you think. Thank you.
+
+Sadman Anik
+
+
+
+
+author: tai.trinh
+comment: Does the userType has to come from the API, or can we just use it when it gets passed via SSO Request?
+
+
+
+Also, do you know if API actually stores N/P? I know we use it for logic at the Hypercube level but I forgot if that userType is actually used by API.
+
+
+author: sadman anik
+comment: We don't pass userType to ssoExchange and also do not store this userType on the hypercube side. We just use userType during ssoKeygen and determine CIF based on UserType. We store user information on the mongo collection that comes from the UserGetAPI.
+
+Yes, I think API stores N/P on the *user* table "type" column.
+
+Thanks,
+
+Sadman
+
+
+author: tai.trinh
+comment: Hi [~sadman anik],
+
+Okay, if we could use a combination of the user type and the | check, that would be good. I just don't want to have this affects BL SSO which also have | users. The client never said anything about that, so we don't want users who have pipes in their CIF suddenly being unable to update their delivery preference.
+
+Also, for the configuration, let's have something along the line of:
+
+"paperless" : {
+ "disabledForSubUser":"true"
+}
+
+I kind of want to move towards more grouping of configurations. Related things should at least go into one grouping, so that it's easier to review all the related configurations. Right now, we always have one single configuration for everything. It's hard to keep track of.
+
+Eventually, I think renaming all the configurations and group them accordingly, but that's a big project for another time. (And of course, whenever I am able to convince Joe and David that it would be a good idea to do so).
+
+Thanks,
+Tai
+
+
+author: tai.trinh
+comment: Hi [~sadman anik],
+
+Also, I think you're saying that right now the Get User API does not return the user type, right? So that would be a necessary enhancement?
+
+Thanks,
+
+Tai
+
+
+author: sadman anik
+comment: Hi [~tai.trinh],
+
+Yes, Get User API does not return any user type, so we need api enhancement for this.
+
+Rifat added you in a mail chain regarding this change. Please take a look.
+
+Thanks,
+
+Sadman
+
+
+author: tai.trinh
+comment: Hi [~sadman anik],
+
+The SSO Enrollment API and Get User API had been enhanced to receive/return a userFlag parameter.
+
+SSO Enrollment API:
+
+Optional Flag: "userFlag" - acceptable value: P, S
+
+If this flag is not passed, the current flag setting logic will apply. If it is passed, the usr_mapping will be created with the flag provided. This means that all previous SSO methods should not need to be updated.
+
+
+
+Get User API:
+
+userFlag will now be returned as part of the response JSON. This can be P, S, or null. Null should just be considered to be P for backward compatibility.
+
+
+
+I have released this to infoservice on ca-hypercube-dv-01. Please test and see if everything works as expected. Now, if it does not work, then we should schedule a timeslot where we can both work together to get this piece to work.
+
+Thanks,
+Tai
+
+
+author: sadman anik
+comment: Hi [~tai.trinh],
+
+This enhancement is okay for new cif when it inserts new cif in ext_id_mapping thenuserFlag logic is working but for existing sefccif it is not updating the primary_usr_flag based onuserFlag. So userGet API will not returnuserFlag.
+
+To make it work we can choose either one of the following solutions,
+ # Update primary_usr_flag in user_mapping table when userFlag is passed through ssoEnrollment API.
+ # One-time migration to set primary_usr_flag to "S" for subUser of SEFC.
+
+If we choose soltiuon#2 then we have to consider intotrac, PUI to make sure when any subUser is created we also have to set primary_usr_flag to "S". So that it's compatible with hypercube.
+
+
+
+Thanks,
+
+Sadman
+
+
+author: tai.trinh
+comment: Hi [~sadman anik],
+
+I think that is fine. These users for singleSignOn will be a completely new set of users. The Bottomline subusers are out of scope and we will consider them whenever the client makes the request.
+
+For InfoTRAC, I do not think we can currently create subusers? Let me know if I'm wrong. I think we can only create primary users. But yes, please let the team know that we need to make sure the S gets there whenever a subuser is created. And yes, on the PUI side, we should follow the same requirement that subusers have the flag S there. However, for SEFC, this is not an issue since we don't have any sort of auth file processing for them.
+
+Is there any other concerns? If not, I'll move code to Infoservice Pilot.
+
+Thanks,
+Tai
+
+
+author: sadman anik
+comment: Hi [~tai.trinh],
+
+There is no user and account creation for sefc on infotrac. The code is done for hypercube but currently, the test is going on.
+
+Let's wait for tomorrow when the testing is done then I will confirm you to commit API on the pilot. And I will commit the code to trunk.
+
+Thanks,
+
+Sadman
+
+
+author: sadman anik
+comment: Hi [~tai.trinh],
+
+I have committed the code to the trunk and added the release note in this ticket. Take a look and let me know.
+
+Thanks,
+
+Sadman
+
+
+
+
+author: anwarh
+comment: [Mamunur Rashid|https://gitlab.infoimageinc.com/mrashid] mentioned this issue in [a commit|https://gitlab.infoimageinc.com/mrashid/hypercube/-/commit/6c330c34d1fd5798588992679176d057b7725f86] of [Mamunur Rashid / Hypercube|https://gitlab.infoimageinc.com/mrashid/hypercube]:{quote}[ISD-3828] allow for sso to pass in UserName; adding validation for userType{quote}
+
+
+author: anwarh
+comment: [Mamunur Rashid|https://gitlab.infoimageinc.com/mrashid] mentioned this issue in [a commit|https://gitlab.infoimageinc.com/mrashid/hypercube/-/commit/24da4b5d520dc71f3424a8a716029332b19ec8f6] of [Mamunur Rashid / Hypercube|https://gitlab.infoimageinc.com/mrashid/hypercube]:{quote}[ISD-3828] Fix ssoEnrollmentAPI userflag parameter {quote}
+
+
+author: anwarh
+comment: [Mamunur Rashid|https://gitlab.infoimageinc.com/mrashid] mentioned this issue in [a commit|https://gitlab.infoimageinc.com/mrashid/hypercube/-/commit/89c500cc30f2656ed16c38497c4a7d0f0d6a32ea] of [Mamunur Rashid / Hypercube|https://gitlab.infoimageinc.com/mrashid/hypercube]:{quote}[ISD-3828] Enhanced singleSignOn with accoutLookUp and disable DP for sub-user...{quote}
+
+
+author: anwarh
+comment: [Mamunur Rashid|https://gitlab.infoimageinc.com/mrashid] mentioned this issue in [a commit|https://gitlab.infoimageinc.com/mrashid/hypercube/-/commit/b0bd14b13fe4343a958b45e4bba59502fa635b49] of [Mamunur Rashid / Hypercube|https://gitlab.infoimageinc.com/mrashid/hypercube]:{quote}[ISD-3828] introducing User variables; singleSignOn7 primary commercial user...{quote}
+
+
+author: anwarh
+comment: [Mamunur Rashid|https://gitlab.infoimageinc.com/mrashid] mentioned this issue in [a commit|https://gitlab.infoimageinc.com/mrashid/hypercube/-/commit/fa24f84919237a90ac5c95f050f334cd55d6a832] of [Mamunur Rashid / Hypercube|https://gitlab.infoimageinc.com/mrashid/hypercube]:{quote}[ISD-3828] removing unneeded logging; expired request should error out{quote}
+
+
+author: anwarh
+comment: [Tai Trinh|https://gitlab.infoimageinc.com/ttrinh] mentioned this issue in [a commit|https://gitlab.infoimageinc.com/PD/infoservice/-/commit/a613af68fc813bc1b9c10c70b8984b44332c7ab4] of [Product Development / InfoService|https://gitlab.infoimageinc.com/PD/infoservice] on branch [infoservice_v2.08_20210728_staging|https://gitlab.infoimageinc.com/PD/infoservice/-/tree/infoservice_v2.08_20210728_staging]:{quote}ISD-3814/ISD-3828/ISD-4400 Update enrollment API to update user information and read in userFlag{quote}

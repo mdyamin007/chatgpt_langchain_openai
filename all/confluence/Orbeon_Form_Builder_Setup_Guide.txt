@@ -1,0 +1,301 @@
+title: Orbeon Form Builder Setup Guide
+body: Today, I am able to setup Orbeon Project inside eclipse, and I am able to run
+it against the server and allow me to debug the code.
+
+I have created wiki in order to help other Developers to setup the same thing,
+and try to understand the project by debugging.
+
+Please refer follow steps in order to setup the project:
+
+1\. Download eclipse Scala-IDE from the link: <http://scala-ide.org/>
+
+2\. Unzip the archive and save it in your file system.
+
+3\. Open eclipse -> File Menu -> Click On Import -> Select Projects From Git
+-> Next.
+
+4\. Entet URI as [git@github.com](mailto:git@github.com):orbeon/orbeon-
+forms.git, and select CE 4.5 Branch, and Select next.
+
+5\. Select New Project Wizard, and Click on Finish.
+
+6\. Now Project Selection Wizard, Select New Scala Project. Name as Orbeon-
+Forms.
+
+7\. If you do not see code inside project then Right Click on Project ->
+Import -> Existing Project From File System -> Select the location where you
+clone the Orbeon Project. -> Click On Finish.
+
+8\. Now, Create resource-local folder inside the project, and copy the content
+of resource-packaged folder into resource-local.
+
+9\. Now create recursive folder as this path inside project: /build/orbeon-
+war/WEB-INF/classes.
+
+10\. Now, Right click on project -> Select Properties -> Select Build Path.
+
+11.Now, setup your Default output folder to  _Orbeon-Forms/build/orbeon-
+war/WEB-INF/classes_.
+
+12\. Remove all source folder, and add src/main/java, src/main/scala,
+src/main/resource, src/main/resource-packaged, src/main/resource-local.
+
+13\. Now Go to the, Libraries tab, and remove all jars. ( **Note:**  Do not
+remove JRE and Scala Library.)
+
+14\. Now add all jars from lib folder. and Click Apply.
+
+15\. Now Click on Resource, Text File Encoding. Click on other, and change it
+to "UTF-8".
+
+16\. Now Close the properties windows.
+
+17\. Now you may get, cross-compiled error for some jars for mongodb and
+GridFS. Remove those jars from your Build Path.
+
+18\. Now, you will get error in few files in Problem Window.
+
+19\. Right now, I have removed MongoDBPersistence.scala file. and for other
+file, I comment the code.
+
+20\. Now open, LoggerFactory.scala file, and comment following line:  
+ _String log4jConfigURL =
+Properties.instance().getPropertySet().getStringOrURIAsString(LOG4J_DOM_CONFIG_PROPERTY,
+false);_
+
+And copy paste the following line after that commented line:  
+ _String log4jConfigURL = "[oxf:/default-log4j.xml](http://oxf/default-
+log4j.xml)";_
+
+ **Note:**  If you do not do above change, you will get error while starting
+your server.
+
+21\. Now, clean your project, and build it. eClipse should compile all scala
+and java file, generate class files under
+
+Orbeon-Forms/build/orbeon-war/WEB-INF/classes.
+
+22\. Now, Right click on build.xml -> Properties -> Run/Debug Settings ->
+Click on New -> Select Ant Build.
+
+23\. New Window named Edit Configuration will open up.
+
+24\. Click on Properties Tab -> Uncheck "Use Global Properties as specified in
+Ant runtime Preference".
+
+25\. Click on Add Property. Give name skip.compilation and value true. Click
+Ok, and close the Configuration. (Note: Now Ant will not Compile Scala and
+Java Files.)
+
+26\. Now, run orbeon-war ant target from eclipse. You should be able to see
+Build Successfully after build finished.
+
+27\. I am using Apache Tomcat as server. Go to server.xml under conf directory
+of your Tomcat directory.
+
+28\. Add following context under <host> </host>:
+
+<Context crossContext="true" debug="0"
+docBase="C:/Users/pritish/orbeon/Orbeon-forms/build/orbeon-war"  
+path="/orbeon" override="true" reloadable="false"/>
+
+*Note: *value for docBase will changed based on the your project location in your file system.
+
+29\. Now open command prompt, and go to your <tomcat home directory>/bin.
+
+30\. Run, catalina jpda start.
+
+31\. It shows server has been started.
+
+32\. Open, localhost:8080/orbeon in your browser. You will see Orbeon Home
+page.
+
+33\. Now, Go to eclipse -> Run Menu -> Debug Configuration -> Select Remote
+Java Application -> click on "+" Sign.
+
+34\. Now enter host as localhost and port as 8000. This will allow Remote
+Debugging.
+
+Please do this setup, and help me to understand the code and different entry
+points.  
+[Edit this
+section](https://i3dev.easyredmine.com/projects/esafetybox/wiki/Orbeon_Form_Builder_Setup_Guide/edit?section=2)
+
+# MySQL Configuration with
+Orbeon[](https://i3dev.easyredmine.com/projects/esafetybox/wiki/Orbeon_Form_Builder_Setup_Guide#MySQL-
+Configuration-with-Orbeon)
+
+1\. Orbeon recommends MySQL 5.6.4 or newer. But MySQL 5.1 or newer can be
+used.
+
+2\. Create a user named 'orbeon' in mysql.
+
+3\. Create database with the name 'orbeon'
+
+4\. DDL to create the table from scratch
+
+alter database character set utf8 collate utf8_bin;
+
+create table orbeon_form_definition (  
+created timestamp(6),  
+last_modified_time timestamp(6),  
+last_modified_by varchar(255),  
+app varchar(255),  
+form varchar(255),  
+form_version int not null,  
+deleted char(1) not null,  
+xml mediumtext collate utf8_unicode_ci  
+) engine = InnoDB;
+
+create table orbeon_form_definition_attach (  
+created timestamp(6),  
+last_modified_time timestamp(6),  
+last_modified_by varchar(255),  
+app varchar(255),  
+form varchar(255),  
+form_version int not null,  
+deleted char(1) not null,  
+file_name varchar(255),  
+file_content longblob  
+) engine = InnoDB;
+
+create table orbeon_form_data (  
+created timestamp(6),  
+last_modified_time timestamp(6),  
+last_modified_by varchar(255),  
+username varchar(255),  
+groupname varchar(255),  
+app varchar(255),  
+form varchar(255),  
+form_version int not null,  
+document_id varchar(255),  
+draft char(1) not null,  
+deleted char(1) not null,  
+xml mediumtext collate utf8_unicode_ci  
+) engine = InnoDB;
+
+create table orbeon_form_data_attach (  
+created timestamp(6),  
+last_modified_time timestamp(6),  
+last_modified_by varchar(255),  
+username varchar(255),  
+groupname varchar(255),  
+app varchar(255),  
+form varchar(255),  
+form_version int not null,  
+document_id varchar(255),  
+draft char(1) not null,  
+deleted char(1) not null,  
+file_name varchar(255),  
+file_content longblob  
+) engine = InnoDB;
+
+If the script is updated by orbeon development team you can found the updated
+script here - <https://github.com/orbeon/orbeon-
+forms/blob/master/src/resources/apps/fr/persistence/relational/ddl/mysql-4_5.sql>
+
+5\. In <tomcat_installation_location>/conf/server.xml add a the following
+resource under <GlobalNamingResources> -
+
+  
+
+&lt;Resource name="jdbc/mysql" auth="Container" type="javax.sql.DataSource"  
+        initialSize="3" maxActive="10" maxIdle="20" maxWait="30000"   
+        driverClassName="com.mysql.jdbc.Driver"   
+        poolPreparedStatements="true"   
+        validationQuery="select 1 from dual"   
+        testOnBorrow="true"   
+        username="orbeon"   
+        password="orbeon"   
+        url="jdbc:[mysql://localhost:3306/orbeon?useUnicode=true&amp;characterEncoding=UTF8](mysql://localhost:3306/orbeon?useUnicode=true&characterEncoding=UTF8)"/>
+
+  
+
+Under <context> of <tomcat_installation_location>/conf/context.xml at the
+resource link -  
+<ResourceLink global="jdbc/mysql" name="jdbc/mysql"
+type="javax.sql.DataSource"/>
+
+6\. Put the mysql-connector-java-5.1.29.jar in
+<tomcat_installation_location>/lib
+
+7\. Open the 'properties-local.xml' (orbeon-
+forms/src/resources_packaged/config/) file. Initially this file was empty.
+Here we can map an application to oracle or mysql persistence layer. Add the
+following lines -
+
+<properties xmlns:xs="<http://www.w3.org/2001/XMLSchema>"  
+xmlns:oxf="<http://www.orbeon.com/oxf/processors>"  
+xmlns:xi="<http://www.w3.org/2001/XInclude>">  
+<property as="xs:string"
+name="[oxf.fr](http://oxf.fr).persistence.provider.*.*.*" value="mysql"/>  
+<property as="xs:string"
+name="[oxf.fr](http://oxf.fr).persistence.mysql.datasource" value="mysql"/>  
+</properties>
+
+8\. issue the following ant command  
+ant clean  
+ant orbeon-dist-war
+
+9\. copy the war file generated in build/distrib/ to
+<tomcat_installation_location>/webapps  
+[Edit this
+section](https://i3dev.easyredmine.com/projects/esafetybox/wiki/Orbeon_Form_Builder_Setup_Guide/edit?section=3)
+
+# Create Custom Controle
+(Button)[](https://i3dev.easyredmine.com/projects/esafetybox/wiki/Orbeon_Form_Builder_Setup_Guide#Create-
+Custom-Controle-Button)
+
+1\. Find out the properties-form-builder.xml (orbeon-forms/src/resources-
+packaged/config). Find the following line -  
+<property as="xs:string" name="oxf.fb.toolbox.group.button.uri.*.*"
+value="oxf:/forms/orbeon/builder/xbl/button-controls.xbl"/>
+
+and add the following line under this -  
+<property as="xs:string" name="oxf.fb.toolbox.group.custom.uri.*.*"
+value="oxf:/forms/orbeon/builder/xbl/customButton-controls.xbl"/>  
+2\. Now we need a .xbl file. Create a "CustomButton-controls.xbl" file. We
+have to put the .xbl file in
+orbeon-"forms/src/resources/forms/orbeon/builder/xbl/"
+
+3\. Put the content of the file from the attachment - "customButton-
+controls.xbl"  
+[Edit this
+section](https://i3dev.easyredmine.com/projects/esafetybox/wiki/Orbeon_Form_Builder_Setup_Guide/edit?section=4)
+
+# Adding Javascript into
+xforms:[](https://i3dev.easyredmine.com/projects/esafetybox/wiki/Orbeon_Form_Builder_Setup_Guide#Adding-
+Javascript-into-xforms)
+
+1\. Open the form in orbeon in which we are trying to add javascript.
+
+2\. Click on "Edit Source"
+
+3\. Under <xh:head> tag add <xh:script> </xh:script>. You can add java script
+here. example -  
+<xh:script type="text/javascript">  
+var myFunction = function(){  
+//alert(document.getElementsByClassName("myClass")["section-1-controlxf-342signer-
+control"].[firstChild.id](http://firstChild.id));  
+alert("Hello!");  
+}  
+</xh:script>
+
+4\. Call a function call from <xf:trigger>/<xf:load> . example code snippet-
+
+&lt;xf:trigger id="signer-control" bind="signer-bind" class="myClass"&gt;  
+                                    &lt;xf:label ref="$form-resources/signer/label"/&gt;  
+                                                &lt;xf:load id="eventId" ev:event="DOMActivate" resource="javascript:myFunction(this)"/&gt;  
+                                    &lt;xf:hint ref="$form-resources/signer/hint"/&gt;  
+                                    &lt;xf:alert ref="$fr-resources/detail/labels/alert"/&gt;  
+                                &lt;/xf:trigger&gt;
+
+  
+
+### Attachments
+
+  
+
+250
+
+

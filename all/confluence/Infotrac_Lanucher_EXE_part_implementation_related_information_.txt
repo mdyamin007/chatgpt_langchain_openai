@@ -1,0 +1,78 @@
+title: Infotrac Lanucher EXE part implementation related information:
+body:   * java code base part and their files  
+InfotracLauncher.java and other on source
+
+    
+    
+    package com.infoimage.launcher;
+    
+    import java.awt.*;
+    import java.net.URL;
+    import java.util.Date;
+
+Npublic class InfotracLauncher {  
+    public static void main(String[] args) {  
+        try {  
+            String userName = System.getProperty("[user.name](http://user.name)");  
+            String uid = new StringBuffer().append(Constants.CID).append("_").append(userName).toString();  
+            String url = new StringBuffer().append(Constants.BASE_URL).append("/[pflogin.do?key=](http://pflogin.do?key=)").append(CipherUtils.getGeneratedKey(uid)).toString();  
+            Desktop.getDesktop().browse(new URL(url).toURI());  
+        } catch (Exception ex) {  
+            System.out.println(ex.getMessage());  
+        }  
+    }  
+}
+
+    
+    
+      
+    
+
+  * Step to generate executable .exe file from java code  
+1\. Generate java .jar file from java source code or project using IDE or tool  
+2\. convert it to progaurd java .jar file using given myconfig.pro and
+proguard.jar files to avoid DE-compilation of java code. or Follow given link
+for details and edit myconfig.pro  
+file based on your environment configuration
+
+<https://sourceforge.net/projects/proguard/files/>  
+<https://dzone.com/articles/protect-your-java-code-from-re>
+
+    
+    
+    $ cd /home/dipak/proguard4.2/lib
+    $ java -jar proguard.jar @myconfig.pro linux command
+    $ java -jar proguard.jar '@myconfig.pro' windows command
+    
+
+3\. finally convert .exe file from progaurd java .jar file using any tool or
+given launch4 tool on this video. And this is final exe file to provide to
+clients
+
+<https://www.youtube.com/watch?v=6_gqWRkw0EY>  
+  
+
+  
+
+# Infotrac Lanucher Infotrac PFLogin part Implementation related Information:
+
+  * /[pfLogin.do](http://pfLogin.do)* , controller has been defined on infotrac. On the controller method encrypted key is fetched from the query param and 'uid', secret and ts is retrieved after decrypting the string.  
+note:  _uid = CLIENT_USERNAME  
+secret = client specific secret key  
+ts = timestamp_
+
+  * The above mentioned information are then passed into PFAuthenticationService.auth method. In this method first the secret key is verified with the key saved inside account management property json.  
+After successful verification of the secret key the the client and username is
+retrieved from the uid and both user and client are fetched from database.
+Then, an authentication object is created with the user  
+information and inject the created authentication object to
+SpringSecurityContext. Finally, a redirection is made to posting login
+process.
+
+  
+
+### Attachments
+
+250250
+
+

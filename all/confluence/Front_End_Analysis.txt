@@ -1,0 +1,853 @@
+title: Front End Analysis
+body:   
+
+  
+
+Document status|
+
+YellowDRAFT  
+  
+---|---  
+Document owner|  
+  
+Designer|
+
+  
+  
+  
+
+  
+
+  
+
+  
+
+#  **Key Points**
+
+ **Client Name**|  EAST WEST BANK  
+---|---  
+ **Schema**|  Default  
+ **SSO**|  ACI512SSO  
+ **DSO**|  Yes  
+ **Account Types**|
+
+  * 04
+  * 99
+  * 01
+  * DD
+  * 54
+  * 03
+  * 02
+  * CD
+  * NW
+
+  
+ **Application Types**|
+
+  * default 
+  * dda_velo
+  * mmidas
+  * xaa
+  * hk
+  * loan
+  * fcdda
+  * etax
+
+  
+ **User-Account Relation**|  Many-to-Many  
+ **Archival Period**|
+
+  1. default (Daily Statements) :  **84 months**
+  2. dda_velo (Velo Statements) :  **84 months**
+  3. mmidas (Mmidas Money Market) :  **84 months**
+  4. xaa (analyzed Statements) :  **84 months**
+  5. hk (Hong Kong Statements) :  **84 months**
+  6. loan (Loan Statements) :  **84 months**
+  7. fcdda (FCDDA Statements):  **84 months**
+  8. etax (E-tax): **25-* months**
+
+  
+ **Paperless Configuration**|  Non-Selective paperless  
+ **on DP change**|  opt-out page  
+ **Delivery Preference**|
+
+  * paper
+  * electronic
+  * Both ( _initially not supported , but if admin changes it to both it shows in member site as well_ )
+
+  
+ **Notification Preference**|  Email  
+ **NP Link Type**|  byUfa  
+ **Welcome Email**|
+
+3 types of welcome email
+
+  *  **Comercial** :
+    * If enroll from _enroll/ssoRegister_ and userType=N search template with "welcome_bb" and sends an email
+  *  **Retail** :
+    * Always From _dso/ssoRegister_ and from _eroll/ssoRegister_ if user type is not N search with "welcome"
+  *  **HK** :
+    * From _enroll/ssoRegister_ if the account has origin 'HK' search template with "welcome_hk"
+
+  
+ **Batch Download**|  Yes (can be turned off from Admin site)  
+ **Menu Tabs**|
+
+  * E-statement
+  * Batch download
+  * Disclosure
+  * Profile
+  * Exit ( for dso)
+
+  
+  
+  
+
+# ROOT
+
+* * *
+
+#  _ **SSO**_
+
+3 Step Enrollment process based on SSO date:
+
+  *  No header
+  * Welcome email activated
+  * After enrollment sets sso date and status as ACTIVE
+
+  
+
+  
+
+ **  _Step_** _ **1:**_
+
+  * PDF View
+
+     
+
+  
+
+  _**Step 2:**_
+
+  * Email option is editable
+  * Log out when clicked cancel
+
+    
+
+  
+
+  _ **Step 3:**_
+
+  * Masked account number
+  * Account holder name is taken from 'USR' table
+  * Can enroll to select paper or electronic but can not enroll with paper
+  * Optional second email filed
+  * Supports account number with leading '0'
+
+  
+
+  
+
+    _ **SSO enroll finish page:**_
+
+   show a finished page to let users know enrollment is done.
+
+  
+
+  
+
+ ** _ACI512:_**
+
+  * Creates user and account
+  * Vendor_user_id = UOB-"<ns3:UserID>VALUE</ns3:UserID>"
+  * Sets usr status as new and goes to enrollment no sso or dso date
+  * No usr_mapping entry
+  * Session login id !usr_id
+  * Sets first and last name
+  * Sets usr_type =N
+  *  Account created with provided type as type and sub type as null
+
+  
+
+  
+
+#  _ **DSO:**_
+
+DSO has the following features
+
+  1.  **Estatement Login**
+  2.  **Forget your password?**
+
+ _ **DSO LOGIN:**_
+
+  * Session login id is stored as " **orgID-loginId** " 
+  * During login required fields are:
+    * orgID
+    * loginID
+    * password 
+  * Session login id stored as lower case always
+  * Goes through 3 steps enrollment same as SSO
+  * Has logo at header
+  * DSO go through enrollment steps 2 times
+
+  
+
+  
+
+ _ **Forget Password:**_
+
+  * 3 steps
+  * Need org id , login id, account, security question and answers but security question is already set from DB do not have to set from drop down and can be anything  
+  *   *   * 
+
+  
+
+#  _ **Header:**_
+
+  * Different headers for dso and sso
+  * SSO doesn't have any logo on the header
+  * DSO with logo as the header
+
+        
+
+       
+
+  
+
+  
+
+#  _ **Home:**_
+
+  * Masked acct number with acct type desc- based on subType on fin account from doc_desc table
+  * Insert for default labeled as "News and notices"
+  * Different disclosure for etax and default, user guide link
+  * Closed account logic:
+    *  _If closed date > 3 month forward to closedAcct.jsp_
+
+ __
+
+ __
+
+  
+
+#  _ **Batch Download:**_
+
+  * batchdownload feature is there for ewbb but admin can disable it but admin can turn it for only customer with " **custom1** " value as " **dcbb "**
+  * disable-> batchdownload off for root of that specific user
+
+  * enable-> batchdownload on for root. of that specific user
+
+  * When Custom1= null, then batchdownload is always on.
+
+  * Compressed into zip 
+  * option to refresh new batch jobs
+  * Link to a user guide on how to use batchdownload
+
+  
+
+  
+
+  
+
+  
+
+#  _ **Disclosure:**_
+
+open pdf in a different tab
+
+  
+
+#  _ **Profile:**_
+
+  
+
+  * User can go to paper it will show a optout page after going to home
+    * 
+
+  
+
+  
+
+  
+
+ _SSO:_
+
+      * Can go to paper
+      * Update email
+      * Shows sso on on user profile section as "Registration Date"
+    *     * 
+
+  
+
+  
+
+  
+
+ _DSO:_
+
+    * can go to paper
+    * User can update password
+    * While admin set up can use any question but while updating from profile page user can select an only selective question from the drop-down menu to set as password hints question
+  * 
+
+  
+
+ _ **Update Password:**_  
+
+  
+
+        
+
+#  _ **Exit:**_
+
+DSO user can log out using exit, takes user to login page.
+
+#  _ **Footer:**_
+
+  * adobe logo takes to exit_notice page
+
+ _ ****_
+
+ **exit notice page:**
+
+ ****
+
+  
+
+# MSM
+
+* * *
+
+# Features List:
+
+  1. Account Management
+  2. Reports
+  3. Administration
+  4. Insert Mgmt.
+  5. Email Proofing
+  6. ACI EB Mgmt.
+  7. Profile
+  8. Exit
+
+#  _ **Account Management:**_
+
+  1. Admin can change Email address
+  2. Admin can change the delivery preference, admin can set it to both. but once on member site they can't change to both
+  3. Admin can reset dso user with a temporary password
+  4. Can browse delivery preference  history
+  5. can disable/enable batch download privilege for DCBB users
+
+#  _ **Reports:**_
+
+  1.  ** ** Latest Stats
+  2. User Login activity
+  3. AI login Activity
+  4. Etax viewed
+  5. Registered Users
+  6. Marketing Insert Reports
+  7. Estatements User Entitlements
+  8. Email Address collection
+  9. Paperless
+  10. Enrollment reports.
+
+#  _ **Administration**_
+
+  * option to create, update and delete admin users
+  * in update there's a option to add origion (HK)
+
+  
+
+  
+
+#  _ **Inserts:**_
+
+option to add insets for all the statement types expect :  **Mmidas Money
+Market**
+
+#  _ **Email Proofing**_
+
+  * All the email templates has two version (different Header and content)
+    * East West Bank
+    * Desert Community Bank
+  * Available templates : eStatements, Loan eStatements, Hong Kong eStatements, Analyzed eStatements,MMIDAS eStatements,  etax, Velo eStatements. FCDDA eStatements, honk Kong welcome
+
+#  _ **ACI EB Mgmt.**_
+
+  * Option to search a user under a organization
+  * User can be deleted and updated
+  * Used for dso user creation
+    * Vendor_userid always ACI
+    * Sess_login_id is "ORGID-useId"
+    * User type always N
+    * No record in Usr_mapping table
+    * Need to link user with existing Account number
+    * can create with any security question
+
+  
+
+#  _ **Profile**_
+
+  * admin can update own password and first last name
+
+ _ ****_
+
+#  ** _Analysis Summary_**
+
+#  ** _ROOT_**
+
+ **Scope**|  **Feature**|  **EWBB Business**|  **Hypercube**|  **Note**  
+---|---|---|---|---  
+ **SSO**|  **Login Vendor**|
+
+  *  **ACI512SSO**
+
+|  84 incomplete **Supported  ** 85 complete **Not Supported** | **This is a
+XML based sso servlet currently we do not support  **  
+ **Enrollment Logic**|
+
+  *  **Enrollment Based on new_status  **
+
+|  1 incomplete **Supported  ** 2 complete **Not Supported** | **Current
+Standard is enrollment based on sso date**  
+ **Enrollment  **
+
+  *  **Step 1:**
+
+|
+
+  *  **  PDF view**
+
+|  3 complete **Supported  ** 4 incomplete **Not Supported** |  
+  
+  
+  * **Step 2:**
+
+|
+
+  *  **Estatement Disclosure**
+
+|  5 complete **Supported  ** 6 incomplete **Not Supported** |  
+  
+  
+  * **Option to add email address**
+
+|  7 incomplete **Supported  ** 8 complete **Not Supported** | **Disclosure is
+supported but email adding is not supported on hypercube, but we have this
+support on step3**  
+  
+  *  **Step 3:**
+
+  
+  
+|
+
+  *  **Masked account number**
+
+|  9 complete **Supported  ** 10 incomplete **Not Supported** |  
+  
+  
+  * **Optional 2nd Email address**
+
+|  11 incomplete **Supported  ** 12 complete **Not Supported** |  
+  
+  
+  * **Option   to paginate for long list of accounts and search by account number/username from UI**
+
+|  13 incomplete **Supported  ** 14 complete **Not Supported** |  
+  
+**Enrollment confirmation  **|
+
+  *  **Confirmation page to confirm user**
+
+|  15 incomplete **Supported  ** 16 complete **Not Supported** |  
+  
+**Welcome Email**|  **send welcome email after enrollment is done**|
+
+ **3 types of welcome email**
+
+  *  **Comercial:**
+    *  **If enroll from   _enroll/ssoRegister_  and userType=N search template with "welcome_bb" and sends an email**
+  *  **Retail:**
+    *  **Always From   _dso/ssoRegister_  and from  _eroll/ssoRegister_  if user type is not N search with "welcome"**
+  *  **HK:**
+    *  **From   _enroll/ssoRegister_  if the account has origin 'HK' search template with "welcome_hk**
+
+|  17 incomplete **Supported  ** 18 complete **Not Supported** | **We have
+support to send only one type of email**  
+ **Header  **|  **logo**|
+
+  *  **For SSO there is no logo**
+  *  **For DSO there be logo**
+
+|  19 incomplete **Supported  ** 20 complete **Not Supported** | **we do not
+support different header or logo for dso or sso**  
+ **Exit Menu**|  **Exit menu items**|
+
+  *  **for dso only**
+
+|  21 incomplete **Supported  ** 22 complete **Not Supported** | **we do not
+support different menu items**  
+ **DSO  **|  **Login**|
+
+ **login with  **
+
+  *  **Organization Id**
+  *  **login ID**
+  *  **Password**
+
+|  23 incomplete **Supported  ** 24 complete **Not Supported** | **we do not
+support organization ID while logging in  **  
+  
+|  **Enrollment**|
+
+  * goes through dso enrollment twice
+
+|  25 incomplete **Supported  ** 26 complete **Not Supported** |  
+  
+  
+| **Forgot Password**|
+
+ **Step 1:  **
+
+  *  **Organization id**
+  *  **log in id**
+  *  **security question**
+
+|  27 incomplete **Supported  ** 28 complete **Not Supported** | **we do not
+support organization ID**  
+  
+|  **Security question  **| while admin creates user can set any question as
+security question doesn't have to be one from drop down,|  29 incomplete
+**Supported  ** 30 complete **Not Supported** | we support only specific
+questions  
+  
+|
+
+ **Step 2:**
+
+  *  **setting new password**
+
+|  31 complete **Supported  ** 32 incomplete **Not Supported** |  
+  
+**Home**|  **E-statement landing page**|
+
+  *  **Masked account number with account-type desc based on subType on fin_account from doc_desc table**
+
+|  33 incomplete **Supported  ** 34 complete **Not Supported** | **we only
+support nickname or account type with masked account number**  
+ **Insert**|
+
+  *  **insert column "News and notices"**
+
+|  35 incomplete **Supported  ** 36 complete **Not Supported** |  
+  
+**closed account**|
+
+  *  **more than 3 months of last modified  **
+
+|  37 complete **Supported  ** 38 incomplete **Not Supported** | **but custom
+message is not supported for closed accounts**  
+ **account-statenment mapping**|
+
+  *  **Land on a specific statement type for selected account (if there is no statement available) based on a mapping on code**
+
+|  39 incomplete **Supported  ** 40 complete **Not Supported** | **hypercube
+lands on default always**  
+ **Batch download**|  **Menu items**|  **Disable/enable**|  41 incomplete
+**Supported  ** 42 complete **Not Supported** | **on hypercube its always on
+**  
+ **for custom1 =null always visiable**|  43 incomplete **Supported  ** 44
+complete **Not Supported** |  
+  
+**for custom1=dcbb checks on privilage table**|  45 incomplete **Supported  **
+46 complete **Not Supported** |  
+  
+**Compress into zip**|  47 complete **Supported  ** 48 incomplete **Not
+Supported** |  
+  
+  
+  * **Batch download User guide is linked on top of the batch download page**
+
+|  49 incomplete **Supported  ** 50 complete **Not Supported** |  
+  
+**Disclosure**|  **menu items**|  
+|  51 complete **Supported  ** 52 incomplete **Not Supported** |  
+  
+**Profile**|  **Menu items**|
+
+  * pagination with search option 
+
+|  53 incomplete **Supported  ** 54 complete **Not Supported** |  
+  
+  
+  * Shows Registration date for SSO
+
+|  55 incomplete **Supported  ** 56 complete **Not Supported** |  
+  
+**Delivery Preference**  
+  
+|
+
+  * can update delivery pref to paper or electronic
+
+|  57 complete **Supported  ** 58 incomplete **Not Supported** |  
+  
+  
+  * if admin change delivery pref to Both and on root user can select paper electronic or both
+
+|  59 incomplete **Supported  ** 60 complete **Not Supported** |  
+  
+  
+  * If selected paper goes to optout page 
+
+|  61 incomplete **Supported  ** 62 complete **Not Supported** |  
+  
+  
+| **Notification preference**|
+
+  * update email address
+
+|  63 complete **Supported  ** 64 incomplete **Not Supported** |  
+  
+  
+|
+
+  * add/update 2nd optional email address
+
+|  65 incomplete **Supported  ** 66 complete **Not Supported** |  
+  
+  
+| **DSO**|
+
+  * can update password
+  * update security question (only selective ones)
+
+|  67 incomplete **Supported  ** 68 complete **Not Supported** | doesnot
+support any update for dso  
+  
+|  
+|  
+|  
+|  
+  
+  
+|  
+|  
+|  
+|  
+  
+  
+#  ** _MSM_**
+
+ **Scope**|  features| EWbb busines| infotrac| note  
+---|---|---|---|---  
+ **Account management**|
+
+ **Account /user search**
+
+|
+
+  * search by account number
+
+|  69 complete **Supported  ** 70 incomplete **Not Supported** |  
+  
+  
+  * search by email address
+
+|  71 complete **Supported  ** 72 incomplete **Not Supported** |  
+  
+  
+  * search by account owner name
+
+|  73 incomplete **Supported  ** 74 complete **Not Supported** |  
+  
+**Delivery Preference**|
+
+  * supports both on msm but not on root initially
+
+|  75 incomplete **Supported  ** 76 complete **Not Supported** |  
+  
+**Notification prefetence**|
+
+  * update email
+
+|  77 complete **Supported  ** 78 incomplete **Not Supported** |  
+  
+  
+|
+
+  * add/update optional 2nd email
+
+|  79 incomplete **Supported  ** 80 complete **Not Supported** |  
+  
+**Batchdownload**|
+
+  * can batchdownload statements
+
+|  81 complete **Supported  ** 82 incomplete **Not Supported** |  
+  
+**Customer privilege**|
+
+  * for custom1=dcbb users admin can turn on or off combined statement feature
+  * if turns off batchdownload tab is not shown on root site
+
+|  83 incomplete **Supported  ** 0 complete **Not Supported** |  
+  
+**Bank name**|
+
+  * East west bank
+  * Desert Community bank
+
+|  86 incomplete **Supported  ** 87 complete **Not Supported** |  
+  
+Reports  
+  
+  
+  
+  
+  
+  
+  
+  
+|  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+|
+
+  *  ** ** Latest Stats
+
+|  88 complete **Supported  ** 89 incomplete **Not Supported** |  
+  
+  
+  * User Login activity
+
+|  90 complete **Supported  ** 91 incomplete **Not Supported** |  
+  
+  
+  * AI login Activity
+
+|  92 complete **Supported  ** 93 incomplete **Not Supported** |  
+  
+  
+  * Etax viewed
+
+|  94 incomplete **Supported  ** 95 complete **Not Supported** |  
+  
+  
+  * Registered Users
+
+|  96 incomplete **Supported  ** 97 complete **Not Supported** |  
+  
+  
+  * Marketing Insert Reports
+
+|  98 complete **Supported  ** 99 incomplete **Not Supported** |  
+  
+  
+  * Estatements User Entitlements
+
+|  100 incomplete **Supported  ** 101 complete **Not Supported** |  
+  
+  
+  * Email Address collection
+
+|  102 complete **Supported  ** 103 incomplete **Not Supported** |  
+  
+  
+  * Enrollment reports
+
+|  104 incomplete **Supported  ** 105 complete **Not Supported** |  
+  
+  
+  * Paperless
+
+|  106 complete **Supported  ** 107 incomplete **Not Supported** |  
+  
+**Administration**|  
+|
+
+  * Admin user and role creation /delete
+
+|  108 complete **Supported  ** 109 incomplete **Not Supported** |  
+  
+**Inserts**|  
+|
+
+  * option to add insets for all the statement types expect :  **Mmidas Money Market**
+
+|  110 complete **Supported  ** 111 incomplete **Not Supported** | Partially
+supported as it will show for all the statement types on infotrac  
+ **Email Profing**|  
+|
+
+  * Option to chose template along with bank
+    * EWBB
+    * Desert Community Bank
+
+|  112 incomplete **Supported  ** 113 complete **Not Supported** | only one
+type of template per statement type  
+  
+|  
+|
+
+  * two version of each template one for ewbb another from dcbb
+
+|  114 incomplete **Supported  ** 115 complete **Not Supported** |  
+  
+**ACI EB mangement**|  **Menu for dso user creation**|  
+|  116 incomplete **Supported  ** 117 complete **Not Supported** |  
+  
+  
+| **option to search  **|
+
+  * there is an option to search dso users of a speciofic organizaton id
+  * update/delete from list
+
+|  118 incomplete **Supported  ** 119 complete **Not Supported** |  
+  
+  
+| **Create Account  **|
+
+  * account creation with 4 steps
+  * need an organization id
+
+|  120 incomplete **Supported  ** 121 complete **Not Supported** |  
+  
+**Profile**|  **admin user profile**|
+
+  * option to update passweord
+
+|  122 complete **Supported  ** 123 incomplete **Not Supported** |  
+  
+  
+  
+
+# _**Miss Match with current hypercube standard**_
+
+  * They have a XML based SSO agent (ACI512) currently hypercube does not have support for this
+  * While User is created from ACI512 insert "UOB-XXXXX" as _vendor_user_id  _ in USR_SESSION table
+  * While User is created from ACI EB Mgmt. from  Admin site it insert "ACI-XXXX" as  _vendor_user_id  _ in USR_SESSION table
+  * For customers with "dcbb" as 'custmor1', their Batchdownload privilege can be turned on/off from msm site (uses **USR_PRIVILEGE  **table)
+  * Different type of welcome email based on region value and customer type
+  * dso enrollment has different enroll and welcome email process
+  * DSO login requires addition " **Organization ID** "  ** ** value which they add with '-' and add login id then convert into lower case and match in session_login_id
+  * Optional secondary Email address
+  * DSO is only inserted from Admin site
+  * Enrollment and Profile has pagination along with search option for a long number of account list
+  * initially only "Paper" and "Electronic" in supported
+  * but from  admin site admin can change a DP to 'BOTH', if it's selected as both user can see and change to both
+  * There is a account_type-statement_type  mapping, if account doesn't have any type of statement it will land on the mapped statement type tab
+  * There are support for multiple types of email template as in , for welcome email there are two one for ewbb and another for dcbb
+  * DSO user creation and password update module
+  * There is a option to search dso user based on "Organization Id" and from there to delete or update the user details
+  * custom reports 
+  * From account drop down is uses sub type to show description before masked account number
+
+

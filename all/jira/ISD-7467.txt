@@ -1,0 +1,89 @@
+title: PUI - Email Count Validation
+description: Assert total recipients count from the query to match the total emails sent to API/email server. If not match, send email alert. The alert only needs to internally and no custom email list per CID.
+
+This update is a defensive coding in response to an issue with GCBK where a developer added a PUI config called optout for one of the statement type, but a bug occurs where other statement types that were not configured for optout feature doesn't send email.
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: Subject: Please Review! Email Sent Mismatch
+
+Hi ISD,
+
+The total recipient from the email query is more than the actual email sent. Please review!
+
+Ref # : \{p_job_id}
+Total Recipient : \{recipient_count}
+Email Sent : \{email_sent_count}
+
+
+author: JIRAUSER11102
+comment: To QA,
+
+*Issue to test:*If the total recipient of an email job does not match the total email sent, then an email should be sent internally regarding this. Email content will be like given in the above comment.
+
+*How to test:*
+ * Prepare index files for doc/afp/etax/enotice process for some CID's.
+
+ * Process those files on pui-stage.
+ * Make sure that the email addresses in NOTIFICATION_PREFERENCE table for the accounts of those index files are your known email addresses so thatwhile testing, mail goes to one of your known address.
+ * InNOTIFICATION_PREFERENCE table, change notification_status into 'N' for some accounts for which you don't want to send email for testing.
+ * Trigger Email Notification for those regular jobs.
+
+ * In processing-ui log, you can see the 'recipientSize from handler' and 'Total notify count'. If these mismatches, one alert notification email will be sent to alert receiver. If you provide me your mail address, I can add it to alert receiver.
+
+
+author: JIRAUSER11104
+comment: [~jahid.hasan] Thanks. I followed all the steps you described.
+
+1. Used this index file: {color:#505f79}119 Aug 8 09:43 /d/INPUT-DEV/I3/process-files/rwcu/as1_12312020_1_05182022_9999_rwcu.txt{color}
+ 2. Triggered Email Notification and got this log file: /usr/local/processing-ui/station/logs/rwcu/email/08162022_0249026.log
+{quote}andreyk@ca-pui-st-01:~$ cat /usr/local/processing-ui/station/logs/rwcu/email/08162022_0249026.log | grep -En 'recipientSize | Total notify count'
+ 23:[08/16/2022 14:49:29] recipientSize from handler: 1
+ 54:[08/16/2022 14:49:30] Total notify count : 1
+{quote}
+PS: [~jahid.hasan] please add my email (andrey.kutsenko@infoimageinc.com) to the alert receiver.
+
+PPS: [~jahid.hasan] how can I check to receive my email alert in case of mismatch total recipients count from the query and the total emails sent to API/email server.
+
+
+author: JIRAUSER11102
+comment: Hi [~Andrey.Kutsenko],
+
+I have added your email address to alert receiver. Now, If any mismatch is found between number of 'recipientSize from handler' and 'Total notify count', then an alert email will be sent to your email address.
+
+
+author: JIRAUSER11104
+comment: Thank you [~jahid.hasan]
+ How can I check this case now?
+{color:#0747a6}_>>If any mismatch is found between number of 'recipientSize from handler' and 'Total notify count', then an alert email will be sent to your email address._{color}
+
+
+author: JIRAUSER11102
+comment: Hi [~Andrey.Kutsenko],
+
+Here, 'recipientSize from handler' is the total number of the entry inNOTIFICATION_PREFERENCE table for the accounts in the index file. And'Total notify count' is the total number of mail sent. So, suppose your index file contains 5 accounts and they have 5 corresponding entries inNOTIFICATION_PREFERENCE table. If you changenotification_status into 'N' for 2 entries, then email will be sent to other 3 addresses. Here,'recipientSize from handler' will be 5 and'Total notify count' will be 3. Now, since mismatch is found between these values, an alert email will be sent to the alert receiver.
+
+
+author: JIRAUSER11104
+comment: Thanks, [~jahid.hasan]
+QA is completed.
+Test-result - PASSED.
+eStatement Email Notification ( Visa Statements ) - Job ID:[195691]
+{code:sh}
+andreyk@ca-pui-st-01:~$ cat /usr/local/processing-ui/station/logs/rwcu/email/08222022_1213013.log | grep -En 'recipientSize | Total notify count'
+23:[08/22/2022 12:13:16] recipientSize from handler: 4
+59:[08/22/2022 12:13:17] Total notify count     :  1{code}
+Email Sent Mismatch:
+ !scr_alert.png|thumbnail! 
+
+
+author: JIRAUSER11104
+comment: Hi [~jahid.hasan], please provide the checklist if needed and update the status of this story based to SOP.
+
+
+author: JIRAUSER11102
+comment: [~Tin.Chak]this feature has gone live today.
+
+[~Andrey.Kutsenko]I havemoved the ticket to done and please check release note for changes.
+
+FYI [~rifat.mahmud]

@@ -1,0 +1,337 @@
+title: SFTP Scanner - Production configuration/deployment
+body:   * **Table of contents**  
+
+    * 1\. Map Local drive to a target BU Server
+    * 2\. OracleDB Changes
+      *         * [A]. Alter Table: INCOMING_FILE
+        * [B]. Alter Table: SCANNER_TEMP
+        * [C]. Create a Table: SCANNER_TEMP_MULE
+        * [D]. Create a Table: SCANNER_TEMP_MULE_HISTORY
+        * [E]. Create a Table: SFTPSCANNER_MAILER
+        * [F]. Create a Table: SFTPSCANNER_RUNBOOK
+    * 3\. Sample Email for Missing Files (Warning Message)
+    * 4\. Sample Email for Incoming Files (Confirmation Message)
+
+  
+  
+
+## 1\. Map Local drive to a target BU Server
+
+ **Mount the shared folder to the Linux server using Samba client**
+
+    
+    
+    #REM Make sure "sftpbu" folder present inside the "/mnt" folder, if not create it using:
+    $sudo mkdir /mnt/sftpbu 
+    
+    #REM Run the command to mount the Windows Shared folder-path to a local folder "/mnt/sftpbu" 
+    #REM This will map the local folder "/mnt/sftpbu" to the external shared folder location "\\10.8.9.35\ftpbu" 
+    $sudo mount -t cifs //10.8.9.35/ftpbu /mnt/sftpbu -o username=script,password=****,domain=INFOIMAGE,rw,file_mode=0777,dir_mode=0777
+    
+    #REM - To unmount/release the local folder having external mapping
+    $sudo umount /mnt/sftpbu
+    
+    #REM To list the mounted folders
+    $sudo df -H
+    
+
+Given below diagram shows file/directory listing for the target folder
+location "\\\10.8.9.35\ftpbu"
+
+  
+  
+
+  
+
+## 2\. OracleDB Changes
+
+  
+  
+
+#### [A]. Alter Table: INCOMING_FILE
+
+  1. Alter table INCOMING_FILE, to add columns TRANSACTION_ID and TRANSACTION_GROUP_ID fileds.
+  2. It will keep transaction for each file processed/transferred to the target location..
+  3. This transaction-id can be tracked with the email sent to the user by referring the above table.  
+
+    
+        ALTER TABLE INCOMING_FILE
+     ADD (
+           TRANSACTION_ID           VARCHAR2(40)  
+           TRANSACTION_GROUP_ID     VARCHAR2(30)  
+         );
+    
+
+  4. Create a Sequence to populate the ID field value of above Table.  
+
+    
+        CREATE SEQUENCE  INCOMING_FILE_SEQ  MINVALUE 1 MAXVALUE 999999999999999999999999999 INCREMENT BY 1 START WITH 1 CACHE 20 NOORDER  NOCYCLE ;
+    
+
+  5. Create a Trigger to assign/populate the ID field value for INCOMING_FILE.ID  
+
+    
+        create or replace trigger T_INCOMING_FILE 
+    BEFORE INSERT ON INCOMING_FILE
+    FOR EACH ROW
+    
+    DECLARE
+     err_num NUMBER;
+     err_msg VARCHAR2(100);
+    BEGIN
+     SELECT incoming_file_seq.NEXTVAL into :NEW.ID from dual ;
+     EXCEPTION
+        WHEN OTHERS THEN
+             -- throw application error
+             err_num := SQLCODE;
+             err_msg := SUBSTR(SQLERRM, 1, 100);
+             RAISE_APPLICATION_ERROR( 100, 'Insert into incoming_file failed ' ||err_num || err_msg );
+    END;
+    
+
+  
+  
+
+#### [B]. Alter Table: SCANNER_TEMP
+
+  1. Alter table SCANNER_TEMP, to add "transaction_id" filed .
+  2. Mule process will create & assign the transaction-id for each file processed/transferred to the target location..
+  3. The transaction-id - unique key assigned during transfer operation to track the transaction status.  
+
+    
+        ALTER TABLE SCANNER_TEMP
+     ADD TRANSACTION_ID           VARCHAR2(40);
+    
+
+  
+  
+
+#### [C]. Create a Table: SCANNER_TEMP_MULE
+
+  1. Create a table SCANNER_TEMP_MULE, which will keep transferred file-list for 24-hrs in order to avoid duplicate file transfer.
+  2. Another Mule process running @12:01am (mid-night) will be clearing-up this DB Table. The trigger attached to the table will archive/insert into SCANNER_TEMP_MULE --> SCANNER_TEMP_MULE_HISTORY Table.  
+
+    
+        CREATE TABLE SCANNER_TEMP_MULE (    
+       FILE_NAME  VARCHAR2(255), 
+       START_TIME DATE, 
+       TRANSACTION_ID VARCHAR2(40)
+    )
+    
+
+  
+  
+
+#### [D]. Create a Table: SCANNER_TEMP_MULE_HISTORY
+
+  1. Create a table SCANNER_TEMP_MULE_HISTORY, which will keep historical records for the table SCANNER_TEMP_MULE.
+  2. The trigger attached to the SCANNER_TEMP_MULE table will populate this table (SCANNER_TEMP_MULE --> SCANNER_TEMP_MULE_HISTORY).  
+
+    
+        REM ** Create a new Table SCANNER_TEMP_MULE_HISTORY similar to the existing table SCANNER_TEMP_MULE
+    CREATE TABLE SCANNER_TEMP_HISTORY (    
+      FILE_NAME  VARCHAR2(255), 
+      START_TIME DATE, 
+      TRANSACTION_ID VARCHAR2(40)
+    )
+    
+
+  3. Create a Trigger to populate records into SCANNER_TEMP_HISTORY table, when DELETE operation fired on the SCANNER_TEMP Table.  
+
+    
+        create or replace trigger "T_SCANNER_TEMP_MULE_DEL" 
+    BEFORE DELETE ON SCANNER_TEMP_MULE
+       FOR EACH ROW
+    
+    DECLARE
+     err_num NUMBER;
+     err_msg VARCHAR2(100);
+    BEGIN
+          INSERT INTO SCANNER_TEMP_MULE_HISTORY
+         (FILE_NAME, TRANSACTION_ID, START_TIME)
+          VALUES
+         (:OLD.FILE_NAME, :OLD.TRANSACTION_ID, :OLD.START_TIME);   
+       EXCEPTION
+        WHEN OTHERS THEN
+              -- throw application error
+              err_num := SQLCODE;
+              err_msg := SUBSTR(SQLERRM, 1, 100);
+              RAISE_APPLICATION_ERROR( -20013, 'Insert into SCANNER_TEMP_MULE_HISTORY failed! ' ||err_num || err_msg );
+    END;   
+    
+
+  
+  
+
+#### [E]. Create a Table: SFTPSCANNER_MAILER
+
+  1. Create a table SFTPSCANNER_MAILER, which will keep a copy of mails generated/sent to the internal/external users.
+  2. It will keep copies of both types of mails (received files for confirmation emails and missing files for Warning emails).
+  3. Another Mule Cron process will be polling this DB Table in order to send the SMTP email and update the table records status IS_MAIL_SENT = 'Y'
+  4. In case of resending or stopping the emails to send, IS_MAIL_SENT flag can be set as Yes ('Y').  
+
+    
+        CREATE TABLE SFTPSCANNER_MAILER (
+        ID NUMBER(10) Primary Key, 
+        SENDER_ID VARCHAR2(255), 
+        SUBJECT VARCHAR2(255), 
+        TO_LIST VARCHAR2(1024 ), 
+        CC_LIST VARCHAR2(1024), 
+        BCC_LIST VARCHAR2(255), 
+        BODY_TEXT VARCHAR2(3990), 
+        MAIL_FOOTER VARCHAR2(255), 
+        IS_MAIL_SENT VARCHAR2(1), 
+        TRANSACTION_STATUS VARCHAR2(10), 
+        TRANSACTION_ID VARCHAR2(40), 
+        CREATED_ON DATE, 
+        UPDATED_ON DATE
+    )    
+    
+
+  5. Create a Sequence to populate the ID field value of above Table.  
+
+    
+        CREATE SEQUENCE  SFTPSCANNER_MAILER_seq  MINVALUE 1 MAXVALUE 999999999999999999999999999 INCREMENT BY 1 START WITH 1 CACHE 20 NOORDER  NOCYCLE ;
+    
+
+  6. Create a Trigger to assign/populate the ID field value of above Table.  
+
+    
+        create or replace trigger T_SFTPSCANNER_MAILER
+      BEFORE INSERT 
+          ON SFTPSCANNER_MAILER
+          FOR EACH ROW
+      DECLARE
+          err_num NUMBER;
+          err_msg VARCHAR2(100);
+      BEGIN
+          SELECT SFTPSCANNER_MAILER_seq.NEXTVAL into :NEW.ID from dual ;
+          -- Update create_date field to current system date
+          :new.CREATED_ON := sysdate;
+      EXCEPTION
+          WHEN OTHERS THEN
+          -- throw application error
+          err_num := SQLCODE;
+          err_msg := SUBSTR(SQLERRM, 1, 100);
+          RAISE_APPLICATION_ERROR( 100, 'Insert into SFTPSCANNER_MAILER failed ' ||err_num || err_msg );
+      END;
+    
+
+  
+  
+
+#### [F]. Create a Table: SFTPSCANNER_RUNBOOK
+
+  1. Create a table SFTPSCANNER_RUNBOOK, which will keep a record of each file to be received during next 24-hrs.
+  2. It will populate at 12:01am (mid-night) by the Mule Quartz job by reading the "FILE_SCHEDULE" Table. For daily single file, it will populate one record, for daily multiple files, it will populate n-records
+  3. Another Mule process running @30-min interval will be validating the files received against this DB Table and send (warning) emails for not-received (missing) files.
+  4. It also keeps track of the number of emails to be sent along with the interval (in min).  
+
+    
+        CREATE TABLE sftpscanner_runbook (
+      ID NUMBER PRIMARY KEY,
+      CID varchar2(25) NOT NULL,
+      SCANNER_NAME varchar2(100),
+      FILE_NAME varchar2(255),
+      FILE_TITLE  varchar2(255), 
+      FILE_FREQ  NUMBER, 
+      EXPIRATION_DATE DATE,
+      RUN_DAY DATE,
+      IS_RECEIVED CHAR,
+      ALERT_COUNT  NUMBER,
+      ALERT_INTERVAL NUMBER,
+      RECEIVED_AT DATE,
+      EMAIL_SENT_AT DATE,
+      LAST_UPDATED_ON DATE DEFAULT SYSDATE,
+      CREATED_ON DATE
+    )
+    
+
+  5. Create a Sequence to populate the ID field value of above Table.  
+
+    
+          CREATE SEQUENCE  SFTPSCANNER_RUNBOOK_SEQ  MINVALUE 1 MAXVALUE 999999999999999999999999999 INCREMENT BY 1 START WITH 1 CACHE 10 NOORDER  NOCYCLE ;
+    
+
+  6. Create a Trigger to assign/populate the ID field value during INSERT operation.  
+
+    
+        CREATE OR REPLACE TRIGGER T_SFTPSCANNER_RUNBOOK_INS
+      BEFORE INSERT ON SFTPSCANNER_RUNBOOK
+       FOR EACH ROW
+    DECLARE
+     err_num NUMBER;
+     err_msg VARCHAR2(100);
+    BEGIN
+       SELECT SFTPSCANNER_RUNBOOK_SEQ.NEXTVAL into :NEW.ID from dual;
+       -- Update create_date field to current system date
+       :new.CREATED_ON := SYSDATE;
+       :new.LAST_UPDATED_ON := SYSDATE;
+    
+    EXCEPTION
+        WHEN OTHERS THEN
+          -- throw application error
+          err_num := SQLCODE;
+          err_msg := SUBSTR(SQLERRM, 1, 100);
+          RAISE_APPLICATION_ERROR( -20011, 'Insert into sftpscanner_runbook failed ' ||err_num || err_msg );
+    END;
+    
+
+  7. Create a Trigger to assign/populate the ID field value during UPDATE operation.  
+
+    
+          CREATE OR REPLACE TRIGGER T_SFTPSCANNER_RUNBOOK_UPDT
+    BEFORE  UPDATE ON SFTPSCANNER_RUNBOOK
+       FOR EACH ROW
+    DECLARE
+     err_num NUMBER;
+     err_msg VARCHAR2(100);
+    BEGIN
+    
+    IF UPDATING ('EMAIL_SENT_AT') and :NEW.email_sent_at IS NOT NULL
+     THEN
+           :NEW.alert_count := :old.alert_count + 1;
+         :NEW.last_updated_on := SYSDATE;
+     ELSE
+         :NEW.last_updated_on := SYSDATE;
+     END IF;
+    
+    EXCEPTION
+        WHEN OTHERS THEN
+          -- throw application error
+          err_num := SQLCODE;
+          err_msg := SUBSTR(SQLERRM, 1, 100);
+          RAISE_APPLICATION_ERROR( -20012, 'Update into sftpscanner_runbook failed ' ||err_num || err_msg );
+    END;
+    
+
+* * *
+
+  
+  
+
+## 3\. Sample Email for Missing Files (Warning Message)
+
+* * *
+
+  
+  
+
+## 4\. Sample Email for Incoming Files (Confirmation Message)
+
+a) When File matched with the scheduled file list.
+
+b) When one File matched with the scheduled file list, while another does not.
+
+c) When one File matched with the scheduled file list, while another doesn't.
+Also, there will be multiple emails for SNFB CID (one email per file).
+
+* * *
+
+  
+
+### Attachments
+
+  
+
+

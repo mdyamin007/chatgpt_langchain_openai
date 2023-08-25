@@ -1,0 +1,133 @@
+title: Set up contextual search engine
+body:   
+
+This page describes how to setup contextual search engine for deployment.  
+  
+
+#### Installation of depdencies
+
+The following items needed to be installed prior deployment.
+
+a. Elastic Search engine 2.0  
+b. Kibana -  _elasticsearch admin panel_  
+c. JDK 7/8  
+d. Tomcat 7  
+e. Contextual Search Engine WAR  
+  
+
+##### Installing ELASTICSEARCH and
+KIBANA[](https://i3dev.easyredmine.com/projects/hypercube_meteor-multi-
+tenant/wiki/Set_up_contextual_search_engine#Installing-ELASTICSEARCH-and-
+KIBANA)
+
+Run the following scripts to install elasticsearch and kibana
+
+    
+    
+    elk_install.sh
+    
+
+  
+to uninstall run script
+
+    
+    
+    elk_uninstall.sh
+    
+
+  
+**Changing the config file:**
+
+  
+
+    
+    
+    cd [ELASTICSEARCH_INSTALLATION_DIRECTORY]/config/
+    nano elasticsearch.yml
+    
+
+Change the following properties in the  **elasticsearch.yml**
+
+[cluster.name](http://cluster.name): estmt_[ENV_NAME] ex. estmt_dev,
+estmt_pilot  
+[node.name](http://node.name): [NAME_OF_THE_NODE] ex. NODE_ONE  
+node.master: true/false
+
+path.logs: /tmp
+
+network.host: [HOST_IP_ADDRESS]
+
+http.port = 9200 [accessing from java client]
+
+add the following properties at the end
+
+bootstrap.system_call_filter: false  
+[xpack.ml](http://xpack.ml).enabled: false  
+xpack.security.enabled: false  
+  
+
+# Building and Deploying contextual search
+
+Fetch the project from the following link
+
+<http://12.189.22.102:422/srv/svn/contextualsearch-poc>  
+Go to the project directory and run the following command to build the war
+
+    
+    
+    mvn package 
+    
+
+  
+  
+
+### Deployment
+
+Change the following properties in config.properties and put it into the
+classpath
+
+    
+    
+    user.swagger.api.base.path= http://[HOST_URL]:[HOST_PORT]/contextualsearch/api
+    user.swagger.api.version= 1.1
+    
+    elasticsearch.node.master= [IP_OF_THE_MASTER_NODE]
+    #elasticsearch.node.two= 10.8.9.126
+    elasticsearch.port=9300
+    elasticsearch.cluster.name=[ELASTICSEARCH_CLUSTER_NAME] ex. estmt_dev
+    
+    txt.file.base.path=/mnt/infoftps5/ #[text file base path]
+    index.file.base.path=/mnt/infoftps5/ #[ index file base path]
+    docs.path.for.indexing=[AN_ABSOLUTE_PATH_FOR_TEMP_TEXT_DUMP] #ex. /home/shuvo/dsi_projects/infoImageWiki/ContextualSearch/mtroms1_text_dump/ 
+    docs.path.for.searching=[AN_ABSOLUTE_PATH_FOR_TEMP_DATA]  #ex./home/shuvo/dsi_projects/infoImageWiki/ContextualSearch/afp2pdf/
+    test.result.path=[AN_ABSOLUTE_PATH_TO_A_DIRECTORY] ex. /tmp/contextualsearch/
+    highlighted.pdf.path=[AN_ABSOLUTE_PATH] ex. /tmp/contextualsearch/highlighted/
+    bulk.index.fragment.size=30
+    
+    info.service.base.path= https://devapi.infoimageinc.com/infoservice/api
+    
+    contextual.search.env=_dev #[_dev, _pilot, _prod]
+    
+    #activeMQ properties
+    
+    distribute.corePoolSize=10
+    distribute.maxPoolSize=15
+    distribute.queueCapacity=25
+    
+    consumer.concurrency.cnt=5
+    activemq.url=tcp://[ACTIVEMQ_HOST_IP]:[ACTIVEMQ_PORT]
+    activemq.queue=contextual-search-queue
+    
+
+  
+
+Put the contextual search war into the tomcat webapps directory and start the
+tomcat server
+
+### Attachments
+
+250250
+
+  
+
+

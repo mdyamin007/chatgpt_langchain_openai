@@ -1,0 +1,305 @@
+title: Targeting Rule Specifications
+body: ## Purpose/Objective Summary
+
+  1. Populating new-rule ui from client settings json and discussion on the json structure
+  2. Rule types
+  3. Mongo collection structure for storing target rules
+
+  
+
+## Populating new-rule UI from client settings json
+
+Following is a sample client settings json.
+
+{  
+    "targetingRule": {  
+        "tabs": [  
+            "Standard",  
+            "Segments and Formulas"  
+        ],  
+        "fields": {  
+            "cifNumber": {  
+                "fieldLabel": "Account Number",  
+                "type": "number",  
+                "parentTab": "Standard"  
+            },  
+            "age": {  
+                "fieldLabel": "Age",  
+                "type": "number",  
+                "parentTab": "Standard"  
+            },  
+            "city": {  
+                "fieldLabel": "City",  
+                "type": "string",  
+                "inputType": "text",  
+                "parentTab": "Standard"  
+            },  
+            "state": {  
+                "fieldLabel": "State",  
+                "type": "string",  
+                "inputType": "text",  
+                "parentTab": "Standard"  
+            },  
+            "zip": {  
+                "fieldLabel": "Zip Code",  
+                "type": "number",  
+                "parentTab": "Standard"  
+            },  
+            "gender": {  
+                "fieldLabel": "Gender",  
+                "type": "string",  
+                "inputType": "dropdown",  
+                "values": [  
+                    "M",  
+                    "F",  
+                    "NA"  
+                ],  
+                "parentTab": "Standard"  
+            },  
+            "currBranch": {  
+                "fieldLabel": "Branch Code",  
+                "type": "number",  
+                "parentTab": "Standard"  
+            },  
+            "segment": {  
+                "fieldLabel": "Segments",  
+                "type": "segment",  
+                "parentTab": "Segments and Formulas"  
+            },  
+            "formula": {  
+                "fieldLabel": "Formulas",  
+                "type": "formula",  
+                "parentTab": "Segments and Formulas"  
+            }  
+        }  
+    }  
+}
+
+  
+Under 'targetingRule' there are two elements  
+1\. tabs  
+2\. fields  
+'tabs' contains names of tab elements. Under 'fields' every rules parentTab is
+related to it and indicates under which tab this field will be shown. For
+example in the following image Account Number is under Standard tab.  
+  
+For each rules under fields key,  
+\- Property names (e.g. acctNumber) under 'fields' has to be unique cause this
+key will be stored in collection and will be used to retrieve later. Also for
+rule type 'number', this property will be used as column name.  
+\- 'fieldLabel' will be used as title of the rule.  
+\- 'type' represents the ruleType  
+\- 'values' will be used to populate dropdown values which is not needed for
+rule type 'number'  
+\- 'delimiter' wiil be used only for ruleType 'fileData'. Delimiter value be
+used to parse into the file data.
+
+  
+
+  
+
+## Rule types
+
+Based on the ruleType from client settings json the fields in the UI will be
+different. So far following are the possible ruleTypes.  
+ **1\. number**
+
+> 1 operand 1 operator  
+> View : one dropdown containing operators (>,<,>=,<=,=) and one textfield for
+> number  
+> Description : For number type the property name under fields will be
+> considered as column name. The operators are populated from RULE_CONDITIONS
+> from constants file.
+
+ **2\. range**   **(Pending)**  
+limit between two numbers  
+View : two textfields  
+Description :  
+ **3\. string**
+
+> given attribute (city, membership etc) is equals to selected value  
+> View : one dropdown  
+> Description : For string type the property name under fields will be
+> considered as column name. 'values' array will contain values of the
+> dropdown. (operator used '=')
+
+ **4\. offerEvent**
+
+> Active offer, respond type (Accepted, Ignored, Clicked etc)  
+> View : two dropdowns  
+> Description : For offerEvent type the UI will include one dropdown
+> containing all active offers and another dropdown with values of 'values'
+> array
+
+ **5\. fileData**
+
+> Selecting from dropdown the data type (Account Number, Zip code etc) and a
+> file containing data delimited by client specified delimiter  
+> View : one dropdown, one file input field  
+> Description : The dropdown will contain all column names (acctNumber,
+> acctType etc).
+
+ **6\. Segments**
+
+> Selecting from dropdown with all available segments  
+> View : one dropdown  
+> Description : Audience segment can be saved on a specified period of time on
+> different action on an offer or campaign. The goal is to reuse this set of
+> audiences directly for future offers.
+
+ **7\. Formulas**
+
+> Selecting from dropdown with all available formulas  
+> View : one dropdown  
+> Description : Formulas can be saved on different actions on multiple offer
+> or campaign. The goal is to reuse this set of audiences directly for future
+> offers.
+
+  
+
+## Mongo collection structure for storing target rules
+
+Following is a sample json from targetingRule mongo collection
+
+{  
+    "_id": "j48uhJJTjw9xtm7EP",  
+    "name": "SF-Gold60",  
+    "cid": "root",  
+    "appID": "offer",  
+    "description": "Gold Members of San Fransisco who are Aged more than 60",  
+    "ruleGroup": [  
+        [  
+            {  
+                "field_key": "age",  
+                "attribute": "number",  
+                "ruleType": "Standard",  
+                "operand": "60",  
+                "operator": ">"  
+            },  
+            {  
+                "field_key": "membershipLevel",  
+                "attribute": "string",  
+                "ruleType": "Standard",  
+                "operand": "Gold",  
+                "operator": "="  
+            }  
+        ],  
+        [  
+            {  
+                "field_key": "clickedOffer",  
+                "attribute": "offerEvent",  
+                "ruleType": "Events",  
+                "offerId": "bC3cqYqDyJDbAecYR",  
+                "operand": "Clicked",  
+                "operator": "="  
+            },  
+            {  
+                "field_key": "acctList",  
+                "attribute": "fileData",  
+                "ruleType": "Standard",  
+                "columnName": "acctNumber",  
+                "operand": "101,102,103,104,105",  
+                "operator": "in"  
+            },  
+            {  
+                "field_key": "formula",  
+                "attribute": "formula",  
+                "ruleType": "Segments and Formulas",  
+                "operand": "9913e35c8e6eb535fb52fb1c",  
+                "operator": "="  
+            },  
+            {  
+                "field_key": "segment",  
+                "attribute": "segment",  
+                "ruleType": "Segments and Formulas",  
+                "operand": "5913e35c8ee3G535fb52fbXc",  
+                "operator": "="  
+            }  
+        ]  
+    ],  
+    "createdBy": "admin",  
+    "createdDate": {  
+        "$date": "2016-11-03T08:59:39.338Z"  
+    },  
+    "modifiedDate": {  
+        "$date": "2016-11-03T09:01:14.062Z"  
+    },  
+    "status": "DRAFT"  
+}
+
+    
+    
+      
+    
+
+  
+Each rule group is the first object under 'ruleGroup'. Each rule group array
+of object may contain multiple rule objects.  
+Here in a rule object,  
+\- field_key reflects property name under 'fields' from client setting json.  
+\- attribute represents ruleType from client setting json.  
+\- ruleType represents the tabName from client setting json.  
+\- offerId is used only for attribute offerEvent and stores id of selected
+offer  
+\- columnName is used only for fileData and stores column name (acctNumber,
+acctType etc) it represents index of selected value of values for ruleTupe
+fileData  
+\- operand stores the values  
+\- operator stores the conditionValue
+
+  
+  
+
+  
+
+## Campaign collection structure to store target rules
+
+{  
+    "_id": "FF9brSbcXGtHvtCq4",  
+    "name": "Campaign001",  
+    "cid": "root",  
+    "appID": "offer",  
+    "acceptance": "",  
+    "inquiries": "",  
+    "launchDate": "",  
+    "expirationDate": {  
+        "$date": "2016-11-30T17:59:59.000Z"  
+    },  
+    "active": false,  
+    "offer": [],  
+    "targetingRuleIdList": [  
+        "j48uhJJTjw9xtm7EP",  
+        "XF9rqSbcdytXvtCq7"  
+    ],  
+    "createdBy": "admin",  
+    "createdDate": {  
+        "$date": "2016-11-07T22:15:07.275Z"  
+    },  
+    "modifiedDate": {  
+        "$date": "2016-11-07T22:18:18.140Z"  
+    },  
+    "startDate": {  
+        "$date": "2016-11-07T18:00:00.000Z"  
+    },  
+    "associations": [],  
+    "isTemplate": false,  
+    "campaignWorkFlowHtml": ""  
+}
+
+    
+    
+      
+      
+    In the collection 'targetingRuleIdList' stores an array of id of rules that was attached to this campaign.
+
+###  Attachments
+
+  
+
+  
+
+  
+
+  
+
+

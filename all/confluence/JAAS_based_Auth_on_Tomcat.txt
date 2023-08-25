@@ -1,0 +1,208 @@
+title: JAAS based Auth on Tomcat
+body: ## update the tomcat web.xml file to contain the security constraints
+
+    
+    
+        <!-- Security Constraints for JAAS -->
+        <security-constraint>
+            <web-resource-collection>
+                <web-resource-name>Users</web-resource-name>
+                <url-pattern>/api/v1/document/idcu/*</url-pattern>
+                <url-pattern>/api/v1/authcheck/*</url-pattern>
+            </web-resource-collection>
+            <auth-constraint>
+                <role-name>idcu</role-name>
+            </auth-constraint>
+        </security-constraint>
+    
+        <security-constraint>
+            <web-resource-collection>
+                <web-resource-name>Internal Users</web-resource-name>
+                <url-pattern>/*</url-pattern>
+            </web-resource-collection>
+            <auth-constraint>
+                <role-name>infoimage</role-name>
+            </auth-constraint>
+        </security-constraint>
+    
+        <security-role>
+            <role-name>idcu</role-name>
+        </security-role>
+        <security-role>
+            <role-name>infoimage</role-name>
+        </security-role>
+    
+        <login-config>
+            <auth-method>BASIC</auth-method>
+            <realm-name>ServicesLogin</realm-name>
+        </login-config>
+    
+    
+
+This is where information about the authorization of specific URLs and the
+specific roles that are allowed to access are defined  
+  
+
+## The JAAS Login Module class file that has all the authentication specific
+details.
+
+  1. Compile the classes from this SVN repo to form i3jaas.jar
+    * `svn+<ssh://pd-tools.infoimage.com/srv/svn/i3jaas>`
+  2. Deploy the compiled i3jaas.jar over to the standard lib folder of tomcat installation. e.g. `/usr/local/tomcat/apache-tomcat-7.0.56-jaas/lib/`
+  3. (Pending) use the corresponding jenkins job to compile and deploy automatically for corresponding environment
+
+  
+
+## Specify Authentication Realm on tomcat
+
+  1. Locate the `<Realm>` block in tomcat's `server.xml`
+  2. Update with following settings  
+
+    
+              <!-- Use the LockOutRealm to prevent attempts to guess user passwords
+               via a brute-force attack -->
+          <Realm className="org.apache.catalina.realm.LockOutRealm">
+            <!-- This Realm uses the UserDatabase configured in the global JNDI
+                 resources under the key "UserDatabase".  Any edits
+                 that are performed against this UserDatabase are immediately
+                 available for use by the Realm.  -->
+            <Realm className="org.apache.catalina.realm.UserDatabaseRealm" 
+                   resourceName="UserDatabase"/>
+            <Realm className="org.apache.catalina.realm.JAASRealm" 
+                   appName="ServicesLogin" 
+                   userClassNames="com.infoimage.jaas.UserPrincipal" 
+                   roleClassNames="com.infoimage.jaas.RolePrincipal"/>
+          </Realm>
+
+  3. The `UserDatabaseRealm` is kept for tomcat-manager to login/deploy
+  4. The `JAASRealm` is used for the validation. Attribute values of `userClassNames` and `roleClassNames` are mandatory
+
+  
+
+### Update tomcat's `context.xml` with the JAASRealm
+
+    
+    
+      
+    
+    
+    
+          <Realm className="org.apache.catalina.realm.JAASRealm" 
+               appName="ServicesLogin" 
+               userClassNames="com.infoimage.jaas.UserPrincipal" 
+               roleClassNames="com.infoimage.jaas.RolePrincipal" />
+      
+    
+    
+      
+    
+
+  
+
+## Placement of jaas.config
+
+  1. Place corresponding jaas.config file to let JAAS pick up the customer authentication logic implemented inside the i3jaas.jar
+  2. Login configuration information such as the LoginModule  
+
+    
+        ServicesLogin {
+        com.infoimage.jaas.ServicesLoginModule required debug=true;
+    };
+    
+
+  3. The application ServicesLogin only has one configured LoginModule, ServicesLoginModule. Therefore, an attempt by ServicesLogin to authenticate a subject (user or service) will be successful if and only if the ServicesLoginModule succeeds. The flag `'required'` is defined due to the below control behavior.
+    1. The Flag value controls the overall behavior as authentication proceeds down the stack. The following represents a description of the valid values for Flag and their respective semantics:
+
+1) Required - The LoginModule is required to succeed.  
+If it succeeds or fails, authentication still continues  
+to proceed down the LoginModule list.
+
+        
+                2) Requisite    - The LoginModule is required to succeed.  
+                              If it succeeds, authentication continues down the  
+                              LoginModule list.  If it fails,  
+                              control immediately returns to the application  
+                              (authentication does not proceed down the  
+                              LoginModule list).
+        
+                3) Sufficient   - The LoginModule is not required to  
+                              succeed.  If it does succeed, control immediately  
+                              returns to the application (authentication does not  
+                              proceed down the LoginModule list).  
+                              If it fails, authentication continues down the  
+                              LoginModule list.
+        
+                4) Optional     - The LoginModule is not required to  
+                              succeed.  If it succeeds or fails,  
+                              authentication still continues to proceed down the  
+                              LoginModule list.
+
+  
+
+## Configure tomcat to start with settings in `jaas.config`
+
+  1. Update bin/setenv.sh in tomcat installation with the above file  
+ ~~# Ensure the following line is included in the CATALINA_OPTS~~  
+ ~~export CATALINA_OPTS=
+"-Djava.security.auth.login.config=$CATALINA_HOME/conf/jaas.config"~~  
+
+    
+         JAVA_OPTS=$JAVA_OPTS "-Djava.security.auth.login.config=$CATALINA_BASE/conf/jaas.config" 
+
+  
+
+## Make sure the cipher keys are present in the infoservice app-config
+properties file
+
+  1. In the app-config SVN:
+  2. Ensure the client specific key is specified. Example:  
+
+    
+        idcu.1.salt=some_secret_value
+    idcu.1.cipherConst=some_4_digit_integer
+    idcu.1.tokenTtl=number_of_seconds_for_token_expiration
+    
+
+  
+
+## Ensure tomcat is using the custom app-config files
+
+  1. Locate `conf/catalina.properties` file
+  2. Search for `common.loader` key
+  3. Add value below if not already  
+
+    
+        /usr/local/tomcat/app-configs/infoservice/ 
+
+  
+
+## Update JAVA_HOME security policy to allow unlimited encryption key length
+
+  1. Download the extension from here: <http://www.oracle.com/technetwork/java/javase/downloads/jce-7-download-432124.html>
+  2. find out what's the JAVA_HOME of the installed system. e.g. `env |grep JAVA_HOME`
+  3. go to the `jre/lib/security` folder of the JAVA_HOME e.g. `/usr/local/java/jdk1.8.0/jre/lib/security`
+  4. Backup the existing policy files  
+
+    
+        mkdir backup
+    cp local_policy.jar backup
+    cp US_export_policy.jar backup
+    
+
+  5. Overwrite these two files from the downloaded package
+
+  
+
+## Debug
+
+If having trouble getting the JAAS to work, enable the fine-grain debug logs
+of JAAS to check what problem it is
+
+  1. find the conf/logging.properties file
+  2. add following line to enable detailed logging  
+
+    
+        # enable realm logging
+    org.apache.catalina.realm.level = FINE
+
+

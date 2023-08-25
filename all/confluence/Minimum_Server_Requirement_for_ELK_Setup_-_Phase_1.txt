@@ -1,0 +1,44 @@
+title: Minimum Server Requirement for ELK Setup - Phase 1
+body: In phase 1, we'll only ship the proxy server logs to Elasticsearch.
+
+## Storage Requirement
+
+  * After analyzing the log size of the existing proxy servers, It's found that,
+
+    * On Production,
+
+      * For 8 internal proxies, the approximate log size for 60 days is ~ 5 GB.
+
+      * For 28 external proxies, the approximate log size for 60 days is ~20 GB.
+
+    * On Pilot,
+
+      * For 2 internal proxies, the approximate log size for 60 days is ~ 2 GB.
+
+      * For 10 external proxies, the approximate log size for 60 days is ~ 10 GB.
+
+  * For Production:
+
+    * CPU 8 core, RAM: 32 GB, Swap 64 GB
+
+  * For Pilot:
+
+    * CPU 4 core, RAM: 16 GB, Swap 32 GB
+
+  * We ideally want 1.8 TB of storage per VM as it is not crossing the minimal requirement of VMware, but we can tolerate a minimum of 500GB, otherwise, we cannot move forward with this project.
+
+  * The 500 GB minimum comes from the aggregate of 60-day proxy logs, approx 475 GB for other overheads like ELK installation overhead, Indexing overhead, Metricbeat logs, APM logs, etc.
+
+  * According to our plan, we'll move to phase 2 after phase 1. Before going to production phase 2, we need to set up APM in some of the applications and Metricbeat in some of the pilot servers and ship the logs to Elasticsearch. The reason behind the minimum requirement of 500 GB is to use the leftover storage for at least 30 days of Metricbeat and APM logs. Extra storage is asked in advance so that we don't need to back and forth for asking the additional storage as it may kill some time.
+
+## Approach
+
+  * In phase 1, we can start with a VM with less storage for storing 60 days of logs. We will create LVM using that storage.
+
+  * After we get the larger storage, we can add the storage with the existing storage using LVM.
+
+## Special Requirement
+
+  * During OS setup, separate partitions are needed for OS and Elasticsearch, so after getting the VM we can create LVM before installing Elasticsearch pointing to that LVM.
+
+

@@ -1,0 +1,42 @@
+Pre-ingestion
+New bank/credit union have old files
+Old bank/credit have files that are not in Infoimage system
+Customers want e-stmt service for these datasets.
+Customers sends their archived data
+Individual pdf and index file
+Big pdf and index file
+Target is to create 1 e-stmt index from these files
+The main challenge is to parse data from the bank/credit dataset.
+Script:
+Typically a perl script to parse the data and create the ISD index
+Data file search:
+Data file is searched by bash script. Data file is taken as an argument of the perl script.
+File Date:
+Data file contains a date. The date is used as the end date for ISD index and zip file names.
+If the data file does not contain a date then the date is taken from any record of the ISD index file (e.g last record)
+Decrypt and unzip:
+File might be encrypted and zipped. File structure is unique for each customer.
+Parse and create ISD index:
+Check if the incoming index file's header is correct.
+Fields are parsed from the incoming index.
+Pdf is renamed or created as ___.pdf
+Check existing applications to find format.
+Doc Format (new format):
+Header:
+'JobType|PresentmentType|DocumentCode|FileName|ZipFileName|DocumentBeginDate|DocumentEndDate|ImageCount|AccountNumber|AccountType|AccountSuffix|AccountName|SSN|MessageID|InsertID|RegionCode|CrippleFlag|PostcardFlag|Afp2webPM|Afp2webIni'
+Date Format: YYYYMMDD
+AFP Format (old format):
+Fields:
+'PdfName|AcctNo|AcctBeginDate|AcctEndDate|ImageCount|AccountName|<>|AcctType'
+Date Format: MMDDYYYY
+ISD Index name:
+${jid}_${enddate_mmddyyyy}_${segment}_${mm1}_${mm2}_${cid}.txt
+ISD Zip name:
+${prefix}_${cycle_no}_${segment}_${mm1}_${mm2}[_<seq>.zip]
+Zip and Post:
+For Zipping use afp_zip_mover_threads.pl
+For Posting use I3 process: I3.socket.pl
+Copy file to ISD:
+Copy index file to $d_dir/isd_input/I3/process-files/$cid/ directory
+Move Incoming pgp file to download directory
+See the documentation file:Preingestion Documentation

@@ -1,0 +1,97 @@
+title: Infotrac: Unlink User / UnEnroll User / Delete User
+body: ### **Current Behavior:**
+
+There is no working unlink/unenroll/delete user button for infotrac.
+
+As per requirements  unlink, unenroll and delete user implementation has been
+completed.
+
+###  **Infoservice:**
+
+3 endpoints has been added so far.
+
+ **Endpoints:**
+
+  1. /api/v1/user/{cid}/unlinkUser
+  2. /api/v1/user/{cid}/unEnrollUser
+  3. /api/v1/user/{cid}/deleteUser
+
+###  **InfoConfig flag:**
+
+  1. userAndAccountCreation -> enableUserUnenroll (boolean) - unenroll
+  2. userAndAccountCreation -> enableUserUnlink (boolean) - new unlink
+  3. userAndAccountCreation -> enableUserRemove (boolean) - delete
+  4. notificationPreference -> deleteAllNpForUnEnrollUser (boolean) - flag to delete all np record unenroll user if flag is true
+  5. userAndAccountCreation -> secondaryUserRemoval (boolean) - (flag -> whether it will affect the secondary users if flag is false)
+
+### Use case:
+
+##  **Unlink User:**
+
+  1. This is to be used for immediate update to the UFAs.
+
+ **Database changes: (InfoService)**
+
+  1. delete NP record from **NOTIFICATION_PREFERENCE** table (if byUfa or byUsr)
+  2. delete nickname record from **USR_ACCT_TYPE_MAPPING** table
+  3. delete ufa record from **USR_FIN_ACCOUNT**
+  4. do these steps for secondary users too, if linked via **USR_TREE** table with primary users (SSO date and P flag) (depends on infoConfig flag -> **secondaryUserRemoval = false** )
+  5. make delivery preference to paper if there is no other enrolled users associated with that account (by inserting into **PAPERLESS** table)
+
+ **InfoConfig flag:**
+
+  1. Access flag: userAndAccountCreation -> enableUserUnlink (boolean)
+  2. secondary users effect flag: userAndAccountCreation -> secondaryUserRemoval (boolean)
+
+##  **UnEnroll User:**
+
+  1. Unenroll the user so that the user will have to go through enrollment again when they log in
+
+ **Database changes: (InfoService)**
+
+  1. set **SESS_LOGIN_ID=!usrId, SESS_PW_EXPIRATION = null, SESS_PW_HINT_PHRASE = null, SESS_PW_HINT_ANS = null, SSO = null, DSO = null** from **USR_SESSION** table
+  2.  **USR_SESSION ->** **SSO = null**
+  3. delete all NP records. (depend on infoConfig flag -> **deleteAllNpForUnEnrollUser = true** )
+  4. make delivery preference to paper if there is no other enrolled users associated with that account (by inserting into  **PAPERLESS**  table)
+
+ **InfoConfig flag:**
+
+  1. InfoConfig flag: userAndAccountCreation -> enableUserUnenroll (boolean)
+  2. For delete all np -> notificationPreference -> deleteAllNpForUnEnrollUser (type -> boolean)
+
+##  **delete User:**
+
+  1. This feature will delete the entire user completely.
+
+ **Database changes: (InfoService)**
+
+  1. delete record from _**USR_FIN_ACCOUNT**_ by usrId
+  2. delete record from _**USR_SESSION**_  by usrId
+  3. delete record from _**NOTIFICATION_PREFERENCE**_  by usrId
+  4. delete record from _**NOTIFICATION_HISTORY**_  by usrId
+  5. delete record from _**RESTRICTION**_  by usrId
+  6. delete record from _**USR_ACCT_TYPE_MAPPING**_  by usrId
+  7. delete record from _**USR_MAPPING**_  by usrId
+  8. do these steps for secondary users too, if linked via **USR_TREE** table with primary users (SSO date and P flag) (depends on infoConfig flag -> **secondaryUserRemoval = false** )
+  9. make delivery preference to paper if there is no other enrolled users associated with that account (by inserting into  **PAPERLESS**  table)
+
+ **InfoConfig flag:**
+
+  1. userAndAccountCreation -> enableUserRemove (boolean) - delete
+
+###  **Infotrac:**
+
+Introduced 3 new buttons for unlink, unenroll and delete user.
+
+In infotrac  role flag added for those buttons. (userManagement -> role ->
+account management)
+
+  1. Unlink User: for admin ( **Access User Unlink (R)** ) and for client user ( **Access User Unlink** )
+  2. Unenroll User: for admin ( **Access User UnEnroll (R)** ) and for client user ( **Access User UnEnroll** )
+  3. Delete User: for admin ( **Access User Remove (R)** ) and for client user ( **Access User Remove** )
+
+  
+
+  
+
+

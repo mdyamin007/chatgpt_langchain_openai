@@ -1,0 +1,50 @@
+title: PUI - Doc Processing Cripple Flag
+description: Export EWBB AFP processing cripple flag logic to Document processing. This logic works similar to etax replacement, only that the replacement happens based on the cripple_flag in the estmt_doc table.
+
+
+author: JIRAUSER11102
+comment: [~Tin.Chak]the code changes are on AfpRegistrar.java and DataHandler.java under document, DataErrorCodes.java in processing-ui trunk and EStatementDocDBAccess.java in i3-core trunk. Please, take a look.
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~jahid.hasan] I looked at EStatementDocDBAccess.java. When there's a cripple flag, it skips inserting the other values. I think we mentioned that we should try to reuse the same logic, but it shouldn't leave out other values. Please fix it and once it goes through your QA, put it on pilot. Thanks.
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: Lin will fix the issue and roll it out to prod. We have an urgent project for EWBB that we need to move them to doc processing within a week.
+
+
+author: azad
+comment: To QA,
+
+Cripple flag support is added to Document process. Now, cripple flag value will be passed from index file (column name:*CrippleFlag*). Valid cripple flag values are 'C' and 'R'.
+
+Cripple flag implementation business is following:
+ # If cripple flag value is 'C': ESTMT_DOC table's CRIPPLE_FLAG column will store 'C' as value.
+ # If cripple flag value is 'R': Existing ESTMT_DOC table record will be deleted. And a new record will get inserted with cripple flag value 'R'.
+
+Test client:_*EWBB*_
+
+Test index file to use:_*ms1_20221011_1_20221012_0254_ewbb.txt*_
+
+Please run a document process job for EWBB with the index file and check the database for cripple flag value.
+
+[~Tin.Chak] [~rifat.mahmud]fyi
+
+Thanks
+Azhar
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+1. Successfully posted index file  [^ms1_20221011_1_20221012_0254_ewbb.txt] on PUI Stage -> Job ID:[198135]
+2. Checked ESTMT_DOC:
+ !screenshot-1.png|thumbnail! 
+3. Successfully posted new index file  [^ms1_20221011_1_20221012_0999_ewbb.txt] -> Job ID:[198137]
+bq. Set ripple flag value is 'R' for ACCT_NUMBER = '13003934'
+4. Checked ESTMT_DOC:
+ !screenshot-2.png|thumbnail! 
+
+Test result - PASSED.
+
+

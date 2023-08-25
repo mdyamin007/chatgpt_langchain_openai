@@ -1,0 +1,66 @@
+title: PROV SSO
+body: PROV sso is unique and cannot be done through the SSO Test Page. Below is the
+instruction on how to perform the SSO with PROV.
+
+## Step-by-step guide
+
+  1. [Setup local Tomcat](https://confluence.infoimageinc.com/display/JP/Local+Tomcat+Server+Installation+Instructions).
+  2. Before building the war files for PROV, revert hblogin.jsp to the revision BEFORE the TLS 1.2 update (locally, DO NOT COMMIT).
+
+PROV SSO requires connection to an external URL to perform the handshake. We
+mock this by hosting a dummy site on ca-pui-dv-01. However, because of the TLS
+1.2 update, it is required that connection to this external URL be done via
+SSL. The connection to ca-pui-dv-01 is not secure, and thus the SSO cannot be
+performed. This is why it is necessary to revert the file back to before using
+TLS 1.2.
+
+  
+
+  3. Build PROV war files and set up PROV in the local tomcat-default.
+  4. Add local host entry for the PROV DNS, e.g. "127.0.0.1 provlocal.infoimageinc.com"
+  5. Startup Tomcat.
+  6. Create a local HTML file with the code below.
+
+xmlPROV SSOtrue
+
+  
+
+  7. Open the HTML file.
+  8. The preloaded information can be used to trigger a successful SSO.
+
+Chrome may complain about "Insecure Access". Try Firefox if that happens.
+
+  
+
+## Using Information other than the Preloaded Data
+
+  1. The SessionId is a value that comes from the VENDOR_USER_ID column in the USR_SESSION table. Find one in the database, or insert a value into the column for a PROV usr_session.
+  2. Edit on ca-pui-dv-01.infoimageinc.com: /usr/local/tomcat/tomcat-processing/i3webapps/ROOT/sso/prov/provtest.html. The value inside the file should be the same as the SessionId to be used in the SSO request.
+  3. The email value can be changed to any other valid email value.
+  4. The account list is a comma-delimited value. This can be changed to all the accounts that the to-be-tested user has access to.
+
+## Related articles
+
+Related articles appear here based on the labels you select. Click to edit the
+macro and add or change labels.
+
+false5SETUPfalsemodifiedtruepagelabel in ("isd-how-to-article","prov","sso")
+and type = "page" and space = currentSpace()prov sso isd-how-to-article
+
+  
+
+true
+
+  
+
+Related issues|  
+  
+---|---  
+  
+  
+
+  
+
+  
+
+

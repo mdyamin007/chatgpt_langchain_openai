@@ -1,0 +1,194 @@
+title: DEMO - Paperless Status and DSO Bug 
+description: Please research the following errors using DSO demo site.
+
+Test user:
+login: dsotest
+pass: Dsotest123!
+
+When  you go to Profile, you will see that the delivery preference are not properly selected. My guess is that somehow, the paperless configs is not properly loaded. If you click "Reset", you will get an error about an undefined object for forEach. The accounts should already have Electronic delivery preference for "default" and "enotice" if you check the database. 
+
+If you click on Electronic for both default and enotice, and then click Submit. The user will be unenrolled. To my knowledge, they should only be unenrolled when you switch to Paper? This might also have something to do with the undefined object. 
+
+Furthermore, if you do get unenrolled and returned to the DSO login page. Seems like you cannot login through the page. I have to refresh / reload the URL in order for the DSO login page to work like normal again. 
+
+----
+Once you get unenrolled, you will need to make this update in the default pilot database:
+update usr_session set dso = '09-MAR-20' where usr_id = '29119437';
+That will allow you to login again. 
+
+
+author: sadman anik
+comment: @isd
+
+Hi [~tai.trinh],
+
+We have debugged the hypercube pilot code with combination dso login with selective paperless option. It seems like we didn't have any client with this combination before. So it was not implemented for this case to get selective paperless configuration from api. That's why it always get *paperlessStatus*object instead of*selectivePaperless* list. So an error occurs when it tries to use foreach on*paperlessStatus* object.To support this we have to implement this feature.
+
+For un-enrollment of user form paper to electronic, issue is happening for same combination. For this i am looking into it.
+
+
+
+Thanks
+
+
+author: sadman anik
+comment: @isd
+
+Hi [~tai.trinh],
+
+I have reviewed the hypercube code for un-enrollment process and find out that, for paperlessConfiguration *"bySelective"*the code was previously implemented in these way.
+
+If "*unenrollOnDeliveryPreferenceChange"*flag is "*true"* and"*paperlessConfiguration*" flag is "*bySelective"*then it unenrolled the user when goes to *electronics* and press submit button. But when it goes to *paper*and press submit button then for *bySelective* it gets "newDeliveryPref" variable asundefine which prevents it from un-enrollment logic and doesn't unenrolled the user in this case.
+
+There are no hypercube clients who has this combination of "*unenrollOnDeliveryPreferenceChange"*as*"true"* and *"paperlessConfiguration"*as *"bySelective"*. We do not support*unenrollOnDeliveryPreferenceChange*for*bySelective* as there are many complicated issue for this case.
+
+But i found a way around to solve the profile page problem which was occurring an {color:#FF0000}undefined object forEach{color} error. Do you want us to implement that?
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Tai Trinh made the following comment in ISD-1953
+
+@dsi
+
+Hi [~sadman anik],
+
+Please elaborate on the undefined object forEach error and the fix you plan to implement.
+
+
+
+author: sadman anik
+comment: @isd
+
+Hi [~tai.trinh],
+
+
+
+For DSO login,
+
+While login it insert or update in*UserAccountsAPIMockData*mongo**collection**with single object "*paperlessStatus*" instead of
+
+"*selectivePaperless*" list for paperless configuration *bySelective*. So, in frontend when it tries to use forEach loop on single object then an error occur.
+
+
+
+This is happening because it do not call an API when login using dso which is define at*userAccountsApi*method.But after reload the page this method being called from *startup.js* file which then insert or update in*UserAccountsAPIMockData* with*selectivePaperless*list. So it doesn't get any error after reload.
+
+
+
+This can be fix for dso login by calling that method in *dsoMethod.js*file which call that API.
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Tai Trinh made the following comment in ISD-1953
+
+@dsi
+
+[~sadman anik],
+
+Okay, thank you for the explanation. Please go ahead and make the update to trunk.
+
+Thanks,
+Tai
+
+
+
+author: sadman anik
+comment: Hi [~tai.trinh],
+
+@isd
+
+It's on my Jira to do list, for profile pagedelivery preference are not properly selected issue.
+
+Is this a request from any client? Because there is so many things to consider.
+
+For example, the one you already mention about un-elrollment on delivery preference change.
+
+
+author: sadman anik
+comment: @isd
+
+Hi [~tai.trinh],
+
+I have fixed that profile page delivery preference issue for dso paperless configuration "bySelective" and tested for DEMO, DACB and HEBC. It's now working fine. Do you want me to commit the code in trunk and deployed?
+
+
+
+Thanks.
+
+Sadman
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Tai Trinh made the following comment in ISD-1953
+
+@dsi
+
+Hi [~sadman anik],
+
+This is only for the profile page issue right? I believe we have agreed that we won't do anything with the*bySelective* and*unenrollOnDeliveryPreferenceChange*. I just want to confirm. Otherwise, yes, please commit to trunk and deploy to Pilot.
+
+Thanks,
+Tai
+
+
+
+author: sadman anik
+comment: @isd
+
+Hi [~tai.trinh],
+
+Yes. That was only for dso profile page issue whose paperless config is "*bySelective*". I committed the code and deployed in the pilot. Please take a look.
+
+Thanks,
+
+Sadman
+
+
+author: sadman anik
+comment: @isd
+
+Hi [~tai.trinh],
+
+Let me know if the fix works.
+
+Thanks,
+
+Sadman
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Tai Trinh made the following comment in ISD-1953
+
+@dsi
+
+Hi [~sadman anik],
+
+Looks good. Is the only change the one to dsoMethods.js? The one made at revision 22302.
+
+I will move it to the production tag once you confirm.
+
+Thanks,
+Tai
+
+
+
+author: sadman anik
+comment: @isd
+
+Hi [~tai.trinh],
+Yes. The only changes is in dsoMethods.js file at revision22302.
+
+
+
+Thanks,
+
+Sadman
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Tai Trinh made the following comment in ISD-1953
+
+@dsi
+
+I have deployed the change to the Production tag. Closing out my ticket.
+

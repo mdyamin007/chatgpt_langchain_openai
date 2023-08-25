@@ -1,0 +1,957 @@
+title: Member Profile Service (eSafetyBox) - Design document
+body:   
+
+# 1\. Introduction
+
+  
+  
+
+## 1.1. Purpose/Objective Summary
+
+    
+    
+    << Required: Fill in brief description of what this project/feature/enhancement is about >>
+
+  * The  **eSafetyBox**  and eStatement applications have identified integration points to use the Mule-ESB REST Service for the Member profile/account management purpose.
+  * The  **eSafetyBox**  application is in a process of enhancement & build in order to use MuleESB for the enrollment & account management service, which will provide state management like active, in-active, closed etc.
+  * The  **eSafetyBox**  application stores account management & state settings into the Oracle database. Mule will use the DB tables to provide CRUS operations using the REST services.
+
+tip. The MuleESB will publish the REST APIs in order to support the user
+account management for the  **eSafetyBox**  application.
+
+ **eSafetyBox**  application could also use opt-in/out-out feature for given
+below scenarios:
+
+  * Change Member profile/account status (ACTIVE -->CLOSED or CLOSED -->ACTIVE) through the Admin-site profile page
+
+  
+
+* * *
+
+Given below section describes in-scope and out-of-scope requirements for the
+Mule-ESB - Member Profile account management service implementation.  
+  
+
+  
+
+### 1.2.1. In-Scope
+
+  *  **Feature-1:**  To register/enroll the member as an initial registration with "INACTIVE" status. It can be changed to ACTIVE status upon approval. This feature will be provided by the eSafetyBox application.
+    * Change/set eStatement paperless status through the Admin-site profile page (paper -> e or e -> paper).
+  *  **Feature-2:**  Member Profile/Account Management: eSafetyBox Enrollment/Account state management
+
+  
+  
+
+### 1.2.2. Out-of-Scope
+
+  *  **Feature-1:**  Mule-ESB will not store user-id/password credentials for the eSafetyBox web-application.
+  *  **Feature-2:**  Mule-ESB will not perform member authentication (i.e. using user-id/password) for the eSafetyBox application.
+    * The eSafetyBox web-application changes/development work is beyond the scope of this document. The eSafetyBox application team will be responsible for the same. It may require some changes at eSafetyBox-end in order to invoke & consume the Mule-ESB REST service.
+    * The Mule-ESB service will be published for the internal/external client in order to provide the services.
+  *  **Feature-3:**  LDAP integration for AI users
+    * The LDAP integration with eSafetyBox AI and member-site is beyond the scope of Mule-ESB implementation.
+
+* * *
+
+  
+  
+
+## 1.3. Assumptions
+
+    
+    
+    << (If Applicable)* List out assumptions made during this design.    
+        IMPORTANT: All assumptions need to be confirmed with corresponding stake-holder during design review.    
+        Assumptions would likely become Dependencies upon confirmation/design-review >>
+
+Given below section describes key assumptions for the Mule-ESB Member Profile
+implementation.
+
+  1.  **Assumption-1:**  It is assumed that eSafetyBox web-application will make a call to the Mule-ESB service to retrieve the member client's current State and email-id.
+  2.  **Assumption-2:**  eSafetyBox web-application will make the REST/JSON call to Mule-ESB - to update the member client's status for the eSafetyBox application.
+  3.  **Assumption-3:**  eSafetyBox web-application will manage web-sessions for the logged-in user along with authentication & authorization process.
+  4.  **Assumption-4:**  eSafetyBox web-application will send the request along with client/token name to the Mule-ESB Service. In case of incomplete request information, MuleESB service will return error with message "Incomplete Request"/"Invalid Request" message. Web-app may correct and resend the request for processing.
+    * As a part of the REST web-service call, Mule-ESB service will return the response with status-code, which can be used by the web-application for success/failure message display purpose.
+    * Mule-ESB application will not store the user-profile details like user-id, name, SSN, address, email-id into the local MuleESB DB.
+    * Mule-ESB application may store transactional data for certain period of time (30-days) and keep taking backup or purge historical data as per the Backup & Archival data policy.
+
+  
+  
+
+## 1.4. Dependencies
+
+    
+    
+    << (If Applicable) List out all dependency component/service/library needed for this design >>
+
+Given below section describes dependencies related to the Member Profile
+service implementation.
+
+  *  **Dependency-1:**   **eSafetyBox**  applications will be available during the testing window in order to complete the end-to-end integration testing in a timely fashion. In case of an delay for dev/testing by internal/external team, it may impact the project schedule & Go-Live!
+
+* * *
+
+  
+  
+
+# 2\. Requirements
+
+## 2.1. Business Requirements & Use Cases
+
+    
+    
+    << (Required) List out all needs/requirement from business/end-user perspective.    
+          Assign an ID for each requirement/use-case item for easier reference in future >>
+
+ID| Title| Details| ScreenMock| Importance  
+---|---|---|---|---  
+BRQ-01| Member Profile Account Management - create an account|
+**Requirement:**  Build & develop REST APIs to support the  **eSafetyBox**
+features for the user account management.  
+ **New User Enrollment**  
+\- When a new eSafetyBox account is created, an email is generated with a
+unique, secure link to a page where they are able to choose a username, select
+and verify their password, and select and answer their security question.  
+\- This functionality takes the place of the Admin user selecting these data
+points on the customer's behalf. Once the user has completed these tasks
+successfully, the enrollment flow continues as is with the box_welcome.jsp
+page (if eSafetyBox enabled).  
+\- The fields necessary for new creation are Account#, First Name, Last Name,
+last 4 of SSN and email address  
+ **Use Case:**  Make API call to retrieve the status or update the status for
+the given user-id.| <attach file>| P0-Show Stopper  
+BRQ-02| To update the member profile account by updating profile status|  
+ **Requirement:**  To update the user-account status for the eSafetyBox
+application for the given status (ACTIVE/SUSPEND/CLOSURE/CLOSED).  
+eSafetyBox application will submit a request to Mule-ESB in order to update
+the account status.  
+ **Use Case:**  User login to eSafetyBox Admin-site by using user-id/password
+successfully and goes to the profile change page to make the user account
+profile update. In this scenarios, it will invoke the MuleESB REST service to
+make change to the Fiserv Specturm DB.| <attach file>| P0:Show Stopper  
+BRQ-03| To retrieve the email-id of member client|  
+ **Requirement:**  To retrieve the email-id of the member client in order to
+display into the web-page.  
+eSafetyBox web-application will make a request to Mule-ESB EST service, which
+will make JDBC call to retrieve the details. MuleESB will return response to
+web-application, which will perform next steps like display data.  
+ **Use Case:**  User login to eSafetyBox web-application or member-site by
+using user-id/password successfully. The web-application profile change page
+will display the current settings for the eStatement (paperless) delivery
+along with email-id.  
+Web-application will make a call to the Mule-ESB REST/JSON service to retrieve
+the email-id.| <attach file>| P0:Show Stopper  
+  
+|  
+|  
+|  
+|  
+  
+  
+  
+  
+
+### 2.1.1. State Diagram
+
+Given below diagram describes various states of the user account status in the
+**eSafetyBox**  application.
+
+Figure-1: eSafetyBox State Diagram
+
+  * Initially, when user registered in the  **eSafetyBox**  application, it will be assigned as  **'INACTIVE'**  status.
+  * After going thru the approval process, user account will moved into the  **'ACTIVE'**  status with all the feature enabled.
+  * The user account can be  _suspended_  or  _closed_  after the opt-out request. These request will fall under the  **'Suspended'**  &  **'Closure'**  state respectively.
+
+* * *
+
+  
+  
+
+### 2.1.2. Integration Landscape
+
+Given below diagram describes integration touch-points for the eSafetyBox
+applications.
+
+Figure-2: eSafetyBox Integration Landscape
+
+* * *
+
+  
+  
+
+## 2.2. Functional Requirements & Use Cases
+
+    
+    
+    << Required: List out all needs/requirement from engineering/functional perspective.   
+         Associate them with an ID for easier reference >>
+
+ID| Title| Details| Bus. Req. Ref.| Importance  
+---|---|---|---|---  
+FRQ-01| Member Account Management - To create the user-account| Enter first
+name, last name, last 4-digit of SSN, email and account number. It will have
+option to create new account for estmt only, eSafetyBox only, or both? Click
+CREATE button to trigger an email to the above email address with security
+link to eStmt member site enrollment page. Click CANCEL button to the previous
+web page. Same as described in above table (Section 2.1).| <attach file>|
+P0:Show Stopper  
+FRQ-02| To update the user-account status by updating the member-profile| To
+build & develop REST APIs to support the eSafetyBox features for the user
+account management. Same as described in above table (Section 2.1).| <attach
+file>| P0:Show Stopper  
+FRQ-03| To retrieve the email-id of member account| Same as described in above
+table (Section 2.1).| <attach file>| P0:Show Stopper  
+  
+  
+  
+
+## 2.3. Performance & Scalability Requirements (SLA)
+
+    
+    
+    << Required: List out all needs/requirement from Performance perspective. Associate them with an ID for easier reference >>
+
+ID| Title| Details| Importance  
+---|---|---|---  
+PRQ-01| To create the user account for the member client.|  **Requirement:**
+To create the user account by eSafetyBox application.  
+ **Use Case:**  As described in above table (Section 2.1)| P0:Show Stopper  
+PRQ-02| To update the user account status|  
+ **Requirement:**  To update the user account status for the eSafetyBox
+application against a user-id and update the same info into the DB. The
+service should return a response within xxxms.  
+ **Use Case:**  As described in above table (Section 2.1)| P0:Show Stopper  
+PRQ-03| To retrieve the email-id of member client|  
+ **Requirement:**  when a member enrolls through the Member Site, web-
+application would like the mail field to be pre-populated with the email
+address stored in the DB. The service should return a response within xxxms.  
+ **Use Case:**  As described in above table (Section 2.1)| P0:Show Stopper  
+PRQ-04| TBD : SLA Matrix - Need to discuss & finalized with the team.| TBD
+...{UPDATE}| TBD ...  
+  
+  
+  
+
+## 2.4. QA/Test Requirements
+
+    
+    
+    << Required: List out all needs/requirement from QA/Testing perspective. Associate them with an ID for easier reference >>
+
+ID| Title| Details| Importance  
+---|---|---|---  
+TRQ-01| To create the user account|  
+ **Requirement:**  To create the member profile user account with status as
+INACITVE. eSafetyBox web-application will submit a request to Mule-ESB
+service, which will create an account.  
+ **Use Case:**  The eSafetyBox web-application will provide first name, last
+name, last 4-digit of SSN, email and account number. It will have option to
+create new account for estmt only, eSafetyBox only, or both? Click CREATE
+button to trigger an email to the above email address with security link to
+eStmt member site enrollment page. Click CANCEL button to the previous web
+page. Same as described in above table (Section 2.1). In this scenarios,
+Client application will make a call to the Mule-ESB REST/JSON service, which
+will in turn update the status in the database.| P0:Show Stopper  
+TRQ-02| To update the user account status|  
+ **Requirement:**  To update the member profile/user account status.
+eSafetyBox web-application will submit a request to Mule-ESB service, which
+will make a JDBC call to update the status in DB.  
+ **Use Case:**  User login to eSafetyBox web-application by using user-
+id/password successfully and goes to the profile change page to make the
+statement delivery as 'eStatement' (paper -> e or e -> paper). In this
+scenarios, Client application will make a call to the Mule-ESB REST/JSON
+service, which will in turn update the status in the database.| P0:Show
+Stopper  
+TRQ-03| To retrieve the email-id of member client|  
+ **Requirement:**  To retrieve the  **email-id**  of the member client in
+order to display into the web-page.  
+eSafetyBox web-application will make a request to Mule-ESB EST service, which
+will make JDBC call to retrieve the details. MuleESB will return response to
+web-application, which will perform next steps like display data.  
+ **Use Case:**  User login to eSafetyBox web-application or member-site by
+using user-id/password successfully. The web-application profile change page
+will display the current settings for the eStatement (paperless) delivery
+along with email-id.  
+It will make a call to the Mule-ESB REST/JSON service to retrieve/update the
+email-id.| P0:Show Stopper  
+  
+* * *
+
+  
+  
+
+# 3\. Design
+
+  
+  
+
+## 3.1. Architecture & Workflow Diagram
+
+    
+    
+    (Required for medium/large feature)* Draft a diagram to show how various functional component work with each other,   
+     also how data flow from one component to another.
+
+Member Profile Service - High-level Implementation Details
+
+{UPDATE}
+
+Figure-3: Member Profile REST Service with DB CRUD operations  
+  
+
+  
+
+## 3.2. Data Model changes (ER diagram & ddl.sql)
+
+    
+    
+    (Required if involve LARGE schema change)* Draft a ER diagram of the existing AND new data-model design.    
+      Highlight the entity/relationship that is added/changed.
+
+This is a new development work, therefore, it will not bring any changes to
+the existing application code or database table schema. This new REST API
+service will require a DB transaction table to store the transactional data
+for a defined period of time. This DB table will be archived and truncated as
+per the data backup & archival policy. This table will help us to see the
+transactional status with error/success code received from the REST API calls.
+It will be maintained under the MuleESB MySQL database.  
+There are eSafetyBox related DB tables defined under the Oracle DB schema e.g.
+"BOX_CURRENT_STATUS", "BOX_HISTORY_STATUS" etc. These tables will be used for
+the read/update purpose.
+
+    
+    
+    (Required if involve schema change)* Include a ddl.sql file that could be executed against old schema in   
+     order to create/change table/columns, as well as handling the corresponding data-migration if applicable.
+
+  
+  
+
+### 3.2.1. DB Table: instantenrollment_transaction.sql
+
+    
+    
+    --
+    -- Same Table (`instantenrollment_transaction`) as used for SSCU/SAFE - InstantEnrollment Service 
+    -- 
+    
+
+  
+  
+
+### 3.2.2. Oraclce DB Tables
+
+    
+    
+    CREATE TABLE "BOX_CURRENT_STATUS" 
+    (
+      "USR_ID" NUMBER(19,0) NOT NULL, 
+      "FLAG" VARCHAR2(8 BYTE) NOT NULL, 
+      "QUESTION" VARCHAR2(256 BYTE) NOT NULL, 
+      "ANSWER" VARCHAR2(64 BYTE) NOT NULL, 
+      "PASSWORD" VARCHAR2(40 BYTE) NOT NULL, 
+      "STATUS" VARCHAR2(10 BYTE) NOT NULL, 
+      "TIER" NUMBER, 
+      "BSTATUS_ID" NUMBER NOT NULL, 
+      "CREATED_TIME" DATE DEFAULT sysdate, 
+      "ALERT" VARCHAR2(1 BYTE) DEFAULT 'N', 
+      "MODIFIED_BY" NUMBER(19,0), 
+      "CID" VARCHAR2(20 BYTE), 
+     CONSTRAINT "BOX_CURRENT_STATUS_PK" PRIMARY KEY ("BSTATUS_ID")
+    )
+    
+    CREATE TABLE "BOX_HISTORY_STATUS" 
+    (
+      "USR_ID" NUMBER(19,0) NOT NULL , 
+      "FLAG" VARCHAR2(8 BYTE) NOT NULL , 
+      "QUESTION" VARCHAR2(256 BYTE) NOT NULL , 
+      "ANSWER" VARCHAR2(64 BYTE) NOT NULL , 
+      "PASSWORD" VARCHAR2(40 BYTE) NOT NULL , 
+      "STATUS" VARCHAR2(10 BYTE) NOT NULL , 
+      "TIER" NUMBER, 
+      "TIME" TIMESTAMP (6), 
+      "BHISTORY_STATUS_ID" NUMBER NOT NULL , 
+      "MODIFIED_BY" NUMBER(19,0), 
+     PRIMARY KEY ("BHISTORY_STATUS_ID") 
+    )
+    
+
+**Java Entity Class**
+
+  * BoxCurrentStatus
+
+    
+    
+    @Entity
+    @Table(name = "BOX_CURRENT_STATUS")
+    @XmlRootElement
+    public class BoxCurrentStatus implements Serializable {
+        private static final long serialVersionUID = 120L;
+        @Basic(optional = false)
+        @Column(name = "USR_ID")
+        private BigInteger usrId;
+        @Basic(optional = false)
+        @Column(name = "FLAG")
+        private String flag;
+        @Basic(optional = false)
+        @Column(name = "QUESTION")
+        private String question;
+        @Basic(optional = false)
+        @Column(name = "ANSWER")
+        private String answer;
+        @Basic(optional = false)
+        @Column(name = "PASSWORD")
+        private String password;
+        @Basic(optional = false)
+        @Column(name = "STATUS")
+        private String status;
+        @Column(name = "TIER")
+        private BigInteger tier;
+        @Id
+        @Basic(optional = false)
+        @Column(name = "BSTATUS_ID")
+        private BigDecimal bstatusId;
+        @Column(name = "CREATED_TIME")
+        @Temporal(TemporalType.TIMESTAMP)
+        private Date createdTime;
+        @Column(name = "ALERT")
+        private String alert;
+        @Column(name = "MODIFIED_BY")
+        private BigInteger modifiedBy;
+        @Column(name = "CID")
+        private String cid;
+    
+        public BoxCurrentStatus() {
+        }
+    
+        public BoxCurrentStatus(BigDecimal bstatusId) {
+            this.bstatusId = bstatusId;
+        }
+        // getters and setters
+    }
+    
+
+  * BoxHistoryStatus
+
+    
+    
+    @Entity
+    @Table(name = "BOX_HISTORY_STATUS")
+    @XmlRootElement
+    public class BoxHistoryStatus implements Serializable {
+        private static final long serialVersionUID = 123L;
+        @Basic(optional = false)
+        @Column(name = "USR_ID")
+        private BigInteger usrId;
+        @Basic(optional = false)
+        @Column(name = "FLAG")
+        private String flag;
+        @Basic(optional = false)
+        @Column(name = "QUESTION")
+        private String question;
+        @Basic(optional = false)
+        @Column(name = "ANSWER")
+        private String answer;
+        @Basic(optional = false)
+        @Column(name = "PASSWORD")
+        private String password;
+        @Basic(optional = false)
+        @Column(name = "STATUS")
+        private String status;
+        @Column(name = "TIER")
+        private BigInteger tier;
+        @Column(name = "TIME")
+        @Temporal(TemporalType.TIMESTAMP)
+        private Date time;
+    
+        @Id
+        @Basic(optional = false)
+        @Column(name = "BHISTORY_STATUS_ID")
+        private BigDecimal bhistoryStatusId;
+        @Column(name = "MODIFIED_BY")
+        private BigInteger modifiedBy;
+    
+        public BoxHistoryStatus() {
+        }
+    
+        public BoxHistoryStatus(BigDecimal bhistoryStatusId) {
+            this.bhistoryStatusId = bhistoryStatusId;
+        }
+        // getters and setters
+    
+    }
+    
+    
+
+  
+  
+
+## 3.3. Application component functional details
+
+    
+    
+    Required if involve big architectural change)* List out the key class/method created/changed for this project.    
+    Highlight the changed portion (e.g. additional param for a method)
+    
+    
+    Provide an overview of what changes if not already illustrated in the Architecture diagram above
+
+### 3.3.1. Overview:
+
+As described in the integration landscape diagram, it will require a REST
+Interface API - to get/update the member profile.
+
+  * As s design guiding principle, Mule ESB will use REST/JSON (JAX-RS & Jersey standards) in order to fulfill business requirements for various clients.
+  * Mule ESB - REST/JSON APIs will use Secure Token method (similar to OAuth2) in order to identify the client for member profile service.
+  * eSafetyBox web-application may need some changes at their end in order to invoke/call the MuleESB REST Service for member profile update functionality.
+  * The Interface API - signature (input/output parameters) are described in next section.
+
+  
+  
+
+  
+
+### 3.3.2. Mule ESB Server URL for REST APIs
+
+The REST API will be invoked with GET or POST method. GET is used to retrieve
+the Member Profile and POST for update/create operations. PUT and DELETE are
+not supported by the service. The URIs used are:
+
+Sl No.| Resource URI| HTTP Method| Operation  
+---|---|---|---  
+1.| <https://localhost:8090/oauth2/token>| POST| Request to get the session
+token value to invoke the member service REST API. This REST API call will be
+mapped to the OAuth2 module client token/authorize call.  
+2.| <https://localhost:8093/api/v1/members>| POST| Request to update member
+profile with the supplied status value. This REST URL call will be mapped with
+the updateMemberProfile() method. It will post the request data in JSON string
+format: {"key-1" : "value-1", "key-2" : "value-2" ...}  
+  
+ **Note:**  localhost will be replaced by the fully-qualified domain name
+(FQDN) of the Server.
+
+> Server Name/URL will be like {host}:{port}
+>
+
+>> where {host}: host name or IP address of the repository and port is the
+port number of the shared HTTP server {port}: port number that the MULE ESB
+Server is running on. For example Port: 80 or 8080. {api}: context of the
+application. Typically this is the name of the WAR file. {v1}: A fixed value
+in the URL for REST API version 1.0. For next enhancement release, it may
+become v2, v3 etc. {members}: Context name mapped to the REST resource, a
+fixed value in the URL.
+
+>
+> and input strings to the GET URL in the format of key/value pairs:
+> {key1}/{value1}/key2}/{value2}/ and so on.
+
+The response content type for the Customer Profile API are application/json.  
+See below examples for a description of the request parameters.
+
+    
+    
+    HTTP POST 
+    <pre><code>
+    POST https://localhost:8090/api/v1/
+    members HTTP/1.1
+    Host: localhost:8093
+    Content-Type: application/json
+    Authorization: Bearer X2ZEU0doR2RmVVVwdjlxSWR4ODNIV2JZR25jaHVGQ25ybk9KTUh3Tk94aUZTc3ItTEtnZVJNRi1NYkszek5kWU03eHBDUXJtZjVWU3IxUGxhTXhBSVFIbXJiODRDOEE
+    
+    { "accountNumber" : "12345", 
+      "clientId" : "eSafetyBox", 
+      "customAttribs" :{ 
+            "emailId" : "eaiadmin@infoimageinc.com",
+            "flagInd1" : "S", 
+            "flagLevel1" : "M", 
+            "flagType1" : "M", 
+            "suffix" : "", 
+            "firstName" : "John",
+            "surname" : "Doe",  
+            "ssnName" : "1234" 
+         }, 
+      "enrollment" : "E" 
+    }
+    </code>
+
+  
+
+ **Response:**
+
+The enrollment object wraps-up member-client information items like
+accountNumber, email-id, set or clear status indicator etc.
+
+    
+    
+    HTTP/1.1 200 OK
+    X-Powered-By: Servlet/2.5
+    Server: localhost:8090
+    Content-Type: application/json
+    Content-Length: 1234
+    Date: Thu, 04 Jun 2009 02:51:59 GMT
+    
+    {
+      "message": "SUCCESSFUL",
+      "data": "{\"StatusCode\": \"00\", \"StatusDesc\": \"SUCCESSFUL\", \"transactionId\" : \"1C342C103F01F3EDE2E3F0C0\" }",
+      "httpStatus": 200
+    }
+    
+
+Response codes and exceptions: Refer Appendix-A
+
+* * *
+
+  
+  
+
+### 3.3.3. REST/JSON APIs
+
+a) API#1 - getMemberProfile() - To list/retrieve user account details for the
+member - accountId
+
+Request input to be supplied by eSafetyBox web-application to the Mule-ESB
+Service (REST/JSON API):  
+The Mule ESB will maintain the REST resources to manipulate database table
+using HTTP requests using method (GET, POST, PUT, PATCH, DELETE).  
+RESTful API will handle CRUD actions using HTTP methods mapped as follows:
+
+Resource| POST (create)| GET (read)| PUT (update)| DEL (delete)| Options| HEAD  
+---|---|---|---|---|---|---  
+/members| Create a new record for the given account-number with INACTIVE
+Status.| List all records| NA| NA| NA| NA  
+/members/{id}| NA| Retrieves specific user member-profile for given Id# {123}|
+NA| NA| NA| NA  
+  
+ **NOTE:**  All URIs are followed by api/v1 context.
+
+ **Phase-2**
+
+Resource| POST (create)| GET (read)| PUT (update)| DEL (delete)| Options| HEAD  
+---|---|---|---|---|---|---  
+/members/{id}| NA| NA| NA| To delete a record for given ID| NA| NA  
+/members/{id}| NA| NA| To update a record with supplied details| NA| NA| NA  
+/members/search/status/{status}| NA| Retrieves specific user member-profile
+for given Status - INACTIVE/ACTIVE/CLOSED| NA| NA| NA| NA  
+/members/search/account/{account}| NA| Retrieves specific user member-profile
+for given Account#| NA| NA| NA| NA  
+  
+a) API#1 - updateMemberProfile() - To update member profile
+
+Request input to be supplied by eSafetyBox web-application to the Mule-ESB
+Service (REST/JSON API):  
+  
+
+  
+
+####  **i) Request Data**
+
+Name| Data Type| Data Length| Business Description| Required  
+---|---|---|---|---  
+accountNumber| Alphanumeric| 10| Member User's Account (unique identifier),
+which will be used for the identification & update purpose.| Y  
+firstName| char| 255| To set/clear flags at the Member Level| Y  
+surname| char| 255| User's Last Name/Surname (255-char)| Y  
+ssnNumber| char| 4| User's SSN Number - Last 4-digits of SSN| Y  
+flagSetOrClear| char| 1| User's preference - FlagSetOrClear : Enter S to set
+the flag or C to clear the flag. It's corresponding to paper or paperless,
+'1'= enrolled into eSatement, '0' = no enrolled.| Y  
+emailId| char| 255| Email-id| Y  
+  
+ **Sample Request**
+
+    
+    
+    JSON Payload by the web-client
+    ----------------------------------------
+    METHOD= POST
+    Content-Type=application/json
+    ----------------------------------------
+    { 
+      "accountNumber" : "12345",
+      "clientId" : "eSafetyBox",
+      "customAttribs" : { "emailId" : "Niraj.Tripathi@infoimageinc.com",
+          "flagInd1" : "C",
+          "firstName" : "John",
+          "lastName" : "Doe",
+          "flagType1" : "C",
+          "surname" : "VI",
+          "ssnNumber" : "1234" 
+        },
+      "enrollment" : "P" 
+    }
+    ----------------------------------------
+    
+
+**Processing Steps**
+
+  * The request will generate the 20-digit transaction-id and return the response back to the web-application.
+  * The request will ask for  _" client_id"_ and  _" client_secret"_ (similar to OAuth2) in order to validate the access for authorized client.
+  * Mule-ESB will perform the required CRUD operation by calling the JDBC query and capture response into the Mule DB Transaction table along with Transaction-id, which can be used for later reference/validation purpose. Finally, response will be returned to the calling application.
+  * Mule-ESB API call returns response back to the web-application along with the Transaction-id (web-application may ignore the trans-id or store it for future reference, if any required)
+
+  
+  
+
+####  **ii) Response Data**
+
+Name| Data Type| Data Length| Business Description| Required  
+---|---|---|---|---  
+Status Code| Numeric| 3| Status code for the request accepted & processed.
+Refer next row for status description.| Y  
+Status Message| Alphanumeric| 20| Status message having detailed status. For
+example, 'Process successfully'. 'Status down', 'System not-reachable' etc. It
+will return error description, in case of error response or no response by the
+Spectrum WS request.| N  
+  
+Sample Response: Output from Mule-ESB REST/JSON API call:
+
+    
+    
+    {
+      "message": "SUCCESSFUL",
+      "data": "{\"StatusCode\": \"00\", \"StatusDesc\": \"SUCCESSFUL\", \"transactionId\" : \"1C342C103F01F3EDE2E3F0C0\" }",
+      "httpStatus": 200
+    }
+    
+
+tip. Examples:
+
+  * Unique-transaction-Id=  _aac46d12bb74a3f7f3_
+  * client_id=  _AqIEbLHT8_
+  * client-secret=  _FBGRNJru1FQd44AzqT3Zg_
+
+b) API#2 - Getting the Access Token - To retrieve the OAuth2 access_token
+
+Request input by web-application to the Mule-ESB (REST/JSON API call):  
+  
+
+  
+
+####  **iii) Request Data**
+
+Name| Data Type| Data Length| Business Description| Required  
+---|---|---|---|---  
+User Id| Alphanumeric| 50| Member User's login-id, unique identifier which
+will be used for the identification & update purpose.| Y  
+  
+To get the access_token, you'll need to make a POST request to
+https://&lt;server&gt;:&lt;port&gt;/oauth2/token with the following
+parameters:
+
+ **Sample Request**
+
+    
+    
+    $ curl -k -X POST https://localhost:8090/oauth2/token \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -d username=johndoe     \
+        -d password=A3ddj3w     \
+        -d client_id=s6BhdRkqt3 \
+        -d grant_type=password  \
+        -d scope=READ_PROFILE%20WRITE_PROFILE
+    
+
+To create & retrieve a token, you must POST to
+<https://localhost:8090/oauth2/token> with grant_type and scopes values in the
+data hash.
+
+Below POST request is also supported. Alternatively, GET HTTP request can be
+used.
+
+    
+    
+    $ curl -k -X POST https://localhost:8090/oauth2/token \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -d "username=johndoe&password=A3ddj3w&client_id=s6BhdRkqt3&grant_type=password&scope=READ_PROFILE%20WRITE_PROFILE" 
+    
+
+  
+
+If everything goes right and the request is successful, you'll receive a 200
+response containing a JSON body like this
+
+    
+    
+    {"scope":"READ_PROFILE WRITE_PROFILE","expires_in":120000,"token_type":"bearer","access_token":"rpGFxEfUuw4R4de8nIgLQbgyokYHhjWzxZy63xnafutsvz7v3oNLtmfPktz7E2dx6QLqbCbJ7YpA-KUgEKzHXA"}
+    
+
+**Processing Steps**
+
+  * The request will submit username/password and client_id and scope, which will act like unique identifier to login and create OAuth2 session token.
+  * Mule-ESB will use OAuth2 module to register a client and retrieve the session token with defined expiry-period.
+
+Response: Output Response from Mule-ESB REST/JSON API call:  
+  
+
+  
+
+####  **iv) Response Data**
+
+Name| Data Type| Data Length| Business Description| Required  
+---|---|---|---|---  
+Email Id| Alphanumeric| 200| Email-id for the requested member client.| Y  
+Status Code| numeric| 3| Status code for the request accepted & processed.
+Refer next row for status description.| Y  
+Status Message| Alphanumeric| 20| Status message having detailed status. For
+example, 'Process successfully'. 'Status down', 'System not-reachable' etc. It
+will return error description, in case of error response or no response by the
+Spectrum WS request.| N  
+  
+ **Sample Response**
+
+    
+    
+    {"scope":"READ_PROFILE WRITE_PROFILE",
+      "expires_in":120000,
+      "token_type":"bearer",
+      "access_token":"rpGFxEfUuw4R4de8nIgLQbgyokYHhjWzxZy63xnafutsvz7v3oNLtmfPktz7E2dx6QLqbCbJ7YpA-KUgEKzHXA" 
+    }
+    
+
+If everything goes right and the request is successful, you'll receive a 200
+response containing a JSON body like this
+
+    
+    
+    { 
+      "scope":"READ_PROFILE WRITE_PROFILE",
+      "expires_in":120000,
+      "token_type":"bearer",
+      "access_token":"rpGFxEfUuw4R4de8nIgLQbgyokYHhjWzxZy63xnafutsvz7v3oNLtmfPktz7E2dx6QLqbCbJ7YpA-KUgEKzHXA" 
+    }
+    
+
+However, if the response is not successful, you'll receive an error response,
+such as this:
+
+    
+    
+    {
+        "error": "invalid_grant",
+        "error_description": "Invalid user credentials" 
+    }
+    
+
+Using Your Access Token with API:  
+Once you have a valid access_token, you can use it to make requests to API V2.
+All you need to do is set it in the Authorization header like this:
+
+Authorization: Bearer {a valid access token}
+
+    
+    
+    To use the token, pass it in a header named "Authorization" 
+    $ curl -k -X POST https://localhost:8090/api/v1/enrollment \
+         -H "Authorization: Bearer X2ZEU0doR2RmVVVwdjlxSWR4ODNIV2JZR25jaHVGQ25ybk9KTUh3Tk94aUZTc3ItTEtnZVJNRi1NYkszek5kWU03eHBDUXJtZjVWU3IxUGxhTXhBSVFIbXJiODRDOEE=" \
+         -H "Content-Type: application/json" \
+         -d '{ "accountNumber" : "12813", "clientId" : "InfoIMAGE", "customAttribs" : { "emailId" : "","flagInd1" : "C", "flagLevel1" : "M", "flagNum1" : "69",  "flagType1" : "C", "reasonNum1" : "",  "suffix" : "", "surname" : "CH"  }, "enrollment" : "P"}'
+    
+
+# 5\. Summarized Change Log
+
+Date| Who| Changes to Design Doc  
+---|---|---  
+8/26/2013| Niraj T| Initial Draft  
+8/29/2013| Niraj T| incorporated review comments after draft review  
+  
+* * *
+
+  
+  
+
+# 6\. Sign-Off
+
+Group| Date| Who| Comments  
+---|---|---|---  
+Product Manager (Business)|  
+|  
+|  
+  
+Account Service (AS)|  
+|  
+|  
+  
+Dev./Impl. Manager (Technical)|  
+|  
+|  
+  
+Production Control (PC)|  
+|  
+|  
+  
+Data Processing (DP)|  
+|  
+|  
+  
+Accounting/Invoicing|  
+|  
+|  
+  
+  
+  
+  
+
+# 7\. Appendix
+
+  
+  
+
+## 7.1. Appendix A: HTTP Response Codes
+
+This list shows the common HTTP response codes and some brief guidelines on
+how to use them.
+
+Code| Name| Description| Note  
+---|---|---|---  
+200| OK| Request was processed as expected.| Request returns a representation
+of the requested entity. Response to a successful GET, PUT, PATCH or DELETE.
+Can also be used for a POST that doesn't result in a creation.  
+201| Created| Request created an entity.| -This cannot happen on GET or DELETE
+requests. This will happen on POST and may happen on PUT requests.  
+The response should set the Location header to the URI for the created
+resource. - Response to a POST that results in a creation.  
+304| Not Modified| The requested resource has not been modified.| \- The
+client's cached representation is still valid. No body is allowed for these
+responses.  
+400| Bad request| Check the error message and correct the request syntax.| Bad
+Input payload. Check the JSON payload structure or mandatory fields value.  
+401| Unauthorized| \- Authentication failure, check your client_id,
+client_secret in order to meet authentication requirements.| This may happen
+when invalid or empty authentication details are provided.  
+403| Forbidden| \- When authentication succeeded but authenticated user
+doesn't have access to the resource.| Please provide authentication
+credentials like client_id, client_secret.  
+404| Not found| \- When a non-existent resource is requested. No resource was
+found at this location (URI).| Mistake in the host or path of the service URI.  
+405| Method not supported| \- When an HTTP method is being requested that
+isn't allowed for the authenticated user.| In eSatement Customer Profile only
+GET, POST is supported. No DEL, PUT operations support.  
+500| Any server-side error.| 500: Internal Server error.| These codes should
+not be set programmatically and are reserved for unexpected errors.  
+503| Server busy| Server busy and service unavailable. Please retry the
+request.|  
+  
+  
+  
+  
+
+## 7.2. Resources
+
+    
+    
+    << Any external/internal resource or references... >>
+
+ **References:**
+
+<http://develop.infoimage.com/projects/esafetybox/wiki/AIDrop>  
+<http://develop.infoimage.com/projects/integration/wiki/SSCU_-
+_Design_document>
+
+* * *
+
+  
+
+### Attachments
+
+

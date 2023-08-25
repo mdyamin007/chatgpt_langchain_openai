@@ -1,0 +1,729 @@
+title: Automation Documentation
+body: Jirakey,summary,type,created,updated,due,assignee,reporter,priority,status,resolutionfe854d92-75f8-38f7-98ae-265b252a07fbDSI-194
+
+##  **This whole document is created and managed by  ** **.  **
+
+  
+
+ **Setup Project: (On Windows)**
+
+Pre-requisite:
+
+  * Maven and JDK 7/8 should be installed
+
+Steps to setup:
+
+  1. Import project on Intellij
+  2. Select POM file, click OK
+  3. Check ide-build
+  4. Enter JDK path (ex. C:\Program Files\Java\jdk.8.9_0191) and click finish.
+  5. Edit Configuration:
+    1. Enter Main Class
+    2. On working Directory field enter path of the build folder
+    3. Add Run Maven Goal "keyword.driven: package -P ide-build"
+    4. Click Apply
+
+  
+
+Steps to run a script:
+
+Open project.properties file from config folder
+
+  1. Set excelPath= excel/file-name.xlsx (the path of the file to run)
+  2. SheetName=LOGIN (The name of sheet. If multiple then comma "," separated)
+  3. file.path=E:\\\reportfile (The path where report file will be saved after running the script)
+  4. browsers= firefox-portable (The browswe which should be used to run the script)
+  5. Run the project
+
+ ***** The mentioned file (file-name.xlsx) should be closed before running)**
+
+#  **About keyword-driven tool:**
+
+  
+
+##  **1.1 Property file**
+
+To run a test case these following properties should be entered into the
+project.properties file.
+
+  *  **" excelPath=excel/File-Name.xlsx":** The excelPath property is used to get the path of the file in which we have stored the test steps. Here "excelPath" is the property name, "excel" is the folder where the file is saved and "File-Name.xlsx" is the name of the test file.
+  *  **" sheetName=Sheet1,Sheet2,Sheet3":** The sheetName property is used to enter the name of the sheets present inside the test file. For multiple sheets the sheet names should be written by separating them with commas and they should be in the same order as entered in the test file. The sheets can be skipped but the order should be the same. For example, "sheetName=Sheet1,Sheet3" or "sheetName=Sheet2,Sheet3". Here "sheetName" is the property name and Sheet1, Sheet2, Sheet3 are the names of the sheets from the test file.
+  *  **" report.file.path=E:/reportfile/":** Here "report.file.path" is the property name and "E:/reportfile/" is the path of the folder where the report will be generated after the test execution is complete.
+  *  **" allowed.browsers": **This property is used to decide which browser will be used to perform the test. For example, "allowed.browsers=firefox-portable" is used to run the test in firefox browser and "allowed.browsers=chrome" is used to run the test in Chrome browser.
+  *  **" wait.before.each.step": **This property is used to define how long should be the timeout before each step. For example, if "wait.before.each.step=2" is used to run the test, before each step the timeout will be 2 seconds.
+
+##  **1.2 Supported Arguments**  
+
+The following table shows all the supported arguments for the keyword-driven
+application. If any of these arguments are passed while running the
+application, the properties configured in the property file get overridden and
+use the CLI property instead.
+
+ **Params**
+
+|
+
+ **Description**  
+  
+---|---  
+  
+-c
+
+|
+
+Config file path  
+  
+-e
+
+|
+
+Excel file path  
+  
+-s
+
+|
+
+Sheet names (comma separated)  
+  
+-r
+
+|
+
+Report file path  
+  
+-er
+
+|
+
+Expected result (number in percentage)  
+  
+-d
+
+|
+
+Asset directory path  
+  
+##  **2.1 Test File (Excel File)**
+
+The excel sheets are saved in the excel folder of the project. This sheet
+consists of 13 columns. Each column contains the information related to an
+action required to perform a specific step.
+
+The column names and their actions are described below,
+
+  1.  **Step:** This is the 1st column and it is used to store the test case name to identify which test case is being performed in a particular step. These test case names will later help to identify which test case is being performed in which step in the report file to know which test case is passed and which is failed.
+  2.  **Label:** The label column is the 2nd column and it's used to store the label for a specific test case or a set of test cases for a specific part of the test. For example, When a login operation is being performed a set of actions are needed to perform like going to the url, setting the username/id, setting the password and clicking on the login button to complete the login process. On the label column we can enter "Login_Process" to identify that we are performing the login operation in this step. This column is also used to jump from one step to another using the label name which will be described later in this document.
+  3.  **Keyword:** The keyword column is the 3rd column of the sheet and it's used to enter the action that needs to be performed for a specific test step. Different keywords are used for different actions for example, gotourl,settext,click etc. These keywords will be described later in this document.
+  4.  **Registry Key:** This is the 4th column and it's used to store values in variables. The variable names are written in this column. These variables are later accessed using ${Variable_Name}.
+  5.  **Element Identifier:** This is the 5th column of the sheet. It stores the locator of a specific element to locate the element on the webpage. These locators are written in this format, "LocatorType=LocatorValue". Here, the LocatorType is the identification technique like id, xpath etc and LocatorName is the xpath value of an element where the locator value is stored. For example, id=username, xpath=//button[@id=username] etc. In the first example, "id" is the LocatorType and "username" is the Locator Value. Similarly in the second example, "xpath" is the LocatorType and "//button[@id=username]" is the LocatorValue.
+  6.  **assertionType:** This is the 6th column of the sheet. This column is used to assert whether an attribute is present in an element. The locator of the element which we store in the "Element Identifier" column is compared with the attribute name entered in this column to verify whether or not the attribute exists in this element.
+  7.  **Value:** The Value column is the 7th column of the sheet. This column is used to store the value of a variable and an element. As mentioned earlier on the "Registry key" column the name of the variable is stored in the "Registry key" Column and the value for that registry key is stored in this "Value" column. This column is also used to store values for specific keywords using the locator written in the "Element xPath column".
+  8.  **Assertion:** The Assertion column is the 8th column of the sheet. This column is used to verify an element value. The locator of the element which we store in the Element xPath column, that element value is compared with the value stored in this "Assertion" column to verify whether or not the value exists in that element.
+  9.  **assertionAction:**   It is used to write conditions and it's the 9th column of the sheet. Depending on the condition being true/false this column is used to jump from one step to another label/next step. For example, true=Login_Process. Here, the assertion action depends on what we are asserting, if the assertion is true it will jump to where the "Login_Process" label is and if the assertion is false it will move to the next step.
+  10.  **timeout:** Timeout is the 10th column of the sheet and it is used to wait for sometime before going to the next step. For example, entering "5" in this column means waiting for "5 seconds" before going to the next step.
+  11.  **ExpectedResult:** Expected Result column is the 11th column of the sheet. After performing every test case we get a result of Passed/Failed That result is then compared with what we enter in this column. If we enter Passed in this column for a test case that means the result is supposed to be Passed but if the result we got from running that test case is Failed. After the whole test script is run, on the report file we will get "1" added for every failed test case like this on the Total Failed test cases number.
+  12.  **Seed:** It is the 12th column of the sheet.
+  13.  **Comment:** This column is the 13th and the last column of the sheet. It's used to enter comments regarding a specific test case.
+
+##  **2.1 Element Identifier**
+
+Before describing the different kinds of keywords and their uses let's see
+what are the Element Identifiers. So there are many ways to locate an element
+like id, name, link, css, xpath etc. Here is an example of the locator for an
+Email or phone input field with different identifiers,
+
+First of all right click on the element that needs to be located on the
+browser then click on Inspect. After clicking on inspect the element details
+will show as the picture below, In this picture you can see the element we are
+locating has a tag called "input" which can be used to write css or xpath
+identifier and inside the input tag it has name and id which can be used to
+write the id and name identifier. The examples for these identifiers are given
+below, ** **
+
+ **ID :** id=identifierId
+
+ **NAME :** name=identifier
+
+ **CSS :** css=input[type='email']
+
+ **XPATH :** xpath=//input[@type='email']  
+  
+---  
+  
+For the Element identifier "link" here is another example using the create
+account link,
+
+  
+
+ **Link :** link=Create account
+
+  
+
+##  **2.2 Keywords**
+
+####  **addregkey:**
+
+When declaring a variable this keyword is used. For example,
+
+In this example "addregkey" keyword is used to declare it's a Registry Key
+then "URL which was entered in the Registry Key column is the registry key
+name and "<https://www.google.com/>" which was entered in the "Value" column
+is the value of that registry key. The registry key value can be accessed from
+any step using ${Registry_Key_Name}[ex. ${URL}].
+
+####  **gotourl:**
+
+This keyword is used to open an URL on a browser. For example,
+
+Here you can see "gotourl" is a keyword entered in the "Keyword" column and
+${URL} is the registry key entered in the "Value" column that has the url
+"<https://www.google.com/>" stored in it. So, in short this keyword is opening
+the URL in the browser with this keyword.
+
+  
+
+####  **wait:**
+
+Wait keyword is used to add delay before going to the next step. Which means
+if I enter "wait" in the "Keyword" column and "3" in the "timeout" column it
+will wait for three seconds before going to the next step. Here's an example
+for the wait keyword,
+
+As you can see in the image above after performing gotourl step the wait step
+is being performed after that it goes to the next step which is settext. So
+here after performing the gotourl step it will wait for "3 seconds" as given
+in the timeout column then perform the next step.
+
+  
+
+####  **gotolabel:**
+
+This keyword is used to jump from one step to another using the label name.The
+example for this step is given below,
+
+As shown in the above image "gotolabel" keyword should be added in the
+"Keyword" column and in the "Value" column the name of the label where you
+want to jump should be added. After this step is executed the next step will
+start from the label entered in the "Value" column.
+
+  
+
+####  **browserback:**
+
+This keyword is used to go back to the previous page. For this step only the
+keyword "browserback" needs to be entered in the "Keyword" column.
+
+  
+
+####  **click:**
+
+This keyword is used to do the click operation like clicking on a button. The
+example for this keyword is given below,
+
+From the above picture you can see the Search by image button has been
+highlighted. In this example we are clicking on this button. To click on this
+button the "click" keyword should be added on the Keyword column and the
+locator of this element should be added in the Element Identifier column like
+the image below,
+
+After this click step the UI should be like the image below,
+
+####  **rightClick** :
+
+rightClick keyword is used to click on an option from the right-click menus.
+The example for this keyword is given below is given below,
+
+To right click on this right click button as shown on the above image,
+"rightClick" should be entered in the "keyword" column and the locator of this
+element should be entered in the "Element Identifier" column as shown in the
+image below,
+
+After this step using the "click" keyword click operation should be done to
+click on an option from the menu.
+
+####  **select:**
+
+This keyword is used to select an option from a drop-down list or check a
+checkbox or select a radio button. The example for this keyword is shown in
+the images below,
+
+  
+
+The left image above shows the radio button, checkbox, and drop-down list for
+which the "select" keyword can be used. The image on the right side shows how
+to use the "select" keyword using the Element identifier. The locator of the
+element which we want to select should be entered in the "Element Identifier"
+column with the keyword "select" on the "Keyword" column. After this step is
+executed it will select the option we are selecting in this step.
+
+  
+
+####  **unselect:**
+
+This keyword is used to uncheck a checkbox. The example is shown in the image
+below,
+
+Using this "uncheck" keyword the element which was previously checked will be
+unchecked.
+
+  
+
+####  **settext:**
+
+Settext is used to enter a value in an input field like email address, user
+name, password etc. It is also used for uploading files. The examples are
+given below, To enter a value in the search field the example below needs to
+be followed,
+
+As you can see in the image above to perform the settext operation "settext"
+keyword needs to be added in the Keyword column then the locator of the
+element where we are going to enter the value should be in the Element xPath
+column and The value which we are going to search should be in the Value
+column. After this step the UI should look like the image below,
+
+For uploading a file the step showed in the image below should be followed,
+
+As the above image shows the "Choose File" button which is used to upload the
+file should be inspected. Then the locator of this element should be entered
+in the "Element Identifier" column, the keyword settext should be added in the
+"Keyword" column and The path of the file should be added in the "Value"
+column. The path of the file can be written in two ways, First one is entering
+the full path of the file on the "Value" column. Then the second way is
+keeping the file in the asset folder which is inside the build folder of the
+application and then entering the path of the build folder in
+project.properties file like  and entering the path of the file from only the
+asset folder like, File= File_Path [ex. File=asset\test.png]. The image below
+should show the way it should be written both ways in the Excel file. After
+this step the image file should be successfully uploaded.
+
+In the image above both the ways of uploading files with settext keyword have
+been shown.
+
+  
+
+####  **clear:**
+
+This keyword is used to clear the value of an input field. For example using
+"settext" we set a value in the input field but with this "clear" keyword we
+can clear the value of that input field. To do so the "clear" keyword must be
+added in the "Keyword" column and the locator of the element which we want to
+clear should be added in the "Element Identifier" column.
+
+  
+
+####  **gettext:**
+
+This keyword is used to get a value of an element and store it in a registry
+key. The example for this keyword is given below,
+
+
+
+As shown in the above image the "gettext" keyword should be added in the
+"Keyword" column then the registry key name should be added in the "Registry
+Key" column and the element locator should be added in the "Element
+Identifier" column. In the first step the value "_blank" of the attribute
+"target" is stored in the "ATTRIBUTE_VALUE" registry key. In the second step
+the text value "Create an account" which is present inside the tag "a" of the
+element will be stored in that registry key and later to assert the value of
+this element this registry key can be used wherever necessary the same way as
+the "addregkey" keywords work.
+
+  
+
+ **assertValue:**
+
+This keyword is used to compare the value of an element with the value entered
+in the "Assertion" column of the sheet. It is also used to jump from one step
+to another The example is given in the images below,
+
+  
+
+As you can see in the above image the element which needs to be compared
+should be inspected first to get the locator of that element. After getting
+the locator the locator should be placed under "Element Identifier" column
+with the keyword "assertValue" in the "Keyword" column and the value that we
+want to compare with this Element value which is "Search by image" in the
+"Assertion column". If the value of the element matches with the Assertion
+column value it will give us the result "Passed" but if it doesn't match it
+will give the result failed. This keyword can be used this way simply to
+assert the value also it can be used to jump from this step to another step
+with the label name. Depending on this assertion result we can put a condition
+in the "assertionAction" column to jump from this step to another. The example
+is given in the below image,
+
+In the image above three examples are given for assertValue keyword, the first
+one shows when the element value and "Assertion" column value matches the
+result comes true. So, according to the condition on the "assertionAction"
+column if the result is false it should jump to the label "Exit". But since
+the result is "true" instead of jumping to the "Exit" label it should show
+"Passed" status on the report file and move to the next step.
+
+The second example is the same as the first one and the result of this step
+should be "true". As the Element Value "Search by image" exactly matches with
+the value in the "Assertion" column. So, for this step according to the
+condition on the "assertionAction" column since the result is true it should
+jump to the "Paste_Img_URL" label instead of moving to the next step without
+running the steps in the middle and continuing the steps from that Label.
+
+The third "assertValue '' example shows, this keyword can be used simply to
+assert the value without any conditions when we only need the result of this
+step on the report file whether it's passed or failed.
+
+####  **assertlikematch:**
+
+This keyword works the same as the "assertValue" keyword. The only exception
+is, it doesn't exactly match the value entered in the "Assertion" column with
+the element value. Instead it checks whether the value entered in the
+"Assertion" column exists in the element value we are asserting or not
+regardless of the case it's written in. The example for this keyword is given
+below,
+
+In the above image the same element that we used for the "assertValue" keyword
+has been used. But the only difference is the "Assertion" column only has the
+value "search" in it instead of "Search by image" the whole value of the
+element like shown in the "assertValue" keyword example. Only the value
+"search" is entered in this column because this keyword will only check
+whether this value exists in the element value or not regardless what case
+it's written in. Since this word exists in the element the result will be
+true. As it is true according to the "assertAction" column it will move to the
+next step instead of jumping to the "Exit" label.
+
+####  **assertcss:**
+
+"assertcss" keyword is used to match the css of the element with css entered
+in the entered in the "Assertion" column. The rest works the same way as the
+"assertValue" keyword. The example is shown in the image below,
+
+
+
+In the images above you can see on step 1  the value of the "Assertion" column
+is wrong so it will give us the result "Failed". On step 2 the "Assertion"
+column value matches with the css of the element so it will give us the result
+"Passed" and move to the "Exit" label according to the condition entered in
+the "assertionAction" column.
+
+  
+
+####  **hasattribute:**
+
+This keyword is used to assert the attribute of the element. It will check
+whether an attribute is present in the element or not. The example for this
+keyword is shown below,
+
+  
+
+As shown in the above image to use the "hasattribute" keyword. This keyword
+should be entered in the "Keyword" column. Then the locator of the element
+which we want to assert should be entered in the "Element Identifier" column.
+After that the attribute of the element which we want to assert whether it
+exists in that element or not should be entered in the "assertionType" column.
+
+After the assertion is done it will give us a result true or false depending
+on whether the attribute exists in that element or not it will jump to the
+label entered in the "assertionAction" column or move to the next step.
+
+  
+
+####  **assertSelection:**
+
+"assertSelection" keyword also works similarly as the "assertValue" keyword
+except instead of asserting the value of the element it asserts whether an
+element is checked or not. For example, if there are multiple checkboxes where
+some of them are checked and some are unchecked, using this keyword we can
+assert which one is checked and which one isn't by using the element
+identifier. If an element is checked this step will give the result true and
+if it is unchecked this step will give the result false. Depending on this
+result we can use the "assertAction" column to choose whether to jump to
+another label or move to the next step. The example is shown in the image
+below,
+
+In the above image, the first step simply gives us the result of this step
+whether it's passed or failed. If the result is passed it means the element is
+already selected. But if the result is failed it means that the element is not
+selected. The second step is the same as the first step with a small
+exception. The only difference is depending on the result it jumps to the next
+label or moves to the next step the same way as the "assertValue" keyword
+works.
+
+  
+
+####  **hasElement:**
+
+This keyword asserts the attribute of the element. The example is given below,
+
+As the above image shows this step will verify whether the attribute entered
+on the Element identifier column exists or not.
+
+  
+
+####  **hassamevalue:**
+
+This keyword is used to compare the value entered in the "Value" column with
+the value entered in the "assertion" column. After comparing the values
+depending on the result being true or false, the condition entered in the
+"assertionAction" column will decide whether it will jump to the label entered
+in this column or move to the next step.
+
+  
+
+####  **incNum:**
+
+This keyword is used to increment a number by 1 to use it as a loop. A short
+example is shown in the image below,
+
+  
+
+####  **hover:**
+
+This keyword is used to click on an element when you mouse over it. This step
+will make the elements visible which can only be visible after mouse over. The
+example for this keyword is given below,
+
+  
+
+####  **dropdownoptioncount:**
+
+This keyword is used to get the number of options available in the drop-down
+list. To do so the element locator should be added in the "Element Identifier"
+column and the keyword "dropdownoptioncount" keyword should be added in the
+"Keyword" column with a registry key name in the "Registry Key" column to
+store the value. The example is given below,
+
+  
+
+####  **switchwindow:**
+
+This keyword is used to switch between windows.
+
+As the above image shows, to run the "switchwindow" step this keyword should
+be added in the "Keyword" column and on the Element identifier the number of
+the tab should be added. According to the above image, after the first step we
+should be switching to the second window or tab and after the next step we
+should be switching back to the first window or tab.
+
+  
+
+####  **switchframe:**
+
+If the element we are trying to locate is in a frame this keyword should be
+used to switch to that frame then locate that element and to get out of that
+frame this "switchframe" keyword should be used again in the "Keyword" column
+with "id=" entered in the "Element Identifier" column.
+
+  
+
+####  **popUpAlert:** ** **
+
+This keyword is used to click on the ok button when a pop up alert pops up.
+The example is given below,
+
+As the above image shows the "popUpAlert" keyword should be entered in the
+"Keyword" column and "id=" should be entered in the "Element Identifier"
+column doing this will click on the ok button of the pop up alert.
+
+  
+
+####  **executeKeyEvent:**
+
+This keyword is used to press keyboard keys. The image below shows how to
+press enter key using this keyword.
+
+  
+
+####  **date:**
+
+This keyword is used to get current, past and future dates in different
+formats. To get the current date The keyword "date" should be entered in the
+"Keyword" column and the format in which we want the date to be should be
+entered in the "Element Identifier" column. Then to store the date a registry
+key name should be entered in the "registry key" column. To get the future or
+past date everything is similar as we did to get the current date. The only
+exception is In the "Value" column the number of days should be entered
+depending on how many days past date and future date we want to store. To get
+a future date we should enter a positive value and to get a past date we
+should enter a negative value in the "Value" column. Some examples of this
+keyword are shown below,
+
+In the above image the first step shows the way to get the current date, the
+second and third step shows the way to get the Future date and the fourth and
+fifth step shows the way to get the past date in different formats.
+
+The screenshot below will show how to get date in different formats and their
+results are shown in the "Comment" column,
+
+####  **function:**
+
+This keyword has many sub keys. These sub keys are used for different
+purposes. The "function keyword should be entered in the "Keyword" column for
+every sub key. Every subkey is entered differently for different purposes in
+the "Element identifier" column. The use of these sub keys are explained
+below,
+
+  *  **replace:** The "replace" subkey is used for replacing a value or a portion of the value with a new one. The image below shows how to use this subkey with the "function" keyword. To use it the "function" keyword should be entered in the "Keyword" column. Then in the "Element Identifier" column the sub key should be entered like this "replace,replacing=[The value that needs to be replaced]replaceby=[The new value that needs to be entered]" and on the "Value" column the value should be entered which we are using to replace the value from. Here replace is the subkey, replacing is used to enter the value we are replacing from the value entered in "Value" column and replaceby is used to enter the new value which we are entering in place of the value entered in replacing.  Then the new replaced value would be saved in the registry key entered in the "Registry key" column.
+
+          
+
+           According to the above image, the first step will store the value "1234", the second step will store "key=1234" and the third step will store "key" in the registry key.  
+  
+
+  *  **concat:** The "concat" subkey is used to join two or more strings together. The image below shows how to use this subkey with the "function" keyword. For this the "function" keyword should be entered in the "Keyword" column. Then in the "Element Identifier" column the sub key should be entered like this "concat,[value1],[value2],..". By doing this it will join the entered values together. But there is one exception, if any value is entered that has the "=" sign in it this subkey will remove the "=" sign part and the part that comes before the "=" sign. Then take the rest of the value, join them together and then it will store the joined value in a registry key. The example is shown below,  
+
+
+           According to the above image, the first function keyword step will store the value "01234" and the second one will store the value "0123456" in the registry key.
+
+  *  **random:** For generating random value an example is shown below,
+
+           
+
+            The first step on the above image shows how to generate a random value of string and the second step shows how to get the random value of numbers.
+
+####  **dburl:**
+
+This keyword is used to enter the url. This url should be entered in the
+project.properties file "jdbc.url=The url needs to be entered here" like this.
+Then it should be accessed through this keyword in the excel sheet. The
+example to access this url is shown in the image below,
+
+####  **dbusername:**
+
+This keyword is used to enter the username. This username should be entered in
+the project.properties file "jdbc.username=username" like this. Then it should
+be accessed through this keyword in the excel sheet. The example to access
+this username is shown in the image below,
+
+####  **dbpassword:** ** **
+
+This keyword is used to enter the password. This password should be entered in
+the project.properties file "jdbc.password=password" like this. Then it should
+be accessed through this keyword in the excel sheet. The example to access
+this username is shown in the image below,
+
+  
+
+####  **dbquery:**
+
+This keyword is used to enter a database query. The example is given below,
+
+  
+
+####  **dbhasresult:**
+
+After running a query this keyword is used to check whether the db has data or
+not.
+
+  
+
+####  **dbgetcolumn:**
+
+This keyword is used to get the column data from the result table and save it
+in a registry key.
+
+The first step on the above image shows how to get the column data and the
+second step shows how to get the column data and store it in a registry key.
+
+  
+
+####  **dbgetrowcount:**
+
+This keyword is used to get the number of rows of a column from the database
+table. To get the row count this keyword needs to be entered in the "Keyword"
+column.
+
+  
+
+####  **dbresult:** ** **
+
+This keyword is used to assert the value we got after running the dbgetcolumn
+step with the value entered in the "Assertion" column.
+
+  
+
+####  **exit:**
+
+This keyword is used to finish the steps of the current sheet which is
+currently running and move to the next sheet entered in the project.properties
+file "sheetName" property or if it was the last sheet in this property it will
+be finished and a report will be generated. For this step only the "exit"
+keyword should be added in the "keyword" column.
+
+  
+
+##  **3.1 Test Report**  
+
+The test report file is generated after the whole test execution is completed.
+There are seven columns in the report file. These column names and their
+description are given below,
+
+ **time:** This is the 1st column of the sheet. It shows the exact time and
+date of a particular test step.
+
+ **testCaseName:** testCaseName is the 2nd column and this column shows the
+name of the test case. It is the name which we enter in the "Step" column of
+the test file. This test case name helps to understand which test case is
+being performed and identify which test case is being passed or failed.
+
+ **lineNo:** This is the step number of the test case and the 4th column of
+the sheet. The "lineNo" column shows which row or step number of the test file
+is being executed in which step.
+
+ **result:** This column shows whether a test step is passed or failed and it
+is the 5th column.
+
+ **expectedResult:** This column is the 6th column of the sheet and it shows
+the same values entered in the "Expected Result" column of the test file. To
+compare with the result column value in the report file. So that we can
+identify which step is passed and which steps have failed.
+
+ **reason:** This is the 7th column and the value of this column shows why a
+specific test case has failed. It shows whether the keyword used for the step
+was entered wrong or the element is not present etc.
+
+ **Comment:** This is the 8th column of the sheet and it shows any comments
+entered for a specific test step that was entered in the comment column of the
+test file.
+
+ **Total Checked:** This is the 3rd last row of the test report file. It shows
+the number of results that were compared according to the "result" and
+"expectedResult" column.
+
+ **Total Failed:** This is the 2nd last row of the test report file. It shows
+the number of results that have failed, according to the comparison of the
+"result" and "expectedResult" column.
+
+ **Total Passed:** This is the last row of the test report file. It shows the
+number of results that were passed according to the comparison of the "result"
+and "expectedResult" column.
+
+  
+
+##  **4.1 Test Sample**
+
+A complete example of a small test with the steps in the test file and their
+reflection on the test report is shown in the below images.
+
+First of all to run this test sample the properties shown in the screenshot
+below should be entered in the project.properties file,
+
+According to the screenshot above the "Test-Sample.xlsx" is the test file
+where the test cases which will be executed are written. As the "sheetName"
+property shows the second sheet "Negative_Testing" of the test file is being
+executed in this test sample. After the whole test is executed the result or
+report file will be generated in the folder entered in the "report.file.path"
+property and to run this test we are using chrome browser as entered in the
+"allowed.browsers" property.
+
+The screenshot of the test steps entered in the test file is shown below,
+
+  
+
+Figure: Test/Excel file
+
+  
+
+Figure: Test report (csv file)
+
+  
+
+The above screenshot shows the generated report after test completion.
+
+

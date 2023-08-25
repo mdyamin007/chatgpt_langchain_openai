@@ -1,0 +1,104 @@
+title: Account Total Reconciliation Project
+body:   
+
+## Synopsis
+
+The majority of our customers ftp their data file(s) to our ftp servers for
+processing. A small percentage of them also provide us information regarding
+the file(s) including the total number of accounts. This information can be
+provided in 3 different ways: separate file(s) containing the count
+information, information provided at the end of the data file and information
+provided in an email. After a job has finished processing, the DP operator
+will manually reconcile the customer provided counts and the ones from our
+processing summary report: Data Processing Verification Sheet (dpvs). The
+processing summary information is also stored in our Oracle database but the
+DP operators do not have access to the database.  
+  
+
+## Goal
+
+To automate the account total verification step to eliminate any human errors.  
+Proposed Solution
+
+  
+
+### develop following perl scripts that we can plugin to our processing flow:
+
+  *  ~~[read_control_total.pl](http://read_control_total.pl)~~  [read_cust_count_tbl.pl](http://read_cust_count_tbl.pl): a script that extract out the total count from the customer count file(s) from the in_dir director and write to stdout. The script will read  ~~a control file~~  the cust_count.tbl, based on the cid and jid arguments to know what count files to look for and what pattern or program to use to pick up the account total. If there are multiple count files in the in_dir folder matching the 'Count file name Pattern' field, the totals should be added up.  
+Usage: [read_cust_count_tbl.pl](http://read_cust_count_tbl.pl) cid jid in_dir
+
+> Fields proposed for the table (1 record per application and the record
+> should be tab-delimited):
+>
+>  
+>
+>
+>  **Field**|  **Desc**  
+> ---|---  
+> CID| 4 character customer id, e.g. rwcu  
+> jid| 3 character job id, e.g. ms1  
+> Count file name pattern| pattern-1|pattern-2||pattern-n  
+> Parsing program name| name of the custom parsing script to use, present only
+> if it is too complex to just use a pattern provided in the Pattern field  
+> Pattern| pattern or regular expression used to extract the count(s)  
+>  
+>  
+>
+
+  * Parsing Program(s): program specified in the 'Parsing program name' field in the control_file above. Needed only if it is too complex to just use a pattern provided in the Pattern field above  
+to do the parsing.
+
+  * [insert_control_total_DB.pl](http://insert_control_total_DB.pl): insert record to table and populate fields proc_id, cust_total-, print_total-
+
+>   * Usage: [insert_control_total_DB.pl](http://insert_control_total_DB.pl)
+> database(prod|test) proc_id, cust_total-, print_total-
+>   * CREATE TABLE acct_process_balance  
+> (  
+> proc_id number not null,  
+> cust_total number,  
+> print_total number,  
+> estmt_total number,  
+> archival_total number,  
+> CONSTRAINT acct_process_bal_pk PRIMARY KEY (proc_id)  
+> )  
+> tablespace isdata;  
+> quit;
+>
+
+  * [update_control_total_DB.pl](http://update_control_total_DB.pl): select by proc_id to update DB record to populate the appropriate field based on the 'type' argument with the 'total' argument value,
+
+> > > where 'type' can contain 1 of the following values:  
+> 'p' - print_total  
+> 'e' - estmt_total  
+> 'a' - archival_total
+>
+>   * Usage: [update_control_total_DB.pl](http://update_control_total_DB.pl)
+> database(prod|test) proc_id, type, total
+>
+
+  * [compare_control_total.pl](http://compare_control_total.pl): compares 2 fields in the DB based on the 'type' argument received. Writes to stdout the following information: values of the 2 fields stored in DB, result of comparison: "Error: counts do not match" or "counts match",
+
+>   * Usage: [compare_control_total.pl](http://compare_control_total.pl)
+> database(prod|test) proc_id type
+>
+
+>
+
+>> > > where 'type' can contain 1 or more of the following values separated by
+',':  
+> 'p' - compares the print_total and cust_total columns  
+> 'e' - compares the estmt_total and cust_total columns  
+> 'a' - compares the archival_total and cust_total columns
+
+  
+
+## System environment
+
+Scripts should be written in Perl. Operating system is Redhat and system shell
+is bash.
+
+### Attachments
+
+250
+
+

@@ -1,0 +1,226 @@
+title: Mule ESB - Basic Terms
+body: **Mule**  is a flexible message processing and integration framework.
+
+ **Connector**
+
+A connector is a concrete instance of a Mule transport, whose properties
+describe how that transport is used. All Mule endpoints use a connector with
+its same transport inherit the connector's properties.
+
+ **Endpoint**
+
+A Mule endpoint is an object that messages can be read from (inbound) or
+written to (outbound), and that specifies properties that define how that will
+be done.
+
+Endpoints can be specified two different ways:  
+An endpoint specified as a global element is called a global endpoint. An
+inbound or outbound endpoint, specified in a flow or service,can refer to a
+global endpoint using the ref attribute.
+
+An inbound or outbound endpoint, specified in a flow or service, can be
+configured without referring to a global endpoint.
+
+ **Transformers**
+
+A transformer is an object that transforms the current Mule message
+
+ **Filters**
+
+A filter is an object that determines whether a message should be processed or
+not.
+
+ **Expressions**
+
+Mule has a powerful expression facility that allows information for many
+different parts of the system to be used to affect message processing.
+
+ **Flows**
+
+The flow is the basic unit of processing in Mule. A flow begins with an
+inbound endpoint from which messages are read and continues with a list of  
+message processors, optionally ending with an outbound endpoint, to which the
+fully processed message is sent.
+
+ **Components**
+
+A component is a message processor written in Java, groovy, or some other
+language
+
+ **Routers**
+
+A router changes the flow of the message. Among other possibilities, it might
+choose among different message processors, split one message into many, join
+many messages into one.
+
+ **Logger**
+
+The logger element allows debugging information to be written from the flow.
+
+ **Cloud Connectors**
+
+A cloud connector calls a cloud service.
+
+ **Processor Chain**
+
+A processor chain is a list of message processors, which will be executed in
+order. It allows you to use more than one processor where a configuration
+otherwise allows only one, exactly like putting a list of Java statements
+between curly braces.
+
+It is used to perform two steps as part of the exception strategy. It first
+transforms and them mails the current message.
+
+ **Sub-flow**
+
+A sub-flow is a flow that can be called from another flow. It represents a
+reusable processing step. Calling it is much like calling a Java method, the
+sub-flow is passed the current message, and when it returns the calling flow
+resumes processing with the message that the sub-flow returns.  
+calls a flow to process an order that has already been pre-processed and
+returns a confirmation message..
+
+ **Exception Strategies**
+
+An exception strategy is called whenever an exception occurs in its scope,
+much like an exception handler in  
+Java. It can define what to do with any pending transactions and whether the
+exception is fatal for the flow, as well as logic for handling the exception
+
+ **Configuration Patterns**
+
+Flows have the advantages of being powerful and flexible. Anything that Mule
+can do can be put into a flow. Mule also comes with configuration patterns,
+each of which is designed to simplify a common use of Mule. It's worthwhile to
+become familiar with the patterns and use them when possible, for the same
+reasons that you would use a library class rather than built the same
+functionality from scratch. There are currently four  
+configuration patterns:
+
+ pattern:bridge bridges between an inbound endpoint and an outbound endpoint  
+ pattern:simple-service is a simple flow from one inbound endpoint to one
+component  
+ pattern:validator is like a one-way bridge, except that it validates the
+message before sending it to the outbound endpoint  
+ pattern:web-service-proxy is a proxy for a web service.
+
+All configuration patterns can specify exception strategies, just as flows
+can.
+
+ **Web service proxy**
+
+This create a proxy for a web service. It modifies the advertised WSDL to
+contain the proxy's URL.  
+The allows you to configure, in addition to the inbound and outbound endpoints  
+ a list of transformers to be applied to requests  
+ a list of transformers to be applied to response  
+ The location of the service's WSDL, either as a URL as as a file name.
+
+Here is an example:
+
+    
+    
+    <pattern:web-service-proxy name="weather-forecast-ws-proxy"
+       inboundAddress="http://localhost:8090/weather-forecast&#8221;
+       outboundAddress="http://server1:6090/weather-forecast&#8221;
+       wsdlLocation="http://server1:6090/weather-forecast?wsdl&#8221; />
+    
+
+This creates a proxy for the weather forecasting service located on server1.
+
+ **Services**
+
+Services are an older feature of Mule. They are not as flexible as flows are
+nor as friendly as configuration patterns. While services remain fully
+supported, it is recommended that new development be done with flows and
+patterns. That having been said, services use many of the same ideas as flows
+and are not difficult to use or construct.
+
+A service is divided into three parts:
+
+  * Inbound. This contains the inbound endpoint plus any processing that precedes the single component that a service is allowed. This can consist of inbound routers, transformers, filters, and other message processors.
+  * Component. This is the same component found in flows. It is optional
+  * Outbound. This is all of the processing that follows the component. It consists of a set of outbound routers. The simplest of these is the  
+pass-through router, which simply passes the message to the outbound endpoint.  
+Services, like flows and pattern, can also define exception strategies.  
+Services live inside a construct called a model, which groups service and
+allows them to share some configuration:  
+ exception strategies  
+ entry point resolves for components
+
+ **Custom Elements**
+
+Mule is extensible, meaning that you can create your own objects (often by
+extending Mule classes). After you've done this, there are standard way to
+place them into the configuration. Assume, for instance, that you've created
+com.mycompany.HTMLCreator", which converts a large variety of document types
+to HTML. It should be a Spring bean, meaning  
+ It has a default constructor  
+ It is customized by setting bean properties
+
+Each type of Mule object has an element used for custom extensions:  
+ custom-connector for connectors  
+ custom-entry-point-resolver for entry point resolvers  
+ custom-exception-strategy for exception strategies  
+ custom-filter for filters  
+ custom-processor for message processors  
+ custom-router for routers  
+ custom-transformer for transformers
+
+A flow is the most versatile and powerful integration mechanism available in
+Mule.
+
+ **Service Vs Flow**
+
+In contrast to the use of Services that define a component with explicit
+inbound and outbound phases that allow a limited amount of flexibility a Flow
+does not define anything and is completely free-form. This means that if your
+solution requires multiple steps you wont't need to use multiple services
+glued together with the vm transport, or a chaining router but you'll be able
+to configure everything in the same flow.
+
+Flows are valuable in many situations, including:  
+ Simple integration tasks  
+ Scheduled data processing  
+ Connecting cloud and on-premise applications  
+ Event processing where multiple services need to be composed
+
+In particular, services are still required if you want to do any of the
+following:  
+ Transactions configured anywhere other than on endpoints e.g. on routers
+(including local, multi-tx, and XA)  
+ Request-Reply
+
+Basic Structure of Flow
+
+    
+    
+    <flow name="">
+    - 0..1 MessageSource
+    - 1..n MessageProcessor(s)
+    - 0..1 ExceptionStrategy
+    
+
+**Service Model**
+
+By default, Mule uses the staged event-driven architecture (SEDA) model. SEDA
+is an architecture model where applications consist of a networkof event-
+driven stages connected by explicit queues. This architecture allows services
+to be well-conditioned to load, preventing resources from  
+being overcommitted when demand exceeds service capacity. As a result, SEDA
+provides an efficient event-based queuing model that maximizes performance and
+throughput.  
+  
+
+  
+
+## References
+
+<http://code.google.com/p/soi-toolkit/wiki/InstallationGuideCygwinSetup>
+
+<http://geekyprimitives.wordpress.com/2012/08/11/fork-and-join-with-mule-3/>  
+<http://mule3.wordpress.com/category/mule-3-esb/>
+
+  
+
+

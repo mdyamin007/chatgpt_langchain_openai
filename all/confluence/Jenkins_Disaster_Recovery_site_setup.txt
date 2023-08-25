@@ -1,0 +1,87 @@
+title: Jenkins Disaster Recovery site setup
+body: # __
+
+# _Objective_
+
+Our objective is to set up a Disaster Recovery (DR) site for Jenkins. Jenkins
+will be up and running in California (CA) by default. Texas (TX) will act as
+DR site. TX will be offline while CA is running. Jenkins data of CA will be
+synced to TX. If a disaster happens in the CA site, we'll up Jenkins at the TX
+site. Backup and restore process will be performed at the reverse way as well.
+We'll take backup form TX and restore them from CA.
+
+#  _Approach_
+
+  * We will be keeping incremental backups of the Jenkins home directory every 15 minutes using a backup script. The backup script will be running as a cron job on the CA side. 
+  * The backup snapshots will be stored in a mounted directory of the TX facility so that those backups snapshots can be restored at TX.
+  *  ** ** We will use a restore script to restore the Jenkins backups. As the backups are taken incrementally, we can go back to any state of Jenkins.
+  * After restoring Jenkins at TX, we will use another backup script to take backup of TX Jenkins. These backup snapshots will be stored in another mounted directory of the TX facility so that we can restore them from CA.
+
+#  _Workflow_
+
+##  _Backup of CA Jenkins_
+
+  * source_directory = /var/lib/jenkins
+  * backup_directory = /mnt/nfs/tx-nas/jenkins-backup
+  * When the backup script will run for the very first time at CA, everything from source_directory will be copied to backup_directory. We'll call this a backup snapshot. the snapshot directory name will be the timestamp when the script started executing.
+  * After creating the snapshot, we'll create a soft link to this directory named _latest_. This _latest_ directory will always be pointing to the most recent snapshot.
+  * Suppose, If the backup script starts executing at 2022-08-08_05:00:00 then at the backup_directory, two directories will be created named _2022-08-08_05:00:00_ and _latest_. The _latest_ directory is nothing but a soft link or pointer of the _2022-08-08_05:00:00_ directory.
+  * When the script will be run after 15 minutes, a new snapshot will be created at backup_directory named _2022-08-08_05:15:00._ This directory or snapshot will contain everything from the source directory at that point. But, this directory will take disk space only for the changed data from the previous snapshot, not the space for copying of whole data of source_directory. 
+  * We will create hard link of the data from the previous snapshot to the newly created snapshot. By doing this, this common data will not be copied from source_directory to the newly created snapshots. Only the changed data will be copied over the newly created snapshots.
+  * At this point, we have two backup snapshots named   _2022-08-08_05:00:00_ and _2022-08-08_05:15:00._ The _latest_ directory is still pointing to the previous snapshot i.e. _2022-08-08_05:00:00._ But as there is a new snapshot, we need to remove _latest_ which was pointing to the older snapshot and create a new one.
+  * After deleting the  _latest_ we'll create a soft link of the most recent backup snapshot. Now,  _latest_ is pointing to the most recent backup snapshot.
+  * There can be a scenario when the backup script can run for more than 15 minutes. To prevent the backup script from being executed it the previous backup is not finished yet, there is a self-detection logic inside the script. If it detects that another instance of this script is still running, the backup process will not proceed. The script will exit.
+
+bashEclipseca-incremental-backup.sh
+
+##  _Restore Jenkins at TX_
+
+  * We will restore the backup snapshots to TX jenkins home directory. For restore, 
+    * source_directory=/mnt/nfs/tx-nas/jenkins-backup/{snapshot}
+    * target_directory=/var/lib/jenkins
+  * The restore script will by default restore Jenkins from _latest_ which contains the most recent state of Jenkins. But, as we've taken the incremental backups, we can restore any state of Jenkins by providing the directory name which is represented by timestamps.
+  * The restore script will first check if Jenkins is already running or not. If running, It'll ask us if we want to stop the running Jenkins before restoring. 
+  * When we confirm with "yes", script will stop the running Jenkins and after stopping, all the data from the source_directory will be copied to target directory.
+  * Suppose, we want to restore the most recent Jenkins state. We just need to run the _tx-restore.sh_ script. But, If we want to restore the state of Jenkins of a specific timestamp, we need to pass the directory or snapshot name as a parameter.
+  * After restoring, this restore script will start Jenkins at TX site.
+
+bashEclipsetx-restore-jenkins.sh
+
+##  _Backup of TX Jenkins_
+
+  * source_directory=/var/lib/jenkins
+  * backup_directory=/mnt/nfs/ca-nas/jenkins-backup
+  * We will take TX Jenkins backup in the same fashion we're taking backup of CA Jenkins. But this backup process will not run a cron job. We'll take this backup manually i.e. run the backup script manually.
+
+bashEclipsetx-manual-backup.sh
+
+  
+
+##  _Restore Jenkins at CA_
+
+  * As the backup snapshots we took from TX, will be stored in a mounted directory, we can restore Jenkins at the CA site using those snapshots. 
+  * source_directory=/mnt/nfs/ca-nas/jenkins-backup/{snapshot}
+  * target_directory=/var/lib/jenkins
+  * Restoring at CA will work in the same fashion we're restoring at the TX site. 
+
+bashEclipseca-restore-jenkins.sh
+
+  
+
+#  _Prerequisites and steps of running the scripts_
+
+  * The owner of the backup directory must be _jenkins_. 
+  * We need to run the scripts as _jenkins_ user.
+  * For taking backup of CA Jenkins, open the crontab by _crontab -e  _and add the following line at the end:
+
+bashEclipsecrontab
+
+  
+
+  * Run this script from TX to restore backups: _./tx-restore-jenkins.sh (restore from latest)   _or _./tx-restore-jenkins.sh 2022-08-08_05:15:00 (restore from a specific snapshot)_
+  * For taking backup of TX Jenkins: run _./tx-manual-backup.sh_
+  * Restore Jenkins from CA:  _./ca-restore-jenkins.sh (restore from latest)   _or _./ca-restore-jenkins.sh 2022-08-08_09:00:00 (restore from a specific snapshot)_
+
+  
+
+

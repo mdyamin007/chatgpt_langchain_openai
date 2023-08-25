@@ -1,0 +1,67 @@
+title: Test Steps
+body: Step 0: Clear eStatements website for 'Demo' client of all estatements. UNDO
+PUIs as necessary
+
+Step 1: Set up Message Campaign in InfoTrac
+
+  1. Create Message Campaign
+  2. Approve Message Campaign
+  3. Verify index file exists on \\\10.8.8.216\input\I3\MsgSample\demo\txt
+  4. Verify that the servlet on InfoTRAC works
+    * Access [http://10.8.8.212:9090/MsgServlet22?cid=demo&apptype=ms1&cycledate=08272013](http://10.8.8.212:9090/MsgServlet22?cid=demo&apptype=ms1&cycledate=08272013) (08272013 is the processing date for the campaign; substitute appropriately, substituted date must lie within the campaign dates. Substitute environment IP for Pilot if testing on Pilot)
+    * The response must look something like this - 1|\\\\\\\10.8.8.216\\\input\\\I3\\\demo\\\demo_ms1_08202013_08312013.zip. (the zip will have the campaign dates)
+
+Step 2: Set up IS processing files.
+
+  1. Data file is demoms1_osi.dat. A backup of this file exists at /d/ftpbu/demobu/test. DO NOT use the backup.
+    * cp /d/ftpbu/demobu/test/demoms1_osi.dat /d/ftpbu/demobu
+    * Edit Statement Date in data file. Ensure it is a "new" date; and doesn't match any on the eStatements web site so far.
+  2. Remove checksum.
+    * vi /home/keep/cksum_log/demoms1_cksum.log
+    * Delete all lines (Ctrl-dd)
+  3. Update insert information and enter selection criteria
+    * /home/insert/demoms1.ins
+    * PROC_DATE to match date of processing. This should lie within the boundaries of the campaign scheduled dates in InfoTRAC.
+  4. Return to home directory. Temp files generated during processing are better saved here than in other directories.
+    * cd
+  5. Execute Paper Processing Script - /home/master/isis.sh
+    * Choose in the interactive menu:
+      * 's' - for Statements
+      * 170 - ID for 'DEMO' client
+      * 2 - for 'Statement' application
+      * Path for data file - /d/ftpbu/demobu/demoms1_osi.dat
+  6. demoms1_osi.dat would have moved out of /d/ftpbu/demobu. So, copy it again from /d/ftpbu/demobu/test
+    * cp /d/ftpbu/demobu/test/demoms1_osi.dat /d/ftpbu/demobu
+    * Edit Statement Date in data file. Ensure it matches the 's' option date that was edited above.
+  7. Get back to home directory.
+    * cd
+  8. Execute eStatements Processing Script - /home/master/isis.sh
+    * Choose in the interactive menu:
+      * 'f' - for AFP to PDF
+      * rest are the same as for 's' option above
+
+Step 3: PUI
+
+  1. Login to PUI (System A: <http://10.8.8.221:9090/login.jsp>)
+  2. Every PUI processing will add one more eStatement to the accounts since the data file is the same. This can be confusing on the UI; so always UNDO earlier PUI first.
+  3. Choose 'New Job', Client - 'Demo'
+  4. AFP Processing - Browse and input the latest index file. The index file (looks like ms1_05312013_08272013_1439_demo.txt)generated at the end of IS Processing would be dropped in 10.8.8.216/input - the PUI input directory
+  5. Ensure "Parallel" is checked
+  6. Ignore the rest of the steps ("Skip") and start PUI.
+  7. Check for no. of "Good" entries; must match the no. of records in the data file.
+  8. Log Check
+    * Read log and verify that message ids are being pulled from InfoTRAC
+    * Read log to verify mode='test' and not 'prod'
+
+Step 4: eStatements Member Site - Selective Insert Visibility
+
+  1. Open eStatements - <https://10.8.8.221:9389/login.jsp>
+  2. Login
+    * Use account number as required for test case with password 'demo'
+    * If account number is not registered for eStatments, do so - register with email id of self.
+    * Click on Statement
+    * Verify
+  3. Logout
+    * click on 'Exit'
+
+

@@ -1,0 +1,156 @@
+title: 19005 - BBBB - Admin Paperless Report Issue
+description: Path: Admin Site> Reports > Paperless > Acc Opt Out
+
+Issue: The report generated is a lot higher than what is displayed on the/msm/paperless/report_results.jsp page (see image). Attached reports from pilot & prod.On production ui displays 13.8K but the report has 22k.
+
+
+
+
+
+
+author: mamunur.rashid
+comment: Hi [~Patric K],
+
+What I have found so far is "Acc. Opt-out" column of the ui is generated correctly from the correct database value. But while generating report it pulls more data than expected. I tried to compare report generating SQL of BBBB and some of the client's report generating SQL who usesSummaryHandler.java class. There are some differences.
+
+BBBB uses the below SQL while generating report:
+{code:java}
+select acct_number,type, modified_by, decode(p_new_status, 'B', 'P', p_new_status)
+  from
+      (
+  SELECT /*+ index(p F1_PAPERLESS)*/ p_id, fa.acct_number,p.stmt_type,  p.p_modified_date,p_new_status, fa.type,
+  CASE WHEN us.ORG_ID = fa.org_id then 'Customer'
+  WHEN us.org_id is null then '(Deleted User)'
+  ELSE us.sess_login_id||' (Admin)'
+  END modified_by,
+   max(p_id) over (partition by fa.acct_id, p.stmt_type ) max_p_id
+  FROM fin_account fa, paperless p left join usr_session us on us.usr_id=p.p_modified_by
+  WHERE fa.org_id=GETORGID('bbbb')
+   AND (us.org_id in (4548, 4549) or us.org_id is null)
+   AND fa.acct_id = p.acct_id
+   AND p.stmt_type='default'
+   AND p.p_modified_date < TO_DATE('2020-05-01','YYYY-MM-DD')
+     )
+  where p_id = max_p_id
+  AND P_NEW_STATUS in('E','U')
+  ORDER BY p_modified_date DESC;
+{code}
+And those clients who useSummaryHandler.java class use the below query to generate report:
+
+
+{code:java}
+select acct_number, type, to_char(p_modified_date, 'MM/DD/YYYY')
+  from
+      (
+  SELECT /*+ index(p F1_PAPERLESS)*/ p_id, fa.acct_number, fa.type, p.stmt_type,  p.p_modified_date,p_new_status,
+   max(p_id) over (partition by fa.acct_id, p.stmt_type ) max_p_id
+  FROM fin_account fa, paperless p
+  WHERE fa.org_id=GETORGID('bbbb')
+   AND fa.acct_id = p.acct_id
+   AND p.stmt_type='default'
+   AND p.p_modified_date < TO_DATE('2020-05-01','YYYY-MM-DD')
+     )
+  where p_id = max_p_id
+  AND P_NEW_STATUS in('E','U')
+  ORDER BY p_modified_date DESC;{code}
+The last query pulls13449 data for April 2021 on production DB. Other than this I haven't found anything in code.
+
+Thanks.
+
+
+
+
+
+
+author: patric k
+comment: [~mamunur.rashid], did you commit changes?
+
+
+
+
+author: patric k
+comment: On pilot I see that the UI number is different than what the csv file pulls? Is that expected?
+
+
+author: mamunur.rashid
+comment: [~Patric K],
+
+I have found the issue why BBBB paperless report still contains more data than the number shown in frontend. It's because of the negative value of "Acc. opt-out". Suppose current "Acc. opt-out" is -5. And then 4 users opted out. The "Acc. opt-out" value will be -1. But as 4 users opted out those user's data will be included in the paperless report. Which is valid.
+
+I found the same issue in (UTCU dev) [https://utcudev.infoimageinc.com:9880/msm/paperless/report_results.jsp]
+
+So our current implementation of BBBB paperless report is valid.
+
+
+author: patric k
+comment: [~mamunur.rashid] Thank you for the explanation!
+
+
+author: patric k
+comment: [~mamunur.rashid] Can you also write up a release note for this fix?
+
+
+author: patric k
+comment: Hi [~mamunur.rashid],
+
+There is an issue with the report. It now adds quotations around each column, and adds a comma after each line (see attached word doc). The client is requesting we refactor the code to remove the quotations marks and the comma at the end of each line like it was on the old format.
+
+*NEW FORMAT*
+
+"Account Number","Type","Modified By","Delivery Preference",
+"36241016","D","Customer","E",
+"35901016","D","mcguirel (Admin)","E",
+"28453017","D","Customer","E",
+
+
+
+*OLD FORMAT*
+
+Account Number,Type,Modified By,Delivery Preference
+36241016,D,Customer,E
+35901016,D,mcguirel (Admin),E
+28453017,D,Customer,E
+
+
+
+
+author: mamunur.rashid
+comment: Hi[~Patric K],
+
+I haven't found any issue like that. In BBBB admin site I pulled paperless "Acc. Opt Out" report and it was generated in csv file like below.
+
+!image-2021-05-19-11-12-29-467.png!
+
+
+
+Thanks,
+
+Mamun.
+
+
+author: mamunur.rashid
+comment: [~Patric K],
+
+I have found that if I open CSV file using a text editor then the new format (with quotation and comma) appears. But opening CSV file using Microsoft Exel or LibreOffice will work fine. The reason for this issue is not because of the code that I have done for this ticket. It seems this issue is related to*CSVReportGenerator.java* class. I have to check if changing in this class will affect other clients or not.
+
+
+author: mamunur.rashid
+comment: [~Patric K],
+
+Other clients are using*CSVReportGenerator.java*class. So I think it is not a good idea to change that class. As BBBB uses CSV as report type so they should use CSV tool to open the report. I don't know why they are using a text editor to open CSV file. If they want to open the report file using a text editor then we should set report type as TXT. Please talk to client and let me know their feedback.
+
+Thanks.
+
+
+author: patric k
+comment: Hi[~mamunur.rashid],
+
+Ah yes sorry I wasn't clear, the issue is with opening in text editor ( this is how the client is using this file). Were we using the CSVReportGenerator.java prior to the update? Because if so, how come now its adding the quotation and comma after each row now? Can you do some more research on possible solutions, and how we can revert to the old format?
+
+Thanks
+
+
+author: patric k
+comment: [~mamunur.rashid],
+
+The client reported that the original files also had quotation mark and commas, and they only used notepad for this one instance. Client says everything is ok. Thanks for the extra research/effort you did.

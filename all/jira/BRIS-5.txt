@@ -1,0 +1,374 @@
+title: is-apps.infoimage.com FTPScanner API trigger feature into the InfoSYNC API. (IS-Dept)
+description: Currently we have old is-apps.infoimage.com api services sitting on a standalone server that needs to be retired.
+
+
+
+Specifications:
+ * Refer to theis-apps.infoimage.com Trigger API Process Diagram.docx attachment to understand the processing flow. The green box is the api that needs to be refactored and re-implemented into InfoSYNC API.
+ * Please place this API code into $domain_url/infosync/v1/ftpscanner/ instead of component/execute-prepare.
+ * All the parameters seen in the attached process diagram from FTPScanner to is-apps.infoimage.com will need to be the same with the exception of the env variable.
+ * I no longer want to use the "env" parameter to determine which RHS processing environment server to make the ssh call. But instead, please use a standalone 'ftpscanner.cfg' configuration for the InfoSYNC API to configure the environment name.
+ * In the configuration file above, please have the script name pulled from the configuration file. (i.e. do not hard code the /home/master/isisscan.sh in the python code). This is so that when we is-apps-dev, is-apps-stage, is-apps-prod we can differentiate which script to invoke via the configuration file.
+ * Do NOT use Django framework. Please use the same Flask framework that we currently have with the InfoSYNC API.
+ * We will deploy this in a container based environment.
+ * Source code is attached "component_director.tar.gz". This is the version of the code that we are currently using in the production environment that needs to be refactored.
+ * Add email notification logic for any error codes. The current version of the code looks like this. In addition, I would like InfoSYNC to send emails to [IS@infomageinc.com|mailto:IS@infomageinc.com]& [DP@infoimageinc.com|mailto:DP@infoimageinc.com.]. Please still keep the same logic to return HttpResponseBadRequest logic.
+ * Email Server URL: mailer-instant.infoimageinc.com
+
+
+{code:java}
+// code placeholder
+if str(sub_process_return_code) == '11':
+    msg = ( "ERROR[11]: The CID: " + serializer.data.get('cid') +
+            " and file name: " + serializer.data.get('filename') + 
+            " combination is not setup for FTP process auto trigger...\n\n" +
+            "Process output below: \n\n" +
+            sub_process_output)
+    return HttpResponseBadRequest(msg)
+elif str(sub_process_return_code) == '12':
+    msg = ( "ERROR[12]: The MD5 value: " + serializer.data.get('md5') +
+            " does not match the MD5 value of the file after transfer...\n\n" + 
+            "Process output below: \n\n" +
+            sub_process_output)
+    return HttpResponseBadRequest(msg)
+
+msg = ("Request Submitted Successfully! \n\n" +
+        "The return code is: " + str(sub_process_return_code) + "\n\n" +
+        "The terminal output is shown below: \n" +
+        str(sub_process_output))
+{code}
+
+
+
+
+To DP,
+
+The InfoSYNC FTPScanner Trigger API encountered the following error for:
+
+CID: $cid
+
+Filename: $filename
+
+MD5: $md5sum_val
+
+Error Message:
+
+ERROR[11]: The CID: " + serializer.data.get('cid') + " and file name: " + serializer.data.get('filename') + " combination is not setup for FTP process auto trigger...\n\n" + "Process output below: \n\n"
+
+
+
+Thank You,
+
+
+
+IS Department
+
+
+
+Note: This email was trigger from system $ENV\{'HOSTNAME'}.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+author: william.kong
+comment: Anwar, the estimated total effort documented is 24hours. Is this the correct assessment for the actual effort to get this project completed?
+
+Also, please provide any updates by end of day your Monday so that I can review the overall progress.
+
+If there are any new questions you identify, please let me know as well. Thanks!
+
+
+
+
+
+
+author: anwarh
+comment: Hi [~William.Kong],
+
+Check out this image:
+ docker pull harbor.infoimageinc.com/library/infosync:v2.4.0
+
+Tested this on my pc, and the private key ssh works. 
+ this is what ftpscanner.cfg looks like:
+{code:python}
+SCRIPT_PATH       = '/home/anwar/test.sh'
+SCRIPT_ENV        = 'test'
+SSH_USERNAME      = 'anwar'
+SSH_HOST          = '10.1.0.149'
+SSH_PRIVATE_KEY   = '/id_rsa'
+
+#Use either SSH_PASSWORD or SSH_PRIVATE_KEY
+#SSH_PASSWORD      = SOME_PASSWORD
+{code}
+
+
+You can use this compose file to run the container:
+
+
+{code:yaml}
+version: '3.0'
+services:   
+  infosync:      
+     image: harbor.infoimageinc.com/library/infosync:v2.4.0
+     build: ./
+     container_name: infosync
+     restart: always
+     ports:       
+       - 9090:80
+     volumes:       
+       - "./dockerFiles/app.cfg:/var/www/config/app.cfg:ro"
+       - "./dockerFiles/ftpscanner.cfg:/var/www/config/ftpscanner.cfg:ro"
+       - "./id_rsa:/id_rsa:ro"
+{code}
+
+
+I've yet to work on the email section. Will use notify service(ISD service) for that.
+ But if you run it, you will be avail to see script output in the log.
+
+Let me know if you need anything else to get it running.
+
+
+
+
+author: william.kong
+comment: Please make sure we are using mailer-instant.infoimageinc.com as the email server.  i'll make a note in the description of work.
+
+
+author: anwarh
+comment: I wash planning to use notifyservice of isd, their dev[http://pd-dev5.infoimageinc.com:8680/notifyservice/#!/notification].
+
+
+
+Do you want me to send mail using SMTP? (I can do that too..)
+
+
+author: anwarh
+comment: Hi,[~William.Kong],
+
+Done with the coding and Initial testing on my side.
+ Code is deployed in our infosync dev Environment.
+
+You can use this:
+ [http://is-apps-dev.infoimage.com/infosync/v1/ftpscanner/?cid=]<cid>&filename=<file name>&md5=<md5>
+
+
+
+Code will be found at path: /home/anwarH/infosync/
+ and the test script is kept at /home/anwarH/test.sh
+ private key, and two cfg files at : /home/anwarH/infosync/dockerFiles
+
+right now it calls from the container to its hosts with that private key.
+
+
+Also uses mail server you mentioned: mailer-instant.infoimageinc.com
+This image harbor.infoimageinc.com/library/infosync:v2.4.0 is also updated.
+
+
+
+
+author: william.kong
+comment: Thanks! I will try to find time today or Thursday to review the code. Once reviewed, I will create subtask for David and Peter to have the assign their staff to test this via FTPScanner.
+
+
+author: william.kong
+comment: Hi Anwar,
+
+
+
+I'm not able attempt to test the is-apps-dev.infoimage.com yet until I'm confortable with what I've observed during the code review.  I will create a subtask call Round #1 Feedback. 
+
+
+
+#1. FTPScannerService.py: Line 60: Please do not use hardcoded email address. Please create an email distribution name from configuration file OR we can change the email notification design to leverage NotifyServices API that you suggested above.
+
+
+
+
+{code:java}
+// code placeholder
+    def send_error_email(self, **kwargs):
+        email_sender = EmailSender()
+        email_sender.send_email_template(
+            'ftp_trigger_script',
+            ['anwar.hossain@dsinnovators.com'],
+            **kwargs
+        )
+{code}
+
+
+
+
+
+
+#2. FTPScannerService.py: Line 51: Please be more description in the email error message in the following code. Please include the "script name" and the "parameters" passed in the error output:
+
+
+
+
+{code:java}
+// code placeholder
+
+                             call_script, ssh_host)
+        except Exception:
+            logging.exception("Failed to execute script!")
+{code}
+
+
+
+
+e.g.:
+
+"Failed to execute script '%s %s %s %s' on host %s ", call_script, cid, filename, md5, ssh_host)
+
+
+
+
+
+Also, please consider adding email notification under the "General: Exception" clause so that we are notified of the issue. We don't monitor the is-apps.infoimage.com log files so our DP team needs to be aware of a general triggering issue.
+
+
+
+#3 FTPScannerService.py: Line 19: Please fix the spelling of the function name run_scirpt to run_script
+
+
+{code:java}
+// code placeholder
+
+    def process_request(self, cid, filename, md5):
+        logging.info(
+            "Processing new scanner request, cid: %s, jid: %s, md5: %s", cid, filename, md5)        thread = threading.Thread(
+            target=self.run_scirpt, args=(cid, filename, md5))
+        thread.daemon = True
+        thread.start()    def run_scirpt(self, cid, filename, md5):
+        try:
+            call_script = app.config['SCRIPT_PATH']
+            env = app.config['SCRIPT_ENV']
+            ssh_username = app.config['SSH_USERNAME']
+            ssh_host = app.config['SSH_HOST']
+            ssh_key = app.config.get('SSH_PRIVATE_KEY')
+            ssh_password = app.config.get('SSH_PASSWORD')
+{code}
+
+
+
+
+
+
+#4FTPScannerService.py: Does process_request function actually use the cid, filename and md5 variables when it invokes the ssh script? Based on the code review, I don't+think+ you are using this variables. If I'm right, please get them corrected.
+
+Line 19:
+{code:java}
+// code placeholder
+            _, stdout, _ = ssh_client.exec_command("sh "+call_script){code}
+
+
+
+
+
+
+
+
+
+
+
+author: william.kong
+comment: Please update SendMail.py code to use configuration file for Email Address and Email Server Name.
+
+
+author: william.kong
+comment: [~anwarh]:
+ * Please update codeSendEmail.py to pull email address from configuration file vs hardcoding the email addresses
+
+
+{code:java}
+self.mail_from = "data_center@infoimageinc.com"
+s = smtplib.SMTP("mailer-instant.infoimageinc.com")
+{code}
+ * Update Swagger UI to document the new FTPScanner Trigger CRUD operations.
+
+
+
+
+
+
+author: william.kong
+comment: [~anwarh] [~shailendrar]:  Anwar/Shail: Please work together tonight on this. I need to confirm the URL and payload parameters for ISD to test in our parallel environment.
+
+
+
+SEFC, VWCU statements are the candidate for testing this.
+
+Once you have it, please comment and notify Tai / Sean via this ticket using '@tai' or '@sean'
+
+
+author: anwarh
+comment: Hi [~William.Kong],
+
+We first need ssh credentials for parallel processing servers. 
+ Can you manage them for me? or point to anyone who can help.
+
+I need:
+ {{SSH_HOST, SSH_USERNAME, SSH_PRIVATE_KEY or SSH_PASSWORD}}
+
+
+
+
+
+
+author: anwarh
+comment: Hi [~tai.trinh]/ [~Tin.Chak],
+
+You can trigger this API using
+{code:bash}
+curl --request POST 'http://is-apps-stage.infoimage.com:80/infosync/v1/ftpscanner/?cid=<cid>&filename=<file name>&md5=<md5>'
+{code}
+Replace `<cid>`, `<file name>` and `<md5>` with appropriate value.
+
+executing this will show you something like this:
+{code:json}
+{
+  "message": "Request Submitted Successfully on 'ab467c3ad047'",
+  "success": true
+}
+{code}
+and it will execute the script on `RHS` server with `oper1` user like this
+{code:bash}
+sh /home/master/isis_scan.sh {cid} {filename} {md5} test
+{code}
+If there is any errors in the script, both of you will get an email with the script output.
+
+
+
+If you need further documentation on this, go here:
+
+[https://gitlab.infoimageinc.com/infoimage/infosync/wikis/ftpscanner]
+
+
+
+Let me know if you face any confusion/issues regarding this.
+
+Thanks
+
+
+author: tai.trinh
+comment: Hi [~anwarh],
+
+With the old print trigger, the scanner only checks whether the response is 200. I'm wondering if that is still true, or do we now have to also check if the success field is also true?
+
+Thanks,
+
+Tai

@@ -1,0 +1,24 @@
+title: Called Wrapper API on msm
+description: Called Wrapper when we have path to PDF in DB:
+Take a look  /usr/local/tomcat/tomcat-default/logs/catalina-2022-10-28.out
+{code:sh}5184 ***[SecuredServlet.java] JSESSIONID=2CBE930FF1B8ACC2437AE037827C5D2E.webapp1-default
+5185 sending command stmt ada=0 cid=fnbt server=tomcatc-s zip=20211126-14_30_29.481_190541.zip file=fnbtms1_10312021_18441278_18546_1.afp zip=20211126-14_30_29.481_190541.zip storage=a acctId=22598960 stmtType=stmt
+5186 Inside wrapper service
+5187 =====================>site(for not zipped):  serviceName: BIBO
+5188 found file on /d/PV-NAS-DEV/indiv_afp/fnbt/compressed-afp/20211126-14_30_29.481_190541.zip mapped server=/d/PV-NAS-DEV/indiv_afp
+5189 =====================>serviceName: BIBO
+5190 Site is prism
+5191 =====================>serviceName: BIBO
+5192 Status: 200
+5193 Oct 28, 2022 2:03:39 PM com.infoimage.financial.estmtdoc.EStmtServlet processUserRequest
+5194 INFO: 208664723{code}
+
+Check DB (ACC: 18441278)
+{code:sql}select FA.ACCT_NUMBER, ED.*, AF.* from ESTMT_DOC ED
+inner join FIN_ACCOUNT FA on ED.ACCT_ID = FA.ACCT_ID
+inner join ARCH_FILE AF on ED.ESD_FILENAME = AF.FILE_NAME
+where PARENT_PATH like '20221028-13%'{code}
+
+
+author: JIRAUSER11104
+comment: This was the correct launch of Wrapper.

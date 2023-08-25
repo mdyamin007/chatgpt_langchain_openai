@@ -1,0 +1,84 @@
+title: SURU [26923] [pvt] S3 Cloud Log Setup
+description: SURU - S3 Cloud Log Setup
+
+Create centralized log file for any S3 Cloud related transmission. This way we have an audit of all the S3 upload transmissions. Today only SURU only uses this logic, but this needs to be applied to ANY customer who uses this S3 cloud push logic.
+
+Log file needs to contain the following informatioin:
+
+CID:
+
+FileNames:
+ MD5 checksum of the file we are uploading
+
+S3 Username
+
+S3 Directory Location
+
+
+
+
+
+The contents of the log should be something like:
+
+{{[02/28/2022 11:16:09] [INFO] [preprocessing02] [SURU] [stage] }}
+{{Starting s3sync.py: /home/test/master/s3sync.py --control_file /home/test/control/suru_s3_all.control upload /z/pdf_afp/suru/surums5/zip/suru_electricity_01262022_1_1.zip suru_electricity_01262022_1_1.zip}}
+{{[02/28/2022 11:16:09] [INFO] [preprocessing02] [SURU] [stage] Uploading file from: /z/pdf_afp/suru/surums5/zip/suru_electricity_01262022_1_1.zip to s3://majstg-invoice-inbox/suru_electricity_01262022_1_1.zip}}
+{{[02/28/2022 11:16:10] [INFO] [preprocessing02] [SURU] [stage] Uploaded: 59.42KB in 0s}}
+{{[02/28/2022 11:16:10] [INFO] [preprocessing02] [SURU] [stage] Uploaded file: /z/pdf_afp/suru/surums5/zip/suru_electricity_01262022_1_1.zip MD5: c742b748bbc99acffb801187f77f28b9}}
+
+
+
+This centralized log file will need to be stored in /$d_dir/ftpbu/s3sync_log/ (If s3sync log folder does not exist, create it)
+
+Log file naming convention should be: s3sync_MMDDYYYY.log
+
+
+author: anwarh
+comment: Hi [~William.Kong],
+
+I modified the above log format like this
+{code:none}
+[02/28/2022 11:16:09] [INFO] [preprocessing02] [SURU] [stage] 
+Starting s3sync.py: /home/test/master/s3sync.py --control_file /home/test/control/suru_s3_all.control upload /z/pdf_afp/suru/surums5/zip/suru_electricity_01262022_1_1.zip suru_electricity_01262022_1_1.zip
+[02/28/2022 11:16:09] [INFO] [preprocessing02] [SURU] [stage] Uploading file from: /z/pdf_afp/suru/surums5/zip/suru_electricity_01262022_1_1.zip to s3://majstg-invoice-inbox/suru_electricity_01262022_1_1.zip
+[02/28/2022 11:16:10] [INFO] [preprocessing02] [SURU] [stage] Uploaded: 59.42KB in 0s
+[02/28/2022 11:16:10] [INFO] [preprocessing02] [SURU] [stage] Uploaded file: /z/pdf_afp/suru/surums5/zip/suru_electricity_01262022_1_1.zip MD5: c742b748bbc99acffb801187f77f28b9
+{code}
+Let me know if this ok. Also does this need parallel or not.
+
+Thanks,
+Anwar
+
+
+author: william.kong
+comment: [~anwarh]: Awesome! I like what you proposed better! Please proceed.  I presume the username is in the control file right? If so, the team can find the credentials in this file.
+
+
+
+
+author: anwarh
+comment: [~William.Kong], AWS uses client ID, and a access key for API type access, no username. Not sure showing them in the log file will be a good idea, even if they are accessible by the control file.
+
+If you want I can add them too, let me know.
+
+
+author: anwarh
+comment: Hi [~TunA]/[~William.Kong],
+
+Please release this  [^IS-888 Transfer Form.docx] . Code is in /d/is/cvs/xfer/anwarH  .
+
+
+author: william.kong
+comment: [~anwarh]: I will work with [~yameelee]to schedule the release later this week instead of March 28. Thank you for getting this turned around so quickly. For now, I will change the date to March 3.
+
+
+
+[~yameelee]: FYI: Please help with this release on March 3.
+
+
+
+
+
+
+author: anwarh
+comment: [~William.Kong], Peter already released this with MFCU.

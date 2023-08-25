@@ -1,0 +1,166 @@
+title: Add eStmt Seletive Insert
+description: Add eStmt Seletive Insert:
+
+app: bkplms2
+
+add this 2 flag in control file bkplms2.control file and export
+
+eStmtSelInsFlag=TRUE
+new_estmt_idx=y
+
+
+
+ask for dt_job_id from pc and ask to enable e-insert for that dt_jod_id and the piece codes
+
+after script run check the index files to see the piece codes
+
+For testing set insert file like this:
+
+DT_JOB_ID: 136752-C11.01-V21365
+JOB_CYC: 136752 02-10
+ENV_PAP: .270 .165 .165
+ENV_HVY: .505
+INSERT1: 0.165
+INSERT2: 0
+INSERT3: 0
+INSERT4: 0
+INSERT5: 0
+INS_ASSIGN1: B
+INS_ASSIGN2: E
+INS_ASSIGN3: 0
+INS_ASSIGN4: 0
+INS_ASSIGN5: 0
+PRINT_FORMAT: dp180
+PROC_DATE: 11282017
+INS_BY_ACCT: /d/custdata/bkplms2_insert_07112022_list.txt I 1
+
+
+author: rony
+comment: Hi [~Shun.Kuwashima]
+
+We are working for eseletive insert . Would you please try to post this index file:ms2_20220725_1_20220728_0623_bkpl.txt in pilot and see insert appears ?
+
+!image-2022-07-28-19-30-59-026.png!
+
+
+
+[~rumanb] [~stephen.yee@infoimageinc.com]
+
+
+
+Thanks
+
+
+
+
+author: shun.kuwashima
+comment: [~rony] [~stephen.yee@infoimageinc.com] I've enabled the e-selective insert flag on the pui side on pilot, but I see an error "Can't replicate the pieceCode info in InfoTRAC!" I checked under the Insert Management tab and I don't see any form entry. I believe PC is able to assist with creating new forms, might need to ask them to assist.
+
+
+author: rony
+comment: Hi [~stephen.yee@infoimageinc.com]
+
+Would it be possible to help here. Would you please ask Pc about what Shun is asking for - creating new forms? I am not quite sure about that.
+
+
+
+Thanks
+
+
+author: stephen.yee@infoimageinc.com
+comment: Requesting from PC...
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~Shun.Kuwashima]-49632 created in infotrac
+
+
+author: shun.kuwashima
+comment: [~stephen.yee@infoimageinc.com] I still don't see any entry under the Insert Management tab on infotrac pilot. Can you double check if it's there?
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~Shun.Kuwashima]- Form 4623 created on pilot.
+
+
+author: shun.kuwashima
+comment: [~stephen.yee@infoimageinc.com] I see the form entry now, but upon clicking on the form number, there is no insert. 
+!bkpl_missing_piece_code.PNG|thumbnail! 
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~Shun.Kuwashima]- where are you looking? I don't see that form or your screenshot anywhere. Are you on pilot? What insert management form are you looking at?
+
+
+author: shun.kuwashima
+comment: [~stephen.yee@infoimageinc.com],
+Go to the Insert management tab on infotrac pilot, you should see one form entry for 4623 as you mentioned earlier. Click on the '4623' and you should see the same page as shown in my screenshot. We should see piece code 33463 in there, but it is not showing.
+
+
+author: stephen.yee@infoimageinc.com
+comment: This is what I see. I don't see 4623 at all.
+
+!SEFC Insert Management Form - Pilot.PNG!
+
+
+author: shun.kuwashima
+comment: [~stephen.yee@infoimageinc.com] your screenshot shows SEFC, not BKPL
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~Shun.Kuwashima]- Sorry. I just created and updated form 4624.
+
+
+author: shun.kuwashima
+comment: [~stephen.yee@infoimageinc.com] I see form 4624, but again the piece code and inventory id values are still showing N/A, I believe we should be seeing 33463. Also it doesnt look like there is any content if you click on 'DOS Disclosure'. You might need to check with PC if they can assist, or perhaps Peter if there are still questions/issues. ISD does not handle these insert form creations.
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~Shun.Kuwashima]- Can you check now? I think I fixed it.
+
+
+author: shun.kuwashima
+comment: [~stephen.yee@infoimageinc.com] Looks good, I was able to repost successfully since the process was able to pick up the piece code. On Account Management, I'm able to see the insert 'Discretionary Overdraft Service Disclosure' next to the statement for the accounts posted. Please verify, here are the list of accounts from the index file:
+
+43104504
+1720010048
+1720010055
+1720011251
+
+
+author: stephen.yee@infoimageinc.com
+comment: Confirmed [~Shun.Kuwashima]. What is the next step?
+
+
+author: shun.kuwashima
+comment: [~stephen.yee@infoimageinc.com] I would assume client pilot approval. Once that's done, then we can set it up on stage for QA to test.
+
+
+author: stephen.yee@infoimageinc.com
+comment: Hi [~Shun.Kuwashima]- got it. This is approved. I was referring to how do we get this insert to be selectively attached to the Monthly Statements. I was thinking DP needs to reprocess. Or can ISD update? Please let me know and do we need to run parallel?
+
+
+author: shun.kuwashima
+comment: [~stephen.yee@infoimageinc.com] On ISD's end, it's just turning on an e-selective insert flag so that the PUI posting process will know to check the piece code inside the index file (which I already enabled on stage). I believe you would need to get the insert form setup on infotrac stage and then maybe have DP reprocess on stage, however please confirm with IS on those next steps. 
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~Shun.Kuwashima]- Ok got it. Thanks. Please turnover to QA and let me know when complete and the flag is turned on.
+
+
+author: shun.kuwashima
+comment: [~stephen.yee@infoimageinc.com] the flag is already enabled on stage for ISD, however we cannot test anything if the insert is not setup and if we don't have the index file. I suggest checking with IS to confirm if anything needs to be done on their end for stage and also have the insert form created on infotrac stage beforehand so that the index file process can run smoothly without needing to repost. 
+
+Also I think it makes more sense for IS to pass it to QA when they are ready since the index file comes from IS.
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~rumanb]- Please see above and advise.
+
+
+author: shun.kuwashima
+comment: [~stephen.yee@infoimageinc.com] due date 8/5 has passed, do we have a new live date?
+
+
+author: shun.kuwashima
+comment: Parallel passed, selective insert for default statements released onto production.

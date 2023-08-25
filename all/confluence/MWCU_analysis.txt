@@ -1,0 +1,653 @@
+title: MWCU analysis
+body: # **5**
+
+  
+
+  
+
+  
+
+Target release| Release name or number  
+---|---  
+Epic|  
+  
+Document status|
+
+YellowDRAFT  
+  
+Document owner|  
+  
+Designer|
+
+  
+  
+  
+
+#  _ **Prism Root Site Analysis**_
+
+##  **key Points**
+
+ **Client Name**|  Meriwest Credit Union  
+---|---  
+ **Schema**|  Default  
+ **SSO**|  hblogin (standalone JSP page)  
+ **DSO**|  Yes  
+ **Account Types**|
+
+  * NA
+
+  
+ **Application Types**|
+
+  * default
+  * business
+  * etax
+
+  
+ **User-Account Relation**|  one-to-one  
+ **Archival Period**|
+
+  1. default (Combined Statements) : **16  **months
+  2. business(Business Statements): **16  **months
+  3. etax (eTax): **16  **months
+  4. checks:  **16** months
+
+  
+ **Paperless Configuration**|  Non-Selective paperless (inserts for all the
+types of statements)  
+ **on DP change**|
+
+  * Set sso,dso date to null
+  * Password hint Question and answer to null
+  * Set login name to '!ACCT_NUM'
+  * logs out of the 
+
+  
+ **Delivery Preference**|
+
+  * paper
+  * electronic
+
+  
+ **Notification Preference**|  Email  
+ **NP Link Type**|  byUsr (uses **Contact_info** )  
+ **Batch Download**|  N/A  
+ **Menu Tabs**|
+
+  * Statements
+  * checks
+  * Account Disclosures 
+  * Reconciliation
+  * Profile
+  * Exit
+
+  
+  
+  
+
+##  _ **SSO**_
+
+Single Step enrollment process:
+
+  1.  _goes to enrollment-based   on_ :
+    1. if both sso & dso is null
+    2. or default's paperless status is not E
+  2. Shows terms and conditions and disclosures 
+  3. takes email and inserts in both ci_email_addr & ci_email_addr2
+  4. no option to choose electronic or paper
+  5.  _for new accoun_ t:
+    1. creates user and account from account number trimming leading zeros of the 10 digits account num
+    2. creates CI entries with ci_email_addr & ci_email_addr2 with same email id
+    3. creates Paperless entires for all the statement types
+    4. sets SSO date
+
+  
+
+##  _ **DSO**_
+
+DSO has the following features
+
+  1. Log in 
+  2. Register
+  3. Forget Login Name
+  4. Forget Password
+
+##  _ **Login:**_
+
+2 Step login method:
+
+  1. log in with login Name and Password
+  2. Token Recovery
+    1.  **After login, there 's an option to save this device as a personal device, to do so requires the last 4 digits of the SSN**
+  3. DSO FAILED ATTEMPT update failed time and count
+  4. after 5 unsuccessful attempts user gets **locked out** for **30min**
+
+ ****
+
+  
+
+  
+
+##  _ **Register**_
+
+5 step DSO registration process
+
+###  _Step 1:_
+
+Pdf view
+
+###  _Step 2:_
+
+Verify user with:
+
+  1. account Number
+  2. 9 digit Social Security Number
+  3. DOB
+  4. Security Code
+  5. 
+
+### Step 3:
+
+Disclosure Agreement
+
+### Step 4:
+
+Dso information:
+
+  1. Login Name
+  2. Password
+  3. Confirm Password
+  4. Email Address
+  5. Confirm Email Address
+  6. Security Question 
+  7. Answer
+
+### Step 5:
+
+Delivery preference option but only electronic is present
+
+  
+
+Enrollment Successful page, if user clicks continue  **takes the user directly
+to token recovery step.**
+
+  
+
+  
+
+  
+
+  
+
+  
+
+##  _ **Forget Login Name:**_
+
+2 steps forget login name recovery process if both steps are validated then
+sends an email with the login name
+
+  1. Step 1 validate with the Account number, Last 4digits of SSN
+  2. Step2 validates security question answer 
+
+  
+
+  
+
+##  _ **Forget Password:**_
+
+2 step forget password recovery process if success lets the user provide a new
+password
+
+  1. step 1, validates with Login Name, Account Number, Last 4 digits of SSN
+  2. steps 2, security Question and answer validate with new password and confirm password
+
+  
+
+  
+
+##  _ **Home:**_
+
+  1. No account selection dropdown as one to one
+  2. no available statements  ** __**
+
+  3. if **file_type  **on ARCH_FILE table it only shows closing date not a clickable link
+
+  4. clickable "PDF" option is only available for AFP type file
+
+ _ ****_
+
+  
+
+  
+
+##  _ **Account Disclosures:**_
+
+opens PDF in new tab
+
+  
+
+##  _ **Reconciliation:**_
+
+opens HTML in tab
+
+ _ ****_
+
+  
+
+##  _ **Profile:**_
+
+  1. option to update delivery preference, if switched to paper (can be considered as unenrolled as sets sso and dso date to null) also dso users will have to enroll again.
+    1. Set sso,dso date to null
+    2. Password hints and answers to null
+    3. Set login name '!ACCT_NUM'
+    4. Set contact_info email1,email2 null
+  2.  if there are both default and business  statements available for the user shows two email address one for default from ci_email_add another for business from ci_email_addr2 
+  3. dso user can update security questions, password
+  4. for DSO users show user name
+
+  
+
+##  _ **Exit:**_
+
+logs out the user
+
+  
+
+#  _ **Prism MSM Site Analysis**_
+
+  
+
+The following tabs are available for admin users:
+
+  1. Account Mgmt.
+  2. E-mail Proofing
+  3. Upload inserts
+  4. ViewTrac Marketing Email
+  5. Reports
+  6. Admin
+  7. Exit
+
+##  _ **Account Mgmt.:**_
+
+  1. can search using account number/email address
+  2. admin can change the Delivery preference
+    1. Sets all the paperless entries to B
+  3. Admin can reset password
+  4. Admin can "Stop a user's Direct Sign-on access"
+    1. Remove dso date
+    2. Set sess_login_id = !acct_num
+    3. Set security question and answer to null
+    4. Set all paperless to B
+    5. On contact_info table set emailadd1, emailadd2, valid1, valid2 to null
+
+  
+
+##  _ **E-Mail Proofing:**_
+
+Available templates are:
+
+  1. combined Statements
+  2. Business Statements
+  3. eTax
+  4. welcome
+  5. Login Name Retrieval
+
+Available System Variables are:
+
+  1. member_name
+  2. Form_name (etax)
+  3. Login_name
+
+  
+
+##  _ **Upload inserts:**_
+
+Standard upload inserts available for default, business only
+
+  
+
+##  _ **Reports:**_
+
+all the reports are standard and supported
+
+  1. E-mail Address collection report shows both email ci_email_addr, ci_email_addr2
+  2. Registered users shows month-wise and total 
+
+  
+
+##  _ **Admin:**_
+
+Standard admin user creation, update and delete module.
+
+  
+
+##  _ **Exit:**_
+
+logout option for admin users
+
+#  ** _Analysis Summary_**
+
+##  ** _Root_**
+
+Scope| Feature| MWCU Business| Hypercube| Note  
+---|---|---|---|---  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+ **SSO**
+
+|  SSO vendor|
+
+  1. uses hblogin.jsp page
+  2. one step sso login
+  3. passes only  "hbvalue" param from sso request
+  4. uses login_id as 0 padded 10 character account number
+  5. uses own hashing class
+
+|  84 incomplete Supported  85 complete Not Supported | doesn't match with any
+existing sso methods  
+user Enrollment logic|
+
+  1. both SSO and DSO has to be null
+  2. or Paperless status has to be something other than 'E'
+
+|  48 complete Supported  49 incomplete Not Supported | Not exactly by this
+logic but we support dso signed up uses doesn't have to go through sso
+enrollment also if they switch to paper they remove sso and dso date which we
+can treat as "unenroll on delivery pref change"  
+Enrollment Step | one step enrollment which shows disclosure with fields to
+provide NP|  1 complete Supported  2 incomplete Not Supported |
+
+will be split into two enrollment steps:
+
+  1. disclosure
+  2. Delivery and notify pref
+
+  
+  
+  
+no option to view delivery preference|  3 incomplete Supported  4 complete Not
+Supported | will view only electronic on step#2  
+inserts two email address (ci_email_addr, ci_email_add2)|  5 incomplete
+Supported  6 complete Not Supported |  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+**DSO**  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+|  Login| Login with  Login Name and password|  7 incomplete Supported  8
+complete Not Supported |  
+  
+option to save as recognized device using last 4 digits of ssn (token
+Recovery)|  9 incomplete Supported  10 complete Not Supported | Replaced with
+MFA , which will send OTP on each login.  
+Registration  
+  
+  
+  
+  
+|  **Step1** : PDF verification |  11 complete Supported  12 incomplete Not
+Supported |  
+  
+  
+**Step 2** : verify user with:
+
+  1. account Number
+  2. 9 digit Social Security Number
+  3. DOB
+  4. Security Code
+
+|  13 complete Supported  14 incomplete Not Supported |  
+  
+**Step 3:**  Disclosure agreement|  15 complete Supported  16 incomplete Not
+Supported |  
+  
+  
+**Step 4:**
+
+Dso information:
+
+  1. Login Name
+  2. Password
+  3. Confirm Password
+  4. Email Address
+  5. Confirm Email Address
+  6. Security Question 
+  7. Answer
+
+|  17 complete Supported  18 incomplete Not Supported |
+
+_Concern point:  _
+
+DSO has the following security questions which are not supported on the
+hypercube.
+
+  * "What was the name of your High School?"
+  * "In what city was your High School?"
+  * "What is your favorite hobby?"
+  * "Company where you had your first job."
+
+  
+ **Step 5** : Delivery preference|  19 complete Supported  20 incomplete Not
+Supported |  
+  
+sends welcome email for DSO only|  21 incomplete Supported  22 complete Not
+Supported | if the welcome email feature is enabled, hypercube sends for both
+dso and sso.  
+on successful registration takes the user to the _****_page , which means auto
+login  |  23 incomplete Supported  24 complete Not Supported | auto login is
+not supported, user will be redirected to log in page to log in.  
+Forget Login Name  
+  
+|  **Step 1** : validate with the Account number, Last 4digits of SSN|  25
+complete Supported  26 incomplete Not Supported |  
+  
+  
+**Step2:** validates security question answer
+
+|  27 complete Supported  28 incomplete Not Supported |  
+  
+Sends login name to email (to ci_email_addr)|  29 complete Supported  30
+incomplete Not Supported |  
+  
+Forget password|
+
+ **step 1:  ** validates with Login Name, Account Number, Last 4 digits of SSN
+
+|  31 complete Supported  32 incomplete Not Supported |  
+  
+  
+**steps 2:  ** security Question and answer validate with new password and
+confirm password
+
+|  33 complete Supported  34 incomplete Not Supported |  
+  
+**Statements**|  Homepage (menu item)|
+
+shows all statements with inserts
+
+|  35 complete Supported  36 incomplete Not Supported |  
+  
+  
+|  
+| _****_for no available statements|  37 complete Supported  38 incomplete Not
+Supported |  
+  
+**Checks**|  Check (menu item)| vendor: infoimage|  39 complete Supported  40
+incomplete Not Supported | will be moved under **statements** tab  
+  
+ **Account  Disclosures **
+
+|  
+| opens in new tab|  41 complete Supported  42 incomplete Not Supported |  
+  
+  
+**Reconciliation**
+
+|  
+|  opens in new tab|  43 complete Supported  44 incomplete Not Supported |  
+  
+**Profile**|  Notification Preference|
+
+  * if there are both default and business statements available for the user shows two email address one for default from ci_email_add another for business from ci_email_addr2.
+
+click here to see
+
+  
+
+|  45 incomplete Supported  46 complete Not Supported | current standard
+doesn'tsupport multiple email  
+no option to update notification preference|  47 incomplete Supported  0
+complete Not Supported |  
+  
+Delivery preference|
+
+can switch to paper, if switched to paper:
+
+  1. Set sso,dso date to null
+  2. Password hints and answers to null
+  3. Set login name '!ACCT_NUM'
+  4. Set contact_info email1,email2 null
+  5. set all paperless entries to 'B'
+
+|  66 incomplete Supported  67 complete Not Supported | we can support only
+setting sso as null  
+  
+| Unenroll from SSO & DSO on delivery preference change|  68 incomplete
+Supported  69 complete Not Supported | we only support unenroll from SSO  
+ **Profile(DSO)**|  Update Security Question&Answers| from profile page user
+can update security question and answers|  70 incomplete Supported  71
+complete Not Supported |  
+  
+  
+| Update pasword| from profile page user can update password|  72 incomplete
+Supported  73 complete Not Supported |  
+  
+**Exit**|  
+|  Performs log out|  74 complete Supported  75 incomplete Not Supported |  
+  
+  
+|  
+|  
+|  
+|  
+  
+  
+## **_MSM_**
+
+Scope| Feature| EQBK business| Infotrac| Note  
+---|---|---|---|---  
+ **Account Management**|  Account Search| Search account by account number and
+Email Address|  104 complete Supported  105 incomplete Not Supported |  
+  
+Delivery Preference|
+
+  * Can switch to Paper only
+  * changes all the paperless entires to 'B'
+
+|  106 complete Supported  107 incomplete Not Supported |  
+  
+delivery preference change unenroll a user from both dso and sso |  76
+incomplete Supported  77 complete Not Supported |  
+  
+Notification Preference|
+
+  * can only view Email Address
+  * shows two email address
+
+|  108 complete Supported  109 incomplete Not Supported | show two email
+address is not supported  
+Stop DSO access|
+
+  * Remove dso date
+  * Set sess_login_id = !acct_num
+  * Set hint que and ans to null
+  * Set all paperless to B,N
+  * On contact_info table set emailadd1, emailadd2, valid1, valid2 to null
+
+|  78 incomplete Supported  79 complete Not Supported |  
+  
+**Email Proofing**|  Create/Update email template|
+
+  1. combined Statements
+  2. Business Statements
+  3. eTax
+  4. welcome
+  5. Login Name Retrieval
+
+|  114 complete Supported  115 incomplete Not Supported |  
+  
+**Upload insert**|  insert|  
+|  116 complete Supported  117 incomplete Not Supported |  
+  
+**Reports**|  
+|  Latest stats, User login Activity, AI login activity, paperless, Registered
+Users,Marketing inserts report|  118 complete Supported  119 incomplete Not
+Supported |  
+  
+  
+| Email address collection|  80 incomplete Supported  81 complete Not
+Supported | shows two email address from ci_email_addr, ci_email_addr2  
+ **Administration**|  admin user create/update/delete| User creation and role
+management|  120 complete Supported  121 incomplete Not Supported |  
+  
+  
+  
+
+  
+
+

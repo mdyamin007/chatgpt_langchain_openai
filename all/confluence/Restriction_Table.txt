@@ -1,0 +1,333 @@
+title: Restriction Table
+body: Restriction is table planned to use some special type of restrictions for some
+cids. Following are 2 special requirements that are known for now.  
+1\. ACBK want us to identify product type 60 users from their auth file
+processing and disable modifying delivery preference (paperless state) from
+electronic to paper of those particular users.  
+2\. SEFC would like to have Email opt-out option for their Mortgage statement
+customers. For mortgage users, we have to provide an option such that they can
+mark themselves not to receive emails only for mortgage statements. At this
+point, users are still on electronic and do not want to receive emails.  
+Per above requirements, below is the proposed table to handle such kind of
+special requirements. In future, if we need additional columns, we can add and
+make them as optional parameters.
+
+ **RESTRICTION table:**
+
+RID| Org_id| Usr_id| Acct_id| Restriction_about| Restriction_type  
+---|---|---|---|---|---  
+Unique id for table. It is a generated from a sequence R_ID_SEQ|  
+|  
+|  
+| Special purpose field e.g. EtoP, statement types on which the restriction is
+applicable| Can be  
+'disableDP' or  
+'emailoptout'  
+or  
+[new restrictions in future]  
+  
+ **Sequence:**
+
+  
+
+CREATE SEQUENCE " DEV_RABO "."RESTRICTION_ID_SEQ" MINVALUE 1 MAXVALUE
+999999999999999999999999999 INCREMENT BY 1 START WITH 1 CACHE 100 NOORDER
+NOCYCLE ;
+
+  
+  
+CREATE TABLE "DEV_CU"."RESTRICTION"  
+( "R_ID" NUMBER NOT NULL ENABLE,  
+"ORG_ID" NUMBER NOT NULL ENABLE,  
+"USR_ID" NUMBER NOT NULL ENABLE,  
+"ACCT_ID" NUMBER,  
+"RESTRICTION_TYPE" VARCHAR2(512 BYTE) NOT NULL ENABLE,  
+"RESTRICTION_ABOUT" VARCHAR2(30 BYTE),  
+CONSTRAINT "RESTRICTION_PK" PRIMARY KEY ("R_ID")  
+USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS  
+STORAGE(INITIAL 4194304 NEXT 4194304 MINEXTENTS 1 MAXEXTENTS 2147483645  
+PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT)  
+TABLESPACE "USERS" ENABLE,  
+CONSTRAINT "RESTRICTION_FIN_ACCOUNT_FK1" FOREIGN KEY ("ACCT_ID")  
+REFERENCES "DEV_CU"."FIN_ACCOUNT" ("ACCT_ID") ENABLE,  
+CONSTRAINT "RESTRICTION_USR_FK1" FOREIGN KEY ("USR_ID")  
+REFERENCES "DEV_CU"."USR" ("USR_ID") ENABLE  
+) PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 NOCOMPRESS LOGGING  
+STORAGE(INITIAL 4194304 NEXT 4194304 MINEXTENTS 1 MAXEXTENTS 2147483645  
+PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT)  
+TABLESPACE "USERS" ;
+
+  
+
+ **RESTRICTION_HISTORY table:**
+
+RH_ID| Org_id| Usr_id| Acct_id| Restriction_about| Restriction_type|
+Modified_by| Modified_date| Status  
+---|---|---|---|---|---|---|---|---  
+Unique id for table. It is a generated from a sequence RH_ID_SEQ|  
+|  
+|  
+| Special purpose field e.g. EtoP, statement types on which the restriction is
+applicable| Can be  
+'disableDP' or  
+'emailoptout'  
+or  
+[new restrictions in future]| user id of the modifier| time of the
+modification| Status of the restriction e.g. 'A' (active) or 'C' (removed)  
+  
+ ** **Sequence:****
+
+CREATE SEQUENCE " DEV_RABO "."RESTRICTION_HISTORY_ID_SEQ" MINVALUE 1 MAXVALUE
+999999999999999999999999999 INCREMENT BY 1 START WITH 1 CACHE 100 NOORDER
+NOCYCLE ;
+
+ **  
+  
+** **Sample data:**
+
+  
+
+R_ID| Org_id| Usr_id| Acct_id| Restriction_about| Restriction_type  
+---|---|---|---|---|---  
+551| 17751| 23668274| 27917077| EtoP| disbaleDP  
+552| 17751| 22395617| 27916369| EtoP| disbaleDP  
+553| 17751| 23668274| 27917077| default| emailoptout  
+554| 16848| 22610762| 22610752| mortgage| emailoptout  
+555| 16848| 22610763| 22610742| mortgage| emailoptout  
+      
+    
+      
+    
+
+  
+
+CREATE TABLE "DEV_CU"."RESTRICTION_HISTORY"  
+   (    "RH_ID" NUMBER NOT NULL ENABLE,  
+"ORG_ID" NUMBER NOT NULL ENABLE,  
+"USR_ID" NUMBER NOT NULL ENABLE,  
+"ACCT_ID" NUMBER,  
+"RESTRICTION_TYPE" VARCHAR2(512 BYTE) NOT NULL ENABLE,  
+"RESTRICTION_ABOUT" VARCHAR2(30 BYTE),  
+"MODIFIED_BY" NUMBER NOT NULL ENABLE,  
+"MODIFIED_DATE" DATE NOT NULL ENABLE,  
+"STATUS" VARCHAR2(2 BYTE),  
+     CONSTRAINT "RESTRICTION_HISTORY_PK" PRIMARY KEY ("RH_ID")  
+  USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS  
+  STORAGE(INITIAL 4194304 NEXT 4194304 MINEXTENTS 1 MAXEXTENTS 2147483645  
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT)  
+  TABLESPACE "USERS"  ENABLE,  
+     CONSTRAINT "RESTRICTION_HISTORY_FIN_A_FK1" FOREIGN KEY ("ACCT_ID")  
+      REFERENCES "DEV_CU"."FIN_ACCOUNT" ("ACCT_ID") ENABLE,   
+     CONSTRAINT "RESTRICTION_HISTORY_USR_FK1" FOREIGN KEY ("USR_ID")  
+      REFERENCES "DEV_CU"."USR" ("USR_ID") ENABLE  
+   ) PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 NOCOMPRESS LOGGING  
+  STORAGE(INITIAL 4194304 NEXT 4194304 MINEXTENTS 1 MAXEXTENTS 2147483645  
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT)  
+  TABLESPACE "USERS" ;
+
+  
+
+    
+    
+      
+    
+
+ **Infoservice APIs:**  
+ **Retrieve Restrictions**
+
+POST  
+/v1/restriction/getRestrictionRecords/{cid  
+}
+
+Query inside code should be as below. Based on the request body parameters,
+the query should be constructed dynamically. The consumer of web service
+should decide what values should be passed to the query.  
+For example,
+
+select * from restriction where restriction_type='emailoputout' and org_id=''
+and usr_id='' and acct_id='' and restriction_about='' +*and new_param=''*+;
+
+Request Body:  
+1)  
+`{  
+`
+
+"usr_id": "1234",  
+"acct_id": "1223456",  
+"restriction_about": "default",  
+"restriction_type": "emailoptout"  
+}
+
+  
+2)
+
+{  
+    "usr_id": "1234",  
+    "acct_id": "1223456",  
+    "restriction_type": "emailoptout"  
+}
+
+  
+3)
+
+{  
+    "usr_id": "1234",  
+    "acct_id": "1223456",  
+    "restriction_type": "disableDP"  
+}
+
+  
+4)
+
+{  
+    "usr_id": "1234"  
+}
+
+Response:  
+1)
+
+{  
+    "restrictions": [  
+        {  
+            "r_id": "1",  
+            "org_id": "demo",  
+            "usr_id": "1234",  
+            "acct_id": "1223456",  
+            "restriction_about": "default",  
+            "restriction_type": "emailoptout"  
+        }  
+    ]  
+}
+
+  
+2)
+
+{  
+    "restrictions": [  
+        {  
+            "r_id": "1",  
+            "org_id": "demo",  
+            "usr_id": "1234",  
+            "acct_id": "1223456",  
+            "restriction_about": "default",  
+            "restriction_type": "emailoptout"  
+        },  
+        {  
+            "r_id": "2",  
+            "org_id": "demo",  
+            "usr_id": "1234",  
+            "acct_id": "1223456",  
+            "restriction_about": "mortgage",  
+            "restriction_type": "emailoptout"  
+        }  
+    ]  
+}
+
+  
+3)
+
+{  
+    "restrictions": [  
+        {  
+            "r_id": "1",  
+            "org_id": "demo",  
+            "usr_id": "1234",  
+            "acct_id": "1223456",  
+            "restriction_type": "disableDP",  
+            "restriction_about": "EtoP"  
+        }  
+    ]  
+}
+
+  
+4)
+
+{  
+    "restrictions": [  
+        {  
+            "r_id": "1",  
+            "org_id": "demo",  
+            "usr_id": "1234",  
+            "acct_id": "1223456",  
+            "restriction_about": "default",  
+            "restriction_type": "emailoptout"  
+        },  
+        {  
+            "r_id": "2",  
+            "org_id": "demo",  
+            "usr_id": "1234",  
+            "acct_id": "1223456",  
+            "restriction_about": "mortgage",  
+            "restriction_type": "emailoptout"  
+        },  
+        {  
+            "r_id": "3",  
+            "org_id": "demo",  
+            "usr_id": "1234",  
+            "acct_id": "1223456",  
+            "restriction_type": "disableDP",  
+            "restriction_about": "EtoP"  
+        }  
+    ]  
+}
+
+ **Create**
+
+POST  
+/v1/restriction/insertRestrictionRecord/{cid  
+}
+
+  
+inserts a restriction record
+
+Request Body:  
+1)
+
+{  
+    "usr_id": "1234",  
+    "acct_id": "1223456",  
+    "restriction_about": "default",  
+    "restriction_type": "emailoptout",  
+    "modified_by": "<Hypercube user id> or <Infotrac Username>"  
+}
+
+  
+2)
+
+{  
+    "usr_id": "1234",  
+    "acct_id": "1223456",  
+    "restriction_type": "disableDP",  
+    "restriction_about": "EtoP",  
+    "modified_by": "<Hypercube user id> or <Infotrac Username>"  
+}
+
+ **DELETE**
+
+DELETE - /v1/restriction/deleteRestrictionRecord/{cid  
+}/{r_id  
+}/{modified_by  
+}
+
+deletes a restriction record
+
+Request URL Suffix:  
+`  
+`
+
+/v1/restriction/deleteRestrictionRecord/sefc/1001/<Hypercube user id> or
+<Infotrac Username>
+
+`  
+`
+
+ **PUI email handler update (Notifypref Email handler):**  
+We have to update EmailQuery class to query restriction table when we have
+restriction flags defined in conf file. This is needed to support email opt-
+out functionality.  
+ACBK CIF file processing:  
+We have to update cif file processing logic to insert prodcuttype60 entries on
+to the database. Hypercube/Infotrac will use infoservice GET API to apply
+restriction on UI.
+
+

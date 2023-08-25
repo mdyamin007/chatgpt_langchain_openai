@@ -1,0 +1,233 @@
+title: FLCU - StmtPDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133565-C00.01-V20541
+
+Processing Scripts to modify:
+ flcu_stmt_process.sh
+
+Data Files to use:
+ FLCU_STMT_043021.zip.pgp
+
+
+
+*NOTE:*
+
+This applications runs on RH2, so testing will be performed on RHS for all job_sel options.
+
+
+
+
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+/z/dsi_pdfi_testing/flcums1/new has zip files after update.
+
+/z/dsi_pdfi_testing/flcums1/old has zip files with production code.
+
+data file:
+
+/z/dsi_pdfi_testing/flcums1/data/FLCU_STMT_053122.zip.pgp
+
+/z/dsi_pdfi_testing/flcums1/data/SCORECARD_053122.txt.pgp
+
+
+
+Parallel id:20220622003426
+
+
+
+Thanks
+
+Rony
+
+
+
+
+
+
+author: william.kong
+comment: [~rony]: Comparison failed. There is a vertical line shifting issue for FLCU. Please see attached document (diff_05312022_9587841_73343.pdf.pdf).
+
+This was a similar problem we had for ELCU in the May 31, 2022 cycle. Nothing was changed and we just waited for the June 30, 2022 cycle production cycle to run and the vertical line issue disappeared.
+
+
+
+I wonder if this is the same situation, can you re-run FLCU MS1 cycle 6/30/2022 in parallel again on the RHS server? I'll back-up the production version for now. Please ensure the message manager is the same in parallel before re-running cycle 6/30 in parallel. Le told me as long as InfoTRAC Stage Message Manager does not have an existing campaign, then the parallel processing will pull the production message.
+
+
+
+
+
+
+author: rony
+comment: Hi [~William.Kong]
+
+processing done . It's in /z/pdf_afp/flcu/flcums1/zip/ folder.
+
+
+
+[~Igor.Khosid]
+
+Thanks
+
+
+author: william.kong
+comment: [~rony]: Much better. Weird, my assumption was right. Looks like the vertical line spacing issue is gone after re-running a more current cycle.
+
+
+
+[~Igor.Khosid]: I've ran the pdf_compare.pl utility to compare. I had to tweak the pixel setting from 5 to 8 to get zero differences. Because of the image / psegs, I had to increase the pixel tolerance level. I've took the liberty to scan more files. Instead of 6,000, i went up to 10,000.
+
+
+
+Results are in:
+
+ca-isis-pr-04:/d/pdf_compare/result_flcums1/pdf_compare_rpt.txt
+
+
+
+Total PDF Files Scanned: 10000
+allowedDifferenceInPercentPerPage: 8:
+Thread Count: 32
+
+Total PDF Files with Differences: 0
+WARNING: We did not compare ALL the pdfs!
+ pdf_compare.pl will only process the first 10000 pdf files out of the total 137847 pdfs
+Start Time: Thu Jul 21 10:07:31 PDT 2022
+Finish Time: Thu Jul 21 12:44:31 PDT 2022
+
+
+
+
+author: william.kong
+comment: [~rony]: Sorry to do this. I noticed that print & estmt step was not ran in on RHS parallel. Can you run it just to make sure there is no issue. We need to do afpcompare to make sure it is ok.
+
+
+
+
+
+
+
+
+
+
+author: rony
+comment: Hi [~William.Kong] [~Igor.Khosid]
+
+This also ran ok for s,f option.
+
+
+
+Thanks
+
+
+author: william.kong
+comment: [~Igor.Khosid]: I ran afpcompare yesterday and all is good. No differences detected.
+
+
+author: william.kong
+comment: [~Igor.Khosid]/[~andreav]: Please advise status on this one as well. Would like to target Aug 16, 2022 'internal' release as well if at all possible.
+
+
+author: JIRAUSER11104
+comment: [~William.Kong] [~Igor.Khosid] I ran the script. I'll post the result after a while.
+
+
+
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+{code:sh}
+perl pdf_compare.pl flcums1_prod/ flcums1_parallel/ result_flcums1 -pixels 8 -threads 32
+{code}
+RESULT >> /d/pdf_compare/result_flcums1/pdf_compare_rpt.txt
+{quote}
+Total PDF Files Scanned: 6000
+allowedDifferenceInPercentPerPage: 8:
+Thread Count: 32
+
+Total PDF Files with Differences: 0
+WARNING:  We did not compare ALL the pdfs!
+          pdf_compare.pl will only process the first 6000 pdf files out of the total 137847 pdfs
+Start Time: Wed Aug 10 12:00:38 PDT 2022
+Finish Time: Wed Aug 10 13:34:34 PDT 2022
+{quote}
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: Thank you for your update!
+
+
+
+[~rony]: Please prep File Transfer Form for code release. This project will not need to go through Parallel Run. As part of this release, please also inform DP to start using RHS server to run this job moving forward via sending email to[dp@infoimageinc.com|mailto:dp@infoimageinc.com]and[is@infoimageinc.com|mailto:is@infoimageinc.com]
+
+
+author: william.kong
+comment: [~rony]:Please prep File Transfer Form for code release. This project will not need to go through Parallel Run. As part of this release, please also inform DP to start using RHS server to run this job moving forward via sending email to[dp@infoimageinc.com|mailto:dp@infoimageinc.com]and[is@infoimageinc.com|mailto:is@infoimageinc.com]; Please advise if this can be released today (8/17), if not, we should release by Monday, 8/22. Please fix due date accordingly.
+
+
+author: rony
+comment: Hi [~TunA]
+
+Need your help to release.
+
+[^IS_PROGRAM_TRANSFER_FORM.doc]
+
+Hi, [~William.Kong] modified the procs file to use rhs.
+
+
+
+
+
+
+author: tuna
+comment: Hi [~rony],
+
+Following codes have been released.
+
+Thanks
+
+Tun
+
+
+
+20220822090455 08/22/2022 ronyD IS-1197 FLCU - StmtPDFi Conversion to AFP2PDF Python [InHse]
+
+[main@rhs ~]$ ll /d/is/cvs/xfer/ronyD/
+total 816
+-rwxrwxrwx 1 ronyD DSI 302357 Aug 22 06:50 FLCUMS11.dfa
+-rwxrwxrwx 1 ronyD DSI 1497 Aug 22 06:50 flcums1.control
+-rwxrwxrwx 1 ronyD DSI 424 Aug 22 06:50 flcums1_pdf.control
+-rwxrwxrwx 1 ronyD DSI 2453 Aug 22 07:00 flcums1.procs
+-rwxrwxrwx 1 ronyD DSI 17210 Aug 22 06:50 flcu_stmt_process.sh
+
+
+
+[~William.Kong]
+
+
+author: JIRAUSER11104
+comment: Hi [~TunA], please update the status of this story based to SOP.
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: I will assist [~rony]/[~TunA]on this one.
+
+
+
+[~rony]: I've updated the status to "Done" since Tun completed the code release yesterday and I've informed DP.

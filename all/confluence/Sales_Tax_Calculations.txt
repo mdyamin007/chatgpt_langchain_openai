@@ -1,0 +1,124 @@
+title: Sales Tax Calculations
+body: ## General Rule
+
+  1. We need to charged the sales tax for any mail piece that goes to state of CA and TX for all print jobs regardless where the client is located.
+  2. We need to charged the sales tax on the E-jobs for those client who is located in state of TX only.
+  3. We need to charged the sales tax on all materials for those client who is located in state of CA and TX. In addition, for those clients who is not located in CA and TX but has requested to store their material in our TX warehouse, we will need to charge the TX sales tax on it.
+  4. Printing Jobs ( CA Clients)
+    1. We use the Client's actual address to determine the CA Sales Tax rate and use our TX facility address to determine the TX sales tax rate for any client who is located in the state of CA.
+    2. Accounting will provide taxable items for state of CA and TX.
+    3. We use the Zip report in the PRP system to determine the Taxable % for the state of CA and TX. ( total mail count went to CA or TX / total Mail count for the month)
+    4. Calculation for the Taxable Amount of each state = total charges of taxable items for the month * % ( we get from d)
+    5. Final sales tax amount = total taxable amount by state * the sales tax rate of the state
+  5. E-jobs ( includes the commercial CD jobs) ( CA Clients). No Sales tax need to be charged for all E-jobs for customers who is located in CA since CA does not tax on online services.
+  6. Per-print Material ( CA clients)
+    1. 100% taxable for the clients who are located in CA.
+  7. Printing Job ( Tax client)
+    1. The TX tax rate is 8.25% for the entire state, so we can use the client address and use our Menlo park facility address to determine the CA sales tax rate for the clients who are located in TX.
+    2. Accounting will provide the taxable items for the state of TX and CA.
+    3. We use the Zip report in the PRP system to determine the Taxable % for the state of CA and TX. ( total mail count went CA or TX / total Mail count for the month)
+    4. Calculation for the Taxable Amount of each state = total charges of taxable items for the month * % ( we get from d)
+    5. Final sales tax amount = total taxable amount by state * the sales tax rate of the state
+  8. E-jobs ( includes the commercial CD jobs) ( TX Clients)
+    1. All E-jobs are 100% taxable for those clients who are located in the state of TX.
+  9. Per-print Material ( TX clients)
+    1. 100% taxable for the clients who are located in CA.
+  10. Printing Jobs ( non CA & TX client)
+    1. We use both of our CA and TX facility address to determine the sales tax rate for those clients.
+    2. Accounting will provide the taxable items for the state of TX and CA.
+    3. We use the Zip report in the PRP system to determine the Taxable % for the state of CA and TX. ( total mail count went CA or TX / total Mail count for the month)
+    4. Calculation for the Taxable Amount of each state = total charges of taxable items for the month * % ( we get from d)
+    5. Final sales tax amount = total taxable amount by state * the sales tax rate of the state
+  11. E-jobs.
+    1. All E-jobs are non-taxable for those client.
+  12. Pre-Print Material
+    1. We only charged TX sales tax if the client has the pre-print material stored in our TX warehouse. - in the current practice, we charged a TX sales tax on all pre-print material for all clients who use our TX plant for the regular production.
+
+  
+
+## Suggestions:
+
+We can leave those pre-print material invoices for the customers who is not
+located either in TX and CA in a manual process since the rule is very unique
+for the state of TX.  
+  
+
+## PRP Zip Report:
+
+It can actually be found by running following query against the Print Oracle
+DB:
+
+    
+    
+    select sum(acct) as acct_sum, state 
+    from allstatesinfo 
+    where procid in (?)
+    and state in ('ca', 'tx')
+    group by state 
+    order by state;
+    
+
+  
+
+## Calculate taxable % for the state of CA and TX
+
+(1) Single App Id
+
+PRP = (Total # of Mailpieces delivered to CA)/(Total Mailpieces delivered)
+
+e.g.  
+App ID: Daily Letter A  
+CA 10  
+Total 100
+
+taxiblePercentageCA = 10/100 = 10%
+
+(2) Multiple App Id
+
+PRP% = (Total # of Mailpieces delivered to CA Across All App Id)/(Total
+Mailpieces delivered Across All App Id)
+
+e.g.  
+App ID: Daily Letter A  
+CA 10  
+Total 100
+
+App ID: Daily Letter B  
+CA 90  
+Total 100
+
+taxiblePercentageCA = (10 + 90)/(100+100) = 50%  
+  
+
+## Calculate postage due and invoice total
+
+    
+    
+    Postage Due = Postage Paid - Postage Used
+    If "Postage Due" > 0, "Invoice Total" should include "Postage Due".
+    If "Postage Due" < 0,  only when user check postage check box, update Invoice Total = Invoice Total - Postage Due.
+    
+
+  
+
+## Calculate CA/TX Tax and Invoice total
+
+    
+    
+    caTax = ItemSubTotal * caTaxRate * itemQty(%)
+    txTax = ItemSubTotal * txTaxRate  * itemQty(%)
+    
+    totalCATax  = sum (caTax)
+    totalTXTax  = sum (txTax)
+    Invoice Total =  totalCATax + totalTXTax  + subTotal
+    
+
+  
+
+###  Attachments
+
+  
+
+250250250250250250
+
+

@@ -1,0 +1,204 @@
+title: SymXchange Estmt Servlet
+body: ## Objectives
+
+* * *
+
+## Create an asynchronous servlet that will take in any updates of delivery
+preference or email changes and pass the request to the InfoService API.
+
+  
+
+## Database Table
+
+* * *
+
+Column | Type| Restriction| Notes  
+---|---|---|---  
+SYMLOG_ID| NUMBER| NOT NULL| Primary Key  
+ORG_ID| VARCHAR2(20)| NOT NULL| Organization id  
+ACCT_ID| NUMBER| NOT NULL| Account ID  
+USER_ID| NUMBER|  
+| User ID  
+OLD_VALUE| VARCHAR2(50)| NOT NULL| Old value of change  
+NEW_VALUE| VARCHAR2(50)| NOT NULL| New value of change  
+RESPONSE| VARCHAR2(50)|  
+| Response from API  
+FAILURE_REASON| VARCHAR2(50)|  
+| Description of Failure  
+STATUS| VARCHAR2(50)|  
+| Status of the request  
+MESSAGE_ID| VARCHAR2(50)| NOT NULL| UUID for reference  
+LAST_MODIFIED| DATE| NOT NULL| last modified time  
+SOURCE| VARCHAR(25)| NOT NULL| Where request is originating from (PUI,
+Hypercube, Infotrac, etc)  
+UPDATE_TYPE| VARCHAR(25)| NOT NULL| Type of request (email update, delivery
+preference update, etc)  
+  
+## InfoService API End Points
+
+* * *
+
+####  PUT /infoservice/api/v1/core/updatecore[/](http://pd-
+pilot1.infoimageinc.com:8580/infoservice/#!/accountV1/updateAcct_put_2)account/{cid}
+
+This API will update the account enrollment status (electronic/paper/both) and
+notification preference (email/sms) on the core. This is not specific to any
+vendor. All the applications - infotrac/hypercube/api/prism will make a call
+to this api to update the delivery preference and notification preference on
+the core. Based on the cid, the api will read the config from the properties
+file and determine which core (FiServ/FIS/Jack Henry) to call
+
+  
+
+Name
+
+|
+
+Type
+
+|
+
+Required
+
+|
+
+Parameter Type  
+  
+---|---|---|---  
+  
+cid
+
+|
+
+String
+
+|
+
+Y
+
+|
+
+path  
+  
+payload
+
+|
+
+Json
+
+|
+
+Y
+
+|
+
+query  
+  
+  
+
+paylod will be a json object having account_id, account number, account type,
+enrollment status (Paper, Paperless, Both), email, sms details.
+
+  
+
+#### GET /infoservice/api/v1/core/transactionreport/{cid}/csv/download
+
+  
+
+This API is used to fetch the transaction status report of success/failed
+transactions
+
+           
+
+Name
+
+|
+
+Type
+
+|
+
+Required
+
+|
+
+Parameter Type  
+  
+---|---|---|---  
+  
+cid
+
+|
+
+String
+
+|
+
+Y
+
+|
+
+path  
+  
+transactionStatus
+
+|
+
+String
+
+|
+
+Y
+
+|
+
+query  
+  
+startDate(Format YYYY-MM-DD)
+
+|
+
+String
+
+|
+
+Y
+
+|
+
+query  
+  
+endDate(Format YYYY-MM-DD)
+
+|
+
+String
+
+|
+
+Y
+
+|
+
+query  
+  
+fileName
+
+|
+
+String
+
+|
+
+Y
+
+|
+
+query
+
+  
+  
+  
+  
+
+

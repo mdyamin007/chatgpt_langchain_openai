@@ -1,0 +1,105 @@
+title: Installing X-Pack on Elasticsearch
+body: **To install X-Pack in Elasticsearch** :  
+Stop Elasticsearch at first, then run the following command
+
+  
+
+bin/elasticsearch-plugin install x-pack
+
+    
+    
+      
+    
+
+  
+Confirm that you want to grant X-Pack additional permissions.
+
+Tip  
+Specify the --batch option when running the install command to automatically
+grant these permissions and bypass these install prompts.
+
+X-Pack needs these permissions to set the threat context loader during install
+so Watcher can send email notifications.
+
+  
+
+ **`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`**  
+ **`WARNING: plugin requires additional permissions`**  
+ **`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`**
+
+  
+
+  * java.lang.RuntimePermission [accessClassInPackage.com](http://accessClassInPackage.com).sun.activation.registries
+  * java.lang.RuntimePermission getClassLoader
+  * java.lang.RuntimePermission setContextClassLoader
+  * java.lang.RuntimePermission setFactory
+  * java.security.SecurityPermission createPolicy.JavaPolicy
+  * java.security.SecurityPermission getPolicy
+  * java.security.SecurityPermission putProviderProperty.BC
+  * java.security.SecurityPermission setPolicy
+  * java.util.PropertyPermission * read,write
+  * java.util.PropertyPermission [sun.nio.ch](http://sun.nio.ch).bugLevel write
+  * [javax.net](http://javax.net).ssl.SSLPermission setHostnameVerifier  
+See
+<http://docs.oracle.com/javase/8/docs/technotes/guides/security/permissions.html>  
+for descriptions of what these permissions allow and the associated risks.
+
+  
+
+Continue with installation? [y/N]y  
+X-Pack requires permissions to enable Elasticsearch to launch the machine
+learning analytical engine. The native controller ensures that the launched
+process is a valid machine learning component. Once launched, communications
+between the machine learning processes and Elasticsearch are limited to the
+operating system user that Elasticsearch runs as.
+
+  
+
+ **`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`**  
+ **`WARNING: plugin forks a native controller`**  
+ **`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`@`**  
+This plugin launches a native controller that is not subject to  
+the Java security manager nor to system call filters.
+
+  
+
+Continue with installation? [y/N]y  
+X-Pack will try to automatically create a number of indices within
+Elasticsearch. By default, Elasticsearch is configured to allow automatic
+index creation, and no additional steps are required. However, if you have
+disabled automatic index creation in Elasticsearch, you must configure
+action.auto_create_index in elasticsearch.yml to allow X-Pack to create the
+following indices:
+
+action.auto_create_index:
+.security,.monitoring*,.watches,.triggered_watches,.watcher-history*,.ml*
+
+ **Now Start Elasticsearch**
+
+  
+
+ **bin/elasticsearch**
+
+    
+    
+      
+    
+
+  
+
+If there is an exception like following
+
+  
+
+ **org.elasticsearch.bootstrap.StartupException: ElasticsearchException[X-Pack
+is not supported and Machine Learning is not available for [linux-x86]; you
+can use the other X-Pack features (unsupported) by
+setting[xpack.ml](http://xpack.ml).enabled: false in elasticsearch.yml]**
+
+  
+
+Fix it by adding following line in the conf/elasticsearch.yml file
+
+ **[xpack.ml](http://xpack.ml).enabled: false**
+
+

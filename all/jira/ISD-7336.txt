@@ -1,0 +1,98 @@
+title: PUI - Big PDF Conversion Error Failed Job
+description: When big PDF conversion failed, it failed and stopped the whole job and. The expected behavior should be to continue posting the other AFP's and increment the bad count for the failed conversion. Not all CID's experienced this.
+
+This is the two CID that it happened to:
+
+FCSB
+
+BKFN
+
+
+author: azad
+comment: To QA,
+
+In Processing UI, currently while converting a big pdf, if the conversion failed, the whole job get failed and the remaining data did not get processed. The requirement of this story is to prevent the whole job failure if any conversion encounters error, instead increase the error count and continue posting the remaining AFPs.
+
+Only Afp and Document process uses the afp2pdf conversion feature. Processing UI system calls the afp2pdf converter based on the following flags:
+ * afp.convert.cutoff=150 (In Afp process, if the afp file's *page count* is more than 150 pages, afp2pdf converter will try to convert it to pdf)
+ * doc.convert.cutoff=200 (In Document process, if the afp file's*size* is more than 200 mb, afp2pdf converter will try to convert it to pdf)
+
+Scope for this issue is global.
+
+
+
+Thanks
+
+Azad
+
+
+author: igor.khosid
+comment: Hi [~Azad]
+Just a few questions / comments
+1. Who is the implementation person?
+2. Please set up a meeting to discuss the testing process in details
+3. The due date of 07.27 - is not feasible right now as we are at the end of the month. Please update the due date
+
+[~davidt] [~Andrey.Kutsenko] - FYI
+
+
+
+author: azad
+comment: [~Igor.Khosid]
+
+I've updated the due date to 8/3.
+
+
+
+We can meet today(7/26) at 8.45 AM PST on zoom. Here are the details -
+
+Join Zoom Meeting [https://us02web.zoom.us/j/87004581543?pwd=UzZlajc0SmFFNHJFTWtPZXNZd3ppQT09|https://www.google.com/url?q=https://us02web.zoom.us/j/87004581543?pwd%3DUzZlajc0SmFFNHJFTWtPZXNZd3ppQT09&sa=D&source=calendar&ust=1659166180475346&usg=AOvVaw22--o4auY9qlHTtoLp0u7X]
+
+Meeting ID: 870 0458 1543
+
+Passcode: 111177
+
+
+
+Sean is the initiator of this project. [~Tin.Chak], can you tell us is there any implementation person for this ticket?
+
+
+
+Thanks
+
+
+author: igor.khosid
+comment: [~Andrey.Kutsenko] - please confirm and attend
+
+[~Azad] - FYI
+[~Azad], [~Andrey.Kutsenko] might be late for a few minutes
+
+[~Igor.Khosid]
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+
+*TEST RESULT:*
+1. *Afp process* - {color:#0747A6}*PASSED*{color}.
+1.1. Setting procs file (section: "processing: afp") on ca-pui-st-01: /usr/local/processing-ui/conf/processing.conf  >> afp.convert.cutoff=200
+1.2. Posted Index File: /d/INPUT-DEV/I3/process-files/fnbt/ms1_05022022_1_05032022_0719_fnbt.txt
+ !scr_IF_FNBT.png|thumbnail! 
+1.3. Result processing in PUI:
+ !scr_PUI_AFP.png|thumbnail! 
+1.4. Log in PUI >>>  [^Processing_AFP_FNBT_Page_Count.log] 
+
+2. *Document process* - {color:#0747A6}*PASSED*{color}.
+2.1. As part of the test, the parameter (section: "processing: document") in the configuration file was set: doc.convert.cutoff=1
+2.2. Posted Index File: /d/INPUT-DEV/I3/process-files/gcbk/ms1_20220630_1_20220701_2135_gcbk.txt
+2.3. Result processing in PUI:
+ !scr_PUI_DOC.png|thumbnail! 
+2.4. Log in PUI >>>  [^Processing_DOC_GCBK_File_Size.log] 
+
+
+author: azad
+comment: [~Tin.Chak] [~Andrey.Kutsenko]
+
+Deployed to Prod.
+
+Thanks

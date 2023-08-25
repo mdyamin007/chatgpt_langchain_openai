@@ -1,0 +1,52 @@
+title: ESignature Vendors Prelim Evaluation
+body: Please see my findings as followings:
+
+  1. RightSignature
+    1. Great small business product as it provides cheap way to get unlimited documents signed.($39/month)
+    2. Even though limited on number of senders (10) and templates (20), we can manage that via manual co-ordination by AC to start with. If needed, then upgrade to enterprise version.
+    3. REST-ful API integration support on sending document and get notified when documents get signed.
+      1. However, need human operations for specifying fields for sign/text-input on the document/templates.
+      2. There is support of using certain text-tag to specify the sign/text-input positions, but I suspect it's going involve either our/client's application code-change, which will be difficult.
+      3. Have API support for document sending mainly, no API exposed for reporting (e.g. # doc signed with template..etc)
+    4. Member facing UI looks good, allow client logo branding with the $39/month plan.
+      1. We can only do a InfoIMAGE brand, not FI specific brand.
+      2. If need FI specific brand, we need to build our own member facing UI based on what RightSignature can provide as base.
+      3. Support Mobile devices by using their native app.
+  2. AssureSign
+    1. Mainly provide API level integration only for Document sending-for-sign and Tracking. Don't see any member facing UI exposed, might need quite some work to build our own UI.
+    2. No exact API spec exposed, hard to gauge how easy/difficult to integrate.
+    3. Don't see pricing info either.
+  3. Silanis
+    1. Sophisticated doc-sign/session/audit-trail/report/integration support through-out.
+      1. It's rather obvious they are most experienced out of these vendors.
+      2. No pricing on their solutions though, so might be expensive.
+    2. Great API spec:
+      1. Support both REST API and Java SDK. (also .NET, but not relevant to us)
+      2. Extensive methods for individual doc operations, doc templates, data tracking, audit trails, etc.
+      3. Ability to specify text-input/sign fields' position via API alone. (by specifying page# and XY co-ordinates though) Not ideal, but have pros-and-cons comparing to RightSignature's approach.
+    3. No sample UI visible on their Member facing UI, but they described to have building blocks available for us to build our own branded UI.
+    4. Support Mobile devices also. Not sure if they will provide SDK for us to build our own, or have one available to use right away. RightSignature's mobile solution might be easier to adopt.
+  4. EchoSign (adobe)
+    1. API level support, but only the basic functionality. About similar (if not worse) than what RightSignature provides.
+    2. Member UI available, but need Enterprise to gain API integration capability.
+
+  
+  
+
+## Summary:
+
+I think we can either go with RightSignature or Silanis based on what their
+pricing and what they can do for us regarding the member-facing UI. Both of
+them are pretty compatible in terms of integrating with our eSafetyBox. The
+flow would be:
+
+  1. using our Admin-drop capability to allow FI to upload documents
+  2. API call to register it to the vendor service as document or doc-template
+  3. Use their/our UI to allow FI admin to specify what area for text-input/sign
+  4. API call to send it to members
+  5. Member use vendor's UI/mobile to sign
+  6. Upon signature complete, we'll receive a REST API callback from the vendor
+  7. We update our side of data/doc accordingly
+  8. Use API-calls or our own queries to render reports for FI.
+
+

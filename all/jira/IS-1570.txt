@@ -1,0 +1,187 @@
+title: HFCU - [31340][pvt] Page 2 message images - Post go-live 
+description: IS Assessment
+=============
+ Hours for development:  2 IS hours 
+ Turnover Date : 09/09/2022
+ Sample to QA Date: 09/19/2022
+
+Sample Date: 09/21/2022  
+ Approval Date: 09/23/2022
+
+ Go live date : 09/30/2022
+
+Engineering resource: Le La
+ 
+Assessment Details (IS):
+- Parallel required: (yes)
+
+-  Dfa does not need to be updated.
+
+-  Update procedure file
+
+-  Make sure specs are documented in SOW
+
+-  Description: 
+   Update hfcums3_process.sh to automatically update page 2 graphic message and QR code if client sends the tiff files.
+
+   Create ${d_dir}/hfcu/ms3/tiff_files if folder is missing
+
+   Copy and rename hfcu_stmt_mm_<mmddyy>.tif   to HFCUM4.TIF and place in  ${d_dir}/hfcu/ms3/tiff_files
+
+    Copy and rename hfcu_stmt_qr_<mmddyy>.tif to HFCUQ4.TIF and place ${d_dir}/hfcu/ms3/tiff_files
+
+    Terminate the program and alert client if tiff files are missing
+
+ 
+
+The image property specs must be the same each time they send an updated message.
+
+Along with the data file, they will also need to send 2 additional tif files each month.
+
+If any of the files are missing, the process will terminate and alert client.
+
+                             
+
+Required Image settings :
+                                        Compression  LZW
+                                        Color type : CMYK
+                                        Resolution: 300 dpi
+
+ 
+
+
+author: lemoy28
+comment: [~kdishroon]
+
+Please see attached samples.
+
+[^hfcu_msg_sample.pdf]
+
+
+author: lemoy28
+comment: Parallel ID: 20220913152922
+
+Pending client sample approval
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220913152922
+   Currently in parallel: Yes
+   User: lela
+   Description: auto-update page 2 message/qr code images
+   Date Submitted: 2022-09-13 15:30:12
+   Date Last Updated: 2022-09-13 15:30:12
+   Files:
+      1) hfcums3_process.sh
+
+
+author: igor.khosid
+comment: Difference prod vs test
+>>>
+< # . /home/control/daily.control
+---
+> . /home/control/daily.control
+---
+> tiff_dir="$d_dir/$cid/$jid/tiff_files"
+---
+> dir_cleanup $tiff_dir
+---
+> 
+---
+>              msg_count=`find ${input_dir} -maxdepth 1 -type f -iname "hfcu_stmt_mm_${mmddyyyy}\.tif" | wc -l`
+>              qr_count=`find ${input_dir} -maxdepth 1 -type f -iname "hfcu_stmt_qr_${mmddyyyy}\.tif" | wc -l`
+>              if [[ ($msg_count -eq 1) && ($qr_count -eq 1) ]]
+>              then
+>                   msg_file=`find ${input_dir} -maxdepth 1 -type f -iname "hfcu_stmt_mm_${mmddyyyy}\.tif"`
+>                   qr_file=`find ${input_dir} -maxdepth 1 -type f -iname "hfcu_stmt_qr_${mmddyyyy}\.tif"`
+>                   echo "cp -f $msg_file $tiff_dir/HFCUM4.TIF"
+>                   cp -f $msg_file $tiff_dir/HFCUM4.TIF
+>                   echo "cp -f $qr_file $tiff_dir/HFCUQ4.TIF"
+>                   cp -f $qr_file $tiff_dir/HFCUQ4.TIF
+>              else
+>                   echo "ERROR: hfcu_stmt_mm_<mmddyyyy>.tif and hfcu_stmt_qr_<mmddyyyy>.tif are missing or tif filenames are misspelled."
+>                   subject="ERROR: HFCU Monthly Statement - cycle date ${mmddyyyy} - missing tiff files"
+>                   mesg="hfcu_stmt_mm_<mmddyyyy>.tif and hfcu_stmt_qr_<mmddyyyy>.tif are missing or tif filenames are misspelled."
+>                   perl ${codebase}/daily_mail2.pl 2 "$subject" "$mesg" "$maillist_internal"
+>                   exit 1
+>              fi341
+---
+> if [[ ($msg_count -eq 1) && ($qr_count -eq 1) ]]
+> then
+>       echo "mv $msg_file $qr_file $backup_dir"
+>       mv $msg_file $qr_file $backup_dir  
+> fi  
+
+[~kdishroon] [~lemoy28]
+Ready for the client review
+[~kdishroon] - please attach updated SOW after the client approval
+
+
+
+author: lemoy28
+comment: [~Igor.Khosid]
+
+Samples are approved
+
+
+author: lemoy28
+comment: [~kdishroon]
+
+Dpvs is attached.
+
+Please request print sample.
+
+[^hfcums3101.print]
+
+print file: hfcums31015.fgn.afp
+
+print range : 1-6
+
+tray 1: 3707
+
+tray 2: 4000
+
+
+
+
+author: kdishroon
+comment: Hi [~Igor.Khosid]
+
+Here is the updated SOW:
+
+[http://sharepoint-svr/AS/Shared%20Documents/SOW%20Directory/HFCU%20-%20HFS%20Federal%20Credit%20Union/SOW/HFCU%20SOW%20Monthly%20Statements%209.28.22.doc]
+
+
+
+
+author: igor.khosid
+comment: [~kdishroon] 
+Please request the print samples
+
+
+author: igor.khosid
+comment: Print samples - attached >>>
+ [^IS-1570_HFCU_Print samples 09292022.pdf] 
+
+
+author: igor.khosid
+comment: QA - completed
+[~lemoy28] - please attach IS checklist
+
+
+author: lemoy28
+comment: [~Igor.Khosid]
+
+IS checklist attached
+
+[^hfcu_IS-1570_qa_check_list.pdf]
+
+
+author: igor.khosid
+comment: IS checklist - attached >>>  [^IS-1570_HFCU_IS-check_list.pdf] 
+
+
+author: lemoy28
+comment: [~TunA]
+
+[^IS-1570_PROGRAM_TRANSFER_FORM.doc]

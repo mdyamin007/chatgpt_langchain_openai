@@ -1,0 +1,87 @@
+Why
+When you are working with a remote server, development on that server just with a terminal might not be the best experience. Even though you can do it with a terminal, it's not the same as developing on your local machine. You might want to use a GUI editor, or you might want to use a GUI debugger. Which is not possible on a terminal/ or too complicated to do so.
+Also, there are other benefits you usually get with a Integrated Development Environment (IDE). like code completion, syntax highlighting, tight integration with the git, etc. Which is not possible on a terminal.
+So, in this article, we will see how to use Visual Studio Code to develop on a remote server.
+How
+There is multiple ways to do this. Following are the three ways I have tried and tested and found to be helpful. 
+Using Visual Studio Code Remote - SSH
+Using Visual Studio Tunnel
+JetBrains Remote Gateway
+We will just talk about the first two ways here. The third one is not free and not light weight (although more powerful).
+Some Prerequisites
+You need to have SSH access to the remote server.
+You need to have Visual Studio Code installed on your local machine.
+You need to have private key configured on your local machine to access the remote server. (this is not necessary if you are ok with entering the password every time you connect to the remote server)
+Configuring SSH
+If you don't have SSH private key configured on your local machine, you can follow this guide to configure it. 
+For newer servers:
+Open the terminal on your local machine.
+Run the following command to generate a new SSH key pair.
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa
+ssh-copy-id -i ~/.ssh/id_rsa.pub @
+Enter the password for the remote server.
+Now, you should be able to connect to the remote server without entering the password.
+For older servers:
+Open the terminal on your local machine.
+Run the following command to generate a new SSH key pair.
+ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519
+Run cat ~/.ssh/id_ed25519.pub and copy the output.
+ssh to the remote server and run the following command.
+mkdir -p ~/.ssh
+touch ~/.ssh/authorized_keys
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys
+echo "" >> ~/.ssh/authorized_keys
+Now, you should be able to connect to the remote server without entering the password.
+Creating SSH Host Config
+Sometimes you might want to connect to multiple servers. So, it's better to create a config file for the SSH hosts. You can create a config file by running the following command.
+touch ~/.ssh/config
+Now, open the config file and add the following content.
+Host <host-name>
+    HostName <server-ip>
+    User <user>
+    IdentityFile ~/.ssh/<private-key>
+Now, you can connect to the remote server by running the following command.
+ssh <host-name>
+Note that above config can change based on the server you are connecting to. You can find more information about the config file here.
+For example, here is my config for connecting to dsi jump server.
+Host jump dsi
+    HostName 10.5.20.38
+    User anwarH
+    HostKeyAlgorithms=+ssh-dss
+    IdentityFile ~/.ssh/id_ed25519
+    PreferredAuthentications publickey
+For WSL/Ubuntu inside Windows
+If you are using WSL/Ubuntu inside Windows, not that there is a difference in the location of the SSH keys. You can find the SSH keys in the following location.
+For a terminal with ubuntu
+the SSH keys are located in the following location.
+~/.ssh
+For a terminal with Powershell/Command Prompt
+the SSH keys are located in the following location.
+C:\Users\<username>\.ssh
+Meaning ssh command will look for keys and config based on the terminal you are using. So, if you are using a terminal with ubuntu, it will look for the keys in the location mentioned above. If you are using a terminal with Powershell/Command Prompt, it will look for the keys in the location mentioned above.
+Important: VSCode will always look for keys in C:\Users\<username>\.ssh location. So, if you are using VSCode. So If you already generated keys and configured it from WSL, you need to copy the keys and config from ~/.ssh to /mnt/c/Users/<username>/.ssh location.
+Using Visual Studio Code Remote - SSH
+Install this extension from the VSCode marketplace. You can find the extension here.
+Click on the green icon on the bottom left corner of the VSCode window.
+Click on Remote-SSH: Connect to Host... option.
+Select the host you want to connect to. (Press yes/continue if you get any prompts)
+Now, your vscode should open inside the remote server. You can see the name of the server on the bottom left corner of the VSCode window. You working directory would be the home directory of the remote server.
+For debugging, you can find more information here.
+Using Visual Studio Code Tunnel
+If you find the above method too complicated/slow, you can use Visual Studio Code Tunnel.
+Install this extension from the VSCode marketplace. You can find the extension here.
+Download the code cli binary from here. Get the CLI and 'x64'.
+Copy the code binary to the home directory of the remote server.
+Open the terminal on the remote server and run the following command.
+chmod +x code
+Open a tunnel using the following command.
+./code tunnel
+Follow the instructions that are shown on the terminal. It will require you to authenticate with github.
+You will get a URL. Open that URL in your browser.
+If you want to utilize you local VSCode, then click one bottom left corner of the VSCode window and click on Remote-SSH: Connect to Tunnel... option.
+Select the tunnel you want to connect to. (Press yes/continue if you get any prompts)
+Concept of Workspace
+If you are using VSCode for a long time, you might have noticed that there is a concept of workspace. You can find more information about the workspace here.
+Basically, a workspace is a collection of folders. You can add/remove folders from the workspace. You can also add/remove files from the workspace. You can also add/remove extensions from the workspace. You will have separate settings for each workspace.
+Git is also integrated with the workspace. So, you can commit/push/pull from individual git repositories.

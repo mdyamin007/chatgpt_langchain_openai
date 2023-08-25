@@ -1,0 +1,309 @@
+title: TKCU - Letter - DailyPDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133571-C30.01-V21352
+
+Processing Scripts to modify:
+ tkcu_dl_process.pl
+
+Data Files to use:
+ "TKCU_DN_04302021.zip.pgp, TKCU_ECL_043021.txt.pgp"
+
+
+
+*NOTE*: This job runs on RH2 server. Since we are migrating from RH2 server to RHS, please test ALL job_sel options to ensure RHS can run with error messages in the processing log files.
+
+
+
+
+author: william.kong
+comment: Good Morning [~jun]! Can you help me run TKCU PDFi one more time. I synced the RH2 fonts on production yesterday around 2:40pm-ish. So yesterday's production cycle 6/17 should be using the same arial fonts as what you used for the afp2pdf parallel. Can you create another parallel cycle 17 so that I can run another comparison.
+
+
+
+Thanks!
+
+
+
+-- Will
+
+
+author: jun
+comment: [~William.Kong]
+
+Cycle 6/17 is ready in parallel env.
+
+/z/pdf_afp/tkcu/tkcudla/dl1_06172022_1_tkcu/
+
+
+author: william.kong
+comment: [~jun]: Thanks for the prompt response! I'm running the comparison now.
+
+
+
+-- Will
+
+
+author: william.kong
+comment: [~jun]: Please have this project turned over to QA to review when time permits. I did confirm cycle 6/17 matched with no issues. If QA passes this project, then we just need to run parallel after EOM and go live thereafter.
+
+
+
+[~Igor.Khosid]: I did QA the contents of the PDF and it matches for cycle 6/17. That's the only QA step I took.
+
+
+author: jun
+comment: [~Igor.Khosid]
+
+archival:/z/pdf_afp/tkcu/tkcudla/
+
+parallel id:20220705134759
+
+Script cannot add to parallel id because another project is holding it in parallel. It's attached here instead.
+
+[^tkcu_dl_process.pl][^tkcu_dl_process.sh]
+
+
+author: igor.khosid
+comment:  Parallel ID: 20220705134759
+   Currently in parallel: Yes
+   User: junM
+   Description: IS-1203 TKCU Convert pdfi to afp2pdf
+   Date Submitted: 2022-07-05 13:48:58
+   Date Last Updated: 2022-07-05 14:05:10
+   Files:
+      1) TKCUDL032.dfa
+      2) TKCUDL016.dfa
+      3) TKCUDL011.dfa
+      4) TKCUDL009.dfa
+      5) TKCUDL029.dfa
+      6) TKCUDL036.dfa
+      7) TKCUDL025.dfa
+      8) TKCUDL002.dfa
+      9) TKCUDL031.dfa
+      10) TKCUDL042.dfa
+      11) TKCUDL005.dfa
+      12) TKCUDL015.dfa
+      13) TKCUDL026.dfa
+      14) TKCUDL019.dfa
+      15) TKCUDL040.dfa
+      16) TKCUDL028.dfa
+      17) TKCUDL010.dfa
+      18) TKCUDL043.dfa
+      19) TKCUDL_ARCHIVAL_INDEX.dfa
+      20) TKCUDL024.dfa
+      21) TKCUDL004.dfa
+      22) TKCUDL023.dfa
+      23) TKCUDL007.dfa
+      24) TKCUDL_ARCHIVAL_INDEX.prj
+      25) TKCUDL034.dfa
+      26) TKCUDL033.dfa
+      27) TKCUDL030.dfa
+      28) TKCUDL014.dfa
+      29) TKCUDL003.dfa
+      30) TKCUDL012.dfa
+      31) TKCUDL035.dfa
+      32) TKCUDL027.dfa
+      33) TKCUDL037.dfa
+      34) TKCUDL038.dfa
+      35) tkcudla_pdf.control
+      36) TKCUDL041.dfa
+      37) TKCUDL018.dfa
+      38) TKCUDL021.dfa
+      39) TKCUDL001.dfa
+      40) TKCUDL020.dfa
+      41) TKCUDL017.dfa
+      42) TKCUDL008.dfa
+      43) tkcudla_pdf_template.control
+      44) TKCUDL013.dfa
+
+
+author: william.kong
+comment: [~Igor.Khosid]: I ran pdf_compare.pl back on Jul 19. The results are good:
+
+
+
+ca-isis-pr-04:/d/pdf_compare/result_tkcu/pdf_compare_rpt.txt
+
+
+
+Total PDF Files Scanned: 6000
+allowedDifferenceInPercentPerPage: 5:
+Thread Count: 128
+
+Total PDF Files with Differences: 0
+WARNING: We did not compare ALL the pdfs!
+ pdf_compare.pl will only process the first 6000 pdf files out of the total 6596 pdfs
+Start Time: Tue Jul 19 14:32:17 PDT 2022
+Finish Time: Tue Jul 19 15:05:43 PDT 2022
+
+
+author: william.kong
+comment: [~jun]:Please also run this on RHS server with 's' option so that we can run afpcompare to test. Once done, we will compare your recent parallel run proc_id from /z/afpformat folder with the /d/afpformat folder version. Please let me know so I can analyze. If there are any error messages with logs, please report them.
+
+
+
+Please reuse cycledl1_06082022_1_tkcu.zip.
+
+
+author: jun
+comment: [~William.Kong],
+
+Some of the letters had verbiage update recently. I think there would be some differences if we use test an older cycle. Is it okay to test a cycle that's July 1st or later?
+
+Also, one of the requirement was to clear out the directory before processing, but the files are kept so DP can create a DVD at the end of each month. Should we skip this requirement?
+
+
+author: william.kong
+comment: [~jun]: Yes, I agree with your suggestion, that it would be ok that we use a more current cycle. I did not realize there were more DFA changes. Also, you are right, please do not purge the files. Nar reported for ds1 we had to keep the zip files in the zip directory. Once you have this completed, we will retest everything. For now, I will change the status to "In Progress".
+
+
+author: jun
+comment: [~William.Kong]
+
+Cycle 0726 is ready for review
+
+/z/pdf_afp/tkcu/tkcudla/dl1_07262022_1_tkcu/
+
+
+author: tuna
+comment: Hi [~jun], [~William.Kong],
+
+Do we have estimated new release date for this project? So I can adjust dates in IS upcoming list.
+
+Thanks,
+
+Tun
+
+
+author: william.kong
+comment: [~TunA]: Thanks for the follow-up! I'm going to estimate 8/15/2022. QA is tied up but I do hope this can be released before 8/15/2022.
+
+
+
+[~Igor.Khosid]/[~jun]: I ran afpcompare program and there were no differences detected in the AFP level for all the letters. (Note: I need to improve the afpcompare script to create a summary report so I don't have to manually parse the results). Here's the results and as you can see +*no*+ errors detected:
+
+
+
+[williamK@rhs2 tkcudla]$ for file in /d/iss/willK/proj_64b/afpcompare_test/tkcudla/*.xml; do echo $file; grep -irH '<Differences total=' $file | grep -v '<Differences total="0" text="0" />'; done;
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl001.afp_1_675_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl002.afp_1_199_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl003.afp_1_642_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl004.afp_1_3_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl005.afp_1_4_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl007.afp_1_588_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl008.afp_1223_1833_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl008.afp_1_611_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl008.afp_1834_1835_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl008.afp_612_1222_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl009.afp_1021_1530_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl009.afp_1_510_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl009.afp_1531_1531_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl009.afp_511_1020_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl011.afp_1_83_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl019.afp_1_59_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl020.afp_1_167_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl027.afp_1_10_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl028.afp_1_8_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl032.afp_1_51_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl034.afp_1_3_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl035.afp_1_174_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl036.afp_1_51_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl037.afp_1_47_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl038.afp_1_266_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl039.afp_1_1212_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl039.afp_1213_2424_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl039.afp_2425_3636_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl039.afp_3637_3637_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl040.afp_1_96_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl041.afp_1_1_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl042.afp_1_130_diff.xml
+/d/iss/willK/proj_64b/afpcompare_test/tkcudla/2411494_tkcudl043.afp_1_2_diff.xml
+
+
+
+As for pdf_compare.pl, here are the new results since we are using a new cycle 26. +*No*+ Differences Detected.
+
+
+
+ca-isis-pr-04:/d/pdf_compare/result_tkcudla/pdf_compare_rpt.txt
+
+Total PDF Files Scanned: 6008
+allowedDifferenceInPercentPerPage: 5:
+Thread Count: 128
+
+Total PDF Files with Differences: 0
+Start Time: Thu Jul 28 09:13:36 PDT 2022
+Finish Time: Thu Jul 28 09:48:30 PDT 2022
+
+
+
+Please perform that standard QA process as discussed last week.
+
+
+
+
+
+
+
+
+
+
+author: jun
+comment: [~Igor.Khosid]
+
+Passing back to QA. New output is here:/z/pdf_afp/tkcu/tkcudla/dl1_07262022_1_tkcu/
+
+
+author: JIRAUSER11104
+comment: [~William.Kong] [~jun]
+
+[~Igor.Khosid] QA is completed.
+{code:sh}
+perl pdf_compare.pl tkcudla_prod tkcudla_parallel result_tkcudla -pixels 5 -threads 32 -maxfiles 15000
+{code}
+{quote}[andreyK@ca-isis-pr-04 ~]$ ls -ltr /d/pdf_afp/tkcu/tkcudla/dl1_07262022_1_tkcu/*.pdf | wc -l
+ 6008
+ [andreyK@ca-isis-pr-04 ~]$ ls -ltr /z/pdf_afp/tkcu/tkcudla/dl1_07262022_1_tkcu/pdf/*.pdf | wc -l
+ 6008
+
+[andreyK@ca-isis-pr-04 ~]$ cat /d/pdf_compare/result_tkcudla/pdf_compare_rpt.txt
+ Total PDF Files Scanned: 6008
+ allowedDifferenceInPercentPerPage: 5:
+ Thread Count: 32
+
+Total PDF Files with Differences: 0
+ Start Time: Tue Aug 9 11:35:15 PDT 2022
+ Finish Time: Tue Aug 9 12:17:53 PDT 2022
+{quote}
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: Thank you for your update!
+
+
+
+[~jun] : Please prep File Transfer Form for code release. This project will not need to go through Parallel Run. As part of this release, please also inform DP to start using RHS server to run this job moving forward via sending email to[dp@infoimageinc.com|mailto:dp@infoimageinc.com].
+
+
+author: jun
+comment: Code release form attached
+
+[^IS_PROGRAM_TRANSFER_FORM_Rev 07132016.doc]
+
+
+author: jun
+comment: [~William.Kong]
+
+Code released to production. Email sent to DP

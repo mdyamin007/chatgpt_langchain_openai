@@ -1,0 +1,280 @@
+title: Design doc
+body: **Business Requirements:**
+
+1\. Template variable management: GUI to set dynamic variable which will be
+used while user will create template (A table will be needed to store variable
+-  **eStatement.notif_template_variable** ).  
+2\. Create email template: From "Marketing Email Template Management" user can
+create template with template name, email from, subject, content, sample
+recipient and may be some dynamic variable. User can download sample CSV file
+where all used dynamic variable in the template will be used as header of each
+column and a sample row will also be there in CSV.  
+3\. Create email campaign: From "Email Campaign Management" user can create
+campaign with a recipient list as CSV file.  
+4\. Email Campaign Report: From "Email Campaign Report" user can see the
+detail of a campaign where he will find a list of recipient, list will show
+recipient name, template name, when sent, when opened, when clicked, when
+unsubscribed (data will come from service).  
+5\. Campaign report: From "Marketing Performance Report", user can see email
+sent count, email bounce count, recipient's response in a graph which can be
+filtered based on dated, campaign data (data will come from service).
+
+ **Database Change:**
+
+We will use  **eStatement.notif_template**  table for saving template
+
+notif_template  
+01\. id  
+02\. type (possible values: 'email', 'sms')  
+03\. app_id (possible values: 'ecm' (stands for Email Campaign Manager),
+'eNotif' (stands for eServices Notifications))  
+04\. subject  
+05\. from_email  
+06\. from_name  
+07\. name  
+08\. cc_email  
+09\. bcc_email  
+10\. content  
+11\. org_id  
+12\. modified_dt  
+13\. modified_by  
+14\. status  
+15\. sample recipient
+
+For notif_template table:  
+Unique ID on 'org_id' and 'name'
+
+Need to create table  **eStatement.notif_campaign**  to store data of a email
+campaign
+
+notif_campaign  
+01\. id  
+02\. org_id  
+03\. campaign_name  
+04\. csv_file_data (CLOB)  
+05\. status  
+06\. start_date  
+07\. modified_dt  
+08\. modified_by  
+09\. status
+
+Need to create  **eStatement.notif_template_variable**  which will contain
+statistic of a recipient info and activity of a campaign
+
+eStatement.notif_template_variable  
+1\. id  
+2\. name  
+3\. code  
+4\. type  
+5\. track (Boolean)  
+6\. sample  
+7\. status  
+8\. org_id
+
+ **Architecture & Work-flow Diagram:**
+
+ **Marketing template**
+
+1\. Email template
+
+> 1.1. Marketing Email Template Management
+>
+
+>> 1.1.1. Create new template
+
+>>
+
+>>> Take input from user then insert data in  **eStatement.notif_template**
+
+>>
+
+>> 1.1.2. List of template
+
+>>
+
+>>> Populate list with pre saved "Marketing Email Template Management"
+
+>>
+
+>> 1.1.3. View template  
+> 1.1.4. Copy template  
+> 1.1.4. Export sample CSV from template
+
+2\. Email Campaign
+
+> 2.1. Create New Campaign
+>
+
+>> > Upload CSV file and give campaign name to save a campaign to
+**eStatement.notif_campaign**  database
+
+>
+> 2.2. Email Send
+>
+
+>> > Submit CSV file to server
+
+>
+> 2.3. View campaign report
+>
+
+>> 2.3.2. Recipient List:
+
+>>
+
+>>> Retrieve data from service and show recipient list.
+
+3\. Marketing Performance
+
+> Client can see the statistic as jQuery graph here, data will come from
+> service.
+
+4\. Template variable management
+
+> 4.1. Show list of variable in datatable  
+> 4.2. Create new variable with track/not track, type, code, name, sample
+> which will be stored in  **eStatement.notif_template_variable**.  
+> 4.1. Edit existing variables
+
+ **Controller Component**
+
+1\. MarketingEmailController
+
+> a. public String getTemplateList(HttpServletRequest request, Model model)
+
+> This method view the email template management dashboard by calling "GET
+> /marketing/[marketingEmailTemplateDashboardView.do](http://marketingEmailTemplateDashboardView.do)".
+
+> b. public String getMrktingEmailTemplate(HttpServletRequest request, Model
+> model)
+
+> This method show the screen to create new marketing email templates by
+> calling "GET / marketing /
+> [getMrktingEmailTemplate.do](http://getMrktingEmailTemplate.do)"
+
+> c.public String getMrktingEmailTemplate(HttpServletRequest request,
+> @RequestParam("mrktingEmailTemplateId") long mrktingEmailTemplateId, Model
+> model)
+
+> This method view the marketing email templates by calling "POST / marketing
+> / [getMrktingEmailTemplate.do](http://getMrktingEmailTemplate.do)"
+
+> d. public String updateMrktingEmailTemplate(HttpServletRequest request,
+> MrktingEmailTemplate mrktingEmailTemplate, Model model)
+
+> This method create/update marketing email template by calling "POST /
+> marketing /
+> [saveMrktingEmailTemplate.do](http://saveMrktingEmailTemplate.do)"
+
+> e. public String deleteMrktingEmailTemplate(HttpServletRequest request,
+> @RequestParam("mrktingEmailTemplateId") long mrktingEmailTemplateId, Model
+> model)
+
+> This method delete marketing email template by calling "POST / marketing
+> /[deleteMrktingEmailTemplate.do](http://deleteMrktingEmailTemplate.do)"
+
+> f. public String copyMrktingEmailTemplate(HttpServletRequest request,
+> @RequestParam("mrktingEmailTemplateId") long mrktingEmailTemplateId, Model
+> model)
+
+> This method copy marketing email template by calling "POST / marketing
+> /[copyMrktingEmailTemplate.do](http://copyMrktingEmailTemplate.do)"
+
+2\. EmailCampaignMngtCtl
+
+> a. public String getCampaignList(HttpServletRequest request, Model model)
+
+> This method view the email campaign management dashboard by calling "GET
+> /marketing/[emailCampaignDashboardView.do](http://emailCampaignDashboardView.do)".
+
+> b. public String getEmailCampaignDetail(HttpServletRequest request,
+> @RequestParam("emailCampaignId") long emailCampaignId, Model model)
+
+> This method view the email campaign by calling "POST / marketing /
+> [getEmailCampaignDetail.do](http://getEmailCampaignDetail.do)"
+
+> c. public String updateEmailCampaign (HttpServletRequest request,
+> EmailCampaign emailCampaign, Model model)
+
+> This method create email campaign by calling "POST / marketing /
+> [saveEmailCampaignDetail.do](http://saveEmailCampaignDetail.do)"
+
+> d. public String startEmailCampaign(HttpServletRequest request, Model model)
+
+> This method start campaign by calling "GET / marketing /
+> [startEmailCampaign.do](http://startEmailCampaign.do)"
+
+3\. MarketingPerformanceCtl
+
+> a. public String getMarketingPerformance (HttpServletRequest request, Model
+> model)
+
+> This method will show performance of the campaign as different graph by
+> calling "GET /marketing/
+> [marketingPerformance.do](http://marketingPerformance.do)".
+
+> b. public String exportMarketingPerformance (HttpServletRequest request,
+> Model model)
+
+> This method will export performance of the campaign as xlsx file by calling
+> "GET /marketing/
+> [saveMarketingPerformance.do](http://saveMarketingPerformance.do)".
+
+4\. TempVariableMgmntCtl
+
+> a. public String getTempVariableList (HttpServletRequest request, Model
+> model)
+
+> This method view the email template variable management dashboard by calling
+> "GET
+> /marketing/[tempVariableDashboardView.do](http://tempVariableDashboardView.do)".
+
+> b. public String getTempVariable(HttpServletRequest request, Model model)
+
+> This method view the email template variable create screen by calling "GET /
+> marketing / [getTempVariable.do](http://getTempVariable.do)"
+
+> c. public String getTempVariable(HttpServletRequest request,
+> @RequestParam("tempVariableId") long tempVariableId, Model model)
+
+> This method view the email template variable detail by calling "POST /
+> marketing / [getTempVariable.do](http://getTempVariable.do)"
+
+> d. public String updateTempVariable (HttpServletRequest request,
+> TempVariable tempVariable, Model model)
+
+> This method create/update email template variable by calling "POST /
+> marketing / [saveTempVariable.do](http://saveTempVariable.do)"
+
+ **Marketing Email Template Management**
+
+ **Marketing Email Template Variable**
+
+ **Email Campaign**
+
+  
+  
+
+  
+
+#  **Must follow the following rules:**
+
+ **Need to implement some scheduler class/method to check nightly to see if
+there is any campaign scheduled to start on that day, and trigger a service
+call to the notification service (Pritish developing) with the required param
+& CSV content.**
+
+ **Ensure all PUT honor the same pattern of only update the attributes
+provided inside the json. meaning attributes that do NOT intend to be changed,
+should NOT be included in the json payload.**
+
+ **For any DELETE action from the web application, we need to have
+intelligence to ensure it is safe to delete. e.g. delete of variables that's
+already used in some template is not allowed. e.g. delete of template that is
+utilized in any campaign is not allowed.**
+
+### Attachments
+
+250250
+
+

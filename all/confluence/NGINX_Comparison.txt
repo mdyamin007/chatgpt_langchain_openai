@@ -1,0 +1,125 @@
+title: NGINX Comparison
+body:   
+
+  
+
+**Nginx Old**
+
+|
+
+ **Nginx New**  
+  
+---|---  
+  
+Version: nginx/1.14.0
+
+|
+
+Version nginx/1.20.1  
+  
+No 3rd party modules integrated
+
+|
+
+3rd party modules
+
+  1. Heartbeat check (Upstream check module)
+  2. Web application Firewall (Modsecurity)
+  3. Server Traffic Status (Nginx Module VTS )
+  4. Docker image ready (Nginx deployment in new server is way simpler)
+
+  
+No dashboard|
+
+Dashboard / html status page where you can find all the back-end server and
+their status and active connection  
+  
+No firewall| Common Security threat handling with a firewall  
+slower startup than latest version| faster startup  
+  
+  
+
+Let's understand the 3rd party modules that been integrated with new nginx
+more details:
+
+  
+
+##  **NGINX ModSecurity (Web Application Firewall)**
+
+ModSecurity protect the back-end servers from common security threats like SQL
+injection, DDoS attack etc and pass the good requests only to back-end server.
+
+  
+
+##  **NGINX  http_stub_status_module**
+
+  
+
+This configuration creates a simple web page with basic status data like
+following screenshot
+
+ **Active connections:  **The current number of active client connections
+including Waiting connections.  
+ **accepts:  **The total number of accepted client connections.  
+ **handled:  **The total number of handled connections. Generally, the
+parameter value is the same as accepts unless some resource limits have been
+reached (for example, the worker_connections limit).  
+ **requests:  **The total number of client requests.  
+ **Reading:  **The current number of connections where nginx is reading the
+request header.  
+ **Writing:  **The current number of connections where nginx is writing the
+response back to the client.  
+ **Waiting:  **The current number of idle client connections waiting for a
+request.
+
+  
+
+##  **NGINX Upstream Check Module**
+
+  
+
+Nginx upstream check module gives us a feature for calling the web application
+**Heartbeat API.  **Which is a built in feature in Nginx Plus. But we're
+achieving the same functionality with this 3rd party module.
+
+  
+
+This Module give us an endpoint to check the health status of upstream/back-
+end servers with a HTML dashboard which looks something like this.
+
+  
+
+ ****
+
+  
+
+ **BUT, do we need to go 2 endpoint to get two different status?** Luckily we
+don't need to do that. There is another Module called **NGINX VTS** Module
+which gives us one end point where we can get all the status.
+
+##  **Nginx stream server traffic status module**
+
+Nginx stream server traffic status module. you an just go to /status of your
+nginx server and get all the status, like active connect, upstream server
+health information or total fail count with separate status code.
+
+see the screenshot below
+
+  
+
+None of these above modules were integrated with Nginx earlier version. So, in
+Nginx new version we're getting some important features like security, a nice
+status dashboard and active health check functionality which are all NginxPlus
+paid feature.
+
+Also, this new nginx is docker ready. All the 3rd party modules are already
+installed in the container. So, installing Nginx in a new server is fairly
+simple, with just one **docker run** command.
+
+  
+
+  
+
+  
+
+

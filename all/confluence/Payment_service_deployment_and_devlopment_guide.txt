@@ -1,0 +1,126 @@
+title: Payment service deployment and devlopment guide
+body: Development prerequisite:
+
+1\. apache-tomcat-7  
+2\. jdk7  
+3\. maven3  
+4\. Oracle  
+5\. You can use any idea/editor as your wish
+
+Deployment prerequisite:
+
+1\. apache-tomcat-7  
+2\. jdk7
+
+Steps to deploy:
+
+1\. Create the following JNDI in the Apache Tomcat7  **server.xml**  file
+
+    
+    
+            <Resource name="jdbc/isd" auth="Container" 
+                  type="oracle.jdbc.pool.OracleDataSource" 
+                  driverClassName="oracle.jdbc.driver.OracleDriver" 
+                  connectionCachingEnabled="true" 
+                  factory="oracle.jdbc.pool.OracleDataSourceFactory" 
+                  url="jdbc:oracle:thin:@10.0.0.30:1521:ORCL" 
+                  user="isd" 
+                  password="password" 
+                  maxActive="20" 
+                  maxIdle="10" 
+                  maxWait="-1"/>
+    
+        <Resource name="jdbc/isd_cu" auth="Container" 
+                  type="oracle.jdbc.pool.OracleDataSource" 
+                  driverClassName="oracle.jdbc.driver.OracleDriver" 
+                  connectionCachingEnabled="true" 
+                  factory="oracle.jdbc.pool.OracleDataSourceFactory" 
+                  url="jdbc:oracle:thin:@10.0.0.30:1521:ORCL" 
+                  user="cu" 
+                  password="password" 
+                  maxActive="20" 
+                  maxIdle="10" 
+                  maxWait="-1"/>
+    
+        <Resource name="jdbc/isd_bank" auth="Container" 
+                  type="oracle.jdbc.pool.OracleDataSource" 
+                  driverClassName="oracle.jdbc.driver.OracleDriver" 
+                  connectionCachingEnabled="true" 
+                  factory="oracle.jdbc.pool.OracleDataSourceFactory" 
+                  url="jdbc:oracle:thin:@10.0.0.30:1521:ORCL" 
+                  user="bank" 
+                  password="password" 
+                  maxActive="20" 
+                  maxIdle="10" 
+                  maxWait="-1"/>
+    
+    
+
+  
+
+2\. Add the following resource link in the Apache Tomcat7 *context.xml * file
+
+    
+    
+            <ResourceLink name="jdbc/isd" global="jdbc/isd" auth="Container" type="oracle.jdbc.pool.OracleDataSource" />
+        <ResourceLink name="jdbc/isd_cu" global="jdbc/isd_cu" auth="Container" type="oracle.jdbc.pool.OracleDataSource" />
+        <ResourceLink name="jdbc/isd_bank" global="jdbc/isd_bank" auth="Container" type="oracle.jdbc.pool.OracleDataSource" />
+    
+
+  
+
+    
+    
+          <Resource class="com.infoImage.estmt.dataSource.MongoConfig" 
+            factory="com.infoImage.estmt.dataSource.MongoConfigFactory" 
+            auth="Container" 
+            name="config/mongoConfig" 
+            mongodb_host="10.0.0.30" 
+            mongodb_port="27017" 
+            mongodb_dbname="dbname" 
+            mongodb_dbuser="user" 
+            mongodb_dbpass="password" 
+            mongodb_collName="cidProperties" />
+    
+
+  
+
+3\. Change the api base path from the  **config.properties**  file
+
+payment.swagger.api.base.path=<http://10.0.0.235:8080/paymentservice/api>  
+payment.swagger.api.version=1.0.1  
+#. By concating CID with dir config file will be loaded i.e config_mtro,
+config_demo etc, In the CID (MTRO) config file(config_mtro.properties)  
+#. the merchant account info is configured. The merchant account info is used
+to send requst to EPX.  
+merchant.conf.dir.format=config/config_  
+info.service.base.path=<https://devapi.infoimageinc.com/infoservice/api/v1>  
+info.service.account.search.path=/account/search  
+notify.service.base.path=<https://devapi.infoimageinc.com/notifyservice/api/v1>  
+send.ondemand.notification=/notification/{cid}/ondemand/track  
+template.service.base.path=<https://devapi.infoimageinc.com/templateservice/api/v1>  
+get.notif.template.path=/notiftmplmgmt/{cid}/template
+
+4\. change the log file path from src/main/resources/logback.xml as your env.  
+in my case it is <file>/tmp/paymentservice.log</file>
+
+5\. Copy the ojdbc14.jar from paymentservice/lib/ojdbc14.jar to apache-
+tomcat7/lib
+
+6\. Run the init epay Schema from paymentservice/init-script/update.sql.
+
+7\. Build a paymentservice.war using maven command. Go to the project
+directory  
+in my case it is amjad@dsi-
+Inspiron:~/dsi_projects/infoImageDev/srv/svn/paymentservice/trunk$ mvn clean
+package
+
+8\. Copy the paymentserivce.war from /target to the /apache-tomcat7/webapps  
+Your payment service API should be workable. It can be accessible by
+payment.swagger.base.path which is configured into config.properties file
+
+### Attachments
+
+250
+
+

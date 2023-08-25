@@ -1,0 +1,434 @@
+A Sample Project for Statements: template_stmt.zip
+DOCFORMAT $_BEFOREFIRSTDOC;
+  /************common*************/
+  IF ENVIRONMENT('ZIPFILE')<> '' AND ENVIRONMENT('ZIPFILE')<>
+   'ZIPFILE' ;
+  THEN ;
+    &D_DIR = SUBSTR(ENVIRONMENT('ZIPFILE'),2,1, '') ;
+  ELSE ;
+    IF ENVIRONMENT('AFPFILE')<> '' AND ENVIRONMENT('AFPFILE')<>'AFPFI'
+  'LE' ;
+    THEN ;
+      &D_DIR = SUBSTR(ENVIRONMENT('AFPFILE'),2,1, '') ;
+    ELSE ;
+      &D_DIR = 'd' ;
+    ENDIF ;
+  ENDIF ;
+  &PREFIX = ENVIRONMENT('prefix') ;
+  &CID = SUBSTR(&PREFIX,1,4, '') ;
+  &JID = SUBSTR(&PREFIX,5,3, '') ;
+  &JOB_TYPE = ENVIRONMENT('JOB_SEL') ;
+  &JOB_FLAG = ENVIRONMENT('JOB_FLAG') ;
+  &LOOKUPFILE = ENVIRONMENT('LOOKUPFILE') ;
+  &SEQ_NUM = 0 ;
+  &PAGE_FROM = 0 ;
+  &STMT_DATE =  '' ;
+  /*need for mailing purpose */
+  &PSNET_HOLD = '           ' ;
+  USE
+    FORMAT GLOBAL_ESTATEMENT_CHECK_INDEX_CONFIGURATIONS ;
+  USE
+    FORMAT GLOBAL_CHECK_IMAGE_CONFIGURATIONS ;
+  USE
+    FORMAT GLOBAL_INVALID_ACCOUNT_CONFIGURATIONS ;
+  USE
+    FORMAT GLOBAL_MESSAGE_MANAGER_CONFIGURATIONS ;
+  USE
+    FORMAT GLOBAL_NEW_E_INDEX_CONFIGURATIONS ;
+DOCFORMAT $_BEFOREDOC;
+  /***************common variables ********************/
+  :STARTS ;
+  /*each line in data file or record*/
+  INPUT_REC = ' ' ;
+  REC_IDENT = ' ' ;
+  CITY =  '' ;
+  STATE =  '' ;
+  ZIP_CODE =  '' ;
+  /*customer member number or account number or  loan number*/
+  ACCOUNT_NUMBER =  '' ;
+  /*account number without leading zeros*/
+  ACCOUNT_NUMBER_TMP =  '' ;
+  /*need for mailing type or whether this will be mailed or suppressed*/
+  MAIL_CODE =  '' ;
+  STMT_BEG_DATE =  '' ;
+  STMT_END_DATE =  '' ;
+  STMT_DATE =  '' ;
+  INDIV_AFP =  '' ;
+  ACCOUNT_NAME =  '' ;
+  CITY_STATE_ZIP =  '' ;
+  /*this is necessary to determine if mailing will be suppressed 'z' or not or else*/
+  /*review SOW to get how to set it's value*/
+  MAIL_CODE = ' ' ;
+  /*the width we are going to use to print text normally $lp_width-$mr_left-$mr_right*/
+  BODY_WIDTH = 0 ;
+  /*Bin information from which come inserts, there may be highest 5 inserts*/
+  /*usually this information comes from SOW*/
+  /**/
+  /*so if SOW has data in 1st and 3rd column in insert table*/
+  /*this value will be '1 1  '*/
+  INSERT_CODE =  '' ;
+  /*Address Initialization maximum 6 address*/
+  ADDR_PTR = 0 ;
+  FOR I
+    REPEAT 6 ;
+    ADDR[I] =  '' ;
+  ENDFOR ;
+  USE
+    FORMAT LOCAL_PAGE_CONFIGURATIONS ;
+  USE
+    FORMAT LOCAL_MESSAGE_MANAGER_CONFIGURATIONS ;
+  USE
+    FORMAT LOCAL_CHECK_IMAGE_CONFIGURATIONS ;
+  /************   project specific variables ******************/
+  INVALID_ACCOUNT_ARRAY_COUNTER = 0 ;
+DOCFORMAT GLOBAL_NEW_E_INDEX_CONFIGURATIONS;
+  /*setting individual afp path */
+  /*writing eindex header by calling ESTMT_IDX_INIT_FIRST*/
+  IF $SYSTEM=='Windows' ;
+  THEN ;
+    &PATH_SLASH = '\' ;
+    &INDIV_PATH = 'c:\isis\afpds\' ;
+  ELSE ;
+    &PATH_SLASH = '/' ;
+    &INDIV_PATH = '/'!&D_DIR!'/'!&CID!'/'!&PREFIX!'-indiv/' ;
+  ENDIF ;
+  &ZIPFILE = ENVIRONMENT('ZIPFILE') ;
+  IF &JOB_TYPE=='f' ;
+  THEN ;
+    USE
+      FORMAT ESTMT_IDX_INIT_FIRST EXTERNAL ;
+  ENDIF ;
+DOCFORMAT GLOBAL_MESSAGE_MANAGER_CONFIGURATIONS;
+  /*there might be one or multiple messages*/
+  :MSG_MGR ;
+  /******* need to set message1 positon where to display*/
+  &MSG1_HOR_POS = 0 ;
+  &MSG1_VER_POS = 3.1 ;
+  /*if message is image then it's not necessary*/
+  &MSG1_WIDTH = 2.8 ;
+  /******* will be set by external dfa*/
+  &PRINTED_MSG1 = 0 ;
+  /******* need to set message2 positon where to display*/
+  &MSG2_HOR_POS = 4.45 ;
+  &MSG2_VER_POS = 0.6 ;
+  /*if message is image then it's not necessary*/
+  &MSG2_WIDTH = 2.8 ;
+  /******* will be set by external dfa*/
+  &PRINTED_MSG2 = 0 ;
+  &TOTAL_MSG_PRINTED = 0 ;
+  /*call this to read portal file where message information is provided*/
+  IF &JOB_TYPE=='m' ;
+  THEN ;
+    IF $SYSTEM=='Windows' ;
+    THEN ;
+      :LOCAL_DIRECTORY ;
+    ELSE ;
+      :PRODUCTION_DIRECTORY ;
+    ENDIF ;
+    USE
+      FORMAT MSG_MGR_READ_SAM_LIST EXTERNAL ;
+  ELSE ;
+    IF &JOB_TYPE<>'d' ;
+    THEN ;
+      USE
+        FORMAT MSG_MGR_READ_CU_SEL_LIST EXTERNAL ;
+    ENDIF ;
+  ENDIF ;
+DOCFORMAT GLOBAL_INVALID_ACCOUNT_CONFIGURATIONS;
+  /*for invalid or bad account*/
+  IF $SYSTEM=='Windows' ;
+  THEN ;
+    :LOCAL_DIRECTORY ;
+    INVALID_ACCOUNT = 'C:\ISIS\afpds\INVALID_ACCOUNT.dat' ;
+  ELSE ;
+    :PRODUCTION_DIRECTORY ;
+    INVALID_ACCOUNT = '/'!&D_DIR!'/'!&CID!'/'!&PREFIX!'_invalid_accou'
+  'nt.txt' ;
+  ENDIF ;
+  DUMMY = CHANGEENV('INVALID_ACCOUNT',INVALID_ACCOUNT) ;
+DOCFORMAT GLOBAL_ESTATEMENT_CHECK_INDEX_CONFIGURATIONS;
+  /*******************check index for check image for estatement team so only for f option*/
+  IF &JOB_TYPE=='f' ;
+  THEN ;
+    IF $SYSTEM=='Windows' ;
+    THEN ;
+      :LOCAL_DIRECTORY ;
+      CHECK_INDEX = 'C:\ISIS\afpds\CK_IDX.dat' ;
+    ELSE ;
+      :PRODUCTION_DIRECTORY ;
+      CHECK_INDEX = '/'!&D_DIR!'/'!&CID!'/CK_IDX.dat' ;
+    ENDIF ;
+    DUMMY = CHANGEENV('CK_IDX',CHECK_INDEX) ;
+  ENDIF ;
+DOCFORMAT GLOBAL_CHECK_IMAGE_CONFIGURATIONS;
+  /*check image Check Image Variables*/
+  /*where the check images will be found usually defined in scripting side*/
+  &TIFFDIR = ENVIRONMENT('TIFFDIR') ;
+  /*the number of statements those have missing check images*/
+  &FN_CRIPPLE_STMT = 0 ;
+  /*total number of statements*/
+  &FN_TOT_STMT = 0 ;
+  /*the threshold point if exceeds then goes to whole statemenets will be disqualified*/
+  &MISSING_CHK_THRESHOLD = 1 ;
+  /*******************cripple handling for check image*/
+  IF &JOB_TYPE=='s' ;
+  THEN ;
+    IF $SYSTEM=='Windows' ;
+    THEN ;
+      :LOCAL_DIRECTORY ;
+      CRIPPLE_REPORT = 'C:\ISIS\afpds300\CRIPPLE.dat' ;
+      &ERROR_TIFF = 'c:\isis\tiff\9999999.TIF' ;
+    ELSE ;
+      :PRODUCTION_DIRECTORY ;
+      CRIPPLE_REPORT = '/'!&D_DIR!'/'!&CID!'/CRIPPLE.dat' ;
+      &ERROR_TIFF = '/home/isis/tiff/9999999.TIF' ;
+    ENDIF ;
+    DUMMY = CHANGEENV('CRIPPLE_RPT',CRIPPLE_REPORT) ;
+    WRITERECORD  TO CRIPPLE_RPT 
+      DELIMITER X'0D0A' ;
+      PUT '                                 CRIPPLE STATEMENT REPORT '
+  '                                     '  DELIMITED ;
+  /**************** change Bank or Credit Union description accordingly*/
+      PUT '                                   IDAHO CREDIT UNION     '
+  '                              '  DELIMITED ;
+      PUT '**********************************************************'
+  '****************************'  DELIMITED ;
+      PUT 'PROCESS DATE: '!$TIME  DELIMITED ;
+      PUT '**********************************************************'
+  '****************************'  DELIMITED ;
+      PUT 'Ck Acct No'  START * LENGTH 21;
+      PUT 'Chk No'  START * LENGTH 15;
+      PUT 'Chk Amt'  START * LENGTH 20;
+      PUT 'Chk Date'  START * LENGTH 21;
+      PUT 'Member No'  DELIMITED ;
+      PUT '**********************************************************'
+  '****************************'  START * LENGTH 100;
+    ENDIO;
+  ENDIF ;
+  IF $SYSTEM=='Windows' ;
+  THEN ;
+    :LOCAL_DIRECTORY ;
+    &ERROR_TIFF = 'c:\isis\tiff\9999999.TIF' ;
+  ELSE ;
+    :PRODUCTION_DIRECTORY ;
+    &ERROR_TIFF = '/home/isis/tiff/9999999.TIF' ;
+  ENDIF ;
+DOCFORMAT LOCAL_CHECK_IMAGE_CONFIGURATIONS;
+  MR_TOP = 1.5 ;
+  MR_BOTTOM = 0.75 ;
+  MR_LEFT = 0.5 ;
+  MR_RIGHT = 0.5 ;
+  /*horizontal gap between images*/
+  &H_GUTTER = 0.125 ;
+  /*vertical gap between images*/
+  &V_GUTTER = 0.125 ;
+  /*default column and row*/
+  COL_NUM = 2 ;
+  ROW_NUM = 6 ;
+  /*total checks of current customer*/
+  ACCOUNT_CHECKS = 0 ;
+  /*total checks of current customer*/
+  &CHK_IMAGE_CT = 0 ;
+  /*total missing checks for current customer*/
+  COUNTER_MISSING = 0 ;
+  FIRST_TIME = 0 ;
+DOCFORMAT LOCAL_MESSAGE_MANAGER_CONFIGURATIONS;
+  /*account no with no leading zeros*/
+  ACN =  '' ;
+  /*no hyphen so if hyphen presents in zip code extract 1st field*/
+  /*ask client to be sure*/
+  ZIP =  '' ;
+  /*no leading zeros or spaces*/
+  BRANCH =  '' ;
+  ACCOUNTTYPE =  '' ;
+  /*this is needed for when only selective criteria presents*/
+  MM2_VALUE_PTR = 0 ;
+  /*all below variables will be set by external dfa*/
+  MSG_ID_STR =  '' ;
+  ID_PTR = 0 ;
+  MSG1_ID =  '' ;
+  MSG_AREA1_NAME =  '' ;
+  MSG_AREA1_PRINTED = 0 ;
+  MSG_AREA1_TYPE = 0 ;
+  MSG2_ID =  '' ;
+  MSG_AREA2_NAME =  '' ;
+  MSG_AREA2_PRINTED = 0 ;
+  MSG_AREA2_TYPE = 0 ;
+DOCFORMAT LOCAL_PAGE_CONFIGURATIONS;
+  /*the no the first page of current customer with respect to all curtomer pages*/
+  &PAGE_FROM_HOLD = 0 ;
+  /*pages/images excluding check images*/
+  STMT_PAGES =  '' ;
+  /*eoc - end of client flag */
+  /*needs for grouping customer with same account no*/
+  /*or address whatever by the post script*/
+  EOC_FLAG = '  1' ;
+  /*group image count  same as &ttl_pages*/
+  /*but this field has special signigicant like group sheet count*/
+  /*it's value also set by the script but we need  to put it*/
+  /*in dfa also*/
+  /**/
+  /**/
+  /**/
+  GROUP_IMAGE_COUNT =  '' ;
+  /*total group sheet, for duplex logicalpage1 and logicalpage2 forms 1 physical page, for simplex one logical page is physical page*/
+  /*this field is necessary for grouping and it's correct value set by the script*/
+  /**/
+  /*but in dfa  we have to put it and it's value is same as physical_page*/
+  /**/
+  GROUP_SHEET_COUNT =  '' ;
+  /*total physical pages, for duplex logicalpage1 and logicalpage2 forms 1 physical page, for simplex one logical page is physical page*/
+  PHY_PAGES =  '' ;
+  /*Total images or logical pages*/
+  &TTL_PAGES =  '' ;
+  /*Sometimes actual page count differ from display count */
+  &TTL_PAGES_DISPLAY =  '' ;
+  /*Need to calculate page in printfooter*/
+  ACT_PAGES =  '' ;
+  /*How many sheets(Physical pages) from Tray1 will be used*/
+  TRAY1_SHEETS =  '' ;
+  /*How many sheets(Physical pages) from Tray2 will be used*/
+  TRAY2_SHEETS =  '' ;
+  /*may be simplex or duplex per requirement*/
+  TRAY1_MODE = 'd' ;
+  /*may be simplex or duplex per requirement*/
+  TRAY2_MODE = 'd' ;
+  /*need when displaying page number*/
+  CUR_PAGE =  '' ;
+DOCFORMAT LOCAL_ESTEMENT_SET_VARIABLES;
+  /*comment set individual afp name, acct_num, &acct_type, &job_desc */
+  /*and any other variables necessary */
+  IF &JOB_TYPE=='f' ;
+  THEN ;
+    :ASSIGNING_VARIABLES ;
+  /*should not contain any sign inside date and format yyyymmdd*/
+    &DOCBEGINDATE = CHANGE(CHANGE(STMT_BEG_DATE,'-', ''),'/', '') ;
+    &DOCBEGINDATE = SUBSTR(&DOCBEGINDATE,5,4, '')!
+     SUBSTR(&DOCBEGINDATE,1,2, '')!SUBSTR(&DOCBEGINDATE,3,2, '') ;
+    &DOCENDDATE = CHANGE(CHANGE(STMT_END_DATE,'-', ''),'/', '') ;
+    &DOCENDDATE = SUBSTR(&DOCENDDATE,5,4, '')!SUBSTR(&DOCENDDATE,1,2,
+      '')!SUBSTR(&DOCENDDATE,3,2, '') ;
+  /*no leading zeros in account number*/
+    ACCT_NUM = NUMPICTURE(ACCOUNT_NUMBER,'#0') ;
+    ACCT_NAME = NOSPACE(ADDR[1]) ;
+  /*set this value appropritely it may be sav,ck,cc,ln etc or blank*/
+    &ACCT_TYPE =  '' ;
+  /*&JOBDESC may need to change*/
+  /*it may be DDA Statement , estatement, Notice etc or may be  blank*/
+    &JOBDESC = &JOBDESC ;
+    INDIV_AFP = &PREFIX!'_'!&DOCENDDATE!'_'!ACCT_NUM!'_'!&SEQ_NUM!'.a'
+  'fp' ;
+    OUTTEMP1 = &INDIV_PATH!INDIV_AFP ;
+    DUMMY = CHANGEENV('OUTFILENAME',OUTTEMP1) ;
+    SELECTOUTPUT OUTFILENAME;
+  ENDIF ;
+DOCFORMAT $_AFTERDOC;
+DOCFORMAT LOCAL_IMPLEMENT_S_F_E_INDEX;
+  /*extracting  zip code*/
+  FOR I
+    REPEAT MAXINDEX(ADDR) ;
+    IF  NOT EMPTY(ADDR[6-I+1]) ;
+    THEN ;
+      CITY_STATE_ZIP = ADDR[6-I+1] ;
+      I = 6 ;
+    ENDIF ;
+  ENDFOR ;
+  INV_CSZ = INVERT(CITY_STATE_ZIP) ;
+  INV_ZIP_CODE = EXTRACT(INV_CSZ,' ',1) ;
+  ZIP_CODE = INVERT(INV_ZIP_CODE) ;
+  /*if address contain do not mail verbiage in it suppress it from  printing*/
+  FOR I
+    REPEAT MAXINDEX(ADDR) ;
+    IF POS('DO NOT MAIL',UPPER(ADDR[I]),1)<>0 ;
+    THEN ;
+      MAIL_CODE = 'z' ;
+    ENDIF ;
+  ENDFOR ;
+  /*archive option*/
+  IF &JOB_TYPE=='e' ;
+  THEN ;
+  /*need to change according to specification*/
+    GROUPINDEX DOC_TYPE = 'Deposit Statements - Commercial' ;
+    GROUPINDEX PDF_FILE_NAME = PDF_NAME ;
+    GROUPINDEX STMT_DATE = STATEMENT_DATE_WITHOUT_DASH ;
+    GROUPINDEX ACCOUNT_NUMBER = ACCOUNT_NUMBER*1 ;
+    GROUPINDEX NAME = ADDR[1] ;
+  ENDIF ;
+  ENDGROUP ;
+  IF &JOB_TYPE=='s' ;
+  THEN ;
+  /*paper option*/
+    ACCOUNT_NUMBER_TMP = ACCOUNT_NUMBER*1 ;
+    WRITERECORD  TO ZIPFILE ;
+  /*This information needs for mailing purpose*/
+      PUT &PSNET_HOLD  START 1 LENGTH 12;
+  /*What number customer this is, should be right align*/
+      PUT RIGHT(&SEQ_NUM,8,' ')  START 15 LENGTH 8;
+  /*zip code*/
+      PUT ZIP_CODE  START 23 LENGTH 10;
+  /*Account number , no leading zeros, must be right aligned*/
+  /*If member number is present then it gets priority over Account number here*/
+      PUT RIGHT(ACCOUNT_NUMBER_TMP,20,' ')  START 33 LENGTH 20;
+  /*mail code , whether it wil be suppressed or else*/
+      PUT MAIL_CODE  START 53 LENGTH 1;
+  /*Total logical pages of a customer, must be right aligned*/
+      PUT RIGHT(&TTL_PAGES,5,' ')  START 54 LENGTH 5;
+  /*Insert code , which insert bin to be used*/
+      PUT INSERT_CODE  START 59 LENGTH 5;
+  /*adress1 most of the case it's the name, a customer may have highest 6 address*/
+      PUT UPPER(ADDR[1])  START 64 LENGTH 40;
+      PUT UPPER(ADDR[2])  START 104 LENGTH 40;
+      PUT UPPER(ADDR[3])  START 144 LENGTH 40;
+      PUT UPPER(ADDR[4])  START 184 LENGTH 40;
+      PUT UPPER(ADDR[5])  START 224 LENGTH 40;
+      PUT UPPER(ADDR[6])  START 264 LENGTH 40;
+  /*starting logical page number of customer*/
+      PUT RIGHT(&PAGE_FROM_HOLD,7,' ')  START 304 LENGTH 7;
+  /*total logical  pages excluding check images*/
+      PUT STMT_PAGES  START 318 LENGTH 5;
+  /*eoc flag need for grouping*/
+      PUT RIGHT(EOC_FLAG,3,' ')  START 332 LENGTH 3;
+  /*group image count need for grouping*/
+      PUT RIGHT(GROUP_IMAGE_COUNT,5,' ')  START 335 LENGTH 5;
+  /*group sheet count need for grouping*/
+      PUT RIGHT(GROUP_SHEET_COUNT,5,' ')  START 340 LENGTH 5;
+  /*Total physical pages( one logical page1 and one logical page2 form one physical page)*/
+      PUT RIGHT(PHY_PAGES,5,' ')  START 351 LENGTH 5;
+  /*Total sheets or physical pages use from Tray1, there may be 5 trays, but most of the cases we saw 2*/
+      PUT RIGHT(TRAY1_SHEETS,4,' ')  START 356 LENGTH 4;
+  /*Tray1 mode 's' for simple, 'd' for duplex*/
+      PUT TRAY1_MODE  START 360 LENGTH 1;
+  /*Total sheets or physical pages use from Tray2*/
+  /*Delete this if not needed*/
+      PUT RIGHT(TRAY2_SHEETS,4,' ')  START 361 LENGTH 4;
+  /*Tray2 mode 's' for simple, 'd' for duplex*/
+  /*Delete this if not needed*/
+      PUT TRAY2_MODE  START 365 LENGTH 1;
+  /*for message manager, message1 type, '1' for fixed message*/
+  /*Delete this if not needed*/
+      PUT MSG_AREA1_TYPE  START 411 LENGTH 1;
+  /*for message manager, message2 type, '1' for fixed message*/
+  /*Delete this if not needed*/
+      PUT MSG_AREA2_TYPE  START 412 LENGTH 1;
+    ENDIO;
+  ENDIF ;
+  IF &JOB_TYPE=='f' ;
+  THEN ;
+    CLOSE OUTFILENAME;
+    &FILENAME = INDIV_AFP ;
+    MSG_ID_STR =  '' ;
+    FOR MC
+      REPEAT MAXINDEX(MSG_ID) ;
+      IF MC>1 ;
+      THEN ;
+        MSG_ID_STR = MSG_ID_STR!','!MSG_ID[MC] ;
+      ELSE ;
+        MSG_ID_STR = MSG_ID[MC] ;
+      ENDIF ;
+    ENDFOR ;
+    &MESSAGEID = MSG_ID_STR ;
+    USE
+      FORMAT ESTMT_IDX_WRITE_AFTER EXTERNAL ;
+  ENDIF ;
+ /* END OF DOCDEF FILE 'TEMPLATE_STMT' */
+Tagged:papyrusprojectsamplestandarttemplate

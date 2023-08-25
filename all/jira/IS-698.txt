@@ -1,0 +1,1086 @@
+title: EQBK - [21051][pvt] eNotices for Daily Notices 
+description: Assessment Details: Setup e-notice for 22 notices (except notice-015)
+ - update eqbkdl_process.sh/pl for e-notice (f-option)
+ - Add app codes by letter type (in all format DFA). App codes are in attached "DL App Codes.xlsx"
+ - use latest print_dfa in eqbkdla.control for new e-notice index file
+ - Notice 023, Names are not showing correctly in TXT record, Need to capture name position in TXT
+ - Notice 017, need to capture acct number to TXT rec and maked acct numbers. (Example, XXXXXX1498)
+ - Notcie 016 need to masked acct numbers in DFA (Example, XXXXXX1498)
+ - Make sure all notices have valid account numbers to post.
+ - No enotice required: Address Change Notice- 015
+ - Test with ISD for posting, this job has two segments
+ Segment[#1|https://track.infoimageinc.com/issues/1]: you can use latest file to test
+ Segment #2: you can use latest file to test
+
+-ISD Development & Support
+
+-QA
+
+
+author: william.kong
+comment: [~jun]: This project start date is 2/10/2022, but if there is a break, please get a head start. If not, then please start this project on 2/10/2022
+
+
+author: william.kong
+comment: [~jun]: Disregard. This project is originally assigned to [~eric.yan].
+
+
+
+[~eric.yan]:This project start date is 2/10/2022, but if there is a break, please get a head start. If not, then please start this project on 2/10/2022. Live date is 2/28/2022.
+
+
+author: william.kong
+comment: [~eric.yan]: please get this code merged. Would like to get samples out to client next week,
+
+
+
+[~kdishroon]: Approval date is on 2/21 which is holiday. Once Eric is ready, let make sure we get approvals no later than 2/22.
+
+
+author: eric.yan
+comment: Hi [~Shun.Kuwashima]
+
+Could you help post the enotice index file for eqbk. This has been tested before but was put on hold for a few months.
+
+/z/isd_input/I3/process-files/eqbk/dla_20220214_1_20220215_1222_eqbk.txt
+
+
+author: shun.kuwashima
+comment: [~eric.yan] [~kdishroon] I was able to post the file successfully. I was able to verify a few accounts for most of the letters. 
+
+I was not able to find the following in the index file:
+003
+004
+010
+012
+015
+
+017 exists but they are all missing an account number, therefore these did not post. 
+
+
+author: eric.yan
+comment: [~Shun.Kuwashima]
+
+Thanks, the other letters are missing in the data file so not available.
+
+DL017 doesn't have an account number as the verbiage has changed. I'll need to confirm AC how they want to proceed.
+
+
+author: eric.yan
+comment: [~Shun.Kuwashima]
+
+This is segment 2 job for DL004. Please test posting.
+
+/z/isd_input/I3/process-files/eqbk/dla_20220215_2_20220215_1637_eqbk.txt
+
+
+author: shun.kuwashima
+comment: [~eric.yan] Posted successfully on pilot, I checked a few accts and I can view the notice.
+
+
+author: eric.yan
+comment: [~Shun.Kuwashima]
+
+This is for segment 3 letters. 024-030, the data file does not have all letters.
+
+/z/isd_input/I3/process-files/eqbk/dla_20220215_3_20220215_1802_eqbk.txt
+
+
+author: shun.kuwashima
+comment: [~eric.yan] Posted the above file successfully on pilot, I was able to find and view letters 024, 026, and 028 for a few accts each.
+
+
+author: eric.yan
+comment: [~kdishroon]
+
+EQBK daily letter enotices are posted on pilot for the client to review. There are a few issues to keep in mind.
+
+1) 003, 004, 010, 012, 015 are not posted because they are missing from the daily letter data file.
+
+2) 017 letter is not posted because the account number is not the full length in the data file.
+
+3) Only 024, 026 and 028 letters are posted for the OD letters ad these are the ones available in the data file.
+
+
+author: william.kong
+comment: [~kdishroon]: Please advise status on Eric's feedback above. Please see if you can the all the deliverables by Thursday morning 2/24; Approval date of 2/21 is missed. I want to get his approved by end of day 2/24. If we cannot get this done by this date, then we need to put this project on hold indefinitely and need to re-assign to a new different developer plus also requote the job to adjust the code with new logic to restart this project.
+
+
+
+
+
+
+
+
+
+
+author: kdishroon
+comment: [~eric.yan] - Can you please provide account number the client can review in Pilot?
+
+
+author: eric.yan
+comment: [~kdishroon]
+
+Here are the account lists for three postings.
+
+
+
+
+author: kdishroon
+comment: Thank you [~eric.yan] - Please note that the client has unmasked the account number for letters 016 and 017.
+
+
+author: eric.yan
+comment: [~kdishroon]
+
+I'm using the latest data file but letter 017 is still masked. Are they going to change it?
+
+
+author: kdishroon
+comment: Hi [~William.Kong] - Please provide a new timeline
+
+[~eric.yan] - Per the client:
+
+"For CD and IRA notices, we need to have the TISA added to second page. Currently, InfoImage does this. InfoCode # 001, 002, 003"
+
+Are you able to add the TISA and upload new samples to pilot?
+
+
+author: eric.yan
+comment: [~kdishroon]
+
+As discussed, please clarify what the client means by "have the TISA added to the second page". Please also keep the work of this Jira to enotice implementation only. If the client has any request to change verbiage or letter template, please open a separate PR.
+
+
+author: kdishroon
+comment: Hi [~eric.yan] - The doc in the first link below should be included with letters 001 and 003; the second link should be included with 002.
+
+[http://sharepoint-svr/AS/Shared%20Documents/SOW%20Directory/EQBK%20-%20Equity%20Bank/Daily%20Notice/Renewable%20CD%20Disclosure.doc]
+
+[http://sharepoint-svr/AS/Shared%20Documents/SOW%20Directory/EQBK%20-%20Equity%20Bank/Daily%20Notice/Renewable%20%20IRA%20CD%20Disclosure.doc]
+
+Let me know if you need me to attach the word docs.
+
+
+
+
+author: eric.yan
+comment: [~kdishroon]
+
+I just check and those backers are already implemented. EQBKB1 for 001, 003 and EQBKB2 for 002. Are you not able to view them on the enotice?
+
+
+author: eric.yan
+comment: [~Shun.Kuwashima]
+
+I check the pilot site and the backers are not loading, possibly due to missing resources.
+
+Could you help to load these resources to ISD server.
+
+S1EQBFDC.300
+S1EQBKB1.300
+S1EQBKB2.300
+S1EQBKB5.300
+S1EQBKLG.300
+
+
+author: shun.kuwashima
+comment: [~eric.yan] Resources should be uploaded now.
+
+
+author: eric.yan
+comment: [~kdishroon]
+
+The backer is showing up now.
+
+
+author: william.kong
+comment: [~kdishroon]: Please advise when we can get client approval for this project.
+
+
+author: kdishroon
+comment: Hi [~eric.yan],
+
+
+
+15 day OD Ltr description actually contains the 20 day OD Ltr. See below:
+
+
+
+!image-2022-03-10-08-23-21-242.png!
+
+
+author: shun.kuwashima
+comment: Hi [~kdishroon] [~eric.yan], I checked acct 7422 in the index file and it contains letter code 026, which is mapped to the description '15 Day OD Letter'.
+
+Index filename: dla_20220215_3_20220215_1802_eqbk.txt
+
+
+author: shun.kuwashima
+comment: [~kdishroon] It looks like the EQBK eNotice SOW is not updated. After talking with Eric, I saw that there were updates made to the EQBK Daily Notice SOW 2.13.2018, so we'll work on updating letter 026. Can you update the eNotice SOW or should we just be referring to the Daily Notice SOW for the letter codes/descriptions?
+
+
+author: kdishroon
+comment: Hi [~Shun.Kuwashima]
+
+My apologies, I thought I had updated the SOW, I will update now and attach shortly.
+
+
+author: kdishroon
+comment: Here is the updated SOW:
+
+[^EQBK eNotice SOW.docx]
+
+
+author: shun.kuwashima
+comment: Thanks [~kdishroon], we updated the description for letter 026 to '20 Day OD Letter'. It should be showing as such on pilot now.
+
+
+author: william.kong
+comment: per eric, description is fixed. Waiting for client feedback
+
+
+author: kdishroon
+comment: Hi [~eric.yan] and [~Shun.Kuwashima],
+
+Here is the client's feedback:
+
+"Will customer receive an option to opt in for e-notices? Same as e-statements. I noticed several options listed under Profile when you go to pull up your statements.  See attachment.
+
+What happens when the 2ndor 3rdoptions are selected? As a test, I selected the 2ndoption for all of my accounts but I didnt get any type of notification or disclosure to read for approval."
+
+[^Doc1(2).docx]
+
+
+author: shun.kuwashima
+comment: [~kdishroon] Each option applies to statements and notices. Below is what each option essentially means:
+1. Electronic
+2. Paper
+3. Both Paper and Electronic
+
+If the user decides to select the 2nd or 3rd option, they will need to click on the 'Submit' button at the bottom of the page to save the update. There is no notification or disclosure for approval when the delivery preference is updated. However, a disclosure should show when a new user is trying to enroll into electronic for the first time.
+
+
+author: kdishroon
+comment: Hi [~eric.yan],
+
+The client is asking:
+
+"Can InfoImage systematically prompt customers to review disclosures and approve? This would be for those customers who are already signed up for e-statements and now sign up for notices."
+
+
+author: eric.yan
+comment: [~kdishroon]
+
+Is this referring to the email notification?
+
+[~Shun.Kuwashima]
+
+Please advise about the client's inquiry.
+
+
+author: kdishroon
+comment: Hi [~Shun.Kuwashima] - I think the client is just asking about if clients that are already signed up for eStatements will have to review and approve the disclosures for the eNotices; I am assuming the answer is no? Can you confirm?
+
+
+author: shun.kuwashima
+comment: Hi [~kdishroon], that's correct. User enrollment is not based on by app, so enrolled users should not see the disclosure/enrollment steps even if we start posting enotices to their accounts.
+
+
+author: william.kong
+comment: [~Shun.Kuwashima]/[~eric.yan]/[~kdishroon]: Any new updates on this project? Is there a new deadline client want to meet instead of the old date of 2/28/2022? Will it be 4/30/2022? If so, would like to update so that [~eric.yan]can wrap up this final IS related project. Please advise.
+
+
+author: eric.yan
+comment: [~William.Kong]
+
+I think it's still pending the client's further feedback.
+
+[~kdishroon]
+
+Please advise.
+
+
+author: william.kong
+comment: [~kdishroon]: We have not gotten any feedback for over two weeks now. Please advise if i should put this project on hold.
+
+
+author: william.kong
+comment: [~kdishroon]: I have not gotten any updates to this project. I will mark this project "On Hold" for now.
+
+
+
+[~eric.yan]: FYI.
+
+
+author: kdishroon
+comment: [~William.Kong]and [~eric.yan] 
+
+Here is the client's feedback; I am pending confirmation from Shun if we can do this:
+
+*Here is what we like to do:*
+
+*{color:#555555}5/1 {color}{color:#ff0000}New {color}{color:#555555}customers will have the option to individually enroll and accept E-notices enrollment disclosure.{color}*
+
+*{color:#555555}6/1 {color}{color:#ff0000}Existing estatement c{color}{color:#555555}ustomers will see a shorten acknowledgment for enrollment into E-notices.{color}*
+
+{color:#555555}*Can InfoImage track acknowledgement to enroll into E-notices on 6/1? Can InfoImage turn on E-notices for those existing customer not enrolled in notices?*{color}
+
+
+
+
+author: eric.yan
+comment: Hi [~Shun.Kuwashima],
+
+Could you look at the above requirement and see if we could do it?
+
+
+author: shun.kuwashima
+comment: [~eric.yan] no we cannot, I also responded to these questions on ISD-6072
+
+
+author: eric.yan
+comment: [~kdishroon]
+
+[~Shun.Kuwashima]already responded on 4/11 onISD-6072.
+
+I don't think we could support the extra request.
+
+
+author: eric.yan
+comment: [~William.Kong], [~kdishroon]
+
+Parallel hold has been removed, project files are backed up to/d/iss/ericY/eqbk/enotices_setup_backup/
+
+
+author: tuna
+comment: Hi [~kdishroon],
+
+This project is holding for a while.
+
+I will remove from developer resource list, if we don't have any action within one week from now.
+
+Developer will not reinitiate project until we setup new timeline.
+
+Please let me or Peter know if we need to restart the project.
+
+Thanks,
+
+Tun
+
+
+
+[~eric.yan], [~William.Kong], [~Peter.Dang]
+
+
+
+
+author: kdishroon
+comment: Additional request for ISD; see ISD-6072:
+
+
+
+- Update all user with sess_active_status as 'active' to 'pre_enroll'.
+
+- When user with 'pre-enroll' status logs in, they will see the disclosure page. If the user agrees to the new disclosure, the status will be set to 'active' and they will not see the disclosure again. If the user choose to not agree to the disclosure, they will still be redirected to the statement page, but the disclosure will be shown to the user when they logs in again.
+
+
+author: tuna
+comment: Hi [~kdishroon]
+
+This job is on and off. [~eric.yan]is no longer working for IS anymore.I removed from resource schedule.
+
+We will need new assessment and new timeline. If client wants to resume this project, please assign PR ticket back to me.
+
+
+Thanks
+Tun
+
+
+
+[~Peter.Dang], [~William.Kong]
+
+
+author: kdishroon
+comment: [~William.Kong] [~Peter.Dang], 
+
+Please see ISD-6072; the client wants this change to go live when the eNotices go live:
+ - Update all user with sess_active_status as 'active' to 'pre_enroll'.
+
+ - When user with 'pre-enroll' status logs in, they will see the disclosure page. If the user agrees to the new disclosure, the status will be set to 'active' and they will not see the disclosure again. If the user choose to not agree to the disclosure, they will still be redirected to the statement page, but the disclosure will be shown to the user when they logs in again.
+
+
+author: kdishroon
+comment: [~William.Kong] [~TunA] [~Peter.Dang] 
+
+Who is working on this now?
+
+
+author: william.kong
+comment: [~kdishroon]: We have another project from [~tohidulI]([IS-989] EQBK - [23136][pvt][in-house] DP / EQBK DL Processing Enhancement to add sub-folders - Jira (infoimageinc.com)) that has a code conflict.
+
+
+
+We need to ask [~tohidulI]to merge the code for this project with IS-989 and retest everything. This means we need client to also audit the PDF archival program along with the changes for this project.
+
+
+
+[~TunA]is going to forward Eric's code from this project to [~tohidulI].
+
+
+
+
+
+[~tohidulI]: [~TunA]will give you [~eric.yan]code and tell you where to get it. Please discuss with [~rony]when you can resume this project and merge your IS-989 project to this project.
+
+Please provide sample date and new approval date since we need to reset a new Timeline expectation.
+
+
+
+
+
+
+author: tuna
+comment: Hi [~tohidulI], Please see William's previous comment. I will assign this project to you. Please review codes and provide tentative timeline to [~kdishroon].
+
+Basically, [~eric.yan]already update the codes for EQBK enotice setup. Eric already tested and provided sample. But client did not approve for long time. Now, we will need sync back some of the codes before ISD can test. We will need parallel test for this update. [~eric.yan]is in ISD team now.
+
+
+
+I provided Eric's codes and code different information below. Please let me or [~eric.yan] know if you have question.
+
+
+
+Thanks
+
+Tun
+
+
+
+
+
+Following codes are updated by Eric for this project. 
+Copied to /d/ac-secure-share/dsi_print/tohidulI/eqbk/is-698/
+-rwxrwxrwx 1 1007 1009 73584 Feb 15 10:24 EQBKDL001.dfa
+-rwxrwxr-x 1 1007 1009 13626 Feb 15 10:29 EQBKDL004.dfa
+-rwxrwxr-x 1 1007 1009 9434 Feb 15 10:39 EQBKDL010.dfa
+-rwxrwxr-x 1 1007 1009 7894 Feb 15 10:40 EQBKDL011.dfa
+-rwxrwxr-x 1 1007 1009 7257 Feb 15 10:41 EQBKDL014.dfa
+-rwxrwxr-x 1 1007 1009 7105 Feb 15 10:45 EQBKDL015.dfa
+-rwxrwxr-x 1 1007 1009 6783 Feb 15 10:48 EQBKDL016.dfa
+-rwxrwxr-x 1 1007 1009 6868 Feb 15 10:53 EQBKDL017.dfa
+-rwxrwxr-x 1 1007 1009 8099 Feb 15 11:11 EQBKDL018.dfa
+-rwxrwxrwx 1 ericY isgroup 7528 Feb 15 11:48 EQBKDL024.dfa
+-rwxrwxrwx 1 ericY isgroup 1668 Sep 28 2021 eqbkdla.control
+-rwxrwxrwx 1 ericY isgroup 14366 Feb 15 11:36 eqbkdl_process.sh
+
+
+Following codes are updated in between
+EQBKDL001.dfa EQBKDL001.dfa.20220505084245 05/05/2022 ronyD IS-1002 EQBK - [27587][pvt] Updating Daily Notices 001 and 002
+EQBKDL001.dfa EQBKDL001.dfa.20220512152421 05/12/2022 ronyD Ticket #29078 DP/EQBK DL #10.01& 11.01/Processing error
+
+EQBKDL024.dfa EQBKDL024.dfa.20220512154823 05/12/2022 thomasY IS-1091 eqbkdl024 update account number parsing logic
+
+
+Following codes are holding by Tohid for IS-989
+eqbkdl_process.sh
+eqbkdla_pdf.control
+EQBKDLPRNT.dfa
+EQBKDLPRNT.prj
+
+
+
+
+
+[~kdishroon], [~rony], [~William.Kong], [~Peter.Dang]
+
+
+author: tohiduli
+comment: Hi [~kdishroon]
+
+Here are the samples after merging codes relating to the IS-989
+
+Data File:EQBK_DN_052622_2.zip
+
+Index File:dla_20220526__20220616_0105_eqbk.txt
+
+archival sample:/z/infoftps3/EQBK/client_pickup/EQBK_D-1_Archival_05262022_2.zip
+
+
+Data File: EQBK_DN_061522_2.zip
+index file:dla_20220615__20220616_0058_eqbk.txt
+archival sample:/z/infoftps3/EQBK/client_pickup/EQBK_D-1_Archival_06152022_2.zip
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+Any feedback?
+
+
+author: kdishroon
+comment: Hi [~rony],
+
+The client still has been unable to test; please see InfoCARE ticket 21051 for the latest update from them.
+
+Thank you,
+
+Keri
+
+
+author: rony
+comment: [~kdishroon], so is ISD working on this? The last comment in isd story is from Jun-10. Thanks.
+
+
+author: kdishroon
+comment: Hi [~rony],
+
+The client is working with their online banking provider to test. The samples are approved but we need them to approve ISD-6072 before we can release code for IS-698.
+
+Thank you,
+
+Keri
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+Any feedback?
+
+
+
+Thanks
+
+
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+Wanted to release this task by EOM. Is it possible?
+
+
+
+[~tohidulI]
+
+Thanks
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+Any feedback?
+
+
+
+Thanks
+
+
+author: kdishroon
+comment: Hi [~rony],
+
+We will need to push this to next month; the client is still working on testing the ISD portion of this project.
+
+Thank you,
+
+Keri Y.
+
+
+author: kdishroon
+comment: Hi [~tohidulI] and [~rony],
+
+The client has finally approved pilot; please proceed with QA.
+
+Thank you,
+
+Keri Y.
+
+
+author: kdishroon
+comment: [~tohidulI] and [~rony],
+
+Can I get an updated timeline for this please? I need to give the client a go-live date.
+
+Thank you!
+
+Keri Y.
+
+
+author: tohiduli
+comment: parallel ID:20220825002337
+
+files exported to QA folder:/d/iss/qa/EQBK/
+
+files are: EQBKDL001.zip,EQBKDL004.zip,EQBKDL010.zip,EQBKDL011.zip,EQBKDL014.zip,EQBKDL015.zip,EQBKDL016.zip,EQBKDL017.zip, EQBKDL018.zip,EQBKDL024.zip
+
+attached dpvs:[^eqbkdla131.print]
+
+file ID: 4.2o1
+
+print range: 479-482,1-4,108-109,51, 97,155
+
+index file: dla_20220831_1_20220902_0403_eqbk.txt
+
+
+author: tohiduli
+comment: Hi [~William.Kong]
+
+do we need parallel testing for this update?
+
+
+author: berezinez
+comment: Parallel ID: 20220825002337
+ Currently in parallel: Yes
+ User: tohidulI
+ Description: IS-698 resources
+ Date Submitted: 2022-08-25 00:23:51
+ Date Last Updated: 2022-09-02 04:18:49
+ Files:
+ 1) EQBKDL018.dfa
+ 2) EQBKDL017.dfa
+ 3) EQBKDL004.dfa
+ 4) EQBKDL011.dfa
+ 5) EQBKDL014.dfa
+ 6) EQBKDL016.dfa
+ 7) EQBKDL015.dfa
+ 8) EQBKDL024.dfa
+ 9) EQBKDL010.dfa
+ 10) eqbkdla.control
+ 11) EQBKDL001.dfa
+ 12) eqbkdl_process.sh
+ 13) EQBKDLPRNT.dfa
+ 14) eqbkdla_pdf.control
+****************************************************
+
+
+author: igor.khosid
+comment: [~kdishroon] - please update the due date
+
+
+author: gthillaivel
+comment: QA in progress
+
+
+author: gthillaivel
+comment: [~kdishroon] [~tohidulI]
+
+Blocker BT-302,BT-303,BT-304,BT-305,BT-306,BT-307,BT-308,BT-309,BT-310,
+
+BT-312, BT-314, BT-315
+
+
+author: tohiduli
+comment: Hi [~kdishroon]
+
+please check BT-305, BT-306, BT-312 and BT-315
+
+
+author: gthillaivel
+comment: [~tohidulI] [~kdishroon]
+
+Blocker BT-302,BT-304,BT-305,BT-306
+
+
+author: rony
+comment: [~tohidulI]is sick today. If he will not be able to back tomorrow. I will look into this.
+
+
+author: gthillaivel
+comment: [~kdishroon] [~Tin.Chak]
+
+[~tohidulI]
+
+Posted index file in PUI stage--"dla_20220831_1_20220902_0403_eqbk.txt" . Need acct #'s for EQBKD004,010,011,015,017,024
+ EQBKDL001.dfa----acct#3105000216,3200009028
+ EQBKDL004.dfa----acct#
+ EQBKDL010.dfa----acct#
+ EQBKDL011.dfa----acct#
+ EQBKDL014.dfa----acct#7701086756
+ EQBKDL015.dfa----acct#
+ EQBKDL016.dfa----acct#7701064328,100004030
+ EQBKDL017.dfa----acct#
+ EQBKDL018.dfa----acct#400463178
+ EQBKDL024.dfa----acct#
+
+Also please look at the index file ,which has the issue . Blocker BT-302
+
+
+author: tohiduli
+comment: Hi [~kdishroon]
+
+I do not have any data file that contains data files for all of the above letters. Can the client provide any data file with contains data for all the letters for testing purpose?
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+Any feedback?
+
+
+
+[~tohidulI]
+
+
+
+Thanks
+
+
+author: kdishroon
+comment: [~rony] [~tohidulI] [~gthillaivel] 
+
+I believe the client approved samples of each of those letters on pilot; did you check all three docs attached on 2/24 for account number?
+
+!image-2022-09-14-16-57-07-920.png!
+
+
+
+
+author: tohiduli
+comment: Hi [~gthillaivel],
+
+attached samples for following letters:
+||Letter||Sample PDF||Index File||
+|EQBKDL001,EQBKDL014,EQBKDL016|[^eqbkdla131.qa.pdf]|dla_20220831_1_20220915_0256_eqbk.txt|
+|EQBKDL010|[^eqbkdl010.pdf]|dla_20220908_1_20220915_0146_eqbk.txt|
+|EQBKDL017|[^eqbkdl017.pdf]|dla_20220908_1_20220915_0146_eqbk.txt|
+|EQBKDL015|[^eqbkdl015.pdf]|dla_20220616_1_20220915_0158_eqbk.txt|
+|EQBKDL011|[^eqbkdl011.pdf]|dla_20220616_1_20220915_0158_eqbk.txt|
+|EQBKDL024|[^eqbkdl024.pdf]|dla_20220831_3_20220915_0223_eqbk.txt|
+|EQBKDL018|[^eqbkdl018.pdf]|dla_20220831_1_20220915_0256_eqbk.txt|
+
+
+
+*Notes*
+ 
+||Letter||Account Number||Page||
+|016|100004030|1|
+|016|7701064328|2|
+|014|7701086756|3|
+|001|3105000216|4-5|
+|001|3200009028|6-7|
+
+
+
+
+
+[~kdishroon]
+
+
+
+
+author: gthillaivel
+comment: [~tohidulI]  [~kdishroon]
+
+Blocker BT-358.BT-365
+
+
+author: kdishroon
+comment: Hi [~tohidulI] ,
+
+Can you please review the blockers above and let me know if you need anything from me?
+
+Also, the client sent a test file to the test folder with the letters you requested if you still need those.
+
+
+
+Thank you,
+
+Keri Y.
+
+
+author: tohiduli
+comment: Hi [~kdishroon]
+
+should I set account type to "NA" in index file for letter 031?
+
+
+author: kdishroon
+comment: Hi [~tohidulI],
+
+The client indicated that the account type should be LN for letter 031.
+
+
+Thank you,
+
+Keri
+
+
+
+
+
+
+author: gthillaivel
+comment: [~kdishroon]
+[~tohidulI]  Blocker BT-385, BT-358
+
+
+author: kdishroon
+comment: [~Peter.Dang] [~terrencet] - Can someone please look at BT-358?
+
+
+author: gthillaivel
+comment: [~kdishroon] [~tohidulI] [~Peter.Dang]
+Posted 2 index files ,that was provided to QA to post in stage and test. Account no for all the 22 notices in not available in the index file posted.Need index file ,with the missing acct # /notices to test .Acct # is available only for 15 notices 
+ [^Acct_esite_testresult.docx] 
+
+
+author: tanmay
+comment: [~gthillaivel] [~Peter.Dang] [~tohidulI] [~jharvey]
+
+I am working with https://jira.infoimageinc.com/browse/IS-1659
+ Here we need update the disclosure forEQBKDL010.dfa
+ I need to know the updates of these project becauseEQBKDL010.dfa is updated here and assigned in parallel id
+
+
+
+
+
+
+author: tohiduli
+comment: Hi [~gthillaivel]
+
+letter 010 exist in this index file: dla_20220705_1_20221010_0739_eqbk.txt
+
+letter 004 index file:dla_20220527_2_20221010_0758_eqbk.txt
+
+the letter 003 does not exist.
+
+
+author: gthillaivel
+comment: [~tohidulI]
+Posted index file -dla_20220705_1_20221010_0739_eqbk.txt .Error in log
+ !screenshot-1.png|thumbnail! 
+Posted index file dla_20220527_2_20221010_0758_eqbk.txt in stage sucessfully )---DT_jobid--175833-C09.01-V21687
+Letter 04 --acct #-[101063375,101071159,201034360
+
+
+author: tohiduli
+comment: Hi [~Shun.Kuwashima]
+
+The index filedla_20220527_2_20221010_0758_eqbk.txt posted successfully but the index file*dla_20220705_1_20221010_0739_eqbk.txt* is giving an error that "Dt-Job ID is missing from datatract(IS) database", Do you have any suggestions?
+
+
+
+
+author: tohiduli
+comment: Hi [~Shun.Kuwashima]
+
+please ignore my last comment.
+
+
+author: kdishroon
+comment: [~tohidulI] [~gthillaivel] [~Peter.Dang] [~Igor.Khosid] [~terrencet],
+
+Can I get an update on this project please; what is it still pending? The client is asking for new go live date
+
+[~phoebe.george] - FYI
+
+Thank you,
+
+Keri
+
+
+author: jessica
+comment: [~tohidulI] [~gthillaivel] what is the status? We received an escalation today on this project and we need to get a live date/timeline to the client today.
+
+
+author: gthillaivel
+comment: [~Jessica][~Igor.Khosid][~kdishroon]
+Attached is the available lettercode for qa to test .The index file "dla_20220705_1_20221010_0739_eqbk.txt  " posted has error 
+ !screenshot-2.png|thumbnail! 
+
+Out of 22 notices only 16 notices account nos are available  in the posted index file.Below is the template , Need Dev input to provide the missing account # index file for QA to test
+ [^Acct_esite_testresult(6).docx] 
+
+
+author: tohiduli
+comment: Hi [~gthillaivel]
+
+please postdla_20220730_1_20221013_0421_eqbk.txt index file.
+
+attached the doc file after adding account number for remaining letters (in green text).[^Acct_esite_testresult_101302022docx.docx]
+
+
+author: gthillaivel
+comment: [~tohidulI]
+Posted index file "dla_20220730_1_20221013_0421_eqbk.txt "-Error in log
+ !screenshot-3.png|thumbnail! 
+
+Letter code17 ,description failed ,when compared to SOW
+Lettcode17 description in SOW is " Overdraft Opt in"
+ !image-2022-10-13-10-07-57-016.png|thumbnail! 
+
+
+author: gthillaivel
+comment: [~Jessica][~kdishroon] [~tohidulI] [~Igor.Khosid]
+Below is the test result .I have updated the screenshots and there are still few missing accounts # in the document
+ [^Acct_esite_testresult_101302022_Latest.docx] 
+
+
+author: shun.kuwashima
+comment: [~gthillaivel] I think acct 7701121868 happened to be posted in another index file as well. From your screenshot, the Overdraft Opt in notice should be showing under the Aug tab, not September since the index file contains date 8/31. Please check again.
+
+
+author: gthillaivel
+comment: [~Shun.Kuwashima]
+Verified the acct #  7701121868  and the description matches the SOW with the Aug posting
+ !screenshot-4.png|thumbnail! 
+
+
+
+author: peter.dang
+comment: [~kdishroon] Please have DSI process using files EQBK_DN_101422_3.zip and EQBK_DN_101222_3.zip. To process these 2 files, we need new dt job id for segment 3 cycle 12 and 14.
+These files are in /z/download/eqbk/DN/ folder.
+
+
+author: kdishroon
+comment: [~Peter.Dang] [~tohidulI] [~gthillaivel] - 
+
+EQBK| Letter - Daily (stage):
+
+
+
+134182-C12.03-V21687
+
+134182-C14.03-V21687
+
+
+
+
+author: tanmay
+comment: [~tohidulI]
+
+updated files has been uploaded to this parallel20220825002337.
+
+!image-2022-10-17-15-21-04-651.png!
+
+
+author: tohiduli
+comment: Hi [~gthillaivel]
+
+Index Files:
+
+EQBK_DN_101422_3.zip:dla_20221013_3_20221017_0725_eqbk.txt
+
+EQBK_DN_101222_3.zip:dla_20221012_3_20221017_0731_eqbk.txt
+
+
+
+
+author: gthillaivel
+comment: [~tohidulI][~kdishroon][~Jessica] [~Shun.Kuwashima] [~Igor.Khosid]
+Posted 2 index file in stage
+EQBK_DN_101422_3.zip:  dla_20221013_3_20221017_0725_eqbk.txt
+EQBK_DN_101222_3.zip: dla_20221012_3_20221017_0731_eqbk.txt
+Below are the sample account # in the index file posted
+024---182907,205062,285353
+025---100088155 ,235093
+026---6701018459,7501003934,7701044714
+027---401025268,1008358606,1212150053
+028---3101009855,6401000609,347523
+029---6901000567,7701088261,7701089955
+030---7701098775
+Verified the description for the above acct# in the admin site ,Failed for the below letter codes 
+Letter code 026-acct#-6701018459
+Letter code 027-acct#-401025268
+Letter code 029-acct#-6901000567
+Blocker BT-442
+
+Missing acct # and discrepancies 
+010---Acct # needed to test
+014---No esite posting in SOW,but posted acct # to admin site
+015---Acct # needed to test
+016---No esite posting in SOW,but posted acct # to admin site
+017--No esite posting in SOW,but posted acct # to admin site
+031--No esite posting in SOW,but posted acct # to admin site
+
+
+
+
+
+author: shun.kuwashima
+comment: [~kdishroon] I've also posted those two index files onto pilot, so client can review.
+
+
+author: gthillaivel
+comment: [~Jessica][~Shun.Kuwashima][~kdishroon]
+Letter description in the admin site matches the SOW now .
+Letter codes 026,027,029.
+Blocker BT-422 is closed now
+
+
+author: kdishroon
+comment: [~gthillaivel]- Here is the updated SOW; please let me know if you have any questions.
+
+{color:#000000}[http://sharepoint-svr/AS/Shared Documents/SOW Directory/EQBK - Equity Bank/SOW/EQBK eNotice SOW 10.17.22.docx|http://example.com/]
+{color}
+
+
+author: gthillaivel
+comment: [~kdishroon]
+Verifying now, Will update my results shortly on the latest SOW above
+
+
+author: gthillaivel
+comment: [~kdishroon][~Jessica] [~tohidulI][~Igor.Khosid][~Shun.Kuwashima]
+
+010---Need acct# to test
+014--SOW is updated, esite posting to "Y"---Pass
+015--SOW is updated, esite posting to "N"---Pass
+016--SOW is updated, esite posting to "Y"---Pass
+017--SOW is updated, esite posting to "Y"---Pass
+
+Note: All the e-notices have been verified and passed, except Letter 10.Need acct # to test
+
+
+author: gthillaivel
+comment: [~kdishroon][~Jessica][~tohidulI][~Shun.Kuwashima]
+Notice 10 have been verified and QA passed
+ !screenshot-5.png|thumbnail! 
+
+Verified the esite posting/description for all the notices ,looks good
+Test results are in the location :  \\dell-2100\qa\2022\03_Change Request\Gnana T\IS-698 EQBK
+ [^Acct_esite_testresult_101302022_Latest.docx] 
+[~tohidulI]-Can you attach IS Checklist
+
+
+author: kdishroon
+comment: [~tohidulI] - Can you please provide the IS checklist?
+
+
+author: igor.khosid
+comment: [~tohidulI] [~rony]
+Please attach *{color:red}IS checklist {color}*ASAP
+
+[~kdishroon] [~gthillaivel] - FYI
+
+
+author: tohiduli
+comment: Hi [~Igor.Khosid], [~gthillaivel]
+
+attached is-checklist
+
+[^IS-698_IS_CHECKLIST_10212022.docx]
+
+
+author: gthillaivel
+comment: [~kdishroon][~tohidulI] [~Jessica]
+Attached is the IS Checklist
+ [^IS-698_EQBK_CHECKLIST.pdf] 
+
+
+
+author: kdishroon
+comment: [~tohidulI]- Please release code.
+
+
+author: tohiduli
+comment: Hi [~yameelee] 
+
+please release the codes. attached transfer form.
+
+[^IS_PROGRAM_TRANSFER_FORM_IS-698_10262022.doc]
+
+
+author: yameelee
+comment: code has been released. backup id:20221026111400

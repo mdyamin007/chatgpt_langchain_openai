@@ -1,0 +1,568 @@
+title: FLCU Migration Analysis
+body: # **ROOT:**
+
+ **Login Method**
+
+|
+
+diSSO (com.infoimage.security.diSso.LoginServlet)  
+  
+---|---  
+  
+ **Enrollment Step**
+
+|
+
+3 Steps  
+  
+ **Welcome Email**
+
+|
+
+Yes  
+  
+ **Menu**
+
+|
+
+  *  **estatement**
+  *  **Morgtage Statements**
+  *  **eNotice**
+  *  **eTax**
+  *  **Disclosure**
+  *  **Profile**
+  *  **Exit**
+
+  
+  
+ **Account Types**
+
+|
+
+NA  
+  
+ **Statement Types**
+
+|
+
+  1. Default : eStatements
+  2. Mortgage: Mortgage Statements 
+  3. Visa : VISA Classic ----> not declared in backend process, not available in msm
+  4. Visa_gold : VISA Gold ----> not declared in backend process, not available in msm
+  5. Heloc: Home Equity --->not declared in backend process, not available in msm
+  6. enotice: eNotice 
+  7. Etax: eTax 
+
+  
+  
+ **Archival Period**
+
+|
+
+  1. default:  eStatement  ( **13 months** )
+  2. mortgage: Mortage Statements ( **13 months** )
+  3. enotice: eNotice ( **4 months** )
+  4. etax: eTax ( **13 months** )
+
+  
+  
+ **Paperless Configuration**
+
+|
+
+NonSelective  
+  
+ **Unenrollment on DP change**
+
+|
+
+True  
+  
+ **Delivery Preference**
+
+|
+
+Paper=B, Paperless=E  
+  
+ **Notification Preference**
+
+|
+
+Email  
+  
+ **NP Link Type**
+
+|
+
+byUfa  
+  
+ **Batch Download**
+
+|
+
+N/A  
+  
+  
+
+###  **User-account Relation:**
+
+  * One user linked to one Account
+
+###  **Login methods:**
+
+###        diSSO:
+
+    * create user & account (inserts dso date while generating key from LoginServlet and inserts sso date after sso enrollment)
+    * updates email
+
+###  **Enrollment:**
+
+Goes through enrollment if SSO null.
+
+Enrollment steps:
+
+  1.  **PDF verify**  
+  2.  **Disclosure**  
+  3.  **enroll preference** : Noneditable email
+
+  
+
+###  **eStatement:  **
+
+shows default type statements
+
+  
+
+###  **Morgtage Statements:  **
+
+shows mortgage type statements
+
+###  **eNotice:**  
+
+shows enotice type documents
+
+###  **eTax:**
+
+shows eTax types documents
+
+###  **Disclosure:  **
+
+shows disclosure HTML page in new tab
+
+###  **Profile:  **
+
+  1. Has option to change the delivery preference (paperless and paper)
+  2. If paper is selected then a message is shown. (There is a fee associated with receiving paper statements. Please see schedule of fees for more info.)
+  3. Shows notification option with the email address but not editable
+
+ **Exit:  ** log out of eStatement
+
+###  **Home:**
+
+  * System maintenance information is shown according to the data in p_maintenance table.
+  * If sso date is null or session status is not "active" or paperless status is "B" then forward to enrollment's test.jsp page
+
+##  **MSM:**
+
+  *  **Account Management:  **
+    1. Search by Account Number and Email Address
+    2. Restricted account Search: Admin users with the  **permission level 8  **or  **permission level 3  **can search restricted accounts
+    3. Can edit the Email address (but email doesn't get updated after submitting the form) Also there is an JS error in this page.
+    4. Update Delivery Preference
+    5. View DP change history
+  *  **Admin:**
+    1. AI user creation & update
+  *  **Email proofing:**
+    1. eStatements
+    2. eNotice
+    3. eTax
+    4. No option to edit/add Welcome Email
+  *  **Upload Inserts:**
+    1. standard update inserts module
+  *  **Reports:**
+    1.  **Latest Status:**  same as the standard infodocs reports in Infotrac [We no longer support this report]
+    2.  **User login Activity:   **same as the standard infodocs reports in Infotrac
+    3.  **AI login**  : same as the standard infodocs reports in Infotrac
+    4.  **Email Address Collection:**  same as the standard infodocs reports in Infotrac
+    5.  **Marketing Insert Report:  **This report shows the number time each marketing insert was viewed.
+
+# Backend analysis:
+
+FLCU has 6 backend process.
+
+  1. afp
+  2. enotice4
+  3. etax
+  4. permission
+  5. insert
+  6. ecl
+
+###  **Afp:**
+
+  * Flags:
+    * global.autoregister= true
+    * afp.compression=true
+  * Handler: AfpStatementData6
+  * Registrar: MessageEStmtRegistrar3
+  * Index file format: afp_file|acct_num|start_date|closing_date|page_count|acct_owner_name|SSN|Application Type|Message IDs for Market Link
+
+  * Mandatory field: afp_file, acct_num, start_date, closing_date, page_count
+  * Acct_owner_name can not be empty and more than 50 characters. If so trims to 50.
+  * Searches account by account number. If not found then it creates account, usr, usr session, user fin account.
+  * Account owner name is updated for existing account.
+
+  
+
+ **Mismatch with Hypercube business:**
+
+  1. Session_loin_id = acctNum instead of !usr_ID
+  2. No entry in **USR_MAPPING** table
+
+ **Database changes:**
+
+  1. Fin_Account
+  2. Usr
+  3. Usr_Fin_Account
+  4. Usr_Session
+  5. Paperless
+  6. Estmt_Doc
+  7. Arch_File
+
+###  **Enotice4:**
+
+  * Flags:
+    * enotice4.isZipped=true
+    * enotice4.automatedEmailNotification=true
+  * Handler: ENoticeData7
+  * Registrar: DefaultENotice4Registrar
+  * Index file format: L|acctNum|acctType|AcctName|afpName|letterCode|closingDate|imageCount|postCardFlag|zipFileName|L
+  * Post code should be  0|""|1 else error, if ="" then sets to '0'
+  * Searches account by account number. If not found then it returns null. Otherwise updates account owner name and user name.
+
+ **Database changes:**
+
+  1. Arch_File
+  2. Enotice
+
+###  **ETax:**
+
+  * Flags:
+    * etax.automatedEmailNotification=true
+    * etax.isZipped=true
+  * Handler: ETaxData3
+  * Registrar: ETaxRegistrar3
+  * Index file format: acctNum|type|afpFileName|date|suffix|appType|SSN/TAX_ID|INPUT_ZIP_FILENAME
+
+  * acctNum, type, afpFileName, date, input_zip_filename
+  * Searches account by account number. If not found then it returns null. 
+  * Inserts data into paperless table
+
+ **Database changes:**
+
+  1. Arch_File
+  2. ETax
+  3. Paperless
+
+###  **Ecl:**
+
+  * Flags:
+    * global.email.storage = notifyPref
+  * Handler: DefaultEclHandler2
+  * Index file format: acctNum|email
+  * Get ufa by account number, if ufa is null throws error
+  * Get notifyprefList  by usrId,acctId, stmt=default
+  * If notifyprefList is empty inserts into np with usrId,AcctId,Email, stmt type=default
+  * Else get notifyprefList[0] , updates np
+
+ **Database changes:**
+
+  1. Notification_Preference
+
+###  **Permission:**
+
+  * Flags:
+    * permission.level=true
+    * permission.purge=true
+  * Handler: DefaultPermHandler
+  * Registrar: DefaultPermRegistrar
+  * Index file format: acctNum;
+  * Deletes all the previous entry from **ACCT_ACCESS** table
+  * Inserts into ACCT_ACCESS table with aa_min_level=3
+
+ **Database changes:**
+
+  1. ACCT_ACCESS
+
+###  **Insert:**
+
+  * Handler: DefaultInsertHandler
+  * Registrar: InsertRegistrar
+  * Index file format: fileName|title;
+  * Insert data into EMAIL_ATTACH table
+  * Update ea_content for last inserted
+  * Select ea_content of the email_attach
+  * Insert data into insert_info **  **table
+
+ **Database changes:**
+
+  1. Email_Attach
+  2. Insert_Info
+
+##  
+ **Backend Reports:**
+
+  1. Accounting Report
+  2. Paperless Report
+  3. Undeliverable Report
+  4. Enrollment Report
+
+###  **Accounting Report:**
+
+ **Class Path** :
+com.infoimage.processing.application.accounting.handler.TemplateReport
+
+Afp report query:  SELECT pj.*,ec.img_count FROM **p_job** pj
+**,p_estmt_count** ec WHERE pj.p_job_id=ec.p_job_id AND pj.org_name=? AND
+[pj.name](http://pj.name)=? AND pj.cycle=? AND pj.status=? ORDER BY
+pj.create_time
+
+Email notification  query: SELECT * FROM **p_job** WHERE org_name=? AND name=?
+AND cycle=? AND status=? ORDER BY create_time
+
+  
+
+Email Reminder query: SELECT p.* FROM **p_job** p, **p_job_email** pje WHERE
+p.org_name=? AND [p.name](http://p.name)=? AND p.status=? AND p.create_time>=?
+AND p.create_time<=? AND p.cycle IS NULL and p.p_job_id = pje.ref_p_job_id and
+pje.stmt_type like ? ORDER BY p.create_time
+
+Marketing Email query:    SELECT p.* FROM **p_job** p, **p_job_email** pje
+WHERE p.org_name=? AND [p.name](http://p.name)=? AND p.status=? AND
+p.create_time>=? AND p.create_time<=? AND p.cycle IS NULL and p.p_job_id =
+pje.ref_p_job_id and pje.stmt_type=? ORDER BY p.create_time
+
+  
+
+###  **Paperless Report:**
+
+ **Class Path** : **DefaultPaperlessReport** and
+**DefaultPaperlessReportRender**
+
+Query: SELECT fa.acct_number, p_latest_status status, p_modified_date,
+p_modified_by
+
+        FROM **fin_account** fa, **paperless2** p2
+
+         WHERE org_id= _getorgid_ ('flcu')
+
+         AND fa.acct_id=p2.acct_id
+
+         AND p2.stmt_type='default'
+
+         AND p2.p_latest_status='E';
+
+###  **Enrollment Report:**
+
+ **Class Path** :
+**com.infoimage.processing.application.file.upload.handler.EnrollmentReportCU**
+
+Query Name: **SELECT_ENROLL_STATUS_ACCT_BASED**
+
+  
+
+##  **Data Migration:**
+
+  1. Sess_login_id is not "!"usr_id
+  2. No data in usr_mapping table
+  3. Stores email in notification_preference table
+
+ **User session and user mapping data migration is needed.**
+
+  
+
+#  Analysis Summary (ROOT)
+
+ **Scope**
+
+|
+
+ **Feature**
+
+|
+
+ **Description**
+
+|
+
+ **Hypercube**
+
+|
+
+ **Note**  
+  
+---|---|---|---|---  
+  
+ **Enrollment (SSO)**
+
+  
+
+|  User enrollment logic| Goes through enrollment if sso date is null or
+sess_active_status is not "active". But there is no backend process that
+inserts sess_active_status other than "active"|  81 complete Supported  82
+incomplete Not Supported | The client will use default (sso date based)
+enrollment logic.  
+  
+Account and User creation
+
+|
+
+Creates user & account (inserts dso date while generating key from
+LoginServlet and inserts sso date after sso enrollment)
+
+|  111 complete Supported  112 complete Not Supported |
+
+In hypercube, only sso date is inserted.  
+  
+Enrollment Information
+
+|
+
+Three Steps
+
+  1.  **PDF verify**  
+  2.  **Disclosure**  
+  3.  **enroll preference** : Noneditable email
+
+|  37 complete Supported  38 incomplete Not Supported |
+
+  
+  
+  
+**Home Page**
+
+|
+
+System maintenance
+
+|
+
+System maintenance information is shown according to the data in p_maintenance
+table.
+
+|  43 incomplete Supported  44 complete Not Supported |  
+  
+  
+Account opt-out
+
+|
+
+If sso date is null or session status is not "active" or paperless status is
+"B" then forward to enrollment's test.jsp page
+
+|  45 complete Supported  46 incomplete Not Supported |
+
+  
+  
+  
+View Status| Viewed/Not-viewed status is shown beside each statement.|  83
+incomplete Supported  84 complete Not Supported |  
+  
+  
+**Profile**
+
+|
+
+Notice
+
+|
+
+If paper is selected then a message is shown. (There is a fee associated with
+receiving paper statements. Please see schedule of fees for more info.)
+
+|  47 incomplete Supported  48 complete Not Supported | This notice can be
+shown in tooltip in hypercube  
+ **Online-Statements**|  
+|  Statement table has 3 columns (Statement Date, Status, Monthly Inserts)|
+49 complete Supported  50 incomplete Not Supported |  
+  
+**E-Notices**|  
+|  Table has 2 columns (Notice Date, Status)|  51 complete Supported  52
+incomplete Not Supported |  
+  
+**E-Taxes**|  
+|  Table has 2 columns (Tax Date, Description)|  53 complete Supported  54
+incomplete Not Supported |  
+  
+  
+**  
+  
+**
+
+# Analysis Summary (MSM)
+
+ **Scope**
+
+|
+
+ **Feature**
+
+|
+
+ **Description**
+
+|
+
+ **Infotrac**
+
+|
+
+ **Note**  
+  
+---|---|---|---|---  
+  
+ **Account management**
+
+|
+
+Restricted account Search
+
+|
+
+Admin users with the  **permission level 8  **or  **permission level 3  **can
+search restricted accounts
+
+|  57 complete Supported  58 incomplete Not Supported |
+
+  
+  
+  
+Editing email address|
+
+Can edit the Email address (but email doesn't get updated after submitting the
+form) Also there is an JS error in this page.
+
+|  
+|  
+  
+ **Email Proofing**|  
+|  
+|  61 complete Supported  62 incomplete Not Supported |  
+  
+**Insert Mgmt**|  
+|  
+|  65 complete Supported  66 incomplete Not Supported |  
+  
+**Reports**|  
+|  
+|  67 complete Supported  68 incomplete Not Supported |  
+  
+**Admin**|  
+|  
+|  71 complete Supported  72 incomplete Not Supported |  
+  
+  
+  
+
+  
+
+

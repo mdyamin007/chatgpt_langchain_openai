@@ -1,0 +1,106 @@
+title: Nginx As a Reverse Proxy
+body:   
+
+  
+
+  
+
+**Note:** If you're unclear on what reverse proxy is then look at the end of
+this page.
+
+  
+
+There are two types of Nginx out there in the market. One is Nginx Open source
+& Nginx Plus. Nginx Plus is a paid service with bunch of module built into it.
+However we're using Nginx Open Source as it will serve our purpose.
+
+  
+
+As you can see from the above diagram, When a client request for an URL, s/he
+doesn't know the actual server where the content is being served. S/he only
+knows the domain name.
+
+When s/he request for the DNS, the request comes to nginx first. Nginx receive
+the request and check the DNS and forward the request to appropriate back-end
+server which is behind a firewall and in a private network. So, no one can
+directly access those servers (ie. infotrac-server-01).
+
+  
+
+## Request Flow:
+
+  1. Client request for a domain from their computer / laptop.
+  2. Few number of routers pass the request based on the domain name IP to the Nginx Server (Lot of network routing happen in this place. but we don't need to care about that)
+  3. Now the request is in our Nginx Server. Nginx now decides where to forward the request to get the content.  Based on the Host-name user sent (infotrac.infoimageinc.com) to Nginx , it forward the request to appropriate server.
+    1. There are one or more server configured with nginx for serving the request.
+    2. Nginx load balance between these servers and forward the request in round robin manner (ie. 1st request to 1st server, 2nd request to 2nd server and so on in a loop )
+    3. But before doing that, nignx check the health of the app running in the backend server. It's generally known as heartbeat check. We use an opensource nginx module name upstream check module (<https://github.com/yaoweibin/nginx_upstream_check_module>) to check the heartbeat in a certain interval which is configurable.
+    4. upstream check module gives a nice html dashboard to see the backend server healthcheck status. If any app is down, it shows in red in the dashboard.
+  4. Then an appropriate server choosen by nginx serve the request and response back to Nginx.
+  5. Nginx now serve the response to the Actual client who requested in their computer/browser.
+
+  
+
+## But what if Nginx server goes down?
+
+If this happens, the even though the backend server are running perfectly, the
+client worn't get the desired response. But lucky us, there're solutions for
+that. We can setup multiple nginx server. High availability is a built in
+feature in Nginx Plus, but as we are using nginx open source, we're depending
+on another linux tool which is called **keepalived**. The diagram is shown
+below for high availability in Nginx
+
+  
+
+A virtual IP will be assigned which can move between two nginx server. This
+virtual IP is assigned using keepalived. So, If master i available then the
+VIP will point to the Nginx master server. So, all request will be served with
+nginx master server.
+
+  
+
+Master will serve all request. but backup server will be ready for any
+downtime for nginx server.
+
+  
+
+If Master goes down, then VIP will be pointed to the backup Nginx server.
+
+If any app server goes down, then heartbeat API call will get failed. So,
+Nginx won't forward any request to that server but other servers.
+
+## Security
+
+But what about the security or web application firewall.  There is an
+opensource application firewall named **ModSecurity**  which can be integrated
+with Nginx Open Source.
+
+We're using ModSecurity as WAF in Nginx. It will prevent  from some common
+security threats like, DDoS attack, SQL injection etc.
+
+  
+
+# Appendix: What is Reverse Proxy
+
+  
+
+Nginx can be used both as reverse proxy or a load balancer. We can assume from
+load balancer term that it balance the load between server, but what is
+reverse proxy?
+
+The basic definitions are simple:
+
+  * A  **[reverse proxy](https://www.nginx.com/resources/glossary/reverse-proxy-server)**  accepts a request from a client, forwards it to a server that can fulfill it, and returns the server's response to the client.
+  * A  **[load balancer](https://www.nginx.com/resources/glossary/load-balancing)**  distributes incoming client requests among a group of servers, in each case returning the response from the selected server to the appropriate client.
+
+But why do we need a reverse proxy in the first place?
+
+A  **reverse proxy server**  is a type of proxy server that typically sits
+**behind the firewall in a private network** and directs client requests to
+the appropriate backend server. A reverse proxy provides an additional level
+of abstraction and control to ensure the smooth flow of network traffic
+between clients and servers.
+
+  
+
+

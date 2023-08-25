@@ -1,0 +1,286 @@
+title: FHNB analysis
+body: # **ROOT:**
+
+  
+
+ **Login Method**
+
+|
+
+diSSO (ROOT/IFSIBhblogin.jsp), SSO(SingleSignOnServlet), DSO  
+  
+---|---  
+  
+ **Enrollment Step**
+
+|
+
+3 Steps  
+  
+ **Welcome Email**
+
+|
+
+Yes (unknown host exception "mailersvr")  
+  
+ **Menu**
+
+|
+
+  * E-Statements
+  * E-Notices
+  * E-Taxes
+  * Statement Reconcilement
+  * Profile 
+
+  
+  
+ **Account Types**
+
+|
+
+99,CA,CH,DD,01,LN,3B,4A,CD,CK,SV,SS,IR, BX,ML  
+  
+ **Statement Types**
+
+|
+
+default, enotice,etax  
+  
+ **Archival Period**
+
+|
+
+Default: 84,
+
+Enotice: 25,
+
+Etax: 84  
+  
+ **Paperless Configuration**
+
+|
+
+NonSelective  
+  
+ **Unenrollment on DP change**
+
+|
+
+False. If dp is changed from paperless to paper, users are redirected to opt
+out page first to view statements of that account..  
+  
+ **Delivery Preference**
+
+|
+
+Paper=B, Paperless=E  
+  
+ **Notification Preference**
+
+|
+
+Email  
+  
+ **NP Link Type**
+
+|
+
+byUsr  
+  
+ **Batch Download**
+
+|
+
+N/A  
+  
+###  **User-account Relation:**
+
+  * Many to many
+
+###  **Login methods:**
+
+  * ####  diSSO:
+
+    *  **Mandatory fields:** password, user_fi_number, email, gmt, timeout
+    * Leading zeros are removed from cif.
+    * Search user by cif. If no user is available then throws user_not_found error.
+    * If user exists then it searches the user profile in usr_session. If data doesn't exist in the usr_session table then it creates usr_session data for that user. Otherwise, if sess_active_status is "invalid" then it throws an error called errorMessage_DISABLED_USER. If sess_active_status is "inactive" then it sets sess_active_status as active.
+    * Emails are updated from sso file if the user has less than two emails in the NP table. Otherwise, email is not updated from sso file.
+  * #### SSO (SingleSignOnServlet): 
+
+    *  **Mandatory fields:** hash method, org_id, cif_num, data.
+    * Leading zeros are removed from cif.
+    * Optional fields: selected_acct, selected_acct_type, email
+    * Email is updated from SSO if email is provided in sso file.
+    * Search user by cif. If no user is available then throws cif not found error.
+    * If the user exists then it searches the user profile in usr_session. If data doesn't exist in the usr_session table then it creates usr_session data for that user.
+    * Emails are updated from sso file if the user has less than two emails in the NP table. Otherwise, email is not updated from sso file.
+
+###  **Enrollment:**
+
+  1. Step 1 of 3: pdf view
+  2. Step 2 of 3: E-Statement Disclosure
+  3. Step 3 of 3: Delivery preferences and Notification preferences. The email field is noneditable. There are two emails. NP email is checked if there is no restriction entry in the RESTRICTION table. A welcome email is sent after enrollment.
+
+  
+
+##  **Menu:**
+
+###  E-Statements:
+
+Statement table has 3 columns (Statement Date, Status, Monthly Inserts)
+
+### E-Notices:
+
+Statement table has 3 columns (Notice Date, Status, Description)
+
+### E-Taxes:
+
+Statement table has 2 columns (Tax Date, Description)
+
+###  **Home:**
+
+  * If the account status is "C" the user is redirected to the ClosedAcct page.
+  * If paperless status is B or paperless status is E/W but the account has no email then the user is redirected to the opt-out page while the account is selected from account selector dropdown. Opt Out page is different for the viewer. This feature is not supported in hypercube. In hypercube the user is unenrolled if DP is changed to paper.
+
+  * System maintenance information is shown according to the data in p_maintenance table.
+
+###  **Profile:**
+
+  * Delivery Preference:
+    * Paperless(E), Paper(B)
+    * Delivery Preference is changeable. 
+    * If DP is changed from paper to paperless, welcome email is sent
+  * Notification Options: Email
+  * Email Address:
+    * Not Editable
+    * Email is checked if no entry is in Restriction table for that email
+  * For DSO login it shows login name, company name for those users whose type is not "P", password, security hint phrase question and allows to update security hint question's answer and password.
+  * For user type "N" it shows viewers information.
+
+### Special business:
+
+  * For user type "N" creating and assigning authorized viewers feature is available.
+
+###  **DSO:**
+
+  * Only the signing in and forget password feature is available.
+  * No dso enroll or register feature.
+  * System maintenance information is shown in login page according to the data in p_maintenance table.
+
+  
+
+#  
+ **MSM:**
+
+  *  **Account Management** :
+    * Search By Account Number:
+    * Search By Email Address
+    * Search by Login Name for DSO user
+    * After searching account admin can do following task:
+
+Can change Delivery Preference (paperless, paper, both)
+
+Can brows paperless history
+
+Can update and delete email address
+
+Have batch downloads
+
+Can create viewers for user having type "N"
+
+  
+
+  * Account creation module for personal account and commercial account.
+  * Statement types: 
+    * default
+    * enotice
+    * etax
+    * welcome
+    * welcome2
+    * emailChange
+  * Archival period: 
+
+Default: 84
+
+Enotice: 25
+
+Etax: 84
+
+  
+  
+  
+  
+  
+  
+  
+  
+
+  *  **Reports** :
+
+  
+
+  *  **Email Proofing: [Notification type: email]**
+
+  
+
+      * E-Statements
+      * E-Notices
+      * E-Taxes
+      * Welcome
+      * Instant Enrollment Email
+      * Email change notification
+
+  
+
+  *  **Marketing Promo Email:**
+
+  
+
+All E-Statement Users: The Marketing Promotion e-mail will be sent to all the
+E-Statement users in InfoIMAGE's database regardless of the paperless status.
+
+Partial List: The Marketing Promotion e-mail will be sent to all the e-mail
+addresses listed in the ECL file that you provide.
+
+The file should have the pipe delimited list of accounts in the following
+format:
+
+ACCOUNT #|FIRST NAME|LAST NAME|E-MAIL ADDRESS
+
+  
+
+  *  **Insert Mgmt**
+
+  
+
+      * Marketing Insert Management: stmtType: E-Statements and E-Taxes
+
+  
+
+  *  **Profile:**
+
+  
+
+Admin users profile, can update password.
+
+  
+
+  *  **Administration:**
+
+  
+
+This page allows users to create, view, modify, and remove other users who
+have lower privileges.
+
+  
+
+  *  **Exit**
+
+  
+
+  
+  
+
+

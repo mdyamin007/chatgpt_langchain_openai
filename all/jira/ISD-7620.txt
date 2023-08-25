@@ -1,0 +1,357 @@
+title: EWBB - [29672][pvt] FIS HELOC statements add backers & Post 
+description: None
+
+
+author: JIRAUSER10906
+comment: [~Azad]
+
+Hi Azhar,
+
+Please upload the following resources:[^S1EWBBB7.300][^S1EWBBB8.300]
+
+Also, please post the following index file to pilot:lna_08272022_08292022_1214_ewbb.txt
+
+Thanks,
+Sam
+
+
+author: azad
+comment: Hi [~SamV2021]
+
+lna_08272022_08292022_1214_ewbb.txt posted on pilot [jobId: 189132].
+
+N.B. The statements are posted under the accounts with type '03'. We have to provide a description on the _DOC_DESC_ table for this type so that they are being displayed on the account select drop-down on client site. What should I set as the description for type '03'? ["Loan" is not available as it is the description for "LN" on the doc_desc table].
+
+[~Tin.Chak]please advise.
+
+Thanks
+
+Azhar
+
+
+author: mattl
+comment: [~SamV2021] [~Tin.Chak]
+
+
+
+please advise
+
+
+author: JIRAUSER10906
+comment: [~Azad] [~Tin.Chak]
+
+Perhaps "Loan Bill"? This job (ewbblna) is a daily loan.
+
+Thanks,
+Sam
+
+
+author: azad
+comment: [~MattL] [~SamV2021]
+
+We may not need to insert any new description on DOC_DESC table yet.
+
+For the accounts on the lna index file, we might be provided with an AUTH/CIF file to create/map users, so that the clients can login to client site and view the new loan statements.
+
+In this cif file, a sub-type will be passed for which we have to have a description on the DOC_DESC table. This sub-type might be "LN" and we currently have the description for "LN" on the DOC_DESC table.
+
+[~Tin.Chak]Let me know, if I am missing anything.
+
+[~rifat.mahmud]fyi.
+
+Thanks,
+
+Azad
+
+
+
+
+author: mattl
+comment: [~Azad] I've attached the CIF the client would like to use.
+
+
+author: azad
+comment: Hi [~MattL]
+
+I have reviewed the CIF file(csv) that you attached and found that EWBB might use 'HL' as sub-type for this accounts. Also, they are using '03' as the type for those accounts in 'lna' index files. So we will map HL with 03 in our database.
+
+Nevertheless, we still need the description for 'HL' to set on our database so that, the description can be shown on the account selection drop-down on client site. For now, I am setting "*_HELOC Loans (TEST)_*" as a placeholder description. Please see attached screenshot (_EWBB_Heloc_Desc_on_AcctSelector.png_).
+
+Please provide me the appropriate verbiage for Heloc statements and I will set it for client to review.
+
+Thanks,
+
+Azhar
+
+
+author: mattl
+comment: They should also be HELOC Loans
+
+
+
+I provided the auth file in .txt format
+
+
+author: azad
+comment: [~MattL] Updated description to "HELOC Loans" for HL.
+
+Thanks
+Azhar
+
+
+author: azad
+comment: [~MattL]
+
+I couldn't post the auth file as this file has 13 columns. EWBB auth file should have 12 columns separated by tabs and no header. Please see [^EWBB_CIF_062022.txt]as a sample.
+
+Thanks
+Azhar
+
+
+author: mattl
+comment: [~Azad]please see revised CIF
+
+
+author: azad
+comment: 
+
+[~MattL]
+
+The revised CIF file couldn't get posted. EWBB Auth file will contain 12 columns and each column is tab separated. Here are the issues against each column --
+
+
+||Column||Issues/Note||
+|1. BANK (bankNum)|bankNum should be "01". In the CIF file it is "1"|
+|2. CIF_KEY (cifNum)|cifNum should be zero(0) padded to make all columns aligned|
+|3. CUSTOMER_TYPE (clientType)|Looks fine|
+|4. FIRST_NAME (firstName)|Looks fine|
+|5. LAST_NAME (lastName)|If no lastName provided, then it should be left empty. Revised CIF file has "NULL"|
+|6. APPLICATION (subType)|Provided "HL". Looks fine.|
+|7. ACCOUNT_NUMBER (acctNum)|acctNum should be zero(0) padded to make all columns aligned|
+|8. DATE_CLOSED (dateClosed)|Closing date should be in MMddyyyy format. Provided in MM/dd/yyyy format|
+|9. OPEN_DATE (openDate)|Open date should be in MMddyyyy format.Provided in MM/dd/yyyy format|
+|10. ACCOUNT_NAME (acctName)|Looks fine|
+|11. PRODUCT_CODE (productType)|If no product code provided, then it should be left empty. Provided "NULL" in the CIF file|
+|12. MAINT_CODE (maintCode)|Provided "A". Looks fine.|
+
+Please follow the conventions and take a look at the [sample cif file|https://jira.infoimageinc.com/secure/attachment/29136/EWBB_CIF_062022.txt] for reference.
+
+FYI [~Tin.Chak] [~rifat.mahmud]
+
+Thanks
+Azhar
+
+
+
+
+author: mattl
+comment: see revised CIF
+
+
+author: azad
+comment: Hi [~MattL]
+
+I couldn't post the revised CIF file. It is not "tab" separated. Instead the data columns are separated with "space".
+
+Take a look at the CIF file posted today for EWBB on Prod PUI, job ref #3508201, file name:EWBB_CIF_091422.txt. Please generate the CIF file the way that CIF file (_EWBB_CIF_091422.txt_) is generated.
+
+FYI [~Tin.Chak] [~rifat.mahmud]
+
+Thanks
+Azhar
+
+
+author: mattl
+comment: [~Azad] Can you grab today's CIF for me & post it here? I cant access it.
+
+
+author: azad
+comment: [~MattL]
+
+Attached the file on this ticket _(EWBB_CIF_091422.txt)._ Please check.
+
+Thanks
+
+
+author: mattl
+comment: [~Azad]- Please see todays file.
+
+
+author: azad
+comment: Hi [~MattL]
+
+The file couldn't be posted. The issue was for column 4(FIRST_NAME) and 10(ACCOUNT_NAME). Each name is consist of 2 words and the words are separated by tabs, instead of space.
+
+Data for each column should be separated by tabs, but the FIRST_NAME or the ACCOUNT_NAME are single column. For example, the name "DAVID GARCIA" is a single data. "DAVID" and "GARCIA" should not be separated by tab. The words should be separated by space.
+
+To sum up,
+"DAVID GARCIA" - correct, because not separated by tab, as it is data for a single column.
+"DAVID  GARCIA" - not correct, because the words are tab separated.
+
+[~Tin.Chak]Please advise.
+
+
+Thanks
+Azhar
+
+
+author: mattl
+comment: Hi [~Azad]please see revised CIF.
+
+
+author: azad
+comment: [~MattL]
+
+CIF file posted. EWBB can view the HELOC statements from client side. They can use cif num: 2327855, Acct Num:
+
+9191156to login to customer site.
+
+Please let me know when can we move forward to upper environments.
+
+FYI [~Tin.Chak] [~rifat.mahmud]
+
+Thanks
+Azhar
+
+
+author: mattl
+comment: [~Azad]Is this example on Pilot or client facing site?
+
+
+author: mattl
+comment: Hi [~Azad]following up on this.
+
+
+author: azad
+comment: [~MattL]
+
+The CIF file is posted on Pilot. You can use the cif and account number I provided on previous comment to do sso on client facing site.
+
+Thanks
+
+
+author: mattl
+comment: [~Azad]client approved.
+
+
+
+Is this ready for parallel.
+
+
+author: mattl
+comment: [~Azad]Following up please advise
+
+
+
+
+author: azad
+comment: [~MattL]
+
+I've updated the Stage environment. I am turning this over to QA to perform Stage testing.
+
+I am targeting release on 10/5. Please advice if it is possible from Print side.
+
+Thanks
+ Azhar
+
+
+author: azad
+comment: To QA,
+
+Please run an AFP process for EWBB on stage. The file name is_lna_08272022_08292022_1154_ewbb.txt_.Process the file on Parallel run mode and bypassing dt jod id search.
+
+Please check customer site and admin site to view Heloc loans statements. You can use cif_2327855_to do sso on customer site.
+
+[~Tin.Chak] [~rifat.mahmud]FYI
+
+Thanks
+Azhar
+
+
+
+
+author: igor.khosid
+comment: Hi [~Azad]
+Getting and error, please see attached
+
+ !PUI - error processing.png|thumbnail! 
+
+
+author: azad
+comment: [~Igor.Khosid],
+
+Did you run it via Document process? Please run it via AFP process. lna index files are configured to run via Afp. Thanks
+
+
+author: igor.khosid
+comment: Thank you, [~Azad]
+The index file processed successfully. Will let you know the result 
+
+
+author: igor.khosid
+comment: QA - completed
+>Admin site tested with in the following accounts:
+[09/27/2022 09:25:19] Insert estmt_doc & estmt_file & arch_file for acctNum: [9173671] appType: [03] closingDate: [08/27/2022] insertID: [00000]
+[09/27/2022 09:25:19] Insert estmt_doc & estmt_file & arch_file for acctNum: [9175742] appType: [03] closingDate: [08/26/2022] insertID: [00000]
+[09/27/2022 09:25:19] Insert estmt_doc & estmt_file & arch_file for acctNum: [9178875] appType: [03] closingDate: [08/28/2022] insertID: [00000]
+> SSO tested with in the following:
+cif 2327855
+
+
+author: mattl
+comment: Hey [~Azad]:
+
+Client wants to know:
+
+
+
+Please let us know how you want to receive Day 0 file? Day 0 file is the master list of all active HELOC accounts.
+
+
+author: mattl
+comment: Hi [~Azad]Following up on this.
+
+
+
+[~Shun.Kuwashima]
+
+
+author: azad
+comment: [~Tin.Chak]Can you help about Matt's request?
+
+Thanks
+
+
+author: mattl
+comment: Hi [~Tin.Chak] [~Azad]following up on this.
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~MattL] You mean the CIF file, right? They can just send it normally through the FTP. They can give it another name and have DP post it manually.
+
+
+author: mattl
+comment: Hi [~Tin.Chak] [~Azad]
+
+Due to the delayed parallel the client is requesting that we release with out a completed parallel, I have attached the confirmation to the the Team Support.
+
+
+
+Please expedite release.
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~Azad] Can you release this before our morning time? Thanks.
+
+
+author: azad
+comment: [~Tin.Chak]
+
+Task is released to Prod.
+
+Updates:
+ # Database updated (EXT_TYPE_MAPPING & DOC_DESC)
+ # Resources (.300 files) uploaded to afp2web prod.
+
+Thanks
+Azhar

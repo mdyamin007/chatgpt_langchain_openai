@@ -1,0 +1,268 @@
+title: EStatement Approval under Job Status
+body: ## 1\. Introduction
+
+## 2\. Requirements
+
+Enhancement on Job Status to do following:
+
+  1. Job status approval on client management settings.
+  2. P-UI will trigger InfoTRAC when job is finish with call back URL.
+  3. Similar to Online Proofing, InfoTRAC will need to send email notification to user that have access to this feature.
+  4. add approve/disapprove link on Job records if E-JOB status is 'Pending'
+  5. upon click of approve/disapprove link, call corresponding PUI servlet/URL accordingly.
+  6. An email should also be trigger to DP so that they can release email notification for that job.
+  7. capture the approval trail info
+  8. control these links via permission.
+  9. Audit log records- approval/release,reject.
+  10. Extended tracking a prerequisite for - estatement approval step process. ( Optional for now )
+  11. Servlet implementation which returns client management settings.
+
+Enhancements on infoservice and InfoDoc management:
+
+  1. Optional parameter to return pending approval PDF.
+  2. Active and pending ones on Infodocs acct mgmt will be shown differently.
+
+ISD side tasks:
+
+  1. ISD will call a url on infotrac to trigger the job status to be shown for approval. ISD will provide call back url in this.
+  2. Call back url confirmation from ISD/Joe.
+  3. P_job table flag (approval/not approved) & estmt_doc status
+  4. PUI - expose a servlet and callback url will be infotrac - send notifications , infotrac notifcations
+
+  
+  
+
+## 3\. Purpose/Objective Summary
+
+Objective: *  
+  
+
+## 4\. Workflow  
+
+  
+
+## 5\. Implementation
+
+### 5.1 InfoTRAC Servlet
+
+Parameters:
+
+  * dtJobId
+  * autoRelease
+  * autoApprove
+
+com.infoimage.infotrac.system.web.InternalCallController.java  
+@RequestMapping(value = "/servlet/jobStatus/[release.do](http://release.do)",
+method = RequestMethod.GET)
+
+[http://localhost:8082/servlet/jobStatus/release.do?pJobId=131334&byPass=none&clientId=sscu&callBackUrl=https://google.com](http://localhost:8082/servlet/jobStatus/release.do?pJobId=131334&byPass=none&clientId=sscu&callBackUrl=https://google.com)  
+[Edit this
+section](https://i3dev.easyredmine.com/projects/infotrac/wiki/EStatement_Approval_under_Job_Status/edit?section=8)
+
+### 5.2 Callback URLs
+
+ISD team will provide details  
+  
+
+### 5.3 Email Template
+
+(1) Ready for release ( send to DP and subscribers )
+
+    
+    
+    jobStatus.release
+    
+    Subject: DEMO: Job Status - New E-Statement job Available
+    
+    Dear DP Department,
+    
+    The flowing E-Statement job is ready for release as of 12/21/2016 00:00 AM PST through Job Status. Please logon to the InfoTrac system to review and release the job.
+    
+    P_JOB_ID: 1234567
+    
+    Thank you,
+    
+    Data Center Department
+    InfoIMAGE Inc.
+    650.473.6388
+    Data_Center@infoimageinc.com 
+    
+
+  
+
+(2) Waiting for approval ( send to subscribers )
+
+    
+    
+    jobStatus.approve
+    
+    DEMO: Job Status - E-Statement Job Waiting For Approval
+    
+    Dear XXX,
+    
+    The flowing E-Statement job is ready for review and approve as of 12/21/2016 00:00 AM PST through Job Status. Please logon to the InfoTrac system to review and approve the job.
+    
+    Job ID:: 1234567
+    
+    Thank you,
+    
+    Data Center Department
+    InfoIMAGE Inc.
+    650.473.6388
+    Data_Center@infoimageinc.com 
+    
+
+(3) Job has been approved ( send to subscribers only )
+
+    
+    
+    jobStatus.approved
+    
+    DEMO:Your E-Statement job has been approved
+    
+    Dear XXX,
+    
+    Your E-Statement job has been approved.
+    
+    Job Number: 135543
+    Job Name: Stmt - Mortgage
+    DT_JOB_ID: 1234567
+    
+    To view more details, please login into InfoTrac and click on the Job Status link.
+    
+    Thank you,
+    Account Services Department
+    InfoIMAGE Inc.
+    650.473.6388
+    Account_Services@infoimageinc.com
+    
+
+### 5.4 Permissions
+
+  1. EStatement Release
+  2. EStatement Approve
+
+### 5.5 New Enhancements
+
+  1. [Merging online proofing on to Job Status tab](https://i3dev.easyredmine.com/projects/infotrac/wiki/Job_Status_Online_Proofing)
+    1. # Job Status Online Proofing
+
+New APIs for supporting online proofing.
+
+1) Update Mongo  
+Print team calls this API after divert is done on paper side. This API will
+update mongo database records with status provided by print team.
+
+ **URL:**  
+[http://pd-
+pilot1.infoimageinc.com:8580/infoservice/api/v1/onlineproofing/updateMongo?cid=tkcu&procId=948600](http://pd-
+pilot1.infoimageinc.com:8580/infoservice/api/v1/onlineproofing/updateMongo?cid=tkcu&procId=948600)
+
+ **Request body:**  {  
+"values" : [ {  
+"mail_piece_code": "qkd4a00001",  
+"pull_status" : "success"  
+}, {  
+"mail_piece_code": "qkd4a00002",  
+"pull_status" : "fail"  
+}, {  
+"mail_piece_code": "qkd4a0002",  
+"pull_status" : "fail"  
+}  
+]  
+}
+
+ **Response Json:**
+
+[ {  
+"pull_status": "success",  
+"mail_piece_code": "qkd4a00001",  
+"mongo_update": true  
+}, {  
+"pull_status": "fail",  
+"mail_piece_code": "qkd4a00002",  
+"mongo_update": true  
+}, {  
+"pull_status": "fail",  
+"mail_piece_code": "qkd4a0002",  
+"mongo_update": false  
+}  
+]
+
+2) E Statement Divert Report
+
+This API will pull records with status as 8 from E statement database. In put
+parameters for GET request are cid, appName, dt_job_id, proc_id and doc_type.
+
+GET  
+ **URL**  
+<http://pd-
+pilot1.infoimageinc.com:8580/api/v1/onlineproofing/eStatmentGetDivertReport/tkcu/TaxStatements/136468-C01.01-V21622/85853/etax>
+
+ **Response :**  {  
+"cid": "tkcu",  
+"total_num": "2",  
+"appName": "TaxStatements",  
+"dt_job_id": "136468-C01.01-V21622",  
+"p_job_id": "85853",  
+"doclist": [ {  
+"doc_id": "3201868",  
+"acct_num": "9153863",  
+"name": "HONG T MILLER"  
+}, {  
+"doc_id": "3201869",  
+"acct_num": "9407886",  
+"name": "Member"  
+}  
+]  
+}
+
+3) E statement GET status
+
+This API will fetch current status of e statement job based on list of
+p_job_ids passed to request.  
+GET  
+ **URL**  
+<http://pd-
+pilot1.infoimageinc.com:8580/infoservice/api/v1/onlineproofing/eStatmentGetStatusApi/cid/tkcu/p_job_ids/84537,84519>
+
+ **Response**  
+[ {  
+"client_id": "tkcu",  
+"p_job_id": 84537,  
+"dt_job_id": "136468-C01.01-V21622",  
+"status": "released",  
+"performed_by": "mholden",  
+"performed_date": "Dec 19, 2017 2:13:21 PM"  
+}, {  
+"client_id": "tkcu",  
+"p_job_id": 84519,  
+"dt_job_id": "136472-C01.01-V21447",  
+"status": "released",  
+"performed_by": "tkcu_anilk",  
+"performed_date": "Mar 28, 2018 1:41:20 PM"  
+}  
+]
+
+4) E statement Update  
+This API updates database tables and triggers appropriate email.  
+@PUT  
+ **URL**  
+<http://pd-
+pilot1.infoimageinc.com:8580/infoservice/api/v1/onlineproofing/eStatmentStatusUpdateApi?cid=tkcu>
+
+ **Request body**  {  
+"pJobId":"84519",  
+"doc_type" : "etax",  
+"reviewUser" : "tkcu_anilk",  
+"approvalStatus" : "released",  
+"divert" : "false",  
+"divertDocIdsList" : ["3201868","3201869"],  
+"dt_job_id" : "136472-C01.01-V21447",  
+"application_id" : "TAX 1042s"
+
+}
+
+### Attachments
+
+

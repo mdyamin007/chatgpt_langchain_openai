@@ -1,0 +1,36 @@
+title: 17739 - GCBK - API Setup for Mobile with BankingOn
+description: 3/1 - Provide Auth Info document
+3/10 - Enable API endpoints
+3/31 - Finish all other development necessary
+
+---
+
+It is important to work closely with BankingOn to ensure that the way they are using the API do not conflict with SSO and the Auth file. See action#29 in the TS ticket. There are still things to discuss and work out.
+---
+
+Development:
+ # Enable API for GCBK with the BankingOn API vendor
+ # Update SSO7 Servlet to have a combine CIF option, and switch GCBK to use this option. So, instead of storing the subuser ID in the vendor_user_id, combine it with the CIF to make primaryCIF|subuserCIF. Still insert the subuserCIF into the vendor_user_id field anyway (This is so that we would not have to update the Admin Site).
+ # One-time migration for subuser to update their CIF to the primaryCIF|subuserCIF format.
+
+
+
+Other development may be necessary dependent certain factor/questions that are not answered yet.
+
+
+author: tai.trinh
+comment: need to deploy combineCIF for subuser to PILOT
+
+
+author: tai.trinh
+comment: need to double check SSO to see why only one account is showing
+
+
+author: tai.trinh
+comment: Need to update Update User API. Due 12/10
+
+
+
+UserProfileDTO already has support for a "status" field. Need to pass that into the DAO in the update user function. If the status is null, do nothing.
+
+Define static variables for "new", "inactive", "active", and store them in a set. If the status is not null, compare against the set of valid statuses before updating "sess_active_status" to the provided status. Otherwise, fail API call due to invalid value provided.

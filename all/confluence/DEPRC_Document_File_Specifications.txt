@@ -1,0 +1,244 @@
+title: DEPRC Document File Specifications
+body:   
+
+  
+
+Table of Contents
+
+truenone
+
+  
+  
+  
+---  
+  
+  
+
+# Filename Specification
+
+* * *
+
+Format: [ _prefix_ ]_[closing_date]_[ _segmentid_ ]_[ _processed_date_ ]_[
+_processed_time_ ]_[ _cid_ ].txt
+
+Field
+
+Number
+
+| Field Name| Description  
+---|---|---  
+1| Prefix| Prefix required to determine statement type; typically 3-character
+long  
+2| Closing Date| Format: yyyymmdd. The statement's closing date.  
+3| Segment ID|
+
+Segment ID assigned by PC; this is a numeric value.  
+  
+4| Processed Date|
+
+Format: yyyymmdd. The system date of when this file was created.  
+  
+5| Processed Time|
+
+Format: hhmm. The system time in 24-hour format of when this file was created.  
+  
+6| Client ID| Internal client ID.  
+  
+  
+
+Filename Examples
+
+    
+    
+    dla_20170825_1_2018113_1122_slcu.txt
+
+  
+
+  
+
+# File Content Specification
+
+* * *
+
+### Header row specification
+
+  * A header row is required.
+  * The values in the header row are the names of fields in the input rows.
+  * The field names are pipe delimited.
+  * The header row must contain the fields with  in the **Required** column. 
+  * There are no required ordering for the field names. Refer to existing document processing index files for 
+
+Header Row Format: [ _fieldname_ ]|[ _fieldname_ ]|[ _fieldname_ ]|[
+_fieldname_ ]|[ _fieldname_ ]|[ _fieldname_ ]|[ _fieldname_ ]|[ _fieldname_
+]|[ _fieldname_ ]|[ _fieldname_ ]|[ _fieldname_ ]|...
+
+Rules:
+
+  * The header row must have the required fields-those with  in the **Required** column. 
+  * Field name must be spelled exactly as listed; not case-sensitive. 
+  * Input row must list data in the same order as the header
+
+### Input row specification
+
+Field Name| Required| Description  
+---|---|---  
+AccountName|  | The name of the owner of the financial account.  
+AccountNumber|  | The account number of the financial account.  
+AccountSuffix|  
+|  **TODO**  
+AccountType|  
+| The type of the financial account.  
+ADA|  
+|  **TODO  **Either defines whether the document is ADA compliant or defines
+whether the document needs to be ADA compliant  
+Afp2webIni|  
+|  **TODO**  
+Afp2webPM|  
+|  **TODO**  
+CrippleFlag|  
+|  **TODO**  
+DocumentBeginDate|  | The start date of the document.  
+DocumentCode|  | The document code mapping to the document type being
+generated.  
+DocumentEndDate|  | The closing date of the document.  
+FileName|  | The name of the individual data file for a statement.  
+ImageCount|  | The number of images embedded in the document.  
+InsertID|  
+| Internal ID for the insert.  
+JobType| | The type job being carried out by the processing.  
+Loan_ID|  
+| Internal ID for the loan.  
+MessageID|  
+| Internal ID for the message.  
+PostcardFlag|  
+|  **TODO**  
+PresentmentType|  | The output type. Currently, the only valid type is PDF.  
+RegionCode|  
+| The code for the region (USA, Canada, etc.) in which the owner of the
+financial account lives.  
+SSN|  
+| The SSN of the owner of the financial account.  
+ZipFileName| | The name of the zip file containing all data files.  
+  
+  
+
+File Content Examples
+
+  
+
+Header|
+
+    
+    
+    JobType|PresentmentType|DocumentCode|FileName|ZipFileName|DocumentBeginDate|DocumentEndDate|ImageCount|AccountNumber|AccountName|AccountSuffix|AccountType  
+  
+---|---  
+Input|
+
+    
+    
+    Notice|PDF|001|slcudla_0000012345_04012016_e_00001.afp|slcudla_01_1_20180413_1242_0.zip|20160401|20160401|1|0000012345|JAMES BOND|suffix|DC  
+    Notice|PDF|001|slcudla_0000067890_04012016_e_00002.afp|slcudla_01_1_20180413_1242_0.zip|20160401|20160401|1|0000067890|LILLY BOND|suffix|DC  
+  
+  
+
+Header|
+
+    
+    
+    jobType|presentmentType|SSN|accountNumber|accountName|accountSuffix|documentCode|documentBeginDate|documentEndDate|imageCount|fileName|zipFileName  
+  
+---|---  
+Input|
+
+    
+    
+    AFP|PDF|123456789|0000054321|MAXIM BOND|suffix|302|20160401|20160401|3|slcudla_0000054321_04012016_e_00005.afp|slcudla_01_1_20180413_1242_0.zip  
+    AFP|PDF|011121314|0000098765|AARON BOND|suffix|302|20160401|20160401|3|slcudla_0000098765_04012016_e_00006.afp|slcudla_01_1_20180413_1242_0.zip  
+  
+  
+
+  
+
+# Configuration File Specification
+
+* * *
+
+Parameter
+
+|
+
+Input Value
+
+|
+
+Description  
+  
+---|---|---  
+[ _processing_type_ ].preprocess.step.[ _integer_ ]| [ _preprocess_name_ ]|
+Define any preprocess(es) to be carried out before the main process.  
+  
+afp.compress.rootPath
+
+| [ _full pathname_ ]| Root path to store the zipped output files for afp
+processing.  
+afp.compression| [ _boolean_ ]: true, false| Define whether to compress the
+output files for afp processing.  
+doc.[ _statement_type_ ].automatedEmailNotification| [ _boolean_ ]: true,
+false| For each statement type, define whether to send automated emails
+(AutoSend).  
+doc.[ _statement_type_ ].estmtselinsert| [ _boolean_ ]: true, false| Define
+whether to get DT_JOB_ID from IS DB.  
+doc.[ _statement_type_ ].isXml| [ _boolean_ ]: true, false| UNUSED VARIABLE.  
+doc.automatedEmailNotification| [ _String_ ]| The text for the automated email
+notification.  
+doc.compress.rootPath| [ _full pathname_ ]| Root path to store the zipped
+output files for non-afp processing.  
+doc.compression| [ _boolean_ ]: true, false| Define whether to compress the
+output files for processing that is neither afp nor etax.  
+doc.convert.system| [ _environment_ ]| The  in which to register the
+statements.  
+doc.copyZipBuffer| [ _integer_ ]| Define the size of the copy buffer.  
+doc.isSharingAfps| [ _boolean_ ]: true, false|
+
+Define whether the afp sharing feature is enabled.  
+  
+doc.rootPath| [ _full pathname_ ]| Root path to input files for real
+documents.  
+doc.test.rootPath| [ _full pathname_ ]| Root path to input files for test
+documents.  
+etax.compression| [ _boolean_ ]: true, false| Define whether to compress the
+output files for etax processing.  
+global.[ _prefix_ ]| [ _statement_type_ ]| Map filename prefix to a statement
+type.  
+global.[ _statement_type_ ].blockEmail| [ _boolean_ ]: true, false| For each
+statement type, define whether automated emails are enabled.  
+global.[ _statement_type_ ].bypassApproval| [ _String_ ]: DP| Allows DP to
+bypass approval requirement (needApproval = true).  
+global.[ _statement_type_ ].desc|
+
+[ _String_ ]
+
+| For each statement type, define the description.  
+global.[ _statement_type_ ].needApproval|
+
+[ _boolean_ ]: true, false
+
+|
+
+Define whether the job needs approval from the client.  
+  
+global.insertMissingDefault| [ _boolean_ ]: true, false| Define whether to set
+default paperless status for members without one (for clients that do not have
+selective paperless).  
+global.merge.cid| [ _current_cid_ ],[ _new __cid__ ]|[ _current __cid__ ],[
+_new __cid__ ]|...| Define the logic to swap cid for merged clients.  
+global.multipleDocType| [ _boolean_ ]: true, false| Define whether there are
+multiple document types. If false or undefined, AutoSend is always true.
+Otherwise, AutoSend = NOT global.[ _statement_type_ ].blockEmail.  
+global.multipleStmtType| [ _boolean_ ]: true, false| Define whether there are
+multiple statement types.  
+  
+  
+
+

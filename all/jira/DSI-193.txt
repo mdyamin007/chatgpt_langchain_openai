@@ -1,0 +1,139 @@
+title: 42940 - DFCU - E-Statment for member (In-house)
+description: None
+
+
+author: rifat.mahmud
+comment: [~tai.trinh]
+
+As DefaultPaperlessRegistrar3 and AccountRegistrar are used by some other clients, the changes that you've asked to make, should it be flag dependent or hard-coded client specific? As no other client has this type of configuration, we've gone with the hard-coded client name route(i.e *_if (org.getId().equals("dfcu")) {_* )
+
+Let me know your thoughts on this.
+
+
+author: mamunur.rashid
+comment: [~tai.trinh]
+
+I have found that in check_image process when new user is created then account number is used as session login id. But in paperless process while creating new user "!usr_id" is used as session login id.
+Are these two different logic is okay in DFCU?
+
+Thanks.
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Tai Trinh made the following comment in ISD-1613
+
+@dsi
+
+Hi [~mamunur.rashid],
+
+What is the progress on this project? Do you have any questions? Please let me know. Remember that this should be pilot ready by the 15th. 
+
+Thanks,
+Tai
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Tai Trinh made the following comment in ISD-1613
+
+@dsi 
+
+Hi [~rifat.mahmud] and [~mamunur.rashid],
+
+After further review, I think it is fine leaving the DefaultPaperlessRegistrar3 as is. The main issue is with AccountRegistrar not adding to the usr_mapping table. Is there a way to determine whether a client is using the new setup (sess_login_id with "!") or the old setup (sess_login_id == usr_id)? If not, we need to introduce a new flag, e.g. global.hypercube=true. If true, we will use "!"; otherwise we won't. Default (null) case is false. The same is true for attaching CIF to user. We will also check if global.hypercube=true. 
+
+Please research all current clients who have check_image processing (using ProcessingJob3), and provide a list of all Hypercube client that have autoRegister on. These clients will need to have the global.hypercube=true flag added to their conf file.
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Tai Trinh made the following comment in ISD-1613
+
+@dsi
+
+Additionally, can you also research all the clients who currently use check_image ProcesingJob3? I have a feeling this issue may be affecting multiple clients. If the code inserts into the usr_session without "!"; there may be other clients who are using this process, but their setup requires the "!" to work properly. If that is the case, we would want to look into fixing all of those clients also.
+
+
+
+author: mamunur.rashid
+comment: Hi [~tai.trinh]
+
+Here I am providing my findings after analyzing check_image process.
+
+Every client that has check_image process uses ProcessingJob3
+
+*Hypercube* client that has check_image process but *autoRegister=false*:
+  1. acbk
+  2. fnbk
+  3. mtro
+
+*Hypercube* client that has check_image process but *autoRegister=true*:
+  1. dfcu
+  2. tkcu
+
+
+
+*Prism* client that has check_image processing but *autoRegister=false* :
+  1. mvcu
+  2. gbbk
+  3. htbk
+  4. cthy
+  5. msbk
+
+*Prism* client that has check_image processing but *autoRegister=true* :
+  1. mocu
+  2. intb
+  3. mwcu
+
+
+author: mamunur.rashid
+comment: [~tai.trinh]
+
+From your last comment what I have understood so far is that a new flag (global.hypercube) should be introduced. If this flag is true then the SESS_LOGIN_ID will be "!USR_ID" otherwise it will be same as before (accout_number).
+Also CIF_NUMBER will be attached in USR_MAPPING only if this flag is true. This update will be on check_image process, I'm keeping DefaultPaperlessRegistrar3 as it was before.
+
+Did I understand it correctly? Let me know your feedback. I have done the code according to my description above.
+
+I also found that previously in AccountRegistrar, after creating a new user, current date is inserted in DSO field of USR_SESSION table. Should it be like this? Or should I change the code so that date is not autometically inserted in DSO field?
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Tai Trinh made the following comment in ISD-1613
+
+@dsi
+
+global.nullDsoTime is the flag that should be used for dso date. createNewUser is default, nullDsoTime = false. If nullDsoTime = true, createNewUserWithoutDate. This means DFCU should have nullDsoTime  = true.
+
+
+
+author: mamunur.rashid
+comment: [~tai.trinh]
+
+Code has been committed to dev environment of processing-ui (*trunk/processing-ui)*
+
+Code has been changed in the file:*com/infoimage/processing/application/common/AccountRegistrar.java*
+
+New flag has been introduced as *global.hypercube*
+
+Also added*global.nullDsoTime* flag in the conf file of dfcu
+
+Thanks
+
+
+author: mamunur.rashid
+comment: Here I am attaching conf file for dfcu:[^dfcu.conf]
+
+
+author: mamunur.rashid
+comment: For a reminder, I have seen that hypercube client *tkcu* has check_image process and it's *global.autoRegister=true.*
+
+So *gobal.hypercube=true*should be added in the conf file of*tkcu.*
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Tai Trinh made the following comment in ISD-1613
+
+@dsi
+
+The code for AccountRegistrar looks good. Please deploy and test on Pilot. 
+

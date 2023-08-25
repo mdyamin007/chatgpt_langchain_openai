@@ -1,0 +1,536 @@
+title: Comparison between API V1 and V2
+body:   
+
+  
+
+There are basically 5 V1 resources that are used by 8 clients. The below table
+describes which clients are used which V1 API and if we convert those clients
+from V1 to V2 then whether they gain any new feature or loss any existing
+feature. Some basic differences also can be found here.
+
+  
+
+Resources| Request Type| Clients| Total Clients| Gaining Feature(s)| Loosing
+Feature(s)| Difference  
+---|---|---|---|---|---|---  
+api/v1/authcheck/| GET| apcu, ewbb, idcu, kycu, ntsb, sscu, vwcu, wtcu| 9| NA|
+NA| NA  
+/api/v1/account/| POST| ewbb, kycu, ntsb, sscu| 4| NA| In v1, if modifiedBy
+user does not exist then API will create the user. But in v2, the vendor is
+not created.| In v1, an account will be created with account number, type and
+account name but in v2, additionally acctSubType and productType will be added
+into fin_account table.  
+/api/v1/account/| GET| ewbb, kycu, ntsb, sscu| 4| NA| In v1, we can get the
+Billing information of that account which is not available into v2.| In v1, we
+have to provide selectivePaperless to get the account but in v2, instead of
+selectivePaperless, we have to provide acctSubType and productType  
+/api/v1/account/| PUT| ewbb, kycu, ntsb, sscu| 4|  
+| InfoXchange is not supported by v2. If an account does not exist, v1 creates
+the account based on the value of acctAutoCreate but in v2, the account is not
+created.| In v1, we are not checking whether the client is a selective
+application client or salesforce client but we do in v2.  
+/api/v1/account/| DELETE| ewbb, kycu, ntsb, sscu| 4| NA| NA| NA  
+/api/v1/user/| ALL| ewbb, kycu, ntsb, sscu| 4| NA| Notification preference
+support for both email & sms| Selective paperless client from property file is
+enabled in v2 but in v1 api expects the selective paperless as query param.  
+/api/v1/document/{cid}/lookup| GET| ewbb,idcu, kycu, ntsb| 4| NA| NA| NA  
+/api/v1/document/{cid}/getDocument /api/v2/document/{cid}/getPdf| GET|
+ewbb,idcu, kycu, ntsb| 4| NA| proofing statement support. Encryption with the
+given params (userPassword & adminPassword)| we are not using the get pdf API
+after the wrapper service has been introduced. But v2 still calls getPdf, but
+internally it calls wrapperservice and both support pdf & html documents. In
+v2, query param name is docType but in v1 it's named stmtType  
+/api/v1/document/{cid}/insertPdf| GET| ewbb,idcu, kycu, ntsb| 4| NA| query
+param named customAttribs, if this custom attribute is passed then it check
+with a literal value of "001" & if it is same as query param then,
+esd_insert_id is passed in response body| NA  
+/api/v1/document/{cid}/insertPdf| GET| ewbb,idcu, kycu, ntsb| 4| NA| NA| NA  
+/api/v1/document/{cid}/image /api/v2/document/{cid}/checkimage| GET|
+ewbb,idcu, kycu, ntsb| 4| NA| NA| v1 expect a query param (datasource). If the
+param value is API then it call the external service. One the other hand v2
+check the vendor and if it's in nwbt3, nautilus or onBase (hard coded in code
+base) then it call external API.  
+/api/v1/document/{cid}/search/check/all| GET| ewbb,idcu, kycu, ntsb| 4| NA|
+NA| In v1, get checks using search criteria with two extra param name
+branchNum and tellerId but in v2 these two search param is not being used.  
+  
+  
+
+### Client wise usability fo V1 and V2 APIs:
+
+The below table describes which clients are using which V1 and V2 APIs.
+
+CID| V1| V2  
+---|---|---  
+apcu| /api/v1/authcheck/*| /api/v2/document/apcu/*  
+  
+| NA| /api/v2/account/apcu/*  
+  
+| NA| /api/v2/user/apcu/*  
+  
+|  
+|  
+  
+ewbb| /api/v1/authcheck/*| /api/v2/document/ewbb/*  
+  
+| /api/v1/account/ewbb/*| /api/v2/account/ewbb/*  
+  
+| /api/v1/user/ewbb/*| /api/v2/user/ewbb/*  
+  
+| /api/v1/document/ewbb/*| NA  
+  
+|  
+|  
+  
+gdcu| NA| /api/v2/authcheck/*  
+  
+| NA| /api/v2/document/gdcu/*  
+  
+|  
+|  
+  
+idcu| /api/v1/document/idcu/*| NA  
+  
+| /api/v1/authcheck/*| NA  
+  
+|  
+|  
+  
+kfcu| NA| /api/v2/document/kfcu/*  
+  
+| NA| /api/v2/authcheck/*  
+  
+|  
+|  
+  
+kycu| /api/v1/document/kycu/*| NA  
+  
+| /api/v1/authcheck/*| NA  
+  
+| /api/v1/account/kycu/*| NA  
+  
+| /api/v1/user/kycu/*| NA  
+  
+|  
+|  
+  
+ntsb| /api/v1/document/ntsb/*| /api/v2/document/ntsb/*  
+  
+| /api/v1/authcheck/*| /api/v2/account/ntsb/*  
+  
+| /api/v1/account/ntsb/*| /api/v2/user/ntsb/*  
+  
+| /api/v1/user/ntsb/*| NA  
+  
+|  
+|  
+  
+ofcu| NA| /api/v2/authcheck/*  
+  
+| NA| /api/v2/document/ofcu/*  
+  
+| NA| /api/v2/account/ofcu/*  
+  
+| NA| /api/v2/user/ofcu/*  
+  
+|  
+|  
+  
+sfce| NA| /api/v2/authcheck/*  
+  
+| NA| /api/v2/document/sfce/*  
+  
+| NA| /api/v2/account/sfce/*  
+  
+| NA| /api/v2/user/sfce/*  
+  
+|  
+|  
+  
+shel| NA| /api/v2/authcheck/*  
+  
+| NA| /api/v2/document/shel/*  
+  
+| NA| /api/v2/user/shel/*  
+  
+|  
+|  
+  
+sscu|  
+|  
+  
+  
+| /api/v1/authcheck/*| NA  
+  
+| /api/v1/account/sscu/*| NA  
+  
+| /api/v1/user/sscu/*| NA  
+  
+|  
+|  
+  
+star| /api/v1/authcheck/*| /api/v2/document/uccu/*  
+  
+| NA| /api/v2/account/uccu/*  
+  
+| NA| /api/v2/user/uccu/*  
+  
+|  
+|  
+  
+vwcu| /api/v1/authcheck/*| /api/v2/document/vwcu/*  
+  
+| /api/v1/jackhenry/symxchange/*| /api/v2/account/vwcu/*  
+  
+| NA| /api/v2/user/vwcu/*  
+  
+|  
+|  
+  
+wash| NA| /api/v2/authcheck/*  
+  
+| NA| /api/v2/account/wash/*  
+  
+| NA| /api/v2/user/wash/*  
+  
+|  
+|  
+  
+wecu| NA| /api/v2/authcheck/*  
+  
+| NA| /api/v2/document/wecu/*  
+  
+| NA| /api/v2/account/wecu/*  
+  
+| NA| /api/v2/user/wecu/*  
+  
+|  
+|  
+  
+wtcu| /api/v1/authcheck/*| /api/v2/document/wtcu/*  
+  
+| NA| /api/v2/account/wtcu/*  
+  
+| NA| /api/v2/user/wtcu/*  
+  
+  
+
+ **document/{cid}/lookup:**  
+
+Fetches all the internal ID within provided cid and app_id
+
+Here, **v1 and v2 are identical.**
+
+  
+
+ **document/{cid}/getDocument:**
+
+  1. we are not using the get pdf API after the wrapper service has been introduced. But v2 still calls getPdf, but internally it calls wrapperservice and both support pdf & html documents.
+  2. In v1,  **proofing statement type** is supported but **not supported in V2.**
+  3. In v2, query param name is **docType** but in v1 it's named **stmtType**
+  4. In v1, PDF can be **encrypted with the given params (userPassword & adminPassword)** which can not be done in v2.
+
+  
+
+ **document/{cid}/search/all:**
+
+  1.  In v1 we have an extra query param named  **customAttribs,**  if this custom attribute is passed then it check with a literal value of "001" & if it is same as query param then,  **esd_insert_id** is passed in response body. Not sure, why this is necessary. it's available not in v2 code.
+
+  
+
+ **document/{cid}/insertPdf:**
+
+We can get a single document using this API. Currently we are supporting
+global and selective document types both in v1 and v2.
+
+Here, v **1 and v2 are identical.**
+
+  
+
+ **document/{cid}/checkimage:**
+
+  1.  API signature is different in v1 ({cid}/image)
+  2. Both api use same external service and internal service layer is also identical.
+  3. Only difference is v1 expect a query param ( **datasource** ). If the param value is  **API  **then it call the external service. One the other hand  **v2** check the vendor and if it's in  nwbt3, nautilus or onBase (hard coded in code base) then it call external API.
+  4.  **But feature wise it' identical**
+
+  
+
+ **document/{cid}/search/check/all:**
+
+  1.  In v1, get checks using search criteria with two extra param name **  branchNum and tellerId** but 
+  2. in **v2** these two search param is not being used.
+
+  
+
+ **account/{cid} [POST]**
+
+  1. In v1, an account will be created with account number, type and account name but in v2, additionally acctSubType and productType will be added into fin_account table.
+  2. in v1, if modifiedBy user does not exist then API will create the user. But in v2, the vendor is not created.
+
+  
+
+ **account/{cid} [GET]**
+
+  1. In v1, we have to provide selectivePaperless to get the account but in v2, instead of selectivePaperless, we have to provide acctSubType and productType.
+  2. In v1, we can get the Billing information of that account which is not available into v2.
+
+  
+
+ **account/{cid} [PUT]**
+
+  1. In v1, we are not checking whether the client is a selective application client or salesforce client but  we do in v2.
+  2. InfoXchange is not supported by v2.
+  3. If an account does not exist, v1 creates the account based on the value of acctAutoCreate but in v2, the account is not created.
+
+  
+
+ **account/{cid} [DELETE]**
+
+  1. delete account and delivery preference.
+
+  
+
+ **v1/user:**
+
+  1. Selective paperless client from property file is enabled in v2 but in v1 api expects the selective paperless as query param.
+  2. Notification preference support for both email & sms in v1, but not in v2
+
+  
+
+  
+
+  
+
+## The API signature/Query Parameter has some changes in v1 & v2
+
+  
+
+ **/v2/document/{cid}/pdf:**
+
+    API v1  \- doesn't have this endpoint. "v1" use /{cid}/getDocument api endpoint. Both have some differences in Query Parameters.
+
+    v1:
+
+        \- Stmt Type(statement,notice,tax,proofing) -  stmtType
+
+        \- Account Number - acctNum
+
+        \- Arch File Id - archFileId
+
+        \- Admin Password for PDF - adminPassword
+
+        \- User Password for PDF - userPassword
+
+        \- is ADA Doc - isAdaDoc
+
+    
+
+    v2 does not contain getDocument, it uses 
+
+ **    /{cid}/pdf endpoint.**
+
+    v2: 
+
+        \- Doctype (statement,notice,tax) - docType
+
+        \- vendorId is required
+
+  
+
+ **/v2/document/{cid}/search/all : query param differences**
+
+    v1: 
+
+        account number  acctNum
+
+        encrypted account number (not required) 
+
+        Encrypted Account Numbers (not required)
+
+        Account IDs  (not required) - accountIds
+
+        customAttribs  (not required) - customAttribs
+
+        stmtType
+
+        stmtTypes
+
+        vendorName (not required)
+
+        vendorId  (not required)
+
+    v2:
+
+        encrypted account number (required)
+
+        docType
+
+        docTypes
+
+        vendorId  (required)
+
+  
+
+ **/v2/document/{cid}/insertPdf:**
+
+    v1: query param name is  \- userId
+
+    V2: query param name is  \- vendorId.
+
+  
+
+ **/v2/document/{cid}/checkimage:**
+
+    v1: 
+
+        \- the endpoint is "/{cid}/image/check"
+
+        \- check image both for encrypted and plain account number 
+
+    v2: 
+
+        \- the endpoint is "/{cid}/checkimage".
+
+        \- encrypted account number
+
+        \- vendorId is required param
+
+  
+
+ **/v2/document/{cid}/search/check/all:**
+
+    v1: 
+
+        \- The endpoint is "/{cid}/search/check"
+
+        \- acctNum is plain text
+
+    
+
+    v2: 
+
+        \- acctNum is encrypted
+
+        \- vendorId is required
+
+  
+
+ **v2/account/{cid} [create account]**
+
+    v1: 
+
+        \- acctNum (plain account number)
+
+        \- vendorId (not required)
+
+    v2: 
+
+        \- acctNum (encrypted account number)
+
+        \- vendorId (required)
+
+        \- accountSubType,   (optional parameter)
+
+        \- productType  (optional parameter)
+
+        \- accountOpeningDate  (optional parameter)
+
+  
+
+ **/v2/account/{cid} [get account]**
+
+    v1:
+
+        \- acctNum (plain account number)
+
+    v2: 
+
+        \- acctNum (encrypted account number) 
+
+        \- vendor id (required) 
+
+        \- accountSubType (optional parameter)
+
+        \- productType (optional parameter)
+
+  
+
+ **/v2/account/{cid} [update account]**
+
+    v1: plain account number
+
+    v2: encrypted account number
+
+  
+
+ **/v2/account/{cid} [delete account]**
+
+    v1: plain account number 
+
+    v2: encrypted account number
+
+  
+
+ **/v2/user/{cid}/ [create user]**
+
+    v1: plain userCIF 
+
+    v2: 
+
+        \- encrypted userCIF
+
+        \- vendorId is required
+
+  
+
+ **/v2/user/{cid}/ [get user]**
+
+    v1: plain userCIF 
+
+    v2: 
+
+        \- encrypted userCIF
+
+        \- vendorId is required (although, in code the vendorId is not being used)
+
+  
+
+ **/v2/user/{cid}/ [get user]**
+
+    v1: plain userCIF 
+
+    v2: encrypted userCIF
+
+  
+
+ **/v2/user/{cid}/account/unlink [Unlink Account from the corresponding
+user]**
+
+    v1: plain text request body
+
+    v2: encrypted request body
+
+  
+
+  
+
+  
+
+  
+
+Drop here!
+
+  
+
+  
+
+Drop here!
+
+  
+
+  
+
+Drop here!
+
+

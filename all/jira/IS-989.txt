@@ -1,0 +1,434 @@
+title: EQBK - [23136][pvt][in-house] DP / EQBK DL Processing Enhancement to add sub-folders
+description: Add sub-folders to the DL Processing.
+
+
+
+Assessment Details (IS):
+ - Parallel required: (yes)(** Required to test with DP for update requirements)
+
+ - Update eqbkdl_process.sh to use segment numbers from zip file name
+
+File name: EQBK_DN_<mmddyy>_*<seg>*.zip
+ - Get the segment# from data file before calling to proc_arg_verify.sh
+
+The new process should be: /home/master/eqbkdl_process.sh (bypass or 0)
+ - Update procedure file accordingly.
+
+Migrate this processing program to be able to run on RHS server instead of RH2
+
+Update the PDF archival script to use our standard afp2pdf.py instead of the old preprocessing02 server.
+
+Revised Timeline:
+
+sampe date: 04/27/2022
+
+sample approval:: 04/29/2022
+
+live date: 05/05/2022
+
+
+
+
+
+
+
+IS Assessment
+ =============
+ Hours for development: 3 Hours
+ Turnover Date : 03/28/2022
+ Sample Date: 04/08/2022
+ Sample Approval Date: 04/12/2022
+ Go live date : 04/20/2022
+
+
+author: tohiduli
+comment: Hi [~TunA]
+
+
+
+I am getting an error when calling the get_infotrac.pl in RH2. eqbkdl_process.sh uses RH2 server for processing. do you have any suggestion?
+
+!image-2022-04-05-15-32-50-882.png!
+
+
+author: tuna
+comment: [~tohidulI],
+
+Sorry, I am not sure what is this error. Please check with [~rony]first. If Rony doesn't know, check with [~Peter.Dang]or [~William.Kong].
+
+Thanks,
+
+Tun
+
+
+
+
+author: tohiduli
+comment: Hi [~kdishroon]
+
+archival sample after using standard afp2pdf script, and using data file segment.
+
+/z/infoftps3/EQBK/client_pickup/EQBK_OD-1_Archival_09282021_1.zip
+
+/z/infoftps3/EQBK/client_pickup/EQBK_OD-2_Archival_09282021_1.zip
+
+/z/infoftps3/EQBK/client_pickup/EQBK_OD-5_Archival_09282021_1.zip
+
+/z/infoftps3/EQBK/client_pickup/EQBK_OD-6_Archival_09282021_1.zip
+
+/z/infoftps3/EQBK/client_pickup/EQBK_OD-7_Archival_09282021_1.zip
+
+data file used:/z/download/eqbk/DN/EQBK_DN_092821_1.zip
+
+
+author: william.kong
+comment: [~tohidulI]: Please run afpcompare between rh2 & rhs on the big afp file.
+
+
+
+[~William.Kong]: Please pp02 resources vs PP03 afp2web resource.
+
+
+author: kdishroon
+comment: Hi [~tohidulI],
+
+
+
+Are you asking to have EQBK test the archival since you are changing the processing server from RH2 to RHS?
+
+
+
+Thank-you,
+
+
+
+Keri
+
+
+author: tohiduli
+comment: Hi [~William.Kong]
+
+Do we need to send the archival zip file to EQBK to test?
+
+To compare the big afp files from RH2 and RHS I need to generate the big afp file from RH2 server.If I run the old script in RH2, I get the following error.
+
+!image-2022-04-05-15-32-50-882.png!
+
+
+author: william.kong
+comment: [~tohidulI]: Can you run your pdf program on the most current production file? (EQBK_DN_052622_2.zip) I want to compare the PDFs from production with your version to make sure the content is the same.
+
+I've copied the production file to:
+
+/d/ac-secure-share/dsi_print/tohidulI/eqbk/is-989/EQBK_DN_052622_2.zip
+
+
+
+
+
+If it is ran correct, I would expect your program to produce theEQBK_D-1_Archival_05262022_2.zip archival file. Please let me know where the pdf archival file is so that I can review and compare with production.
+
+
+
+Also, i noticed that you are not using the standardized folder name conventions. Can you please adjust to be:
+
+
+
+$d_dir/pdf_afp/eqbk/eqbkdla/pdf
+
+$d_dir/pdf_afp/eqbk/eqbkdla/zip
+
+$d_dir/pdf_afp/eqbk/eqbkdla/work
+
+
+
+Would like to keep the processing folder structure consistent and standardized.
+
+
+author: tohiduli
+comment: Hi [~William.Kong]
+
+archival sample location:
+
+/z/infoftps3/EQBK/client_pickup/EQBK_D-1_Archival_05262022_2.zip
+
+
+
+also changed to code to use the standardized folder name conventions.
+
+
+author: kdishroon
+comment: [~tohidulI]- Does the client need to do anything with this file?
+
+
+author: tohiduli
+comment: Hi [~kdishroon]
+
+can you check IS-698?
+
+
+author: william.kong
+comment: [~tohidulI]/[~rony]: Is the test code updated in Parallel? I was testing in RHS and it complain that the script required to be ran on RH2. This leads me to believe the parallel code is not updated with the change pertaining to this project. I want to verify the PDF archival content looks OK.
+
+
+
+In addition, I'm also troubleshooting why the big afp is not backedup in /d/afpformat/ folder. This particular logic is not coded by you but from a different global isisdisk_daily.sh logic that I want to trouble using this program.
+
+
+
+
+
+
+author: tohiduli
+comment: Hi [~William.Kong]
+
+the updated eqbkdl_process.sh script now in parallel
+
+
+author: kdishroon
+comment: [~William.Kong] Per Neil:
+
+!image-2022-07-05-10-10-05-350.png|width=726,height=136!
+
+
+author: william.kong
+comment: [~tohidulI]: Can you advise why this error is occurring in parallel? Did I run this incorrectly:
+
+
+
+oper1@rhs ~> /home/test/master/eqbkdl_process.sh 1 bypass
+
+ls /z/ftpbu/eqbkbu/DN/ | grep -P 'EQBK_DN_\d\{6}(_.*zip|.zip)' | head -1
+Invalid argument!
+Usage: /home/test/master/eqbkdl_process.sh segment[1,2,3....] \{0|bypass} input_file
+oper1@rhs ~> echo $?
+1
+
+
+author: tohiduli
+comment: Hi Will,
+
+
+
+please use
+/home/test/master/eqbkdl_process.sh bypass
+
+We are using the segment number from the data file.
+!image-2022-07-07-12-48-38-183.png!
+
+
+
+author: rony
+comment: Hi [~William.Kong]
+
+Any feedback?
+
+
+author: william.kong
+comment: [~rony]& [~tohidulI]: Sorry! was on vacation and missed this. I checked the pdf archival portion only with cycle 7/14 seg #2. The pdfcompare utiltity did not detect any differences. Please go ahead and submit this project to QA so that they can verify the other specification changes as well.
+
+
+
+I've placed my pdf archival testing files in:/d/ac-secure-share/is/williamK/is-989/eqbkdla_0714.zip if QA wants to review my test results between prod & parallel.
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~rony]/[~tohidulI]: Has this project been submitted to QA ([~Igor.Khosid]); Please advise. Thanks!
+
+
+author: tohiduli
+comment: parallel ID:20220722010705
+
+There is no changes in the design of the document
+
+e-statement index file:/z/isd_input_dev/I3/process-files/eqbk/dla_20220526__20220722_0110_eqbk.txt
+
+attached is checklist:[^IS-989_IS_CHECKLIST_07220222.docx]
+
+
+
+
+author: rony
+comment: [~Igor.Khosid]
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220722010705
+   Currently in parallel: Yes
+   User: tohidulI
+   Description: IS-989 EQBK daily processing enhancement and pdfi to afp2pdf
+   Date Submitted: 2022-07-22 01:07:37
+   Date Last Updated: 2022-07-22 01:07:37
+   Files:
+      1) eqbkdla.control
+      2) EQBKDLPRNT.prj
+      3) eqbkdl_process.sh
+      4) EQBKDLPRNT.dfa
+      5) eqbkdla_pdf.control
+
+
+author: igor.khosid
+comment: QA  - completed
+1. Processe4d on  RHS server 
+2. segment numbers used from the data file
+IS checklist - attached >>>  [^IS-989_IS_CHECKLIST_07220222.pdf] 
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+Would you please create parallel form.
+
+
+
+[~tohidulI]
+
+
+
+Thanks
+
+
+author: william.kong
+comment: [~kdishroon]: Can you please get this into parallel process? This in-house ticket has been outstanding for a while and DP would like to get this out of the way.
+
+
+
+[~rony]: Since [~tohidulI]is no longer with us any more, will you be assisting with the parallel? In meantime, I will update due date to 8/25/2022
+
+
+author: william.kong
+comment: [~rony]: I did not realize this project is still waiting for [~kdishroon]to create parallel. Will you be taking over this?
+
+
+
+Because I did not realize this was still outstanding, Jason was testing this program and ran into the following issue. Can you or the new designated person research this?
+
+
+
+!image-2022-08-23-16-24-19-095.png!
+
+
+author: tohiduli
+comment: Hi [~William.Kong]
+
+Remove the segment number when running the script. The script will get the segment number from the data file name.
+
+for example
+
+/home/test/master/eqbkidl_process.sh bypass
+
+
+author: william.kong
+comment: [~tohidulI]: I still have the same issue without using segment number. If it does not need segment number then the verbiage below should also be adjusted as well b/c it is very misleading. Please advise.
+
+!image-2022-08-24-17-42-25-331.png!
+
+
+author: tohiduli
+comment: Hi [~William.Kong]
+
+
+
+There should be a data file in /z/ftpbu/eqbkbu/DN/ directory with file patternEQBK_DN_<MMDDYY>_<Segment>.
+
+I updated the script to give appropriate error message if the data file is not found
+
+
+author: tohiduli
+comment: Hi [~TunA]
+
+attached transfer form
+
+[^IS_PROGRAM_TRANSFER_FORM_IS_989.docx]
+
+please release the files
+
+
+
+
+author: tuna
+comment: Hi [~tohidulI],
+
+Following codes have been released.
+
+Thanks
+
+Tun
+
+
+
+20220907091003 09/07/2022 tohidulI IS-989 EQBK - [23136][pvt][in-house] DP / EQBK DL Processing Enhancement to add sub-folders
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/tohidulI/
+total 624
+-rwxrwxrwx 1 tohidulI DSI 1668 Sep 1 00:07 eqbkdla.control
+-rwxrwxrwx 1 tohidulI DSI 383 Sep 1 00:08 eqbkdla_pdf.control
+-rwxrwxrwx 1 tohidulI DSI 123617 Sep 1 00:08 EQBKDLPRNT.dfa
+-rwxrwxrwx 1 tohidulI DSI 0 Sep 1 00:07 EQBKDLPRNT.prj
+-rwxrwxrwx 1 tohidulI DSI 18376 Sep 1 00:07 eqbkdl_process.sh
+
+
+
+
+author: william.kong
+comment: [~tohidulI]: Procedure file was not updated with the new processing instructions to ignore segment number. I will ask DP to assist this one time. However, please remember if processing instructions change, the procedure file needs to be updated as well too.
+
+
+author: tohiduli
+comment: Hi [~TunA] 
+
+please release the updated procs file.
+
+attached transfer form
+
+[^IS_PROGRAM_TRANSFER_FORM_IS-989-09132022.doc]
+
+
+author: tuna
+comment: Hi [~tohidulI],
+
+DP procs file has been released.
+
+Thanks
+
+Tun
+
+
+
+20220913084303 09/13/2022 tohidulI IS-989 EQBK - [23136][pvt][in-house] DP / EQBK DL Processing Enhancement to add sub-folders
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/tohidulI/
+total 48
+-rwxrwxrwx 1 tohidulI DSI 2990 Sep 13 01:10 eqbkdla.procs
+
+
+author: tohiduli
+comment: Hi [~TunA]
+
+please release the procs file. I needed to update the server name from RH2 to RHS
+
+[^IS_PROGRAM_TRANSFER_FORM_IS_989-09152022.docx]
+
+
+author: tuna
+comment: Hi [~tohidulI],
+
+Following code has been released.
+
+Thanks,
+
+Tun
+
+
+
+20220915082405 09/15/2022 tohidulI IS-989 procs file update for EQBK - [23136][pvt][in-house] DP / EQBK DL Processing Enhancement to add sub-folders
+
+[main@rhs ~]$ ll /d/is/cvs/xfer/tohidulI/
+total 48
+-rwxrwxrwx 1 tohidulI DSI 2990 Sep 15 03:08 eqbkdla.procs

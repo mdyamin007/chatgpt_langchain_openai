@@ -1,0 +1,194 @@
+title: How to Install Java(JDK/JRE) In Ubuntu 1204
+body:   
+
+## A. Sun JDK vs OpenJDK
+
+In the past, Sun JDK was the default java package in Ubuntu. After Sun
+Microsystem was acquired by Oracle in 2010, Ubuntu (and various distros)
+switched the java package to the fully open-source OpenJDK as the SUN JDK no
+longer contain codes that are fully open-sourced.
+
+OpenJDK is community-built and is (almost) 100% similar to the SUN JDK. You
+can easily install OpenJDK in Ubuntu via the Ubuntu Software Center, by
+running the command:
+
+    
+    
+    $ sudo apt-get install openjdk-7-jre
+    
+
+If you have a specific java-based app that don't run well in  **OpenJDK** ,
+you can switch to the  **SUN JDK**  instead. Here is how you do it:  
+  
+
+  
+
+## B. The hard way
+
+This method requires you to install SUN JDK 7 manually. It is a good way for
+you to learn the trick.
+
+1\. Download the SUN JDK 7 here to your home folder.
+
+2\. Extract the tar file.
+
+3\. Move the extracted file to the "/usr/lib/jvm/" folder:
+
+`$ sudo mv jdk1.7.0_04 /usr/lib/jvm/`
+
+4\. Install SUN JDK 7 in your system:
+
+    
+    
+    $ sudo update-alternatives --install /usr/bin/javac javac /usr/lib/jvm/jdk1.7.0_04/bin/javac 1
+    $ sudo update-alternatives --install /usr/bin/java java /usr/lib/jvm/jdk1.7.0_04/bin/java 1
+    
+
+5\. Set the environment variables:
+
+    
+    
+    $ sudo update-alternatives --config javac
+    $ sudo update-alternatives --config java
+    
+
+You will see an option like the screenshot below:
+
+Enter the option that corresponds to the SUN JDK package. Press Enter.
+
+That's it.
+
+To test your java:
+
+`$java -version`  
+  
+
+  
+
+## C. The easy way
+
+If you don't want to manually install the SUN JDK, you can do it via a PPA.
+Since there is no official PPA for SUN JDK, you will have to grab a custom PPA
+that comes with the java package. Note that custom PPAs might add extra
+software sources to the repository, and cause your system to be bloated or
+even have conflicts with other apps. So bear in mind the risk involved.
+
+There are several PPAs out there that come with SUN JDK, one that you can use
+is "webupd8team/java"
+
+    
+    
+    sudo add-apt-repository ppa:webupd8team/java
+    sudo apt-get update
+    sudo apt-get install oracle-java7-installer
+    
+
+This should install SUN JDK 7 in your system.  
+  
+
+  
+
+## D. Run Java applet in Browsers (Firefox, Chrome etc)
+
+Even after you have installed the java package, you will find that the java
+applet in your browser won't run. If you are using the OpenJDK, here is
+another package that you need to install:
+
+    
+    
+    $ sudo apt-get install icedtea-7-plugin
+    
+
+For Oracle java, run the commands:
+
+    
+    
+    mkdir ~/.mozilla/plugins
+    ln -s /usr/lib/jvm/jdk1.7.0_04/jre/lib/i386/libnpjp2.so ~/.mozilla/plugins
+    
+
+If you are using a 64-bit system, remember to change the "i386 to  **"
+amd64"**.
+
+Once install, restart your browser. The java applet should run now. To test if
+Java is working in your browser, go to
+<http://java.com/en/download/testjava.jsp>. If installed correctly, you should
+see a "Your java is working" message.
+
+* * *
+
+  
+  
+
+## E. Install OpenJDK on Ubuntu 12.04 "Precise Pangolin" and Ubuntu 12.10
+"Quantal Quetzal"
+
+    
+    
+    $ sudo apt-get install openjdk-7-jre
+    $ sudo apt-get install openjdk-7-jdk
+    $ sudo apt-get install icedtea6-plugin
+    
+
+To remove the OpenJDK and the related packages, do this:
+
+    
+    
+    $ sudo apt-get remove openjdk-7-jdk openjdk-7-jre icedtea6-plugin
+    OR
+    $ sudo apt-get remove openjdk-6-jre 
+    OR
+    $ sudo apt-get remove openjdk*
+    
+
+Also, related command to remove the OpenJDK:
+
+    
+    
+    $ sudo apt-get remove openjdk-6-jre 
+    OR
+    $ sudo apt-get remove openjdk*
+    
+
+  
+  
+
+### Oracle Java 7. Install the Oracle JDK 7. Install the Oracle JRE 7. Install
+the Firefox/Chrome Oracle Java 7 plugin
+
+<http://www.iasptk.com/ubuntu-oracle-java7-jdk7-jre7-firefox-chrome-plugin>  
+<http://www.webupd8.org/2012/01/install-oracle-java-jdk-7-in-ubuntu-via.html>
+
+* * *
+
+  
+  
+
+## F. References:
+
+a). Oracle Site for JDK 1.7 Installation instructions  
+<http://docs.oracle.com/javase/7/docs/webnotes/install/index.html#linux>
+
+b). Completely uninstall and reinstall OpenJDK  
+<http://askubuntu.com/questions/139702/completely-uninstall-and-reinstall-
+openjdk>
+
+c). "openjdk-7" source package in Precise  
+<https://launchpad.net/ubuntu/precise/+source/openjdk-7>
+
+    
+    
+    Ubuntu  Precise (12.04)  "openjdk-7" source package 
+    
+    icedtea-7-jre-jamvm: Alternative JVM for OpenJDK, using JamVM
+     openjdk-7-dbg: Java runtime based on OpenJDK (debugging symbols)
+     openjdk-7-demo: Java runtime based on OpenJDK (demos and examples)
+     openjdk-7-doc: OpenJDK Development Kit (JDK) documentation
+     openjdk-7-jdk: OpenJDK Development Kit (JDK)
+     openjdk-7-jre: OpenJDK Java runtime, using Hotspot JIT
+     openjdk-7-jre-headless: OpenJDK Java runtime, using Hotspot Zero (headless)
+     openjdk-7-jre-lib: OpenJDK Java runtime (architecture independent libraries)
+     openjdk-7-jre-zero: Alternative JVM for OpenJDK, using Zero/Shark
+     openjdk-7-source: OpenJDK Development Kit (JDK) source files
+
+

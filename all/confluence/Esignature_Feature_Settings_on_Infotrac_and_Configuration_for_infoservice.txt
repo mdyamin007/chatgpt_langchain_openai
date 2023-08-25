@@ -1,0 +1,100 @@
+title: Esignature Feature Settings on Infotrac and Configuration for infoservice
+body: **Add ESignature Feature Setting in infotrac**
+
+Run below queries on infotrac database
+
+Insert into INFOTRAK.FEATURE_DEFINITION
+(CODE,NAME,CREATED_TIME,PARENT_CODE,TYPE) values
+('eSign','eSignature',to_date('17-NOV-14','DD-MON-RR'),null,null);  
+Insert into INFOTRAK.FEATURE_DEFINITION
+(CODE,NAME,CREATED_TIME,PARENT_CODE,TYPE) values ('accessESign','Access
+eSignature',to_date('17-NOV-14','DD-MON-RR'),'eSign',null);
+
+INSERT INTO "INFOTRAK"."FEATURE_DEFINITION" (CODE, NAME, CREATED_TIME,
+PARENT_CODE, TYPE) VALUES ('accessAddPkg', 'Access Add Package',
+TO_DATE('2016-08-04 10:40:32', 'YYYY-MM-DD HH24:MI:SS'), 'eSign', null);  
+INSERT INTO "INFOTRAK"."FEATURE_DEFINITION" (CODE, NAME, CREATED_TIME,
+PARENT_CODE, TYPE) VALUES ('accessEdtPkg', 'Access Edit Package',
+TO_DATE('2016-08-04 10:40:32', 'YYYY-MM-DD HH24:MI:SS'), 'eSign', null);  
+INSERT INTO "INFOTRAK"."FEATURE_DEFINITION" (CODE, NAME, CREATED_TIME,
+PARENT_CODE, TYPE) VALUES ('accessDltPkg', 'Access Delete Package',
+TO_DATE('2016-08-04 10:40:32', 'YYYY-MM-DD HH24:MI:SS'), 'eSign', null);  
+INSERT INTO "INFOTRAK"."FEATURE_DEFINITION" (CODE, NAME, CREATED_TIME,
+PARENT_CODE, TYPE) VALUES ('accessSndPkg', 'Access Send Package',
+TO_DATE('2016-08-04 10:40:32', 'YYYY-MM-DD HH24:MI:SS'), 'eSign', null);  
+INSERT INTO "INFOTRAK"."FEATURE_DEFINITION" (CODE, NAME, CREATED_TIME,
+PARENT_CODE, TYPE) VALUES ('acsAddTmplt', 'Access Add Template',
+TO_DATE('2016-08-04 10:40:32', 'YYYY-MM-DD HH24:MI:SS'), 'eSign', null);  
+INSERT INTO "INFOTRAK"."FEATURE_DEFINITION" (CODE, NAME, CREATED_TIME,
+PARENT_CODE, TYPE) VALUES ('acsEdtTmplt', 'Access Edit Template',
+TO_DATE('2016-08-04 10:40:32', 'YYYY-MM-DD HH24:MI:SS'), 'eSign', null);  
+INSERT INTO "INFOTRAK"."FEATURE_DEFINITION" (CODE, NAME, CREATED_TIME,
+PARENT_CODE, TYPE) VALUES ('acsDltTmplt', 'Access Delete Template',
+TO_DATE('2016-08-04 10:40:32', 'YYYY-MM-DD HH24:MI:SS'), 'eSign', null);
+
+ **Info Service Config Property Changes.(/usr/local/tomcat/app-
+configs/infoservice/config.properties)**
+
+1\. Add additional entry for contacting infotrac database to retrieve user
+details for building silani's request
+
+oracle.infotrac.db.url=jdbc:oracle:thin:@//10.8.8.215:1521/wodb.edata  
+oracle.infotrac.db.username=infotrak  
+oracle.infotrac.db.password=********
+
+2\. Add cid specific apikey and url and mention the default expiration date
+for package
+
+mtro.silanis.api_key=bFBRZzY1QUxJbXczOmNyNjFUTWZFdjdrNQ==  
+mtro.silanis.api_url=<https://sandbox.esignlive.com/api>  
+mtro.esign.default_expiration=1
+
+3\. Add passphrase specific to cid (MTRO). This would be use to do encryption
+to upload files in swift server
+
+To generate pass phrase use the below link :  
+<https://strongpasswordgenerator.com/>
+
+mtro.passphrase=hv5PhAst3P4J4sZ (This was created for stage environment)
+
+4\. Other configurations for esignature remains same for all cid's
+
+esign_tmp_fldr=/tmp/esign/  
+     esign.downloader.enable=true  
+     esign.downloader.dayRange=1  
+     silanis.cron.expression=0 */5 * * * ?   
+    esign.package.export.enabled=bkcu  
+    esign.package.export.cron=0 0 0 * * ?  
+    bkcu.esign.package.export.path=/tmp/esign/
+
+Note* for reference <http://www.quartz-
+scheduler.org/documentation/quartz-2.x/tutorials/crontrigger.html>
+
+5\. Add CID to existing list to enable download scheduler  
+esign.package.export.enabled=bkcu,mtro
+
+ **Post Deployment Check List**
+
+1\. Check if the schedulers are running correctly,
+
+specifically on infocloud01(production) during deployment we should always
+verify that "Method executed at every 5 minute" is shown in the logs.  
+grep esign.task.ESignPackageScheduler catalina.out
+
+catalina-2016-12-09.out:5151273 [pool-3-thread-1] INFO
+com.infoimage.esign.task.ESignPackageScheduler - Method executed at every 5
+minute. Current time is :: Fri Dec 09 16:00:00 PST 2016  
+catalina-2016-12-09.out:5451273 [pool-3-thread-1] INFO
+com.infoimage.esign.task.ESignPackageScheduler - Method executed at every 5
+minute. Current time is :: Fri Dec 09 16:05:00 PST 2016  
+catalina-2016-12-09.out:16:10:00.001 [pool-5-thread-1] INFO
+c.i.esign.task.ESignPackageScheduler - Method executed at every 5 minute.
+Current time is :: Fri Dec 09 16:10:00 PST 2016  
+catalina-2016-12-09.out:16:15:00.000 [pool-5-thread-1] INFO
+c.i.esign.task.ESignPackageScheduler - Method executed at every 5 minute.
+Current time is :: Fri Dec 09 16:15:00 PST 2016  
+catalina-2016-12-09.out:16:20:00.000 [pool-5-thread-1] INFO
+c.i.esign.task.ESignPackageScheduler - Method executed at every 5 minute.
+Current time is :: Fri Dec 09 16:20:00 PST 2016
+
+

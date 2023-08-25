@@ -1,0 +1,257 @@
+title: Data Normalization
+body: ## A. Building Blocks of Documents
+
+The following are the building blocks that are used to compose documents that
+we support today. For each building block, a generic XML sample structure is
+defined based on evaluating document samples. The XML Schema for Papyrus
+ingestion should then be defined based on these building blocks. The
+structures would expand to include more and more variations from various
+document types as well as cores over time. We'll check-point by iterations.
+
+  1. Statement Level Data {FIXME} (need to evaluate)
+  2. [Address Block](https://i3dev.easyredmine.com/projects/datanormalize/wiki/Address_Block)
+  3. [Account Summary](https://i3dev.easyredmine.com/projects/datanormalize/wiki/Account_Summary)
+  4. [Saving/Checking Accounts](https://i3dev.easyredmine.com/projects/datanormalize/wiki/SavingChecking) {UPDATE}
+    1. Cleared Checks
+    2. Check Images
+    3. REGDD
+  5. [Loan Statements](https://i3dev.easyredmine.com/projects/datanormalize/wiki/Loan_Statements) {UPDATE}
+    1. Summary Box
+    2. REGZZ
+  6. [Credit Card Statements](https://i3dev.easyredmine.com/projects/datanormalize/wiki/Credit_Card_Statements) {NEW} (both Open/Close End)
+  7. [CD/IRA Statements](https://i3dev.easyredmine.com/projects/datanormalize/wiki/CDIRA_Statements) {NEW} (both Open/Close End)
+
+  
+  
+
+### Feedbacks
+
+  1. [Tien Feedback - 20131126](https://i3dev.easyredmine.com/projects/datanormalize/wiki/Tien_Feedback_-_20131126)
+
+  
+  
+
+### To Be Identified:
+
+  * Account Type Group Assignment
+  * Account Type Group Ordering
+  * Address Block and Endorsement
+  * YTD Summary
+  * ATM/Debit Card Activity at a Glance
+  * Pie Charts
+  * Message Manager 2.2
+
+  
+  
+
+## B. XML Schema for Papyrus ingestion.
+
+As part of the Data Normalization efforts, a common schema is been developed
+to conform to all DataCore specific formats. Currently preparation for
+**Symitor**  Record layout is in progress. Ultra Data would follow right
+after.
+
+ **Schema**  :  _in progress_  
+[IIDataCore.xsd](https://i3dev.easyredmine.com/attachments/662/IIDataCore.xsd)  
+[PlatformSchema.xsd](https://i3dev.easyredmine.com/attachments/1227/PlatformSchema.xsd)
+
+Please find the Sample XML generated from Hadoop job process with a sample
+TKCU Statement file (Flat Data).  
+[tkcu.xml](https://i3dev.easyredmine.com/attachments/1226/normalized_data.xml)
+(new schema version)  
+[tkcu.xml](https://i3dev.easyredmine.com/attachments/663/result-0002530280.xml)
+
+Consolidated version of TKCU Statement file (~140 records).  
+[tkcu.xml](https://i3dev.easyredmine.com/attachments/701/result-
+consolidated.xml)
+
+Please find the Sample XML generated from Hadoop job process with a sample
+FCSB Statement file (Print Format).  
+[fcsb.xml](https://i3dev.easyredmine.com/attachments/611/fcsb_sample.xml)  
+  
+
+### Papyrus's capability to parse XML data
+file[](https://i3dev.easyredmine.com/projects/datanormalize/wiki?utm_campaign=menu&utm_content=project_menu&utm_term=wiki#Papyruss-
+capability-to-parse-XML-data-file)
+
+Tien provided a sample code of how XML get parsed today:
+[XMLTest.zip](https://i3dev.easyredmine.com/attachments/840/XMLTest.zip?t=1372198522
+"Download file")  
+  
+
+### Running the job.
+
+// load the file to HDFS  
+// eg: to load a statement file, say tkcu_stmt_qa.dat (from my home folder)
+into HDFS location /user/dsarkar/tkcu/input
+
+    
+    
+    $ hadoop fs -put /home/dsarkar/projects/datafiles/tkcu_stmt_qa.dat /user/dsarkar/tkcu/input
+    
+
+// to check if the file is loaded into HDFS
+
+    
+    
+    $ hadoop fs -ls /user/dsarkar/tkcu/input
+    Found 3 items
+    -rw-r--r--   1 dsarkar supergroup      22200 2013-12-24 13:52 /user/dsarkar/tkcu/input/tkcu.stm
+    -rw-r--r--   1 dsarkar supergroup 1107736376 2013-12-24 13:52 /user/dsarkar/tkcu/input/tkcu_stmt_jun2013.dat
+    -rw-r--r--   1 dsarkar supergroup    1367938 2014-01-13 20:48 /user/dsarkar/tkcu/input/tkcu_stmt_qa.dat
+    
+    
+
+// print usage
+
+    
+    
+    $ hadoop jar target/datanormalization-1.0.jar com.infoimage.client.SymitarJobClient -help
+    usage:
+     -fileName <fileName>       Statement file name
+     -hadoopUser <hadoopUser>   hadoop user name
+     -help                      Print help for this application
+     -inputPath <inputPath>     inputPath (relative to HDFS structure)
+     -outputPath <outputPath>   outputPath (relative to HDFS structure)
+    
+
+  
+eg:
+
+// running the job  
+// 'cd' to the location where the jar file is present or mention the file path
+next to the jar parameter  
+// Please ensure that the statement file is available on HDFS
+
+    
+    
+    $ hadoop jar ~/lib/datanormalization-1.0.jar com.infoimage.client.SymitarJobClient \
+        -fileName tkcu.stm \
+        -inputPath tkcu/input \
+        -outputPath tkcu/output \
+        -hadoopUser dsarkar
+    
+
+  
+
+// check the output files (XML) on HDFS; please note that the files are on
+HDFS, not locally.
+
+    
+    
+    $ hadoop fs -ls /user/dsarkar/tkcu/output
+    
+    Found 9 items
+    -rw-r--r--   3 dsarkar supergroup          0 2014-01-13 16:19 /user/dsarkar/tkcu/output/_SUCCESS
+    drwxr-xr-x   - dsarkar supergroup          0 2014-01-13 13:23 /user/dsarkar/tkcu/output/_logs
+    -rw-r--r--   3 dsarkar supergroup          0 2014-01-13 16:18 /user/dsarkar/tkcu/output/part-r-00000
+    -rw-r--r--   3 dsarkar supergroup       8767 2014-01-13 16:18 /user/dsarkar/tkcu/output/result-0000001041.xml
+    -rw-r--r--   3 dsarkar supergroup       1939 2014-01-13 16:18 /user/dsarkar/tkcu/output/result-0000002163.xml
+    -rw-r--r--   3 dsarkar supergroup       5763 2014-01-13 16:18 /user/dsarkar/tkcu/output/result-0000002480.xml
+    -rw-r--r--   3 dsarkar supergroup       5916 2014-01-13 16:18 /user/dsarkar/tkcu/output/result-0000003476.xml
+    -rw-r--r--   3 dsarkar supergroup       4205 2014-01-13 16:18 /user/dsarkar/tkcu/output/result-0000003544.xml
+    -rw-r--r--   3 dsarkar supergroup       4123 2014-01-13 16:18 /user/dsarkar/tkcu/output/result-0000006088.xml
+    
+
+  
+
+// get the XMLs from HDFS to local file system
+
+    
+    
+    $ cd /home/<user>/<somefolder>
+    
+    // copy the 'output' folder from HDFS to your local folder in pwd
+    $ hadoop fs -get /user/<userid>/tkcu/output
+    
+    $ ls -ltr output/
+    total 52
+    -rwxr-xr-x 1 dsarkar dsarkar    0 Jan 13 16:52 _SUCCESS
+    drwxrwxr-x 3 dsarkar dsarkar 4096 Jan 13 16:52 _logs
+    -rwxr-xr-x 1 dsarkar dsarkar    0 Jan 13 16:52 part-r-00000
+    -rwxr-xr-x 1 dsarkar dsarkar 8767 Jan 13 16:52 result-0000001041.xml
+    -rwxr-xr-x 1 dsarkar dsarkar 1939 Jan 13 16:52 result-0000002163.xml
+    -rwxr-xr-x 1 dsarkar dsarkar 5916 Jan 13 16:52 result-0000003476.xml
+    -rwxr-xr-x 1 dsarkar dsarkar 5763 Jan 13 16:52 result-0000002480.xml
+    -rwxr-xr-x 1 dsarkar dsarkar 4205 Jan 13 16:52 result-0000003544.xml
+    -rwxr-xr-x 1 dsarkar dsarkar 4123 Jan 13 16:52 result-0000006088.xml
+    
+
+// check the status of the job
+
+<http://pd-grid02:50030/jobtracker.jsp>
+
+* * *
+
+  
+
+## C. Data Mining/Machine Learning
+
+InfoIMAGE aims to glean information that will be useful to the client through
+the large amounts of data that we process on a daily basis. Data mining allows
+the client to specify what type of information they want to know, whereas
+machine learning will provide insights that may never have occurred to the
+client. Some areas that this will benefit the client include: Message Manager
+marketing messages, Alerts, Banner Management, Selective Inserts, etc.
+
+Step 1: Technology Evaluation
+
+  * Database
+
+>   * MongoDB
+>   * Apache Cassandra
+>   * Apache HDFS
+>   * Apache HBase
+>
+
+  * Batch Processing Tool
+
+>   * Hadoop
+>
+
+  * Data Mining
+
+>   * Apache Impala
+>   * Apache Hive
+>   * Kiji
+>   * Pentaho (lower priority)
+>   * Apache Hue (lower priority)
+>
+
+  * Machine Learning
+
+>   * Weka
+>   * Apache Mahout
+>   * WibiData's Kiji (lower priority)
+>
+
+Below is a high level architecture of various components including the Batch
+processing that results to a normalized data structure.
+
+Please find this
+[paper](http://ijiepr.iust.ac.ir/browse.php?a_id=241&slc_lang=en&sid=1&ftxt=1)
+from
+[here](http://ijiepr.iust.ac.ir/browse.php?a_code=A-10-1-122&slc_lang=en&sid=1),
+that is referred to as a reference document to come up with our prototype to
+exercise our data mining efforts.
+
+ **Data Sets** : Filtered content from Transaction Data and Account
+Information tables. (Serialized Avro objects into Kiji tables(HBase))  
+ **Data Pre-processing step** : Hadoop/Kiji/Scalding  
+ **Clustering algorithm**  run to classify members into clusters with shared
+characteristics (as Raring/Transactor/Pamper User) : K-means with k => 3  
+ **Customer Power**  (CP) computation to derive Customer Score (CS) : Kiji
+(using Sum of Transaction Amount at a Month, STAM, as referred in the paper)  
+RFM scoring determination : TBD
+
+A High level Design is depicted here.
+
+Description to follow. TBD.
+
+###  Attachments
+
+  
+
+250250250250250250250250250250
+
+

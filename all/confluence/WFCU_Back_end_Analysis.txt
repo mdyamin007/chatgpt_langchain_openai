@@ -1,0 +1,217 @@
+title: WFCU Back end Analysis
+body: # **Processing steps:**
+
+  1. afp
+  2. permission
+  3. enotice
+  4. etax
+  5. ecl
+  6. paperless
+  7. doc
+
+##  **AFP Process:**
+
+###  **Handler:   **AfpStatementData
+
+###  **Process file:**
+
+fileName[0-49]
+
+acctNum[50-99]
+
+beginDate[100-149] format: MMddyyyy
+
+closingDate[150-199] format: MMddyyyy
+
+numOfPages[200-249]
+
+acctName[250-rest] Mandatory
+
+###  **Registrar:**   DefaultEStmtRegistrar
+
+### ProcessingJob Steps:
+
+  1. #### getFinAccount() :
+
+    1. Finds account by account number. If not found.
+      1. Inserts into the **fin_account** table. Sets Acct_owner_contact_id=null.
+      2. autoRegister is set to true, then creates user. In user table, user_firstName=acctName.  Inserts into **usr_session** table. In **usr_session** table : sess_login_id=accountNumber, DSO=current date, sess_active_status=Active. Inserts into **usr_fin_account** table.
+    2. If account found,
+      1. If the account name is not matched, updates account_owner_name and acct_owner_contact_id in the fin_account table.  Searches in UFA table by account_number and orgId. If UFA exists and usr_id is not null, then searches that user and if found sets the firstName = account_name, and stores that user.
+    3. Searches paperless status form paperless2 table by acctId and stmtType. If not found, inserts into the paperless2 table. newStatus="B" and oldStatus="N". If stmtType is not "default", then searches in paperless2 table using acctId and stmtType="default". If not found, inserts into the paperless2 table. newStatus="B" and oldStatus="N".
+  2. ####  **registerStatement():**
+
+    1. Inserts the file into the ESTMT_DOC table.
+    2. Insert into p_job_estmt
+  3. Updates arch_file table
+  4. stmtType is inserted into ACCOUNT_STMT_TYPE
+  5. Insert into p_estmt_count table
+
+  
+
+##  **Permission Process:**
+
+###  **Handler** : DefaultPermHandler
+
+###  **Process file:**
+
+acctNum [Mandatory field]
+
+###  **Registrar:**   DefaultPermRegistrar
+
+### ProcessingJob Steps:
+
+  1. Deletes all from acct_access table of wfcu.
+  2. Updates acct_access table. Sets aa_min_level=3
+
+  
+
+##  **Enotice Process:**
+
+###  **Handler:   ENoticeData3**
+
+###  **Process file:**
+
+acctNum|type_a|afpFileName|date|type_b
+
+###  **Registrar:**   DefaultENoticeRegistrar
+
+### ProcessingJob Steps:
+
+  1. #### getFinAccount() :
+
+    1. Searches account by accountNumber and orgId. If not found, returns null and increments warning count. If found, updates the acount owner name in fin_account table.
+  2. #### registerENotice():
+
+    1. Creates a BaseArchive object using parentPath,afpFilename and AFP_TYPE. If it's a new data then inserts arc_file_id,file_type,file_name and parent_path into **arch_file** table. If it's not a new data then updates arch_file table with parentPath,fileName and type.
+    2. If it's a new enotice data then Inserts into **enotice** table. Otherwise updates enotice table with acctId,arch_file_id,enotice_stamp and letterCode.
+    3. Inserts into **p_job_enotice** table.
+  3. #### addImageCount():
+
+    1. Inserts into p_estmt_count table
+  4. #### updateEnoticeStatusByPJobId():
+
+    1. Updates status in enotice table
+
+  
+
+##  **Etax Process:**
+
+###  **Handler:   ETaxData3**
+
+###  **Process file:**
+
+  1. 8 columns in the index file: acctNum |  type | afpFileName    | date | suffix | appType    | SSN/TAX_ID | INPUT_ZIP_FILENAME
+  2. Mandatory columns: acctNum, type, afpFileName, date, INPUT_ZIP_FILENAME
+
+Optional columns: suffix, apptype, ssn
+
+###  **Registrar:**   ETaxRegistrar3
+
+### ProcessingJob Steps:
+
+If replacement=true (from frontend) then update status of existing data in
+etax table.
+
+needApproval=false, createAccount=false, compression=false
+
+ **Database changes:**
+
+ **Etax:** etax_id, acct_id,etax_type, etax_stamp, arch_file_id, ssn (if new
+data then insert, otherwise update.)
+
+ **Paperless:** p_new_status-> B, p_old_status -> N
+
+ **Paperless2:** p_latest_status -> B, p_old_status -> N
+
+ **P_Job_Etax:** P_Job_id, Etax_id
+
+ **Arch_File:** Arch_file_id, File_type, Parent_path, File_name, Page_Count,
+storage_server (if new then insert otherwise update)
+
+  
+
+##  **ECL Process:**
+
+###  **Handler:   DefaultEclHandler2**
+
+###  **Process file:**
+
+acctNum|email
+
+### ProcessingJob Steps:
+
+  1. Updates email on contact_info
+
+##  **Paperless  Process:**
+
+###  **Handler:   DefaultPaperlessHandler2**
+
+###  **Process file:**
+
+acctNum|acctName|email|status|date
+
+If status is not "P" then email is a mandatory field.
+
+If, 5 columns are given,then date is a mandatory field.
+
+###  **Registrar:**   DefaultPaperlessRegistrar3
+
+### ProcessingJob Steps:
+
+  1. Updates p_job table
+  2. #### enroll():
+
+    1. If cif_num is not provided via the enrollment file, then acctNum will be used as cif_num.
+    2. Finds account by orgId and acctNumber. If not found,
+      1. Creates a new account and user. If acctName is not provided in index file, acctName="New Member". In the index file, if the status is "5" which is hold code, Then finds account by acctNum and acctName. If not found, then creates that account  and inserts into fin_account table(orgId, acctNum,acctName,lastModified,acctStatus="H"). Otherwise, creates and saves fin account with orgId,acctNum acctName,lastModified. 
+      2. Creates new User. sets firstName=acctName. Stores in USR table
+      3. In usr_session, sess_login_id=!usrId. NO date is inserted.
+      4. Searches for UFA by usrId and acctId. If found, returns that ufa. If not found, Creates UFA with status="active" and pk="null' ,regDate=current date.
+      5. attachCifToUser(). Inserts into usr_mapping. CifNum->acctNumber.
+    3. Searches for paperless status by acctId and stmtType. If its modified date is the latest, no update is required. otherwise, If update is required, 
+      1. insertPaperlessStatus():
+        1. Searches paperless status by acctId and stmtType="default". If null, creates an object with oldStatus="N" and newStatus="B".
+        2. Finds account by acctNum and orgId. In the index file,if paperlessstatus=5, then fin_account status is set to "H" and no NP update is required. returns false. (End of (C)).
+        3. Otherwise, if the account status is "H" then its set to "A" and saves the account. 
+        4. If currentStatus(paperless status of that account) is not matched with newStatus(index file status), then 
+          1. Inserts into paperless table setting the newStatus, setModifiedBy=1,stmtType="default",reason="10".
+          2. Searchs for UFA by acctNum and orgId. If not found, trhows exception. Then searchs for userProfile by the ufa's userId and orgId. **If newStatus(index file status)= "E"**, sets SSO=current date(usr_session). And returns true.That means, **np update is required**. Or if,  **newStatus(index file status)=** is "B" then sets sso=null in usr_session. Searchs np by acctId and deletes that np. and if newStatus is "U", sets sso=null. **For both B and U, no np update is required.**
+        5. If currentStatus(paperless status of that account) is matched with newStatus(index file status),  and only for newStatus =E or U, np update required.
+    4.   If np update is required, creates np with sms or email.  First **searches np by both usrId and acctId.** If not found, creates a new one setting both usrId and acctId.  and email or sms. If multiple np found, throws an exception saying can't update np..
+  3. Inserts p_job_id and img_count in p_estmt_count table.
+
+##  **Report:**
+
+####  **Customized enrollment report:**
+
+  1. init()
+  2. buildReportData()
+  3. getQueryString()
+  4. customerEnrollmentReport()
+  5. getCifOrUsername()
+    1. SELECT sess_login_id FROM usr_session WHERE org_id=getorgid(?) AND usr_id=? 
+    2. If resultSet not found for (a), SELECT cif_num FROM usr_mapping WHERE org_id=getorgid(?) AND usr_id=? . If result not found,
+      1. select usr_firstname FROM usr WHERE usr_id=?
+  6. getLatestProcTime2():
+    1. SELECT TO_CHAR(proc_time, 'YYYY-MM-DD HH24:MI:SS') proc_time FROM p_job_time WHERE org_id = getorgid(?)
+  7. filterReportData()
+  8. updatePJobTime()
+    1. UPDATE p_job_time SET proc_time = TO_DATE(?, 'YYYY/MM/DD HH24:MI:SS'), p_job_id = ? WHERE org_id = getorgid(?)
+
+####  **Reg E paperless report:**
+
+####  **Report format: acct_number | p_latest_status | modified_date**
+
+  1. init()
+  2. writeReport():
+    1. SELECT * FROM fin_account fa, paperless2 p2 WHERE fa.org_id=getorgid(?) " + 
+
+"AND p2.stmt_type=? AND fa.acct_id=p2.acct_id AND p2.p_modified_date>=? AND
+p2.p_modified_date<?
+
+  
+
+  
+
+

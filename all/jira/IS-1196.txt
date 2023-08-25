@@ -1,0 +1,277 @@
+title: FLCU - Letter - DailyPDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133564-C30.01-V21570
+
+Processing Scripts to modify:
+ flcudn_process.sh
+
+Data Files to use:
+ FLCU_DN_04302021_01.zip.pgp
+
+
+
+*NOTE*: This job runs on RH2 server. Since we are migrating from RH2 server to RHS, please test ALL job_sel options to ensure RHS can run with error messages in the processing log files.
+
+
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+Parallel id:20220618115843
+
+There is dfa FLCUDNA12.dfa you will see , but it is print dfa. So I am not providing .zip file in QA folder for this.
+
+Check/z/dsi_pdfi_testing/flcudna/ old and new folder to compare archival sample.
+
+[^flcudna220.print]print 1st page from 4.2o1.
+
+
+
+Thanks
+
+Rony
+
+
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220618115843
+   Currently in parallel: Yes
+   User: ronyD
+   Description: IS-1196 FLCU - Letter - DailyPDFi Conversion to AFP2PDF Python [InHse]
+   Date Submitted: 2022-06-18 11:58:58
+   Date Last Updated: 2022-06-21 08:50:39
+   Files:
+      1) flcudna_pdf_template_header.control
+      2) flcudna_pdf_template.control
+      3) flcudna_pdf.control
+      4) flcudn_process.sh
+      5) flcudna_pdf_template_footer.control
+      6) flcudn_process.pl
+      7) FLCUDNA12.dfa
+      8) flcudna.control
+      9) FLCUDNA12.prj
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+Would you please check again with pdf compare to see the difference to check if the result is better?
+
+
+
+Thanks
+
+
+author: william.kong
+comment: [~Igor.Khosid]: pdf_compare.pl reported 4 differences. Primary issue with 3 of the 4 differences is the OMR lines are different.
+
+
+
+refer to:
+
+ca-isis-pr-04:/d/pdf_compare/result_flcudna/ for the results.
+
+
+
+Total PDF Files Scanned: 1027
+allowedDifferenceInPercentPerPage: 5:
+Thread Count: 64
+
+Total PDF Files with Differences: 4
+Start Time: Wed Jul 20 16:37:45 PDT 2022
+Finish Time: Wed Jul 20 16:42:55 PDT 2022
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~rony]: During manual QA when I was doing a pdf_compare.pl training, we manually noticed that the index file structure issue with this job. Left side is original production and right side is new afp2pdf. Please fix index file to make sure the structure matches. Looks like extra line space and the tag is not indented properly and change status to Request for QA when you are done.
+
+!image-2022-07-22-16-43-27-699.png!
+
+
+author: rony
+comment: Hi [~William.Kong] [~Igor.Khosid]
+
+Updated sample is in/z/pdf_afp/flcu/flcudna/zip/ folder.
+
+[~William.Kong]
+
+I needed change the template.control indentation like below to generate same structure output which is little bit not friendly coding structure:
+
+!image-2022-07-24-15-37-34-100.png!
+
+
+
+If I put the if condition code like this it creates extra empty line before and after TAX ID line:
+
+!image-2022-07-24-15-38-40-130.png!
+
+
+
+Thanks
+
+Rony
+
+
+
+
+author: william.kong
+comment: [~rony]: Thanks for the update in fixing the xml file.+Glancing+ the xml file, it looks good, but will need QA team to do a more thorough QA.
+
+
+
+Please note. ONLY 1 issue but i'm pretty confident it is a processing issue where the latest run is pulling the date from the insert file. When you ran it originally it was fine. Please confirm if my assessment is correct so that we can make this note to QA:
+
+
+
+You original run diff looked OK:
+
+diff_flcu_dn_06202022_048_0_1027.pdf_VS_flcu_dn_06202022_048_0_1024.pdf.ORIG.pdf
+
+But the recent run, the letter date is different:
+
+diff_flcu_dn_06202022_048_0_1027.pdf_VS_flcu_dn_06202022_048_0_1024.pdf.pdf
+
+The following is from PDFi (Original Prod version):
+
+flcu_dn_06202022_048_0_1027.pdf
+
+The following is from your most current version from parallel:
+
+flcu_dn_06202022_048_0_1024.pdf
+
+
+
+
+
+[~Igor.Khosid]: I've recopied all the pdf and index file from that latest version Rony fixed. I re-ran the pdf_compare.pl for regression testing and the results are good with the exception of 1 which I'm pretty sure is just a processing issue.
+
+
+
+The results are in:
+
+ca-isis-pr-04:/d/pdf_compare/result_flcudna/pdf_compare_rpt.txt
+
+
+
+Total PDF Files Scanned: 1027
+allowedDifferenceInPercentPerPage: 5:
+Thread Count: 64
+
+Total PDF Files with Differences: 4
+Start Time: Sun Jul 24 21:00:31 PDT 2022
+Finish Time: Sun Jul 24 21:05:48 PDT 2022
+
+
+
+
+
+
+author: rony
+comment: Hi [~William.Kong] [~Igor.Khosid]
+
+Yes the date is coming from the data of processing. Dfa isFLCUDN048.dfa.
+
+!image-2022-07-25-10-40-01-281.png!
+
+
+
+
+
+Thanks
+
+
+
+
+author: william.kong
+comment: [~Igor.Khosid]/[~Andrey.Kutsenko]: Please advise status on this QA request. Would like to target a Aug 16, 2022 internal release if at all possible. Thanks!
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+{code:sh}
+perl pdf_compare.pl flcudna_prod/ flcudna_parallel/ result_flcudna -pixels 5 -threads 32 -regex 'flcu_dn_[0-9]+_[0-9]+_[0-9]+_<SEQ>.pdf'
+{code}
+RESULT* >> /d/pdf_compare/result_flcudna/pdf_compare_rpt.txt
+{quote}Total PDF Files Scanned: 1027
+ allowedDifferenceInPercentPerPage: 5:
+ Thread Count: 32
+
+Total PDF Files with Differences: 4
+ Start Time: Wed Aug 10 13:58:54 PDT 2022
+ Finish Time: Wed Aug 10 14:05:55 PDT 2022
+{quote}
+_*The result is identical to the test performed by_ [~William.Kong] _on July 24._
+
+Checked the structure of the index file in XML format - no comments.
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: Thank you for your update!
+
+
+
+[~rony]: Please prep File Transfer Form for code release. This project will not need to go through Parallel Run. As part of this release, please also inform DP to start using RHS server to run this job moving forward via sending email to [dp@infoimageinc.com|mailto:dp@infoimageinc.com]and [is@infoimageinc.com|mailto:is@infoimageinc.com]
+
+
+author: mahbubs
+comment: Hi [~TunA],
+
+Transfer form attached.[^IS_PROGRAM_TRANSFER_FORM_Rev 07132016.doc]
+
+Rony did cvs checkin.
+
+Resources are in Rony's xfer dir.
+
+Please release this.
+
+Thanks
+
+
+author: tuna
+comment: HI [~mahbubS],
+
+Following codes have been released.
+
+Thanks,
+
+Tun
+
+
+
+20220816094043 08/16/2022 ronyD IS-1196 FLCU - Letter - DailyPDFi Conversion to AFP2PDF Python [InHse]
+
+[main@rhs ~]$ ll /d/is/cvs/xfer/ronyD/
+ total 840
+ -rwxrwxrwx 1 ronyD DSI 122978 Aug 16 00:50 FLCUDNA12.dfa
+ -rwxrwxrwx 1 ronyD DSI 1523 Aug 16 00:50 flcudna.control
+ -rwxrwxrwx 1 ronyD DSI 483 Aug 16 00:50 flcudna_pdf.control
+ -rwxrwxrwx 1 ronyD DSI 792 Aug 16 00:50 flcudna_pdf_template.control
+ -rwxrwxrwx 1 ronyD DSI 26 Aug 16 00:50 flcudna_pdf_template_footer.control
+ -rwxrwxrwx 1 ronyD DSI 136 Aug 16 00:50 flcudna_pdf_template_header.control
+ -rwxrwxrwx 1 ronyD DSI 5212 Aug 16 05:10 flcudna.procs
+ -rwxrwxrwx 1 ronyD DSI 10323 Aug 16 00:50 flcudn_process.pl
+ -rwxrwxrwx 1 ronyD DSI 13389 Aug 16 00:50 flcudn_process.sh
+
+
+
+[~William.Kong], [~rony]

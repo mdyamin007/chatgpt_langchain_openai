@@ -1,0 +1,778 @@
+title: MFA Interface - Implementation details
+body: ## A. REST APIs
+
+  
+  
+
+### a) Generate Secure-token API
+
+I) Request: Input to be supplied by eStatement web-application to the Mule-ESB
+Service (REST/JSON API call):
+
+tip. Method=POST  
+header: Content-Type=application/json  
+URL: http://{server}:{port}/membersvc/v1/mfa
+
+    
+    
+    {
+      "userId": "john.doe@mycompany.com"  //varchar(255). Unique-end-user-login-id to identify the member-client.
+      "deliveryType": "M"                   //varchar(1). Mandatory, M/S: Mail/SMS delivery mode. 
+      "cellProviderCode": "XYZ"           //varchar(3). Service Provider's code. optional, in case of delivery mode=M (E-mail).
+      "phoneNumber": "4088827365"         //varchar(10). 10-digit cell-phone number, No spaces/chars in-between.
+      "emailId": "user-mail-id"           //varchar(255). optional, in case of delivery mode=S (SMS).
+    }
+    
+
+  * The request will generate the 6-digit verification code (security-token) and send it to the user-supplied phone-number (or thru email) and return the response back to the eStatement web-application.
+  * Mule-ESB will generate the verification code (security-token) and send it to client thru designated channel (SMS/Email) and store into the Mule DB Transaction table along with Transaction-id, which will be used later for validation purpose.
+  * Mule-ESB API call returns response back to the web-application along with the Transaction-id (web-application may ignore the trans-id or store it for future reference, if any required)
+
+II) Response: Output from Mule-ESB REST/JSON API call:
+
+tip. Method=POST  
+header: Content-Type=application/json  
+URL: http://{server}:{port}/membersvc/v1/mfa
+
+    
+    
+    HTTP/1.1 200 OK
+    X-Powered-By: Servlet/2.5
+    Server: Example/v3
+    Content-Type: application/json
+    Content-Length: 1234
+    Date: Thu, 04 Jun 2009 02:51:59 GMT
+    
+    
+    
+    {
+      "message": "Request submitted successfully!",                     //Message. Error description in case of error.
+      "data": "Transaction-Id=e3701876-60cf-4ce4-ac26-c8faaa8c8cd6",    // UUID value to identify each transaction
+      "httpStatus": 200                                                 // Status Code (similar to HTTP message code) 
+    }
+    
+
+As you can see in the above example, Response object wraps up the transaction-
+id.
+
+Examples:
+
+  * "data" will have transaction-Id=  _8ae84afd-7aac-46d1-a4a1-72bb74a3f7f3_
+  * "data" will have error/success message text.
+  * "httpStatus" will have status code like 401, 500, 501, 200 for Bad Input data, Server Error, Not supported, Success respectively.
+
+Response codes and exceptions:
+
+HTTP response codes are used to indicate:
+
+Code| Description  
+---|---  
+200| OK  
+400| BAD_REQUEST : Check the error message and correct the request syntax.  
+503| INTERNAL_SERVER_ERROR : Server busy and service unavailable.  
+501| NOT_IMPLEMENTED : Method not supported.  
+503| SERVICE_UNAVAILABLE: Service not available. Try later!  
+  
+* * *
+
+### b) Validate Secure-token API
+
+I) Request: Input Request by web-application to the Mule-ESB (REST/JSON API
+call):
+
+tip. Methods=GET  
+URL: http://{server}:{port}/{api-
+name}/{version}/{resource}/userid/{userid}/token/{token}  
+header: None
+
+    
+    
+    http://{server}:{port}/membersvc/v1/mfa/userid/{userId}/token/{tokenId}
+    where:
+           {userId} = Member client ID / Unique-login-id e.g. john.doe@mycompany.com
+           {tokenId}  = 6-digit number (fixed length)
+    
+
+  * The request will submit the 6-digit number value for secure-token along with user-id to validate the token status.
+  * Mule-ESB will validate the secure-token against the transaction database table keeping in view of token expiry period (default= 2-hour/120-min) and return the result accordingly.
+
+II) Response: Output Response from Mule-ESB :  
+For passed/matched token value:
+
+    
+    
+    {
+      "message": "OK",                         //OK or Not OK (NOK)
+      "data": "{ \"Status\" : \"valid\"}",     //valid or invalid status for matched/unmatched token.
+      "httpStatus": 200                        //http status code.
+    }
+    
+    
+
+For failed/unmatched token value:
+
+    
+    
+    {
+      "message":  "NOK",                         //OK or not OK (NOK)
+      "data": "{ \"Status\" : \"Not found\"}",   //valid or invalid status for matched/unmatched token.
+      "httpStatus": 200                          //http status code.
+    }
+    
+
+* * *
+
+  
+  
+
+## B. Mule Workflow Implementation
+
+  
+  
+
+### a) Mule Workflow
+
+  1. Given below diagram describe the Mule workflow for the MFA Service - Main Workflow.
+
+Figure-1: MFA Service - Main Workflow
+
+  1. The given below diagram describes asynchronous flow of the request processing. It will be invoked by the last step of the Main Workflow.
+
+Figure-2: MFA Service - Async Workflow processing for token delivery thru
+SMS/Email
+
+Figure-3: MFA Service - Async Workflow (right-hand side view of the above
+diagram)  
+  
+
+### b) Database Persistence (JPA + Hibernate + Spring)
+
+  * The REST web-services will use MySQL database a persistence data layer to connect & access the DB using MySQL JDBC connection.
+  * It will also use the Spring framework base JPA + Hibernate implementation for the CRUD operations.
+  * The EST web-service will accept the GET, POST action verb to perform the create and retrieve operations corresponding to the new transaction creation and retrieve the transaction (i.e. to generate the security token) and to validate the security token).
+
+Figure-4: MFA Service - REST implementation using JPA + Spring + Hibernate  
+  
+
+## C. Database Schema for MFA
+
+  
+  
+
+### a) Database Table
+
+ **Database Table to store transaction details:**
+
+    
+    
+     ---------------------------------------------------------------------------------------------------------
+    -- Table structure for table `mfa_user_transaction`
+    ---------------------------------------------------------------------------------------------------------
+    CREATE TABLE `mfa_user_transaction` (
+      `id` bigint(30) NOT NULL AUTO_INCREMENT,
+      `user_id` varchar(50) NOT NULL,
+      `email_id` varchar(255) DEFAULT NULL,
+      `phone_number` char(10) CHARACTER SET latin1 DEFAULT NULL 
+                                   COMMENT '10-digit phone number (without spaces, - or .)',
+      `provider_id` varchar(3) DEFAULT NULL 
+                                   COMMENT 'service provider-id, for complete list see table providers_list.',
+      `delivery_mode` char(1) CHARACTER SET latin1 NOT NULL DEFAULT 'S' 
+                                   COMMENT 'mode of delivery (S/M: SMS/E-Mail, Default=S',
+      `transaction_status` varchar(3) DEFAULT NULL,
+      `security_token` varchar(10) DEFAULT NULL 
+                                   COMMENT '6-digit one time, single use verification code',
+      `token_expiry_dt` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+      `transaction_id` varchar(40) NOT NULL COMMENT 'UUID value',
+      `CREATED_ON` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+      `UPDATED_ON` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+       PRIMARY KEY (`id`),
+       UNIQUE KEY `transaction_id_uniqkey` (`transaction_id`)
+    ) 
+    
+
+### b) Database Table#2
+
+ **Database Table for list of providers:**
+
+    
+    
+     ---------------------------------------------------------------------------------------------------------
+    -- Table structure for table `mfa_service_provider_list`
+    ---------------------------------------------------------------------------------------------------------
+    CREATE TABLE `mfa_service_provider_list` (
+      `id` bigint(10) NOT NULL AUTO_INCREMENT,
+      `provider_id` varchar(3) NOT NULL COMMENT '3-char fixed-length code',
+      `provider_name` varchar(20) NOT NULL,
+      `provider_sms_email_suffix` varchar(50) DEFAULT NULL,
+      `provider_desc` varchar(100) DEFAULT NULL 
+                                           COMMENT 'service providers name & description like AT&T, Verizon etc.',
+      `provider_status` tinyint(1) NOT NULL DEFAULT '1' 
+                                           COMMENT 'enable or disable?(Y/N: Yes/No or True/False',
+      `CREATED_ON` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+      `UPDATED_ON` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+       PRIMARY KEY (`id`),
+       UNIQUE KEY `provider_id_uniqkey` (`provider_id`)
+    ) ENGINE=InnoDB;
+    
+
+  
+  
+
+### c) Database Table#3
+
+ **Database Table for Errors:**
+
+    
+    
+     ---------------------------------------------------------------------------------------------------------
+    -- Table structure for table `mfa_service_errorlog`
+    ---------------------------------------------------------------------------------------------------------
+    CREATE TABLE `mfa_service_errorlog` (
+      `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+      `ERROR_MESSAGE` longtext,
+      `recorded_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB;
+    
+
+* * *
+
+  
+  
+
+## C. Java Classes
+
+  
+  
+
+###  **i) Java Class for Input Request (JSON)**
+
+Web-application (eStatement) will identify & track the user-login for the MFA
+specific request and submit the request to the Mule REST MFA Service.
+
+    
+    
+    @JsonAutoDetect
+    public class MfaUserTransactionRequest {
+    
+        public enum DeliveryCode {
+            Mail(0), SMS(1); 
+            private int code;
+    
+            private DeliveryCode(int code) {
+                this.code = code;
+            }
+            public int getStatus() {
+                return this.code;
+            }
+        }
+        //Delivery mode= M/S or 0/1 value
+        private String smsOrEmail;
+    
+        private String userId;
+        private String phoneNumber;
+        private String cellProviderCode;
+        private String emailId;    
+        private String transactionId;
+        /// Getters and Setters Methods    
+    
+
+*Note: Refer next section having request/response sample data examples.  
+  
+
+###  **ii) Java Class for output Response (JSON)**
+
+    
+    
+     
+    @JsonAutoDetect
+    public class MfaManagerResponse {
+            public enum HttpStatus {
+            OK(200), 
+            BAD_REQUEST(400), 
+            INTERNAL_SERVER_ERROR(500), 
+            NOT_IMPLEMENTED(501), 
+            SERVICE_UNAVAILABLE(503);
+        }
+    
+        private int httpStatus;
+        private String message = "";
+        private String data;
+            // Getters and Setters Methods    
+      }
+    
+
+  
+  
+
+### **iii) Java Class - Secure Token**
+
+    
+    
+     
+    // ** To generate 6-digit Security Token
+    import java.util.Random;
+    import com.infoimage.eai.mfa.modal.MfaConstants;
+    
+    public class SecurityToken {
+    
+        //generate token using random 6-digit number algorithm
+        //and store this number into the transaction table
+        public static String GenerateTokenKey(int tokenLength) {
+            int tokenSize = MfaConstants.TOKEN_KEY_LENGTH;
+            if ( tokenLength>0) {
+                tokenSize = tokenLength;
+            }
+            return String.valueOf(tokenSize < 1 ? 0 : new Random()
+                    .nextInt((9 * (int) Math.pow(10, tokenSize - 1)) - 1)
+                    + (int) Math.pow(10, tokenSize - 1));
+        }
+    
+        public static String generateSecurityToken(int tokenLength) {
+            int tokenSize = MfaConstants.TOKEN_KEY_LENGTH;
+            if ( tokenLength>0) {
+                tokenSize = tokenLength;
+            }
+            Random randomNumber = new Random();
+            long longNumber = randomNumber.nextLong();
+            if (longNumber < 0) {
+                longNumber =  longNumber * (-1);
+            }
+            longNumber += 10000;
+           return (String.valueOf(longNumber)).substring(0, tokenSize );
+        }
+    
+    }
+    
+
+  
+  
+
+### **iv) Input Validations**
+
+Given below table describes all the rules applicable on the input data
+payload.
+
+#| Title| Description| Error Message  
+---|---|---|---  
+1.| Null Input payload| When no input payload data supplied like {}. It will
+return error.| "Null Input supplied!"  
+2.| Null User-Id field value| When no input User-Id field value supplied like
+"{"userId": ""}".| "Missing User-Id value!"  
+3.| Null deliveryType field value| When no input deliveryType field value
+supplied like "{"deliveryType": ""}".| "Missing Delivery mode value!"  
+4.| Null emailId field value when deliveryType="M"| When no emailId field
+value supplied when deliveryType is defined as "Mail".| "Missing Email-Id for
+delivery mode as Email!"  
+5.| Check on emailId field value when deliveryType="M"| When invalid emailId
+value supplied when deliveryType is defined as "Mail".| "Invalid Email-Id!"  
+6.| Null phoneNumber field value when deliveryType="S"| When no phoneNumber
+value supplied when deliveryType is defined as "SMS".| "Missing Phone-number
+for SMS delivery!"  
+7.| Check on phoneNumber field value when deliveryType="S"| When phoneNumber
+field length <>10, when deliveryType is defined as "SMS".| "Invalid Phone-
+number. Numeric(10)!"  
+8.| Check on phoneNumber field value when deliveryType="S"| When invalid
+phoneNumber value supplied when deliveryType is defined as "SMS". Only 0-9
+digits allowed, no space, dots and hyphen char.| "Invalid Phone-number!"  
+9.| Check on phoneNumber field value when deliveryType="S"| When phoneNumber
+is supplied as alphanumeric for "SMS" delivery. Only 0-9 digits allowed, no
+space, dots and hyphen char.| "Aphanumeric or empty Phone-number. N(10)!"  
+10.| Null cell phone provider's name| When no value supplied for
+cellProviderCode field like "{"cellProviderCode": ""}".| "Missing Provider-
+name for SMS delivery!"  
+11.| Check on cell phone provider's name when deliveryType="S"| When invalid
+cellProviderCode value supplied when deliveryType is defined as "SMS". Only
+3-char code allowed.| "Invalid Mobile Provider Name!"  
+12.| deliveryType field value other than M/S| When deliveryType field value
+supplied like "{"deliveryType": "X"}". It should be either "M" or "S".|
+"Invalid Delivery mode value, accepted value: M/S!"  
+  
+* * *
+
+  
+  
+
+## D. Testing
+
+  
+  
+
+### 1\. URL for Input Data Helper:
+
+tip. DEV Server: <http://localhost:10303/membersvc/v1/mfa/help>  
+Test Server: <http://10.8.9.57:10303/membersvc/v1/mfa/help>
+
+Methods=GET  
+header: Not applicable  
+URL= <http://localhost:10303/membersvc/v1/mfa/help>  
+Output JSON response:
+
+    
+    
+    {
+       "message": "Input request helper.",
+       "data": {
+          "userId": "User-Id, mandatory field.",
+          "deliveryType": "SMS/Email= S/M .",
+          "phoneNumber": "10-digit Cell-phone-number, no dashes, no dots space. Required for SMS.",
+          "cellProviderCode": "Cell phone provider's code (3-Char). Required for SMS.",
+          "emailId": "Email-Id, required for Email delivery." 
+       },
+       "httpStatus": 200
+    }
+    
+
+  
+  
+
+### 2\. Testcase # 1: To generate new token and deliver thru  _Email_
+
+ **Description:**  eStatement web-application submitted a request by HTTP POST
+call with JSON payload.  
+The input payload data has request for security token delivery thru
+**Email**.
+
+tip. DEV Server: <http://localhost:10303/membersvc/v1/mfa>  
+Test Server: <http://10.8.9.57:10303/membersvc/v1/mfa>
+
+    
+    
+    Methods=POST
+    header: Content-Type=application/json
+    URL= http://localhost:10303/membersvc/v1/mfa
+    Input JSON data:
+    ----------------------------------------
+    {
+           "userId": "john.doe",
+           "deliveryType": "M",
+           "emailId": "Niraj.Tripathi@infoimageinc.com" 
+    }
+    
+    Output JSON response:
+    ----------------------------------------
+    {
+      "message": "Request submitted successfully.",
+      "data": "{ \"transactionId\" : \"8182dabf-d60a-460b-99f6-802b3fc5af7e\"}",
+      "httpStatus": 200
+    }
+    
+    Secure Token Delivery thru Email:
+    ----------------------------------------
+    -----Original Message-----
+    From: Eai Admin 
+    Sent: Thursday, May 09, 2013 1:20 PM
+    To: Niraj Tripathi
+    Subject: Verification Code
+    
+    Verification Code= 422390
+    
+    
+
+  
+  
+
+### 3\. Testcase # 2: To generate new token and deliver thru  _SMS_
+
+ **Description:**  eStatement web-application submitted a request by HTTP POST
+call with JSON payload.  
+The input payload data has request for security token delivery thru  **SMS**.
+
+tip. DEV Server:<http://localhost:10303/membersvc/v1/mfa>  
+Test Server: <http://10.8.9.57:10303/membersvc/v1/mfa>
+
+    
+    
+    Methods=POST
+    header: Content-Type=application/json
+    URL= http://localhost:10303/membersvc/v1/mfa
+    Input JSON data:
+    ----------------------------------------
+    {
+           "userId": "niraj_cell",
+           "deliveryType": "S",
+           "phoneNumber": "4088827365",
+           "cellProviderCode": "VIR" 
+    }
+    
+    Output JSON response:
+    ----------------------------------------
+    {
+      "message": "Request submitted successfully!",
+      "data": "{ \"transactionId\" : \"8a135e19-ac1a-4c08-bd2b-fafb16f1d4c4\"}",
+      "httpStatus": 200
+    }
+    
+    Secure Token Delivery thru SMS:
+    ----------------------------------------
+    -----Original Message-----
+    From: Eai Admin 
+    Sent: Thursday, May 09, 2013 1:35 PM
+    To: 4088827365
+    Subject: Verification Code
+    
+    Verification Code= 400769
+    
+    
+
+  
+  
+
+### 4\. Testcase # 3: For request processing (with additional input fields):
+
+Post a MFA request to send the token thru Mail:
+
+tip. DEV Server:<http://localhost:10303/membersvc/v1/mfa>  
+Test Server: <http://10.8.9.57:10303/membersvc/v1/mfa>
+
+    
+    
+    Methods=POST
+    header: Content-Type=application/json
+    URL= http://localhost:10303/membersvc/v1/mfa
+    Input JSON data:
+    ----------------------------------------
+    
+    {
+           "userId": "john.doe",
+           "deliveryType": "M",
+           "emailId": "Niraj.Tripathi@infoimageinc.com",
+           "phoneNumber": 4088827365
+    }
+    
+    Output JSON response:
+    ----------------------------------------
+    {
+      "message": "Request submitted successfully!",
+      "data": "{ \"transactionId\" : \"a190c4df-c2fe-417e-b552-c9c060ea587c\"}",
+      "httpStatus": 200
+    }
+    
+    Secure Token Delivery thru Email:
+    ----------------------------------------
+    
+    -----Original Message-----
+    From: Eai Admin 
+    Sent: Thursday, May 09, 2013 1:49 PM
+    To: Niraj Tripathi
+    Subject: Verification Code
+    
+    Verification Code= 429064
+    
+    
+
+  
+  
+
+### 5\. Testcase # 4: For request processing (with additional input fields):
+
+Post a MFA request to send the token thru SMS:
+
+tip. DEV Server:<http://localhost:10303/membersvc/v1/mfa>  
+Test Server: <http://10.8.9.57:10303/membersvc/v1/mfa>
+
+    
+    
+    http://localhost:10303/membersvc/v1/mfa
+    Method: POST
+    header: Content-Type=application/json
+    Input data:
+    
+    {
+      "userId": "niraj_cell_mail",
+      "deliveryType": "S",
+      "phoneNumber": "4088827365",
+      "cellProviderCode": "VIR",
+      "emailId": "Niraj.Tripathi@infoimageinc.com" 
+    }
+    
+    Output JSON response:
+    ----------------------------------------
+    {
+      "message": "Request submitted successfully!",
+      "data": "{ \"transactionId\" : \"80909357-886a-4845-8a01-6b0d295b354a\"}",
+      "httpStatus": 200
+    }
+    
+    Secure Token Delivery thru Email:
+    ----------------------------------------
+    
+    -----Original Message-----
+    From: Eai Admin 
+    Sent: Thursday, May 09, 2013 1:50 PM
+    To: Niraj Tripathi
+    Subject: Verification Code
+    
+    Verification Code= 196276
+    
+    
+
+* * *
+
+  
+  
+
+### 6\. Testcase # 5: To validate the token request processing :
+
+Get status of the security token, which was earlier generated and delivered
+thru SMS/Email.
+
+tip. DEV Server:<http://localhost:10303/membersvc/v1/mfa/userid/{user-
+id}/token/{token-id>}  
+Test Server: [http://10.8.9.57:10303/membersvc/v1/mfa/userid/{user-
+id}/token/{token-id](http://10.8.9.57:10303/membersvc/v1/mfa/userid/%7Buser-
+id%7D/token/%7Btoken-id)}
+
+Case-I: For not valid token
+
+    
+    
+    http://localhost:10303/membersvc/v1/mfa/userid/john.doe/token/969915
+    Method: GETT
+    header: not applicable
+    Input data: None
+    
+    Output JSON response:
+    ----------------------------------------
+    {
+      "message": "NOK",
+      "data": "{ \"Status\" : \"Not found\"}",
+      "httpStatus": 200
+    }
+    
+    
+
+Case-II: For a valid token
+
+    
+    
+    http://localhost:10303/membersvc/v1/mfa/userid/john.doe/token/969995
+    Method: GETT
+    header: not applicable
+    Input data: None
+    
+    Output JSON response:
+    ----------------------------------------
+    {
+      "message": "OK",
+      "data": "{ \"Status\" : \"valid\"}",
+      "httpStatus": 200
+    }
+    
+    
+
+* * *
+
+  
+  
+
+## B. Admin REST Services
+
+  
+  
+
+### Service Provider's API
+
+a) To list all the service providers configured into the database:
+
+tip. <http://localhost:10303/service/v1/provider/all>  
+Method= GET  
+Output JSON response (Content-Type=application/json):
+
+    
+    
+    [
+      {
+        "id": 1,
+        "providerId": "ATT",
+        "providerName": "ATT",
+        "providerEmailSuffix": "@txt.att.net",
+        "providerDesc": "AT&T: SMS:: [10-digit phone number]@txt.att.net",
+        "providerStatus": true,
+        "createdOn": "05-01-2013 10:08:55 PDT",
+        "updatedOn": "05-01-2013 10:16:25 PDT" 
+      },
+      {
+        "id": 9,
+        "providerId": "VER",
+        "providerName": "Verizon",
+        "providerEmailSuffix": "@vtext.com",
+        "providerDesc": "Verizon: [10-digit phone number]@vtext.com",
+        "providerStatus": true,
+        "createdOn": "05-01-2013 10:15:06 PDT",
+        "updatedOn": "05-01-2013 10:19:15 PDT" 
+      },
+      {
+        "id": 10,
+        "providerId": "VIR",
+        "providerName": "VirginMobile",
+        "providerEmailSuffix": "@vmobl.com",
+        "providerDesc": "Virgin Mobile USA: [10-digit phone number]@vmobl.com ",
+        "providerStatus": true,
+        "createdOn": "05-01-2013 10:15:30 PDT",
+        "updatedOn": "05-01-2013 10:19:27 PDT" 
+      }
+    ]
+    
+
+  
+
+b) To list particular service provider by ID configured into the database:
+
+tip.
+[http://localhost:10303/service/v1/provider/id/{id](http://localhost:10303/service/v1/provider/id/%7Bid)}  
+Method= GET  
+<http://localhost:10303/service/v1/provider/id/1> or 2 and so on  
+Output JSON response (Content-Type=application/json):
+
+    
+    
+    {
+      "id": 1,
+      "providerId": "ATT",
+      "providerName": "ATT",
+      "providerEmailSuffix": "@txt.att.net",
+      "providerDesc": "AT&T: SMS:: [10-digit phone number]@txt.att.net",
+      "providerStatus": true,
+      "createdOn": "05-01-2013 10:08:55 PDT",
+      "updatedOn": "05-01-2013 10:16:25 PDT" 
+    }
+    
+
+  
+
+c) To list particular service provider by CODE configured into the database:
+
+tip.
+[http://localhost:10303/service/v1/provider/code/{code](http://localhost:10303/service/v1/provider/code/%7Bcode)}  
+Method= GET  
+<http://localhost:10303/service/v1/provider/code/VIR> or ATT and similar
+3-char code.  
+Output JSON response Content-Type=application/json:  
+\---------------------------------------------------
+
+    
+    
+    {
+      "id": 10,
+      "providerId": "VIR",
+      "providerName": "VirginMobile",
+      "providerEmailSuffix": "@vmobl.com",
+      "providerDesc": "Virgin Mobile USA: [10-digit phone number]@vmobl.com ",
+      "providerStatus": true,
+      "createdOn": "05-01-2013 10:15:30 PDT",
+      "updatedOn": "05-01-2013 10:19:27 PDT" 
+    }
+    
+
+  
+
+* * *
+
+  
+
+### Attachments
+
+  
+
+

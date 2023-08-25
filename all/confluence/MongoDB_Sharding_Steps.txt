@@ -1,0 +1,30 @@
+title: MongoDB Sharding Steps
+body: **Start Configuration Server:**  
+Windows:  
+mongod --configsvr --dbpath C:/mongodb/config --port 27019
+
+Linux:  
+sudo mongod --configsvr --dbpath /mongodb/config --port 27019
+
+  
+
+ **Start MongoS:**  
+mongos --configdb <config_server_ip>:27019
+
+Now, connect to shell by  
+mongo -host <mongos_ip>
+
+ **Adding shard:**  
+sh.addShard( "<mongod_shard1_ip>:27017" )  
+sh.addShard( "<mongod_shard2_ip>:27017" )
+
+ **changing chunk size:**  
+db.settings.save( { _id:"chunksize", value: 1024} )
+
+ **Enabling Sharding on Database:**  
+sh.enableSharding("hypercube11")
+
+ **Enabling sharding on collection**  
+sh.shardCollection("hypercube11.document", { "org_id": 1, "acct_num" : 1} )
+
+

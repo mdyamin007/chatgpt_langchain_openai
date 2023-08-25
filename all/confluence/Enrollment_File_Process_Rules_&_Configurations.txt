@@ -1,0 +1,37 @@
+title: Enrollment File Process Rules & Configurations
+body: # Processing Rules & Configurations
+
+* * *
+
+Processing will only succeed if all of the following rules are met. The rules
+can be altered by changing certain configurations.
+
+  1. Data Validation
+    1. CIF must be provided if the client uses CIF. 
+    2. Account number must be provided and must be a valid number
+    3. Account Type must be provided if the client uses Account Types.
+    4. Account name must be provided
+    5. Valid status must be provided
+    6. If Status is not **P** , 
+      1. If Notification Preference is  **email,** then a valid email must be provided
+      2. If Notification Preference is  **sms** , then a valid SMS must be provided
+  2. Processing
+    1. Account number must exist in the database.
+      1.  **Configurable** : **Create Account**  
+        * False (default)
+        * True: The process will create an account if it cannot find one in the database.
+    2. New user profile will be created if an existing profile cannot be found for the account number and CIF (if applicable).
+    3. Change paperless status for the account. This will only occur if the Modified Date provided in the file is later than the modified date currently in the database. This is to prevent the processing from overwriting user's paperless election if they occurred after the enrollment file was generated. For example, if the file was generated at 8 am on 4/20/2020 but user changed paperless status at 9 am on 4/20/2020, and if the file is processed at 10 am on 4/20/2020, the processing will not change the paperless status, because the user had made the change at a later time.
+      1.  **Configurable** **: Use Process Time**
+        * False (default)
+        * True: The process time will be used instead of the Modified Date in the enrollment file. In the 4/20/2020 example above, the processing will change the paperless status, because the processing time is 10 am which is later than the time the user made their change (9 am)
+      2.  **Configurable** :  **One Time Sync**
+        * False (default)
+        * True: For clients who want to preserve the Modified Date field. This will cause the processing to always update the paperless status.
+    4. If we change paperless status to  **E** , enroll the user for SSO. The user will not have to go through enrollment on their first login attempt.
+      1.  **Configurable:  ** **Do Not Enroll**
+        * False: For the clients that use the eStatement Site, the user will still have to go through the enrollment steps on their first login attempt to accept the disclosure.
+        * True (default)
+    5. Notification data will only be updated if the paperless status was changed to  **E  **or **W**.
+
+

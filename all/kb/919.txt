@@ -1,0 +1,153 @@
+If some job for a client ( <cid><jid> ) has e-selective insert meaning it will have some campaigns or notices or envelopes or add that client want to add to the statements. They are uploaded by PC using aThey are uploaded by PC using a piece code number to database. The scripts get the piece codes from database to add to txt record or estmt index files. The actual inserts will be pulled when the statements are being inserted into envelopes or posted online.
+An insert file with insert may look like below ( msbkms1.ins ):
+DT_JOB_ID: 136752-C11.01-V21365
+JOB_CYC: 136752 02-10
+ENV_PAP: .270 .165 .165
+ENV_HVY: .505
+INSERT1: 0.165 00000-99999
+INSERT2: .190 00000-99999
+INSERT3: 0
+INSERT4: 0
+INSERT5: 0
+INS_ASSIGN1: B
+INS_ASSIGN2: E
+INS_ASSIGN3: 0
+INS_ASSIGN4: 0
+INS_ASSIGN5: 0
+PRINT_FORMAT: dp180
+PROC_DATE: 11282017
+ESUP_BY_ACCT: /t/ftpbu/msbkbu/paperless/msbk_paperless.12-11-2017.txt e
+MC_BY_ACCT: /home/keep/MSBK_DDA_Suppress_NP2_013114.txt x
+So based on above insert file there is two inserts for it.
+Here you see INS_ASSIGN1: E here E means this insert is for estatement , B means it is for both paper and estatement and P means it is only for paper.
+This insert information is responsible for inserting insert information in paper index file position( 59-63 insert_code ) and estement index file( InsertID field ) where some id ( also called Piece code ) are concatenated for each insert. And those insert id is being pulled from database by DT_JOB_ID.
+Sample insert information in paper txt file according to above insert file( the example is for msbkms1):
+as the first insert binINS_ASSIGN1: is for paper and estatement and no other insert is for paper so the 59th column has 1 meaning for paper option insert will come from insert bin1 while priting . Sometimes we write this information directly in the dfa according the sow but sometimes the backend script handles it if insert files insert information andeStmtSelInsFlag is true in control file.
+Normally when we run a project we see PieceCode value in the screen output like below:
+rht,, '','',136752-C11.01-V21365, TX, STM;
+in QueryDataTRAC_ForPieceCode
+pieceCodes=30729 30730 
+job_process: -11, JOB_RE_RUN
+job_process: -11, 948516
+Executing specific updates for 'msbkms1'...
+fn: /t/msbk/msbkms1128
+prefix: msbkms1128
+procID: 948561
+The above is also output for msbkms1. There are two piece codes for it so it has two inserts.
+In the estatement index file one of the filed field is for piece codes for all the inserts/pieces.
+msbkms1_11272017_1000086054_0.afp|1000086054|11062017|11272017|3|CASSANDRA M KLAUSING||D|12661||30729,30730,0,0,0||
+msbkms1_11272017_1000176088_1.afp|1000176088|11222017|11272017|1|DAVID WOJCIECHOWSKI||D|12661||30729,30730,0,0,0||
+msbkms1_11272017_1000200485_2.afp|1000200485|11202017|11272017|2|LATISHA REE GILSDORF||D|12661||30729,30730,0,0,0||
+msbkms1_11272017_1000256928_3.afp|1000256928|11082017|11272017|2|CHRISTOPHER M BACKS||D|12661||30729,30730,0,0,0||
+msbkms1_11272017_1000309037_4.afp|1000309037|11222017|11272017|1|CRYSTAL N BROWN||D|12661||30729,30730,0,0,0||
+msbkms1_11272017_1000352323_5.afp|1000352323|11222017|11272017|1|SHAUN M TOPPING||D|12661||30729,30730,0,0,0||
+msbkms1_11272017_1000390845_6.afp|1000390845|11152017|11272017|2|BOBBY R GLENN||D|12661||30729,30730,0,0,0||
+msbkms1_11272017_5303000931_7.afp|5303000931|11202017|11272017|2|ASIA ROSE ROBINSON||D|12661||30729,30730,0,0,0||
+msbkms1_11272017_9802920571_8.afp|9802920571|11202017|11272017|2|FRANCESCO TERNULLO||D|12661||30729,30730,0,0,0||
+msbkms1_11272017_1502979_9.afp|1502979|11012017|11272017|3|GENE R JOHNSON||D|12661|1|30729,30730,0,0,0||
+If you notice the 11th field has 5 insert information. One can have five inserts at most. Since msbkms1 has two inserts the last three are 0s.
+This insert information is inserted into etatement index file by estmt_selective_ins.pl which is called from move_afp2.sh or may be some other scripts also.
+But for this you need to have two flags in control file:
+eStmtSelInsFlag="TRUE"
+ new_estmt_idx="y"
+and you might need to export those variables in the control file.
+How these insert information ( bin info in paper txt and piece codes info in e-index file )inserted into index file:
+In isisdisk :
+   if [ $eStmtSelInsFlag = "TRUE" ]
+    then
+         get_DT_JOB_ID
+         perl ${home_master}/master/verify_dt_job_id.pl $cid $jid
+         if [ $? != 0 ]; then
+             echo "Error $?: ${home_master}/master/verify_dt_job_id.pl. Exiting $0"
+             exit 1
+         fi
+         #####  split up txt into paper and estmt txts based on the .ins file  2/5/15 - EW
+ python ${home_master}/master/ins_split_txt.py ${fn}.txt ${home_ins}/insert/${prefix}.ins
+         cp ${fn}.txt.estmt ${home_env}/${keep_dir}/eStmtSelIns/${cid}${jid}_${dt_job_id}.txt
+    fi    
+Thisins_split_txt.py makes two index files both are actually paper index file. And this code inserts just insert information there, one for paper insert( e.g. /t/msbk/msbkea1102.txt ) and another for estatement insert ( e.g. /t/msbk/msbkea1102.txt.estmt ). In both of index files bin information are inserted.
+estmt index file which is created from paper index file:
+Below code is responsible for inserting bin information in both index file:
+def create_variable(input_txt_data,record_no,ins_assign):
+    paper=''
+    estmt=''
+    #loop and logics for creating paper and estmt variable 
+    for col in range(58,63):      
+        if(input_txt_data[record_no][col]==' '):
+            paper+=str(' ')
+            estmt+=str(' ')
+        elif(input_txt_data[record_no][col]=='1'):
+            if (ins_assign[col-58]=='E' or ins_assign[col-58]=='e'):
+                estmt+=str('1')
+                paper+=str(' ')
+            elif (ins_assign[col-58]=='P' or ins_assign[col-58]=='p'):
+                estmt+=str(' ')
+                paper+=str('1')
+            elif (ins_assign[col-58]=='B' or ins_assign[col-58]=='b'):
+                estmt+=str('1')
+                paper+=str('1')
+            else:
+                msg= "ERROR OCCURED!! Invalid Value. INS_ASSIGN"+str(col-58)+" = "+ins_assign[col-58]
+                txt = "Dear~User\\\\n\\\\nERROR~OCCURED\\!\\!~Invalid~Value.INS_ASSIGN"+str(col-58)+"~\\=~"+ins_assign[col-58]+"\\\\n\\\\nThanks"                                   
+                os.system("python " + os.environ['home_master'] + "/master/daily_mail.py 2 Eselective~Insert " + txt + " ernest_wong@infoimageinc.com")                
+                #os.system("python daily_mail.py 2 Eselective~Insert " + txt + " mahbubsakib.dsi@gmail.com")                
+                print msg
+                stdout(msg, 1)
+    return (paper,estmt)
+isisdisk copy this file to
+cp ${fn}.txt.estmt ${home_env}/${keep_dir}/eStmtSelIns/${cid}${jid}_${dt_job_id}.txt
+And this index file is used by another script named: estmt_selective_ins.pl and it is called from move_afp2.sh
+and it reads the ${cid}${jid}_${dt_job_id}.txt file and get which insert bin is being using and according to that it pull the insert code from tblRTWO_IPL table.
+#############################################################
+# QueryDataTRAC()
+# 1) Based on JobID(DT_JOB_ID), query tblRTWO_Cycle to 
+#    retrieve pieceCodes(BIN1,BIN2,BIN3,BIN4,BIN5)
+# 2) Store query result set as a string, subsitute space with 0
+#############################################################
+sub QueryDataTRAC
+{   
+    $sql=
+"select Bin1,Bin2,Bin3,Bin4,Bin5 from tblRTWO_IPL where jobid='${dt_job_id}'";
+    $sth=$mySqlDB->prepare($sql);
+    $sth->execute or die "SQL Error: $DBI::errstr \n";
+    while (@pieceCodesRes=$sth->fetchrow_array)
+    {
+        @pieceCodes=@pieceCodesRes;
+        #print "$pieceCodes[0]|$pieceCodes[1]|$pieceCodes[2]|$pieceCodes[3]|$pieceCodes[4] \n";
+    }
+}
+Then it puts those piece codes information in 15th field into e-index files that is generated from under f option:
+			for ($j=0;$j<$fixCount;$j++) {
+				if ($j == 14) {
+					$newindex=$newindex.$thisPieceCode.'|';     # replace value with piececode
+				} else {
+					$newindex=$newindex.$idxarray[$j].'|';
+				}
+			}
+in move_afp_threads.sh
+eStmtSelInsFlagOn ()
+{
+     if [ -s "${home_master}/control/${cid}${jid}.control" ]
+     then
+          eStmtSelInsFlag=`grep ^eStmtSelInsFlag ${home_master}/control/${cid}${jid}.control | sed "s/\"//g" | cut -d'=' -f2`
+          if [ $eStmtSelInsFlag = "TRUE" ]
+          then
+               echo "eStmtSelInsFlag is set in .control file!"
+          else
+               echo "eStmtSelInsFlag is NOT set in .control file!"
+          fi
+     fi
+}
+You can find this index file in /$d_dir/$cid/ or${isd_input}/${jid}_????????_?_????????_????_${cid}.txt
+What needs to do when you have to implement e-selective inserts:
+add flags to control file
+update isnert file for testing doesn't need to have correct value
+ask for dt_job_id , to enable e-insert for that dt_jod_id and the piece codes
+check the index files to see the insert info , piece codes
+Some discussion from email( for wecu monthly wecums1):
+Terrence:
+STAGING/PARALLEL:
+132168-C00.01-V22407  DT JOB IDDDA
+Is e-insert defined for above dt_job_id. If yes, what is the piece code ID?
+From Brittany Smallwood :
+Tagged:eselective insertinfotracinsertpiece code

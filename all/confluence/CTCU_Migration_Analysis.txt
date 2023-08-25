@@ -1,0 +1,689 @@
+title: CTCU Migration Analysis
+body:   
+
+Document Status|
+
+YellowDRAFT  
+  
+---|---  
+Document Owner|  
+  
+  
+
+# Contra Costa Federal Credit Union
+
+32circle
+
+##  **ROOT**
+
+  
+|  
+  
+---|---  
+ **Login Method**|  WESCOMSSO (SingleSignOn7Servlet)  
+ **Enrollment Step**|  1 (Disclosure/Terms & Conditions Agreement)  
+ **Welcome Email**|  None  
+ **Menu**|  Review Statements, Disclosure, Statement Rights, Visa Statement
+Rights, Reconciliation, Logoff  
+**Account Types**|
+
+N/A  
+  
+ **Statement Types**|  default(Combined), visa(VISA), etax(eTax)  
+ **Archival Period**|
+
+24  
+  
+ **Paperless Configuration**|  Non-Selective  
+ **On DP Change**|
+
+Show Opt-out page  
+  
+ **Delivery Preference**|
+
+E (Paperless), B (Paper), N (New), U (New - used before 2012)  
+  
+ **Notification Preference**|  Email only  
+ **NP Link Type**|  byUSR  
+ **Batch Download  **| N/A  
+ **Schema**|  CU  
+ **User-Account Relation**|
+
+One to One  
+  
+### Database Migration
+
+ **USR_SESSION** : Account number as sess_login_id. DSO is not null. Migration
+needed.  
+ **USR_MAPPING** : 2168 data. Might be inserted by the DOC process. Migration
+needed.  
+ **NOTIFICATION_PREFERENCE** : No data. Uses CONTACT_INFO table. Migration
+needed.
+
+### SSO (signlesignon7)
+
+#### SignleSignOn7Servlet
+
+  * As updateEmail is false, email is not mandatory to submit along with encrypted data.
+  * Only account number is needed for successful SSO, email is not mandatory.
+  * Account number will be 10 characters long. If the account number is less than 10 characters, then appends leading zero to make 10 characters. [ in web.xml, accountDigits=10 ]
+  * Searches user with account number via loginFinder. 
+    * Retrieve usr_id from USR, USR_SESSION table where sess_login_id = account number (with leading zeroes). 
+  * If user is found, 
+    * Retrieve login(session) from USR, USR_SESSION table by usr_id. 
+  * If the user is not found then login does not exist.
+    * As createLogin is false, it will not create a new USR or USR_SESSION record. It will throw an exception - "login not found". 
+  * Does not update email while sso. [ in web.xml, updateEmail = false ]
+  * Generate sso_key and set that in the USR_SESSION table as sso_key. 
+  * Returns the key to submit in wc_hblogin.jsp page.
+
+#### wc_hblogin.jsp
+
+  1. Get the key from the request. 
+  2. The user is searched by this sso_key in the USR_SESSION table. 
+    1. If not found, no null check is found in the code. A NullPointerException will occur while getting the user session. 
+    2. If found, 
+      1. Set sso_key to null in the USR_SESSION table.
+      2. Set the current date to the SSO column. 
+      3. loginSession will be set to browser session. 
+      4. Redirects to 'home.jsp'.
+
+### DSO
+
+  1. DSO login page exists but no dso user id is found in the production database. 
+  2. Access log does not have any hit on /login.jsp. 
+  3. Prism code-base does not have any dso folder, which usually holds the dso codes. 
+  4. Production database has dso dates, which can be inserted by backend process XML, which uses old logic AFP registrar. 
+  5. We can conclude that **CTCU does not have DSO login**. 
+
+### **Leading Zero Account**
+
+During SSO, leading zeros are appended if the account number is less than 10
+characters long.
+
+### Welcome Email
+
+N/A
+
+###  **Enrollment**
+
+One step:
+
+  1. Disclosure/Agreement:
+    1. An agreement to receive statements electronically is shown. 
+    2. Clicking the "Agree" button will set the paperless status to E and redirect to the home page. 
+    3. Clicking the "Disagree" button will close the tab.
+
+### Enrollment Logic
+
+  * If the paperless status of the account is U(new) or B(paper), then the user will go through enrollment. It is checked in the home.jsp page. 
+
+### Statement Types & Archival Period
+
+Three types of statements are
+
+  * ESTMT_DOC: default, visa ==> 24
+  * ENOTICE: N/A
+  * ETAX: etax ==> 24
+
+No inserts.
+
+### Delivery Preference
+
+  1. Paper = B, Paperless = E, New = N, U(Used as new before 2012) (From Database)
+  2. Users will be unable to view statements while on paper. 
+  3. In the PAPERLESS2 table, 3 latest status  'E', 'B' and 'U'. 
+    1. From ROOT, MSM and PUI processes, no 'U' is being inserted/updated. 
+    2. No undeliverable report. 
+    3. This client does not have 'both' or 'preenroll' as delivery preference. 
+    4. From the codebase, 'U' is being treated as 'N'(new). 
+    5. From the database, the records with 'U' as p_latest_status have p_modified_date the year 2012 or before.
+
+### Notification Preference
+
+  * Only Email is supported.
+  * Uses CONTACT_INFO table. No data in NOTIFICATION_PREFERENCE table.
+
+### Paperless Configuration
+
+Non-Selective. Can't assign different emails for different statement types.
+
+### NP Link Type
+
+byUSR. Uses CONTACT_INFO table. So, only usr_id is stored.
+
+
+
+### Menu Tabs
+
+  *  **Review Statements**
+    * Combined Statements, Visa Statements, eTax Statements. 
+    * Shows full account number with leading zero(s). 
+    * No inserts. 
+    * Shows Helpful Hints. 
+    * Account name is shown. 
+    * On the top right part of the screen an GIF(images/ct/cash.gif) is shown. No Banner management in MSM. Clicking the image will redirect the user to [https://www.1stnorcalcu.org/loans/](https://www.1stnorcalcu.org/loans/) .
+    * Email and delivery statements are shown here (instead of Profile page).
+      * Clicking the 'update' link to change the email address shows a form to insert the new email address and another field to re-enter. 
+      * Clicking the 'here to start' link to change the delivery preference opens a pop-up window which shows a confirmation message. Agreeing that will change the delivery preference. 
+  * **Disclosure**
+    * Shows the agreement to receive disclosures electronically. (disclosure/disclosure_pop.jsp)
+  *  **Statement Rights**
+    * Shows the billing rights for default(Combined) statements (disclosure/rights_pop.jsp)
+  *  **Visa Statement Rights**
+    * Shows the billing rights for visa statements (disclosure/visa_rights.pdf)
+  *  **Reconciliation**
+    * Shows the reconciliation pdf (not editable). (disclosure/acct_recon.pdf). 
+  * **Logoff**
+    * A confirmation prompt is shown.
+
+  
+
+* * *
+
+##  **MSM**
+
+### Statement Search
+
+  * Can search for an account's statements by account number. Search is done by appending leading zeros at the front. 
+  * Admin can change the email address.
+  * Has statement transfer.
+
+### Admin Edit
+
+  * Can change admin user's password. 
+  * Can create/view/modify/remove other managers/users that have lower privileges.
+
+### Paperless Management
+
+  * Can manage statement's delivery modes (Paperless to Paper or vice-versa).
+  * Shows account number, enrollment date, current delivery mode and last change date. 
+  * Does not show paperless history. Only the current status. 
+
+### Paperless Report
+
+  1. Shows the number of opt-in users, the number of opt-out users, and the number of accumulative opt-out users for each month. 
+  2. Can be downloaded as a text file. 
+
+### Undeliverable Email Account
+
+  1. Admin can search any email address and can delete the email from the database. 
+  2. No Undeliverable report.
+
+### Email Proofing
+
+  * Email Notifications Templates: 
+    * eStatement
+    * visa
+    * eTax
+  * Notification Type: Email
+  * Keywords:
+    *  **TAX_LIST**
+
+  
+
+* * *
+
+##  **Processing UI**
+
+### BACKEND PROCESSES
+
+CTCU has 5 processes,
+
+  1. XML (Last processed on 2019-10-29)
+  2. PERMISSION
+  3. ETAX
+  4. DOC
+
+### Settings
+
+  * global.multipleStmtType=true
+  * global.multipleDocType=false
+  * global.autoRegister=true
+  * global.ssoKey=Av*sh108e#G
+  * global.enableAccountType=false
+
+### Statement Types and Index file prefix
+
+  *  **global.ms1** =default
+  *  **global.mv1** =visa
+
+### XML Process
+
+Flags:
+
+  * xml.handler.classPath=com.infoimage.processing.application.xml.handler.CtcuHandler
+  * xml.entify=true
+  * xml.hasPrefix=true
+  * xml.prefix.start=8
+  * xml.prefix.end=11
+
+#### Handler: CtcuHandler
+
+  1. FIelds: **_acctNum_** _| **acctN**_ ** _ame_** _|_ ** _beginDate_** _|_ ** _closingDate_** _|_ _pages_ _|_ ** _stmtType_**  
+
+ ****Bold** indicates mandatory fields.
+
+#### Registrar: DefaultEStmtRegistrar
+
+  1. Always creates a new account if not found. 
+  2. As global.autoRegister is true, creates a new  ** _USR_**  and  ** _USR_SESSION_**  record. 
+  3. Set DSO date in  ** _USR_SESSION_**  table. 
+  4. Set account number as  _sess_login_id_  in  ** _USR_SESSION_**  table. 
+  5. Does not create user mapping. 
+  6. If a record is found in the  ** _FIN_ACCOUNT_**  table, update  _acct_owner_name,_  unless the name is "MEMBER". 
+  7. As multipleDocType is false, data will be blindly inserted while registering statements. 
+  8.  ** _EmailNotification.register_**  method will be called.
+
+Database table inserts:
+
+  * FIN_ACCOUNT: status -- "A"
+  * PAPERLESS: old -- "N", new -- "B"
+  * ESTMT_DOC, ARCH_FILE, ESTMT_FILE
+
+### Permission Process
+
+Flags:
+
+  * permission.handler.classPath=com.infoimage.processing.application.permission.handler.DefaultPermHandler
+  * permission.registrar.classPath=com.infoimage.processing.application.permission.registrar.DefaultPermRegistrar
+  * permission.level=7
+  * permission.purge=true
+
+ **Handler** : **DefaultPermHandler**
+
+  1. Fields: **acctNum**  
+
+ **Registrar** : **DefaultPermRegistrar**
+
+  1. As permission.purge is true, it deletes all records from the ACCT_ACCESS table for CTCU. 
+  2. After purging, the index file will be processed.
+  3. For each account number in the index file, insert into ACCT_ACCESS table with aa_min_level as 7. 
+
+### ETAX Process
+
+Flags:
+
+  * etax.compression=false
+  * etax.createAccount=false
+  * etax.isZipped=true
+  * etax.copyZipBuffer=32768
+  * etax.automatedEmailNotification=true
+
+#### Handler: ETaxData3
+
+  1. Fields: _**acctNum** | **type** | **afpFileName** | **date** | suffix | appType | ssn | **zipFileName**  _
+  2. As isZipped is true, the total field has to be 8.
+
+ ****Bold** indicates mandatory fields.
+
+#### Registrar: ETaxRegistrar3
+
+  1. etax.createAccount=false, no account will be created if not found. 
+
+### DOC Process
+
+Flags:
+
+  * doc.compression=false
+  * doc.isZipped=true
+  * doc.copyZipBuffer=65536
+  * doc.hasSelectivePaperless=false
+  * doc.acctNumAsLoginId=true
+
+#### Data: DataHandler
+
+#### Registrar: AfpRegistrar
+
+  1. Fetch account from FIN_ACCOUNT by account number and type.
+  2. Always creates a new account if not found. 
+  3. As autoRegister is true, it will create a new user profile. 
+  4. Set DSO date in  ** _USR_SESSION_**  table. 
+  5. Set account number as  _sess_login_id_  in  ** _USR_SESSION_**  table. 
+  6. Creates USR_MAPPING. 
+  7. If account exists,
+    1. Check the **_acctName_** provided by the index file. If it does not match with the account name in the database, update it in the FIN_ACCOUNT table. 
+    2. Does not update account name if the name is either "MEMBER" or "CUSTOMER". 
+  8. Inserts Paperless record: 
+    1. If no record is found, create a new Paperless record: Old = N, New = B.
+    2. If the statement type is not default, create a new record for default statement type. 
+  9. Inserts statement data in ESTMT_DOC, ARCH_FILE and ESTMT_FILE. 
+  10. Inserts record in P_JOB_ESTMT. 
+
+### Email Processing
+
+####  **Flags**
+
+  * email.default.needApproval=true
+  * email.heloc.needApproval=true
+  * email.visa.needApproval=true
+  * email.visa_gold.needApprova=true
+  * email.visa_plat.needApproval=true
+  * email.etax.needApproval=false
+  * etax.automatedEmailNotification=true
+
+#### ESTMT Handler: EStmtEmailHandler
+
+Get recipients who satisfies the following criteria:
+
+  1. ESTMT_DOC:  _status_  is null or "9",  _esd_email_status_  is null
+  2. CONTACT_INFO:  _ci_email_addr_  is not null
+  3. USR:  _ci_id_  is not null
+  4. PAPERLESS2:  _p_latest_status_  is one of "E", "U" or "W",  _stmt_type_  is "default"
+
+#### ETAX Handler: CtcuETaxEamilHandler
+
+Get recipients who satisfies the following criteria:
+
+  1. ETAX:  _status_  is null or "9",  _esd_email_status_  is null
+  2. CONTACT_INFO:  _ci_email_addr_  is not null
+  3. USR:  _ci_id_  is not null
+  4. PAPERLESS2:  _p_latest_status_  is one of "E" or "U",  _stmt_type_  is "default"
+  5. P_ETAX_EMAIL:  _etax_id_  is not null
+
+####  **Configuration needed to send via API**
+
+  * notification.isSendEmailViaAPI=true
+  * notification.isEmailManageByEstmt=false
+
+  
+
+* * *
+
+  
+
+## Analysis Summary (ROOT)
+
+Scope| Feature| CTCU Business| Hypercube| Note  
+---|---|---|---|---  
+SSO| User Enrollment Logic|
+
+If the paperless status of the account is U(new) or B(paper), then the user
+will go through enrollment. It is checked in the home.jsp page.
+
+ **Note** : Previousely CTCU might use 'U' for new account's paperless status
+instead of 'N' before 2012. Also previously they might had undeliverable
+report which might change the paperless status to 'U' for those account who
+have undeliverable email addresses. Admin site has an option to delete the
+email addresses for undeliverable emails.
+
+|  53 complete **Alternatively Supported** 54 incomplete Not Supported |
+
+In Hypercube, a user goes through enrollment if he/she never logged in via SSO
+(no date in sso column).
+
+Client will use default (sso date based) enrollment logic. Also, if user will
+go to paper he/she will be forced un-enrolled.
+
+  
+  
+  
+Enrollment Step 1| Terms & Conditions Agreement/Disclosure|  9 complete
+**Supported** 10 incomplete Not Supported | If migrate to Hypercube, then two
+enrollment steps will be used, the second step will be email update.  
+Misc|
+
+  * Users will hit on / **WESCOMSSO,** which is mapped to the servlet( **SingleSignOn7Servlet** ).
+  * During SSO, new account, user, ufa, session and paperless records will not be created (createLogin = false). Sets sso date. Does not put dso date. 
+  * Account numbers have to be 10 characters long. If it is less then 10 characters, then it will be zero-padded at the front. Database stores them with leading zero(s).
+  * Email is not mandatory during sso and is not being updated (updateEmail = false). 
+
+|  42 complete **Supported** 43 incomplete Not Supported |
+
+SSO Method 'singleSignOn7' will be used.
+
+Will use ' **cifLength** = **10** ' and ' **prefix0s** = **Y** ' properties to
+support the zero-padding feature.  
+  
+Menu  
+  
+| Tabs (Statements)|
+
+  * Shows full account number with leading zero(s). 
+
+|  11 complete **Supported** 12 incomplete Not Supported
+
+  
+
+|  
+  
+  
+  * Email and delivery statements are shown here (instead of Profile page).
+    * Clicking the 'update' link to change the email address shows a form to insert the new email address and another field to re-enter. 
+    * Clicking the 'here to start' link to change the delivery preference opens a pop-up window which shows a confirmation message. Agreeing that will change the delivery preference. 
+
+|  36 incomplete Supported 37 incomplete Not Supported 38 complete
+**Alternatively  Supported** | this feature will be moved under profile tab  
+  
+  * On the top middle part of the screen an _****_is shown.  Clicking the image will redirect the user to <https://www.1stnorcalcu.org/loans/> .
+
+|  39 incomplete Supported 40 incomplete Not Supported 41 complete
+**Alternatively  Supported** |
+
+The image with a link is static. It does not behave like a banner that we
+support in Hypercube. Also, CTCU admin site does not have any banner
+management. **We can show the GIF in the disclosure section below Helpful
+Hints.  **  
+  
+  * Shows Helpful Hints. 
+
+|  0 incomplete Supported 1 incomplete Not Supported 2 complete
+**Alternatively  Supported** |
+
+Helpful Hints will be shown in the disclosure section of the Hypercube home
+page.  
+  
+  * Account name is shown
+
+|  3 incomplete Supported 4 complete **Not Supported** |  
+  
+Tab (Disclosures)|
+
+  *  **Disclosure** : Shows the agreement to receive disclosures electronically.
+  *  **Statement** **Rights** : Shows the billing rights for default(Combined) statements
+  *  **Visa** **Statement** **Rights** : Shows the billing rights for visa statements
+  *  **Reconciliation** : Shows the reconciliation pdf (not editable)
+
+|  20 complete **Supported** 21 incomplete Not Supported | We can show this
+disclosures in the disclosure tab which will accomodate those 4 links.  
+Close|  
+|
+
+Closes the tab.
+
+|  24 complete **Supported** 25 incomplete Not Supported | Same as Exit, just
+the name is different.  
+  
+  
+
+## Analysis Summary (MSM)
+
+Scope| Feature| CTCU Business| InfoTRAC| Note  
+---|---|---|---|---  
+Statement Search|  
+|
+
+  * Can search for an account's statements by account number. Search is done by appending leading zeros at the front. 
+  * Admin can change the email address.
+  * Has statement transfer.
+
+|  72 complete **Supported** 73 incomplete Not Supported |  
+  
+Admin Edit|  
+|
+
+  * Can change admin user's password. 
+  * Can create/view/modify/remove other managers/users that have lower privileges.
+
+|  26 complete **Supported** 27 incomplete Not Supported |  
+  
+Paperless Management|  
+|
+
+  * Can manage statement's delivery modes (Paperless to Paper or vice-versa).
+  * Shows account number, enrollment date, current delivery mode and last change date. 
+  * Does not show paperless history. Only the current status. 
+
+|  28 complete **Supported** 29 incomplete Not Supported |  
+  
+Paperless Report|  
+|
+
+  * Shows the number of opt-in users, the number of opt-out users, and the number of accumulative opt-out users for each month. 
+  * Can be downloaded as a text file. 
+
+|  13 complete **Supported** 14 incomplete Not Supported |  
+  
+Undeliverable Email Account|  
+|
+
+  * Admin can search for any email address and can delete the email from the database. 
+  * No Undeliverable report. 
+
+|  15 incomplete Supported 16 complete **Not Supported** |  
+  
+Email Proofing|  
+|
+
+  * Email Notifications Templates: 
+    * eStatement
+    * visa
+    * eTax
+  * Notification Type: Email
+  * Keywords:
+    *  **TAX_LIST**
+
+|  46 complete **Supported** 47 incomplete Not Supported |  
+  
+Logout|  
+|  
+|  
+|  
+  
+  
+  
+
+## Analysis Summary (PUI)
+
+Process| Prefix| Backend Business| Mismatch with Hypercube Business| Changes
+Needed  
+---|---|---|---|---  
+XML|
+
+  
+
+|
+
+Handler: CtcuHandler
+
+Registrar: DefalutEStmtRegistrar(Afp Registrar)
+
+XML process might be deprecated. No XML process has been run for previous 90
+days.
+
+|
+
+  1. Sets DSO date in USR_SESSION table.
+  2. Sets account number as sess_login_id in USR_SESSION table.
+  3. Does not put records in USR_MAPPING table. 
+
+|
+
+Use HypercubeEStmtRegistrar.  
+  
+DOC| ms1, mv1|
+
+Handler: DataHandler
+
+Registrar: AfpRegistrar
+
+|
+
+  1. Sets DSO date in USR_SESSION table.
+  2. Sets account number as sess_login_id in USR_SESSION table.
+  3. Puts records in USR_MAPPING table. 
+
+|
+
+Add following flags:
+
+  1. global.nullDsoTime=true
+  2. global.acctNumAsLoginId=false
+
+  
+Etax|  
+|
+
+Handler: ETaxData3
+
+Registrar: ETaxRegistrar3
+
+| Current configuration does not support Hypercube business.| Etax process
+does not create any accounts or users. So, no changes needed.  
+Permission|  
+|
+
+Handler: DefaultPermHandler
+
+Registrar: DefaultPermRegistrar
+
+aa_min_level is 7.
+
+|  
+| No changes needed  
+Reports|  
+|
+
+Paperless Report (Handler: DefaultPaperlessReport, Renderer:
+DefaultPaperlessReportRender)
+
+|  
+| No changes needed  
+Email|  
+|
+
+ESTMT Handler: EStmtEmailHandler
+
+ETAX Handler: CtcuETaxEmailHandler
+
+  
+
+|  
+|
+
+  * notification.isSendEmailViaAPI=true
+  * notification.isEmailManageByEstmt=false
+
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+

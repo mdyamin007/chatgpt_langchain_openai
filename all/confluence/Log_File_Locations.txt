@@ -1,0 +1,333 @@
+title: Log File Locations
+body:   
+
+# Application Name
+
+|
+
+# Locations  
+  
+---|---  
+  
+## Tomcat Prism
+
+  * Production
+    * Catalina Logs
+    * Restart
+    * Access logs
+    * Old logs
+  * Stage
+  * Pilot
+  * Dev
+
+|
+
+ **Production:** **ca-prism-pr-01/02  **
+
+  * Catalina logs: /usr/local/tomcat/tomcat-[schema]/logs/catalina-YYYY-MM-DD.out
+    * E.g. /usr/local/tomcat/tomcat-default/logs/catalina-2020-08-25.out
+  * Restart
+    * Shutdown: sudo systemctl stop prism-[schema] (replace schema with cu/bank/default)
+      * E.g. sudo systemctl stop prism-bank
+    * Startup: sudo systemctl start prism-[schema] (replace schema with cu/bank/default)
+      * E.g. sudo systemctl start prism-bank
+
+  * Access: /usr/local/tomcat/tomcat-[schema]/logs/cid-prod.infoimageinc.com_access_log.YYYY-MM-DD.txt
+    * E.g. /usr/local/tomcat/tomcat-default/logs/ewbb-prod.infoimageinc.com_access_log.2020-08-25.txt
+  * Old logs (up to 90 days)
+    * /e/log/tomcat-[schema]
+
+ **Stage: ca-prism-st-01**
+
+ **Pilot: ca-prism-pi-01/02**
+
+ **Dev: ca-prism-dv-01**  
+  
+## Hypercube
+
+  * Production
+    * Logs
+    * Old Logs
+    * Restart
+  * Stage
+  * Pilot
+  * Dev
+
+|
+
+ **Production: ca-hypercube-pr-01/02/03/04**
+
+  * Logs
+    * Hypercube: /var/log/meteor/hypercube/YYYY-MM-DD.log
+    * Meteor: /var/log/meteor/hypercube/meteor.out
+  * Old Logs (up to 90 days)
+    * /e/log/hypercube
+    *  **Note: This old log path only exists on production**
+  * Restart
+    * Shutdown: sudo systemctl stop hypercube
+    * Startup: sudo systemctl start hypercube
+    * Restart: sudo systemctl restart hypercube
+
+ **Stage** :  **ca-hypercube-st-01**
+
+  * Logs
+    * Hypercube: /var/log/meteor/hypercube-stage-infoconfig
+
+ **Pilot:  ca-hypercube-pi-01/02**
+
+ **Dev:  ca-hypercube-dv-01**  
+  
+## Processing-UI
+
+  * Production
+    * Index file paths
+    * Afp file paths
+    * Conf files
+    * Logs
+    * Restart
+  * Dev/Pilot/Stage
+    * Index file paths
+    * Afp file paths
+    * Conf files
+    * Logs
+
+  
+
+|
+
+ **Production: ca-pui-pr-01**
+
+  * Index files
+    * Recent: /d/INPUT/I3/process-files/[cid]
+    * Backup files: /d/INPUT/I3/process-files-backup/[cid]/
+      * Note: There should be folders dated by month, we maintain about 4-5 months of these files.
+  * Afp files
+    * /d/INPUT/indiv_afp/[cid]
+  * Conf files
+    * /usr/local/processing-ui/conf/[cid.conf]
+  * Logs
+    * /usr/local/processing-ui/station/logs/[cid]
+    * Note: Each cid will have different folders under them, depending on which processes they have.
+  * Restart
+    * Stop: sudo processing_ui.sh stop
+    * Start: sudo processing_ui.sh start
+
+ **Dev/Pilot/Stage: ca-pui-dv-01, ca-pui-pi-01, ca-pui-st-01**
+
+  * Index files
+    * Recent: /d/INPUT-DEV/I3/process-files/[cid]
+    * Backup files: /d/INPUT-DEV/I3/process-files-backup/[cid]
+      * Note: Files are usually not backed up on lower environments, they just sit in the process-files folder.
+  * Afp files
+    * /d/INPUT-DEV/indiv_afp/[cid]
+  * Conf files
+    * /usr/local/processing_ui/conf/[cid.conf]
+  * Logs
+    * /usr/local/processing_ui/station/logs/[cid]
+
+  
+  
+## API
+
+  * Production  
+
+    * Infoservice
+    * Infoservice-Jaas
+    * Black Knight API
+
+  
+
+|
+
+ **Infoservice Production: ca-hypercube-pr-01/02/03/04**
+
+  * Path: /usr/local/tomcat/infoservice/logs
+    * sudo vim localhost_access_log.2020-08-24.txt
+    * catalina-YYYY-MM-DD.out
+
+ **Api Jaas: ca-apipui-pr-01/02/03/04  **
+
+  * Path: /usr/local/tomcat/infoservice-jass/logs
+    * prodapi_access_log.YYYY-MM-DD.txt -> stores requests from client
+    * catalina-YYYY-MM-DD.out-> info on the request
+  * Black Knight Logs:
+    * /usr/local/docker/bki-docs/logs/bkidocs.log 
+
+    * /usr/local/docker/bki-docs/logs/bkidocs-YYYY-MM-DD.log (backup)
+
+  
+  
+## InfoTRAC
+
+  * Production
+    * Logs
+    * Old logs
+
+  
+
+|
+
+ **Production: ca-infotrac-pr-01/02**
+
+  * Infotrac: /usr/local/docker/tomcat9.0.45-jdk8-infotrac/logs/catalina-YYYY-MM-DD.out
+    * E.g. /usr/local/docker/tomcat9.0.45-jdk8-infotrac/logs/catalina-2021-08-18.out
+
+ **Old Logs: ca-utils-pr-01/02**
+
+  * /mnt/logs/ca-infotrac-pr-01/tomcat9.0.45-jdk8-infotrac
+
+Note: Should have up to 5 months of logs  
+  
+## Proxy servers
+
+  * Production
+    * Hypercube proxies
+      * Access logs
+      * Error logs
+    * Prism proxies
+      * Access logs
+      * Error logs
+  * Stage
+    * Hypercube
+    * Prism
+  * Pilot
+    * Hypercube
+    * Prism
+
+|
+
+Nginx/Apache logs show if clients are hitting our server(s). Commonly checked
+if users are receiving TPV/504 errors.
+
+Look for something like this in the access logs: POST /ssoExchange HTTP/2.0"
+lb_to: 10.8.9.148:8080
+
+ **Production:**
+
+  *  **Hypercube: ca-proxy-pr-17/18 and ca-proxy-pr-09/10**
+    *  **/var/log/nginx**
+      * Access logs: (cid).access
+        * Counting number of total connections: 
+          * sudo grep -c '10.8.9.148' *access.1
+      * Error logs: (cid).error
+        * Counting worker connection errors: 
+          * sudo grep -c 'worker_connection' *error.1
+        * Counting upstream errors:
+          * sudo grep -c 'upstream' *error
+          * sudo grep '13:.*upstream' *.error > ~/test.txt -> greps counts for all error files with upstream errors at 1pm and dumps into a file test.txt
+        * Listing 504 errors:
+          * sudo grep ' browser_resp: 504 ' /var/log/nginx/*.access
+  *  **Prism: ca-proxy-pr-03/04 and ca-proxy-pr-07/08**
+    * /var/log/apache2 (NOTE: can't cd into apache2 directly, use sudo ls to view the log files and then sudo vim apache2/filename from there).
+      * Access logs: (cid).access
+      * Error logs: (cid).error
+      * 1/14/21: IDCU switch over to pr-07/08 
+
+ **Stage** :
+
+  *  **Hypercube: ca-intproxy-st-02**
+  *  **Prism: ca-intproxy-st-01**
+
+ **Pilot:  **
+
+  *  **Hypercube: ca-extproxy-pi-07/08  **
+    * /usr/local/docker/nginx
+      * Access logs: (cid).access
+      * Error logs: (cid).error
+  *  **Prism:**   **ca-extproxy-pi-05/06**
+
+  
+  
+## Afp2Web/Wrapper Service
+
+  * Production
+    * Afp2Web
+    * Wrapper
+  * Dev/Pilot/Stage
+    * Afp2Web
+    * Wrapper
+
+  
+
+|
+
+ **Production**
+
+  *  **Afp2Web: ca-afp2web-pr-01/02/03/04**
+    * /usr/local/docker/afp2web/logs
+      * access.log
+      * error.log
+  *  **Wrapper: ca-wrapper-pr-01/02**
+    * /usr/local/docker/wrapperservice/logs
+      * catalina logs
+
+ **Dev/Pilot/Stage**
+
+  *  **Afp2Web: ca-afp2web-dv-01/02**
+  *  **Wrapper:  ca-wrapper-dv-01/02**
+
+  
+  
+## Scanner
+
+  * Production
+    * Root logs
+    * DP logs
+    * Client pickup logs
+    * Handler logs
+
+|
+
+ **Scanner: ca-ftpbu-pr-01**
+
+  * Root
+    * /scanner/root.log - general scanner logs showing file movement and ftp emails sending out
+  * DP
+    * /ftpbu/month_DD_YYYY_ALL.dp - file movement, i.e. from backup to download, FTS related
+  * Client pickup
+    * /ftpbu/client_pickup_log/client_pickup_MMDDYYYY.log
+  * Handler
+    * E:\isd_scanners\pilot\logs\handler
+
+  
+  
+## Check Images (needs updating)
+
+|
+
+ **Pilot: pd-dev03/05 (outdated)**
+
+  * /var/log/apache2 (NOTE: can't cd into apache2 directly, use sudo ls to view the log files and then sudo vim apache2/filename from there).
+    * Access logs: access.log
+    * Error logs: error.log
+
+  
+  
+## Other
+
+|
+
+  * Command 'top': shows the CPU load percentages
+  * To see the service name on a server, go to /etc/systemd/system and then ls
+  * You can also list all services running by doing in root directory:  
+systemctl list-units --type=service
+
+  * Display how much total space in directory: du -h
+
+## Delete Old Log Files
+
+  * Prism logs  
+
+    *  **sudo find /usr/local/tomcat/tomcat-[schema]/logs -type f -mtime +90 -exec rm -rf {} \;**  
+
+      * This will delete all files older than 90 days within folders without deleting the folders themselves.
+  * PUI logs  
+
+    *  **sudo find /usr/local/processing-ui/station/logs -type f -mtime +90 -exec rm -rf {} \;  **
+      * This will delete all files older than 90 days within folders without deleting the folders themselves.
+
+  
+  
+  
+
+

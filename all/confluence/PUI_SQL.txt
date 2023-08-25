@@ -1,0 +1,86 @@
+title: PUI SQL
+body: PUI PROCESS DATA POPULATION BELOW
+
+Need to do sql below only if you did not use the exported data
+
+  * Queries below are related to balance sheet processing  
+SS1|SS1|HH1|3ACT|10/13/1989|Testlastname1|Testfirstname1|10/16/2012|1800|180|141
+JEFFERSON AVE||MENLO PARK|CA|94025|||||  
+SS1|SS2|HH2|3ACT|10/13/1989|Testlastname2|Testfirstname2|10/16/2012|Combined
+Above|50|141 JEFFERSON AVE||MENLO PARK|CA|94025|||||
+
+getting all the accounts which were inserted when balance sheet was
+processing. You would need to replace org_id with org_id after you run the
+setup sql.replace xxx with the org_id you get when you created organization in
+setup sql.
+
+  *   
+below we are populating with 2 hospital account numbers  
+a)  **insert into
+fin_account(acct_id,org_id,acct_number,acct_owner_name,type,last_modified,status)  
+values(2222,xxx,'HH1','Testfirstname1 Testlastname1','NA',sysdate,'A')  
+insert into
+fin_account(acct_id,org_id,acct_number,acct_owner_name,type,last_modified,status)  
+values(2223,xxx,'HH2','Testfirstname2 Testlastname2','NA',sysdate,'A')**
+
+b)-- should return 2 rows  
+select * from fin_account where org_id=??
+
+  * Entry in usr table ( this is populated when balance sheet is processed. Two related accounts are mapped to one usr_id.  
+a)  **insert in urs(usr_id,usr_birthdate,
+usr_gender,usr_firstname,usr_lastname,ci_id,source  
+values(101,'13-OCT-1989
+00:00:00','F','Testfirstname1','Testlastname1',1221864,'Direct')**  
+b) select * from usr where usr_id=101*
+
+  * Entry in usr_fin_account table ( this maps usr table with fin_account table)  
+a)  **insert into
+usr_fin_account(ufa_id,usr_id,acct_id,ufa_status,ufa_registrationdate)  
+values(33333,101,2222,'active',sysdate)**  
+ **insert into
+usr_fin_account(ufa_id,usr_id,acct_id,ufa_status,ufa_registrationdate)  
+values(33334,101,2223,'active',sysdate)**
+
+b) -- this should return 2 entries  
+select * from usr_fin_account where acct_id in (select acct_id from
+fin_account where org_id=??
+
+  * Usr_mapping holds identifies seed no associated with a usr_id  
+a)  **Insert into usr_mapping(org_id,cif_num,usr_id  
+values(xxx,'SS1',101)**  
+b) select * from usr_mapping where usr_id=15312096 -- returns one entry
+
+  * fin_account_bill_ext  
+a)  **insert into
+fin_account_bill_ext(acct_id,statement_date,amount_due,balance,guarantor_acct_number,disposition,combined_min)  
+values(2222,'16-OCT-2012 00:00:00',1800,180,'SS1','3ACT','N')  
+insert into
+fin_account_bill_ext(acct_id,statement_date,amount_due,balance,guarantor_acct_number,disposition,combined_min)  
+values(2223,'16-OCT-2012 00:00:00',0,50,'SS2','3ACT','Y')**
+
+b) select * from fin_account_bill_ext where acct_id in(select acct_id from
+fin_account where org_id=??
+
+  * All queries below are related to index file processing  
+  
+<docs>  
+<docDetail acctNbr="SS1" name="Testfirstname1 testlastname1" totalDue="111.00"
+minDue="11.00" dueDate="10/20/2012" billingDate="10/16/2012"
+docGUID="155503696" pageCount="1" docType="L3" docTitle="Final Demand"/>  
+<docDetail acctNbr="SS2" name="Testfirstname2 testlastname2" totalDue="222.00"
+minDue="22.00" dueDate="10/20/2012" billingDate="10/16/2012"
+docGUID="155503696" pageCount="1" docType="L3" docTitle="Final Demand"/>  
+</docs>
+
+    * \-- Bill table
+
+a) replace ffff in query below with fund_id in the setup sql,  
+232424 is just a dummy archive id for a bill. this id is not valid  
+ **insert into
+bill(bill_id,acct_id,invoice,due_date,due_amt,min_due_amt,start_date,end_date,biller_fund_id,archive_id)  
+values(600,2222,'HH1','20-OCT-2012 00:00:00',11100,1100,'16-OCT-2012
+00:00:00','16-OCT-2012 00:00:00',ffff,232424)**  
+b) select * from bill where acct_id in (select acct_id from fin_account where
+org_id=??
+
+

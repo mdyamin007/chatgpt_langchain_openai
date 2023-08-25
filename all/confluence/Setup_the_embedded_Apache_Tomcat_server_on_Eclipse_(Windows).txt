@@ -1,0 +1,184 @@
+title: Setup the embedded Apache Tomcat server on Eclipse (Windows)
+body: 1\. Download apache tomcat from <http://tomcat.apache.org/download-70.cgi>
+(windows 32/64 bit).
+
+2\. Make sure that you have maven installed in your system OR you can have the
+maven plugin installation under eclipse.
+
+3\. Mavenized the client project like the below structure (e.g TKCU client)
+
+  * Make sure to place CID specific .properties under client specific resource folder. e.g C:\workspace\svntomcat\tkcu\ROOT\src\main\resources for ROOT and C:\workspace\svntomcat\tkcu\msm\src\main\resources for msm.
+
+  * Update web.xml paths (if applicable)
+    * Update the CID\msm\src\main\webapp\WEB-INF\web.xml path values. * Update the CID\ROOT\src\main\webapp\WEB-INF\web.xml path values.
+
+2\. Create two different web projects per client i.e one for msm(Admin site)
+another for ROOT (Member site).
+
+  * If you want to have multiple client setup under same workspace then modify the client specific pom.xml files and change the project name like* tkcu-msm*
+
+  * Select the resource path of msm e.g (C:\workspace\svntomcat\tkcu\msm) then go to command prompt and run the below maven command.  
+ **mvn eclipse:clean eclipse:eclipse -Dwtpversion=2.0**
+
+  * Import the existing projects into workspace by selecting root directory e.g (C:\workspace\svntomcat\tkcu\msm). Once the corresponding web project is selected in the workspace then you will see the project setup like below.
+
+  * Generate the two separate war files either through command prompt or eclipse plugin.
+
+Through command prompt :  **mvn package**
+
+ **Example**
+
+3\. Set up Tomcat server in eclipse
+
+  * Go to server window and right click to set up new server. Give the server name and select the tomcat installation directory.
+
+  * Test if tomcat is working, visit
+    
+        http://<host>:<port>/
+
+(e.g. <http://localhost:8080/>).
+
+The default port is 8080, but if your port 8080 is already occupied for other
+service/processes,  **either change the port in server.xml**
+
+    
+        Look for the corresponding &lt;Connector tag and update the port value to your choice (e.g. <http://localhost:9080/>).
+    
+         **OR you can do the same through server configuration window**
+
+4\. Configure it to use SSL
+
+  * Include the jks (if already provided). * Update the <Connector> as follow
+
+    
+    
+             <Connector SSLEnabled="true" clientAuth="false" keystoreFile="c:\cert\tomcat.jks" keystorePass="infoimage" maxThreads="150" 
+             port="9880" protocol="org.apache.coyote.http11.Http11Protocol" scheme="https" secure="true" sslProtocol="TLS"/>
+    
+
+5\. Place the system.prop file under server configuration
+
+ **Example**
+
+6\. Add the system.prop file configuration under server argument configuration
+by double clicking the corresponding server.
+
+ **Example**
+
+-Dcom.infoimage.configfile="C:\workspace\svntomcat\Servers\CUServer-config\system.prop"
+
+  
+
+7\. Update catalina.properties
+
+  * To include the dependent libraries: find key shared.loader and add corresponding path. * Example: shared.loader=C:/webapp-lib/*.jar
+
+8\. Add web projects under tomcat server.
+
+ **Example**
+
+9\. Update application specific configurations
+
+  * Modify the server.xml to add following block within the <GlobalNamingResources> block
+
+    
+    
+             <Resource auth="Container" driverClassName="oracle.jdbc.OracleDriver" factory="oracle.jdbc.pool.OracleDataSourceFactory" initialSize="50" lifo="false" logAbandoned="true" maxActive="100" maxIdle="50" maxTotal="16" maxWaitMillis="3000"         minEvictableIdleTimeMillis="30000" minIdle="10" name="jdbc/default" password="dev_cu" removeAbandoned="true" removeAbandonedTimeout="60" testOnBorrow="true" testOnCreate="false" testOnReturn="false" testWhileIdle="true" timeBetweenEvictionRunsMillis="30000" type="oracle.jdbc.pool.OracleConnectionPoolDataSource" url="jdbc:oracle:thin:@//10.8.8.215:1521/wodb.edata" user="dev_cu" validationInterval="34" validationQuery="SELECT 1 FROM DUAL"/>
+    
+    
+
+  * Add the following line inside the context.xml <Context> block
+
+<ResourceLink global="jdbc/default" name="jdbc/default"
+type="oracle.jdbc.pool.OracleDataSource"/>
+
+  * Setup Virtual Host for needed application
+
+Make sure you have below host setup configuration after adding web projects on
+tomcat server.
+
+    
+    
+              <Host appBase="wtpwebapps" autoDeploy="true" name="tkcu.infoimageinc.com" unpackWARs="true">
+            <Context path="/ROOT" reloadable="true">
+                <ResourceLink global="jdbc/default" name="jdbc/default" type="oracle.jdbc.pool.OracleConnectionPoolDataSource"/>
+            </Context>
+             <Context docBase="msm" path="/msm" reloadable="true">
+                <ResourceLink global="jdbc/default" name="jdbc/default"    type="oracle.jdbc.pool.OracleConnectionPoolDataSource" />
+            </Context>
+            <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs" pattern="%h %l %u %t &quot;%r&quot; %s %b" prefix="tkcu.infoimageinc.com_access_log." suffix=".txt"/>
+          </Host>
+    
+
+  * The name value need to match to whatever incoming URL host expected. If necessary, can add <Alias> tag to handle multiple URL host expected for the same application.
+
+  * While setting up more clients from the same schema add below configuration in the client's web.xml file  
+e.g. (tkcu client)
+
+    
+    
+            <context-param>
+                  <param-name>webAppRootKey</param-name>
+                  <param-value>tkcu</param-value>
+            </context-param> 
+    
+
+  * Inside the system.prop, ensure the following keys are updated accordingly. Use the $CATALINA_HOME variable as-is to avoid hardcoded paths
+
+webserver.root=  **(Provide your specified path)**  
+webserver.config=  **(Provide your specified path)**  
+webapps.root=  **(Provide your specified path)**
+
+  * Place the logging.conf (CID specific) inside the CID folder so that it gets picked up by the SystemProperties class.
+
+  * Make sure the CID value inside the logging.conf is spelled correctly!
+
+10.  **Publish (Ctrl+Alt+P)**  and  **Start (Ctrl+Alt+R)**  the corresponding tomcat server.
+
+11\. You will see the server and application specific activity in console
+window.
+
+12\. If you see server timeout issues then increase the server startup time
+according to your requirement.
+
+ **Example**  
+
+13\. To check the access logs and deployed application.
+
+  * Go to the default Tomcat server core directory.
+
+ **Example**
+
+C:\workspace\svntomcat\\.metadata\\.plugins\org.eclipse.wst.server.core
+
+  * The corresponding server will show up like temp0, temp1 etc based on number of servers setup in your workspace
+
+14.  **Don't forget to add host name entry in your windows host file.**
+
+15.  **To debug the application in eclipse.**
+
+  * Add the corresponding java projects into workspace from svn  **OR**  it can be done through .psf file  **(will discuss later)**
+  * Build all java projects.
+  * Select the client specific web project and add the corresponding java Project Reference.
+
+ **Example**
+
+ **CID-web-project** \---> Right click---> Properties---> Project Reference
+
+Then select the corresponding java projects e.g (afp2web, i3-core, processing-
+ui  **(if needed)** ) etc.
+
+16\. Place the Breakpoints in the code where you want to step in and then
+start the server in  **Debug (Ctrl+Alt+D)**  mode.
+
+  
+
+  
+
+### Attachments
+
+  
+
+  
+
+

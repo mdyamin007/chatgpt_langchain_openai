@@ -1,0 +1,205 @@
+title: RHS2 - Prod: EWBB ReOrg - Failed Process
+description: [~William.Kong] Please see below with EWBB ReOrg prod test. I lost my processing screen however this error was at the end on the process. 
+
+ewbbsr101.log
+
+Child process 2178 print_step_one ewbbms5 got fatal error rc=127.
+Main process 617 exited with fatal error ...
+
+
+author: william.kong
+comment: [~yameelee] and [~Peter.Dang]: Can you review this RHS2*{color:#00875a}Production{color}*testing issue.
+
+
+author: nischala.manjunath
+comment: [~William.Kong]: I tried processing this in parallel and I ran into two issues - it prompts me to enter the password for oper1 mid run and its unable to load a shared library (screenshot uploaded).
+ !screenshot-1.png|thumbnail! 
+
+I'm going to check with Ernest if he can help as well.
+
+
+author: william.kong
+comment: [~nischala.manjunath]: Ernest was informed and I'm going to assign this ticket to him for now.
+
+
+author: william.kong
+comment: [~jasramos]: Just spoke with Ernest. He corrected the print module issue by updating the env_init.sh global script. Can you please re-test.
+
+
+author: jasramos
+comment: [~William.Kong] appears reorg processed.A DPVS was created, but there is an error in the log.
+
+DDA & Savings should process after reorg but the processed failed. I'm not sure if DDA & Savings is part of the test, however I provided a snippet of my processing screen. Please see below
+
+*Processing Screen*
+
+!image-2020-10-16-11-26-35-573.png!
+
+*ewbbsr101.log*
+
+!image-2020-10-16-11-28-21-809.png!
+
+
+author: william.kong
+comment: [~yameelee] and [~Peter.Dang]: Please look at screenshot #1. I thought we modified production code to not connect to external servers. Please advise why this is being reported.
+
+
+
+As for the second screenshot, please I will address this with Anil after you guys are done. Please re-assign to me after you guys ensure there is NO external connections in the production code.
+
+
+author: peter.dang
+comment: Sorry I commented all ewbb_ftp.pl in ewbb_dda_process.sh, but reorg has a separate call outside of this main script. I removed ftp command from ewbb_ftp.pl and ewbb_xaa_sftp_put.sh.
+
+
+author: william.kong
+comment: [~Peter.Dang]: Thanks Peter for the update. I will keep this ticket assigned to me until Anil fixes the indexfileprocessor issue on production.
+
+
+
+
+
+
+author: william.kong
+comment: [~jasramos]: Can you re-test today? Network fixed the second issue that you reported. Both issues are now resolved.
+
+
+author: jasramos
+comment: [~William.Kong] reprocessing started. Start time 1:02pm.
+
+
+author: jasramos
+comment: [~William.Kong] I received a new error. 
+
+*Processing Screen:*
+
+jobsel is f in isisdisk.sh
+
+color flag is: 0 in get_msg_v2_cu_std_prod.pl
+jobsel is : f
+url: http://pui-prod.infoimageinc.com/MsgServlet22?cid=ewbb&apptype=ms1&cycledate=09012020&services=estmt
+1|ewbb_ms1_08282020_09292020.zip
+Successfully grabbed zip file given code 1 and file ewbb_ms1_08282020_09292020.zip
+Basename of the file to be grabbed is ewbb_ms1_08282020_09292020.zip
+zipfile - /d/isd_input/I3/IS/ewbb/ewbb_ms1_08282020_09292020.zip
+/d/ewbb/ewbbms1/ewbbms1_msg_portal.txt
+checking mm2 index file
+Running ... /home/master/verify_estmt_captured.pl prod ewbb ms1 ms1 01 ewbbsm101
+estmt_combine_exception:Mon Oct 19 14:53:38 PDT 2020
+Error: dt_job_id 161486-C01.01-V21329 rerun with different JID. Current CID: ewbb, JID: ms3 - New CID: ewbb, JID: ms1. Please ensure DT_JOB_iD is correct for this rerun. /home/master/verify_estmt_captured.pl
+Error within program: verify_estmt_captured.pl
+Fatal error in isisdisk.sh ewbbms1 f
+
+*ewbbsm101.log, ewbst101.log & ewbbsr101.log*
+
+Error when calling API curl -X POST http://is-apps-prod.infoimage.com/infosync/v1/infotrac/online_proofing/extended_mail_tracking/proc_id/2268766/cid/ewbb/user_id/oper1 -H accept: application/json -H Content-Type: application/json -d \{ state: submitted, type: full, message: Request to insert, full_txt_name: ewbbms120201019144714.txt}
+perl /home/master/trigger_tracking_by_rec
+
+*DPVS created*
+
+!image-2020-10-19-15-03-44-209.png!
+
+
+author: peter.dang
+comment: [~jasramos],
+
+
+
+This error is due to missing paper process for this dt job id.
+
+You will need to rerun with both s,f options.
+
+
+
+
+author: peter.dang
+comment: Jason,
+
+
+
+Look like the dt_job_id was mixed up or switch between ms1 and ms3.
+
+161486-C01.01-V21329 rerun with different JID. Current CID: ewbb, JID: ms3 - New CID: ewbb, JID: ms1
+
+
+
+Please delete the old job from ETA.
+
+verify ms3 and ms1 insert file dt_job id and reprocess.
+
+
+author: jasramos
+comment: [~Peter.Dang]Thanks. 
+
+Job #'s stay the same and the vid changes through ms1,ms3 & ms5. I will be making a request to PC for a full set of dt_job_jobs (ms1,ms2 & ms5). Once received I will reprocess
+
+
+author: jasramos
+comment: [~William.Kong]reprocess complete. Everything looks good. Below is the only other error I noticed other than the normal check images.
+
+/d/ewbb/ewbbsm101.log:Error when calling API curl -X POST http://is-apps-prod.infoimage.com/infosync/v1/infotrac/online_proofing/extended_mail_tracking/proc_id/2268778/cid/ewbb/user_id/oper1 -H accept: application/json -H Content-Type: application/json -d \{ state: submitted, type: full, message: Request to insert, full_txt_name: ewbbms120201021115015.txt}
+
+Note: Auto post trigger but and failed.
+
+Error: the data file has been processed before
+
+Thanks!
+
+Jason
+
+
+author: william.kong
+comment: [~jasramos]: Can we 'UNDO' the old EWBB August cycle on PUI and retry?
+
+
+author: jasramos
+comment: [~William.Kong] I'll re-run to have a full process.
+
+
+author: jasramos
+comment: [~William.Kong] reprocess complete. eStmts posted. 
+
+21 accts did not post and received error below.
+
+!image-2020-10-21-16-56-28-067.png!
+
+
+author: william.kong
+comment: [~Tin.Chak]: Can you review this PUI processing error?
+
+
+author: william.kong
+comment: [~Tin.Chak]: When you return to work tomorrow, can you give us an update on this issue?
+
+
+author: william.kong
+comment: [~Tin.Chak]: Per your spark message, here is the latest status:
+
+(12:47) Sean Chak: Hi Will, I need DSI to setup the path for afp2web
+(12:47) Sean Chak: Everything else posted just fine, just the big AFP have issues
+
+
+
+
+author: william.kong
+comment: [~Tin.Chak]: Any new updates on this issue? Were you guys able to solve this problem? Please advise.
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~William.Kong] We are still looking into it. The issue is the file size is too big and there's an error at the afp2web Apache that we are trying to fix.
+
+
+author: william.kong
+comment: [~jasramos]: Sean confirmed that the issue is resolved and he manually posted. Can you confirm the results? If it is good, please update smartsheet and re-assign back to me.
+
+
+
+Thanks!
+
+
+author: jasramos
+comment: [~William.Kong] smart sheet updated.
+
+
+author: william.kong
+comment: [~jasramos]: Thanks! closing this ticket out now.

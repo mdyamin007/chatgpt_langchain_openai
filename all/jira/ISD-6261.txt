@@ -1,0 +1,48 @@
+title: 25667 - ALCU - Deconversion Request
+description: None
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: 07/01/2018 - 08/31/2020
+
+Commercial Loans - 362666
+Line of Credit - 28835
+Mortgage - 23474
+Daily Notices - 103947
+
+
+Queries:
+Select count(ed.esd_id)
+from Fin_Account Fa, Estmt_Doc Ed
+where Fa.org_id = getorgid('alcu')
+and Fa.Acct_Id = Ed.Acct_Id
+AND (Ed.status IS NULL OR Ed.status=9)
+and ed.esd_closingdate >= to_date('07/01/18', 'MM/DD/YY')
+and ed.esd_closingdate <= to_date('08/31/20', 'MM/DD/YY')
+and Ed.Stmt_Type = 'loan';
+
+Select count(ed.esd_id)
+from Fin_Account Fa, Estmt_Doc Ed left join estmt_type_desc et on et.esd_id=ed.esd_id
+where Fa.org_id = getorgid('alcu')
+and Fa.Acct_Id = Ed.Acct_Id
+AND (Ed.status IS NULL OR Ed.status=9)
+and ed.esd_closingdate >= to_date('07/01/18', 'MM/DD/YY')
+and ed.esd_closingdate <= to_date('08/31/20', 'MM/DD/YY')
+and Ed.Stmt_Type = 'loc';
+
+Select count(ed.esd_id)
+from Fin_Account Fa, Estmt_Doc Ed left join estmt_type_desc et on et.esd_id=ed.esd_id
+where Fa.org_id = getorgid('alcu')
+and Fa.Acct_Id = Ed.Acct_Id
+AND (Ed.status IS NULL OR Ed.status=9)
+and ed.esd_closingdate >= to_date('07/01/18', 'MM/DD/YY')
+and ed.esd_closingdate <= to_date('08/31/20', 'MM/DD/YY')
+and Ed.Stmt_Type = 'mortgage';
+
+select count(ed.enotice_id)
+from fin_account fa, enotice ed
+where Fa.org_id = getorgid('alcu')
+and Fa.Acct_Id = ed.Acct_Id
+AND (Ed.status IS NULL OR Ed.status=9)
+and ed.enotice_stamp >= to_date('07/01/18', 'MM/DD/YY')
+and ed.enotice_stamp <= to_date('08/31/20', 'MM/DD/YY');

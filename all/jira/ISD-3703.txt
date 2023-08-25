@@ -1,0 +1,398 @@
+title: 15085 - OSCU - Hypercube Migration
+description: *DSI*: Finish development for pilot by Feb 3. ISD will need the one week lead-time to review and resolve any issue before the Client Pilot date.
+
+
+author: azad
+comment: Hi [~tai.trinh],
+
+
+
+OSCU Migration progress is as follows,
+ # Database Migration not done.
+ # PUI Update Analysis done but code base is not updated to match Hypercube business.
+ # InfoTRAC (MSM) Analysis done.
+ # Hypercube (ROOT) Analysis done and front-end ready.
+
+
+
+Thanks,
+
+Azad
+
+
+author: azad
+comment: Hi [~tai.trinh],
+
+We are going forward with OSCU Migration as per Joe's instruction.
+
+After analyzing the MSM part, we've found some missing features in InfoTRAC.
+ # *Account Management:* _Updating email address and switching delivery preference will send email notification_  InfoTRAC doesn't have those supports.
+ # *Email Proofing:* _Switching Delivery Preference and updating email address_  As InfoTRAC doesn't send email notification for those, do we need email proofing template for them?
+ # *Marketing Promo Email:* This should not be in InfoTRAC. Also it is not listed in PR Document.
+ # *Reports:* _Latest Stats and Marketing Insert Report_  InfoTRAC doesn't support those reports.
+
+What should be done for those?
+
+Thanks,
+
+Azad
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+ # The client will lose support for this feature.
+ # The client will lose support for this feature.
+ # I think there's a "Marketing" feature on InfoTRAC?
+ # The client will lose support for these reports. If the client asks for any report specifically, we will provide them through the PUI via FTP. These will be assessed case by case when the client brings it up.
+
+Thanks,
+
+Tai
+
+
+author: azad
+comment: Hi [~tai.trinh],
+
+We are done for OSCU from our side. Current migration progress status as follows:
+ # *Hypercube*: Committed to trunk.
+ # *PUI*: I've updated the PUI codebase and oscu.conf file. Updated PUI is tested but is not committed. Should I commit the code?
+ # *InfoTRAC*: Setup is only done in DEV. Should I setup InfoTRAC in PILOT too?
+ # *Database* *Migration*: Only DEV Database is migrated. Should I migrate the PILOT Database also?
+
+Thanks,
+
+Azad
+
+
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+
+Yes, please commit all code to Dev, and I will review.
+
+That said, the plan for AFP/Enotice is to move to Document Processing. I just read the analysis documents and it seems like that wasn't what's going to happen.
+
+Thanks,
+Tai
+
+
+author: azad
+comment: Hi [~tai.trinh],
+
+Enotice is moved to Document Processing. About AFP, only Real Estate Loan(mlb) statements are moved to Document Processing.
+
+I have followed the PR Document and also checked the index files of OSCU from ca-pui-dv-01 (10.5.16.192).
+
+From there,PUI is updated to support the following configuration:
+||Process to Use||Statements & Prefix||
+|AFP|Default (ms1), Visa (mv1)|
+|DOC|Default (ms2), Visa (mv2), Loan (mlb), Enotice (en1)|
+|ETAX|Etax (etax)|
+
+Please, cross-check this configuration and let me know if anything should change.
+
+Thanks,
+Azad
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+
+I think ms1 and mv1 are no longer being used on Production. I will confirm with IS. But yeah, everything should just be moved to Document processing except eTax. We will just have to work with IS and ask them to update all the index files.
+
+Please go ahead and commit code to dev.
+
+Thanks,
+
+Tai
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+
+I have switched OSCU to using digitalInsightV2, since this is what we're doing on Prism, too. I am allowing for new account/user creation, since I do not see a reason to restrict that.
+
+When I try to log in as new user, though, the email address I pass through the SSO doesn't take, and I have to enter the email address again. Is there not a configuration that enable this?
+
+Thanks,
+Tai
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+
+A few other things I notice:
+ # The email templates on InfoTRAC have the wrong names. The name of the templates need to be the same as the names in the oscu.conf file. So default template need to be "Monthly Statements".
+ # The welcome email template is not there.
+ # Some configurations in InfoTRAC is unnecessary I think. For example, the SSO method. That isn't being used by InfoTRAC. We shouldn't keep unnecessary configs like that.
+
+Thanks,
+Tai
+
+
+author: azad
+comment: Hi [~tai.trinh],
+
+About new user/account creation, wasn't it off on OSCU Prism site?
+
+While logging in as a new user, passed email through SSO can be shown in the email input field. It depends on a flag that was missing. It's fixed now. Also, I've set "ssoUserUpdate" to true, so that the email passed through SSO will be saved in the database.
+ # I've updated the template names as such - Monthly Statements, VISA, Real Estate Loan, E-Notices, E-Tax.
+ # Welcome email template was absent in InfoTRAC pilot. Now, added to both dev and pilot, named "Welcome".
+ # Removed those flags - _defaultSSOMethod_,_ssoMethod_, from InfoTRAC configuration.
+
+Thanks,
+
+Azad
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+
+Yes, it was on the OSCU Prism Site. But sometimes, with migration, we have to take into consideration whether it makes sense to have such a restriction. The only thing that this achieves is that it would prevent brand new users who have no statements from logging in, and resulting in an "undefined" error page. It would just be better to allow them to log in. Due to the fact that it would just be better UX, the decision can be, and was made to allow new user/account creations.
+
+Everything else is good.
+
+For all of the Setup tickets, is there anything you still need to do? If not, please close them out. I guess the tickets are really for "setup and ready for Pilot". After all development are done, either there will be new bug tickets/requests, or everything will be worked on in this main ticket.
+
+Thanks,
+ Tai
+
+
+author: azad
+comment: Hi [~tai.trinh],
+
+Yeah, I agree.
+
+About other setup tickets,
+ * *PUI*: As everything is now moved to Document process except eTax, no code changes are needed. Only 1 or 2 flags need to be added in the conf file. I have updated oscu.conf in trunk. The conf file in production (srv/svn/estmt2/processing/conf-schedule/branches/production) needs to be updated too. Should I update it as well?
+ * *Database* *Migration*: In Pilot database, USR_SESSION migration was left out for logging purpose. Other two (USR_MAPPING and NP) are done. Should I start running migration on Pilot DB?
+
+Other than that, everything is done from our side.
+
+Thanks,
+Azad
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+ * *PUI*: No, only move configuration to Pilot only.
+ * *Database Migration*: Yes, please migrate usr_session also.
+
+Thanks,
+Tai
+
+
+author: azad
+comment: Hi [~tai.trinh],
+
+I've finished my remaining works on PUI and Migration sub-tickets and now they are closed.
+
+I am also closing the coordination sub-ticket as well as this main ticket. If new bug/requests arises, we can create new ticket and work on them.
+
+Thanks,
+Azad
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+
+Just an update.
+
+We are targeting to have client's approval by 7/16.
+
+Live date: 7/28.
+-----
+
+This is just notes.
+
+There is apparently some issue with the welcome email still. Pending more information from the client to research.
+
+Thanks,
+Tai
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+
+Here is the issue details. Please research.
+
+--
+
+My account 249119: confirmation message fails each time for me
+
+
+ # I un-enrolled my account via desktop site and then re-enrolled successfully. Upon re-enrollment I got the error message in desktop and no confirmation email.
+ # I un-enrolled my account via InfoTRAC pilot site then re-enrolled with the app. Same error message and no email.
+ # I un-enrolled and re-enrolled my account via the app. Same error and no email.
+
+
+
+In comparison, Logan has been successful for his account 436661. He un-enrolled and re-enrolled via desktop and app and received the confirmation message / email each time
+
+--
+
+Thanks,
+Tai
+
+
+author: azad
+comment: Hi [~tai.trinh],
+
+My findings:
+ # The account 249119 has the email address "jen_erik@me.com". After enrolling, welcome email template fetching was successful and while sending the email I've got the error message: "_*This is not production environment and email address or email domain is not white listed. To address : jen_erik@me.com"*_. Please check the log below.
+ # The account 43661 has the email address "logan.dane.asher@gmail.com". I think gmail.com is whitelisted thus no error is triggered and Notification.success() message is shown in the UI. Email sending logs are added below.
+ # I tried un-enrolling from InfoTRAC and re-enrolling in the desktop site. Same scenario as above.
+ # Couldn't try the app. I don't have credentials. But I don't think platform is the issue here. Some domains are not whitelisted.
+ # I tried enrolling account 249119 with azhar.uddin@dsinnvators.com and got the welcome message. [I changed the email back]
+
+Log for the account 249119
+{code:java}
+2021-07-08 14:06:38:3600 - info: oscu server/methods.js :: sendNotification ...cid:oscu data:{"to":"jen_erik@me.com","app":"estmt","templateid":67973,"type":"email","carrier":"na","vars":{"sdv_txt_userName":"JAY E LUBBOCK "}} 
+
+2021-07-08 14:06:38:3600 - info: oscu server/methods.js :: sendNotification http://notifyservice-common-pilot.infoimageinc.com/api/v1/notification/oscu/realtime?sample=false 
+
+2021-07-08 14:06:39:6140 - error: oscu @ server/methods.js :: sendNotification Response issue ::{"stack":"Error: failed [500] {\"message\":\"This is not production environment and email address or email domain is not white listed. To address : jen_erik@me.com (2021-07-08 01:06:39.499)\"}\n at Object.Future.wait (/home/azad/.meteor/packages/meteor-tool/.1.1.10.ipc7sn.gfx58++os.linux.x86_64+web.browser+web.cordova/mt-os.linux.x86_64/dev_bundle/server-lib/node_modules/fibers/future.js:398:15)\n at Object.call (packages/meteor/helpers.js:119:1)\n at [object Object].Meteor.methods.sendNotification (server/methods.js:935:1)\n at maybeAuditArgumentChecks (livedata_server.js:1698:12)\n at livedata_server.js:708:19\n at [object Object]._.extend.withValue (packages/meteor/dynamics_nodejs.js:56:1)\n at livedata_server.js:706:40\n at [object Object]._.extend.withValue (packages/meteor/dynamics_nodejs.js:56:1)\n at livedata_server.js:704:46\n at tryCallTwo (/home/azad/.meteor/packages/promise/.0.5.1.9sjkhc++os+web.browser+web.cordova/npm/node_modules/meteor-promise/node_modules/promise/lib/core.js:45:5)\n - - - - -\n at makeErrorByStatus (packages/aldeed_http/packages/aldeed_http.js:26:1)\n at Request._callback (packages/aldeed_http/packages/aldeed_http.js:238:1)\n at Request.self.callback (/home/azad/.meteor/packages/aldeed_http/.0.2.2.1jx49gb++os+web.browser+web.cordova/npm/node_modules/request/request.js:372:22)\n at Request.emit (events.js:98:17)\n at Request.<anonymous> (/home/azad/.meteor/packages/aldeed_http/.0.2.2.1jx49gb++os+web.browser+web.cordova/npm/node_modules/request/request.js:1310:14)\n at Request.emit (events.js:117:20)\n at IncomingMessage.<anonymous> (/home/azad/.meteor/packages/aldeed_http/.0.2.2.1jx49gb++os+web.browser+web.cordova/npm/node_modules/request/request.js:1258:12)\n at IncomingMessage.emit (events.js:117:20)\n at _stream_readable.js:944:16\n at process._tickCallback (node.js:448:13)"}
+{code}
+Log for the account 43661
+{code:java}
+2021-07-08 14:11:11:4860 - info: oscu server/methods.js :: sendNotification ...cid:oscu data:{"to":"logan.dane.asher@gmail.com","app":"estmt","templateid":67973,"type":"email","carrier":"na","vars":{"sdv_txt_userName":"oscunewusr "}}
+
+2021-07-08 14:11:11:4870 - info: oscu server/methods.js :: sendNotification http://notifyservice-common-pilot.infoimageinc.com/api/v1/notification/oscu/realtime?sample=false
+
+2021-07-08 14:11:12:9800 - info: oscu server/methods.js :: sendNotification - Response received 
+{code}
+Please give me your feedback.
+
+Also, I've noticed Account Management V2 in InfoTRAC pilot is added. Did you add this? Which one should we use for OSCU?
+
+Thanks,
+
+Azad
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+
+Again, please don't move this to DONE. This ticket can only be closed once OSCU is on Production.
+
+Thank you for the research. I'll relay the information to the client.
+
+Thanks,
+Tai
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+
+Whenever a welcome email is sent, we get a pop-up saying "Welcome notification has been sent."
+
+The client is asking for this verbiage to be customizable. I think this is fine. Let's have a configuration that can replace this default verbiage.
+
+This is the verbiage the client wants:Thanks! Weve sent a welcome message to your email address.
+
+Thanks,
+Tai
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+
+Also, please make sure you test sending out emails since we are switching to sending out emails with API.
+
+Let me know if you need help.
+
+Thanks,
+Tai
+
+
+author: azad
+comment: Hi [~tai.trinh],
+
+Customizing welcome email verbiage feature is implemented and committed in hypercube trunk. QA completed cross-client testing with OSCU, HEBC, BANB, SEFC and WTCU.
+
+I've added a new flag - "welcomeNotifySuccessText" that will contain the customized verbiage for successful welcome message send notification. For example,
+
+_"welcomeNotifySuccessText": "Thanks! Weve sent a welcome message to your email address."_
+
+I've done welcome email test from Hypercube.
+
+I will test sending email from PUI and let you know.
+
+Thanks,
+ Azad
+
+
+author: azad
+comment: Hi [~tai.trinh],
+
+We have finished testing sending out emails via templateservice and notifyservice API in PUI PILOT.
+
+If you need anything please let me know.
+
+Thanks,
+Azad
+
+
+author: igor.khosid
+comment: [~tai.trinh]
+
+Please update due date
+
+
+author: nprimak
+comment: Hi Tai,
+
+I have errors to generate keys on both sso. Not sure which one I should test, I am testing on pilot, but both are not working or I need to input some special data.
+
+Thank you,
+
+Natasha
+
+
+author: nprimak
+comment: Thank you Tai for providing host entry for oscu pilot
+
+
+author: nprimak
+comment: Verified OSCU on Pilot SSO site, works as expected and ready for client review.
+
+
+author: tai.trinh
+comment: Hi [~nprimak],
+
+Sorry, this is supposed to be QA for Staging; not Pilot.
+
+Thanks,
+Tai
+
+
+author: nprimak
+comment: I will re-test on Staging
+
+
+author: nprimak
+comment: Verified on Staging, works correctly.
+
+
+author: nprimak
+comment: Verified OSCU on Pilot SSO site, works as expected and ready for client review.
+
+
+
+
+
+
+author: nprimak
+comment: I don't know from where last comments came from, I think it old from other browser, please ignore,
+
+But it verified on staging and pilot and ready for release
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+
+As discussed, please prepare for Production release.
+
+Thanks,
+Tai

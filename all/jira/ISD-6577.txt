@@ -1,0 +1,307 @@
+title: EWBB: Setup Keyword Search for Electronic Site
+description: Set-up Keyword Search for EWBB's customer electronic site for the following applications (as Phase 1):
+
+    DDA/Savings eStatements
+    Account Analysis eStatements
+
+Description from Addendum:
+
+Provides end user with the ability to search for specific keywords within a particular type of statement for a given data range. The
+matching documents are listed in search results, and once clicked  the document is presented with each appearance of the
+keyword highlighted.
+
+IS: Requires index file update - targeted to begin 3/15/22.
+
+ISD: Requires UI update and processing of updated index file - targeted to begin 3/1/22.
+
+Proposed live date = 5/16/22 (needs to be reviewed with IS/ISD)
+
+
+author: phoebe.george
+comment: [~Tin.Chak] Please confirm who will assigned to this ticket. IS had the following questions on the eStatement index file:
+ # What should the cripple flag field be in the new index structure?
+ # What should the inline insert flag field be in the new index structure?
+ # Are there any other field changes/updates that need to be done in order to trigger the keyword search?
+
+
+
+Thanks,
+
+Phoebe
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~phoebe.george] Azhar is working on this. I create ticket ISD-6429 for them to work on this feature.
+
+[~Azad] Please provide answer to Phoebe's question.
+
+Thanks.
+
+
+author: azad
+comment: Hi [~phoebe.george],
+
+The new index file will be on standard Document process file format. The header will be like following:
+
+_*JobType*|*PresentmentType*|*DocumentCode*|*FileName*|*ZipFileName*|*DocumentBeginDate*|*DocumentEndDate*|*ImageCount*|*AccountNumber*|*AccountType*|*AccountSuffix*|*AccountName*|*SSN*|*MessageID*|*InsertID*|*RegionCode*|*CrippleFlag*|*PostcardFlag*|*Afp2webPM*|*Afp2webIni*_
+ # The cripple flag field name is "CrippleFlag". It will be in the 17th position.
+ # The insert flag field name is "InsertID". It will be in the 15th position.
+ # No other field changes are needed in respect with the keyword search.
+
+Thanks,
+
+Azad
+
+
+author: azad
+comment: [~phoebe.george]
+
+From the task description, I understand that only the*DDA/Savings eStatements* and the *Account Analysis eStatements* will get the contextual search feature. So, in the Customer site, whenever those statement's tabs are selected, the search box will appear.
+
+Now, from the code base and also from the ewbb configuration file, I've found two_dda_ type statements, i.e. fcdda (FCDDA Statements) and dda_velo (Velo Statements). Can you please confirm me which of those statements will get the feature or both?
+
+Also, I need to know the statement type for the Account Analysis eStatements. I did not find any statement type with that description on the code base or on the configuration. The close I could find is the_xaa_ type statements as they have the description*Analyzed Statements* stated on the prism code.
+
+For your reference, I am writing all the statement types and their description that are currently configured on the code base and on the ewbb.conf file.
+||statement type||description||
+|default|Daily Statements/Monthly Statements/eStatements|
+|dda_velo|Velo Statements|
+|fcdda|FCDDA Statements|
+|mmidas|Mmidas Money Market|
+|loan|Loan Statements|
+|xaa|Analyzed eStatements/XAA Statements|
+|mortgage|Mortgage Statements|
+|hk|Hong Kong Statements|
+|etax|E-Tax/eTax|
+|enotice|Notice|
+
+Can you confirm me which of the above will get the contextual search feature?
+
+[~Tin.Chak]FYI
+
+
+
+Thanks
+
+Azad
+
+
+author: phoebe.george
+comment: [~Azad] Sorry for the delay! Only 'Default' and 'Analyzed eStatements/XAA' will be included for the setup.
+
+Default = Regular DDA
+
+XAA = Account Analysis
+
+FCDDA and VELO will not be part of this setup requiring keyword search.
+
+Can you confirm target date when customer may be able to pilot? I haven't forwarded a new timeline yet and wanted to confirm. Thank you!
+
+
+author: mamunur.rashid
+comment: [~phoebe.george],
+
+Code has been deployed on pilot. QA is currently testing it. Hopefully, customer can see it on pilot by 16th.
+
+Search_index has been processed only for XAA statement. If you can provide search_index file for default statement then we can test contextual search for the default statement too.
+
+Thanks.
+
+
+
+
+
+
+author: phoebe.george
+comment: [~mamunur.rashid] Here are the DDA index files:
+|DDA Index File:ms1_20220428_1_20220513_0941_ewbb.txt|
+
+DDA Search Index:search_index_ms1_20220428_1_20220513_0941_ewbb.idx
+
+
+author: azad
+comment: [~phoebe.george]
+
+I've deployed the contextual search implementation on Pilot. Testing is passed on Pilot.
+
+Please let me know if you find any issue.
+
+Thanks
+
+Azad
+
+
+author: phoebe.george
+comment: [~Azad] I requested IS to provide an additional index test file that included business accounts.
+
+He will provide if possible to create from the EOM file.
+
+Also, updating live date to end of June as a placeholder. We still need to review internally though what is possible for a target live date.
+
+
+author: phoebe.george
+comment: [~Azad] We had to generate index files from an additional DDA file for specific accounts. Can you load this to pilot as well?
+
+ms1_20220430_1_20220613_2102_ewbb.txt
+
+search_index_ms1_20220430_1_20220613_2102_ewbb.idx
+
+
+
+Thanks!
+
+
+author: azad
+comment: Hi [~phoebe.george]
+
+I've ran the file on pilot [jobid: 188282]. It did not ran successfully as the error "_The index file doesn't have the corresponding id in IS DB!_" occurred.
+
+This error occurs whenever the job did not find the dt_job_id on the IS database table named "_linkpaperandestmt_". The query that was used is
+{code:java}
+select id from linkpaperandestmt where index_file_name=? and cid=?
+{code}
+I could not look into it further as we don't have this table on the database that the Processing-UI uses.
+
+Let me know if you need anything.
+
+[~Tin.Chak] [~rifat.mahmud]Let me know what can we do from our side.
+
+
+
+Thanks
+
+Azad
+
+
+author: phoebe.george
+comment: [~Azad] EWBB had this question while continuing to test pilot site - can you confirm below?
+
+So far, I have one question about the search feature - through the keyword search, we anticipate that the customer will be able to type in their account number or account name to directly get to that specific account. When our customers have large number of accounts, we want to allow them to directly enter part of the account number of account name to get to the account documents.
+
+I recall this was available in an early demo, but currently when I try this in the Pilot site I am not able to get the correct result.
+
+Please help to review and let me know if we need to discuss.
+
+
+
+
+author: azad
+comment: Hi [~phoebe.george],
+
+I've attached the user guide for contextual search with this ticket. Contextual Searching has some limitations. One of those limitation is that our contextual search implementation does not support partial search, this means that if the search term is contained within a word in a document, the search engine in our module does not find it as a match. It only searches for a whole word only, i.e. only whole words are get indexed so that only whole words can be matched.
+
+So, if the client puts a part of the account number, the search term will not get matched with any word. Client has to put the whole account number on the search box to find the document contained that account number.
+
+Sometimes, in the client site's account drop-down, you could find results by only searching with the unmasked portion of the account number (I've attached a screenshot). From the screenshot, if you search with '1566' which is the unmasked portion of the_Analyzed Checking_ account, you will get document containing the number '1566'. Here it may seem like that partial searching is working, but it is working because 1566 is the whole account number, not just a part of another larger number. The prefix 'X's are just masking, added to make the account number 10 digits long.
+
+Please let me know if you have any further questions.
+
+[~Tin.Chak], please let me know if I missed anything here.
+
+Thanks
+
+
+author: phoebe.george
+comment: [~Azad] [~Tin.Chak] We are working to load additional cycles to the pilot site for continued validation of the pilot for EWBB.
+
+IS is assisting with having these cycles processed and will let you know when ready to load.
+
+Note that we are trying to launch by 11/9/22 for this feature. Let me know if any issues with that date. Thanks!
+
+
+author: azad
+comment: [~phoebe.george]
+
+We have started updating Prism and ELK servers targeting this live date.
+
+Please let me know if the statements are posted for another cycle on Pilot.
+
+Thanks
+Azhar
+
+
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~Azad] [~rifat.mahmud] Can you create a new Story for specifically implementing the cripple logic? We need to get that to QA and roll it out. The print side have made the switch to the doc processing on production, but the logic for the cripple flag is not there.
+
+
+author: phoebe.george
+comment: [~Azad] [~rifat.mahmud] Sorry, but can you post this additional index file for this project this morning?
+
+ms1_20220919_1_20220927_0957_ewbb.txt
+search_index_ms1_20220919_1_20220927_0957_ewbb.idx
+
+
+
+Thank you!
+
+Phoebe
+
+
+author: azad
+comment: HI [~phoebe.george]
+
+I ran the doc file (ms1) on Pilot and it was not posted as the IS db did not have the corresponding id for this index file. This issue might be fixed by consulting with IS side.
+
+I'll look into it tomorrow to see what we can do.
+
+
+
+[~rifat.mahmud] [~Tin.Chak] fyi
+
+Thanks!
+
+
+author: rodriguez
+comment: [~phoebe.george] [~Azad]I just posted a new index file on pilot, please see below:
+
+INDEX FILE =ms1_20221010_1_20221011_1106_ewbb.txt
+
+SEARCH INDEX =search_index_ms1_20221010_1_20221011_1106_ewbb.idx
+
+PILOT POSTING:
+
+!image-2022-10-11-12-49-23-663.png!
+
+INDEX IN IS PILOT DB:
+
+!image-2022-10-11-12-52-27-553.png!
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~Azad] [~rifat.mahmud] Is the new story created for the cripple logic in document processing? We really need this because it's affecting production.
+
+
+author: azad
+comment: [~Tin.Chak]
+
+As far as I know, there was a ticket for cripple flag implementation on Doc process to make the EWBB's afp process switch to doc. Here is the ticket link.
+
+This ticket is already released to production.
+
+[~rifat.mahmud]fyi
+
+Thanks!
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~Azad] [~rifat.mahmud] Can you double check? The flag was not inserted into the database and it doesn't look like the code is there.
+
+
+author: azad
+comment: [~Tin.Chak]
+
+I checked the code today and found that the cripple flag logic implementation was done up to Pilot. Stage and Production did not get this update.
+
+The ticket which was created before for this implementation was marked as done. But the code was not released to Stage and Prod. Here is the link of previous story for this https://jira.infoimageinc.com/browse/ISD-6430
+
+I've deployed the code to Stage. Should we have a stage testing for this task?
+
+Let me know.
+
+
+
+[~rifat.mahmud]fyi
+
+Thanks

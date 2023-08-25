@@ -1,0 +1,124 @@
+title: Backup script for mongodb, harbor, gitlab and jenkins
+body: The following repository is for holding the script to take backup of mongo,
+harbor, jenkins and gitlab
+
+Gitlab is responsible to run the scheduler with the help of Gitlab CI.
+
+More information can be found in the readme file.
+
+<https://gitlab.infoimageinc.com/devops/backup-
+scheduler/-/blob/master/Readme.md>
+
+  
+
+Backup Service Name| Server IP/Hostname| Scheduled Time| Backup script
+Location| Backup Location| Mounted on Server and Location| Notes  
+---|---|---|---|---|---|---  
+Elasticsearch| 10.4.16.69/ca-elasticsearch-pr-01| 9:45 AM PST daily|
+/root/elasticdbbackup.sh| /usr/local/elk/elasticsearch/restore_bkup/| [ca-
+isilon01-nfs:/backup/ca-elasticsearch-pr-01](http://ca-isilon01-nfs/backup/ca-
+elasticsearch-pr-01)|  
+  
+Swift| 10.4.16.62/ca-swift-pr-02| 4:15 PM PST daily|
+/root/swiftbackupscript_prod.sh| /mnt/backup/ca-swift-pr-01| [ca-
+isilon01-nfs:/backup](http://ca-isilon01-nfs/backup)/ca-swift-pr-01| Primary
+server is ca-swift-pr-01, the back up process is running on ca-swift-pr-02  
+Gitlab| 10.4.16.193/ca-utils-pr-01|
+
+4.00 PM PST daily
+
+11.00 PM PST on Monday weekly
+
+05.00 PM PST on Day 14 monthly
+
+|
+
+    
+    
+    - sudo su  
+    - rm /usr/local/docker/gitlab-server/gitlab-data/data/backups/*
+    - cd /usr/local/docker/gitlab-server   
+    - docker-compose exec gitlab gitlab-backup create
+    - mv /usr/local/docker/gitlab-server/gitlab-data/data/backups/* /backup/gitlab/...
+    
+
+| `ca-utils-pr-01` server in the path `/backup/gitlab`|
+
+`[ca-isilon01-nfs:/backup](http://ca-isilon01-nfs/backup) /backup nfs
+timeo=14,intr,nolock,rw`
+
+|  
+  
+Harbor| 10.4.16.193/ca-utils-pr-01| 02.00 PM PST on Tuesday weekly|
+
+    
+    
+    - sudo su  
+    - rm -rf /tmp/harbor_backup/*
+    - 7z a /backup/harbor/.../harbor-data.tar /data
+    - 7z a /backup/harbor/.../harbor-server.tar /usr/local/docker/harbor-server/
+    
+
+| `ca-utils-pr-01` server in the path `/backup/harbor`| `[ca-
+isilon01-nfs:/backup](http://ca-isilon01-nfs/backup) /backup nfs
+timeo=14,intr,nolock,rw`|  
+  
+Jenkins| 10.4.16.193/ca-utils-pr-01| 12.00 PM PST on Monday weekly|
+
+    
+    
+    - sudo su  
+    - rm -rf /tmp/jenkins_backup/*
+    - 7z a /tmp/jenkins_backup/jenkins-data.tar /var/data/jenkins
+    - 7z a /tmp/jenkins_backup/jenkins-server.tar /usr/local/tomcat/tomcat-jenkins
+    
+    - mv /tmp/jenkins_backup/* /backup/jenkins/...
+    
+
+| `ca-utils-pr-01` server in the path `/backup/jenkins`| `[ca-
+isilon01-nfs:/backup](http://ca-isilon01-nfs/backup) /backup nfs
+timeo=14,intr,nolock,rw`|  
+  
+MongoDB Prod| 10.4.16.193/ca-utils-pr-01|
+
+10.00 AM PST daily
+
+01.00 PM PST on Day 19 monthly
+
+|
+
+`- export SERVICE_NAME=MongoProdBkup`
+
+`- `export BACKUP_MODE=`daily/monthly/weekly (only one applies)`
+
+`- python3 mongodb_backup.py`
+
+| `ca-utils-pr-01` server in the path `/backup/jenkins/MongoProdBkup`| `[ca-
+isilon01-nfs:/backup](http://ca-isilon01-nfs/backup) /backup nfs
+timeo=14,intr,nolock,rw`|  
+  
+LDAP (IR)| 10.4.24.207/ca-mongoir-pr-03| 11:45 PM PST daily|
+/usr/local/apps/openldapinforeach/ldapProdBackup.sh| `ca-mongoir-pr-03` server
+in the path `/backup/ldap/`|  
+|  
+  
+  
+|  
+|  
+|  
+|  
+|  
+|  
+  
+  
+|  
+|  
+|  
+|  
+|  
+|  
+  
+  
+  
+
+

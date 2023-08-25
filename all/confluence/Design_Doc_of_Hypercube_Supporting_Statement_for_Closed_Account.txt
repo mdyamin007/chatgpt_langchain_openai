@@ -1,0 +1,267 @@
+title: Design Doc of Hypercube Supporting Statement for Closed Account
+body: ## **Introduction**
+
+This design documentation is to represent the necessary information and
+changes required for Hypercube supporting statement for a closed account.
+
+This feature will allow users to view statements for their closed accounts on
+the hypercube.
+
+##  **Purpose/Objective Summary**
+
+The main objective of this feature is to let users show their statements for
+their closed accounts.
+
+##  **Scope**
+
+### In-Scope
+
+  1. Check current business for closed accounts.
+  2. Check all necessary changes for code and API parameter
+
+##  **Findings**
+
+  1. For hypercube, if there is a closed account then we show floated sliding verbiage saying " _This account has been closed since   **date**. You will not have access to this account after  **date**."_  and this massage is not based on any flag. It's global for all close accounts.
+  2. We do not show any statements for closed accounts. But after we change to the closed account from the account selector dropdown, it shows the previously selected accounts statements tab (if have any), disclosures, and also the search option on the statement page along with some console errors. Also if we click on **search** or **statement** Type Tab then it doesn't work but it arises a new console error.
+  3. We do not show the batch download option for closed accounts.
+  4. The header message for closed account **" This account has been closed since " +date + ". You will not have access to this account after " \+ date + ". **also shown on to profile page. But it should only be shown on the statement page when that closed account is selected only.
+  5. Hypercube also shows " **Your account has been closed and you can no longer access it. We are sorry for any inconvenience.** " this verbiage on the delivery preferences box for that closed account.
+  6. Hypercube does not only check the account status for determining the closed account is true or false. If the status is " **C** " that means closed then it checks if  (account **lastModified** date + **acctExpiryDays** from a client properties file) is in the current date range. if it is in the current date range then it returns false for the closed account. Since it returns false for the closed account, so hypercube calls the statement search API but the API does not return any result because of account status is " **C** " in the database. API returns as below, 
+    
+        API Error: failed [600] {"Message": "No result found. Please check input parameters.","status": "600"}.
+
+Since this "600" is not handled in the code so it's showing that " **Service
+Temporarily Unavailable** " error on the hypercube.
+
+  7. There is verbiage for the closed account on the statement page. But it is not shown due to some miscoding.  " **Your account has been closed and you can no longer access it. We are sorry for any inconvenience.** " This verbiage should show on the statement page for the closed account. Below is the sample of how it should look as current HTML codding.
+  8. Infoservice API related to this feature support noted below,
+
+ID
+
+|
+
+Title
+
+|
+
+URL
+
+|
+
+Method  
+  
+---|---|---|---  
+API_01| estatementDataApi|
+
+infoserviceURL/api/v1/document/' + cid + '/search/all?
+
+| GET  
+  
+# Requirements
+
+### Business Requirements
+
+ID
+
+|
+
+Title
+
+|
+
+Functionality  
+  
+---|---|---  
+BR_01| Remove floated sliding verbiage for closed account based on the new
+client flag|
+
+Hypercube will hide floated sliding verbiage for all closed accounts if any
+client takes this feature flag and will show this verbiage for all other
+client's closed accounts.  
+  
+BR_02| Fetch and show all statement for closed account based on the new client
+flag|
+
+Hypercube will now show or hide statement for closed account based on this
+feature flag.  
+  
+BR_03| Modify floated sliding verbiage to sticky message text| Update UI/UX
+for better sense.  
+BR_04| Show batchdownload option for closed account based on the new client
+flag| Hypercube will now show or hide batchdownload for closed account based
+on this feature flag.  
+BR_05| Fix the previous UI of the e-statement page.| Stop showing statement
+tab, search bar, and disclosure for a closed account.  
+  
+### Functional Requirements
+
+ID
+
+|
+
+Title
+
+|
+
+Functionality  
+  
+---|---|---  
+FR_01| Introducing new flag called " **showClosedAccountStatement : boolean**
+"|
+
+Add this flag on client properties to enable statements for closed accounts.
+By default, if this flag is not present then acts as false.  
+  
+FR_02| Add new parameter " **includeClosed** " in **  API_01-**statement
+search all API to fetch closed account statements|
+
+Hypercube will now always fetch closed account statement but will manipulate
+it on the frontend for show/hide based on " **showClosedAccountStatement** "
+client flag  
+  
+FR_03| Change HTML,CSS for closed account verbiage|
+
+Stop sliding and improve visibility.  
+  
+FR_04| Add logic to show statement and batchdownload for the closed accounts|
+Add logic for show/hide batchdownload for closed account based on
+**showClosedAccountStatement**  
+FR_05| Fix the previous bug for the closed account| Don't show any statement
+type, search bar, and disclosure for a closed account if "
+**showClosedAccountStatement** " flag is false.  
+  
+### QA/Test Requirements
+
+ID
+
+|
+
+Title
+
+|
+
+Details  
+  
+---|---|---  
+QR_01|
+
+Test this new feature based for " **showClosedAccountStatement** " flag
+
+|
+
+Set flag to true/false and test feature for any client  
+  
+QR_02| Test closed account verbiage HTML-CSS change| Check modified look for
+closed account verbiage.  
+  
+## Code changes
+
+  1. Code update
+
+Project file path
+
+|
+
+Method Scope
+
+|
+
+Changes  
+  
+---|---|---  
+server/methods.js|
+
+#### estatementDataApi
+
+|
+
+Add " **includeClosed** " parameter in API call to fetch closed account
+statement data  
+  
+private/asset/{cid}/properties.js| Client properties flag|
+
+Add new flag  **showClosedAccountStatement  **for showing closed account
+statement  
+  
+client/views/e-statement/eStatement.html| Statement| Add show/hide statement
+logic based on  **showClosedAccountStatement  **flag  
+client/views/e-statement/eStatement.js| Closed account verbiage and
+Batchdownload| Modify the look and add show/hide verbiage logic based on
+**showClosedAccountStatement  **flag  
+  
+# Summarized Change Log
+
+Date
+
+|
+
+Who
+
+|
+
+Changes  
+  
+---|---|---  
+  
+
+
+| Sadman Anik| Creation  
+  
+
+
+| Sadman Anik| Added 2, 5, and 7 no findings.  
+  
+  
+
+# Feedback / Question / Answers
+
+Question
+
+|
+
+Answer  
+  
+---|---  
+  
+ **Q1.** What do you think about folding the flag into the acctExpiryDays? We
+can use a value like -1. In the code, we can define a global variable like
+Account.NO_EXPIRATION = -1, so then our code can have this if statement: "if
+(acctExpiryDays == Account.NO_EXPIRATION)".
+
+In the properties file, unfortuantely, we would still have to define -1.
+
+Do you think this would be better or worse?
+
+  
+
+ **F1.1**. The acctExpiryDays is essentially the flag that controls the
+visibility of the closed account statements. By default, this determines how
+long a user have to access their statements before they all become
+unavailable. In the same vein, we can use -1 to denote "unlimited time".
+
+|
+
+ **A1.**   I don't think it will be a good design to override existing flag
+business, it will be confusing for future development.
+
+  
+
+  
+
+  
+
+ **F1.1**. acctExpiryDays flags contain the days that are added to the
+lastModifiedDate of the account and determine is closed or not closed. It's
+better to not mixing this two logic. As  
+  
+ **Q2.** Should we show the batch download option for closed accounts based on
+that new flag? |  **A2**. Yes. If we are displaying statements, we should
+display Batch Download. This should also be true right now (even though it's
+not quite working as intended). If an account is closed, and it's within the
+acctExpiryDays, the user should have access to Batch Download (if enabled).
+This is particularly important for closed accounts since the user most likely
+wants to save all their statements before they lose access completely.  
+  
+  
+
+

@@ -1,0 +1,196 @@
+title: Common Setup Questions To Ask
+body:   
+
+## _Data Files:_
+
+  * What is the name of core system that generates your data file?
+
+  
+
+  * What is the file format for this application? 
+
+  
+
+  * Is there multiple data files that we use for processing?
+
+If Yes, advise the client recommended approach is for the client to zip all
+the files together prior to sending it over to us and PGP encrypt the file.
+
+  
+
+  * Will this application require a cross-reference file and/or a separate data feed that will require us to do additional custom programming to merge your data?
+
+  
+
+  * What is InfoIMAGE file naming convention we would like client to use:  
+Here is a list of the common field names we must have in order to recognize
+their data file:
+
+  1. CID: InfoIMAGE's 4 digit client id (e.g. bfcu - BayFederal Credit Union; ewbb - East West Bank); Our program must have this uniq field to help confirm the data file being used corresponds to the program we wrote. It is a preventative measure to not use the program to run another client's data file.
+  2. Cycle Date: We try to encourage the client to use the same cycle date that the statement/notices. However, we do encounter some clients that are unable to use the cycle date associated to the contents of the data file. If that is the case, system date is acceptable. Common date format can be: MMDDYYYY and MMDDYY.
+  3. Segment Number: Segment numbers are used whenever there is multiple files processed in the same day. There will be setups where clients will state that there will rarely or never be another set of files sent in one business day. If that is case, we still want the client to hard the number "1" in the file naming convention. Our programming needs to be flexible to run multiple times a day w/o overwriting the first segment.
+
+> > Above are the three minimum data fields requirements needed in the file
+> naming conventions. Typical delimiter between these fields is "_". In
+> addition to the three fields, you always need to include a small descriptive
+> fixed application name that can be anything. e.g.:
+
+> > ewbb_dda_{MMDDYYYY}_{SEG#}.txt.pgp
+
+  
+
+##  _Check Image Data Files (Statement Application ONLY):_
+
+Note:  Usually Banks require check images;  Sometime Credit Unions may require
+check image as well if they have a small business statements
+
+  * Do your statements have check pages?  If no, you can skip this entire section.
+
+  
+
+  * Who is your item processor?
+
+  
+
+  * Please note, we require check images sent to us daily.  Most of our clients generally send us check images 5 days a week but we do have a very large client that send us check images 7 days a week.  When do you generate check images and what time of day will you send it us to process  _automatically_.
+
+  
+
+Vendor| Comments  
+---|---  
+Jack Henry 4|Sight| If client uses this item processor, typically the don't
+send us check images daily.   Jack Henry 4|Sight sends us the check images we
+need along with their Statements.  
+  
+|  
+  
+  
+|  
+  
+  
+  
+
+  * InfoIMAGE has a standard cripple rate logic that we apply to all applications if we are creating the check pages from the  _individual_ check images.  Typically most of our clients choose 2% cripple rate; however, you can choose a different cripple during the implementation.   If cannot decide the cripple rate now, you can decide later when we do our cripple rate testing, but for now, we will use 2%.  When our processing detect a high cripple rate, our processing program will halt and our team will contact you to review the cripple report to confirm if we should proceed or wait for you to send us the missing check images.  
+
+  
+
+  * Can you provide us an email address of who you want to be notified when the cripple report is available for download?   
+
+  
+
+  
+
+  * What is the check image layout do you prefer?  
+    * 2 x 5  (most common)
+    * 2 x 6  (....)
+    * ..
+    * ...
+
+  
+
+  * Do you want us to print Front only or Front & Back Images?
+
+  
+
+Note, the following cores have tag defining a individual customer preference
+of front or front & back or none (i.e. truncated statements)
+
+Core| Comments  
+---|---  
+Jack Henry - Core Director| Refer to XML Tag <ImgFrntBck>  
+  
+|  
+  
+  
+|  
+  
+  
+  
+
+  
+
+  
+
+##  _Handling Rules:_
+
+  
+
+Are there any  suppression rules for this application?  If so, please list out
+all the suppression rules and provide us the field/location in the data file
+to identify the suppression logic?
+
+> Is there House Holding  
+> ...
+
+  
+
+Are there any house holding required?
+
+  
+
+  
+
+  
+
+##  _Message Manager:_
+
+This only applies to Statement/Loan/Heloc/Credit Card applications.  We
+currently do not support Message Manager for Daily Notices.
+
+  
+
+What type of message area do you want?  Graphics or Text Input
+
+  
+
+Do you require select criteria?  If so, here is a list of standard criteria
+that we have for your Statement Core provider (refer to __________ for the
+list of selective criteria).
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+ **TODO** :
+
+  * What key data fields we need to capture across all data file formats?
+
+> Account Number (w/o Leading zeros)  
+> Address Lines  
+> Statement / Notice Date (used primary for eStatements, but should be mapped
+> out regardless if they have eStatements or not)
+>
+
+>> Need to capture the Begin Date and the Closing Date. If begin date is not
+available, then use the same value as the closing date.
+
+>
+> App Code (used primary for InfoIMAGE's eStatement solution); Generally
+> Credit Union systems like Jack Henry Symi
+>
+
+>> Because the Account Number may overlap between application types, it is
+critical that we need to different the application types such as DDA, SAV,
+Loans, CD, Safe Deposit Box, etc etc ...
+
+  * Are there any other External product where there is a separate data stream that we need to combine together w/ the statement file?
+
+  * Adding more notices to an existing setup? Can we set it up in the same job... ... blah blah blah
+
+  * Does client have eStatements with us and if so, does this need to be setup w/ eStatements.
+
+  * Does client require account numbers masked in the document?
+
+> If yes, the data file must be sent to us w/o masking in order for us to
+> provide account number indexing information the PDF archival and/or
+> eStatements.
+
+

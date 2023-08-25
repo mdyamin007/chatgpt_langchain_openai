@@ -1,0 +1,62 @@
+title: Afp2web Docker Image Creation
+body:   
+
+The git repository for afp2web docker image is:
+<https://gitlab.infoimageinc.com/PD/afp2web-docker-image>
+
+  
+
+Steps needs to install new apackages for afp2web existing docker image.
+
+You get something like below instruction to update afp2web without docker
+
+  
+
+Installation Notes
+
+Download and install the I3_20200415_a2ws_update.tgz full release and Install
+it into /var/lib/apache2/fcgid/a2wserver as described below:
+
+1\. Stop Apache Server  
+service apache2 stop
+
+2\. Unzip the update package into AFP2web Server's installation directory  
+tar xvzf I3_20200415_a2ws_update.tgz -C /var/lib/apache2/fcgid/a2wserver
+
+3\. Change ownership and permission of the unzipped files  
+cd /var/lib/apache2/fcgid/a2wserver  
+chown -R www-data:www-data *  
+chmod 644 a2w/core/dm/*.pm a2w/core/visitor/*.pm
+
+4\. Start Apache server  
+service apache2 start
+
+  
+
+As we're building the docker image, we have to focus on step 2 there, where
+the tar.gz file has been extracted into /var/lib/apache2/fcgid/a2wserver
+
+For docker build we don't have to use **tar**  for doing that, we can simply
+use **ADD  **in Dockerfile
+
+  
+
+  
+
+Step 3 is for the permission and ownership change so that Apache can read all
+the configuration files. Inside **Dockerfile  **the ownership for the files
+are already there. so you don't have to do anything unless new type of files
+are being introduced.
+
+  
+
+Information:
+
+  * All the package files for afp2web is located under **docker_files/afp2web_server** folder
+  * All the configs files for afp2web are located under **docker_files/config** folder
+  * All the resources file for afp2web are located under  **docker_files/resources**
+  * There is a dummy **docker-compose.yml** file to run and check in your local
+
+  
+
+

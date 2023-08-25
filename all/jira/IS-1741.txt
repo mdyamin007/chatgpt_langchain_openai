@@ -1,0 +1,66 @@
+title: CAMB - [30848] [pvt] DDA EOM Validation of Counts FASTTRACK 
+description: Add PGP encryption to DDA EOM Validation report.
+
+
+author: mattl
+comment: Hi [~yameelee]Following up on this.
+
+
+author: yameelee
+comment: [~MattL] I will get samples today.
+
+
+author: yameelee
+comment: PR_ID:20221031104114
+
+new encrypted file: /z/infoftps3/CAMB/client_pickup/CAMB_ESMO_ESQU_COUNTS_08152022.txt.pgp
+
+[~Igor.Khosid]: Per [~MattL], will bypass parallel as I am just encrypting the file.
+
+FYI: Also updated cnt_from_header_rec=`grep "^0001" ${data_file} | wc -l | tr -d '\r'` as the combine.dat file no longer exist since may 2021 there is only 1 data file and no longer have to be combined so the count was always 0.
+
+
+author: igor.khosid
+comment:    Parallel ID: 20221031104114
+   Currently in parallel: Yes
+   User: yamee
+   Description: add pgp key to count file
+   Date Submitted: 2022-10-31 10:41:21
+   Date Last Updated: 2022-10-31 10:41:21
+   Files:
+      1) camb_stmt_process.sh
+
+
+author: berezinez
+comment: [~yameelee] [~MattL]
+
+QA is completed, the changes look good. Please attach IS checklist if needed.
+
+
+
+< if [ -s $count_file ]; then
+< cp $count_file ${d_dir}/infoftps3/camb/client_pickup/
+---
+> gpg --always-trust -o ${d_dir}/infoftps3/CAMB/client_pickup/CAMB_ESMO_ESQU_COUNTS_${proc_date}.txt.pgp -r information.systems@cambridgesavings.com -e --yes ${count_file}
+>
+> if [ $? = 0 ]; then
+90c91
+< cnt_from_header_rec=`grep "^0001" ${dir}dda/cambms1_combine.dat | wc -l | tr -d '\r'`
+---
+> cnt_from_header_rec=`grep "^0001" ${data_file} | wc -l | tr -d '\r'`
+
+
+author: mattl
+comment: Hi [~yameelee]CAMB EOM should be PGP encrypted correct?
+
+
+
+please let me know if this has been released.
+
+
+author: yameelee
+comment: [~MattL], sorry I have not release this yet. Will do so now.
+
+
+author: yameelee
+comment: [~MattL] code released.

@@ -1,0 +1,55 @@
+title: Notification Staggering
+body:   
+
+## Goal:
+
+Suppose we have 10,000 notifications for a particular job. When this job is
+triggered, 10,000 notifications will be sent one after another.Suppose, we
+don't want to send 10,000 notifications at a time. So we can tell the API to
+send a small chunk of notification (for instance 100 notification) at a time
+with a given interval. Our new enhancement will take care of these types of
+functionality.
+
+## API parameters:
+
+To achieve the above functionality, we have introduced 3 new **optional**
+parameters in notificationservice.
+
+    
+    
+    staggering (y/n default value is n)  
+    staggeringLimit (chunk size of notification for a particular time)  
+    staggeringHour (Interval time in hour)
+
+staggering takes y or n which indicates whether the job is staggering enable
+or not. staggeringLimit indicates how many notifications we want to send at a
+time and staggeringHour indicates interval time between chunks of
+notifications.
+
+## Functionality:
+
+If staggering value is n, then notifyservice will behave as it was but if we
+provide y for staggering, the API will check staggeringLimit and
+staggeringHour. If staggeringLimit is not provided then default value will be
+taken from the property file. Same logic goes for staggeringHour.Suppose,
+there is a staggering enable job where total notification count is 5000,
+staggering limit is 1000 and staggering hour is 2 hours. When notifyservice
+start to process this job, it will send 1000 notifications and wait for 2
+hours and after 2 hours it will send next 1000 notifications. So 5000
+notification will be sent with in 10 hours and each two hours, 1000
+notification will be sent.
+
+  
+
+## Property:
+
+The below property will be taken if the job is staggering enabled but
+staggering limit or staggering hour is not provided through API call.
+
+    
+    
+    #notification staggering  
+    default.staggering.limit=1000  
+    default.staggering.hour=5 
+
+

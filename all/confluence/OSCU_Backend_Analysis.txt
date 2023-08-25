@@ -1,0 +1,459 @@
+title: OSCU Backend Analysis
+body:   
+2
+
+#  _ **Backend Processes**_
+
+OSCU has 5 backend process:
+
+  1. Afp
+  2. Doc
+  3. Enotice
+  4. Etax
+  5. Insert_range (will be deprecated in Hypercube)
+
+##  _ **Statement types and index file name**_
+
+  1.  **global.ms1** = default
+  2.  **global.ms2** = default
+  3.  **global.ms3** = default
+  4.  **global.mv1** = visa
+  5.  **global.mv2** = visa
+  6.  **global.mlb** = loan
+  7.  **global.tax** = etax
+
+  
+
+ESTMT Type| Prefix| Process to Use  
+---|---|---  
+default| ms1| DOC  
+default| ms2| DOC  
+default| ms3| DOC  
+visa| mv1| DOC  
+visa| mv2| DOC  
+loan| mlb| DOC  
+etax| tax| ETAX  
+  
+  
+
+  
+
+##  _ **Afp Process**_
+
+  
+Statements processed by Afp:  **Default, Visa  **
+
+Will be processed by doc process.
+
+###  **Flags:**
+
+  * global.autoregister=true
+  * global.multipleDocType=false
+  * global.default.imageMessage=true
+  * global.visa.imageMessage=true
+  * afp.compression=true
+
+### Handler (data): __AfpStatementData6__
+
+ _ **fileName** | **acctNum** | **beginDate** | **closingDate** |
+**numOfPages** | **acctName** | ssn | appType | messageIds_
+
+  *  **Bold** indicates mandatory field.
+  * Set sequence number from **fileName**. Split File_Name with "_", if length == 5 take arr[3] as seqNum else take substring from arr[3] from 0 to starting of ".afp" or ".pdf". 
+  * As Afp statements will be processed by Doc process, **AfpStatementData6 will not be used as data parser**. Instead **DataHandler from Doc process will be used**.
+
+### Registrar: __MessageEStmtRegistrar__
+
+  1. Will not be used as Apf statements will be processed by **Doc process**. 
+  2. Always creates a new account if not found. 
+  3. As global.autoRegister is true, creates a new  ** _USR_** and  ** _USR_SESSION_** record. 
+  4. Set DSO date in  ** _USR_SESSION_** table. 
+  5. Set account number as  _sess_login_id_ in  ** _USR_SESSION_** table. 
+  6. Does not create user mapping. 
+  7. If a record is found in the  ** _FIN_ACCOUNT_** table, update  _acct_owner_name,_  unless the name is "MEMBER". 
+  8. As multipleDocType is false, data will be blindly inserted while registering statements. 
+  9. Image_Message is true for " **default** ", " **visa** " and " **loan** ". Therefore registerMessage method will be called for those statement types. 
+  10. As multipleDocType is false, email notification will be turned on. So **_EmailNotification.register_** method will be called.
+
+  
+
+ **getFinAccount()**
+
+  1. Search account with the **account number** : 
+    1. If not found: 
+      1. Inserts into  _ **FIN_ACCOUNT**_ with the account number, name and set the status to NA,  **no acct_type**. 
+      2. Create  _ **USR**_ _ _ and  _ **USR_SESSION**_ with  **account number as sess_login_id, DSO date.**  
+      3. Insert into  _ **USR_FIN_ACCOUNT**_ with  **acct_id** &  **usr_id**. 
+    2. If found: 
+      1. Updates the user's  **first_name** to account name. 
+  2. Insert into paperless ( _ **PAPERLESS**_ )
+  3.  _FIN_ACCOUNT_ **:   type -> NA, Status -> A**.
+  4.  _USR_FIN_ACCOUNT:  _ **ufa_status  -> active.**
+  5.  _PAPERLESS **:**_    **p_new_status  -> B, p_old_status -> N. **
+  6.  _PAPERLESS2:  _ **p_latest_status  -> B, p_old_status -> N.**
+
+  
+
+ **registerStatement()**
+
+  1. Insert into  _ **ESTMT_DOC**_ ,  _ **ARCH_FILE**_ ,  _ **ESTMT_FILE**_. 
+  2. For  **ms1, ms2, ms3, mv1, mv2**  only: 
+    1. Insert into  _ **ESTMT_MSG_DETAIL**_ and  _ **ESTMT_MSG**_.
+  3. Insert into  _ **P_JOB_ESTMT.**_  
+
+  
+
+ **Processing Job:**  
+
+  1. Insert into  _ **P_ESTMT_COUNT**_
+  2.  **EmailNotification.register:**
+    1. Insert into  _ **P_JOB_EMAIL**_
+
+  
+
+### Mismatch with Hypercube business:
+
+  1.  _ **sess_login_id**_ _ _ **= acctNum** instead of  _ **!usr_id**_
+  2. No entry in  _ **USR_MAPPING  **_table. 
+  3.  **DSO date** not null. 
+
+### Changes needed:
+
+  1.  **Registrar  -> **
+    1. Use **HypercubeEStmtRegistrar** as the registrar for Afp process instead of  **MessageEStmtRegistrar**. 
+    2. In **HypercubeEStmtRegistrar.registerMessages()** method, add a check to **cast data1 to AfpStatmentData6.**  
+
+##  ** _Doc Process_**
+
+Documents processed by Doc: **Default, Visa,  ** **Real Estate Loan (mlb),
+Enotice (enotice).  **
+
+### Flags:
+
+  * global.autoregister=true
+  * global.multipleDocType=false
+  * global.loan.imageMessage=true
+
+### Handler (data): __DataHandler__
+
+ _ **jobType** | **PresentmentType** | **documentCode** | **fileName** |
+zipFileName | **documentBeginDate** | **documentEndDate** | **imageCount** |
+**accountNumber** | accountType | accountSuffix | **accountName** | _
+
+ _ssn | messageId | regionId | crippleFlag | postcardFlag | afp2webPM |
+afp2webIni_
+
+  *  **Bold** indicate mandatory filed. 
+  * Header in the process file has to be present.
+
+### Registrar:  _ _AfpRegistrar__
+
+  1. Will be used to only register  **loan** **(mlb)** statements. 
+  2. As global.autoRegister is true, create a new  _ **USR**_ and  _ **USR_SESSION**_ record. 
+  3. Sets account number as  _sess_login_id_ in  _ **USR_SESSION**_ table. 
+  4. Sets DSO date in  _ **USR_SESSION**_ i table.
+  5. Sets account number as  _CIF_NUM_ in  _ **USR_MAPPING**_ table. 
+  6. If account is present in database, update account owner name as account name unless the name is "MEMBER" or "CUSTOMER". 
+  7. As multipleDocType is false, data will be blindly inserted while registering statements.  
+  8. imageMessage is true for " **default** ", " **visa** " and " **loan** ". Therefore  _registerMessage_ method will be called for those statement types. 
+  9. As multipleDocType is false, email notification will be turned on. So  _EmailNotification.register_ method will be called. 
+
+  
+
+ **getFinAccount()**
+
+  1. Search account with the account number: 
+    1. If not found: 
+      1. Inserts into  _ **FIN_ACCOUNT**_ with the account number, name and set the status -> A,  **no acct_type**. 
+      2. Create  _ **USR**_ _ _ and  _ **USR_SESSION**_ with  **account number as sess_login_id, DSO date.**  
+      3. Insert into  _ **USR_MAPPING**_ table with account number as _CIF_NUM_. 
+      4. Insert into  _ **USR_FIN_ACCOUNT**_ with  **acct_id** &  **usr_id**. 
+    2. If found: 
+      1. Updates the user's  **first_name** to account name. 
+  2. Insert into paperless ( _ **PAPERLESS**_ )
+  3.  _FIN_ACCOUNT_ **:   type -> NA, Status -> A**.
+  4.  _USR_FIN_ACCOUNT:  _ **ufa_status  -> active.**
+  5.  _PAPERLESS **:**_    **p_new_status  -> B, p_old_status -> N. **
+  6.  _PAPERLESS2:  _ **p_latest_status  -> B, p_old_status -> N. **
+
+  
+
+ **registerStatement()**
+
+  1. Insert into  _ **ESTMT_DOC**_ ,  _ **ARCH_FILE**_ ,  _ **ESTMT_FILE**_. 
+  2. For  **mlb**  only: 
+    1. Insert into  _ **ESTMT_MSG_DETAIL**_ and  _ **ESTMT_MSG**_.
+  3. Insert into  _ **P_JOB_ESTMT.**_  
+
+  
+
+ **Processing Job:**  
+
+  1. Insert into  _ **P_ESTMT_COUNT**_
+  2.  **EmailNotification.register:**
+    1. Insert into  _ **P_JOB_EMAIL**_
+
+### Mismatch with Hypercube business:
+
+  1.  _ **sess_login_id**_ _ _ **= acctNum** instead of  _ **!usr_id**_
+  2.  **DSO date** not null. 
+
+  
+
+### Changes needed:
+
+  1.  **oscu.conf  -> **  
+
+    1. Remove **doc.acctNumAsLoginId** flag. 
+    2. Add **global.nullDsoTime=true.  **
+
+  
+
+##  ** _Enotice Process_**
+
+Will be processed by **Doc process.  **
+
+### Flags:
+
+  * global.autoregister=true
+  * global.multipleDocType=false
+  * enotice.createAccount=true [ replace with doc.enotice.createAccount=true ]
+  * enotice.compression=true
+
+### Handler (data): __ENoticeData1__
+
+ _ **acctNum** | **type** | **afpFileName** | **date** | **acctName** |
+**code**_
+
+  *  **Bold** indicates mandatory field. 
+  * As Enotice will be processed by Doc process, **ENoticeData1 will not be used as data parser**. Instead **DataHandler from Doc process will be used**. 
+
+### Registrar:  _ _DefaultENoticeRegistrar (will not be used)__
+
+  1. Will not be used as Enotice will be processed with Doc process. 
+  2. As  **enotice.createAccount is true** , new account will be created if not found. 
+  3. DSO date in  _ **USR_SESSION**_ table. 
+  4. Does not create user mapping.  
+
+### Registrar:  _ _EnoticeRegister__  
+
+  1. As Enotice will be processed by Doc process,  **EnoticeRegister** will be used to register enotices. 
+  2. As  **doc.entoice.createAccount is null** , if not found, **will not create an account**. Also if found, update account name, unless the name is "MEMBER", "CUSTOMER" or "USER". ** **
+  3. Sets account number as _CIF_NUM_ in  _ **USR_MAPPING**_ table. 
+  4. As **multipleDocType** is false, email notification is enabled. So **EmailNotification.register()** method will be called. 
+
+ **getFinAccount()**
+
+  1. Finds account with account number. 
+    1. If not found,
+      1. will not create an account. Returns null. 
+    2. If found,
+      1. Update account owner name if it is different and does not contain "MEMBER", "CUSTOMER" or "USER". 
+  2. Insert into paperless. 
+
+ **registerStatement()**
+
+  1. Insert into  _ **ARCH_FILE, ENOTICE**_
+  2. Insert into  _ **P_JOB_ENOTICE.**_
+
+ **Processing Job:**  
+
+  1. Insert into  _ **P_ENOTICE_COUNT**_
+  2.  **EmailNotification.register:**
+    1. Insert into  _ **P_JOB_EMAIL**_
+
+### Mismatch with Hypercube business:
+
+  1.  **DSO date** not null. 
+
+### Mismatch with previous registrar (DefaultENoticeRegistrar)
+
+  1.  ** _Will not create an_** ** _account  _** _if not found.  _
+
+### Changes needed:
+
+  1.  **oscu.conf  -> **  
+
+    1. Remove  **processing.step.3=enotice**
+    2. Add  **global.en1=enotice**. 
+    3. Add  **global.enotice.desc=E-notices**. 
+    4. Add  **doc.enotice.createAccount=true**. 
+    5. Add  **doc.enotice.setDSOSSONull=true**. 
+
+  
+
+  
+
+##  ** _Etax Process_**
+
+Documents processed by Etax:  **Etax (tax)  **
+
+### Flags:
+
+  * global.autoregister=true
+  * global.multipleDocType=false
+  * etax.compression=false
+  * etax.createAccount=false
+  * etax.isZipped=true
+  * etax.copyZipBuffer=32768
+  * etax.automatedEmailNotification=true
+
+### Handler (data): __EtaxData3__
+
+ _ **acctNum** | **type** | **afpFileName** | **date** | suffix | appType |
+ssn | **zipFileName**_
+
+  *  **Bold**  indicates mandatory field. 
+  * As  **etax.isZipped** is true, each line should contain 8 data fields. 
+
+  
+
+### Registrar: __EtaxRegistrar3__
+
+  1. As  **etax.createAccount is false** , it **will not create** a new account if not found. 
+
+ **getFinAccount()**
+
+  1. If account not found, returns null, increase warning count.
+  2. Insert into paperless. 
+
+ **registerEtax()**
+
+  1. Insert into  _ **ARCH_FILE**_. 
+  2. Insert into  _ **ETAX**_
+  3. Insert into  _ **P_JOB_ETAX**_
+
+ **Processing Job:  **
+
+  1. Insert into  _ **P_ESTMT_COUNT**_
+  2. Insert into _**P_JOB_EMAIL**_
+
+  
+
+### Mismatch with Hypercube business:
+
+No mismatch as no user and account creation.
+
+  
+
+#  ** _Backend Reports_**
+
+## Paperless Report
+
+  1. Copy all the files in the source folder of a client to the backup folder. 
+  2. Files in the backup folder which has the same file name as the files in the source folders will be deleted. 
+  3. Remove all the files in the source folder. 
+  4. Subfolders in the source folder will be ignored. 
+  5. Handler:  **DefaultPaperlessReport**
+    1.  **getAllOptoutAccounts:**
+      1. Retrieves all accounts who are currently in paperless.
+      2. Database tables:  _ **FIN_ACCOUNT, PAPERLESS2**_
+      3.  **Query:** _  
+SELECT fa.acct_number, p_latest_status status, p_modified_date, p_modified_by  
+FROM fin_account fa, paperless2 p2  
+WHERE org_id=getorgid('oscu')  
+AND fa.acct_id=p2.acct_id  
+AND p2.stmt_type='default'  
+AND p2.p_latest_status='E'_
+
+    2.  **getAllOptinAccountsByPeriod:**
+      1. For a given time period, retrieves all accounts who are migrated to paper.
+      2. Database tables:  _ **FIN_ACCOUNT, PAPERLESS**_
+      3.  **Query:  
+** _SELECT fa.acct_number, p_new_status status, p_modified_date, p_modified_by  
+FROM fin_account fa, paperless p  
+WHERE fa.org_id=getorgid('oscu')  
+AND fa.acct_id=p.acct_id  
+AND (p.p_old_status='E' OR p.p_old_status='U')  
+AND p.p_new_status='B'  
+AND p.stmt_type='default'  
+AND to_char(p.p_modified_date, 'YYYY MM')='2021 03'  
+_ _AND ORDER BY p.p_modified_date DESC_
+
+    3.  **getOptoutAccountsByPeriod:**
+      1. For a given time period, retrieves all accounts who are migrated to paperless. 
+      2. Database tables:  _ **FIN_ACCOUNT, PAPERLESS**_
+      3.  **Query:  
+** _SELECT fa.acct_number, p_new_status status, p_modified_date, p_modified_by  
+FROM fin_account fa, paperless p  
+WHERE fa.org_id=getorgid('oscu')  
+AND fa.acct_id=p.acct_id  
+AND (p.p_old_status='B' OR p.p_old_status='N')  
+AND (p.p_new_status='E' OR p.p_new_status='U')  
+AND p.stmt_type='default'  
+AND to_char(p.p_modified_date, 'YYYY MM')='2021 03'  
+_ _AND ORDER BY p.p_modified_date DESC_
+
+  6. Renderer:  **DefaultPaperlessReportRender**
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+

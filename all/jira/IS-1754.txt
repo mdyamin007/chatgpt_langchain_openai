@@ -1,0 +1,197 @@
+title: BKPL Student Checking Letter Update
+description: Assessment:If "Hold" is found in the address, suppress from print entirely.
+
+
+author: mahbubs
+comment: Hi [~stephen.yee@infoimageinc.com],
+
+I updated the program and ran the process using latest production data fileBKPL_StudentChecking_100622.zip.gpg
+
+But this data don't have any customer that has "HOLD" verbiage in address.
+
+Please provide a production data file that has HOLD verbiage in address.
+
+Or should I use the data file that is attached to TS 34678? I don't know if it is good to use for providing sample.
+
+*IMPORTANT*: I noticed in the TS data, the HOLD verbiage is surrounded by star sign * like following : *HOLD*
+
+So in the program, i looked for exactly *HOLD* verbiage, instead of searching just "HOLD" because someone's name could be "Michel Holden".
+
+Thanks
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~mahbubS]- Yes, please use the data in 34678. And yes, it will appear as "*HOLD*" in the data.
+
+
+author: mahbubs
+comment: Hi [~stephen.yee@infoimageinc.com],
+
+I ran the process using the TS 34678 data.
+
+The customer with HOLD address have been print suppressed.
+
+Those customer info are diverted to nop file.[^bkpldnb4285.nop]
+
+DPVS also has their entry. I attached the DPVS.[^bkpldnb428.print]
+
+Thanks
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~Igor.Khosid] [~mahbubS]- Thishas been approved. Please prepare for QA and change status to ready for QA. Please provide...
+
+1. Parallel ID
+2. Export projects into QA Folder
+3. Provide DPVS for print samples.
+4. Provide index file for QA posting.
+
+Approved sample - N/A - Update was to suppress addresses with "*HOLD*" in the data.
+
+SOW -http://sharepoint-svr/AS/Shared%20Documents/SOW%20Directory/BKPL%20-%20BankPlus/SOW/BKPL%20Collection%20Letters%20(CSV)%20SOW%208.30.21.docx
+
+Mapping - N/A
+
+
+
+
+author: mahbubs
+comment: Hi [~Igor.Khosid],
+
+Please start qa on this.
+
+Project is in qa folder:/d/iss/qa/BKPL/BKPLDN109.zip
+
+parallel ID:20221027041632
+
+DPVS attached:[^bkpldnb428.print]
+
+No print range needed because this is a suppression related update.
+
+Just Need to check if address has the "*HOLD*" verbiage, then those customer get entry in nop file and DPVS also has entry of them.
+
+Thanks
+
+
+author: igor.khosid
+comment: [~mahbubS] >>> *{color:red}Please attach IS checklist
+{color}*
+   Parallel ID: 20221027041632
+   Currently in parallel: Yes
+   User: mahbubS
+   Description: IS-1754 BKPL Student Checking Letter Update
+   Date Submitted: 2022-10-27 04:16:49
+   Date Last Updated: 2022-10-28 03:04:36
+   Files:
+      1) BKPLDN109.dfa
+
+
+author: igor.khosid
+comment: [~Andrey.Kutsenko]
+>> Approved, please proceed with the final QA
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+ DFA file is updated:
+{code:sh}
+[oper1@rhs ~]$ diff /home/isis/docdef/BKPLDN109.dfa /home/test/isis/docdef/BKPLDN109.dfa
+541a542,543
+>   USE
+>     FORMAT DO_SPECIAL_HANDLING ;
+639a642,651
+>
+> DOCFORMAT DO_SPECIAL_HANDLING;
+>   ~CSZ_LINE = CITY!STATE!ZIP_CODE ;
+>   IF POS('*HOLD*',UPPER(CUSTOMER_NAME),1)<>0 OR POS('*HOLD*',
+>    UPPER(ADDR_LINE1),1)<>0 OR POS('*HOLD*',UPPER(ADDR_LINE2),1)<>0 OR
+>    POS('*HOLD*',UPPER(~CSZ_LINE),1)<>0 ;
+>   THEN ;
+>     MAIL_CODE = 'z' ;
+>   ENDIF ;{code}
+Checked - if address has the \*HOLD\* verbiage, then those customer get entry in nop file.
+[~misbah.uddin@dsinnovators.com] please attach IS checklist.
+
+
+author: mahbubs
+comment: Hi [~Andrey.Kutsenko],
+
+IS checklist attached.[^IS Checklist#IS-1754.docx]
+
+Thanks
+
+
+author: mahbubs
+comment: Hi [~stephen.yee@infoimageinc.com],
+
+If parallel required, please create a parallel ticket.
+
+Otherwise, let me know if i have to prepare for release.
+
+Thanks
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~mahbubS]- The assessment doesn't say if parallel is needed. Is it? Or can we just roll out?
+
+
+author: JIRAUSER11104
+comment: IS checklist >>>  [^IS-1754_BKPL_Checklist.pdf] 
+
+
+author: mahbubs
+comment: Hi [~stephen.yee@infoimageinc.com],
+
+It's better to have a parallel. If time is too short for this task then we can skip parallel.
+
+Otherwise please create a parallel ticket.
+
+Thanks
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~mahbubS]- no time for parallel. This was a simple update so please provide rollout instructions for onshore to do this week.
+
+
+author: mahbubs
+comment: Hi [~stephen.yee@infoimageinc.com],
+
+It may look simple update for you. But the consequences for this update matters to us. This is a suppression logic update. If suppression doesn't work as expected thenfor example, statement may get delivered to a person who was not supposed to have any. And in the end, the blame would be on us.
+
+Anyway, I will prepare for release today.
+
+Thanks
+
+
+author: mahbubs
+comment: Hi [~TunA],
+
+Please release code.
+
+Transfer form attached.[^IS_PROGRAM_TRANSFER_FORM_Rev 11012022.doc]
+
+I did cvs checkin. Resources are in/d/is/cvs/xfer/mahbubS/
+
+Thanks
+
+
+author: tuna
+comment: Hi [~mahbubS],
+
+Following code has been released.
+
+Thanks,
+
+Tun
+
+
+
+20221103090609 11/03/2022 mahbubS IS-1754 BKPL Student Checking Letter Update
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/mahbubS/
+total 96
+-rwxrwxrwx 1 mahbubS DSI 19700 Nov 3 05:51 BKPLDN109.dfa
+
+
+
+[~stephen.yee@infoimageinc.com]

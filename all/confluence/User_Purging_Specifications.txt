@@ -1,0 +1,111 @@
+title: User Purging Specifications
+body: # Overview
+
+* * *
+
+This process will purge users identified by the Unique User Identifier. Users
+will be purged along with any related information such as email address. For
+setup that enables SSO via a file processing such as the Auth File, the user
+will no longer be able to log in. For setup that allows SSO at-will, if the
+user does try to log in again, they will be treated as a new user.
+
+Accounts will be unlinked from the user. If the user is the last enrolled user
+linked to an account, the account will be changed to Paper delivery. This is
+because an account needs an enrolled user in order to be delivered
+electronically.
+
+There will be remnant user entries that are kept for auditing purposes. For
+example, if a user changed the paperless status of an account, we'll need to
+keep the user record to maintain the paperless status history. However, this
+will be transparent to the client and customer.
+
+ **Frequency**|  At-will  
+---|---  
+ **Completeness**|  Incremental  
+  
+  
+
+Index Filename Specification
+
+* * *
+
+Format: _CID_usr_purge_yyyymmdd_hhmm_.txt
+
+Field
+
+Number
+
+|
+
+Field Name
+
+|
+
+Description  
+  
+---|---|---  
+1| Client ID|
+
+4 letter internal customer ID used by InfoIMAGE  
+  
+2| Process Name| A static  _usr_purge  _to indicate what process the file is
+meant to be used for.  
+3| Processing Date|
+
+The Processing Date: 2 digit month, 2 digit day, and 4 digit year (yyyymmdd)  
+  
+4| Processed Time|
+
+The Processing Time (Military Time): 2 digit hour ranging between 01-24 and 2
+digit minute (hhmm)  
+  
+  
+
+Filename Example
+
+    
+    
+    demo_usr_purge_20220101.txt  
+    demo_usr_purge_20220101.txt.pgp (encrypted)
+
+  
+
+# Index File Content Specification
+
+* * *
+
+  * Columns are fixed and must be in the order of UUID|SUID.
+  * SUID can be left empty if it is not applicable.
+
+### Data fields
+
+Field
+
+Number
+
+|
+
+Field Name
+
+|
+
+Description
+
+|
+
+Required  
+  
+---|---|---|---  
+1| Unique User Identifier (UUID)|
+
+The unique identifier for the user used for the setup. Typically the SSN/TIN,
+CIF, or a value determined by the Online Banking Vendor.
+
+|   
+2| Subuser Unique Identifer (SUID)| The unique identifier for the subuser.
+Typically determined by the Online Banking Vendor.| Required when purging
+subusers  
+  
+  
+
+

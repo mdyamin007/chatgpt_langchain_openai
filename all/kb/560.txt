@@ -1,0 +1,111 @@
+Need to set ZIPFILE( or any name)
+Formatgroup: (ZIPFILE configuration)
+ZIPFILE set this as Environment Variable and gives a value( This value will be the output file for s option)
+Code( use the below code in Document Format Definitions for job type s, might need some change based on project requirements). If it is a statement then use Code For Statement or if it is daily then use Code For Dalily:
+Code:
+  IF &JOB_TYPE=='s' ;
+  THEN ;
+    WRITERECORD  TO ZIPFILE ;
+    /*This information needs for mailing purpose*/
+      PUT &PSNET_HOLD  START 1 LENGTH 12;
+      /*What number customer this is, should be right align*/
+      PUT RIGHT(&SEQ_NUM,8,' ')  START 15 LENGTH 8;
+      /*zip code*/
+      PUT ZIP_CODE  START 23 LENGTH 10;
+      /*Account number , no leading zeros, must be right aligned*/
+      /*If member number is present then it gets priority over Account number here*/
+      PUT RIGHT(ACCT_NUM_TMP,20,' ')  START 33 LENGTH 20;
+      /*mail code , whether it wil be suppressed or else*/  
+      PUT MAIL_CODE  START 53 LENGTH 1;
+      /*Total logical pages of a customer, must be right aligned*/
+      PUT RIGHT(&TTL_PAGES,5,' ')  START 54 LENGTH 5;
+      /*Insert code , which insert bin to be used*/  
+      PUT INSERT_CODE  START 59 LENGTH 5;
+      /*adress1 most of the case it's the name, a customer may have highest 6 address*/
+      PUT UPPER(ADDR[1])  START 64 LENGTH 40;
+      PUT UPPER(ADDR[2])  START 104 LENGTH 40;
+      PUT UPPER(ADDR[3])  START 144 LENGTH 40;
+      PUT UPPER(ADDR[4])  START 184 LENGTH 40;
+      PUT UPPER(ADDR[5])  START 224 LENGTH 40;
+      PUT UPPER(ADDR[6])  START 264 LENGTH 40;
+      /*starting logical page number of customer*/
+      PUT RIGHT(&PAGE_FROM_HOLD,7,' ')  START 304 LENGTH 7;
+      /*total logical  pages excluding check images*/  
+      PUT STMT_PAGES  START 318 LENGTH 5;
+      /*Total physical pages( one logical page1 and one logical page2 form one physical page)*/
+      PUT RIGHT(PHY_PAGES,5,' ')  START 351 LENGTH 5;
+      /*Total sheets or physical pages use from Tray1, there may be 5 trays, but most of the cases we saw 2*/  
+      PUT RIGHT(TRAY1_SHEETS,4,' ')  START 356 LENGTH 4;
+      /*Tray1 mode 's' for simple, 'd' for duplex*/  
+      PUT TRAY1_MODE  START 360 LENGTH 1;
+      /*Total sheets or physical pages use from Tray2*/  
+      PUT RIGHT(TRAY2_SHEETS,4,' ')  START 361 LENGTH 4;
+      /*Tray2 mode 's' for simple, 'd' for duplex*/  
+      PUT TRAY2_MODE  START 365 LENGTH 1;
+      /*for message manager, message1 type, '1' for fixed message*/
+      PUT MSG_AREA1_TYPE  START 411 LENGTH 1;
+      /*for message manager, message2 type, '1' for fixed message*/
+      PUT MSG_AREA2_TYPE  START 412 LENGTH 1;
+    ENDIO;
+  ENDIF ;
+For Daily Use this:
+  IF &JOB_TYPE=='s' ;
+  THEN ;
+    WRITERECORD  TO ZIPFILE ;
+      /*This information needs for mailing purpose*/
+      PUT &PSNET_HOLD  START 1 LENGTH 12;
+      /*What number customer this is, should be right align*/
+      PUT RIGHT(&SEQ_NUM,8,' ')  START 15 LENGTH 8;
+      /*zip code*/
+      PUT ZIP_CODE  START 23 LENGTH 10;
+      /*Account number , no leading zeros, must be right aligned*/
+      /*If member number is present then it gets priority over Account number here*/
+      PUT RIGHT(ACCT_NUM_TMP,20,' ')  START 33 LENGTH 20;
+      /*mail code , whether it wil be suppressed or else*/  
+      PUT MAIL_CODE  START 53 LENGTH 1;
+      /*Total logical pages of a customer, must be right aligned*/
+      PUT RIGHT(&TTL_PAGES,5,' ')  START 54 LENGTH 5;
+      /*Insert code , which insert bin to be used*/  
+      PUT INSERT_CODE  START 59 LENGTH 5;
+      /*adress1 most of the case it's the name, a customer may have highest 6 address*/
+      PUT UPPER(ADDR[1])  START 64 LENGTH 40;
+      PUT UPPER(ADDR[2])  START 104 LENGTH 40;
+      PUT UPPER(ADDR[3])  START 144 LENGTH 40;
+      PUT UPPER(ADDR[4])  START 184 LENGTH 40;
+      PUT UPPER(ADDR[5])  START 224 LENGTH 40;
+      PUT UPPER(ADDR[6])  START 264 LENGTH 40;
+      /*starting logical page number of customer*/
+      PUT RIGHT(&PAGE_FROM_HOLD,7,' ')  START 304 LENGTH 7;
+      /*Letter Code*/
+      PUT &LTR_CODE  START 312 LENGTH 3;
+      /*Afp code*/
+      PUT &AFP_CODE  START 315 LENGTH 3;
+      /*total logical  pages excluding check images*/  
+      PUT STMT_PAGES  START 318 LENGTH 5;
+      /*Enotice Date no dash/slash allowed here format  mmddyyyy*/  
+      PUT ENOTICE_DATE  START 323 LENGTH 8;
+      /*if letters customer forms a group Group, this is total image/logical page for all customers of that group*/
+      PUT GROUP_IMAGE_COUNT  START 335 LENGTH 5;
+      /*if letters customer forms a group Group, this is total image/logical page for all customers of that group*/
+      PUT RIGHT(GROUP_SHEET_COUNT,5,' ')  START 345 LENGTH 1;
+      /*if estatement needs to be suppressed*/
+      PUT E_SUPPRESSED_FLAG  START 340 LENGTH 5;
+      /*Total physical pages( one logical page1 and one logical page2 form one physical page)*/
+      PUT RIGHT(PHY_PAGES,5,' ')  START 351 LENGTH 5;
+      /*Total sheets or physical pages use from Tray1, there may be 5 trays, but most of the cases we saw 2*/  
+      PUT RIGHT(TRAY1_SHEETS,4,' ')  START 356 LENGTH 4;
+      /*Tray1 mode 's' for simple, 'd' for duplex*/  
+      PUT TRAY1_MODE  START 360 LENGTH 1;
+      /*Total sheets or physical pages use from Tray2*/  
+      PUT RIGHT(TRAY2_SHEETS,4,' ')  START 361 LENGTH 4;
+      /*Tray2 mode 's' for simple, 'd' for duplex*/  
+      PUT TRAY2_MODE  START 365 LENGTH 1;
+      /*for message manager, message1 type, '1' for fixed message*/
+      PUT MSG_AREA1_TYPE  START 411 LENGTH 1;
+      /*for message manager, message2 type, '1' for fixed message*/
+      PUT MSG_AREA2_TYPE  START 412 LENGTH 1;
+      /*Just need to fill this field to avoid some error in back end*/
+      PUT FILLER  START 381 LENGTH 1;
+    ENDIO;
+  ENDIF ;
+For More More Information about record layout GO HERE.

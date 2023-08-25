@@ -1,0 +1,90 @@
+title: CoBiz eFax related enhancement
+body: ## eFax related changes at notifyservice
+
+1\. Add following property to notification.properties
+
+>
+> [fax.to](http://fax.to).address=[faxback@mailerserver.com](mailto:faxback@mailerserver.com)
+>
+
+>> This should be the email address to send email to the fax mailerserver.
+
+2\. For fax type notification subject line will be generated on the fly while
+processing CSV file (Format : /fax=${recipientPhoneNumber}).
+
+> Fax server pulls efaxes from this address inbox  
+> Subject line: /fax=faxnumber- This is the way to put in the subject line for
+> the fax server to dial the client fax number, example: /fax=5035975317  
+>  **But we are still missing the spec on how to populate the actual subject
+> line with value, in addition to this fax number.**
+
+3\. To address of the fax type email notification will come from the
+[fax.to](http://fax.to).address property.  
+4\. Attachments can be added as the same way we can add attachments with the
+email notification.
+
+> Attachments adding variable descriptions are followed.
+>
+
+>> sdo_attach_{variableName} = With this variable type we can directly add
+attachment file link, this link may contains sdo_txt_/udo_txt_{variableName}
+type variable. There are two way to give URL.  
+> Example:
+>>
+
+>>> 1\. Add URL as column header:  
+>
+> sdo_attach_stmt=<http://internal.afp2web.server/get_stmt?account_num=${sdo_txt_acctnum>}  
+> This total line is a column header, rest of the column is empty. From this
+> column we will pick the URL, replace sdo_txt_/udo_txt_{variableName}
+> variable's value of the URL.  
+> 2\. Also you can give URL as column value.
+
+> > sdo_txt_{variableName} = Contains value which be used to replace variable
+> attachment URL  
+> udo_attach_{variableName}  
+> udo_txt_{variableName} = Same as sdo_txt_{variableName}  
+> udo_attach_{variableName} = Same as udo_txt_{variableName}  
+> Ref :
+> <https://i3dev.easyredmine.com/projects/notifsvc/wiki/Supported_CSV_columns_variable_format_and_description>
+
+  
+  
+
+## eFax related changes at templateservice
+
+1\. Validation added for "fax" type template
+
+> a. fromEmail and fromName can not be null/empty and it should be valid email
+> address.  
+> b. Sample recipient can be phone number  
+> c. subject can be null/empty
+>
+
+>> As we replace subject line with "/fax=recipientPhoneNumber" before sending
+notification from notifyservice.
+
+>
+> d. content of the template can only be plain-text
+>
+
+>> Because through the testing, it appears like any style will just get
+stripped out after receiving the fax. According to decision accepting plain-
+text only would make sense.
+
+  
+  
+
+## eFax related changes at infoTRAC
+
+1\. Add new type "fax" to template to E-Notification and Marketing tab.  
+2\. It's mandatory to give fromName and fromEmail while saving fax type
+template.
+
+> fromEmail and fromName will come from Feature.meta just like how we handle
+> the From info for email.
+
+3\. There is no subject line field input field for fax type template.  
+4\. Just like sms template content is extracted as plain-text format.
+
+

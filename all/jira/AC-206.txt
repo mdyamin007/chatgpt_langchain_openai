@@ -1,0 +1,47 @@
+title: OFCU - [21150][pvt] Daily eStatements enrollments Setup
+description: OFCU - Daily eStatements enrollments Setup
+
+Description:Update the customer's enrollment status on a daily basis instead of having it updated monthly through the statement file.
+
+*Specs*: Unique User ID | Account Number | Account Name | Status | Email | Modified Date
+*Unique User ID*: This will just be the Member Number.
+*Account Number*: This is the Member Number.
+*Account Name*: The Member Name.
+*Status*: The delivery preference:*P*(aper) or*E*(lectronic)
+*Email*: Email address required to enroll into Electronic preference. Can be left empty if the status is*P*.
+*Modified Date*: The enrollment time in Unix Epoch Time.
+
+*Example:*
+12345|12345|John Doe|E|john.doe@email.com|1625846715
+44444|44444|Jane Doe|P||1625846715
+
+The Modified Date is used to determine whether the process should update the Delivery Preference. For example, if the Modified Date represent July 9 at 7:00 a.m. and the file is processed on July 9 at 8 a.m. the process will check to see if there were any user choices after 7:00 a.m. Maybe the user has logged on and already changed the delivery preference at 7:45 a.m. Because of this, the delivery preference from the file will be skipped, since we do not want to override the user-choice at 7:45 a.m.
+
+Alternatively, we can opt to not have Modified Date, and use the Processing Time as the benchmark, i.e. if the file is processed at 8 a.m. then we would only skip if we discover any user's choice that occurs after 8 a.m.
+
+Setup will be 5 hours.
+
+*Timeline*
+Turnover: 9/16
+Pilot: 9/29
+Live: 11/12
+
+
+author: sysadmin
+comment: Mackenzie Huynh made the following comment in ISD-5373
+
+@ac
+
+
+
+I noticed that the status and email header is swapped. The specs has it as*Status | Email.*
+
+But in the file, the format is in*Email* *|**Status.*****
+
+
+author: barnetts
+comment: [~mac],
+
+I am following up with OFCU 
+
+Thanks, Barnett 

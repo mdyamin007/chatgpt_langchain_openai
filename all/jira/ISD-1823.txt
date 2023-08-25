@@ -1,0 +1,201 @@
+title: 9115 - FCBT - Setup ID Mapping through SSO
+description: None
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~sadman anik],
+
+I think the logic for FCBT will be a bit different. We may need to have a secondary flag to determine which type of external ID mapping it is. As far as I know, for SEFC, we check the external ID mapping to get all the accounts tied to the CIF. We would use that to compare against the list of accounts provided in the SSO request, and only allow access to accounts that's in the ext id mapping table.
+
+For FCBT, it is a bit different. We will check all the accounts provided in the SSO request against the ext id mapping table. If the account exist as an external ID in the table, we will change it to the internal ID. If the account doesn't exist, then we will use that as the internal ID. For example,
+
+Table
+Ext | Int
+1234 | 4567
+7890 | 9012
+
+Request: 1234, 8552
+The returned list of accounts would be: 4567, 8552
+
+From what I see, we would have to make several calls to the API for each account number to see if there is an internal ID.  I will talk with Surekha to see whether she wants to enhance or add new functions to allow us to make only 1 call.
+
+
+author: tai.trinh
+comment: @dsi
+
+
+
+Hi [~sadman anik]
+
+Upon further research, it seems like the only changes we need to do is on the configuration level. There is a flag called "accountLookup". We just need to set this flag to true. The enrollment API already has logic that will take in this flag, and map the list of accounts to internal accounts if they exist. For those that don't have an internal mapping, they will be used as is. This is the logic that we wanted.
+
+I have updated the design doc to reflect this finding.
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Sadman Anik made the following comment in DSI-227
+
+Hi [~tai.trinh],
+
+@isd
+
+If "accountLookup" flag do the job done then what will be the use of adding "externalAccountLookUp" with sub property "externalType" and "includeNotFound" ? Because there is no implementation for "externalAccountLookUp" in q2sso.
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~sadman anik],
+
+You're right. There isn't.
+
+
+author: tai.trinh
+comment: 9115 
+
+
+author: tai.trinh
+comment: 9115 test
+
+
+author: tai.trinh
+comment: 9115 test
+
+
+author: tai.trinh
+comment: 9115 test
+
+
+author: tai.trinh
+comment: 9115 test
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Sadman Anik made the following comment in DSI-227
+
+@isd
+
+Hi [~tai.trinh],
+
+I have changed the configuration for all the FCBT clients. Can we somehow start testing without waiting for Ext Id Map Processing confirmationupdate from IM / client?
+
+Thanks.
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi[~sadman anik],
+
+You can do it locally or on dev. In the database, you just need to create entries in the ext_id_mapping table.
+
+
+
+app_id: estmt
+
+external_id: arbitrary number
+
+external_id_type: ext_acct_num
+
+internal_id: an account number from fin_account
+
+internal_id_type: acct_num
+
+Then when you SSO in, asking for access of the ext_acct_num, you should be granted access to the acct_num instead. Any number that you pass in that does not exist in the table should be read as is.
+
+Best,
+
+Tai
+
+
+
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Sadman Anik made the following comment in DSI-227
+
+Hi [~tai.trinh],
+
+@isd
+
+According to your comment, i have tested two clients with "accountLookup":true and it's following the business rules as expected. Do you want me to commit and deploy the code for all the fcbt clients? Or i should wait for ext Id map processing which is pending.
+
+Thanks,
+
+Sadman
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~sadman anik],
+
+Yes, please commit and deploy.
+
+Thanks,
+
+Tai
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Sadman Anik made the following comment in DSI-227
+
+@isd
+
+Hi [~tai.trinh],
+
+I have committed and deployed the code in pilot.
+
+
+
+Thanks,
+
+Sadman
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Sadman Anik made the following comment in DSI-227
+
+@isd
+
+Hi [~tai.trinh],
+
+Is there any update forext Id map processing?
+
+Thanks,
+
+Sadman
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi Sadman,
+
+I have already made the necessary enhancement for the extIdMap process on Pilot. You can review my changes if you want. The client wanted to provide only 1 file for all their sub-organizations, which is why the logic had to change in the way that it did.
+
+Sorry, there isn't much for you to do on this project. Originally, I had thought the scope would be much larger, but turned out a lot of the required features were already in place.
+
+Thanks,
+
+Tai
+
+
+author: admin
+comment: Setup on pilot, pending client testing
+
+
+author: tai.trinh
+comment: Look into why sending something other LN causes issue.
+
+
+author: anwarh
+comment: [Mamunur Rashid|https://gitlab.infoimageinc.com/mrashid] mentioned this issue in [a commit|https://gitlab.infoimageinc.com/mrashid/hypercube/-/commit/2b615fc08def773bf42371d2d7584cb9a357a522] of [Mamunur Rashid / Hypercube|https://gitlab.infoimageinc.com/mrashid/hypercube]:{quote}ISD-1823 update fcbt configs to support id mapping by accounts{quote}

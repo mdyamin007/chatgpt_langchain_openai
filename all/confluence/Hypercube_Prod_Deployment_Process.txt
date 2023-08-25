@@ -1,0 +1,89 @@
+title: Hypercube Prod Deployment Process
+body:   
+
+## **_Description:_**
+
+This document describes the deployment process for hypercube on the production
+level.
+
+Even though this document is solely focused on the production level but the
+process is the same for all the lower environments.
+
+##  ** _How to deploy an individual instance?_**
+
+You can simply deploy an instance through jenkins, all you have to do is go to
+the specific pipeline i.e " _hypercube-docker_ca-hypercube-pr-XX_ " and just
+select build with parameter and start the building process.
+
+If there's any change on the current production tag or you just want to sync
+the static files to production you can do this. below are the links or all the
+hypercube pipelines:
+
+  * [hypercube-pr-01](https://jenkins.infoimageinc.com/job/PROD/view/ca-hypercube-pr-01/job/hypercube-docker_ca-hypercube-pr-01/)
+  * [hypercube-pr-02](https://jenkins.infoimageinc.com/job/PROD/view/ca-hypercube-pr-02/job/hypercube-docker_ca-hypercube-pr-02/)
+  * [hypercube-pr-03](https://jenkins.infoimageinc.com/job/PROD/view/ca-hypercube-pr-03/job/hypercube-docker_ca-hypercube-pr-03/)
+  * [hypercube-pr-04](https://jenkins.infoimageinc.com/job/PROD/view/ca-hypercube-pr-04/job/hypercube-docker_ca-hypercube-pr-04/)
+
+##  ** _What are the dependencies?_**
+
+If you are deploying a new tag you have to make sure of the following.
+
+  1. On the code level, there must be the following files
+    1. /docker_config/healthcheck.sh
+    2. Dockerfile
+    3. Jenkinsfile
+  2. If there's any change on the **settings.json** level then all 4 docker-compose.yml files must be changed " **[server-configs-prod](https://gitlab.infoimageinc.com/configuration-management/server-configs-prod)** " on git repository as during running the container docker-compose.yml file will be pulled from git. 
+    1. /ca-hypercube-pr-01/hypercube/docker-compose.yml
+    2. /ca-hypercube-pr-02/hypercube/docker-compose.yml
+    3. /ca-hypercube-pr-03/hypercube/docker-compose.yml
+    4. /ca-hypercube-pr-04/hypercube/docker-compose.yml
+    5. additionally, you will have to update the settings.json file on the same location as well(P.S. this won't have any effect on deployment, just will be easier to track and created compose file) 
+  3. If you are changing the production then you need to reconfigure the pipeline to create a docker image from that tag. this needs to be changed in all 4 pipelines. Under pipeline SCM, you just need to modify the "Repository Url" and that's it and then save it.
+    1. 
+
+##  ** _Changes on client configuration level (properties.json)?_**
+
+If it's a **non-infoConfig  **tag then you will have to commit to the the tag
+then trigger the build.
+
+But if it's a infoConfig tag then you just need to modify it from the
+**infoconfig UI** and that's it.
+
+All the versions equal to or above v9.0.0.0 will be infoConfig tag.
+
+##  ** _what are the differences between 4 compose files?_**
+
+for all the **non-infoConfig  **tag just the **ROOT_URL  **is different on
+compose file,
+
+but on infoconfig tags there's new property added inside setting.json "
+**infoConfig** ", " **notification** ", " **mailer** ". among these three,
+infoConfig and notification object contains different information
+
+for different different instances such as **appName** , **instanceName** (to
+register to infoConfig), instance wise health check endpoint, version check
+endpoint, and Notification settings to notify.
+
+##  ** _How to revert back to non infoconfig tag after infoconfig Release?_**
+
+If you are working on anything you need to update on both **the latest
+tag(v19.0.0.0 or above)**  and **hypercube_v8.0.18.5** to keep our option open
+to revert back to non-infoconfig at any time.
+
+so on the code level, you need to sync between both also, for the
+properties.json file and settings.json file or any static files.
+
+If we keep everything synced between these two tags, all we will need to
+revert back is to change the tag name and trigger the build.
+
+  
+
+  
+
+  
+
+  
+
+  
+
+

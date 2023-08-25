@@ -1,0 +1,148 @@
+title: Papyrus DocEXEC Server & AFPCompare Installation
+body: ### _**Overview:**_
+
+The following are the step-by-step guideline on installing the ISIS Papyrus
+Software for DocEXEC in the Linux Processing Server
+
+###  _ **Prerequisites:**_
+
+  * Linux Centos Operating System,
+  * Contact ISIS Papyrus Support to request the downloading software.  The will provide a temporary URL, username & password access to download software.  (e.g.:  <ftp://ftps.isis-papyrus.com> / <https://ftps.isis-papyrus.com>)); 
+  * Install as root user
+
+###  _ **Installation Steps for DocEXEC:**_
+
+In the steps below, examples illustrated will be version 7.72.  So change 7.72
+(i.e. 772) to the version of the ISIS Software that you are installing below
+
+  * Download the software (e.g.:  DVD_V772.7z) and save it in \\\dell-2100\IS\ folder (e.g.:  \\\dell-2100\IS\isis_772_dvd)
+  * On the processing server, create the following folders for the software to be installed:
+
+    
+    
+    mkdir -m777 -p /isis/pdel772  
+    mkdir -m777 -p /isis/pdel6772  
+    mkdir -m777 -p /isiscomm_772  
+    mkdir -m777 -p /isiscomm_6772
+
+  * Copy the pdel3710.tar from DVD folder into the following location; Per Ernest, ISIS always use pdel3710.tar & pdel6710 as the source name, but we need to rename it to pdel3###.tar and pdel6###.tar version number.
+
+    
+    
+    cp -p pdel3710.tar /isis/pdel3772/pdel3772.tar  
+    cp -p pdel6710.tar /isis/pdel6772/pdel6772.tar 
+
+  * Extract the tar files, gunzip files and change permission to 777:
+
+    
+    
+    tar -xvf /isis/pdel3772/pdel3772.tar -C /isis/pdel3772/ --strip-components=1  
+    gunzip /isis/pdel3772/*.gz  
+    tar -xvf /isis/pdel6772/pdel6772.tar -C /isis/pdel6772/ --strip-components=1  
+    gunzip /isis/pdel6772/*.gz  
+    chmod -R 777 /isis/pdel3772 /isis/pdel6772
+
+  * Copy the the commonl3.tar which is usually located in the DVD folder:  ISISDVD01/isiscomm/l3/commonl3.tar & copy commondata.tar which is usually located in DVD folder: ISISDVD01/isiscomm/commondata.tar & commonl6.tar which is usually located in DVD folder: ISISDVD02/isiscomm/l6/commonl6.tar
+
+    
+    
+    cp -p commonl3.tar /isiscomm_772/  
+    cp -p commondata.tar /isiscomm_772/  
+    cp -p commonl6.tar /isiscomm_6772/  
+    cp -p commondata.tar /isiscomm_6772/
+
+  * Extract the tar files, gunzip files and change permission to 777:
+
+    
+    
+    tar -xvf /isiscomm_772/commonl3.tar -C /isiscomm_772/  
+    tar -xvf /isiscomm_772/commondata.tar -C /isiscomm_772/  
+    gunzip -r /isiscomm_772/*  
+      
+    tar -xvf /isiscomm_6772/commonl6.tar -C /isiscomm_6772/  
+    tar -xvf /isiscomm_6772/commondata.tar -C /isiscomm_6772/  
+    gunzip -r /isiscomm_6772/*  
+      
+    chmod -R 777 /isiscomm_772/* /isiscomm_6772/*
+
+###  _ **Installation Steps for AFPCompare:**_
+
+In the steps below, examples illustrated will be version 7.72.  So change 7.72
+(i.e. 772) to the version of the ISIS Software that you are installing below
+
+  * Download the software (e.g.:  DVD_V772.7z) and save it in \\\dell-2100\IS\ folder (e.g.:  \\\dell-2100\IS\isis_772_dvd)
+  * On the processing server, create the following folders for the software to be installed
+
+    
+    
+    mkdir -m777 -p /isis/panl3772/tar
+
+  * Copy the panl3710.tar from DVD folder ISISDVD01/panl3710/panl3710.tar into the following location.
+
+    
+    
+    cp -p panl3710.tar /isis/panl3772/tar
+
+  * Extract the tar files, gunzip files and change permission to 777:
+
+    
+    
+    tar xvf /isis/panl3772/tar/panl3710.tar -C /isis/panl3772/ --strip-components=1  
+    gunzip /isis/panl3772/*.gz  
+    chmod -R 777 /isis/panl3772/
+    
+    
+      
+      
+    
+
+###  _ **Configuring Server Environment Variables:**_
+
+At the time of writing this documentation, we the internal URL for IPAS server
+is ca-ipas-pr-02.  If the url has changed, please update the instructions
+below accordingly.
+
+  * The following will need to be setup and configured once in order for the Papyrus Software to have the right environment variables to run and also authenticate the IPAS servers.   Please check /etc/profile to make sure the following does not exists.  If it does not, run the following:
+
+    
+    
+    sudo sh -c "echo ''                                                                                   >> /etc/profile"  
+    sudo sh -c "echo '#Papyrus Settings'                                                                  >> /etc/profile"  
+    sudo sh -c "echo 'export ISIS_KEY_MODE=ALL'                                                           >> /etc/profile"  
+    sudo sh -c "echo 'export ISIS_OMS_DOMAIN=ca-ipas-pr-02     #ipas auth server'                         >> /etc/profile"  
+    sudo sh -c "echo 'export ISIS_OMS_PORT=9091'                                                          >> /etc/profile"  
+    sudo sh -c "echo 'export LD_LIBRARY_PATH=/isiscomm/l6/lib:$PW_PATH:$[LD_LIBRARY_PATH:/usr/local/lib](http://LD_LIBRARY_PATH/usr/local/lib)'   >> /etc/profile"  
+    sudo sh -c "echo 'export ISIS_COMMON=/isiscomm'                                                       >> /etc/profile"  
+    sudo sh -c "echo 'export TMP=/d/temp'                                                                  >> /etc/profile"  
+    sudo sh -c "echo ''                                                                                   >> /etc/profile"  
+      
+    sudo mkdir -m777 /d/temp  
+      
+    # The following line is needed for InfoIMAGE enviornment variable init:  
+    sudo sh -c "echo ''                                                                                   >> /etc/profile"  
+    sudo sh -c "echo '. /home/master/env_init.sh'                                                         >> /etc/profile"  
+    sudo sh -c "echo ''                                                                                   >> /etc/profile"
+
+  * Restart the system after you the edits have been made above.  
+  
+
+  * Run the following command to confirm port 9091 is opened
+
+    
+    
+    ping ca-ipas-pr-02  
+      
+    # Use the IP address listed above and replace it below  
+      
+    echo > /dev/tcp/10.4.20.47/9091 && echo "Port 9091 is opened"
+
+  * If the command above does not return "Port 9091 is opened", then you need to check with Network Department to find out if they are blocking port 9091 to the ca-ipas-pr-02 server.
+
+    
+    
+      
+      
+      
+    
+
+

@@ -1,0 +1,314 @@
+title: KYCU - Invoice - Loan BillPDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133579-C30.01-V21726
+
+Processing Scripts to modify:
+ kyculb1_process.sh
+
+Data Files to use:
+ KYCU_loan_05302022.pgp
+
+
+
+*NOTE*: This job runs on RH2. Since we are migrating from RHS to RH2, we should test all options so that we can do afpcompare and also ensure there is no errors in the processing logs.
+
+
+
+
+author: william.kong
+comment: [~anwarh]/[~tanmay]: According to the PDFi spreadsheet, this job is assigned to Tanmay, but [~rony]mentioned on IS-1336. that this is assigned to Anwar. Please confirm who is the right assignee for this PDFi project and I will update both smartsheets correctly.
+
+
+author: william.kong
+comment: [~anwarh]/[~tanmay]: Can you guys respond to my comment above?
+
+
+author: tanmay
+comment: [~William.Kong] this one assigned to me. thanks
+
+
+author: william.kong
+comment: [~tanmay]: Thanks for the update! I will update this project live date to target 8/15; But please try to get this done earlier if possible. Thanks!
+
+
+
+Also another note, please this program currently runs on RH2. You will need to test on RHS and remove the hardcode HOSTNAME==RH2 logic from the script. Please test ALL job_sel options and verify there is no processing errors in log files. We will do FULL regression testing for this project.
+
+
+author: william.kong
+comment: Hi [~tanmay],
+
+
+
+Are we still on schedule to get this project ready by 8/15? Please advise. Thanks!
+
+
+author: tanmay
+comment: [~William.Kong] [~Peter.Dang]
+
+We are having cosmic issue while converting from pdfi to archival, even if in paper option as well
+
+box gets overlapped even if the the corner of the box
+
+I have ran both rhs2 and rhs still same issues
+
+!image-2022-08-11-19-35-14-144.png!
+
+
+author: william.kong
+comment: [~tanmay]: I think this may be a transparency issue being turned on via AFP2WEB. Can you try to run the AFP2PDF option with using the afp2web.ini configuration that we turned off.
+
+
+
+e.g.:
+
+Can you try defining this argument in the script in red below. This configuration has transparency mode turned off.:
+
+
+
+afp2pdfy.py ..... {color:#ff0000}IniFilename=afp2web_no_transparency.ini{color}
+
+
+
+If the PDF looks ok, can you also try to insert this into:
+
+/home/test/control/kyculb1_pdf.control instead of adding the argument. I'm just curious to see if putting this argument in the control file also works instead of using an argument in the command line.
+
+
+
+Also, I noticed that the parallel folder is not following the standard folder structioner:
+
+Instead of:
+
+
+
+/z/pdf_afp/kycu/kyculb1/zip
+
+I'm seeing:
+
+/z/pdf_afp/keycu/kyculb1/archival/zip
+
+
+
+Please remove the "archival' subdirectory folder logic if it makes sense.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+author: tanmay
+comment: [~William.Kong]
+
+Great it works
+
+IniFilename=afp2web_no_transparency.ini works both in as a argument ofafp2pdfy.py and properties of pdf control file
+
+
+
+
+author: tanmay
+comment: [~William.Kong]
+
+old and new sample has been placed at/z/dsi_pdfi_testing/kyculb1/old and/z/dsi_pdfi_testing/kyculb1/new
+
+respectively.
+
+Please check and let me know if anything
+
+
+author: JIRAUSER11104
+comment: QA test - *FAILED*
+
+Ran script:
+{code:sh}
+[andreyK@ca-isis-pr-04 pdf_compare]$ perl pdf_compare.pl kyculb1_prod/ kyculb1_parallel/ result_kyculb1 -pixels 5 -threads 32 -regex '[0-9]+_<SEQ>.pdf'{code}
+Report:
+{code:sh}
+[andreyK@ca-isis-pr-04 pdf_compare]$ cat /d/pdf_compare/result_kyculb1/pdf_compare_rpt.txt
+Total PDF Files Scanned: 247
+allowedDifferenceInPercentPerPage: 5:
+Thread Count: 32
+
+Total PDF Files with Differences: 247
+Start Time: Mon Aug 15 12:35:19 PDT 2022
+Finish Time: Mon Aug 15 12:41:50 PDT 2022
+{code}
+
+[~William.Kong] please take a look at the log files.
+[~tanmay] FYI
+Diff content:
+ !scr_diff_content.png|thumbnail! 
+
+
+
+author: anwarh
+comment: Hi [~Igor.Khosid],
+
+
+
+If you are talking about this change
+
+!image-2022-08-16-17-55-08-662.png!
+
+
+
+This is a message manager text, so you can ignore this.
+
+
+
+
+author: JIRAUSER11104
+comment: QA test - *PASSED* (based to comment [~anwarh])
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: I also re-ran the results using an exclusion configuration file to ignore the message manager area when doing the PDF comparison.
+
+
+
+See the following:
+
+perl pdf_compare.pl kyculb1_prod/ kyculb1_parallel/ result_kyculb1_wk -pixels 8 -threads 32 -regex '[0-9]+_<SEQ>.pdf' -exclusions *kyculb1.json*
+
+
+
+This json config file is specific for kyculb1 to ignore a specific area in Page 1. If you like to see how it ignores, you can decrease the pixel setting to 5 so that it generates errors. You will see the yellow area which means where PDFCompare is ignoring.
+
+
+
+Report:
+
+/d/pdf_compare/result_kyculb1_wk/pdf_compare_rpt.txt
+
+Total PDF Files Scanned: 247
+allowedDifferenceInPercentPerPage: 8:
+Thread Count: 32
+
+Total PDF Files with Differences: 0
+Start Time: Tue Aug 16 13:22:06 PDT 2022
+Finish Time: Tue Aug 16 13:23:50 PDT 2022
+
+
+
+
+
+
+
+[~anwarh]: Please schedule release by preparing File Transfer form. Once completed, please alert me or email [dp@infoimageinc.com|mailto:dp@infoimageinc.com]of this release. We need to inform them that they need to run this application on rhs server moving forward.
+
+
+
+
+author: william.kong
+comment: Oops! The comment above is supposed to go to [~tanmay]and not [~anwarh].
+
+
+
+[~tanmay]:Can you please prepare the File Transfer form and have this released on Monday, August 22, 2022? Once completed, please alert me or email[dp@infoimageinc.com|mailto:dp@infoimageinc.com]because we need to advise DP that they need to start running this program via RHS server moving forward.
+
+
+author: tanmay
+comment: [~TunA]
+
+Transfer form([^IS_PROGRAM_TRANSFER_FORM_IS-1211.doc]) has been attached and files has been placed at/d/is/cvs/xfer//mahbuburT/
+
+
+
+Please proceed to production
+
+
+author: anwarh
+comment: Hi [~TunA],
+
+In addition to the above release request, can you please also release this procs file?
+/d/is/cvs/xfer/anwarH/kyculb1.procs
+
+[~William.Kong]: Can you please move the corn job to rhs server? 
+
+Thanks,
+Anwar
+
+
+author: tuna
+comment: Hi [~anwarh],
+
+Following codes have been released.
+
+Thanks,
+
+Tun
+
+
+
+20220822145000 08/22/2022 mahbuburT IS-1211 KYCU - Invoice - Loan BillPDFi Conversion to AFP2PDF Python [InHse]
+
+[oper1@rhs idcudla]$ ll /d/is/cvs/xfer/mahbuburT/
+total 384
+-rwxrwxrwx 1 mahbuburT DSI 47280 Aug 22 05:17 KYCULB11.dfa
+-rwxrwxrwx 1 mahbuburT DSI 627 Aug 22 05:15 KYCULB11.prj
+-rwxrwxrwx 1 mahbuburT DSI 1286 Aug 22 05:16 kyculb1.control
+-rwxrwxrwx 1 mahbuburT DSI 477 Aug 22 05:17 kyculb1_pdf.control
+-rwxrwxrwx 1 mahbuburT DSI 14463 Aug 22 05:16 kyculb1_process.sh
+
+
+
+
+
+[~William.Kong]
+
+
+author: anwarh
+comment: Hi [~TunA], 
+
+Can you please also release this file? 
+/d/is/cvs/xfer/anwarH_backup/is-1211/
+
+Need to move them into /d/is/cvs/xfer/anwarH/ before release.
+
+Thanks,
+Anwar
+
+
+author: tuna
+comment: Hi [~anwarh],
+
+Following code has been released.
+
+Thanks,
+
+Tun
+
+
+
+20220824100340 08/24/2022 anwarH IS-1211 KYCU - Invoice - Loan BillPDFi Conversion to AFP2PDF Python [InHse]
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/anwarH/
+total 48
+-rwxrwxrwx 1 oper1 opers 2611 Aug 24 10:02 kyculb1.procs
+
+
+
+[~William.Kong]
+
+

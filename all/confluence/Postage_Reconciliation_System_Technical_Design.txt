@@ -1,0 +1,177 @@
+title: Postage Reconciliation System Technical Design
+body:   
+
+## Tables:
+
+The following tables are from IS end:  
+1\. ifs_job_no_presort <\- proc_id & fc_billable
+
+> fc_billable values:  
+> 1\. 0 -> do not mail  
+> 2\. -1 -> do not bill client  
+> 3\. 1 -> bill client normally  
+> 4\. 2 -> bill client full rate
+
+2\. process_main <\- proc_id, status, proc_grp_id, and postage_type and etc.  
+3\. job_type <\- appno, vid, prefix (ms1) and etc.  
+4\. rate_oz <\- count for each categories with weight  
+5\. discount_rate_by_zip <\- discounts for 5 digits and 3 digits  
+6\. netsort_cnt <\- counts for each category, and for  **permit**  job, the
+weight is assigned  
+7\. dpvs_cnt <\- dpvs counts  
+8\. postage_job_map <\- save dataTrac(OPS database) information  
+9\. Postage_billed_summary <\- billing information  
+10\. Postage_paid_summary <\- paid to post office  
+11\. Postage_profit_summary <\- profit information  
+12\. Postage_rate <\- base rate with effective dates  
+13\. Mur_template_list <\- with template names and an mtl_id as primary key  
+14\. Mur_template <\- actual template sets with effective dates  
+15\. Markup_rate_cycles <\- link each cid and application type and effective
+date to a markup template (mtl_id). Please note the job_id is the
+${datacenter}:${jobid} from OPS database  
+  
+
+### The following tables are from OPS database:
+
+> 1\. Tblal <\- appno, vid, cid, appid, status and etc.  
+> 2\. Tblrtwo_cycle <\- vid (links to tblal) and proc_id, drop dates and etc.  
+> 3\. Tblrtwo <\- check failed/cancelled job
+
+  
+  
+
+## Logic to generate the report:
+
+1\. For given client, given application type and given drop date range, access
+OPS database first to get a list of jobs. (proc_ids, drop date and other
+information)
+
+>   * Please note, for the clients with grouping logic, the client ID we pass
+> to OPS database will be always parent client ID (say fcsb instead of fnbt
+> and etc.)
+>
+
+2\. For each proc_id:
+
+>   * For each proc_id, check if it is belong to mega client (refer to
+> grouping logic client). If is, double check if for this proc_id (parent),
+> has any child process.
+>   * Insert the data trac information to Postage_job_map table (for parent)
+>   * For parent job, load process_main information and IFS_Job_no_presort
+> information. (those information will apply to its child for Mega structure
+> clients).
+>   * Get all the  **production jobs linked to this proc_id**  (if grouping,
+> will be all of the sub_cid jobs, else, it will be the job itself).
+>
+
+>
+
+>> i. If the  **parent job status <=0**, throw exception (Bad job) for mega
+structure client.  
+> ii. Based on the drop date, get the postage base rate set.  
+> iii. Now we have a list of sub_proc_id links to proc_id, and for each
+> sub_proc_id:
+>>
+
+>>> 1\. Copy datatrac information from parent, and for mega client, we need
+save sub_proc_id information in postage_job_map  
+> 2\. Check status linked to sub_proc_id, throw exception if its status <=0
+> (sub job).  
+> 3\. Get the markup rate (based on the datatrac information), if no markup
+> rate has been created, throw exception.  
+> 4\. Based on the markup rate, base rate, get the billing information.
+> (rate_oz, discount_rate_by_zip to get the pieces). Please note, 5digits and
+> 3 digits are from discount_rate_by_zip. Basic is got from: basic(rate_oz) -
+> 5digits (above) - 3digits (above); For mega client, keep updating the
+> information for the whole group.
+>>
+
+>> iv. Got the  **billing information**  as a group. (please note, mega
+clients are lumped together to meter)
+
+> > The below example is for proc_id =167905.
+
+ **Postage Billing Summary Example:**  
+
+> > v. Calculate the  **postage paid**  to post office:
+
+Since netsort_cnt do not have the weight information, we need estimate the
+category information from the above calculated basic, 5 digit and 3 digits
+pieces.
+
+For Menlo Park:
+
+Please note, for MP, the base rate we used to calculate the postage due is
+based on base rate of 5digit1oz. Only 5digit, 3 digit and basic will get
+profit. (in rate_oz table, no AADC so far)
+
+Rate category (r)| # of pieces  
+---|---  
+2 (5 digit) <\- rate use 10z| n2  
+3 (3 digit)| n3  
+4 (AADC)| n4  
+5 (basic)| n5  
+9 (full rate)| n9 ( shouldn't occur any more)  
+10 (full rate 1 0z)| n10  
+11 (full rate 2 0z)| n11  
+12 (full rate 3 0z)| n12  
+13 (full rate 4 0z)| n13  
+  
+Total paid = $Affixed + $ postage_due - $full_service_saving  
+Pre_paid post office: 5digit 1OZ
+
+ $Affixed = 4k=1((profitable  **k**  0z * $5digit  **k**  oz_rate)  
+ $full_service_saving =  
+0.03 * (${3digits_count}+ ${5digits_count}+${basic_count})  
+ $postage_due = sum((ri-r2) * ni) <\- estimated, since no weight information.
+If there is, we can calculate the total paid to post office as TX.
+
+ **NetSort Breakdown Summary Example:**  
+
+Please note, we read the fc_billable in ifs_job_no_presort table, if non-
+mailable, no postage information
+
+If TX center, 5digit, 3 digit, basic and full rate (1-4oz) will get discount,
+and was estimated from rate_oz and discount_rate_by_zip (no netsort_cnt
+table). The base rate is from AADC 1 0Z.
+
+The following is an example of proc_id= 167894
+
+ **PreSort Breakdown Summary example:**  
+
+The postage due is calculated based on $affixed. No postage due, and there is
+$0.007 service fee and which will be passed to client.  
+vi. Calculate profit:  
+For each category, we calculate the profit. (only this profitable categories)
+and sum them up.  
+  
+
+## Rates:
+
+ **Base rate:**  postage rate that we need pay post office. Each base rate
+will bind to an effective date, and each set will contain a list of rate
+information for each category (for example, 5 digit 1 0Z and etc)
+
+ **Markup rate:**  some extra rate we will charge our client for profitable
+categories. For MP center, the profitable category contains 5 digit, 3 digit
+and basic. For TX center, the profitable categories include 5 digit, 3 digit,
+basic and full rate 1-4 oz.
+
+ **Contract rate:**  the rate that we charge our client.
+
+> For profitable categories: ${contract_rate}= ${base_rate}+ ${markup_rate}  
+> For other categories: ${contract_rate}= ${base_rate}
+
+ **Special notes:**  
+In rate_oz table, only and only if the pieces whose jid is setup in job_table
+table (type column), will be billed and considered for postage report. So when
+IS set up new application, before Accounting is able to create markup rate,
+**the entry in job_type table must be created**!!!!
+
+### Attachments
+
+  
+
+250250250
+
+

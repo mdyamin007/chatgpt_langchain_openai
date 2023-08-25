@@ -1,0 +1,141 @@
+title: WFCU:  Monthly/Visa/Mortgage Statement:  PDF Archival Add Cleanup Logic (In-house)
+description: Parallel Required: Yes (Run Paper, eStmt & PDF) to make sure all service perform without issues.
+
+
+
+Please review the wfcu_archival.pl perl script that is shared with several WFCU application inside the isisdisk.sh. There is a bug where the program does not clear the/d/pdf_afp/wfcu/wfcums1/backup/ & /d/pdf_afp/wfcu/wfcums3/backup/ & /d/pdf_afp/wfcu/wfcumv1/backup & & /d/pdf_afp/wfcu/wfcuml1/backup folder+before+ beginning the PDF archival program. Files are constantly being accumulated.
+
+
+
+I looked at the snippet of the code. I+think+ we need to add the following lines in red below (Please evaluate if my assessment is correct):
+
+
+
+{{&printlog( "Cleaning archival directories...\n" );}}
+ {{system( "rm -f ${pdf_afp}*" );}}
+ {{system( "rm -rf $pdfDir" );}}
+ {{system( "rm -rf $xmlDir" );}}
+
+{color:#de350b}{{system( "rm -rf $backupDir" );}}{color}
+
+{color:#de350b}{{# Also move the following line of code up here (look 7 lines down)}}{color}
+
+{color:#de350b}{{# mkdir $backupDir if ( ! -d $backupDir );}}{color}
+
+{{system( "mv -f ${zipDir}* $backupDir" );}}
+
+
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~anwarh]/[~rony]/[~amirR]: here's another in-house PDF archival related program to fix as well.
+
+
+author: william.kong
+comment: [~amirR]: Any updates to this project. I was hoping this in-house project to go live today. Please advise.
+
+
+author: william.kong
+comment: [~amirR]: I will extend it to next Monday since you have a holiday on Thursday. But I will need this completed on time this time around.
+
+
+author: william.kong
+comment: [~amirR]: please advise status of this particular project. I don't believe there is any blocker for this particular project. Please advise.
+
+
+author: amirr
+comment: Hi [~William.Kong],
+
+
+
+Update is done.
+
+Parallel ID:20211228073424
+
+Data file:/z/download/wfcu/mv1/202110/WFCU_VISA_10012021.zip.pgp
+
+
+author: william.kong
+comment: [~amirR]: Can you attach the program transfer form? I would like to do a quick code review and will ask either Peter or Yamee to help with the code release since Tun is OOO this entire week.
+
+
+
+/home/test/master/wfcu_process.sh looks good to me. Just need to check which other files you modified as well. thanks!~
+
+
+author: rony
+comment: Hi [~William.Kong]
+
+There is only one morewfcu_archival.pl.
+
+[^IS_PROGRAM_TRANSFER_FORM.doc]
+
+
+
+
+author: rony
+comment: Hi [~William.Kong]
+
+Currently this resource is under zhuoxint.
+
+!image-2022-07-21-21-09-59-079.png!
+
+
+
+Can we assign this Jira to him?
+
+
+
+Thanks
+
+Rony
+
+
+author: rony
+comment: Hi [~William.Kong] 
+
+can we assign this Jira to [~zhuoxinT]
+
+
+
+Thanks
+
+
+author: tuna
+comment: Hi Rony,
+
+Following codes have been release together with [~zhuoxinT]updates.
+
+Per [~William.Kong], "please proceed with release if completed testing with Parallel."
+
+
+
+
+
+total 9 files
+
+20220825143804 08/25/2022 zhuoxinT IS-1050 (by Zhuoxin) WFCU DQ Mortgage Letters. Letter 50, print and archival, IS-642 (by RonyD) WFCU: Monthly/Visa/Mortgage Statement: PDF Archival Add Cleanup Logic, IS-643 (By RonyD) WFCU: Daily Notices: PDF Archival Add Cleanup Logic (In-house)
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/zhuoxinT/
+ total 576
+ -rwxrwxrwx 1 zhuoxinT isgroup 7765 Aug 25 13:26 wfcu_archival.pl
+ -rwxrwxrwx 1 zhuoxinT isgroup 4586 Aug 25 13:27 wfcuArchive.pl
+ -rwxrwxrwx 1 zhuoxinT isgroup 857 Aug 25 13:27 wfcudl050.control
+ -rwxrwxrwx 1 zhuoxinT isgroup 12774 Aug 25 13:27 WFCUDL050.dfa
+ -rwxrwxrwx 1 zhuoxinT isgroup 642 Aug 25 13:27 WFCUDL050.prj
+ -rwxrwxrwx 1 zhuoxinT isgroup 1431 Aug 25 13:27 wfcudla.control
+ -rwxrwxrwx 1 zhuoxinT isgroup 8773 Aug 25 13:27 wfcudla.procs
+ -rwxrwxrwx 1 zhuoxinT isgroup 15542 Aug 25 13:27 wfcu_process.pl
+ -rwxrwxrwx 1 zhuoxinT isgroup 27599 Aug 25 13:26 wfcu_process.sh
+
+
+
+
+
+[~Kbittmann]

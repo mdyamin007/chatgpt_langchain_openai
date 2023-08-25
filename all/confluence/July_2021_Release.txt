@@ -1,0 +1,313 @@
+title: July 2021 Release
+body:   
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+**RELEASE: 24 July 2021**
+
+#  **InfoTRAC**
+
+  
+
+  * ### Required Property/Config Change List:
+
+  * ###  **Wiki page links:**
+
+  * ### Change Log **:**
+
+    * jQuery version update to 3.6.0 from 1.*.*/2.*.*/3.*.*
+
+    * PDF header added
+    * Acct mgmt v2 release
+  * Inoftrac Queries updates for this release
+
+  
+
+        INSERT INTO FEATURE_DEFINITION (CODE, NAME, CREATED_TIME, TYPE) VALUES ('acctMgmtV1', 'Account Management V1', TO_DATE('2021-07-09 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), null ); 
+
+        INSERT INTO FEATURE_DEFINITION (CODE, NAME, CREATED_TIME,TYPE) VALUES ('infoDocsV2', 'Account Management V2', TO_DATE('2021-07-14 00:00:00', 'YYYY-MM-DD HH24:MI:SS'),null );
+
+        INSERT INTO FEATURE_DEFINITION (CODE, NAME, CREATED_TIME, parent_code,TYPE) VALUES ('acsInfoDocsV2', 'Access Account Management V2', TO_DATE('2021-07-14 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'infoDocsV2',null );
+
+  
+
+Account management v2 developed home page shows drop down to search. This
+search criteria needs new properties to be added on client feature settings
+page. We have a script developed that will do this one time job.
+
+Also need have script that will insert new features per cid in database for
+account management v1 and v2.
+
+Script to run queries into database. The script is set to add
+accountSearchCriteria property into Account Management Property JSON
+
+<https://gitlab.infoimageinc.com/dsi-pd/database-query-runner>
+
+  
+
+ **Servers to deploy**
+
+19 incomplete ca-infotrac-pr-01 20 incomplete ca-infotrac-pr-02
+
+# **Notifyservice**
+
+If total number of notification is less than or equal to 200 (which is
+configurable) then change notification failed threshold to 50%
+
+  * ### Required Property/Config Change List:
+
+    *         notification.job.failed.throttle.ignore.on.notification.count = 200
+
+  * ###  **Wiki page links:**
+
+  * ### Change Log **:**
+
+    * Notification failed threshold change to 50% on certain number of notification count
+
+  
+
+ **servers to deploy**
+
+21 incomplete ca-infotrac-pr-01 22 incomplete ca-infotrac-pr-02 23 incomplete
+ca-apipui-pr-01 24 incomplete ca-apipui-pr-02 25 incomplete ca-apipui-pr-03 26
+incomplete ca-apipui-pr-04 27 incomplete ca-inforeach-pr-01 28 incomplete ca-
+inforeach-pr-02
+
+# **INFOSERVICE**
+
+There are no changes in the API specification for infoservice. Everything is
+automatically generated. The workflow is below:
+
+  * Gets the statementType from ESD_DOC table from Oracle
+  * Gets the client properties from mongodb properties collection
+  * From properties collection infoservice get the actual name for the statementType we got from step 1
+  * infoservice get the closing date from oracle in respective table for the requested document (ie. ESD_DOC, ETAX, ENotice)
+  * infoservice passes the titleDocType as a query param for the value we get from step 3 and titleDate param for the value we get in step 4 while calling wrapperservice 
+
+For proofing statement tab title and statement title, show Application ID as
+value. Don't need to append date for this. If this is not  there, hard code
+value as 'Sample' instead of 'Proofing'.
+
+  
+
+Previously, for get document API, a temporary PDF was generated in tomcat temp
+folder but now this folder will be generated in the predefined location which
+can be provided through property file.
+
+Added npLinkType both support, Made the npLinkType optional parameter and
+default value is byUfa and Added email attachment password into json into
+notificationpreference andpoint.
+
+  
+
+  * ### Required Property/Config Change List:
+
+    *         document.encryption.temp.location=/tmp/
+
+  * ###  **Wiki page links:**
+
+  * ### Change Log **:**
+
+    * PDF title change
+
+    * Temporary PDF location change for get pdf/document API
+
+  
+
+ **servers to deploy**
+
+29 incomplete ca-hypercube-pr-01 30 incomplete ca-hypercube-pr-02 31
+incomplete ca-hypercube-pr-03 32 incomplete ca-hypercube-pr-04 33 incomplete
+ca-infotrac-pr-01 34 incomplete ca-infotrac-pr-02
+
+  
+
+**WRAPPER SERVICE  
+**
+
+PDF title: wrapperservice has 2 optional query parameter, titleDate &
+titleDocType.
+
+  1. If we don't pass any of the 2 params, it just checks the stmtType and use that for the pdf title
+  2. If we pass titleDate only, then pdf title will be stmtType along with the date
+
+  
+
+  * ### Required Property/Config Change List:
+
+    *         NA
+
+  * ###  **Wiki page links:**
+
+  * ### Change Log **:  **
+
+    * 2 optional query parameter, titleDate & titleDocType.
+
+  
+
+ **servers to deploy**
+
+35 incomplete ca-wrapper-pr-01 36 incomplete ca-wrapper-pr-02
+
+# **NGINX**
+
+  
+
+Hypercube & InfoTRAC reverse PROXY configuration with NGINX
+
+  
+
+  *  **Wiki Page Links**
+
+    * Workflow on Nginx as a reverse PROXY <https://confluence.infoimageinc.com/x/DYMXBg>
+    * Installing / Configuring / Docker image creation with NGINX source and configuring 3rd party Modules <https://confluence.infoimageinc.com/x/foMXBg>
+    * Comparison between older Nginx with newer Nginx <https://confluence.infoimageinc.com/x/pIMXBg>
+  *  **Change Log**
+    * upstream check module integration with Nginx for healthcheck
+    * Nginx version 1.19.0 with ubuntu 20.04
+    * Nginx deploy with Docker
+
+  
+
+#  **INDEX FILE PROCESSOR (Discussion is going on. If Anil confirm us then we
+will deploy the application on 24th July)**
+
+ActiveMQ integration with index file processor. Release branch
+indexfileprocessor_v1.02_20210724
+
+  
+
+  * ### Required Property/Config Change List:
+
+ **  
+**
+
+text
+
+  
+
+  *  **Wiki Page Links**
+
+    * Previous Implementation and their limitations and current implementation and their advantages:  
+  *  **Change Log**
+    * activemq integration
+  *  ** **Newly Added  **dependencies**
+
+    
+    
+    <dependency>  
+       <groupId>org.springframework</groupId>  
+       <artifactId>spring-jms</artifactId>  
+       <version>4.0.2.RELEASE</version>  
+    </dependency>  
+      
+    <dependency>  
+       <groupId>org.apache.activemq</groupId>  
+       <artifactId>activemq-all</artifactId>  
+       <version>5.1.0</version>  
+    </dependency>  
+    
+
+Note: We have to update the configuration file for failed job. Currently we
+are using pr-01 but it should be the common one(proxy).
+
+  
+
+#  **USPS SCAN SERVICE**
+
+ActiveMQ integration with usps scan service. Release branch
+uspsscanservice_v1.02_20210724
+
+  
+
+  *  **Required Property/Config Change List**
+
+  
+
+text
+
+  
+
+  
+
+  *  **Wiki page links**
+    * Implementation Details: 
+  *  **Change log**
+    * activemq integration
+  *  **Newly Added  dependencies**
+
+    
+    
+    <dependency>  
+       <groupId>org.springframework.boot</groupId>  
+       <artifactId>spring-boot-starter-activemq</artifactId>  
+    </dependency>  
+      
+    
+
+ **Servers to deploy**
+
+37 incomplete ca-jobtrack-pr-01 38 incomplete ca-jobtrack-pr-02
+
+NOTE: ca-jobtrack-pr-02 is not mounted for FTPBU or download. We have to mount
+those path before deployment because after MQ implementation both instances
+will use those path.
+
+    
+    
+      
+    
+
+  
+
+  
+
+#  **PRISM**
+
+  * Completed removal of Spring/Hibernate configurations used for eSafetyBox and eSignature. Server restart time are now:  
+
+    1. Default: 2 minutes 23 seconds
+    2. Bank: 1 minute 10 seconds
+    3. CU:  2 minutes 20 seconds
+
+  
+
+  
+
+Drop here!
+
+  
+
+  
+
+Drop here!
+
+  
+
+  
+
+Drop here!
+
+  
+
+  
+
+Drop here!
+
+  
+
+  
+
+Drop here!
+
+

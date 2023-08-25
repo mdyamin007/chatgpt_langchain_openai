@@ -1,0 +1,594 @@
+title: MFCU - [28357][pvt] Monthly Statement  Automate Privacy Policy inline insert that is required annually in September  Perm Solution
+description: Dev Hour: 5
+
+Start Date: 08/23/22
+
+Sample Date: 08/30/22
+
+Approval Date: 09/02/22
+
+Live Date: 09/09/22
+
+Programmer: Fahim
+
+
+
+Details:
+
+Dfa: MFCUMS11.dfa
+
+Script: mfcums1_process.sh
+ * Update program to pickup selective insert file if exist in zip data file.
+ * Filename:mfcu_privacy_list_MMDDYY.txtcopy list to working dir.
+ * Update DFA to parse the file and if file exist and if current account no is in the list then put the privacy inline insert at the last of statement in new page and assign to account insert bin 3.
+ * Add insert at the end of statement in new physical page
+ * Check comment 104 of parent ts pdf and doc attachment for insert outlook. Address, Account no, bar code will be dynamic in this insert, so convert the doc to tiff removing the dynamic portion and code for the dynamic values in dfa, maintain font per doc/pdf attachment, arial 10.
+ * Check comment 113for overall requirement.
+ * PO Box no should be 919023 per comment 55
+ * Check comment 66 for barcode information
+ ** Based on the address provided, the IMB should read as:
+ 00 (Barcode ID)
+ 703 (CRE)
+ 903129885 (MID)
+ 000000 (Serial #)
+ 921919023 (Zip+4)
+ 23 (Delivery Point)
+ * Ask dt job id from pc and let pc know this will have insert.
+ * Test files: Use old June or July production file for development
+ 
+
+Details:
+ * In-Line Insert portion (cycles annually September month end):
+ ** InfoIMAGE will update and add the insert as the LAST insert; after Change of Terms in-line insert
+ ** Printed as its own page with nothing printed on the back of page
+ ** In-Line insert is SELECTIVE by account list
+ ** Insert list as follows:mfcu_privacy_list_MMDDYY.txt
+ ** We will use the PDF/word document attached (MFCU - CA Privacy Policy 9.2022_mock up by AV_rev 6.17 using 11pt for title and 10pt for body).
+ *** Note: The TIF will not be used since there is variable data
+ !https://app.na3.teamsupport.com/dc/1888578/images/ce1cc3ba-5039-4c3e-9088-539f78a68fee.png!
+ ** Account numbers are supposed tomasked
+ ** The in-line will be included for print, eStatements+*and*+archival
+ * CRE portion:
+ ** MFCU will be using our house #9 CRE envelope which will be inserted with the accounts that get the in-line insert
+ ** Update the house CRE as mocked up in your comment from 6/22 with adjustment to the zipcode
+ * !https://app.na3.teamsupport.com/dc/1888578/images/f5bc5576-3375-4b58-b581-285782aad37d.png!
+
+
+
+Miscellaneous Notes:
+
+MFCU has weekend eNotifications at 11:30am PST, 3:30pm PST and 5pm PST based on file arrival agreement of 3:30am - 4am PST
+ Refernce ticket #28936 and eStatement SOW
+ FINAL list will come when production is about to begin
+ Assign insert bin 3
+
+
+author: JIRAUSER11500
+comment: Hi [~Igor.Khosid]
+
+The sample is attached below
+
+[^mfcums13014.2o1.pdf]
+
+I have used the data file mfcu_stmt_07012022_1.zip.pgp from production also created a dummy file for privacy policy for testing from that file.
+
+[~dyuen]
+
+
+
+Thanks
+
+
+author: igor.khosid
+comment: [~berezinez] - Please review and confirm if the samples are ready for the client review
+
+
+author: dyuen
+comment: Hi [~berezinez], any updates on this?
+
+Thanks
+
+
+author: berezinez
+comment: [~dyuen]
+
+QA in progress..
+
+
+author: berezinez
+comment: [~Sheikh_Fahim] [~dyuen]
+
+QA pass, please send for client approval.
+
+
+author: dyuen
+comment: Thank you. Samples forwarded to client for review/approval. Pending response.
+
+
+author: dyuen
+comment: [~Sheikh_Fahim], please following feedback from MFCU:
+
+
+
+We have a few changes.
+
+1. Add a space after "(Affiliates):". See screenshot below.
+
+2. The verbiage for the NO choice should read, "NO, please do not share personal and financial information with your affiliated companies.". See screenshot below.
+
+3. In the in-the-box message under #1 delete the colon.
+
+4. Add code CA-P-09/22 to the bottom right hand foot of the page. See screenshot.
+
+
+
+!image-2022-08-31-10-03-45-917.png!
+
+
+author: JIRAUSER11500
+comment: Hi [~berezinez]
+
+The changes have been made in the updated sample Can you please take a look.
+
+
+
+Updated Samples:
+
+[^MFCUMS11.pdf]
+
+
+
+[~dyuen]
+
+Thanks
+
+
+author: berezinez
+comment: [~dyuen] [~Sheikh_Fahim]
+
+QA pass, please send for client approval.
+
+
+
+****after approval please reexport to QA folder with the latest update and request print samples.
+
+
+author: dyuen
+comment: Updated sample forwarded to MFCU. Pending approval/response.
+
+
+author: JIRAUSER11500
+comment: Hi [~dyuen]
+
+Any feedback from the client?
+
+Thanks.
+
+
+author: bryanl
+comment: Hi [~Sheikh_Fahim]
+
+Per client:
+
+The content of Privacy Policy insert is all okay. However, we were wondering about the spacing on the bottom portion of the insert. Can this be adjusted just a bit?
+
+1.Member's Address, the lines aren't evenly spaced (MFCU28357Change1.png)
+
+2.The bar code under the account Number, seems smashed together (MFCU28357Change2.png)
+
+
+author: JIRAUSER11500
+comment: Hi [~Bryanl]
+
+The spacing issues has been fixed in the new samples attached below
+
+Sample:[^mfcums_newsample.pdf]
+
+Screenshot:
+
+!spacing_fixed.PNG!
+
+Thanks
+
+
+author: dyuen
+comment: Updated sample forwarded to client for review/approval. Pending response.
+
+
+author: rony
+comment: Hi [~dyuen] [~Peter.Dang]
+
+!image-2022-09-13-23-09-16-910.png|width=916,height=435!
+
+
+
+We are using this command in papyrus to generate bar code.
+
+
+
+Thanks
+
+
+
+
+author: dyuen
+comment: [~Sheikh_Fahim], looks like they have an issue with spacing in the box now. Can you take a look?
+
+
+
+Per MFCU:
+
+Marketing has asked about the spacing of the 3 line items within the box in the bottom left corner.
+
+They are asking if a little bit of space can be put in between each of the 3 line items. Right now the sentences seem crammed together. 
+
+Looks like you shouldn't have to increase the size of the box to add a little space b/w the sentences.
+
+Also, they are asking if you can double check... but it almost looks like line# 3 might be in a larger font. Is it? The 3 line items should all have the same font & font size.
+
+!image-2022-09-13-13-56-34-682.png!
+
+
+author: JIRAUSER11500
+comment: Hi [~dyuen]
+
+The space between the lines has been fixed the screenshot and sample is attached below:
+
+!spaced_box.PNG!
+
+Sample:[^New_Space_With_Space_FIxed_MFCU.pdf]
+
+^Also i have double checked all of the points are using the same font size.^
+
+^Thanks^
+
+
+
+
+author: dyuen
+comment: Samples with updated spacing in box has been forwarded to client. Pending approval.
+
+Note: Adjustment may need to be made to the barcode.
+
+
+author: dyuen
+comment: Hi [~Peter.Dang] [~rony] [~Sheikh_Fahim] , I spoke with MFCU and they're looking to us for a recommendation on which barcode to use; code 39 or 128. Is it possible to provide a sample back for both barcodes just so that MFCU can compare? If there really is no difference since their account numbers are only numbers, please advise which code we will use. And provide an updated sample using the recommended barcode.
+
+!https://app.na3.teamsupport.com/dc/1888578/images/0c8a8aba-7865-4d7c-805d-8dbb80ad70b9.png!
+
+
+
+Thanks
+
+
+author: dyuen
+comment: Hi [~Sheikh_Fahim]. I checked with Peter. Please use code 128 under the account number field in the bottom portion of the letter.
+
+[~rony]
+
+
+
+!spacing_fixed.PNG!
+
+
+
+!image-2022-09-14-12-29-47-477.png|width=954,height=256!
+
+
+author: JIRAUSER11500
+comment: Hi [~dyuen]
+
+I have used code 128 for bar code and the new sample is attached below
+
+
+
+Sample:[^Updated_sample_with_code_128.pdf]
+
+
+
+Thanks
+
+
+author: dyuen
+comment: [~berezinez], FYI, I sent the updated sample to MFCU for a simultaneous QA/client review.
+
+Thanks
+
+
+author: dyuen
+comment: [~Sheikh_Fahim], please see feedback from client:
+
+
+
+We've tested the barcode, it does pull up the correct information. However, the barcode itself is difficult for our reader to pick up.
+
+We think it needs a little more space around it and a larger size. I found out that our current system is set to read barcodes at 0.5 inch in Height. However, they think they can adjust to it being a little smaller than that, because I don't think that would fit on the form.*Can you find out what the current height of the barcode is set to?*
+
+I've mocked up a new alignment on the bar code. It's a suggestion of moving the spacing to align with the last line of the address & increase in size. Let me know what your team thinks. Pls see attached.
+
+!image-2022-09-15-16-34-40-103.png!
+
+
+
+Can you adjust the barcode according to their specs/mockup?
+
+Thanks
+
+
+author: JIRAUSER11500
+comment: Hi [~dyuen]
+
+The current height of the bar code is 0.12
+
+!Height_barcode.PNG|width=587,height=259!
+
+which size should we use for the new height?
+
+Thanks
+
+
+author: dyuen
+comment: Hi [~Sheikh_Fahim], can try .3 or if its too large try .25?
+
+Thanks
+
+
+author: JIRAUSER11500
+comment: Hi [~dyuen]
+
+I am providing the both samples with 0.30 and 0.25 down below
+
+Height 0.30 Sample:[^MFCUMS11_with_height_0.30.pdf]
+
+Height 0,25 Sample:[^MFCUMS11_with_height_0.25.pdf]
+
+Let me knw which one the client approves.
+
+Thanks
+
+
+author: dyuen
+comment: Thanks [~Sheikh_Fahim]for the quick turnaround!
+
+I have forwarded both samples. Pending their response.
+
+
+author: dyuen
+comment: Hi [~Sheikh_Fahim], the height is still too short.
+
+Can you make the barcode taller in height to fill in the blue space as shown in the screenshot below?
+
+!image-2022-09-15-16-34-40-103.png!
+
+
+author: JIRAUSER11500
+comment: Hi [~dyuen]
+
+The new sample with adjusted height is attached below
+
+
+
+Sample:[^New_Sample_With_Adjusted_Height.pdf]
+
+
+
+Thanks
+
+
+author: dyuen
+comment: Updated sample with adjusted height provided to MFCU. Pending response.
+
+
+author: dyuen
+comment: Hi [~Sheikh_Fahim], the latest samples are approved! I re-attached the final sample to prevent confusion.
+
+Per MFCU: "**Received APPROVAL from all parties on the California Privacy Policy (Annual) for September. ***
+ 
+ Please let your team know this is approved. _Thank you!"_
+
+[^MFCU MS11_Adusted Barcode Height_092022_FINAL APPROVED.pdf]
+h3. ^A couple things:^
+ # 
+h3. Can you have the same code moved to the PILOT environment?
+
+ # 
+h3. Can you provide test DPVS, etc for print samples and parallel test?
+
+h3. Thanks!
+
+
+author: JIRAUSER11500
+comment: Hi [~Igor.Khosid]
+
+The project is in the qa folder MFCUMS11.zip
+
+Parallel ID:20220911043946
+
+isd index file :[^ms1_20220630_3_20220921_1016_mfcu.txt]
+
+DPVS:[^mfcums1301.print]print page 18-23 from 4.2o1 file
+
+[^IS_Checklist.docx]
+
+
+
+[~dyuen]
+
+thanks
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220911043946
+   Currently in parallel: Yes
+   User: fahimU
+   Description: IS-1491
+   Date Submitted: 2022-09-11 04:40:01
+   Date Last Updated: 2022-09-20 21:05:55
+   Files:
+      1) MFCUMS11.prj
+      2) MFCUMS11.dfa
+      3) mfcums1_process.sh
+
+
+author: igor.khosid
+comment: [~dyuen] - please request the print samples and please update the due date
+
+[~berezinez] - the pdf samples approved, please proceed with testing
+
+
+author: dyuen
+comment: Hi [~Sheikh_Fahim], per SCRUM [~rony]will work with you and [~misbah.uddin@dsinnovators.com] to sync your codes and move it into the PILOT environment.
+
+Thanks,
+
+Daphne
+
+
+author: dyuen
+comment: Hi [~Sheikh_Fahim] , please provide the test DPVS and other forms for parallel testing.
+
+Note, when this is released to production, MFCU wants this insert to go behind the Change of Terms insert, ([~Sheikh_Fahim]'s jira)
+
+Thanks
+
+[~berezinez]
+
+
+author: JIRAUSER11800
+comment: Hi [~Igor.Khosid],
+
+Parallel ID: *20220911043946*
+
+Project MFCUMS11.zip is in the QA folder.
+
+DPVS:[^mfcums1101.print]from 4.2o1 print page 3-5.
+
+ISD index:ms1_20220630_1_20220925_0114_mfcu.txt
+
+Checklist:[^IS_1491_Checklist.docx]
+
+
+
+Per comment https://jira.infoimageinc.com/browse/IS-1491?focusedCommentId=51704&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-51704
+
+This insert goes behind the Change of Terms insert (Jira: https://jira.infoimageinc.com/browse/IS-1458)
+
+
+
+[~dyuen]
+
+[~Sheikh_Fahim]
+
+
+author: berezinez
+comment: Parallel ID: 20220911043946
+ Currently in parallel: Yes
+ User: misbahU
+ Description: IS-1491
+ Date Submitted: 2022-09-11 04:40:01
+ Date Last Updated: 2022-09-24 22:39:24
+ Files:
+ 1) MFCUMS11.prj
+ 2) MFCUMS11.dfa
+ 3) mfcums1_process.sh
+ 4) S1MFCUVP.300
+
+
+author: berezinez
+comment: [~dyuen]
+
+Please request print samples.
+
+
+author: dyuen
+comment: Print samples requested.
+
+
+
+
+author: JIRAUSER11104
+comment: Print samples >>>  [^IS-1491_MFCU_PrntSmpls_09262022.pdf] 
+
+
+author: berezinez
+comment: [~dyuen] [~Sheikh_Fahim] [~misbah.uddin@dsinnovators.com]
+
+Please advise: on printed samples displayed on the second page:" Summary of key changes" page,
+
+but it doesn't appear on approved samples, this page is empty on approved samples. should it be there? see attached.
+
+[^MFCU MS11_Adusted Barcode Height_092022_FINAL APPROVED.pdf]
+
+^[^IS-1491_MFCU_PrntSmpls_09262022.pdf]^
+
+
+author: dyuen
+comment: Hi [~berezinez], my apologies. I should have made a note. The "Summary of Key Changes"/Change of Terms should be there/is correct. MFCU will have 2 in-line inserts for this coming month end. One for the global Change of Terms insert (IS-1458) and one for the selective Privacy Policy insert (this jira). The order in the print samples is also correct. MFCU wanted the Change of Terms insert to display before the Privacy Policy insert.
+
+
+
+I will initiate parallel. [~misbah.uddin@dsinnovators.com] [~Sheikh_Fahim], should we use 1 parallel ticket for this test?
+
+[~rony] [~Andrey.Kutsenko]
+
+Thanks
+
+
+author: berezinez
+comment: [~dyuen] [~misbah.uddin@dsinnovators.com] [~Sheikh_Fahim]
+
+QA is completed, IS checklist is attached.
+
+[^IS_1491_MFCU_checklist.pdf]
+
+
+author: JIRAUSER11800
+comment: Hi [~dyuen],
+
+Can we release this Jira and my Jira https://jira.infoimageinc.com/browse/IS-1458together?
+
+Or, should we release this Jira first?
+
+Please advise.
+
+[~Sheikh_Fahim]
+
+
+
+Thanks
+
+
+author: dyuen
+comment: Adding note:
+
+[~Sheikh_Fahim] per the zoom chat, I will submit 1 parallel ticket for this Jira and IS-1458 since they can be released together.
+
+Pending completion of QA[~Andrey.Kutsenko] for IS-158
+
+[~berezinez] [~misbah.uddin@dsinnovators.com] [~Igor.Khosid][~TunA]FYI
+
+Thanks
+
+
+author: dyuen
+comment: [~berezinez] [~Sheikh_Fahim] [~rony] MPT #34008 created
+
+
+author: tuna
+comment: Following codes have been released, per [~misbah.uddin@dsinnovators.com]in IS-1458.
+
+Thanks
+
+Tun
+
+
+
+20220930131443 09/30/2022 misbahUIS-1458MFCU -[30875][pvt]Change of Terms In-Line Insert for September Month End andIS-1491MFCU -[28357][pvt]Monthly Statement . Automate Privacy Policy inline insert that is required annually in September . Perm Solution
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/misbahU/
+total 1048
+-rwxrwxrwx 1 misbahU DSI 222605 Sep 30 12:29 MFCUMS11.dfa
+-rwxrwxrwx 1 misbahU DSI 18790 Sep 30 12:29 mfcums1_process.sh
+-rwxrwxrwx 1 misbahU DSI 170283 Sep 30 12:29 S1MFCUVP.300
+
+

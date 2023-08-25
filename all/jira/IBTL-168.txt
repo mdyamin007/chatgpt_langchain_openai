@@ -1,0 +1,264 @@
+title: RHS - FRST ES3 ( Mortgage Escrow Analysis ) no entry on InfoTrac Job Status
+description: File has been reprocessed ( proc_id #2268837 ) still no entry on InfoTrac Job Status.
+
+
+author: cesarg
+comment: [~William.Kong]
+
+
+author: shailendrar
+comment: [~anil.dasa] - On print side the job is processed successfully & its also been processed by the Index FIle Processor.Can you please check why its (proc id 2268837) not visible on Bris Prod InfoTrac?
+
+
+author: anil.dasa
+comment: [~shailendrar] [~cesarg]
+
+We have 42 pages on job status table. Job 2268837 has file received date as 08/15. So I had to search with dt_job_id for viewing job.
+
+
+
+!image-2020-10-29-10-21-30-354.png!
+
+
+author: shailendrar
+comment: Thanks [~anil.dasa] - I can see the job listed.
+
+
+
+[~cesarg] [~William.Kong]- Also please note that the afp files did not get copied to /d/isd_share/frst/afpfiles hence InfoTrac is unable to open pdf via JobStaus.
+
+
+author: william.kong
+comment: [~Peter.Dang]: Can you see the message above to see why afp files did not copy over to /d/isd_share? Is there any way we can manually recover?
+
+
+author: peter.dang
+comment: New online proofing has this code. Not sure if this was intended, but it will not copy the afp if processing_proof='y'
+
+
+
+[~William.Kong]
+
+
+
+if [ $call_for_processing_proof = "Y" ]
+ then
+ # new online proofing update
+ new_online_proofing_create_copy_prf_pdf_to_isd "${base_dir}/${cid}/${baseAfpFile}"
+
+else
+ echo -e "$baseAfpFile.${dateTime}" >> ${isd_share_fileid_folder}${fileid_idx}
+ vcp ${base_dir}/${cid}/${baseAfpFile} ${isd_share_afp_folder}${baseAfpFile}.${dateTime}
+ if [ $? != 0 ]; then
+ echo -e "Error in vcp ${base_dir}/${cid}/${baseAfpFile} ${isd_share_afp_folder}${baseAfpFile}.${dateTime}"
+ echo -e "Error in vcp ${base_dir}/${cid}/${baseAfpFile} ${isd_share_afp_folder}${baseAfpFile}.${dateTime}" >> ${fn}.log
+ fi
+ fi
+
+
+author: william.kong
+comment: [~shailendrar]: Can you help me verify if Peter's assessment is correct and review the implementation of the new_online_proofing_create_copy_prf_pdf_to_isd function to see why the afp files are not copied over?
+
+
+author: shailendrar
+comment: [~William.Kong] - I don't think so as Menlo has the exact same code & afps are getting copied over. I'll need to spend more time research.
+
+
+author: shailendrar
+comment: [~Peter.Dang]- If the job has proof file set to 'Y' the track_by_rec() function is called twice:
+ * From isisdisk script (For regular afp files)
+ * From olp_handler.sh (For proof file)
+
+Before calling track_by_rec for regular afp files the processing_proof is always set to "N"; see below code snipped from isisdisk_daily:
+
+#new online proofing update
+
+2990 if [ $checkfile = "${fn}.prf" -a -s $checkfile ]
+ 2991 then
+ 2992
+ 2993 # set a flag to indicate we are calling for proof file not full file
+ 2994 call_for_processing_proof="Y"
+ 2995
+ 2996 new_online_proofing_process "$checkfile"
+ 2997
+ 2998 # set call_for_processing_proof="N" after finished
+ 2999 call_for_processing_proof="N"
+ 3000
+ 3001 fi
+
+so the issue is not related to processing_proof flag;FRSTME3 has no afp copying issue when ran on Menlo server.
+
+Also one of the other job (EWBBDNA) has a proof file & it did not have any issues copying afp's over (https://jira.infoimageinc.com/browse/IBTL-163).
+
+
+
+
+author: william.kong
+comment: [~Peter.Dang]: Please advise if you agree with this assessment. If so, i'd like to close this ticket out.
+
+
+author: peter.dang
+comment: It is strange, the afp file all of sudden appears. The process was Oct, 29. We may need DP to retest if time permits.
+
+
+
+VCP log indicated it was copied successfully.
+
+
+
+Copy /d/frst/es3/frstes3129.prf.20201029101546 to /frstes3129.prf.20201029101546 successfully!
+Copy /d/frst/es3/frstes3129.prf.afp to /d/isd_share/frst/afpfiles//frstes3129.prf.afp successfully!
+Copy /d/afp/frst/frstes3129.prf.pdf to /frstes3129.prf.pdf successfully!
+Copy /d/frst/es3/frstes31294.2o1.20201029101555 to /frstes31294.2o1.20201029101555 successfully!
+Copy /d/frst/es3/frstes31294.2o1.afp to /frstes31294.2o1.afp successfully!
+Copy /d/frst/es3/frstes3129.log to /d/share/daily/logfiles/frst/10-29//frstes3129.log successfully!
+
+
+author: william.kong
+comment: [~cesarg]: Can you re-test this one more time in {color:#de350b}*PRODUCTION*{color} environment per Peter's recommendation above.
+
+
+author: william.kong
+comment: [~cesarg]: Scratch that! I don't want this re-testing to impact OPS testing. Please disregard!!
+
+
+author: william.kong
+comment: [~cesarg]: Pleaser re-test. Our print & inserting test is completed. I just want to make sure the issue above is resolved.
+
+
+author: cesarg
+comment: File has been reprocessed, new proc_id (2268857 ).
+
+
+author: cesarg
+comment: [~William.Kong]
+
+
+author: shailendrar
+comment: [~Peter.Dang] - Below is the snippet from /home/keep/vcp.log; Only files from first two lines are copied; rest of the afps are missing:
+
+
+
+!image-2020-11-13-11-10-36-427.png!
+
+
+author: william.kong
+comment: [~Peter.Dang]: Can you provide an update on this weird scenario as to why the logs said we copied but yet the files are missing?
+
+
+author: peter.dang
+comment: Shail,
+
+
+
+Look like the prf.pdf file was copied over instead of afp file. Please check the code below.
+
+
+
+#if called for processing then convert the prf afp to pdf
+ if [ $call_for_processing_proof = "Y" ]
+ then
+ # new online proofing update
+ {color:#FF0000}new_online_proofing_create_copy_prf_pdf_to_isd "${AfpFile}"{color}
+
+else
+ echo -e "$baseAfpFile.${dateTime}" >> ${isd_share_fileid_folder}${fileid_idx}
+ echo "---^^^---vcp ${AfpFile} ${isd_share_afp_folder}${baseAfpFile}.${dateTime}" >> ${fn}.log
+ vcp ${AfpFile} ${isd_share_afp_folder}${baseAfpFile}.${dateTime}
+ if [ $? != 0 ]; then
+ echo -e "Error in vcp ${AfpFile} ${isd_share_afp_folder}${baseAfpFile}.${dateTime}"
+ echo -e "Error in vcp ${AfpFile} ${isd_share_afp_folder}${baseAfpFile}.${dateTime}" >> ${fn}.log
+ fi
+ fi
+
+
+
+
+
+
+author: peter.dang
+comment: Also notice in this function notice the vcp afp to isd_share does not have timestamp.
+
+
+
+new_online_proofing_create_copy_prf_pdf_to_isd() {
+
+echo "$0 starting copying prf pdf to isd..."
+
+local AfpFile="$1"
+ local baseAfpFile=`basename $AfpFile`
+ #need to create prf pdf for online proofing
+ local prf_pdf_name="${baseAfpFile%afp}pdf"
+ echo -e "${prf_pdf_name}.${dateTime}" >> ${isd_share_fileid_folder}${fileid_idx}
+
+{color:#ff0000}vcp ${AfpFile} ${isd_share_afp_folder}{color}
+ if [ $? != 0 ]; then
+ echo -e "Error in vcp ${AfpFile} ${isd_share_afp_folder}"
+ echo -e "Error in vcp ${AfpFile} ${isd_share_afp_folder}" >> ${fn}.log
+ fi
+
+
+
+
+
+I compared production and BB logs and found that production does not copy pdf file over.
+
+
+
+This job has formdef defined
+---^^^---vcp /d/frst/es3/frstes31134.2o1.afp /d/isd_share/frst/afpfiles/frstes31134.2o1.afp.20201113101746
+---^^^---vcp /d/frst/es3/frstes31135.2oz.afp /d/isd_share/frst/afpfiles/frstes31135.2oz.afp.20201113101746
+apy call is curl -X GET http://is-apps-prod.infoimage.com/infosync/v1/infotrac/online_proofing/infosync_get_state/cid/frst/proc_ids/2278544 -H accept: application/json -H Content-Type: application/json
+apy call is curl -X PUT http://is-apps-prod.infoimage.com/infosync/v1/infotrac/online_proofing/infosync_state_update/proc_id/2278544/cid/frst/user_id/oper1 -H accept: application/json -H Content-Type: application/json -d \{ state: submitted, type: full, message: Request to update, full_txt_name: frstes311320201113101746.txt}
+perl /home/master/trigger_tracking_by_rec.pl /d/isd_share/frst/print_fileid/frstes311320201113101746.txt
+
+
+
+
+
+{color:#FF0000}BB production TEST{color}
+
+
+
+python /home/master/afp2pdf.py direct InputFilename="/d/isd_share/frst/afpfiles/frstes3115.prf.afp" PKEY="TRANSPARENT" OutputFilePath="/d/afp/frst/"
+apy call is curl -X GET http://is-apps-prod.infoimage.com/infosync/v1/infotrac/online_proofing/infosync_get_state/cid/frst/proc_ids/2268857 -H accept: application/json -H Content-Type: application/json
+apy call is curl -X POST http://is-apps-prod.infoimage.com/infosync/v1/infotrac/online_proofing/infosync_state_update/proc_id/2268857/cid/frst/user_id/oper1 -H accept: application/json -H Content-Type: application/json -d \{ state: submitted, type: prf, olp: y, olp_prf_file: y, olp_auto_rel: y, olp_int_dlist: dp@infoimageinc.com, olp_divert: y, message: Request to insert, prf_txt_name: frstes311520201113104142.prf.txt}
+/d/frst/es3/frstes3115.is:
+job started : Fri Nov 13 10:43:53 PST 2020
+job ended : Fri Nov 13 10:43:54 PST 2020
+
+
+
+Look like when the files are no longer in /d/frst/es3/ when it tried to copy over.
+
+This job has formdef defined
+---^^^---vcp /d/frst/es3/frstes31154.2o1.afp /d/isd_share/frst/afpfiles/frstes31154.2o1.afp.20201113104354
+---^^^---vcp /d/frst/es3/frstes31155.2oz.afp /d/isd_share/frst/afpfiles/frstes31155.2oz.afp.20201113104354
+apy call is curl -X GET http://is-apps-prod.infoimage.com/infosync/v1/infotrac/online_proofing/infosync_get_state/cid/frst/proc_ids/2268857 -H accept: application/json -H Content-Type: application/json
+apy call is curl -X PUT http://is-apps-prod.infoimage.com/infosync/v1/infotrac/online_proofing/infosync_state_update/proc_id/2268857/cid/frst/user_id/oper1 -H accept: application/json -H Content-Type: application/json -d \{ state: submitted, type: full, message: Request to update, full_txt_name: frstes311520201113104354.txt}
+perl /home/master/trigger_tracking_by_rec.pl /d/isd_share/frst/print_fileid/frstes311520201113104354.txt
+
+
+author: shailendrar
+comment: [~Peter.Dang] - I just looked at the 11/14 production run & I see the following:
+
+
+
+*/d/isd_share/frst/print_fileid*
+
+-rw-rw-rw- 1 oper1 opers 367 Nov 14 10:20 frstes3114.prf.20201114102030
+-rw-rw-rw- 1 oper1 opers 331 Nov 14 10:20 frstes311420201114102030.prf.txt
+-rw-rw-rw- 1 oper1 opers 13664 Nov 14 10:21 frstes31144.2o1.20201114102140
+-rw-rw-rw- 1 oper1 opers 399 Nov 14 10:21 frstes311420201114102140.txt
+
+
+
+*/d/isd_share/frst/afpfiles*
+
+-rw-rw-rw- 1 oper1 opers 240752 Nov 14 10:20 frstes3114.prf.afp
+-rw-r--r-- 1 oper1 opers 379458 Nov 14 10:20 frstes3114.prf.pdf.20201114102030
+-rw-rw-rw- 1 oper1 opers 298444 Nov 14 10:21 frstes31144.2o1.afp.20201114102140
+
+
+
+All the files are copied as expected. Are you saying the code on Brisbane server is different than current production?

@@ -1,0 +1,120 @@
+title: Jenkins Prism Pipeline
+body: The Prism CI/CD Pipeline is set up on Jenkins as Pipeline projects. There is a
+master pipeline, **PrismMaster** , that passes user-provided parameters to an
+appropriate downstream pipeline, determined by CID and system environment. The
+pipeline parameters are initialized as Active Choices Parameters and are
+defined by Groovy script (returns an array object). With Active Choices
+Parameters, it is possible to render one parameter dependent on another, e.g.
+the list of possible CIDs is dependent on the schema chosen. The pipeline
+script (Jenkinsfile) is pulled from the Gitlab SCM:
+<https://gitlab.infoimageinc.com/prism/jenkins-pipeline-script>.
+
+  
+
+Table of Contents
+
+truenone
+
+  
+  
+  
+---  
+  
+# Prism Master
+
+## Parameters
+
+SYS_ENV: Defines the system environment.
+
+TOMCAT_SERVER: Defines the server. Available choices are dependent on SYS_ENV.
+
+SCHEMA: Defines the schema.
+
+ORG_NAME: Defines the CID. Available choices are dependent on schema.
+
+BUILD_MSM: Defines whether to deploy MSM.
+
+BUILD_ROOT: Defines whether to deploy ROOT.
+
+## SCM
+
+Repository URL: <ssh://git@gitlab.infoimageinc.com:221/prism/jenkins-pipeline-
+script.git>
+
+Script path: master-script/Jenkinsfile
+
+# Base Pipeline
+
+## Naming Convention
+
+${CID}-${SYS_ENV}-pipeline
+
+For environments that have multiple servers, we will pair the system
+environment with the individual server identification number, e.g. pr01 or
+pr02. (This decision is still pending. Production is not set up yet)
+
+Examples
+
+adfi-dev-pipeline
+
+ewbb-pilot-pipeline
+
+## Parameters
+
+The same as  **PrismMaster** , but no choices are defined. Base pipelines are
+meant to be triggered solely by  **PrismMaster**.
+
+## SCM
+
+Repository URL: <ssh://git@gitlab.infoimageinc.com:221/prism/jenkins-pipeline-
+script.git>
+
+Script path: base-script/Jenkinsfile
+
+# Setting up a Base Pipeline
+
+All base pipelines have the same configuration. It is the parameters that
+define what and how the job will build. This is why  **it is very important
+that the base pipelines are ONLY triggered by Prism Master**.
+
+To set up a new pipeline using the GUI:
+
+  1. Click **New Item**
+  2. Enter a name for the pipeline. It is required that the name follows the naming convention defined above.
+  3. Choose  **Pipeline  **as the project type.
+  4. Copy from  **template-prism-pipeline**.
+
+To mass create base pipeline (usually when setting up a new system
+environment):
+
+  1. Log into ca-utils-pr-01 (currently gitlab-01).
+  2. cd /usr/local/jenkins/volume/.jenkins/jobs.
+  3. Modify the allcids.txt file if necessary to include on the CIDs of interest.
+  4. bash create_pipeline_jobs.sh ${SYS_ENV}
+    * This script will create the base pipelines for the CIDs provided in the allcids.txt file for the system environment provided as a parameter to the script.
+
+# Changing Base Pipeline Configuration
+
+The base pipeline is set up in such a way that its configuration does not need
+to be changed. The Jenkinsfile is pulled from Gitlab, and as such any commit
+to the repository will be pulled to Jenkins whenever the next build is
+triggered. However, if there is a need to update the configurations on
+Jenkins, follow the following steps:
+
+  1. Update  **template-prism-pipeline**.
+  2. Log into ca-utils-pr-01 (currently gitlab-01).
+  3. cd /usr/local/jenkins/volume/.jenkins/jobs
+  4. bash propagate_pipeline_config.sh ${SYS_ENV}
+    * This script will propagate the config file of  **template-prism-pipeline** to all the pipeline jobs belonging to the provided ${SYS_ENV} parameter.
+
+# External Resources
+
+To learn more about Active Choices Parameters:
+<https://plugins.jenkins.io/uno-choice/>
+
+To learn more about Pipeline Script:
+<https://jenkins.io/doc/book/pipeline/syntax/>
+
+  
+
+

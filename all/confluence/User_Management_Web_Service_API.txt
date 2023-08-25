@@ -1,0 +1,2114 @@
+title: User Management Web Service API
+body:   
+
+Table of Contents
+
+truenone
+
+# Introduction
+
+This web service API is customized for First Community Services (FCSB) only.
+Through the web services, FCSB will be able to register any new users and/or
+accounts in the InfoIMAGE eStatements system. This document will describe how
+to use the web services.
+
+# Connection to the web service
+
+All web service connections should be established under HTTPS protocol. Each
+web service request should be submitted in HTTP POST. For security reasons, IP
+filtering will be setup during the installation so that only the web service
+connections coming from FCSB will be allowed to access the eStatements system.
+
+Although Fort Hood National Bank (FHNB) and First National Bank Texas (FNBT)
+are both under FCSB, different URLs will be used to access the same web
+service. For example, to retrieve a user information from FHNB through the web
+service: GetUser, the URL will be:
+[https://statements.fhnb.com/GetUser.ws?](https://statements.fhnb.com/GetUser.ws)
+
+Similarly, for FNBT, the URL will be:  
+<https://statements.1stnb.com/>GetUser.ws?
+
+# Response from the web service
+
+The response from every web service will be described in XML. Since the XML
+structure is different from one web service to another, please read the
+specification of each web service for more details.
+
+# Web service
+
+This section will describe the web services that are available to FCSB.
+
+## _Toc197408474GetUser
+
+Service Name: GetUser.ws  
+Given a CIF, this web service will return the user information and the account
+information from the registered users table. If the user doesn't exist in
+E-Statements, an error message will be returned.  
+ **Input:**
+
+ **Parameter**
+
+|
+
+ **Required**
+
+|
+
+ **Length**
+
+|
+
+ **Comment**  
+  
+---|---|---|---  
+  
+cif
+
+|
+
+Yes
+
+|
+
+14
+
+|
+
+The CIF number of the user  
+  
+  
+ **Example:** <https://statements.fhnb.com/GetUser.ws?cif=123456>  
+**Note** : The example listed above is described in the HTTP GET style. Please
+translate it in the HTTP POST style accordingly.  
+ **Output:**
+
+ **Parent**
+
+|
+
+ **Node**
+
+|
+
+ **Body**  
+  
+---|---|---  
+  
+  
+
+|
+
+InfoIMAGE
+
+|
+
+  
+  
+  
+InfoIMAGE
+
+|
+
+user
+
+|
+
+  
+  
+  
+user
+
+|
+
+acct
+
+|
+
+EMPTY  
+  
+  
+  
+
+ **Node**
+
+|
+
+ **Attribute Name**
+
+|
+
+ **Comment**  
+  
+---|---|---  
+  
+user
+
+|
+
+cif
+
+|
+
+The CIF number of the user  
+  
+user
+
+|
+
+tin
+
+|
+
+The TIN number  
+  
+user
+
+|
+
+tinType
+
+|
+
+TIN Type: O - Other (Matricular), E - Employee ID, S - Social Security ID.  
+  
+user
+
+|
+
+firstName
+
+|
+
+The user's first name  
+  
+user
+
+|
+
+lastName
+
+|
+
+The user's last name  
+  
+user
+
+|
+
+dob
+
+|
+
+Date of birth (MMDDYYYY)  
+  
+user
+
+|
+
+employee
+
+|
+
+The employee number  
+  
+user
+
+|
+
+promo
+
+|
+
+The promotion code  
+  
+user
+
+|
+
+register
+
+|
+
+Y = if the user is registered to E-Statements already; N = otherwise.  
+  
+user
+
+|
+
+loginId
+
+|
+
+The email address/login of this user  
+  
+user
+
+|
+
+hint
+
+|
+
+Security phrase to recover forgotten password  
+  
+user
+
+|
+
+hintAns
+
+|
+
+Security hint to recover forgotten password  
+  
+user
+
+|
+
+status
+
+|
+
+The user status: A - Active, L - Lockout (The user login is locked out and the
+user won't be able to login until 30 mins later), R - Reset Password (When the
+user logs into E-Statements, the user will be redirected to password reset
+page)  
+  
+user
+
+|
+
+source
+
+|
+
+The source id defined by FCSB  
+  
+acct
+
+|
+
+num
+
+|
+
+The account number  
+  
+acct
+
+|
+
+branch
+
+|
+
+The branch  
+  
+acct
+
+|
+
+paperless
+
+|
+
+the delivery preference of the account: Y = Electronic; N = In Paper  
+  
+  
+
+acct
+
+|
+
+app
+
+|
+
+The application type of the account: DD - Demand depositSV - Savings TimeLN -
+LoansIR - IRA AccountsCD - Certificate of Deposits IR - IRA  
+CA - Cards  
+BX - Safe Deposit BoxML - Mortgage Loans  
+CT - Collateral  
+  
+---|---|---  
+  
+acct
+
+|
+
+email
+
+|
+
+The 1st email address of this user to this account  
+  
+acct
+
+|
+
+email2
+
+|
+
+The 2nd email address of this user to this account.  
+  
+acct
+
+|
+
+source
+
+|
+
+A source id defined by FCSB  
+  
+acct
+
+|
+
+ein
+
+|
+
+Employee identification number  
+  
+  
+ **Example:**  
+<InfoIMAGE>  
+<user cif="123456" tin="111222333" tinType="S" firstName="John" lastName="Doe"
+dob="01311979" register="Y" promo="123" employee="8642"
+loginId="john_doe@hotmail.com" hint="What's your mother maiden name?"
+hintAns="brown" status="A" source="Admin">  
+<acct num="1234" app="DD" paperless="Y" branch="32"
+email="john_doe@hotmail.com" email2="john_doe@yahoo.com" source="Admin"
+ein="145"/>  
+<acct num="5678" app="CA" paperless="Y" branch="38" email="johndoe@gmail.com"
+email2="" source="Admin" ein="123"/>  
+<acct num="6513" app="SV" paperless="Y" branch="84"
+email="john_doe@hotmail.com" email2="" source="Admin" ein="123"/>/>  
+</user>  
+</InfoIMAGE>  
+This user is found!  
+<InfoIMAGE>  
+<error code="U09">The user does not exist</error>  
+</InfoIMAGE>  
+The user doesn't exist!  
+For the complete list of error code, please refer to the error handling
+section.
+
+##  EnrollUser
+
+Service Name: EnrollUser.ws  
+Given the user information and account information, this web service will
+enroll the user for direct sign-on. It creates a login for this user, updates
+the user information according to the input parameters, and opts out the
+specified accounts. A welcome email will be sent out when this service is
+completed.  
+If the user or anyone of the accounts does not exist in our system, we will
+create the user/account instantly and set it to be expired 7 days later. If
+the user/account information doesn't show up in any auth files before the
+expiration date, the user/account will be purged from the system.  
+This service does not support any users, who are already DSO-enrolled.  
+**Input:**
+
+ **Parameter**
+
+|
+
+ **Required**
+
+|
+
+ **Length**
+
+|
+
+ **Comment**  
+  
+---|---|---|---  
+  
+cif
+
+|
+
+Yes
+
+|
+
+14
+
+|
+
+The CIF number of the user  
+  
+tin
+
+|
+
+Yes
+
+|
+
+9
+
+|
+
+The SSN or TIN (only digits are allowed)  
+  
+tinType
+
+|
+
+Yes
+
+|
+
+1
+
+|
+
+  
+  
+  
+firstName
+
+|
+
+Yes
+
+|
+
+20
+
+|
+
+  
+  
+  
+lastName
+
+|
+
+Yes
+
+|
+
+20
+
+|
+
+  
+  
+  
+dob
+
+|
+
+Yes
+
+|
+
+8
+
+|
+
+  
+  
+  
+password
+
+|
+
+Yes
+
+|
+
+20
+
+|
+
+  
+  
+  
+loginId
+
+|
+
+Yes
+
+|
+
+50
+
+|
+
+The login ID/email address of this E-Statement account.  
+  
+hint
+
+|
+
+Yes
+
+|
+
+50
+
+|
+
+The question will be used in password reset  
+  
+hintAns
+
+|
+
+Yes
+
+|
+
+50
+
+|
+
+The answer of the question in password reset  
+  
+employee
+
+|
+
+Yes
+
+|
+
+20
+
+|
+
+The employee number  
+  
+promo
+
+|
+
+Optional
+
+|
+
+20
+
+|
+
+The promotion code  
+  
+source
+
+|
+
+Yes
+
+|
+
+60
+
+|
+
+  
+  
+  
+ein
+
+|
+
+Yes
+
+|
+
+10
+
+|
+
+Employee Identification Number  
+  
+numOfAccts
+
+|
+
+Yes
+
+|
+
+2
+
+|
+
+The number of accounts that are going to be enrolled for this user  
+  
+num.[i]
+
+|
+
+Yes
+
+|
+
+20
+
+|
+
+The account number. [i] is the index of accounts in the request. For example,
+num.1 refers to the first account number and num.2 refers to the second
+account number.  
+  
+app.[i]
+
+|
+
+Yes
+
+|
+
+2
+
+|
+
+The application type of the ith account  
+  
+branch.[i]
+
+|
+
+Yes
+
+|
+
+3
+
+|
+
+The branch number of the ith account  
+  
+email.[i]
+
+|
+
+Yes
+
+|
+
+50
+
+|
+
+The 1st email address of the user to the ith account  
+  
+email2.[i]
+
+|
+
+No
+
+|
+
+50
+
+|
+
+The 2nd email address of the user to the ith account  
+  
+  
+  
+ **Example:**
+[https://statements.fhnb.com/EnrollUser.ws?cif=123456&tin=123456789&tinType=...&numOfAccts=2&num.1=123&app.1=DD&...&num.2=456&app.2=SV&](https://statements.fhnb.com/EnrollUser.ws?cif=123456&tin=123456789&tinType=...&numOfAccts=2&num.1=123&app.1=DD&...&num.2=456&app.2=SV&)...  
+ **Note** : The abstract example listed above is described in the HTTP GET
+style. Please translate it in the HTTP POST style accordingly.  
+**Output:**
+
+ **Parent**
+
+|
+
+ **Node**
+
+|
+
+ **Body**  
+  
+---|---|---  
+  
+  
+
+|
+
+InfoIMAGE
+
+|
+
+  
+  
+  
+InfoIMAGE
+
+|
+
+response
+
+|
+
+Success  
+  
+  
+ **Example:**  
+<InfoIMAGE>  
+<response>Success</response>  
+</InfoIMAGE>  
+You add the user successfully  
+  
+<InfoIMAGE>  
+<error code="U01">Missing the parameter: cif</error>  
+</InfoIMAGE>  
+Something wrong while we are processing your request!  
+For the complete list of error code, please refer to the error handling
+section.
+
+## EnrollSSOUser
+
+Service Name: EnrollSSOUser.ws  
+**Input:**
+
+ **Parameter**
+
+|
+
+ **Required**
+
+|
+
+ **Length**
+
+|
+
+ **Comment**  
+  
+---|---|---|---  
+  
+cif
+
+|
+
+Yes
+
+|
+
+14
+
+|
+
+The CIF number of the user  
+  
+tin
+
+|
+
+Yes
+
+|
+
+9
+
+|
+
+The SSN or TIN (only digits are allowed)  
+  
+tinType
+
+|
+
+Yes
+
+|
+
+1
+
+|
+
+  
+  
+  
+firstName
+
+|
+
+Yes
+
+|
+
+20
+
+|
+
+  
+  
+  
+lastName
+
+|
+
+Yes
+
+|
+
+20
+
+|
+
+  
+  
+  
+dob
+
+|
+
+Yes
+
+|
+
+8
+
+|
+
+  
+  
+  
+employee
+
+|
+
+Yes
+
+|
+
+20
+
+|
+
+The employee number  
+  
+promo
+
+|
+
+Optional
+
+|
+
+1
+
+|
+
+The promotion code.  
+  
+source
+
+|
+
+Yes
+
+|
+
+60
+
+|
+
+  
+  
+  
+ein
+
+|
+
+Yes
+
+|
+
+10
+
+|
+
+Employee Identification Number  
+  
+numOfAccts
+
+|
+
+Yes
+
+|
+
+2
+
+|
+
+The number of accounts that are going to be enrolled for this user  
+  
+num.[i]
+
+|
+
+Yes
+
+|
+
+20
+
+|
+
+The account number. [i] is the index of accounts in the request. For example,
+num.1 refers to the first account number and num.2 refers to the second
+account number.  
+  
+app.[i]
+
+|
+
+Yes
+
+|
+
+2
+
+|
+
+The application type of the ith account  
+  
+branch.[i]
+
+|
+
+Yes
+
+|
+
+3
+
+|
+
+The branch number of the ith account  
+  
+email.[i]
+
+|
+
+Yes
+
+|
+
+50
+
+|
+
+The 1st email address of the user to the ith account  
+  
+email2.[i]
+
+|
+
+No
+
+|
+
+50
+
+|
+
+The 2nd email address of the user to the ith account  
+  
+app.[i]
+
+|
+
+Yes
+
+|
+
+2
+
+|
+
+The application type of the ith account  
+  
+  
+ **Output:**
+
+ **Parent**
+
+|
+
+ **Node**
+
+|
+
+ **Body**  
+  
+---|---|---  
+  
+  
+
+|
+
+InfoIMAGE
+
+|
+
+  
+  
+  
+InfoIMAGE
+
+|
+
+response
+
+|
+
+Success  
+  
+  
+ **Example:**  
+<InfoIMAGE>  
+<response>Success</response>  
+</InfoIMAGE>  
+You add the user successfully  
+  
+<InfoIMAGE>  
+<error code="U01">Missing the parameter: cif</error>  
+</InfoIMAGE>  
+Something wrong while we are processing your request!  
+For the complete list of error code, please refer to the error handling
+section.  
+  
+
+## SaveUser
+
+Service Name: SaveUser.ws  
+This web service will now only update the user information according to the
+input parameters. It will not create any login nor update the password if the
+user doesn't have any login.  
+**Input:**
+
+ **Parameter**
+
+|
+
+ **Required**
+
+|
+
+ **Length**
+
+|
+
+ **Comment**  
+  
+---|---|---|---  
+  
+cif
+
+|
+
+Yes
+
+|
+
+14
+
+|
+
+The CIF number of the user. It is used to look up the user and it will not be
+updated.  
+  
+tin
+
+|
+
+Yes
+
+|
+
+9
+
+|
+
+The SSN or TIN (only digits are allowed)  
+  
+tinType
+
+|
+
+Yes
+
+|
+
+1
+
+|
+
+  
+  
+  
+firstName
+
+|
+
+Yes
+
+|
+
+20
+
+|
+
+  
+  
+  
+lastName
+
+|
+
+Yes
+
+|
+
+20
+
+|
+
+  
+  
+  
+dob
+
+|
+
+Yes
+
+|
+
+8
+
+|
+
+  
+  
+  
+hint
+
+|
+
+Yes
+
+|
+
+50
+
+|
+
+The question will be used in password reset  
+  
+hintAns
+
+|
+
+Yes
+
+|
+
+50
+
+|
+
+The answer of the question in password reset  
+  
+status
+
+|
+
+Optional
+
+|
+
+1
+
+|
+
+The possible values are "A" and "R". If the status isn't provided, the status
+remains unchanged.  
+A - Active; R - The user will need to update the password after the user logs
+in.  
+If the login is locked out, this web service will clear the lockout status.  
+  
+password
+
+|
+
+Optional
+
+|
+
+20
+
+|
+
+This value will be used when status = 'R'  
+  
+  
+ **Output:**
+
+ **Parent**
+
+|
+
+ **Node**
+
+|
+
+ **Body**  
+  
+---|---|---  
+  
+  
+
+|
+
+InfoIMAGE
+
+|
+
+  
+  
+  
+InfoIMAGE
+
+|
+
+response
+
+|
+
+Success  
+  
+  
+ **Example:**  
+<InfoIMAGE>  
+<response>Success</response>  
+</InfoIMAGE>  
+You updated the user successfully  
+  
+<InfoIMAGE>  
+<error code="U01">Missing the parameter: cif</error>  
+</InfoIMAGE>  
+Something wrong while we are processing your request!  
+For the complete list of error code, please refer to the error handling
+section.
+
+##  GetAccount
+
+Service Name: GetAccount.ws  
+Given an account number, this web service will return the corresponding
+account information associated from the registered account tables. If the
+account doesn't exist in E-Statements, an empty response will be returned.  
+ **Input:**
+
+ **Parameter**
+
+|
+
+ **Required**
+
+|
+
+ **Length**
+
+|
+
+ **Comment**  
+  
+---|---|---|---  
+  
+num
+
+|
+
+Yes
+
+|
+
+20
+
+|
+
+The account number  
+  
+  
+ **Output:**
+
+ **Parent**
+
+|
+
+ **Node**
+
+|
+
+ **Body**  
+  
+---|---|---  
+  
+  
+
+|
+
+InfoIMAGE
+
+|
+
+  
+  
+  
+InfoIMAGE
+
+|
+
+acct
+
+|
+
+EMPTY  
+  
+  
+
+ **Node**
+
+|
+
+ **Attribute Name**
+
+|
+
+ **Comment**  
+  
+---|---|---  
+  
+acct
+
+|
+
+num
+
+|
+
+The account number  
+  
+acct
+
+|
+
+branch
+
+|
+
+  
+  
+  
+acct
+
+|
+
+paperless
+
+|
+
+the delivery preference of the account: Y = Electronic; N = In Paper  
+  
+acct
+
+|
+
+app
+
+|
+
+The application type of the account:DD - Demand depositSV - Savings TimeLN -
+LoansIR - IRA AccountsCD - Certificate of Deposits IR - IRA  
+CA - Cards  
+BX - Safe Deposit BoxML - Mortgage Loans  
+CT - Collateral  
+  
+acct
+
+|
+
+ein
+
+|
+
+Employee identification number  
+  
+email
+
+|
+
+cif
+
+|
+
+The CIF number of the user, who assigns the email address to this account.  
+  
+email
+
+|
+
+[body]
+
+|
+
+An email address associated with this account.  
+  
+  
+ **Example:**  
+<InfoIMAGE>  
+<acct num="1234" app="DD" paperless="Y" branch="32" ein="123">  
+<email cif="123">john_doe@hotmail.com"</email>  
+<email cif="434">johndoe@yahoo.com</email>  
+</acct>  
+</InfoIMAGE>  
+The account is found!  
+<InfoIMAGE></InfoIMAGE>  
+The account doesn't exist in E-Statements  
+For the complete list of error code, please refer to the error handling
+section.
+
+## AddAccount
+
+Service Name: AddAccount.ws  
+This web service will assign the email addresses to the account that is
+associated to the user and change the delivery preference of the account to be
+paperless.  
+The web service will create the account instantly if the account doesn't exist
+in the system. It will set the account to be expired 7 days later. If the
+account information doesn't show up in any auth files before the expiration
+date, the account will be purged from the system.  
+**Input:**
+
+ **Parameter**
+
+|
+
+ **Required**
+
+|
+
+ **Length**
+
+|
+
+ **Comment**  
+  
+---|---|---|---  
+  
+cif
+
+|
+
+Yes
+
+|
+
+14
+
+|
+
+The CIF number of the user  
+  
+num
+
+|
+
+Yes
+
+|
+
+20
+
+|
+
+The account number  
+  
+app
+
+|
+
+Yes
+
+|
+
+2
+
+|
+
+The application type of this account  
+  
+branch
+
+|
+
+Yes
+
+|
+
+3
+
+|
+
+The branch number  
+  
+source
+
+|
+
+Yes
+
+|
+
+60
+
+|
+
+The source ID defined by FCSB  
+  
+email
+
+|
+
+Yes
+
+|
+
+50
+
+|
+
+The 1st email address of the user to this account  
+  
+email2
+
+|
+
+No
+
+|
+
+50
+
+|
+
+The 2nd email address of the user to this account  
+  
+ein
+
+|
+
+Yes
+
+|
+
+10
+
+|
+
+Employee identitication number.  
+  
+  
+ **Output:**
+
+ **Parent**
+
+|
+
+ **Node**
+
+|
+
+ **Body**  
+  
+---|---|---  
+  
+  
+
+|
+
+InfoIMAGE
+
+|
+
+  
+  
+  
+InfoIMAGE
+
+|
+
+response
+
+|
+
+Success  
+  
+  
+ **Example:**  
+<InfoIMAGE>  
+<response>Success</response>  
+</InfoIMAGE>  
+You add the user successfully  
+  
+<InfoIMAGE>  
+<error code="U01">Missing the parameter: num</error>  
+</InfoIMAGE>  
+Something wrong while we are processing your request!  
+For the complete list of error code, please refer to the error handling
+section.
+
+## IsLoginAvailable
+
+Service Name: IsLoginAvailable.ws  
+This web service will check if the given login name is being used by any
+existing user. It will first check if any pending enrollments have chosen the
+login name. If not, it will check our user registered table to see if the
+login name has been taken. Since Jan 21, 2008, e-mail address will be used as
+the login name in E-Statements.  
+ **Input:**
+
+ **Parameter**
+
+|
+
+ **Required**
+
+|
+
+ **Length**
+
+|
+
+ **Comment**  
+  
+---|---|---|---  
+  
+loginId
+
+|
+
+Yes
+
+|
+
+50
+
+|
+
+The login name/email address  
+  
+  
+ **Output:**
+
+ **Parent**
+
+|
+
+ **Node**
+
+|
+
+ **Body**  
+  
+---|---|---  
+  
+  
+
+|
+
+InfoIMAGE
+
+|
+
+  
+  
+  
+InfoIMAGE
+
+|
+
+response
+
+|
+
+Yes
+
+|
+
+No  
+  
+  
+ **Example:**  
+<InfoIMAGE>  
+<response>Yes</response>  
+</InfoIMAGE>  
+The login is available!
+
+## UpdatePassword
+
+Service Name: UpdatePassword.ws  
+This web service will update the password of the user identified by the login.
+The next time the user logs in, they will need to assign a new password.  
+ **Input:**
+
+ **Parameter**
+
+|
+
+ **Required**
+
+|
+
+ **Length**
+
+|
+
+ **Comment**  
+  
+---|---|---|---  
+  
+loginId
+
+|
+
+Yes
+
+|
+
+50
+
+|
+
+The login name/email address  
+  
+password
+
+|
+
+Yes
+
+|
+
+20
+
+|
+
+The new password of the user.  
+  
+  
+ **Output:**
+
+ **Parent**
+
+|
+
+ **Node**
+
+|
+
+ **Body**  
+  
+---|---|---  
+  
+  
+
+|
+
+InfoIMAGE
+
+|
+
+  
+  
+  
+InfoIMAGE
+
+|
+
+response
+
+|
+
+Success  
+  
+  
+ **Example:**  
+<InfoIMAGE>  
+<response>Success</response>  
+</InfoIMAGE>  
+The login is available!
+
+## UpdateEmail
+
+Service Name: UpdateEmail.ws  
+This web service will update the email addresses for the account that is
+associated to the user.  
+**Input:**
+
+ **Parameter**
+
+|
+
+ **Required**
+
+|
+
+ **Length**
+
+|
+
+ **Comment**  
+  
+---|---|---|---  
+  
+cif
+
+|
+
+Yes
+
+|
+
+14
+
+|
+
+The CIF number of the user  
+  
+num
+
+|
+
+Yes
+
+|
+
+20
+
+|
+
+The account number  
+  
+app
+
+|
+
+Yes
+
+|
+
+2
+
+|
+
+The application type of this account  
+  
+email
+
+|
+
+Yes
+
+|
+
+50
+
+|
+
+The 1st email address of the user to this account  
+  
+email2
+
+|
+
+No
+
+|
+
+50
+
+|
+
+The 2nd email address of the user to this account  
+  
+  
+ **Output:**
+
+ **Parent**
+
+|
+
+ **Node**
+
+|
+
+ **Body**  
+  
+---|---|---  
+  
+  
+
+|
+
+InfoIMAGE
+
+|
+
+  
+  
+  
+InfoIMAGE
+
+|
+
+response
+
+|
+
+Success  
+  
+## Web Service Error Handling
+
+When an error is generated during the process, the service will return the
+error code and the error message as follows:  
+ **Example:**  
+<InfoIMAGE>  
+<error code="U01">Missing the parameter: cif</error>  
+</InfoIMAGE>  
+**Error Code:**
+
+ **Code**
+
+|
+
+ **Message**  
+  
+---|---  
+  
+U01
+
+|
+
+Missing the parameter: [the parameter name]  
+  
+U02
+
+|
+
+Invalid TIN  
+  
+U03
+
+|
+
+Unknown TIN type  
+  
+U04
+
+|
+
+Invalid DOB  
+  
+U05
+
+|
+
+The login is chosen  
+  
+U06
+
+|
+
+Invalid email format  
+  
+U07
+
+|
+
+User exists  
+  
+U08
+
+|
+
+Account exists  
+  
+U09
+
+|
+
+User doesn't exist  
+  
+U10
+
+|
+
+The length of the parameter is over the limit: [the parameter name]  
+  
+U11
+
+|
+
+Invalid user status  
+  
+U12
+
+|
+
+The CIF number is being used in other FCSB's branch.  
+  
+U13
+
+|
+
+Cannot create login for this user because the user is already in the pending
+queue.  
+  
+U14
+
+|
+
+The CIF isn't in the queue yet.  
+  
+U15
+
+|
+
+Password is the same as the old one.  
+  
+U16
+
+|
+
+Invalid numOfAccts  
+  
+OTH
+
+|
+
+Any other undefined error  
+  
+  
+  
+
+

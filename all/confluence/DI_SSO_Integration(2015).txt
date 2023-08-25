@@ -1,0 +1,106 @@
+title: DI SSO Integration(2015)
+body: It's a 2 steps request:
+
+  1. IFSIBhblogin.jsp (validate the user information(optional: (create accounts) and (map the user-account relationships)). once validated, return the key)  
+Required Params below:
+
+    1. user_fi_number (For model that requires account type, it'll be used as "cifNum". The model without account type will be used as "acctNum".)
+    2. pswd (password we used to validate whether it's matching or not, not doing anything else)
+    3. email (email address)
+    4. gmt (gmt time, not doing anything with it)
+    5. timeout (timeout period in minutes. E.g.: 3 will be treated as timeout after 3 minutes)
+    6. account_number
+      1. if not found
+        1. account_number(i) (i is an increment number goes from 1)
+          1. if found, loop until not found and use params below:  
+i. anum(i) acctNum  
+ii. astat(i) not being used  
+iii. atype(i) acctType  
+iv. ausr(i) not being used  
+v. adsc(i) not being used
+
+          2. if not found, error out
+        2. else use param below:
+          1. anum acctNum
+          2. astat not being used
+          3. atype acctType
+          4. ausr not being used
+          5. adsc not being used
+  2. IFSIBssoexchange.jsp (use the key returned from the IFSIBhblogin.jsp to login)
+    1. key (the key was previously returned by the hblogin.jsp)
+
+  
+  
+
+# DI SSO on HyperCube
+
+  
+  
+
+## Version 1 : Account number received as part of
+user_fi_number[](https://i3dev.easyredmine.com/projects/estmt20/wiki/DISSOIntegration#Version-1-Account-
+number-received-as-part-of-user_fi_number)
+
+  1. /ssoKeygen (Server route that get the parameters, validates them (optional: (create accounts) and (map the user-account relationships)) and if valid, return the key)
+
+  
+  
+
+#### Reads the following parameters :
+
+  1. user_fi_number (Used as account number)
+  2. pswd (Password to validate the sso method with the password saved for each cid in property file)
+  3. email (Email address)
+
+  
+  
+
+#### Accounts creation/User-Accounts mapping
+
+In this model, parameters external Id and list of accounts will have the same
+value: user_fi_number (account number). Additionally an optional parameter
+(controlled by property) is also sent to check if the account number has to be
+created if it is not present already. If account_number is null and
+autoCreateAccount=y then anum=user_fi_number  
+  
+
+## Version 2 : External user id received as part of user_fi_number and
+account_num received
+independently[](https://i3dev.easyredmine.com/projects/estmt20/wiki/DISSOIntegration#Version-2-External-
+user-id-received-as-part-of-user_fi_number-and-account_num-received-
+independently)
+
+  1. /ssoKeygen (Server route that get the parameters, validates them (optional: (create accounts) and (map the user-account relationships)) and if valid, return the key)
+
+  
+  
+
+#### Reads the following parameters :
+
+  1. user_fi_number (Used as cifNum/external user id)
+  2. pswd (Password to validate the sso method with the password saved for each cid in property file)
+  3. email (Email address)
+  4. if(account_number is present) {  
+account_number (Account number)  
+atype (Account type)  
+} else {  
+account_number(i) (i is an increment number goes from 1) (if found, loop
+through each index for following parameters)
+
+atype(i) (Account type associated with each account number)  
+}  
+//AS of now astat,ausr,adsc are parameters which are not being processed on
+hypercube SSO processing time. atype is processed as per the index of the
+sequence of parameters for account_num
+
+  
+  
+
+#### Accounts creation/User-Accounts mapping
+
+In this model, parameters external Id will get the value from user_fi_number
+and list of accounts will get the value from account_number/account_number(i).
+Additionally an optional parameter (controlled by property) is also sent to
+check if the account number has to be created if it is not present already.
+
+

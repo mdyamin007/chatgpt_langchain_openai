@@ -1,0 +1,319 @@
+title: SSCU - Mule Server Running Procedure
+body:   
+
+## [A] Mule Server in DMZ (10.8.9.54) Which Prod Mule box, but moved inside
+the DMZ
+
+  
+
+### Mule Commands
+
+> > <Mule_Home> = /opt/stageMule332
+
+  * To check the running  **status**  of the Mule Server:  
+
+    
+        $ cd <Mule_Home>
+    $ sudo ./bin/mule status
+    
+
+  * To STOP the Mule Server:  
+
+    
+        $ cd <Mule_Home>
+    $ sudo ./bin/mule stop
+    
+
+  * To START the Mule Server:  
+
+    
+        $ cd <Mule_Home>
+    $ sudo ./bin/mule start
+    
+
+  * To deploy the project ZIP file under Mule Server:
+
+    
+    
+    $ cd <Mule_Home>/apps
+    $ sudo rm <PROJECT_NAME>-anchor.txt       for example: "mule_sscu_instantenrollment-anchor.txt" 
+    $ sudo cp <PROJECT_NAME.zip> .
+    
+
+  * The Mule server will pick-up the zip files and unzip it using the zip file-name as folder-name under  _" apps"_ sub-folder.
+  * Check MySQL database connection is defined correctly under the folder:  _< Mule_Home>/apps/<project_folder>_.  
+For example:  
+ _/opt/stageMule332/apps/mule_sscu_instantenrollment/classes/application-
+override.properties_
+
+  * To LOG folder for Mule Server:
+    1. The Mule server writes log files under "logs" sub-folder.
+    2. Check file  _" mule_ee.log"_ for latest log file details. It keeps appending into this file incase file size grows > 10mb, it renames to  _" mule_ee.log.X"_
+
+* * *
+
+  
+  
+
+## [B] Mule Test Server PD-DEV1 (10.8.9.57)
+
+  
+  
+
+### Mule Commands
+
+> > <Mule_Home> = /opt/muleEE3.3.2
+
+  * To check the running  **status**  of the Mule Server:  
+
+    
+        $ cd <Mule_Home>
+    $ sudo ./bin/mule status
+    
+
+  * To STOP the Mule Server:  
+
+    
+        $ cd <Mule_Home>
+    $ sudo ./bin/mule stop
+    
+
+  * To START the Mule Server:  
+
+    
+        $ cd <Mule_Home>
+    $ sudo ./bin/mule start
+    
+
+  * To deploy the project ZIP file under Mule Server:
+
+    
+    
+    Copy zip file under the "apps" sub-folder:
+    $ cd <Mule_Home>/apps
+    $ sudo rm <PROJECT_NAME>-anchor.txt       for example: "mule_sscu_instantenrollment-anchor.txt" 
+    $ sudo cp <XXX.zip> .
+    
+
+When Mule Server is fully up & running, it will show the application status as
+DEPLOYED. In case of error, it will show as FAILED.
+
+    
+    
+    **********************************************************************
+    *            - - + APPLICATION + - -            * - - + STATUS + - - *
+    **********************************************************************
+    * mule_sscu_instantenrollment                   * DEPLOYED           *
+    * mule_mfaproject-1.0                           * DEPLOYED           *
+    * default                                       * DEPLOYED           *
+    * mmc-agent-mule3-app-3.3.2                     * DEPLOYED           *
+    * mulesftpscannerrest-1.0                       * DEPLOYED           *
+    **********************************************************************
+    
+
+  
+
+  * The Mule server will pick-up the zip files and unzip it using the zip file-name as folder-name under  _" apps"_ sub-folder.
+  * Check MySQL database connection is defined correctly under the folder:  _< Mule_Home>/apps/<project_folder>_ and make sure it has the Ip-Address for he box.
+
+> > For example:  
+>  _/opt/muleEE3.3.2/apps/mule_sscu_instantenrollment/classes/application-
+> override.properties_
+    
+    
+    ### MySQL database server configuration
+    jdbc.mysql.url=jdbc:mysql://10.8.9.57:3306/MULEDB?zeroDateTimeBehavior=convertToNull&autoReconnect=true
+    jdbc.mysql.username=MULE
+    jdbc.mysql.password=*****
+    
+
+  * To LOG folder for Mule Server:
+    1. The Mule server writes log files under  _" logs"_ sub-folder.
+    2. Check file  _" mule_ee.log"_ for latest log file details.
+
+  
+  
+
+### Testing
+
+ **a) From Inside Corp Network using Server IP-address:**
+
+<https://10.8.11.22:8443/oauth2/token>
+
+    
+    
+    HTTP Method = POST  
+    Content-Type=application/x-www-form-urlencoded  
+    HTTP Payload  
+    username=infoimage&password=enFoRS1Ige&client_id=s6BhdRkqt3&grant_type=password&scope=READ_PROFILE%20WRITE_PROFILE
+
+Response:
+
+    
+    
+    {
+      "scope": "READ_PROFILE WRITE_PROFILE",
+      "expires_in": 119999,
+      "token_type": "bearer",
+      "access_token": "20tclm33ZY2Wk0WjMNe24X0vgAzfahE7y8lAsM2Q-2HKL1OCsh--zXamAVekjfT_bPiZlFIU8BQTQnMWD3saWg" 
+    }
+    
+
+  
+
+NOTE: In case of no response, it may be the SSL Cert which is not yet trusted.
+So, try with URL and accept the Cert under browser trust-store.  
+<https://10.8.11.22:8443/oauth2/token>  
+In case of further errors, try with URL: <https://10.8.9.57:8090/oauth2/token>
+
+2\. To post the JSON Payload:  
+<https://10.8.11.22:8443/api/v1/enrollment?access_token={token_received_from_previous_call>}
+
+    
+    
+    HTTP Method = POST  
+    Content-Type=application/json  
+    HTTP Payload  
+    
+    
+    
+    {
+      "accountNumber" : "10966",
+      "clientId" : "InfoIMAGE",
+      "customAttribs" : {
+          "flagInd1" : "S" 
+        },
+      "enrollment" : "E" 
+    }
+    
+    
+    
+      
+    
+
+Response:
+
+    
+    
+    aaa
+    
+
+  
+
+**b) From Outside using Server DNS Name:**
+
+1\. To get the Secure Token:
+
+<https://testapi.infoimageinc.com/oauth2/token>
+
+    
+    
+    HTTP Method = POST  
+    Content-Type=application/x-www-form-urlencoded  
+    HTTP Payload  
+    username=infoimage&password=enFoRS1Ige&client_id=s6BhdRkqt3&grant_type=password&scope=READ_PROFILE%20WRITE_PROFILE
+
+Response:
+
+    
+    
+    {
+      "scope": "READ_PROFILE WRITE_PROFILE",
+      "expires_in": 119999,
+      "token_type": "bearer",
+      "access_token": "20tclm33ZY2Wk0WjMNe24X0vgAzfahE7y8lAsM2Q-2HKL1OCsh--zXamAVekjfT_bPiZlFIU8BQTQnAG2FsaWg" 
+    }
+    
+
+  
+NOTE: In case of no response, it may be the SSL Cert which is not yet trusted.
+So, try with URL and accept the Cert under browser trust-store.  
+<https://testapi.infoimageinc.com/oauth2/token>  
+In case of further errors, try with URL: <https://10.8.9.57:8090/oauth2/token>
+
+  
+
+2\. To post the JSON Payload:  
+<https://testapi.infoimageinc.com/api/v1/enrollment?access_token={token_received_from_previous_call>}
+
+    
+    
+    HTTP Method = POST  
+    Content-Type=application/json  
+    HTTP Payload  
+    
+    
+    
+    {
+      "accountNumber" : "10966",
+      "clientId" : "InfoIMAGE",
+      "customAttribs" : {
+          "flagInd1" : "S" 
+        },
+      "enrollment" : "E" 
+    }
+    
+    
+    
+      
+    
+
+Response:
+
+    
+    
+    aaa
+    
+
+  
+
+* * *
+
+  
+  
+
+## [C] SSL Cert Commands
+
+I. How to convert from .pem file to .jks file.
+
+    
+    
+    keytool -import -v -trustcacerts -alias <your alias> -file <your file>.pem -keystore <your key store>.jks -storepass <your storepass> 
+    
+
+II. How to list the keys/certs from KeyStore
+
+    
+    
+    keytool -v -list -keystore <yourkeystore>
+    
+
+  
+
+You can store many certificates in a keystore, and each certificate is stored
+under a unique alias name.
+
+* * *
+
+Asides from the java keystore located in JAVA_HOME, mule has its own keystore
+located under /opt/muleEE3.3.2/apps/mule-sscu-
+instantenrollment-1.0/classes/sslcerts/clienttruststore.jks
+
+For any new certificates, you will need to add it to  **both**  keystores.
+
+* * *
+
+  
+  
+
+## [C] FAQ:
+
+Q: Where is the apache mule server and logs?  
+A: 10.8.11.22 (ApacheMule) and the logs are located in /opt/apache2/log/ssl-
+error443.log (PROD) and /opt/apache2/log/ssl-error8443.log (DEV)
+
+  
+
+  
+
+

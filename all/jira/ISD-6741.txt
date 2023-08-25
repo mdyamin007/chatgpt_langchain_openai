@@ -1,0 +1,12 @@
+title: 27784 - EPCU - Members experiencing 504 Bad Gateway errors
+description: 3/24 - can see members logging in and clicking on their statements, was able to verify via the statement urls in the logs. Noticed 'upstream timed out' errors for epcu as well as a couple for jdcu and wfcu, later necu, but only reported by EPCU so far. 
+
+Also noticed between 2:15 - 3:45pm, all 4 hypercube servers were restarting every few minutes, having DSI confirm atm.
+
+Update 1: DSI confirmed clicktrack is the one which was getting restarted in an interval, not hypercube. But hypercube was facing an issue on /ssoExchange endpoint, there's a possibility that infoservice is responsible for this gateway timeout.
+
+Update 2, 3/30/22: We've configured APM server for backend infoservice and did the update on the hypercube side. It's now only in DEV environment. We showed a demo to David today on our regular meeting. QA will do some testing, then tomorrow we'll deploy the changes on PILOT. After deploying the changes on PILOT we'll keep there few days for beta testing. Then everything seems fine, we'll go for PROD release
+
+Update 3, 4/14/22: Initially thought it was coming from internal api, but the issue seems to be hypercube rebooting somewhat frequently, which may affect some SSO requests. DSI is going to make changes to auto start up script so that it doesnt reboot so much to see if that reduces 504 errors and monitor next few days. 
+
+Update 4, 4/28/22: Issue stems from non-null DSO date fields in usr_session table. During user login, hypercube code checks whether dso is not null, and if so another block of code will check infoconfig enrollment setting to see whether dsoAndSsoLogin is enabled. If not, then it will throw 504. To resolve this, DSI updated DSO date field to null and updated pui conf so that PUI processes will add a null dso date.

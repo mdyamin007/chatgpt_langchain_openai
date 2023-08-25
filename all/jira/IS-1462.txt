@@ -1,0 +1,143 @@
+title: OSCU - Invoice- Visa PDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+
+Processing Scripts to modify:
+oscumv2_process.sh
+
+Data Files to use:
+
+
+
+*NOTE*: This job runs on RH2. Since we are migrating from RHS to RH2, we should test all options so that we can do afpcompare and also ensure there is no errors in the processing logs.
+
+
+author: anwarh
+comment: Hi [~William.Kong],
+
+Parallel ID: 20221015012546
+production cycle: 09/30
+
+Data files:
+/z/dsi_pdfi_testing/oscumv2/data/OSCU_20220930_Monthly_Statement.xml.zip
+
+old zips: /z/dsi_pdfi_testing/oscumv2/old/
+new zips: /z/dsi_pdfi_testing/oscumv2/new/
+
+*Notes:*
+* Index file has the comma & space issue, but in this case, it correct
+	* The index file we generated previously had comma in its value, which essentially changed the column's meaning
+
+Thanks,
+Anwar
+
+
+author: william.kong
+comment: [~anwarh]: I'm going to use the version from Parallel since it seems the latest instead of the/z/dsi_pdfi_testing/oscumv2/new/ version:
+
+
+
+{{[williamK@rhs2 new]$ ll /z/dsi_pdfi_testing/oscumv2/new/oscu_mv2_09302022_1.zip /z/pdf_afp/oscu/oscumv2/zip/oscu_mv2_09302022_1.zip}}
+{{-rw-r--r-- 1 anwarH DSI 3115704084 Oct 15 07:23 /z/dsi_pdfi_testing/oscumv2/new/oscu_mv2_09302022_1.zip}}
+{{-rw-r--r-- 1 anwarH DSI 3115699042 Oct 16 06:26 /z/pdf_afp/oscu/oscumv2/zip/oscu_mv2_09302022_1.zip}}
+{{[williamK@rhs2 new]$ md5sum /z/dsi_pdfi_testing/oscumv2/new/oscu_mv2_09302022_1.zip /z/pdf_afp/oscu/oscumv2/zip/oscu_mv2_09302022_1.zip}}
+{{d8493cda2ec05a2789b915896c9a2258 /z/dsi_pdfi_testing/oscumv2/new/oscu_mv2_09302022_1.zip}}
+{{a9d2561d450067bbc6553335bedba5cc /z/pdf_afp/oscu/oscumv2/zip/oscu_mv2_09302022_1.zip}}
+
+
+
+I noticed in the new version, there is an extra ^M new line character:
+
+!image-2022-10-17-09-34-52-265.png!
+
+
+
+Can you remove the extra ^M line character for each of the individual txt file?
+
+This issue also exists in the{{/z/dsi_pdfi_testing/oscumv2/new/oscu_mv2_09302022_1.zip}}version as well.
+
+
+author: anwarh
+comment: [~William.Kong], new archival in : /z/pdf_afp/oscu/oscumv2
+Please check.
+
+
+author: william.kong
+comment: [~anwarh]: Great work! I don't see difference other than the expected global code issue with the truncation of the ',' character in the afp2pdf.py program. I'm surprised client did not report comma delimiter issue with their production files b/c there will be extra comma for name field. I will ask QA to resume and complete their thorough QA process.
+
+
+
+[~Andrey.Kutsenko]/[~Igor.Khosid]: Files are in
+
+ca-unittest-pr-02:/d/pdf_compare/oscumv2_prod
+
+ca-unittest-pr-02:/d/pdf_compare/oscumv2_parallel.
+
+
+
+
+
+
+author: JIRAUSER11104
+comment: Thank you, [~William.Kong]
+QA is in progress.
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+Ran script with the command:
+{code:sh}perl pdf_compare.pl oscumv2_prod oscumv2_parallel result_oscumv2 -pixels 12 -threads 16 -exclusions oscumv2.json{code}
+Test result:
+{quote}
+Total PDF Files Scanned: 6000
+allowedDifferenceInPercentPerPage: 12:
+Thread Count: 16
+
+Total PDF Files with Differences: 0
+WARNING:  We did not compare ALL the pdfs!
+          pdf_compare.pl will only process the first 6000 pdf files out of the total 27819 pdfs
+Start Time: Wed Oct 19 14:23:46 PDT 2022
+Finish Time: Wed Oct 19 15:33:58 PDT 2022{quote}
+
+
+author: william.kong
+comment: Thanks [~Andrey.Kutsenko]!
+
+
+
+[~anwarh] : Please prep File Transfer for code release for next Monday.
+
+
+author: anwarh
+comment: Hi [~yameelee]/[~rodriguez],
+
+Transfer form:  [^IS-1462 OSCU Transfer Form.doc] 
+
+Code is in:
+*/d/is/cvs/xfer/anwarH_backup/is-1462*
+
+Can you please move them into /d/is/cvs/xfer/anwarH/ and then release?
+
+Thanks,
+Anwar
+
+[~William.Kong]
+
+
+author: william.kong
+comment: [~yameelee]/[~rodriguez]; When time permit, please release code today. thanks!
+
+
+author: yameelee
+comment: [~anwarh]& [~William.Kong] code released. backup id:20221024120533

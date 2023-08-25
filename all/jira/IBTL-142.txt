@@ -1,0 +1,80 @@
+title: InfoSync - CA-IS-APPS SG/DV Oracle connection issue
+description: [~William.Kong] - ca-is-apps-sg & ca-is-apps-dv both seem to have Oracle connection issue. Below is the screenshot with config change and its corresponding erros:
+
+
+
+*ca-is-apps-sg-01: /var/www/config/stage.app.cfg*
+
+SQLALCHEMY_DATABASE_URI="oracle://isparallel:isparallel@ca-oracle-dv-01.infoimageinc.com:1521/*dev*"
+
+!stage-sid-dev.png!
+
+
+
+SQLALCHEMY_DATABASE_URI="oracle://isparallel:isparallel@ca-oracle-dv-01.infoimageinc.com:1521/*wodb*"
+
+
+
+!stage-sid-wodb.png!
+
+
+
+*ca-is-apps-dv-01: /var/www/config/pilot.app.cfg*
+
+SQLALCHEMY_DATABASE_URI="oracle://is:is@ca-oracle-dv-01.infoimageinc.com:1521/*dev*"
+
+!dv-sid-dev.png! 
+
+
+
+SQLALCHEMY_DATABASE_URI="oracle://is:is@ca-oracle-dv-01.infoimageinc.com:1521/*wodb*"
+
+!dv-sid-wodb.png!
+
+
+
+
+
+Swagger URL:
+
+[http://ca-isapps-sg-01.infoimageinc.com/api_doc/]
+
+Example -curl -X GET "http://ca-isapps-sg-01.infoimageinc.com/infosync/v1/infotrac/online_proofing/get_extended_mail_tracking/state/warning" -H "accept: application/json"
+
+[http://ca-isapps-dv-01.infoimageinc.com/api_doc/]
+
+Example -curl -X GET "http://ca-isapps-dv-01.infoimageinc.com/infosync/v1/infotrac/online_proofing/get_extended_mail_tracking/state/success" -H "accept: application/json"
+
+
+
+
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~shailendrar]: The issue was here:
+
+/usr/local/infosync-stage/docker-compose.yml
+
+
+
+!image-2020-10-16-11-52-44-571.png!
+
+
+
+I'm going to fix it now and rebuild.
+
+
+
+
+author: william.kong
+comment: [~shailendrar]: I'm going to close this ticket out. Please help me fix prod and dev as well so that we do not have the overloaded host names.
+
+
+author: shailendrar
+comment: [~William.Kong] - The issue is fixed on dev & pilot. The InfoSync service is up & running on both the servers.

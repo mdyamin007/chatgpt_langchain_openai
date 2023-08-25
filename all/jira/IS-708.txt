@@ -1,0 +1,141 @@
+title: WECU - [25044][pvt] RUSH fix of PromoBalTfr mapping
+description: After further review we aren't going to ask for a new column. What we would actually like is the following:
+
+If you see an account feature called PromoBalTfr we want the balance subject to interest rate column amount mapped from the following location in the raw data file.
+
+<AccountFeature>
+
+ <Name>PromoBalTfr</Name><CurrentBalance>
+
+ <CurrentBalance>5827.66</CurrentBalance>
+
+All other account feature names will continue to map to
+
+<AccountFeature>
+
+<Name>
+
+<Balances>
+
+<Balance Type="Average Daily Balance" Amount=" " />
+
+See attached current Visa Statement Mapping, Mapping for PromoBalTfr Interest Rate Char
+
+
+author: JIRAUSER10911
+comment: Data file for testing attached.
+
+
+author: william.kong
+comment: [~thomasY]: When you return tomorrow, this is a HIGH priority project as it has a very short timeline. Please work on it ASAP.
+
+
+author: JIRAUSER10911
+comment: [~thomasY]
+
+
+
+Please confirm the sample will be ready by 1/7.
+
+
+author: thomasy
+comment: [~jharvey]Yes they will be.
+
+
+author: william.kong
+comment: [~Kbittmann]: Thomas said it will be on target for 1/7 (tomorrow).
+
+
+author: thomasy
+comment: Parallel:20220106140455
+
+[~Kbittmann] Sample:[^wecumv1.pdf]
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220106140455
+   Currently in parallel: Yes
+   User: thomasY
+   Description: 708
+   Date Submitted: 2022-01-06 14:05:00
+   Date Last Updated: 2022-01-06 14:05:00
+   Files:
+      1) WECUMV11.dfa
+
+
+
+author: igor.khosid
+comment: [~berezinez]
+Please review and submit for the customer review
+
+
+author: igor.khosid
+comment: 1. Parallel report
+Parallel ID: 20220106140455
+Currently in parallel: Yes
+User: thomasY
+Description: 708
+Date Submitted: 2022-01-06 14:05:00
+Date Last Updated: 2022-01-06 14:05:00
+Files:
+1) WECUMV11.dfa
+	  
+2. DIfference prod vs test
+624c624
+<           ACCT_FEATURES_TYPE = VAR[3] ;
+---
+>           ACCT_FEATURES_NAME = VAR[3] ;
+630c631
+---
+>           ACCT_FEATURE_BAL = VAR[8] ;
+646,648c647,654
+<           INTEREST_CALC[MAXINDEX(INTEREST_CALC)+1] = 
+<            'Average Daily Balance|'!NUMPICTURE(VAR[4],
+<            '#,##0.00;-#,##0.00') ;
+---
+>           IF UPPER(ACCT_FEATURES_NAME)=='PROMOBALTFR' ;
+>           THEN ;
+>            INTEREST_CALC[MAXINDEX(INTEREST_CALC)+1] = 
+>             'Average Daily Balance|'!ACCT_FEATURE_BAL ;
+>           ELSE ;
+>            INTEREST_CALC[MAXINDEX(INTEREST_CALC)+1] = 
+>             'Average Daily Balance|'!VAR[4] ;
+>           ENDIF ;
+
+
+author: berezinez
+comment: [~jharvey] [~Kbittmann]
+
+QA pass, ready for customer approval.
+
+
+author: JIRAUSER10911
+comment: [~thomasY]
+
+
+
+Samples approved.
+
+
+author: william.kong
+comment: [~berezinez]: Can you update status to QA Completed. Looks like customer provided approvals as well too.
+
+
+author: berezinez
+comment: [~Kbittmann] [~thomasY]
+
+QA is completed, please attach IS checklist if needed.
+
+
+author: william.kong
+comment: [~thomasY]: Please work with [~TunA]in the morning to release on Friday.
+
+
+author: JIRAUSER10911
+comment: [~TunA]
+
+Please provide an ETA for today's release.
+
+
+author: thomasy
+comment: This has been released.

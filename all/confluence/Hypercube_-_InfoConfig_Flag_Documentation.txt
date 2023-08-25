@@ -1,0 +1,1605 @@
+title: Hypercube - InfoConfig Flag Documentation
+body: ## **Introduction**
+
+This design documentation is to represent the hypercube flag change details
+for infoConfig.
+
+Following is a table that describes all of the flags structure changes for
+infoConfig and their business.
+
+  
+
+Feature Group| Old Flags| New infoConfig Flag Structure| Business| Difference  
+---|---|---|---|---  
+Menu|
+
+  
+
+Menu
+
+" **menu** ":[  
+   {  
+      "name":"eStatement",  
+      "link":"?page=eStatement",  
+      "id":"estatement"  
+   },  
+   {  
+      "name":"eSignature",  
+      "link":"?page=myPackage",  
+      "id":"e-signature"  
+   },  
+   {  
+      "name":"Profile",  
+      "link":"?page=profile",  
+      "id":"profile"  
+   },
+
+   {  
+      "name":"Logout",  
+      "link":"/logout?expire=true&showLogo=true",  
+      "id":"logout",
+
+      "userGroup":"dso"  
+   }
+
+]
+
+  
+
+|
+
+  
+
+Menu
+
+" **menu** ":[  
+   {  
+      "name":"eStatement",  
+      "link":"?page=eStatement",  
+      "id":"estatement"  
+   },  
+   {  
+      "name":"eSignature",  
+      "link":"?page=myPackage",  
+      "id":"e-signature"  
+   },  
+   {  
+      "name":"Profile",  
+      "link":"?page=profile",  
+      "id":"profile"  
+   },
+
+   {  
+      "name":"Logout",  
+      "link":"/logout?expire=true&showLogo=true",  
+      "id":"logout",
+
+      "userGroup":"dso"  
+   }  
+]
+
+  
+
+|
+
+We show these menus in the hypercube header navbar.
+
+Flags Bussiness are following,
+
+  *  **menu.userGroup -** If loginType and userGroup are the same then show the menu item.
+
+| No difference.  
+SSO|
+
+  
+
+SSO
+
+"defaultSSOMethod":"q2sso",  
+"ssoEnrollmentFlow":[  
+   {  
+      "template":"termsAndCondition"  
+   },  
+   {  
+      "template":"enrollEstmtVerifyCaptcha"  
+   },  
+   {  
+      "template":"enrollPreferences"  
+   }  
+],  
+"samplePDFCaptcha":true,  
+"preserveSsoPayloadOnEnrollment":true,  
+"eStatementEnrollment":true,  
+"forcePaperlessOnEnroll":false,  
+"ssoMethod":{  
+   "q2sso":{  
+      "password":"PASSWORD",  
+      "hashMethod":"MD5",  
+      "usrAutoCreate":"y",  
+      "acctAutoCreate":"y",  
+      "checkPrimaryUser":"y",  
+      "removeUFA":"y",  
+      "updateEmail":"y",  
+      "prefix0s":"y",  
+      "cifLength":"9",  
+      "clientCode":"clientCode",  
+      "acctTypeRequired":"y",  
+      "captureAcctDesc":"n",  
+      "overrideStmtTypeLanding":"boolean",  
+      "validUserTypes":[  
+         "N",  
+         "P"  
+      ],  
+      "delimiterNotRequireForSubuser":true,  
+      "removeAccountLeadingZero":true,  
+      "useDatabaseUfaOnly":true  
+   }  
+},  
+"ignoreKeySsoKeygen":true,  
+"ssoUserUpdate":true,  
+"defaultTokenName":"key",
+
+"ssoKeyGenFormat" : "json",
+
+"denyNonenrolledSsoUsers":"true", "ignoreAccountMatching":true,  
+""dsoUserDoSSOEnrollment"" : true,  
+""checkAAaccounts" : true"
+
+  
+
+|
+
+  
+
+SSO
+
+{  
+   "sso":{  
+      "defaultMethod":"q2sso",  
+      "enrollment":{  
+         "templates":[  
+            "termsAndCondition",  
+            "enrollEstmtVerifyCaptcha",  
+            "enrollPreferences"  
+         ],  
+         "samplePDFCaptcha":true,  
+         "preservePayload":true,  
+         "eStatementEnrollment":true,  
+         "forcePaperlessOnEnroll":false  
+      },  
+      "methods":[  
+         {  
+            "type":"q2sso",  
+            "password":"PASSWORD",  
+            "hashMethod":"MD5",  
+            "userAutoCreate":true,  
+            "accountAutoCreate":true,  
+            "checkPrimaryUser":true,  
+            "removeUFA":true,  
+            "updateEmail":true,  
+            "prefix0s":true,  
+            "cifLength":9,  
+            "clientCode":"CLIENT_CODE",  
+            "accountTypeRequired":true,  
+            "captureAccountDescription":false,  
+            "overrideStmtTypeLanding":false,  
+            "validUserTypes":[  
+               "N",  
+               "P"  
+            ],  
+            "delimiterNotRequireForSubuser":true,  
+            "removeAccountLeadingZero":true,  
+            "useDatabaseUfaOnly":true  
+         }  
+      ],  
+      "ignoreKeySsoKeygen":true,
+
+      "ssoKeyGenFormat" : "json",  
+      "allowGETRequest":true,
+
+       "userUpdate":false,  
+      "defaultTokenName":"key",  
+      "denyNonEnrolledSsoUsers":false,  
+      "ignoreAccountMatching":true,
+
+      "updateHoldStatus":false,  
+      "dsoUserDoSSOEnrollment":true,  
+      "mapDDAccountTypeToAA":true  
+   }  
+}
+
+  
+
+|
+
+ SSO object defines the client's single sign-on business logic.
+
+Flags Bussiness are following,
+
+  *  **sso.defaultMethod** \- Default SSO method for the CID as CID may support multiple SSO.
+  *  **sso.enrollment** \- The sequence of pages to be displayed during the user enrollment.
+  *  **sso.templates  **\- defines enrollment steps of a client.
+  *  **sso.enrollment.samplePDFCaptcha** \- Show sample pdf captcha during enrollment.
+  *  **sso.enrollment.preservePayload** \- If true then it read email from ssoKeyGen
+  *  **sso.enrollment.eStatementEnrollment** \- Enable/disable enrollment when user logs in to the eStatement application.
+  *  **sso.enrollment.forcePaperlessOnEnroll** \- Forcefully enroll user on electronic delivery preference if the property is enabled.
+  *  **sso.methods[]** \- List of all SSO methods and details of sso method used by the CID. It contains all the details needed or the SSO such as method name, password, client-specific code etc.
+  *  **sso.methods.checkPrimaryUser -  **If true then must provide the cif number.
+  *  **sso.methods.prefix0s -  **If true and cif number has a certain length then taking the last digits as cif length from the cif number otherwise remove all the leading zeros.
+  *  **sso.methods.cifLength -  **Define a number that indicates the fixed cif number length for a specific cid.
+  *  **sso.methods.clientCode -  **Organization id for a specific client.
+  *  **sso.methods.overrideStmtTypeLanding -  **If true and statement type is not empty then convert notice to enotice or tax to etax.
+  *  **sso.methods.validUserTypes -  **Contains the user types that a specific cid has.
+  *  **sso.methods.delimiterNotRequireForSubuser -  **If true the primaryUserId won't be sent to infoservice with pipe(|) delimited subUserId. If false only subUserId will be sent.
+  *  **sso.methods.removeAccountLeadingZero -  **If true remove all the leading zeros for the account numbers.
+  *  **sso.methods.useDatabaseUfaOnly -  **If true the user will login with all its accounts stored in the database.
+  *  **sso.ignoreKeySsoKeygen** \- If true then return key during ssoKeyGen without " **key=** "
+  *  **sso.allowGETRequest** \- Allow get request on ssoKeyExchnage.
+  *  **sso.userUpdate  **\- Updates email address passed from sso request.
+  *  **sso. defaultTokenName** \- Default name for the token to be passed to the POST SSO Exchange request.
+  *  **sso.denyNonEnrolledSsoUsers** \- Show custom text for unenroll user during ssoExchnage.
+  *  **sso.ignoreAccountMatching** \- Log in with all existing accounts if the flag is true. Only for the DI_V1 auth method.
+  *  **sso.updateHoldStatus  **\- Updates hold status of an account after sso login.
+  *  **sso.dsoUserDoSSOEnrollment** \- DSO user have to pass sso enrollment for dogin SSO
+  *  **sso.mapDDAccountTypeToAA** \- Map AA account type to DD account type for FIS auth method.
+  *  **sso.ssoKeyGenFormat** \- If the value of this flag is "json" then return key in JSON format.
+
+  
+
+|
+
+Some flags related to single sign on are now inserted into SSO object.
+
+  
+
+Changes flag names are following,  
+  
+DSO|
+
+  
+
+DSO
+
+{  
+   "dsoLoginEnable":true,  
+   "dsoEnrollmentFlow":[  
+      {  
+         "template":"termsAndCondition"  
+      },  
+      {  
+         "template":"enrollEstmtVerify"  
+      },  
+      {  
+         "template":"enrollVerifyUser"  
+      }  
+   ],  
+   "dsoUserIdentification":{  
+      "personal":{  
+         "ssn9":"Social Security Number",  
+         "dob":"Date of Birth"  
+      },  
+      "business":{  
+         "ssn9":"Business Tax ID"  
+      }  
+   },  
+   "mfaOnDso":true,  
+   "showdsocaptcha":true,  
+   "dsopasswordhint":true,  
+   "mfa":{  
+      "ttl":600  
+   },  
+   "resetPasswordWithloginId":true,  
+   "ssoToDsouserLoginMessage":"string",  
+   "multipleCustomerTypes":"boolean",  
+   "dsoEnrollDisableText":"string",  
+   "companyURL":"string"  
+}
+
+  
+
+|
+
+  
+
+DSO
+
+{  
+   "dso":{  
+      "enrollmentFlowTemplates":[  
+         "termsAndCondition",  
+         "enrollEstmtVerify",  
+         "enrollVerifyUser"  
+      ],  
+      "mfa":{  
+         "ttl":600  
+      },  
+      "dsoUserIdentification":{  
+         "personal":[  
+            {  
+               "value":"ssn9",  
+               "text":"Social Security Number"  
+            },  
+            {  
+               "value":"dob",  
+               "text":"Date of Birth"  
+            }  
+         ],  
+         "business":[  
+            {  
+               "value":"ssn9",  
+               "text":"Business Tax ID"  
+            }  
+         ]  
+      },  
+      "showCaptcha":true,  
+      "passwordHint":true,  
+      "resetPasswordWithLoginId":true,  
+      "ssoToDsoUserLoginMessage":"string",  
+     "multipleCustomerTypes":false,  
+      "dsoEnrollDisableText":"string",  
+      "companyURL":"string"  
+   }  
+}
+
+  
+
+|
+
+DSO object defines the client's direct sign-on business logic.
+
+Flags Bussiness are following,
+
+  *  **dso{}  **\- Enable/disable DSO login functionality for a CID.
+  *  **dso.enrollmentFlowTemplates -** The sequence of pages to be displayed during the user's DSO enrollment.
+  *  **dso.mfa.ttl** \- Set ttl for MFA token in the second form.
+  *  **dso.dsoUserIdentification** \- Set which ssn is used for user identification, personal or business.
+  *  **dso.dsoUserIdentification.personal.value -  **Contains the user's unique indentification and it's length. For example: ssn9 or dob.
+  *  **dso.dsoUserIdentification.personal.text -  **Contains the description of unique identification attribute. For example: Social Security Number or Date of Birth.
+  *  **dso.dsoUserIdentification.business.value -  **Contains the user's unique indentification and it's length. For example: ssn9.
+  *  **dso.dsoUserIdentification.business.text -  **Contains the description of unique identification attribute. For example: Social Security Number.
+  *  **dso.showCaptcha** \- Enable/disable showing captcha in DSO enrollment.
+  *  **dso.passwordHint** \- Enable password hint for dso enrollment and forget the password.
+  *  **dso.** **resetPasswordWithLoginId  **\- Dso user can reset forget password with username/loginId.
+  *  **dso.ssoToDsoUserLoginMessage** \- Show a custom text message during dso login.
+  *  **dso.multipleCustomerTypes** \- User can select their identification during dso enrollment and reset username or password.
+  *  **dso.dsoEnrollDisableText** \- This custom message shows during dso enrollment if dso is disabled for any user.
+  *  **dso.companyURL  **\- Shows company name during dso enrollment disabled step.
+
+|  
+  
+Enrollment|
+
+  
+
+Enrollment
+
+{  
+   "hideAcctListOnEnroll":true,  
+   "cantViewPDFFistParaText":"",  
+   "estmtVerifyText":"string",  
+   "enrollPreferenceTitleText":"string",  
+   "showHelpfulHints":true,  
+   "bothDsoAndSsoLoginEnable":true,  
+   "enrollPreferenceText":"string",  
+   "estmtVerifyTitleText":"string"  
+}
+
+  
+
+|
+
+  
+
+Enrollment
+
+{  
+   "enrollment":{  
+      "hideAccountList":true,  
+      "canotViewPDFFirstParaText":"",  
+      "eStatementVerifyText":"",  
+      "enrollPreferenceTitleText":"string",  
+      "showHelpfulHints":true,  
+      "dsoAndSsoLogin":true,  
+      "enrollPreferenceText":"string",  
+      "eStatementVerifyTitleText":"string"  
+   }  
+}
+
+  
+
+|
+
+The enrollment object defines the client's both single sign-on and direct
+sign-on business logic.
+
+Flags Bussiness are following,
+
+  *  **enrollment.hideAccountList** \- Hides the account list on enrollment for selective paperless but  "paperlessOnEnroll" should be set to true for all the statement types.
+  *  **enrollment.canotViewPDFFirstParaText** \- Shows custom message on can't view pdf page.
+  *  **enrollment.eStatementVerifyText -** Shows custom message on enroll estmt verify page.
+  *  **enrollPreferenceTitleText  **\- set custom tittle on the final step of  enrollment, if not set will show "Account Preferences".
+  *  **enrollment**. **showHelpfulHints** \- Shows a link on estatement page that redirects to a client-specific template.
+  *  **enrollment.dsoAndSsoLogin** \- Enable both DSO and SSO login.
+  *  **enrollment.enrollPreferenceText** \- Show a custom message during enrollment preference.
+  *  **enrollment.eStatementVerifyTitleText** \- Show a custom title in estmt verify page.
+
+|  
+  
+Statement|
+
+  
+
+statement
+
+{  
+   " **statements** ":{  
+      "default":{  
+         "name":"Monthly Statement",  
+         "following":"default",  
+         "paperDependents":[  
+            "enotice",  
+            "etax"  
+         ],  
+         "disablePaper":true  
+      },  
+      "visa":{  
+         "name":"Visa",  
+         "following":"default"  
+      },  
+      "loan":{  
+         "name":"Loan",  
+         "following":"default"  
+      },  
+      "enotice":{  
+         "name":"eNotice",  
+         "following":"enotice",  
+         "paperlessRestrictions":"default",  
+         "disablePaper":true  
+      },  
+      "etax":{  
+         "name":"eTax",  
+         "following":"default",  
+         "paperlessRestrictions":"default"  
+      }  
+   }
+
+" **statementType** ":[  
+      {  
+         "default":"eStatement"  
+      },  
+      {  
+         "notice":"eNotice"  
+      },  
+      {  
+         "tax":"eTax"  
+      },  
+      {  
+         "heloc":"LOC"  
+      },  
+      {  
+         "mortgage":"Mortgage"  
+      },  
+      {  
+         "loan":"Loan"  
+      }  
+   ]  
+}
+
+  
+
+|
+
+  
+
+Statement
+
+{  
+   " **statements** ":[  
+      {  
+         "type":"default",  
+         "name":"Statements"  
+      },  
+      {  
+         "type":"visa",  
+         "name":"VISA"  
+      },  
+      {  
+         "type":"loan",  
+         "name":"Loan"  
+      },  
+      {  
+         "type":"analysis",  
+         "name":"Account Analysis"  
+      },  
+      {  
+         "type":"etax",  
+         "name":"Taxes"  
+      },  
+      {  
+         "type":"enotice",  
+         "name":"Notices"  
+      }  
+   ]  
+}
+
+  
+
+|
+
+Hypercube uses the " **Statement** " flag to set up statement type and name
+for any specific client. We show this name of statement type in the statement
+tab.
+
+  
+
+|
+
+We separate the flag structure for the by-selective and non-selective
+features.
+
+  
+
+Old " **statementType " **flag is converted to new infoConfig  **" Statement"
+**flag.
+
+  
+
+And, The old " **statements** " flag is converted to new infoConfig  **"
+selectivePaperless" **flag under **deliveryPreference** object. as below,
+
+SelectivePaperless
+
+"deliveryPreference":{  
+   "selectivePaperless":[  
+      {
+
+         "name":"Monthly Statement",  
+         "type":"default",  
+         "following":"default",  
+         "paperDependents":[  
+            "enotice",  
+            "etax"  
+         ],
+
+         "disablePaper":true           
+
+      },  
+      {
+
+         "name":"Visa",  
+         "type":"visa",  
+         "following":"default"  
+      },  
+      {
+
+        "name":"Loan",  
+         "type":"loan",  
+         "following":"default"  
+      },  
+      {
+
+        "name":"eNotice",  
+         "following":"enotice",  
+         "paperlessRestrictions":"default",  
+         "disablePaper":true
+
+      },  
+      {  
+          "name":"eTax",  
+         "following":"default",  
+         "paperlessRestrictions":"default"  
+      }  
+   ]  
+}
+
+  
+  
+  
+archivalPeriod|
+
+  
+
+archivalPeriod
+
+{  
+   "archivalPeriodPriority":[  
+      "appType"  
+   ],  
+   "statementArchivalPeriod":24,  
+   "defaultStartDate":24,  
+   "hypercube":{  
+      "archivalPeriod":{  
+         "default":5,  
+         "visa":6,  
+         "mortgage":13,  
+         "enotice":24,  
+         "etax":17,  
+         "closedAccount":6,  
+         "unenrolledArchival":8  
+      }  
+   },  
+   "archivalPeriod":{  
+      "default":25,  
+      "mortgage":25,  
+      "billing":25,  
+      "enotice":25,  
+      "etax":25  
+   }  
+}
+
+  
+
+|
+
+  
+
+archivalPeriod
+
+{  
+   "archivalPeriod":{
+
+      "isIndividual":true,  
+      "allStatementPeriod":24,  
+      "initialStartDuration":24,  
+      "statements":[  
+         {  
+            "type":"default",  
+            "month":5  
+         },  
+         {  
+            "type":"visa",  
+            "month":5  
+         },  
+         {  
+            "type":"mortgage",  
+            "month":5  
+         },  
+         {  
+            "type":"enotice",  
+            "month":5  
+         },  
+         {  
+            "type":"etax",  
+            "month":5  
+         },  
+         {  
+            "type":"closedAccount",  
+            "month":5  
+         },  
+         {  
+            "type":"unenrolledArchival",  
+            "month":5  
+         }  
+      ]  
+   }  
+}  
+  
+
+  
+
+|
+
+The archivalPeriod object defines the archival period for their statement
+type. If any type's archival period is missing then it will take a period from
+the **allStatementPeriod  **flag.
+
+Flags Bussiness are following,
+
+  *  **archivalPeriod.allStatementPeriod** \- Contractually elected View Statement Archival Period (retention period of eStatements for member/user viewing).
+  *  **archivalPeriod.isIndividual  **\- To set archival for each statement type.
+  *  **archivalPeriod**.i **nitialStartDuration** \- Pre-Archival period of statements elected by the live date (for eStatements).
+  *  **archivalPeriod.statements[]  **\- Define each statement types individual archival period .
+
+|
+
+Previously, hypercube took archival period from either from
+
+ **" hypercube":archivalPeriod{}**
+
+ **or**
+
+ **   "archivalPeriod":{}**
+
+But now there is only one archival period object in infoConfig.  
+  
+Account|
+
+  
+
+Account
+
+{  
+   "accountType":{  
+      "99":"Unknown",  
+      "NA":" ",  
+      "DD":"Deposit Account",  
+      "BM":"BMS Statement",  
+      "AA":"Account Analysis",  
+      "00":"Decline Letter",  
+      "LN":"Loan Account",  
+      "CD":"Certificate Of Deposits IR - IRA"  
+   },  
+   "accountSortingByNumber":true,  
+   "externalAccountLookUp":{  
+      "externalType":"ext_acct_num",  
+      "defaultAcctType":"LN"  
+   },  
+   "showClosedAcctStatement":"true",  
+   "visibleLengthOfMaskedAccount":4,  
+   "hideAccountSelector":false,  
+   "showOrgNameInAcctSelector":true,  
+   "accountTypeSort":[  
+      "CK",  
+      "SV",  
+      "TD",  
+      "LN",  
+      "CC"  
+   ],  
+   "accountsOrderEnable":true,  
+   "acctExpiryDays":0,  
+   "accountLookup":false,  
+   "pageAccountLimit":20,  
+   "acctNumberMasking":false,  
+   "nickNamePreferredOverAcctNum":true  
+}
+
+  
+
+|
+
+  
+
+Account
+
+{  
+   "account":{  
+      "sortByNumber":true,  
+      "externalAccountLookUp":{  
+         "externalType":"ext_acct_num",  
+         "defaultAcctType":"LN"  
+      },  
+      "showClosedAccountStatement":"true",  
+      "visibleLengthOfMaskedAccount":4,  
+      "hideSelector":false,  
+      "showOrganizationNameInAccountSelector":true,  
+      "order":true,  
+      "expiryDays":0,  
+      "lookup":false,  
+      "viewLimit":20,  
+      "numberMasking":false,  
+      "nickNamePreferredOverNumber":true,  
+      "types":[  
+         {  
+            "text":"Unknown",  
+            "code":"99"  
+         },  
+         {  
+            "text":"Deposit Account",  
+            "code":"DD"  
+         },  
+         {  
+            "text":"BMS Statement",  
+            "code":"BM"  
+         },  
+         {  
+            "text":"Account Analysis",  
+            "code":"AA"  
+         },  
+         {  
+            "text":"Decline Letter",  
+            "code":"00"  
+         },  
+         {  
+            "text":"Loan Account",  
+            "code":"LN"  
+         },  
+         {  
+            "text":"Certificate Of Deposits IR - IRA",  
+            "code":"CD"  
+         }  
+      ],  
+      "showDescription":false,
+
+      "notViewable":false,  
+      "accountTypeSort":[  
+         "CK",  
+         "SV",  
+         "TD",  
+         "LN",  
+         "CC"  
+      ]  
+   }  
+}
+
+  
+
+|
+
+Account object defines all the necessary flags related to account like type,
+sort, etc.
+
+Flags Bussiness are following,
+
+  *  **account.types** \- Array that lists all the account types supported by the CID. _code_ denotes the value that will be saved into the database and _text_ denotes the description by which the client will identify the account type.
+  *  **account.sortByNumber** \- enable/disable account dropdown list sorting.
+  *  **account.externalAccountLookUp** \- Filter or map account from ext_id_maping table based on **externalType.**
+  *  **account.showClosedAccountStatement** \- Show statement, batchDownload, disclousure for closed account.
+  *  **account.visibleLengthOfMaskedAccount** \- Custom number for masked account visible length. The default value is 4.
+  *  **account.hideSelector** \- Show/hide the account selector drop down on the eStatment page.
+  *  **account.showOrganizationNameInAccountSelector**  \- Enable or disable showing organization name in the account selection dropdown.
+  *  **account.order**  -  Shows account numbers with the same type in sorted order if false.
+  *  **account.expiryDays** \- Number of days for which closed account can be accessed.
+  *  **account.lookup**   \- Check account number associated with the alias account number.
+  *  **account. viewLimit** \- Custome account limit to show account pagination in profile page. The default value is 20.
+  *  **  account.numberMasking **\- Enable account number masking.
+  *  **account.nickNamePreferredOverNumber** \- Shows account description only in the account selector and header.
+  *  **account.showDescription  **\- Shows account desccribtion on account selector and header.
+  *  **account.notViewable  **\- To enable not viewable feature.
+  *  **account.accountTypeSort** \- Sort the account type accordingly given list
+
+|  
+  
+deliveryPreference|
+
+  
+
+deliveryPreference
+
+{  
+    "disablePaperlessToPaper": false,   
+
+    "bothAsDeliveryPreference":true,  
+   "unenrollOnDeliveryPreferenceChange":false,  
+   "requireTermsAgreementOnPaperlessEnrollment":false,  
+   "disableDeliveryPreferenceChange":false,  
+   "hidePaperPreference":false,  
+   "optOutText":{  
+      "changedTo":"paper",  
+      "text":""  
+   },  
+   "enableOptOutStatements":true,  
+   "restrictionConfig":[  
+      "default"  
+   ],  
+   "accept":"string",  
+   "reject":"string",  
+   "disablePaperlessMessage":"string",  
+   "showNotificationOnPaper":true,  
+   "hideFollowingDeliveryType":true,  
+   "allPaperlessChangable":"boolean"  
+}
+
+  
+
+|
+
+  
+
+deliveryPreference
+
+{  
+   "deliveryPreference":{  
+      "disablePaperlessToPaper":false,  
+      "disableDeliveryPreferenceChange":true,  
+      "bothPaperAndElectronic":true,  
+      "unenrollOnDeliveryPreferenceChange":false,  
+      "requireTermsAgreementOnPaperlessEnrollment":true,  
+      "hidePaperPreference":true,  
+      "disabledPaperlessForSubUser":true,  
+      "hide":true,  
+      "showOnlySelected":true,  
+      "acceptAsPaperlessText":"",  
+      "acceptAsPaperText":"",  
+      "disablePaperlessMessage":"",  
+      "showNotificationOnPaper":false,  
+      "hideFollowingType":false,  
+      "allPaperlessChangable":false,  
+      "optOut":{  
+         "changedTo":"paper",  
+         "text":"",  
+         "restrictionConfig":[  
+            "default"  
+         ]  
+      },  
+      "selectivePaperless":[  
+         {  
+            "type":"default",  
+            "following":"default",  
+            "paperDependents":[  
+               "enotice",  
+               "etax"  
+            ],  
+            "paperlessOnEnroll":true,  
+            "disablePaper":true  
+         },  
+         {  
+            "type":"visa",  
+            "following":"default",  
+            "disablePaper":true  
+         },  
+         {  
+            "type":"loan",  
+            "following":"default",  
+            "disablePaper":true  
+         },  
+         {  
+            "type":"analysis",  
+            "following":"default",  
+            "disablePaper":true  
+         },  
+         {  
+            "type":"etax",  
+            "following":"default",  
+            "disablePaper":true  
+         },  
+         {  
+            "type":"enotice",  
+            "following":"default",  
+            "disablePaper":true,  
+            "paperlessRestrictions":"default"  
+         }  
+      ]  
+   }  
+}
+
+  
+
+|
+
+deliveryPreference object defines all the necessary flags related to delivery
+preference.
+
+Flags Bussiness are following,
+
+  *  **deliveryPreference.disablePaperlessToPaper  **\- Disable the option to switch to paper delivery preference.
+  *  **deliveryPreference.disableDeliveryPreferenceChange** -
+
+Hide delivery preference box from account panel on profile.
+
+N.B. Some clients use "delivery-pref" CSS class also to hide that box.
+
+  *  **deliveryPreference.bothPaperAndElectronic** \- Show Both as delivery preference on enrollment and profile page.
+
+  *  **deliveryPreference.unenrollOnDeliveryPreferenceChange** \- Un-enroll user when change delivery preference to paper if set as true.
+  *  **deliveryPreference**. **requireTermsAgreementOnPaperlessEnrollment  **\- Display terms and condition modal when the user switches from paper to paperless on profile tab.
+  *  **deliveryPreference.hidePaperPreference  **\- Hides only the paper delivery preference from profile page.
+  *  **deliveryPreference.disabledPaperlessForSubUser** \- Hides only the paper delivery preference from profile page for sub-user.
+  *  **deliveryPreference.hide  **\- Hides the entire delivery preference feature from the profile page.
+  *  **deliveryPreference.showOnlySelected  **\- Shows only selected delivery preference on the profile page.
+  *  **deliveryPreference.acceptAsPaperlessText** **-  **Shows custom option name for paperless during SSO and DSO enrollment.
+  *  **deliveryPreference.acceptAsPaperText** **-  **Shows custom option name for paper during SSO and DSO enrollment.
+  *  **deliveryPreference.disablePaperlessMessage** **-** Alert message to be shown when user select delivery preference from electronic to paper.
+  *  **deliveryPreference.showNotificationOnPaper** **-** It it's turned on, then the notification preference panel under account will still show even if the account is in paper.
+  *  **deliveryPreference.hideFollowingType** **-  **Hides following statement types on profile delivery preference for the selective paperless client.
+  *  **deliveryPreference.allPaperlessChangable** **-** Supports to sets delivery preference to electronics for all accounts.
+  *  **deliveryPreference**. **optOut  **\- shows the opt-out option for email delivery preference.
+  *  **deliveryPreference**. **optOut.changedTo -  **Contains the delivery preference the user can switch to. For example: paperless, paper.
+  *  **deliveryPreference.optOut.text -  **The text will be shown if the user switches to the above mentioned delivery preference.
+  *  **deliveryPreference.optOut.restrictionConfig -  **Contains the statement types for those the user can't switch the paper.
+  *  **deliveryPreference.selectivePaperless  **\- Defines statements options for selective paperless.
+
+|  
+  
+notificationPreference|
+
+  
+
+notificationPreference
+
+{  
+   "npLinkType":"byUfa",  
+   "profilePrimaryEmail":false,  
+   "editProfilePrimaryEmail":true,  
+   "editProfilePhone":true,  
+   "smsNotification":true,  
+   "emailAndSmsNotification":false,  
+   "emailConfirmationWorkFlow":false,  
+   "smsConfirmationWorkFlow":false,  
+   "enableSendWelcomeNotification":true,  
+   "enableNotifPrefChangeNotification":true,  
+   "disablePhoneEditMessage":"",  
+   "disableEmailEditMessage":"",  
+   "attachedStatement":false,  
+   "ignoreAttachmentPassword":true,  
+   "attachedStatementDisable":true,  
+   "emailAndSmsNotificationText":"string",  
+   "welcomeNotifySuccessText":"string",  
+   "notAutoCheckEmailAttachment":"boolean",  
+   "profileEmailLimit":1,  
+   "profilePhoneLimit":0  
+}
+
+  
+
+|
+
+  
+
+notificationPreference
+
+{  
+   "notificationPreference":{  
+      "npLinkType":"byUfa",  
+      "profilePrimaryEmail":false,  
+      "editProfilePrimaryEmail":true,  
+      "editProfilePhone":true,  
+      "smsNotification":true,  
+      "emailAndSmsNotification":false,  
+      "emailConfirmationWorkFlow":false,  
+      "smsConfirmationWorkFlow":false,  
+      "sendWelcomeNotification":true,  
+      "sendChangeNotification":true,  
+      "disablePhoneEditMessage":"",  
+      "disableEmailEditMessage":"",  
+      "SMSNotificationText":"",  
+      "attachedStatement":{  
+         "ignorePassword":true,  
+         "disableAttachment":true,  
+         "notAutoCheckEmailAttachment":true  
+      },  
+      "emailAndSmsNotificationText":"string",  
+      "welcomeNotificationSuccessText":"string",  
+      "profileEmailLimit":1,  
+      "profilePhoneLimit":0  
+   }  
+}
+
+  
+
+|
+
+notificationPreference object defines all the necessary flags related to
+notification preference.
+
+Flags Bussiness are following,
+
+  *  **notificationPreference.npLinkType** \- Type of notification preference linking. It could be on user level, account level or ufa level. Currently, hypercube is only setup for byUFA.
+  *  **notificationPreference.profilePrimaryEmail**  \- If the CID has primary email for the user.
+  *  **notificationPreference.editProfilePrimaryEmail** \- If true then user can edit their email address.
+  *  **notificationPreference.editProfilePhone** -  If true then user can edit their sms number.
+  *  **notificationPreference.smsNotification** \- Enable sms notification preference. Default is email.
+  *  **notificationPreference.emailAndSmsNotification**  \- Both sms and email notification preference.emailAndSmsNotificationText
+  *  **notificationPreference.emailConfirmationWorkFlow**  \- Enable/disable email confirmation flow. If selected, an email would be sent to email to confirm its validity.
+  *  **notificationPreference.smsConfirmationWorkFlow**  \- Enable/disable phone number confirmation flow. If selected, a confirmation code would be sent to the phone number for validation.
+  *  **notificationPreference.sendWelcomeNotification**  \- Enable/disable sending welcome notification.
+  *  **notificationPreference.sendChangeNotification**  \- Enable/disable notification while changing notification preference.
+  *  **notificationPreference.disablePhoneEditMessage** \- Shows custom message for disabled phone option user.
+  *  **notificationPreference.disableEmailEditMessage** \- Shows custom message for disabled email option user.
+  *  **notificationPreference.SMSNotificationText** \- Shows custom option name for SMS.
+  *  **notificationPreference.emailAndSmsNotificationText** \- Shows custom option name for Both np.
+  *  **notificationPreference.welcomeNotificationSuccessText**  \- Customize the pop-up message text that appears after successfully sending a welcome email.
+  *  **notificationPreference.profileEmailLimit** \- The limit on number of emails/account
+  *  **notificationPreference.profilePhoneLimit** \- The limit on number of sms/account.
+  *  **notificationPreference.attachedStatement{}** \- Enable attached statement for client.
+  *  **notificationPreference.attachedStatement.ignorePassword** \- Hide password field for attachment.
+  *  **notificationPreference.attachedStatement.disableAttachment** \- Disable attachment statement checkbox on profile.
+  *  **notificationPreference.attachedStatement.notAutoCheckEmailAttachment** \- If true then by default attachment checkbox will un-checked during enrollment.
+
+  
+
+  
+
+  
+
+|  
+  
+Profile|
+
+  
+
+Profile
+
+{  
+   "enableHeaderColor":{  
+      "paperColorCode":"#e72b1d",  
+      "paperlessColorCode":"#1E3583"  
+   },  
+   "profileLabel":"string",  
+   "profileSubmitPreferenceText":"string",  
+   "profileSubmitButtonText":"Submit",  
+   "successAlertMessage":""  
+}
+
+  
+
+|
+
+  
+
+Profile
+
+{  
+   "profile":{  
+      "headerColor":{  
+         "paperColorCode":"#e72b1d",  
+         "paperlessColorCode":"#1E3583"  
+      },  
+      "label":"string",  
+      "submitPreferenceText":"string",  
+      "submitButtonText":"Submit",  
+      "successAlertMessage":""  
+   }  
+}
+
+  
+
+|
+
+Profile object defines all the necessary flags related to profile page
+settings.
+
+Flags Bussiness are following
+
+  *  **profile.headerColor** \- Define specific color for account box header for paper and paperless option.
+  *   **profile.label  **\- Shows custom label for profile page.
+  *  **profile.submitPreferenceText** \- Custom submit preference text for profile page.
+  *  **profile.submitButtonText  **\- Custom submit button name for profile page.
+  *  **profile.successAlertMessage** \- Shows custom message after successful account submission. 
+
+|  
+  
+Document|
+
+  
+
+Document
+
+{  
+   "includeInserts":true,  
+   "isAda":true,  
+   "taxReplacement":true,  
+   "stmtExpansionMessage":"string",  
+   "viewStatementForPaperUser":false,  
+   "customStatementName":false,  
+   "statementname":"wtcu_statement",  
+   "noResultFoundText":"string"  
+}
+
+  
+
+|
+
+  
+
+Document
+
+{  
+   "documents":{  
+      "includeInserts":true,  
+      "isAda":true,  
+      "taxReplacement":true,  
+      "statementExpansionMessage":"",  
+      "viewStatementForPaperUser":false,  
+      "customStatementName":false,  
+      "statementName":"wtcu_statement",  
+      "noResultFoundText":"string",
+
+       "showDescription":true,
+
+       "includeHref":false
+
+  
+   }  
+}
+
+  
+
+|
+
+Profile object defines all the necessary flags related to profile page
+settings.
+
+Flags Bussiness are following
+
+  *  **documents.includeInserts  **\- Include inserts of the property is enabled, exclude otherwise.
+  *  ** **documents.isAda**** \- enable/disable Ada compatibility. 
+
+  *  **documents.taxReplacement** \- Show YES/NO for tax statement if the tax is replacement.
+  *  **documents.statementExpansionMessage  **-  Shows custom message on statement expand buton hover.
+  *  **documents.viewStatementForPaperUser** \- Show statement if the user account is in paper.
+  *  **documents.customStatementName** \- Use to set custom name for statement file while download.
+  *  **documents.statementName  **\- Set custom statement file name as string.
+  *  **documents.noResultFoundText  **\- Shows custom message if no statement found.
+  *  **documents.showDescription  **\- To show Statement Description.
+  *  **documents.includeHref  **\- This adds href to the pdf/html statement view icon instead of calling additional method to generate the statement link to view .
+
+|  
+  
+batchDownload|
+
+  
+
+batchDownload
+
+{  
+"batchDownload" : true,  
+"batchTTL" : 30,  
+"enableCombineIntoSinglePdf" : false,  
+"enableCompressToZip" : true,  
+}
+
+  
+
+|
+
+  
+
+batchDownload
+
+{  
+   "batchDownload":{  
+      "ttl":30,  
+      "enableCombineIntoSinglePdf":false,  
+      "enableCompressToZip":true,
+
+      "maximumPageCount":1500,
+
+      "maximumDocumentCount":100  
+   }  
+}
+
+  
+
+|
+
+Batchdownload object defines all the necessary flags related to batchdownload.
+
+Flags Bussiness are following
+
+  *  **batchDownload{}  **\- Enable and disable batch download feature.
+  *  **batchDownload.ttl  **\- Define the number of days when creating a batch job.
+  *  **batchDownload.enableCombineIntoSinglePdf  **\- Enable/disable statement to be combined in a single pdf in batch download.
+  *  **batchDownload.enableCompressToZip  **\- Enable/disable statement to be compressed in a zip file in the batch download.
+  *  **batchDownload.maximumPageCount  **\- Maximum page count restricts a user to download batch to that specified number of pages, default value 1500 pages.
+  *  **batchDownload.maximumDocumentCount  **\- Maximum document count restricts a user to download batch to that specified number of statements, default value 100 statements.
+
+|  
+  
+checkImage|
+
+  
+
+checkImage
+
+  
+
+  
+
+|
+
+  
+
+checkImage
+
+{  
+   "checkImage":{  
+      "viewTab":true,  
+      "viewMultipleChecks":true,  
+      "vendor":[  
+         {  
+            "name":"infoimage",  
+         "passthrough":"InstID%25253Dci%2525257Cid%25253D0",  
+            "datasource":"api"  
+         }  
+      ]  
+   }  
+}
+
+  
+
+|
+
+Check image object defines all the necessary flags related to check Image.
+
+Flags Bussiness are following
+
+  *  **checkImage.viewTab** \- Enable/Disable check image functionality for the CID.
+  *  **checkImage.viewMultipleChecks  **\- Enable/disable multiple check option.
+  * checkImage.vendor - use to fetch checkImage data from external source.
+
+|  
+  
+Banner|
+
+  
+
+Banner
+
+{  
+   "bannerVerbiage":true,  
+   "hasBanner":false,  
+   "banner":"banner.gif"  
+}
+
+  
+
+|
+
+  
+
+Banner
+
+{  
+   "banner":{  
+      "showVerbiage":true,  
+      "showImage":false,  
+      "imageName":"banner.gif"  
+   }  
+}
+
+  
+
+|
+
+The banner object defines all the necessary flags related to different kinds
+of banner images.
+
+Flags Bussiness are following,
+
+  *  **banner.showVerbiage** \- Show client-specific custom html verbiage template.
+  *  **banner.showImage  **\- Show banner image from banner management.
+  *  **banner.imageName  **\- Show image on nav header.
+
+  
+
+|  
+  
+Disclosure|
+
+  
+
+Disclosure
+
+{  
+   "multipleDisclosure":[  
+      {  
+         "type":"default",  
+         "name":"Statements"  
+      },  
+      {  
+         "type":"enotice",  
+         "name":"eNotices"  
+      }  
+   ]  
+}
+
+  
+
+|
+
+  
+
+Disclosure
+
+{  
+   "disclosure":[  
+      {  
+         "type":"default",  
+         "name":"Statements"  
+      },  
+      {  
+         "type":"enotice",  
+         "name":"eNotices"  
+      }  
+   ]  
+}
+
+  
+
+|
+
+The disclosure object defines all the necessary flags related to different
+kinds of banner images.
+
+Flags Bussiness are following,
+
+ **disclosure{}  **\- Enable multiple discloure.
+
+|  
+  
+popupAlert|
+
+  
+
+popupAlert
+
+{  
+   "popupAlert":true,  
+   "undeliverableEmailMessage":"string"  
+}
+
+  
+
+|
+
+  
+
+popupAlert
+
+{  
+   "popupAlert":{  
+      "undeliverableEmailMessage":""  
+   }  
+}
+
+  
+
+|
+
+The popupAlert object defines all the necessary flags related to popup alert.
+
+Flags Bussiness are following,
+
+  *  **popupAlert{}** \- Enable popup alert for client.
+  *  **popupAlert.undeliverableEmailMessage  **\- Enable undeliverable email popup alert for any client.
+
+|  
+  
+contextualSearch|
+
+  
+
+contextualSearch
+
+{
+
+   "contextualSearch" : true
+
+}
+
+  
+
+|
+
+  
+
+contextualSearch
+
+{
+
+   "contextualSearch" : true
+
+}
+
+  
+
+|
+
+The contextualSearch object defines all the necessary flags related to
+contextualSearch.
+
+Flags Bussiness are following,
+
+  *  **contextualSearch** \- Enable/disable contextual search. Word search in statement document.
+
+|  
+  
+Session|
+
+  
+
+Session
+
+{  
+   "timeoutPreferenceText":"Your session has timed out.",  
+   "sessionTTL":true  
+}
+
+  
+
+|
+
+  
+
+Session
+
+{  
+   "session":{  
+      "timeoutPreferenceText":"Your session has timed out.",  
+      "ttl":true  
+   }  
+}
+
+  
+
+|
+
+The session object defines all the necessary flags related to the session.
+
+  *  **session.timeoutPreferenceText** \- Custom timeout text for session timeout page.
+  *  **session.ttl  **\- Set custom time to live in millisecond for the session.
+
+|  
+  
+uiFeatures|
+
+  
+
+uiFeatures
+
+{  
+   "showToolTip":false,  
+   "defaultPage":"eStatementAcctType",  
+   "logo":"string",  
+   "minilogo":"string",  
+   "daysToMaintenanceDowntime":"string",  
+   "keepSessionAliveUrl":"string",  
+   "ssoExchangeErrorMessage":"string",  
+   "estmtErrorMessage":"",  
+   "logoutPreferenceText":"string",  
+   "siteMigrationText":{  
+      "message":"string",  
+      "endDate":"string"  
+   },  
+   "hideAcrobat":true,  
+   "hideSSL":true,  
+   "showBottomBar":true,  
+   "sslSealTitle":"string",  
+   "sslSealImageName":"string",  
+   "showCopyright":"boolean"  
+}
+
+  
+
+|
+
+  
+
+uiFeatures
+
+{  
+   "uiFeatures":{  
+      "logo":"",  
+      "miniLogo":"",  
+      "showToolTip":false,  
+      "defaultPage":"eStatementAcctType",  
+      "daysToMaintenanceDowntime":"",  
+      "keepSessionAliveUrl":"",  
+      "ssoExchangeErrorMessage":"",  
+      "eStatementErrorMessage":"",  
+      "logoutPreferenceText":"",  
+      "siteMigrationText":{  
+         "message":"",  
+         "endDate":""  
+      },  
+      "footer":{  
+         "hideAcrobat":true,  
+         "hideSSL":true,  
+         "showBottomBar":true,  
+         "sslSealTitle":"",  
+         "sslSealImageName":"",  
+         "showCopyright":false  
+      }  
+   }  
+}
+
+  
+
+|
+
+The uiFeature object defines all the necessary flags related to the hypercube
+user interface.
+
+  *  **uiFeatures.showToolTip  **\- Shows tool tips icon and message.
+  *  **uiFeatures.defaultPage  **-Set default page for client.
+  *  **uiFeatures.logo  **\- The image file for the logo of the CID.
+  *  **uiFeatures.minilogo  **\- CID specific logo file for small resolution screen.
+  *  **uiFeatures.daysToMaintenanceDowntime  **\- Number of days before the downtime for which message has to be displayed.
+  *  **uiFeatures.keepSessionAliveUrl  **\- If the parent site wants eStatement to keep session alive by continuously heating request to a particular service, this property stores the URL to that service.
+  *  **uiFeatures.ssoExchangeErrorMessage  **\- This flag contains specific error message in accountList is empty during ssoExchange.
+  *  **uiFeatures. eStatementErrorMessage **\- Shows custom error message on e-statement page.
+  *  **uiFeatures.logoutPreferenceText  **\- Custom logout text for logout page.
+  *  **uiFeatures.siteMigrationText** \- Shows custom site migration text for maintainance.
+  *  **uiFeatures.footer.hideAcrobat** \- Hides acrobat logo from the footer.
+  *  **uiFeatures.footer.hideSSL** \- Hides SSL logo from the footer.
+  *  **uiFeatures.footer.showBottomBar** \- Shows a bottom bar before footer.
+  *  **uiFeatures.footer.sslSealTitle** \- Title on the ssl seal image.
+  *  **uiFeatures.footer.sslSealImageName** \- Shows custom ssl image on footer.
+  *  **uiFeatures.footer.showCopyright** \- Shows copyright message on footer.
+
+|  
+  
+  
+  
+
+

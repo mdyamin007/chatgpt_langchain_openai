@@ -1,0 +1,338 @@
+title: FLCU BackEnd Analaysis Document
+body: # _**Data Migration:**_
+
+to match with the hypercube data model, we will need the following migration
+
+  1. USR_MAPPING migration as they do not use user_mapping to store CIF
+  2. USR_SESSION migration to set sess_login_Id as !usrId , set DSO to null
+
+#  _ **Back End Processes:**_
+
+  1. AFP
+  2. Enotice4
+  3. Etax
+  4. Permission
+  5. Insert
+  6. Ecl
+
+#  _ **Statement type and index file name:**_
+
+  1.  **global.ms1** = default
+  2.  **global.ml1** =mortgage
+  3.  **global.tax** =etax
+
+#  _ **Afp process:**_
+
+##  **Flag** :
+
+  * global.autoregister= true
+  * accountType = false
+  * Enable account lookup = false
+  * nullDSo = false
+  * Multiple doc type = false
+
+##  **Handler:**   AfpStatementData6
+
+flcums1_01312020_9732568_109693.afp|9732568|01012020|01312020|5|RACHEL
+ARIZAGA|||162420,162421|
+
+ **Afp_file[0] -** mendatory  flcums1_01312020_9732568_109693.afp
+
+ **Acct_num[1] -** mendatory 9732568
+
+ **Start_date[2] -** mendatory 01012020
+
+ **Closing_date[3] -** mendatory 01012020
+
+ **Page_count[4] -** mendatory int 5
+
+ **Acct_owner_name[5] -** can not be empty and more than 50characters if so
+trims to 50 RACHEL ARIZAGA
+
+ **SSN[6]-** if not given empty string " "
+
+ **Application Type[7] -** if not given empty string " "
+
+ **Message IDs for Market Link[8] -** if not given empty string 162420,162421
+
+Set sequence number from afp_file name. Split afp_file with  "_", if length==5
+take arr[3] as seqNum else take substring from arr[3] from 0 to starting of
+".afp" or ".pdf"
+
+For the example above **109693**
+
+##  **Registrar:** **  **MessageEStmtRegistrar3
+
+ **getFinAccount()**
+
+  1. Search account with the account number:
+    1. If not found:
+      1. Inserts into **fin_account** with the account number, name and set the status to A, **no acct_type  **
+      2. Create **usr** and **usr_session** with **account number as** **sess_login_id , DSO date**
+      3. Insert into **usr_fin_account** with **acct_id** & **usr_id  **
+    2. If found:
+      1. If acct name is not the same as index file updates account name and update the user's **first_name** to account name
+  2. Insert into paperless
+
+  
+  
+
+ **registerStatement():**
+
+    1. Insert into **ESTMT_DOC,   ESTMT_FILE, ARCH_FILE ** table
+
+  *  **For MS1 only:**
+
+    1. Pull msg from infotrac DB using msg Id
+    2. Insert into **ESTMT_MSG_DETAIL**
+  1. Insert into **P_JOB_ESMT** table
+
+  
+
+ **Processing Job:**
+
+    1. INSERT INTO **P_ENOTICE_COUNT**
+
+  *  **INSERT INTO P_JOB_EMAIL**
+
+  
+
+##  **Mismatch with Hypercube business:**
+
+  1. Session_loin_id = acctNum instead of !usr_ID
+  2. No entry in **USR_MAPPING** table
+  3. DSO date not null
+
+  
+  
+  
+
+#  _ **Etax process:**_
+
+##  **Flags** :
+
+  * etax.createAccount = false
+  * etax.automatedEmailNotification = true
+
+##  **Handler:** ** ** ETaxData3
+
+acctNum |  type | afpFileName    | date | suffix | appType    | SSN/TAX_ID |
+INPUT_ZIP_FILENAME
+
+  
+
+##  **Registrar:** ETaxRegistrar3
+
+ **getFinAccount** ():
+
+  1. If account not found returns null,increase warning go to next line
+  2. Insert into paperless
+
+ **registerEtax():**
+
+  1. Insert into **ARCH_FILE**
+  2. Insert into **ETAX** set SSN = given ssn if null then insert null
+  3. Insert into **P-_JOB_ETAX**
+
+##  **Processing Job:**
+
+  1. INSERT INTO **p_estmt_count**
+  2. INSERT INTO **P_JOB_EMAIL**
+
+  
+
+##  **Mismatch with Hypercube business** :
+
+            No mismatch as no user and account creation 
+
+  
+  
+  
+  
+
+#  **Permission process:**
+
+##  **Flags** :
+
+  * Need purge = true
+
+so, deletes all the previous entry from **ACCT_ACCESS** table
+
+##  **Handler:** defaultPermHandler
+
+acctNum
+
+##  **Registrar:** **  **defaultPermRegistrar
+
+  1. ### Inserts into **ACCT_ACCESS** table with aa_min_level=3
+
+##  **Mismatch with Hypercube business** :
+
+            No mismatch as no user and account creation 
+
+#  _ **ECL process:**_
+
+##  **Flags:**
+
+  * global.email.storage= notifypref
+  * ecl.purge=false
+  * global.emailUserAcctRef =null
+
+##  **Handler:** DefaultEclHandler2
+
+acctNum|email
+
+##  **Processing job**
+
+  1. If purge == true:
+    1. Get notifypref by org Id and insert into notifyMap
+  2. Get ufa by account number, if ufa is null throws error
+  3. Get notifyprefList  by usrId,acctId, stmt=default
+  4. If notifyprefList is empty inserts into np with **usrId,AcctId,Email, stmttype=default**
+  5. Else get notifyprefList[0] , updates np, remove from notifyMap
+  6. If purge is set to true: remove all the remaining np from notifyMap
+
+##  **Mismatch with Hypercube business** :
+
+        No mismatch as no user and account creation 
+
+#  **  
+** ** _Enotice process_ :**
+
+##  **Flags** :
+
+  * enotice4.acctTypeRequired = false
+  * enotice.createAccount= false
+  * Global.enotice.needapproval = false
+
+##  **Handler:**   ENoticeData7
+
+L|acctNum|acctType|AcctName|afpName|letterCode|closingDate|imageCount|postCardFlag|zipFileName|L
+
+L|5041640||PETER J
+MONTEIRO|flcu_5041640_02282020_e_00002.afp|014|02282020|1|0|flcudna_28_1_03022020_112226_0.zip|L
+
+  
+
+     * post code should be  0|""|1 else error, if ="" then sets to '0'
+
+##  **Registrar:** **   **DefaultENotice4Registrar
+
+ **getFinAccount():**
+
+  1. Finds account with acctNum
+    1. If not found error
+    2. If found:
+      1. If acct name if different from index file 
+        1. update acct name
+        2. Update usr first name with acctName from index file
+  2. Insert into paperless with enotice
+
+ **registerEnotice():**
+
+  1. Insert into  **ARCH_FILE**
+  2. Insert into **ENOTICE**
+  3. Insert into  **P_JOB_ENOTICE**
+
+  
+
+##  **Processing Job:**
+
+  1. INSERT INTO **P_ENOTICE_COUNT**
+  2. INSERT INTO **P_JOB_EMAIL**
+
+##  **Mismatch with Hypercube business:**
+
+       No mismatch as no user and account creation 
+
+#  _ **Insert process:**_
+
+##  **Flags** :
+
+##  **Handler:**   DefaultInsertHandler
+
+##  **Registrar:** **  **InsertRegistrar
+
+  1. Calls **email_Attach_insert():** puts data in **EMAIL_ATTACH** table
+  2. Calls updateFileContent(email_attach_id: from #1, data):
+    1. Update ea_content for last inserted
+    2. Select ea_content of the email_attach
+  3. Calls updateInsertTable(email_attach_id, data) :
+    1. Insert info **INSERT_INFO   **table
+  4. Calls updateJobInsert(insertedId from #3):
+    1. Insert value in **p_job_insert** table
+
+##  **Mismatch with Hypercube business:**
+
+    No mismatch as no user and account creation 
+
+#  _ **Backend Reports:**_
+
+  1. Accounting Report
+  2. Paperless Report
+  3. Undeliverable Report
+  4. Customized Enrollment Report
+
+  
+  
+
+#  _ **Accounting Report:**_
+
+##  **Class Path** :
+
+com.infoimage.processing.application.accounting.handler.TemplateReport
+
+ **Stsmt query:   **SELECT pj.*,ec.img_count FROM **p_job** pj
+**,p_estmt_count** ec WHERE pj.p_job_id=ec.p_job_id AND pj.org_name=? AND
+[pj.name](http://pj.name)=? AND pj.cycle=? AND pj.status=? ORDER BY
+pj.create_time
+
+ **Email notification   query:** SELECT * FROM **p_job** WHERE org_name=? AND
+name=? AND cycle=? AND status=? ORDER BY create_time
+
+ **Email Reminder query:**   SELECT p.* FROM **p_job** p, **p_job_email** pje
+WHERE p.org_name=? AND [p.name](http://p.name)=? AND p.status=? AND
+p.create_time>=? AND p.create_time<=? AND p.cycle IS NULL and p.p_job_id =
+pje.ref_p_job_id and pje.stmt_type like ? ORDER BY p.create_time
+
+ **Marketing Email query:**     SELECT p.* FROM **p_job** p, **p_job_email**
+pje WHERE p.org_name=? AND [p.name](http://p.name)=? AND p.status=? AND
+p.create_time>=? AND p.create_time<=? AND p.cycle IS NULL and p.p_job_id =
+pje.ref_p_job_id and pje.stmt_type=? ORDER BY p.create_time
+
+  
+
+#  _ **Paperless Report:**_
+
+##  **Class Path** :
+
+ **DefaultPaperlessReport** and **DefaultPaperlessReportRender**
+
+ **Query:   **
+
+ ** ** SELECT fa.acct_number, p_latest_status status, p_modified_date,
+p_modified_by
+
+        FROM **fin_account** fa, **paperless2** p2
+
+         WHERE org_id= _getorgid_ ('flcu')
+
+         AND fa.acct_id=p2.acct_id
+
+         AND p2.stmt_type='default'
+
+         AND p2.p_latest_status='E';
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+

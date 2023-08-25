@@ -1,0 +1,638 @@
+title: TKCU - [31231][pvt] Adding Encryption Numbers on Tax Forms
+description: Dev Hour: 6 (4 hours to coding + 2 hours testing)
+
+Turnover Date: 09/20/2022
+
+Sample Date: 09/26/2022
+
+Approval Date: 09/30/2022
+
+Qa Date: 10/03/2022
+
+Live Date: 10/12/2022
+
+
+
+parallel required.
+
+Programmer: Rony
+
+
+
+Details:
+
+---------------------
+
+Need to display encrypted account no besides account no
+
+Client expected output is :
+
+*****8727795C2TC7RC(masked entireaccount no + <space>+encrypted account) . Per client in comment 16 both can be of max 10 length and since client wants an space between those while displaying total length we need is 21.
+
+Currently for 1098 :
+
+
+
+
+
+It is using 21,40 position for display and
+
+751-770 position for index file for segment 1, 21-40 for segment 2 and 3.
+
+We can put the account no and encrypted account no in column 751-771 (length 21) for display (since we need to put a space between account no and encrypted account no ), and the account no for index in 21-40.
+
+So we need to set a rule with field 751-771 for tax_acctnum_main table in tax_insert_table.sql file
+
+
+
+INSERT INTO tax_acctnum_main (ref_number,start_pos,end_pos,split_by,remove_zeros,acct_pos_loc,suf_pos_loc,suf_display, acct_n_suf_order) VALUES ('77','751','771','blank','1','blank','blank','as_is', 'a');
+
+which we will use for display.
+
+
+
+and for e_index we need to change for tkcu segment 1 which is using rule 50 currently. We can change to use rule 1 instead.
+
+So overall for tax_acctnum_ref table
+
+
+
+CID | FORM | SEGMENT | DISPLAY | E_INDEX |
+
+tkcu|1098|1|751|1|
+
+tkcu|1098|2|751|47|
+
+tkcu|1098|3|751|48|
+
+tkcu|rest|all|751|1|
+
+
+
+there is already a preprocessing script for 1098 tkcu_1098_spec_handle.pl where it puts member number from cross reference file to irs data file in position 751-770 position. And it is taking account no from 21-40 position and ssn from 12-20 position to match with cross reference file. We have to build another preprocessing script for all tkcu forms which will be called before tkcu_1098_spec_handle.pl per tax process, we will put account no, space , encrypted account no combination in field 751-771 for display. And,
+
+we need to make a slight change in tkcu_1098_spec_handle.pl, instead of putting member no in 751-770 put this in 21-40 , so basically we will replace the account no with member no for 1098.
+
+
+
+-----------------------per Bill----------------------------
+
+Test file,TKCU_ENCRPTACCT.pgp, has been uploaded to the Test folder.
+
+
+author: rony
+comment: Hi [~billr]
+
+Can I have a test data file too?
+
+And if I don't find a match with Xref file account no, what should we do? Will we just display the account no only without an encryption number?
+
+Thanks
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+
+
+/d/ac-secure-share/ac/bill/is-1600/TKCU_1099R_311_2020.zip is the archival sample for 1099r where the client can see the update (encrypted number besides account no )as well as verify the archival is ok too.
+
+[~billr]
+
+to process1098FICS there is a xref file needed in the format*loanID|ssn|ytd_taxes_paid_amt|SymitarAccountNum*
+
+I need this file for testing purposes. Would it be possible to provide this?
+
+
+
+Thanks
+
+
+
+
+author: igor.khosid
+comment: [~Andrey.Kutsenko] - please proceed with the testing
+
+
+author: JIRAUSER11104
+comment: QA is in progress.
+
+
+author: billr
+comment: [~rony]
+
+I am following up with the client for thexref file.
+
+Client previously provided the test fileTKCU_ENCRPTACCT.pgp, to the Test folder. Do you also still need a data file?
+
+
+author: rony
+comment: Hi [~billr]
+
+TKCU_ENCRPTACCT.pgp is another xref file for the account number to encrypt no mapping. I am talking about IRS data files. But it's ok I have some IRS data files. But I still need the Xref file*loanID|ssn|ytd_taxes_paid_amt|SymitarAccountNum.*
+
+
+
+Thanks
+
+
+author: JIRAUSER11104
+comment: ****************************************************
+   Parallel ID: 20220922111414
+   Currently in development: Yes
+   User: ronyD
+   Description: https://jira.infoimageinc.com/browse/IS-1600
+   Date Submitted: 2022-09-22 11:14:38
+   Date Last Updated: 2022-09-22 11:14:38
+   Files:
+      1) tkcu_account_to_encrypted_account.pl
+      2) tkcu_1098_spec_handle.pl
+****************************************************
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+
+note: Form1099-Rchecked
+ In the archival samples for 1099r -> /d/ac-secure-share/ac/bill/is-1600/TKCU_1099R_311_2020.zip displayed masked account number + <space>+encrypted account number:
+ !scr_smpl_1099R.png|thumbnail! 
+ The substitution of the encrypted account number on the form is based on the matches of account numbers in the Xref files:
+{code:sh}
+[oper1@rhs ~]$ ls -ltr /z/download/tkcu/TKCU_ENCRPTACCT
+-rwxr-xr-x  1 ronyD DSI 19371066 Sep 21 13:49 /z/download/tkcu/TKCU_ENCRPTACCT
+
+[oper1@rhs ~]$ ls -ltr /t/tax/tkcu/tkcu.1099rgen.for1
+-rw-rw-rw-  1 ronyD DSI 2516456 Sep 21 15:52 /t/tax/tkcu/tkcu.1099rgen.for1{code}
+
+
+author: billr
+comment: [~rony] [~dawnl]
+
+Rony client is asking:
+
+You have also provided a formatloanID|ssn|ytd_taxes_paid_amt|SymitarAccountNum
+
+The Symitar Account number - you would need to be the actual account number and not Encrypted Account Number, correct?
+
+
+author: rony
+comment: Hi [~billr]
+
+
+
+Loan id will match with irs actual account no ( 21-40 ) and SymitarAccuntNum will be like member number ( not encrypted ) that will be used for posting for 1098FICS.
+
+
+
+Thanks
+
+
+author: billr
+comment: [~rony] Thanks, following up with client.
+
+
+author: billr
+comment: [~rony]
+
+Rony, client provided a file:
+
+Bill, the file has been moved over for you guys. Should be named TKCU_1098_FICSbox11
+
+
+author: billr
+comment: [~rony] [~Jessica]
+
+Rony, please let me know if the file the client provided,TKCU_1098_FICSbox11, is what we need.
+
+
+author: rony
+comment: Hi [~billr] 
+
+Yes, this is the file. I need one more help. Would it be possible to provide me data file for 1098?
+
+
+
+Thanks
+
+
+author: billr
+comment: [~rony]
+
+I will request 1098 data file from client.
+
+
+author: billr
+comment: [~rony]
+
+Client is askingwhat the 1098 data file name is:
+
+"Could you ask the developer what the name of the specific file he is looking for?"
+
+
+author: billr
+comment: [~rony]
+
+Rony - Client is asking for the file name of the 1098 data file requested.
+
+
+author: billr
+comment: [~rony]
+
+Rony, Client has provide test file, let me know if this is what you need:
+
+"I have moved it over for you. Named: TKCU_TAX_122821_1050_FICS_Test"
+
+
+author: rony
+comment: Hi [~Andrey.Kutsenko]
+
+
+
+/d/ac-secure-share/ac/bill/is-1600/TKCU_1098_311_2021.zip is an archival sample. The same folder also hastkcuyt1098.pdf full sample for 1098 fics. This is the last form I wanted to turn over to QA, cause it has a data manipulation or preprocessing script to manipulate data tkcu_1098_spec_handle.pl which takes another cross-reference file
+z/download/tkcu/TKCU_1098_FICSBox11_12302021.txt withformatloanID|ssn|ytd_taxes_paid_amt|SymitarAccountNum. So wanted to turnover this form to QA too.
+
+Just to refresh our task is to display encrypted no besides account no for which the client provides a xref file with account|encrypted account format.
+In the pdftkcuyt1098.pdf page 105 you will see such an example. For those who don't get a match with the Xref file, we are displaying only account no.
+.
+
+
+
+!image-2022-10-03-14-41-49-633.png!
+
+
+
+[~billr]
+
+
+
+Thanks
+
+
+
+
+
+
+
+
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+
+note: Form1098 checked
+{code:sh}
+[oper1@rhs ~]$ ls -ltr /d/ac-secure-share/ac/bill/is-1600/tkcuyt1098.pdf
+-rw-r--r--  1 ronyD DSI 24998002 Oct  3 01:38 /d/ac-secure-share/ac/bill/is-1600/tkcuyt1098.pdf{code}
+The encrypted Account No is displayed on the form for those accounts that get a match with the Xref file:
+{code:sh}
+[oper1@rhs ~]$ ls -ltr /t/tax/tkcu/tkcu.1098gen.for1
+-rw-rw-rw-  1 ronyD DSI 4674196 Oct  3 01:32 /t/tax/tkcu/tkcu.1098gen.for1{code}
+
+
+author: rony
+comment: Hi [~billr]
+
+Is it approved by the client?
+
+
+
+Thanks
+
+
+author: billr
+comment: [~rony]
+
+Rony, I have requested DP make the files available to the client for review/approval.
+
+
+author: billr
+comment: [~rony] [~Jessica]
+
+Rony, I sent the following samples to the client:
+
+TKCU_1098_311_2021.zip has been copied to /d/infoftps3/tkcu/client_pickup successfully
+tkcuyt1098.pdf has been copied to /d/infoftps3/tkcu/client_pickup successfully
+
+And they responded:
+
+After initial review of both files that were sent over, I was not able to locate the encrypted account number next to the account number on the tax forms. Am I missing something? Was it placed somewhere else?
+
+
+author: rony
+comment: Hi [~billr]
+
+Below are some page nos to look at:
+
+105 110 171 277 351 689 707 838 1017 1052 1078 1174 1301 1334 1363 1489 1808 1814 1968 2097 2197 2369 2434 2506 2566 2792 3016 3081 3292 3318 3480 3483 3528 3978
+
+
+
+For the rest of the accounts, it didn't match with the Xref file.
+
+
+
+Thanks
+
+
+
+
+
+
+author: billr
+comment: [~rony]
+
+Thanks Rony, following up with the client.
+
+
+author: billr
+comment: [~rony] [~Jessica]
+
+Rony, client responded to:
+
+I have been able to look at a few samples and all the samples account numbers appear to be wrong. The name, socials, and addresses appear to be correct, but the account numbers are not correctly aligned with each member - even the ones with the Encrypted Account numbers appearing.
+
+
+author: rony
+comment: Hi [~billr]
+
+If the client can provide us with some examples would be helpful.
+
+
+
+Thanks
+
+
+author: rony
+comment: Hi [~billr]I am not sure why client is saying account nos and encrypted nos are appearing wrong. Let me give you some example with snapshot of xref file for encryption:
+
+Page: 105
+
+irs account no=> 11183   irs name=>AARON JAMES OVERTURF
+
+!image-2022-10-15-18-02-02-396.png!!image-2022-10-15-18-02-46-197.png!
+
+
+
+
+
+page: 171
+
+irs data account no =>11206 irs data name =>WALTER KELLY OGLE
+
+!image-2022-10-15-18-05-12-905.png!   !image-2022-10-15-18-05-24-620.png!
+
+
+
+
+
+page: 110
+
+irs data account no =>11206 irs data name =>WALTER KELLY OGLE
+
+
+
+!image-2022-10-15-18-07-15-235.png!   !image-2022-10-15-18-06-29-496.png!
+
+
+
+
+
+So please ask the client what is exactly wrong here?
+
+
+
+Thanks
+
+
+
+
+author: billr
+comment: [~rony]
+
+Rony, I will send the examples to the client. The client had responded below and provided the attached file, Document2.docx before they saw your examples.
+
+The accounts are accounts I found within our core - you can see that each last 4 account number on tax forms are incorrect. I also went back and made sure that the accounts that didn't have Encrypted Account numbers present in the xref file we created and sent to you, and they are there. So, majority of the files that were sent to review should have Encrypted Account number listed.
+
+
+author: rony
+comment: [~billr]
+
+This is the file from the client. Please ask them to search with the customer name and then check the value from columns 21-40, which is account no.
+
+[^tkcu.1098gen-1.for1]
+
+
+
+Note: client didn't send us data in the above naming, the client sent data with a long line and we break down the long line into multiple lines each line is an A or B record, but the content is the same.
+
+Now if the account from this file seems wrong we need a replacement file from the client.
+
+
+
+Thanks
+
+
+
+
+
+
+author: billr
+comment: [~rony]
+
+Rony, client responded:
+
+!image-2022-10-17-11-37-39-010.png|width=695,height=272!
+
+
+author: rony
+comment: Hi [~billr]
+
+This will need extra programming. It's good that we provided a sample for 1098 fics otherwise this will never be caught until production release. But based on current workload I need time to implement this. I will be able to make the update and provide a sample by mid-next week.
+
+
+
+Thanks
+
+Rony
+
+
+author: rony
+comment: Hi [~billr]
+
+/d/ac-secure-share/ac/bill/is-1600/tkcuyt1098_10232022.pdf is the updated sample where SmitarAccountNum is used to find the encrypted account no.
+
+
+
+Thanks
+
+
+author: billr
+comment: [~rony]
+
+Thanks, I will follow up with the client.
+
+
+author: billr
+comment: [~rony] [~Jessica]
+
+Rony, client approved the samples and is asking for samples of the other tax forms,1099, 1099INT, 1099MISC, etc.
+
+
+author: rony
+comment: Hi [~billr]
+
+I kept some sample in/d/ac-secure-share/ac/bill/is-1600/12262022
+
+
+
+If the client needs a sample for any other form please provide me data file.
+
+
+
+Thanks
+
+
+author: rony
+comment: Hi [~billr]
+
+Any feedback on samples?
+
+
+
+Thanks
+
+
+author: billr
+comment: [~rony]
+
+Hi Rony, no response back yet. I will follow up.
+
+
+author: billr
+comment: [~rony] [~Jessica]
+
+Rony, client approved the samples.
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+parallel id:20221109030455
+
+[^tkcu98e131.print]print 1-4 pages from 4.2o1.
+
+[^IS_Checklist.docx]
+
+[~billr]
+
+Thanks
+
+
+author: igor.khosid
+comment:    Parallel ID: 20221109030455
+   Currently in parallel: Yes
+   User: ronyD
+   Description: IS-1600 tkcu encryted number on tax forms
+   Date Submitted: 2022-11-09 03:07:08
+   Date Last Updated: 2022-11-09 03:07:08
+   Files:
+      1) tkcu_account_to_encrypted_account.pl
+      2) tkcu_1098_spec_handle.pl
+
+
+author: billr
+comment: [~rony] [~Jessica]
+
+Rony, client is asking:
+
+Can you find out why 1099-C does not have the Encrypted Account Number? The Business Area owner wants to know.
+
+I thought this was because it had a hyphened loan ID but is it because of something else?
+
+
+author: rony
+comment: Hi [~billr]
+
+Yes, the client is correct, the hyphened loaned id is causing the issue. Please ask the client how should we proceed then.
+
+
+
+Thanks
+
+
+author: billr
+comment: [~rony] [~Jessica]
+
+Rony, Customer responded:
+
+I thought that was the case. How simple is it for the developer to leave the Loan ID in place while still placing the Encrypted Account Number in the same area? If this is simple, please add and we'll get the sample approved immediately so we can go live.
+
+
+author: rony
+comment: Hi [~billr]
+
+/d/ac-secure-share/ac/bill/is-1600/11152022/tkcuyt199c.pdf is an updated sample for 1099c.
+
+
+
+Thanks
+
+
+author: billr
+comment: [~rony]
+
+Rony, I will send samples to client for approval.
+
+
+author: billr
+comment: [~rony] [~Jessica]
+
+Rony, client responded to most recent samples:
+
+Is there a maximum number of characters that can be present in the account number field?
+
+I was able to locate all 8 accounts I looked at; however, I noticed the Encrypted Account Number was missing a few characters on each. My instant thought was because the last 4 of loan ID was there and there was no more room. Just wanted to confirm before we move on to final steps.
+
+
+author: rony
+comment: Looking into this. Will get back to you asap.
+
+
+author: rony
+comment: Hi [~billr]
+
+I updated the code to accommodate total of 26 digits (10-digit account no, 1 hyphen, 4-digit loan, 1 space, 10-digit encrypted account no).
+
+Below are updated samples for 99c (the client sees the issue ) and 98e ( to check if the latest update doesn't affect other forms).
+
+[^tkcuyt199c.pdf]
+
+[^tkcuyt198e.pdf]
+
+
+
+I also want to provide a sample for 1042s since the account no location for this form is different from other forms. Would you please ask the client to provide a test file for 1042s?
+
+
+
+Thanks
+
+
+
+
+
+
+
+
+author: billr
+comment: [~rony] [~Jessica]
+
+Thanks Rony, I will follow up with the client.
+
+
+author: billr
+comment: [~rony]
+
+Rony, client responded and provided the file:1042-S IRS Reporting List.txt
+
+We don't have very many 1042s. Matter of fact, I don't know if we currently have any accounts right now but looked at previous year tax statements and found a list. Let me know if this is what you need?

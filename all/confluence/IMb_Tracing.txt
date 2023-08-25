@@ -1,0 +1,215 @@
+title: IMb Tracing
+body: ## Project Documentation
+
+  1.   2.   3.   4. [Index File Processor Installation](https://i3dev.easyredmine.com/projects/imb_tracing/wiki/Index_File_Processor_Installation)
+
+  
+
+## Barcode Formats
+
+  1. IMb Tracing Specifications: [IMB Service Type IDs.pdf](https://i3dev.easyredmine.com/attachments/865/IMB%20Service%20Type%20IDs.pdf?t=1372709950 "Download file")
+  2. Service Type IDs: [IMb_Tracing_User_Guide.pdf](https://i3dev.easyredmine.com/attachments/867/IMb_Tracing_User_Guide.pdf?t=1372710034 "Download file")
+  3. Destination IMb Tracing  
+
+  4. Origin IMb Tracing  
+
+  
+
+## IS Index File Specifications
+
+  
+  
+
+###  **Header Record**
+
+A header record must exist on the first line in the file. Fields in this
+record are pipe-delimited and they are described in the following table:
+
+ **Field**|  **Required?**|  **Max Length**|  **Type**|  **Description**  
+---|---|---|---|---  
+Record Type| Required| 1| Alpha| The value of this field is "H" always  
+Process ID| Required| 10| Numeric| The unique InfoIMAGE process ID generated
+by IS  
+Record Terminator| Required| 1| Alpha| The value of this field is "H" always  
+  
+Note: DT_Job_ID cannot be included as a unique identifier because jobs not set
+up on InfoTRAC will not have a DT_Job_ID.  
+  
+
+  
+
+###  **Inbound/Outbound Record**
+
+Field schema supports both Destination IMb Tracing and Origin IMb Tracing.
+Fields in this record are pipe-delimited and they are described in the
+following table:
+
+ **Field**|  **Required?**|  **Max Length**|  **Type**|  **Description**  
+---|---|---|---|---  
+Record Type| Required| 1| Alpha| Destination IMb Tracing = "D", Origin IMb
+Tracing = "O"  
+Customer Account Number| Required| 20| Numeric| Statement/document account
+number. No leading zeros.  
+Customer Name| Required| 40| Alpha| The name of the individual that belongs to
+the statement/document. Should be truncated if the length exceeds 40
+characters.  
+Customer Zip Code| Required| 10| Alphanumeric| The zip code of the mailpiece's
+destination address.  
+Cycle Date| Required| 8| Numeric| The cycle date from the insert file. Format:
+MMddyyyy  
+Process Date| Required| 12| Numeric| The time when the statement was
+processed. Format: MMddyyyyhhmm  
+IMb| Required| 35| Alphanumeric| Digits in the IMb. Use hyphens to separate
+the Barcode ID, Service Type ID, MID, Sequence # and Routing Zip Code (Note:
+Sequence number increments for non-mail, non-print and eStatement files as
+well)  
+IMb Scannable| Required| 1| Alpha| Scannable = "Y", Not Scannable = "N"
+Currently, only presort files will be included in the index file, so all
+mailpieces will be scannable.  
+Job Name| Not Required| 20| Alphanumeric| Customer-understandable application
+name of this statement/document  
+Application Suffix| Not Required| 3| Alpha| Additional information to be
+included (e.g. letter type). Fill in "N/A" if the field is not applicable.  
+2D Piece ID| Not Required| 10| Alpha| The 2D-piece ID assigned to the
+individual document.  
+Balance| Not Required| 10| Numeric| The statement balance for Origin IMb
+Tracing. Fill in "0" (zero) if not applicable. Amount is formatted in cents
+(all digits). Ex: 1234 for $12.34.  
+Minimum Balance| Not Required| 10| Numeric| The minimum balance on the
+statement. Use same format as "Balance" field.  
+Record Terminator| Required| 1| Alpha| Destination IMb Tracing = "D", Origin
+IMb Tracing = "O"  
+  
+  
+  
+
+###  **Footer Record**
+
+A footer record must exist on the last line in the file. Fields in this record
+are pipe-delimited and they are described in the following table:
+
+ **Field**|  **Required?**|  **Max Length**|  **Type**|  **Description**  
+---|---|---|---|---  
+Record Type| Required| 1| Alpha| The value of this field is "F" always.  
+Total Count| Required| Variable| Numeric| The number of destination and origin
+records in the file.  
+Record Terminator| Required| 1| Alpha| The value of this field is "F" always.  
+  
+  
+  
+
+## Reports Needed
+
+  1. InfoTRAC Mail Tracking Report Mock-ups: [Mail Tracking within Job Status - Mock-ups 11 19 13.docx](https://i3dev.easyredmine.com/attachments/1286/Mail%20Tracking%20within%20Job%20Status%20-%20Mock-ups%2011%2019%2013.docx?t=1384886235 "Download file")
+  2. Query by an individual account within a CID, show statements under the individual account. For each statement sent, provide a link to show the trail of corresponding mapped 20-digit code.
+    1. Most likely this would be integrated together with the 2D camera image query as well.
+  3. On CID level, show summary reports:
+    1. By Date Range (e.g. Day, Week, Month)
+    2. By Geographic Locations. (e.g. zip code, city, state)
+      1. Average number of days it takes mailpieces to reach different zip codes from CA or TX
+      2. Zip Data can be obtained from: <http://www.unitedstateszipcodes.org/zip-code-database/>
+    3. By Application
+    4. Seed Mailing Statistics (for prospective clients)
+    5. By Delivery Time (emphasis on slow mailpieces)
+    6. Store tracking data for 90 days or more
+  4. For each/combination of dimension(s) above, report attributes:
+    1. Average Shipment Elapsed Time (e.g. x days)
+  5. {TODO}
+  6. Reports offered by Track N Trace
+    1. Job Reports
+      1. Mailing and Shipment - general information about the mailing
+      2. Job Report by Date - counts and percentages grouped by estimated delivery date
+      3. Job report by NDC/SCF/State/5 digit zip code - # of pieces delivered by estimated delivery date for each facility type
+    2. Performance Reports
+      1. Delivery Summary - total # of pieces delivered by zip code or state, total # and % of pieces delivered, % of pieces by state that received any scans, % of mail pieces delivered on time (by USPS standards)
+      2. Delivery Statistics - speed of delivery broken down by zip code or state
+      3. Delivery Barcode Scan Summary - # of business days it took an individual mailpiece to be delivered, broken down by day
+      4. Delivery Exception - mis-routed (scanned at unexpected facility - not on route) and looping (scanned at the facility, sent out for delivery but somehow scanned again at the facility) exceptions
+      5. US Maps (Delivery Performance) - % of pieces delivered by business day, displayed via color coding on a US map
+    3. Data Exports (data export request an extract of mailpiece or scan data for all mailpieces or a selection of those pieces based on your criteria)
+      1. Mailpiece export - mailpiece displayed at final scan
+        1. Export criteria:
+          1. All mailpieces
+          2. Mailpieces that have not received scans
+          3. Mailpieces without an Estimated Delivery Date
+          4. Mailpieces with an Estimated Delivery Date (select date range)
+          5. Zip code range
+          6. Include header row
+          7. Export File Delimiter (comma, tab, semicolon, pipe, caret)
+          8. Email Information
+          9. Can schedule automated exports
+      2. Scan export - scan data for each USPS facility
+
+  
+
+## Sample files
+
+  1. Sample data file from USPS: [fsb4880103.pkg](https://i3dev.easyredmine.com/attachments/856/fsb4880103.pkg?t=1372377970 "Download file")  
+Columns are:
+
+ **Column**|  **Value Carried**|  **Description**  
+---|---|---  
+1| Facility ID (ZIP)| The 5-digit ZIP Code of the facility where mail was
+processed.  
+2| Operation Code| The code that indicates the level of sort operation at
+which the mail was processed. Code meaning could be referenced to attachment
+below.  
+3| Scan Date and Time| The date (mm/dd/yyyy) and time (hh:mm:ss) the mail was
+processed. Timezone of this time value is based on the ZIP in Column 1  
+4| Routing ZIP Code (POSTNET)| The Destination ZIP Code within the Intelligent
+Mail barcode used to process the mailpiece (5, 9, or 11 digits).  
+5| Intelligent Mail Barcode Digits| The remaining 20 digits of the Intelligent
+Mail barcode for IMB TRACING  
+  
+  
+
+  2. Operation Code spec: [Operation Codes.xlsx](https://i3dev.easyredmine.com/attachments/1243/Operation%20Codes.xlsx?t=1382543773 "Download file")
+  3. Facilities Table: <http://pe.usps.com/text/LabelingLists/L005.htm#1102681> (Do NOT use: [Facilities Table.xlsx](https://i3dev.easyredmine.com/attachments/1244/Facilities%20Table.xlsx?t=1382543773 "Download file"))
+  4. Client Mailer ID list: \dell-2100\share\CRID\
+  5. Database Table Schema: [Database Table Designs.xlsx](https://i3dev.easyredmine.com/attachments/1287/Database%20Table%20Designs.xlsx?t=1384888148 "Download file")
+  6. Test IS index file/AFP: [slcu_fmt_253552.txt](https://i3dev.easyredmine.com/attachments/1292/slcu_fmt_253552.txt?t=1385049011 "Download file"), [9MID_slcues101.is.afp](https://i3dev.easyredmine.com/attachments/1293/9MID_slcues101.is.afp?t=1385049011 "Download file")
+  7. Active Menlo Applications (Last Revised: 11/21/2013): [Active MP Only Applications 11-21-13.xlsx](https://i3dev.easyredmine.com/attachments/1299/Active%20MP%20Only%20Applications%2011-21-13.xlsx?t=1385475357 "Download file")
+  8. Active Texas Applications (Last Revised: 11/21/2013): [Active TX Only Applications 11-21-13.xlsx](https://i3dev.easyredmine.com/attachments/1300/Active%20TX%20Only%20Applications%2011-21-13.xlsx?t=1385475357 "Download file")
+  9. {TODO} Need sample data (file/db) of how we map our Members' account number to the 20-digit code
+
+  
+
+## Vendors that can provide access to tracing data
+
+  1. iAccuTrace (AccuZip):
+    1. Website: <http://www.accuzip.com/accutrace/>
+    2. Product Demo: <http://www.accuzip.com/accutrace/video.htm>
+    3. Documentation: [AccuTRACE Input File Specifications.pdf](https://i3dev.easyredmine.com/attachments/868/AccuTRACE%20Input%20File%20Specifications.pdf?t=1372710280 "Download file")
+  2. MailTrak (Pitney Bowes - GrayHair)
+    1. Website: <http://www.grayhairsoftware.com/owners-mail-tracking-outbound.html>
+    2. Datasheet: [07-PBPS-GrayHair_Cutsheet.pdf](https://i3dev.easyredmine.com/attachments/869/07-PBPS-GrayHair_Cutsheet.pdf?t=1372710485 "Download file")
+  3. Track N Trace (Bell & Howell)
+    1. Website: <http://www.bellhowell.net/products/IQSoftware_TrackNTrace.aspx>
+    2. Product Demo: [https://bccsoftware.webex.com/tc0506l/trainingcenter/record/recordAction.do?siteurl=bccsoftware&recordingID=58019947&actionType=Info&tcRecordingLink=Yes](https://bccsoftware.webex.com/tc0506l/trainingcenter/record/recordAction.do?siteurl=bccsoftware&recordingID=58019947&actionType=Info&tcRecordingLink=Yes).
+
+  
+
+## Full Service IMb Updates
+
+  1. Clients with jobs in both CA and TX
+    1. BKFN
+      1. TX = DDA & Savings, Daily Letter & Commercial Loan
+      2. CA = Postcard Daily
+    2. EWBB
+      1. TX = DDA & Savings
+      2. CA = DDA & Savings, Daily Letter, On-Track, Loan Bill, Foreign eStmt & XAA Statements
+    3. KEYS
+      1. TX = After Market
+      2. CA = After Market
+
+  
+
+###   Attachments
+
+  
+
+250250250250250250250250250250250250250250250250250250250250250
+
+true250250
+
+

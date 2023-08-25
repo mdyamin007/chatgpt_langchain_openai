@@ -1,0 +1,96 @@
+title: Infotrac job status paper jobs are not showing up
+description: I was testing jobstatus module on brisbane infotrac application. When trying to view paper job pdf from infotrac, print script is throwing error. We are executing script onca-preproc-pr-03 machine.
+
+
+
+Infotrac log:
+
+2020-09-25 08:20:15 INFO SftpService:104 - MHLOG:: loading pdf send {color:#de350b}command: python /home/test/master/afp2pdf.py direct FileCreationMode=ALL StartingPage=105 EndingPage=106 IniFilePath=/home/test/keep/ IniFilename=afp2web_pr.ini InputFilename=/d/isd_share/gulf/afpfiles/gulfms11015.2oz.afp.20200901052258 OutputFilePath=/d/isd_share/afp2web_out Quietmode=on FilenamePattern="<b27e7032-b844-4314-8b67-1c779ca0ba1d>"{color}
+com.jcraft.jsch.JSchException: Algorithm negotiation fail
+ at com.jcraft.jsch.Session.receive_kexinit(Session.java:583)
+
+
+author: william.kong
+comment: [~anil.dasa]: We changed the way we mount isd_share using isilon server last week. This server ca-preproc-pr-03 needs to be configured correctly. However, I'm having DNS issues and updated the following ticket for Prem to review:
+
+
+
+https://jira.infoimageinc.com/browse/BRIS-178
+
+
+
+I'll keep this ticket assigned to me so that I do not lose sight of it.
+
+
+
+Thanks!
+
+
+
+-- Will
+
+
+
+
+author: william.kong
+comment: [~anil.dasa]: Sorry! I forgot to update you on this ticket. ca-preproc-pr-03 is working. Please retest.
+
+
+author: anil.dasa
+comment: [~William.Kong] [~shailendrar]
+
+Still getting same exception.
+
+
+author: anil.dasa
+comment: Below are infotrac logs when trying to view paper job pdf from job status module.
+
++*Infotrac logs:*+
+
+2020-10-28 09:30:31 INFO UserManager:52 - UserManager-->getById()-->uid: 12001
+{color:#de350b}2020-10-28 09:30:31 INFO SftpService:104 - MHLOG:: loading pdf send command: python /home/test/master/afp2pdf.py direct FileCreationMode=ALL StartingPage=1 EndingPage=1 IniFilePath=/home/test/keep/ IniFilename=afp2web_pr.ini InputFilename=/d/isd_share/ewbb/afpfiles/ewbbdna1234.2o1.afp.20201027134031 OutputFilePath=/d/isd_share/afp2web_out Quietmode=on FilenamePattern="<f583dd81-758b-41db-bb5e-c89d07864e50>"{color}
+{color:#de350b}com.jcraft.jsch.JSchException: Algorithm negotiation fail{color}
+ at com.jcraft.jsch.Session.receive_kexinit(Session.java:583)
+ at com.jcraft.jsch.Session.connect(Session.java:320)
+ at com.jcraft.jsch.Session.connect(Session.java:183)
+ at com.infoimage.infotrac.stmt.service.SftpService.loadPstmt(SftpService.java:116)
+ at com.infoimage.infotrac.stmt.service.SftpService$$FastClassByCG
+
+
+author: shailendrar
+comment: [~William.Kong] - I tried running below command on preprocessing03 server & received a different error:
+
+*python /home/test/master/afp2pdf.py direct FileCreationMode=ALL StartingPage=1 EndingPage=1 IniFilePath=/home/test/keep/ IniFilename=afp2web_pr.ini InputFilename=/d/isd_share/ewbb/afpfiles/ewbbdna1234.2o1.afp.20200724070211 OutputFilePath=/d/isd_share/afp2web_out Quietmode=on FilenamePattern="<f583dd81-758b-41db-bb5e-c89d07864e50>"*
+
+*{color:#de350b}[http://127.0.1.1/services/getStatus?ResponseFormat=json&jobid=66216338785365795106]{color}*
+ *{color:#de350b}{{color}*
+ *{color:#de350b}"JobID": "66216338785365795106"{color}*
+ *{color:#de350b}, "JobPID": "1850"{color}*
+ *{color:#de350b}, "Filename": "\/d\/isd_share\/ewbb\/afpfiles\/ewbbdna1234.2o1.afp.20200724070211"{color}*
+ *{color:#de350b}, "Status": "Error: Pid=1850 ReqId=00021 Exception while processing request 21. Msg: Input or output format is not licensed"{color}*
+ *{color:#de350b}, "ResponseTime": 1{color}*
+{color:#de350b}*}*{color}
+
+
+
+
+
+
+author: william.kong
+comment: [~shailendrar]: For some reason, the /home/test/keep/afp2web_pr.ini is using the wrong license. I updated in Menlo and Brisbane. However, I'm scratching my head hear. If Menlo is using the wrong license, Menlo should not work also.
+
+
+
+Regardless, can you re-test and work with Anil to confirm if InfoTRAC works.
+
+
+author: shailendrar
+comment: [~William.Kong] - The following command worked w/o any issue after license update:
+
+python /home/test/master/afp2pdf.py direct FileCreationMode=ALL StartingPage=1 EndingPage=1 IniFilePath=/home/test/keep/ IniFilename=afp2web_pr.ini InputFilename=/d/isd_share/ewbb/afpfiles/ewbbdna1234.2o1.afp.20200724070211 OutputFilePath=/d/isd_share/afp2web_out Quietmode=on FilenamePattern="<f583dd81-758b-41db-bb5e-c89d07864e50>"
+
+[~anil.dasa] - I am unable to reproduce the issue related to "Algorithm negotiation fail" on our end.
+
+
+author: anil.dasa
+comment: I have updated JSCH jar on infotrac production and also updated configuration to call correct ini file and finally was able to view pdf statements.

@@ -1,0 +1,584 @@
+title: Nami SSO7 Specification - Hypercube
+body: # InfoIMAGE Single Sign-On
+
+The Single Sign-On module allows a user from a financial institution to gain a
+secure access to InfoIMAGE eStatements services without asking the user to
+perform any authentication on screen. The financial institution will handle
+the authentication process behind the screen by delivering predefined
+authentication data to InfoIMAGE over the secure sockets layer (SSL) protocol.
+This allows the user to have quick and seamless access to InfoIMAGE
+eStatements services.  
+When a user clicks on the eStatements link on the home banking site of the
+financial institution, the financial institution will construct the
+authentication data and transmit it with the user's email address to InfoIMAGE
+over the SSL protocol. InfoIMAGE will validate the authentication data by
+using a secret message that is shared between the two parties. If the
+authentication succeeds, InfoIMAGE will reply the financial institution with a
+session key; otherwise, the financial institution will receive an error
+message. Given a session key, the financial institution will embed the session
+key to the link to InfoIMAGE eStatements services and send the modified link
+to the user's browser, which should automatically redirect the user to the
+link. InfoIMAGE will validate the session key and grant the access to the
+user. If necessary, session information can be posted back to the financial
+institution's servers, allowing its home banking application to keep the
+user's session alive while the user is accessing InfoIMAGE eStatements
+services. The following diagram illustrates the entire single sign-on process
+in the normal situation.
+
+  
+
+  
+ _Figure 1: single sign-on process_  
+In order to provide additional security on the transmission of the
+authentication data, InfoIMAGE will enable IP filtering such that only
+requests coming from the financial institution will be processed on
+InfoIMAGE's servers.
+
+##  
+
+## Technical Details
+
+There are three steps that need to be taken to connect to the InfoIMAGE
+eStatement Site successfully:
+
+  1. Generate Authentication Data: generate a Hash Data Value to be passed to InfoIMAGE during the ssoKeyGen step.
+  2. SSO Key Generation: request SSO access from InfoIMAGE by passing the generated Hash Data Value. On a successful attempt, an SSO Key will be returned.
+  3. SSO Exchange: log the user into InfoIMAGE eStatements Site using the SSO Key returned by InfoIMAGE.
+
+## Step 1 - Generate Authentication Data
+
+The authentication data is an ASCII string that is sent from the financial
+institution to InfoIMAGE. It consists of a Hash Value, a User Identification
+Number, and the Current Date concatenated in the listed order. Depending on
+the hashing algorithm that is chosen, the length of authentication data is
+different. We recommend using SHA-256 as this is the most secure encryption
+method.
+
+ **Table 1** : Specification of authentication data encrypted by MD5.
+
+ **Field**
+
+|
+
+ **Start Position**
+
+|
+
+ **End Position**
+
+|
+
+ **Length**  
+  
+---|---|---|---  
+  
+Hash Value
+
+|
+
+1
+
+|
+
+32
+
+|
+
+32  
+  
+User Identification Number
+
+|
+
+33
+
+|
+
+52
+
+|
+
+20  
+  
+Current Date
+
+|
+
+53
+
+|
+
+60
+
+|
+
+8  
+  
+  
+ **Table 2** : Specification of authentication data encrypted by SHA-1.
+
+ **Field**
+
+|
+
+ **Start Position**
+
+|
+
+ **End Position**
+
+|
+
+ **Length**  
+  
+---|---|---|---  
+  
+Hash Value
+
+|
+
+1
+
+|
+
+40
+
+|
+
+40  
+  
+User Identification Number
+
+|
+
+41
+
+|
+
+60
+
+|
+
+20  
+  
+Current Date
+
+|
+
+61
+
+|
+
+68
+
+|
+
+8  
+  
+  
+ **Table 3** : Specification of authentication data encrypted by SHA-256.
+
+ **Field**
+
+|
+
+ **Start Position**
+
+|
+
+ **End Position**
+
+|
+
+ **Length**  
+  
+---|---|---|---  
+  
+Hash Value
+
+|
+
+1
+
+|
+
+64
+
+|
+
+64  
+  
+User Identification Number
+
+|
+
+65
+
+|
+
+84
+
+|
+
+20  
+  
+Current Date
+
+|
+
+85
+
+|
+
+92
+
+|
+
+8  
+  
+## Hash Value
+
+The hash value is a hexadecimal string representing the result of a hashing
+algorithm. The supported algorithms are MD5, SHA-1, and SHA-256.
+
+Specifications:
+
+  * Input is a 36-character-long ASCII string consisting of the Client Code ID, the User Identification Number, the SSO Password, and the Current Date.
+  * All characters must be lowercase.
+  * Length must be:
+    * 32 characters long if using MD5
+    * 40 characters long if using SHA-1
+    * 64 characters long if using SHA-256
+
+ **Table 4: Specifications of the Input for the Hash Value**
+
+ **Field**
+
+|
+
+ **Start Position**
+
+|
+
+ **End Position**
+
+|
+
+ **Length**
+
+|
+
+ **Comment**  
+  
+---|---|---|---|---  
+  
+Client Code ID
+
+|
+
+1
+
+|
+
+8
+
+|
+
+8
+
+|
+
+This is a 8-digit number assigned by InfoIMAGE during installation.  
+  
+User Identification Number
+
+|
+
+9
+
+|
+
+28
+
+|
+
+20
+
+|
+
+If the account number is not 20 characters long, prepend with leading zeros.  
+  
+SSO Password
+
+|
+
+29
+
+|
+
+38
+
+|
+
+10
+
+|
+
+This is a secret message that is only known by the financial institution and
+InfoIMAGE. All requests will use the same password.  
+  
+Current Date
+
+|
+
+39
+
+|
+
+46
+
+|
+
+8
+
+|
+
+The date that the request is sent to InfoIMAGE's server. The format is in
+MMDDYYYY.  
+  
+##  
+
+## User Identification Number
+
+This is the ID used by InfoIMAGE to identify a unique user. This value should
+be the same value that is used to generate the Hash Value. The value can be
+the Member Number, SSN/TIN, or a CIF value defined by the FI or third-party
+vendor.
+
+Specifications:
+
+  * Length must be 20. If the number is not 20 characters long, prepend with leading zeroes.
+
+## Current Date
+
+The date that the request is sent to InfoIMAGE.
+
+Specifications:
+
+  * The format is MMDDYYYY.
+
+## Step 2 - SSO Key Generation
+
+The vendor sends an HTTP POST request to the InfoIMAGE ssoKeyGen endpoint to
+request for an SSO Key that will be used to sign the user into InfoIMAGE
+eStatement Site.
+
+  
+
+URL Specification: https://[baseURL]/ssoKeyGen[/method name if there are
+multiple methods]
+
+Example: <https://demopilot.infoimageinc.com/ssoKeyGen>
+
+  
+
+**Table 5: SSO Request Specification**
+
+ **HTTP Parameter**
+
+|
+
+ **Max Length**
+
+|  **Required**|
+
+ **Comment**  
+  
+---|---|---|---  
+  
+data
+
+|
+
+N/A
+
+| Y|
+
+The length is variable based on the encryption method used. Refer to **Table
+1** , **2** , and **3**.  
+  
+email
+
+|
+
+100
+
+| Y|
+
+This email address is used to enroll the user into eStatements if they are not
+already enrolled. Subsequent passes of this value will update the email
+address stored in the InfoIMAGE database.  
+  
+selected_acct#
+
+|
+
+100
+
+| Y|
+
+The account number to display. The account number should not have any leading
+zeros. # index starts at 0.  
+  
+selected_acct_type#
+
+|
+
+2
+
+| Y if the client is set up with InfoIMAGE to have account types.|
+
+2 digit alpha numeric application code identifier for the selected account. #
+index starts at 0  
+  
+selected_acct_desc#
+
+|
+
+64
+
+| N|
+
+The account's nickname to be display on the site in place of the account
+number. # index starts at 0.  
+  
+user_type
+
+|
+
+1
+
+| Y|
+
+Indicate if the type of user is a personal or business.  
+P = Personal  
+N = Business  
+  
+stmt_type| N/A| N| This value is used to determine the eStatement sub-tab that
+the landing home page will default to. The values are maintained by InfoIMAGE,
+and will be provided to the client.  
+  
+login_id
+
+|
+
+100
+
+| Y if the user is a subuser.|
+
+Login ID of the subuser. DO NOT pass a login_id for the primary user.  
+  
+user_name
+
+|
+
+100
+
+| N|
+
+User's full name.  
+  
+  
+
+Example for Step 2
+
+<form action="https://demopilot.infoimageinc.com/ssoKeyGen/namisso"
+method="POST">  
+<input type="hidden" name="data"
+value="9d095e1198d6b76956ebf5a0ae32c5d40000000000000012345709202021" />  
+<input type="hidden" name="email" value="john.doe@email.com"/>  
+<input type="hidden" name="selected_acct0" value="12345"/>  
+<input type="hidden" name="selected_acct_type0" value="NA" />  
+<input type="hidden" name="selected_acct_desc0" value="John Doe's Account 1"
+/>  
+<input type="hidden" name="selected_acct1" value="22222" />  
+<input type="hidden" name="selected_acct_type1" value="NA"/>  
+<input type="hidden" name="selected_acct_desc1"value="Account 2" />  
+<input type="hidden" name="selected_acct2" value="33333" />  
+<input type="hidden" name="selected_acct_type2" value="NA" />  
+<input type="hidden" name="selected_acct_desc2" value="Account 3" />  
+<input type="hidden" name="selected_acct3" value="44444" />  
+<input type="hidden" name="selected_acct_type3" value="NA" />  
+<input type="hidden" name="selected_acct_desc3" value="Account 4" />  
+<input type="hidden" name="user_type" value="P" />  
+<input type="hidden" name="user_name" value="John Doe" />  
+<input type="hidden" name="stmt_type" value="default" />  
+</form>
+
+  
+
+## Return Value
+
+On success:
+
+key=[key string]
+
+  
+
+On failure:
+
+602: Invalid Request
+
+## Step 3 - SSO Exchange
+
+The SSO Key is passed to InfoIMAGE via HTTP POST at the ssoExchange endpoint
+to sign the user into eStatements.
+
+  
+
+URL Specification: https://[baseURL]/ssoExchange
+
+  
+
+ **Table 5: SSO Exchange Specification**
+
+ **HTTP Parameter**
+
+|
+
+ **Max Length**
+
+|
+
+ **Comment**  
+  
+---|---|---  
+  
+key
+
+|
+
+N/A
+
+|
+
+The SSO Key returned from the ssoKeyGen endpoint.  
+  
+  
+
+Example for Step 3
+
+<form action="https://demopilot.infoimageinc.com/ssoExchange" method="POST">  
+<input type="hidden" name="key" value="upK63pSysMDZZZbiK"/>  
+</form>
+
+  
+
+### Certification Requirements
+
+If the Home Banking application requires additional
+certification/authentication methods, such as P3P, client-side certificate
+authentication, and any other authentication methods, InfoIMAGE must be
+informed of these requirement(s) before SSO setup begins.
+
+

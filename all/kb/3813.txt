@@ -1,0 +1,228 @@
+import paramiko
+from paramiko_expect import SSHClientInteraction
+username = 'anwarH',
+password = '<pass>',
+host = '10.5.20.38'
+dsi_expect = r"\[anwarH@dsi ~\]\$\s+"
+rht_expect = r".*\[anwarH@rht ~\]\$\s+.*"
+data_files = {
+    'surums1': [
+        'SURU_COS_stmt_072421_071650.txt',
+        'SURU_COS_stmt_072721_070758.txt',
+        'SURU_COS_stmt_072821_070721.txt',
+        'SURU_COS_stmt_072921_070651.txt',
+        'SURU_COS_stmt_073021_070757.txt',
+        'SURU_COS_stmt_073121_070840.txt',
+        'SURU_COS_stmt_080121_070634.txt',
+        'SURU_COS_stmt_080321_070614.txt',
+    ],
+    'surums2': [
+        'SURU_HIC_stmt_072421_071814.txt',
+        'SURU_HIC_stmt_072621_070818.txt',
+        'SURU_HIC_stmt_072721_070932.txt',
+        'SURU_HIC_stmt_072821_070852.txt',
+        'SURU_HIC_stmt_072921_070832.txt',
+        'SURU_HIC_stmt_073021_070931.txt',
+        'SURU_HIC_stmt_073121_071004.txt',
+        'SURU_HIC_stmt_080121_070756.txt',
+        'SURU_HIC_stmt_080321_070741.txt',
+    ],
+    'surums3': [
+        'SURU_TandM_stmt_072821_071618.txt',
+    ],
+    'surums4': [
+        'SURU_Upfront_stmt_072421_072051.txt',
+        'SURU_Upfront_stmt_072521_071047.txt',
+        'SURU_Upfront_stmt_072721_071212.txt',
+        'SURU_Upfront_stmt_072821_071151.txt',
+        'SURU_Upfront_stmt_073021_071227.txt',
+        'SURU_Upfront_stmt_073121_071257.txt',
+        'SURU_Upfront_stmt_080321_071030.txt'
+    ],
+    'surums5': [
+        [
+            'SURU_electricity_stmt_Monthly_080221_080200.txt',
+            'SURU_electricity_stmt_Daily_080221_042128.txt'
+        ],
+        [
+            'SURU_electricity_stmt_Monthly_072321_031021.txt',
+            'SURU_electricity_stmt_Daily_072321_030513.txt'
+        ],
+        [
+            'SURU_electricity_stmt_Monthly_072721_042352.txt',
+            'SURU_electricity_stmt_Daily_072721_045538.txt'
+        ],
+        [
+            'SURU_electricity_stmt_Monthly_072821_020234.txt',
+            'SURU_electricity_stmt_Daily_072821_023821.txt'
+        ],
+        [
+            'SURU_electricity_stmt_Monthly_072921_051940.txt',
+            'SURU_electricity_stmt_Daily_072921_051029.txt'
+        ],
+        [
+            'SURU_electricity_stmt_Monthly_073021_035710.txt',
+            'SURU_electricity_stmt_Daily_073021_025253.txt'
+        ],
+        [
+            'SURU_electricity_stmt_Monthly_072621_035900.txt',
+            'SURU_electricity_stmt_Daily_072621_025445.txt'
+        ],
+    ],
+}
+dt_job_ids = {
+    'surums1': {
+        '01': '138959-C01.01-V22628',
+        '02': '138959-C02.01-V22628',
+        '03': '138959-C03.01-V22628',
+        '23': '138959-C23.01-V22628',
+        '24': '138959-C24.01-V22628',
+        '25': '138959-C25.01-V22628',
+        '26': '138959-C26.01-V22628',
+        '27': '138959-C27.01-V22628',
+        '28': '138959-C28.01-V22628',
+        '29': '138959-C29.01-V22628',
+        '30': '138959-C30.01-V22628',
+        '31': '138959-C31.01-V22628'
+    },
+    'surums2': {
+        '01': '138961-C01.01-V22630',
+        '02': '138961-C02.01-V22630',
+        '03': '138961-C03.01-V22630',
+        '23': '138961-C23.01-V22630',
+        '24': '138961-C24.01-V22630',
+        '25': '138961-C25.01-V22630',
+        '26': '138961-C26.01-V22630',
+        '27': '138961-C27.01-V22630',
+        '28': '138961-C28.01-V22630',
+        '29': '138961-C29.01-V22630',
+        '30': '138961-C30.01-V22630',
+        '31': '138961-C31.01-V22630',
+    },
+    'surums3': {
+        '01': '138962-C01.01-V22631',
+        '02': '138962-C02.01-V22631',
+        '03': '138962-C03.01-V22631',
+        '23': '138962-C23.01-V22631',
+        '24': '138962-C24.01-V22631',
+        '25': '138962-C25.01-V22631',
+        '26': '138962-C26.01-V22631',
+        '27': '138962-C27.01-V22631',
+        '28': '138962-C28.01-V22631',
+        '29': '138962-C29.01-V22631',
+        '30': '138962-C30.01-V22631',
+        '31': '138962-C31.01-V22631',
+    },
+    'surums4': {
+        '01': '138963-C01.01-V22632',
+        '02': '138963-C02.01-V22632',
+        '03': '138963-C03.01-V22632',
+        '23': '138963-C23.01-V22632',
+        '24': '138963-C24.01-V22632',
+        '25': '138963-C25.01-V22632',
+        '26': '138963-C26.01-V22632',
+        '27': '138963-C27.01-V22632',
+        '28': '138963-C28.01-V22632',
+        '29': '138963-C29.01-V22632',
+        '30': '138963-C30.01-V22632',
+        '31': '138963-C31.01-V22632',
+    },
+    'surums5': {
+        '01': '138960-C01.01-V22629',
+        '02': '138960-C02.01-V22629',
+        '03': '138960-C03.01-V22629',
+        '23': '138960-C23.01-V22629',
+        '24': '138960-C24.01-V22629',
+        '25': '138960-C25.01-V22629',
+        '26': '138960-C26.01-V22629',
+        '27': '138960-C27.01-V22629',
+        '28': '138960-C28.01-V22629',
+        '29': '138960-C29.01-V22629',
+        '30': '138960-C30.01-V22629',
+        '31': '138960-C31.01-V22629',
+    },
+}
+# Create a client interaction class which will interact with the host
+client = paramiko.SSHClient()
+client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+client.connect(host, username='anwarH', password='1m1r0nm4n')
+ftp = client.open_sftp()
+interact = SSHClientInteraction(client, timeout=999999, display=True)
+def modify_insert(prefix, data_file):
+    if isinstance(data_file, list):
+        data_file = data_file[0]
+    if prefix in ['surums1', 'surums2', 'surums3', 'surums4']:
+        proc_date = data_file.split('_')[3]
+    else:
+        proc_date = data_file.split('_')[4]
+    cycle_date = proc_date[2:4]
+    job_cycle_date = proc_date[:2] + '-' + proc_date[2:4]
+    print('\n\n', 'DT-JOB-ID:', dt_job_ids[prefix][cycle_date], '\n\n')
+    insert_file = ftp.open(f'/home/dsi/insert/{prefix}.ins').readlines()
+    new_file_lines = []
+    for line in insert_file:
+        line = line.strip()
+        if line.startswith('DT_JOB_ID: '):
+            new_file_lines.append(f'DT_JOB_ID: {dt_job_ids[prefix][cycle_date]}')
+        elif line.startswith('JOB_CYC: '):
+            new_file_lines.append(f'JOB_CYC: {dt_job_ids[prefix][cycle_date].split("-")[0]} {job_cycle_date}')
+        else:
+            new_file_lines.append(line)
+    print('Updating insert file...')
+    with ftp.open(f'/home/dsi/insert/{prefix}.ins', 'w') as insert_file:
+        [insert_file.write(line + '\n') for line in new_file_lines]
+        insert_file.flush()
+def remove_checksum(prefix):
+    print('Removing checksum...')
+    try:
+        ftp.remove(f'/home/dsi/keep/cksum_log/{prefix}_cksum.log')
+    except FileNotFoundError:
+        pass
+def copy_data_file(datafile):
+    print('Coping datafile...')
+    if isinstance(datafile, list):
+        for data in datafile:
+            client.exec_command(f'cp /z/anwarH/suru/newdata4/{data} /t/ftpbu/surubu/stmt/')
+    else:
+        client.exec_command(f'cp /z/anwarH/suru/newdata4/{datafile} /t/ftpbu/surubu/stmt/')
+def run_processing_script(prefix):
+    interact.expect(dsi_expect, strip_ansi=True)
+    interact.send('xsh rht')
+    interact.expect(rht_expect, strip_ansi=True)
+    interact.send(f'sh -x "$home_master"/master/{prefix}_process.sh 1 bypass n,s,f,e')
+    prompts = [
+        rht_expect,
+        r"anwarH@preprocessing03's password:\s+",
+        r'.*Is this a re-run (Y/N)?.*',
+        '.*Please enter re-run code:.*',
+        '.*Do you want to print reports (y/n)?.*'
+    ]
+    while True:
+        interact.expect(prompts, strip_ansi=True)
+        if interact.last_match == rht_expect:
+            interact.send('exit')
+            return
+        elif interact.last_match == prompts[1]:
+            interact.send('\n')
+        elif interact.last_match == prompts[2]:
+            interact.send('Y')
+        elif interact.last_match == prompts[3]:
+            interact.send('11')
+        elif interact.last_match == prompts[4]:
+            interact.send('n')
+def run_data_files():
+    for prefix in data_files:
+        print('Prefix: ', prefix)
+        for data_file in data_files[prefix]:
+            print('#' * 70, '\n', 'Data File: ', data_file, '\n', '#' * 70)
+            # if input('Continue? (Y/n): ').lower() not in ['y', '']:
+            #     exit(0)
+            modify_insert(prefix, data_file)
+            remove_checksum(prefix)
+            copy_data_file(data_file)
+            run_processing_script(prefix)
+    interact.expect(dsi_expect)
+    interact.send('exit')
+    interact.expect()
+if __name__ == '__main__':
+    run_data_files()

@@ -1,0 +1,137 @@
+title: Infotrac Local setup
+body: This guide will help to check out code from gitlab and run Infotrac
+application locally.
+
+  
+
+Git lab location for infotrac master branch is below.
+
+<https://gitlab.infoimageinc.com/PD/infotrac.git>
+
+  
+
+Right now infotrac is deployed as a docker application. We need to download
+docker desktop for windows or mac. We need certain folders and files to run
+docker application. We can copy those folders and files from one of the
+environments (Example : ca-infotrac-pi-01 machine). We can paste folders
+anywhere and run docker application. In this setup, I am creating files and
+folder in same folder where infotrac code is checked out. For example, I have
+checked out code into infotrac-master folder and I am creating folders for git
+inside this folder.
+
+  
+
+  
+
+First folder to create is docker-configs. This folder has one file named as
+docker-compose.yml. Contents of this file are below. We are taking base image
+from harbor. This image has all necessary softwares needed to rin infotrac
+application. This will run application on port 8380 for http and 9380 for
+https.
+
+ _ **docker-compose.yml:**_
+
+version: '3.0'  
+services:  
+  infotrac:  
+    container_name: infotrac  
+    image: "[harbor.infoimageinc.com/base-images/tomcat:9.0.45-serverjre-8-ubuntu-v6](http://harbor.infoimageinc.com/base-images/tomcat:9.0.45-serverjre-8-ubuntu-v6)"  
+    ports:  
+      \- "8380:8380"  
+      \- "9380:9380"  
+      \- "8389:8389"  
+      \- "8385:8385"  
+    restart: always  
+    volumes:  
+      \- "./../[webapps:/usr/local/tomcat/webapps](http://webapps/usr/local/tomcat/webapps)"  
+      \- "./../tomcat-configs/bin/setenv.[sh:/usr/local/tomcat/bin/setenv.sh](http://sh/usr/local/tomcat/bin/setenv.sh)"  
+      \- "./../tomcat-configs/conf/web.[xml:/usr/local/tomcat/conf/web.xml](http://xml/usr/local/tomcat/conf/web.xml)"  
+      \- "./../tomcat-configs/conf/server.[xml:/usr/local/tomcat/conf/server.xml](http://xml/usr/local/tomcat/conf/server.xml)"  
+      \- "./../tomcat-configs/conf/context.[xml:/usr/local/tomcat/conf/context.xml](http://xml/usr/local/tomcat/conf/context.xml)"  
+      \- "./../tomcat-configs/conf/catalina.[properties:/usr/local/tomcat/conf/catalina.properties](http://properties/usr/local/tomcat/conf/catalina.properties)"  
+      \- "./../tomcat-configs/[ext-lib-infotrac:/usr/local/tomcat/ext-lib-infotrac](http://ext-lib-infotrac/usr/local/tomcat/ext-lib-infotrac)"  
+      \- "./../app-configs/[infotrac:/usr/local/tomcat/app-configs/infotrac](http://infotrac/usr/local/tomcat/app-configs/infotrac)"  
+      \- "./../[logs:/usr/local/tomcat/logs](http://logs/usr/local/tomcat/logs)"  
+      \- "./../[certs:/usr/local/tomcat/certs](http://certs/usr/local/tomcat/certs)"  
+      \- "/mnt/INPUT/[I3:/mnt/INPUT/I3](http://I3/mnt/INPUT/I3)"  
+    logging:  
+      driver: "json-file"  
+      options:  
+        max-size: "200m"  
+        max-file: "5"
+
+  
+
+Based on docker file mentioned above, we need to mount few locations like
+setenv,web.xml,server.xml,context.xml,catalina.properties. We can copy these
+files from any environment as mentioned above. Based on configured values we
+can point make our local environment point to any environment. Ext-lib-
+infotrac folder contains all external jars needed for infotrac application.
+app-configs will contain file related to database configuration. Logs will
+store in logs folder. We have to copy war file on to webapps folder or change
+configuration to target because when we run maven install command a new war
+will be generated in target folder. If we mount webapps to webapps locally, we
+have to copy new war from target to webapps folder.
+
+  
+
+Note: We need to work with network team to request port access for database to
+make our application run locally.
+
+  
+
+Commands to run docker are below:
+
+We have to navigate to folder where docker-compose.yml file is present and run
+"docker-compose up -d" to start application. "docker -compose" down to stop.
+We can run "docker ps" command to make sure our docker image is running.
+
+  
+
+Url to hit infotrac application locally is below. By default docker is not
+running on local host and for my machine docker ip is 192.168.99.100. We can
+google on how to search docker IP of our machine.
+
+<http://192.168.99.100:8380/login.do>
+
+  
+
+  
+
+ _ **Remote debugging Infotrac application locally:**_
+
+Remote debugging allows us to put some break points in eclipse when we run
+docker application locally. This feature will help us to debug any issues
+locally. Running infotrac locally is very slow and using remote debugging will
+be even slow but it will be handy to debug.
+
+We have to add below configuration on setenv.sh(tomcat-configs\bin\\) to
+enable remote debugging.
+
+export JAVA_OPTS="-Xdebug
+-Xrunjdwp:transport=dt_socket,address=8380,server=y,suspend=y"
+
+  
+
+In eclipse we have run debug configuration and new remote java application. We
+have to give host and port information and source code should be infotrac
+master that we have checked out.
+
+  
+
+We have to start docker application and it will wait for debugging to start
+from eclipse before it starts up completely.
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+

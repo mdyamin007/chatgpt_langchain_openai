@@ -1,0 +1,73 @@
+title: Update the code to send an email to DP if the input pdf file is blank or empty. Research why the daily log file is not being backed up and research if possible to not add the empty/blank pdf files to the cksum log
+description: Update the code to send an email to DP if the input pdf file is blank or empty. Research why the daily log file is not being backed up and research if possible to not add the empty/blank pdf files to the cksum log
+
+
+author: nischala.manjunath
+comment: [~Igor.Khosid] - Updated the code to send an email and to move to download if the pdf data file sent is blank.
+Parallel id - 20220404173131
+Thanks!
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220404173131
+   Currently in parallel: Yes
+   User: nischalaM
+   Description: MSBK IS-933
+   Date Submitted: 2022-04-04 17:31:38
+   Date Last Updated: 2022-04-04 17:31:38
+   Files:
+      1) msbkdn1_daily_process.sh
+      2) MSBKDN001.dfa
+
+
+author: igor.khosid
+comment: 1. Parallel report
+Parallel ID: 20220404173131
+Currently in parallel: Yes
+User: nischalaM
+Description: MSBK IS-933
+Date Submitted: 2022-04-04 17:31:38
+Date Last Updated: 2022-04-04 17:31:38
+Files:
+1) msbkdn1_daily_process.sh
+2) MSBKDN001.dfa
+
+2. Difference prod vs test
+<	T:\2022\03_Change Request\Igor K\IS-933 MSBK\DEV\MSBKDN001.dfa	2022-03-04 12:51:30
+>	T:\2022\03_Change Request\Igor K\IS-933 MSBK\DEV\MSBKDN001 test.dfa	2022-04-05 07:32:54
+Changes: 1
+...	...	364c365,368
+365	>	  IF PAGE_CNT<1 OR IMG_CNT<1 ;
+366	>	  THEN ;
+367	>	    MESSAGE -1,4,'Page Count/Image count is 0. Data file maybe empty';
+368	>	  ENDIF ;
+<	T:\2022\03_Change Request\Igor K\IS-933 MSBK\DEV\msbkdn1_daily_process.sh	2022-03-08 10:20:20
+>	T:\2022\03_Change Request\Igor K\IS-933 MSBK\DEV\msbkdn1_daily_process test.sh	2022-04-05 07:26:21
+Changes: 2
+...	...	124c125,132
+125	>	        totalLines=`wc -l < ${redDir}/${subprefix}.csv`
+126	>	        if [ $totalPage = "1" -a $totalLines = "1" ]; then
+127	>	        	echoLog "File is empty."
+128	>	                filelist=${filelist}"${pdf_file} "
+129	>	                new_pgp=$pgpbase"-EMPTY"
+130	>	                mv $pgpfile $download$new_pgp
+131	>	                msg_subj="MSBK DN1 Data file is empty"
+132	>	        	msg_body="MSBK DN1 data file - ${pgpbase} is empty. Moving to download."
+...	...	125c134,137
+134	>	       		python ${home_master}/master/daily_mail.py 2 "${msg_subj}" "${msg_body}" "${mailint}"
+135	>	                exit 1
+136	>	        fi
+137	>	        exit 1
+
+
+author: nischala.manjunath
+comment: [~Igor.Khosid] - Here's a screenshot of the email that will be sent to dp 
+ !screenshot-1.png|thumbnail! 
+
+
+author: igor.khosid
+comment: QA - completed
+
+
+author: nischala.manjunath
+comment: [~kericapote] - Code is released.

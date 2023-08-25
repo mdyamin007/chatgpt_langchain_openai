@@ -1,0 +1,308 @@
+title: Backup and Restore Procedure for gitlab, harbor, jenkins and mongodb
+body: # Backup and Backup Restore Procedure of multiple services like GitLab,
+Harbor, Jenkins, and MongoDB
+
+This backup taking system is designed around GitLab's CI/CD Pipeline. Prior
+knowledge about any CI/CD system is required to add or modify existing backup
+jobs.
+
+Manual Triggering/Creation of backup doesn't require any prior knowledge,
+everything can be done using GitLab's UI.
+
+# Contents-
+
+Schedule Backups
+
+  *     * Backup Parameters
+  * Disabling a Scheduled Backup
+  * Manual Backup Creation
+  * Single Service Backup Creation
+  * Internal Workings
+    * Backup Generation Server
+    * Backup Location
+    * Backup Cleanup
+  * Creating a new Backup Job for new Service
+
+Backup Restore
+
+  *   * Harbor
+  * Jenkins
+  * MongoDB
+
+  
+
+#  **Schedule Backups**
+
+There are already four services configured for auto backup creation. They are:
+
+  1. GitLab
+  2. Jenkins
+  3. Harbor
+  4. Mongo Production Database
+
+  
+
+## Pipeline schedules
+
+Pipelines are normally run based on certain conditions being met. For example,
+when a branch is pushed to repository. Pipeline schedules can be used to also
+run pipelines at specific intervals. For example:
+
+  
+
+  * Every month on the 22nd for a certain branch.
+  * Once every day.
+
+In addition to using the GitLab UI, pipeline schedules can be maintained using
+the Pipeline schedules API.
+
+To schedule a pipeline for project:
+
+  1. Navigate to the project's CI / CD > Schedules page.
+  2. Click the New schedule button.
+  3. Fill in the Schedule a new pipeline form.
+  4. Click the Save pipeline schedule button.
+
+Once you are done creating the pipelie you can see the list of the created
+pipelines.
+
+## Backup Parameters
+
+This system requires two variables to work.
+
+  1. `SERVICE_NAME`: name of the service, that will be used throughout the program to ensure only steps necessary to run that backup job.
+  2. `BACKUP_MODE`: used to separate different backup frequency. Each backup mode will create a separate folder inside the service name folder.
+
+These two parameters are mandatory. If you want to schedule a new backup, you
+have to specify them using variable like below:
+
+## Manual Backup Creation
+
+ **Steps:**
+
+  1. Go to [CI/CD -> Schedules](https://gitlab.infoimageinc.com/devops/backup-scheduler/-/pipeline_schedules "https://gitlab.infoimageinc.com/devops/backup-scheduler/-/pipeline_schedules")
+
+  2. If you click on any of the scheduled backup's play button, it will immediately start taking the backup of that service.
+
+  3. You should be able to see a new backup gets created.
+
+  4. Clicking on that Pipeline number will take you to that pipeline and you will be able see the actual log of that jobs in Realtime.
+
+## Single Service Backup Creation
+
+To run the backup pipeline for a single service just for once got to CI/CD ->
+Pipeline. Then click on the New Pipeline button and you will be taken to the
+following page.
+
+Here all you need to do is specify the target branch and define the variables
+also known as Backup Parameters. If everything is good then just click on the
+Run Pipeline button.
+
+## Disabling a Scheduled Backup
+
+Click on the edit icon of any of the jobs, and  **deselect**  the 'Active'
+tick box. And then save the pipeline schedule.
+
+## Internal Workings
+
+### Backup Generation Server
+
+Backup generation jobs are triggered using GitLab's CI/CD ecosystem. To run a
+CI Job, you need to configure a 'job runner' where it will run your specified
+steps to take the backups.
+
+More about GitLab Runner can be found here: <https://docs.gitlab.com/runner/>
+
+For our purpose, We used `Ca-Utils-pr-01` server.
+
+ **Note:**  You have to ensure that the service you are trying to take a
+backup of, can be accessed from this server.
+
+### Backup Location
+
+Backups can be found inside `Ca-Utils-pr-01` server in the path `/backup`
+
+This `backup` folder is mounted from `ca-isilon01-nfs`
+
+`[ca-isilon01-nfs:/backup](http://ca-isilon01-nfs/backup) /backup nfs timeo =
+14, intr, nolock, rw`
+
+Each Backup service will have its own subfolder.
+
+### Backup Cleanup
+
+With every backup job, a cleanup job gets performed to remove previous backups
+and maintain a fixed number of backups for those jobs.
+
+The following table shows the number of previous backups that should be kept
+for each service-
+
+  
+| GitLab| Harbor| Jenkins| MongoDb  
+---|---|---|---|---  
+Daily| 10| n/a| n/a| 3  
+Monthly| 4| 2| 4| n/a  
+Weekly| 1| n/a| n/a| 4  
+  
+### Creating new Backup Job for new Service
+
+ **Steps:**
+
+  1. Add a new job inside the `.gitlab-ci.yml` file
+
+Following is the example of one service
+
+    
+    
+      
+    
+    
+    
+    generate:gitlab:
+      stage: generate
+      only:
+        variables:
+          - $SERVICE_NAME == "gitlab"
+      script:
+        - sudo sh -c 'rm /usr/local/docker/gitlab-server/gitlab-data/data/backups/* || true'
+        - sudo sh -c 'cd /usr/local/docker/gitlab-server && docker-compose exec -T gitlab gitlab-backup create'
+        - sudo sh -c 'rm -rf /tmp/gitlab_backup/; mkdir -m777 /tmp/gitlab_backup/'
+        - sudo sh -c 'mv /usr/local/docker/gitlab-server/gitlab-data/data/backups/* /tmp/gitlab_backup/'
+        - sudo sh -c 'chmod -R 777 /tmp/gitlab_backup/*'
+    
+        - export BACKUP_DIR=$BACKUP_DIR/gitlab/$BACKUP_MODE/$BACKUP_DATE
+        - \[ -d $BACKUP_DIR \] || mkdir -m777 -p $BACKUP_DIR
+        - cp /tmp/gitlab_backup/* $BACKUP_DIR
+      tags:
+        - generate
+    
+    
+      
+    
+
+  1. You need to change `job name`, `$SERVICE_NAME`, `script` sections.
+
+  2. `script` is the list of `bash` commands you want to execute in order to create the backup and copy it to the proper backup location.
+
+  3. After that you also need to schedule this jobs using GitLab's Schedule option. Just create new schedule with proper variables specified in the Backup Parameters section.
+
+  4. You also need to specify the cleanup cycle of that job by updating the `cleanup_backups.py`'s Backup Cleanup section.
+
+#  **Backup Restore**
+
+We may need to restore any of our service's backup anytime. Let's discuss
+about the restore backup process of each services that we were talking about
+on the Schedule Backups section.
+
+## GitLab
+
+For Gitlab three types of backups are kept. All the backup files can be found
+in `/backup/gitlab/` location on `ca-utils-pr-01` server.
+
+ **Steps to restore:**
+
+  1. Copy the particular tar file that we want to restore and paste it to the following location- `/usr/local/docker/gitlab-server/gitlab-data/data/backups/`
+
+  2. Then run the following command to restore gitlab from it's backup file.
+
+    
+    
+      
+    
+    
+    
+    docker-compose exec gitlab gitlab-backup restore
+    
+    
+      
+    
+
+## Harbor
+
+In the case of Harbor, there are two tar files that we need to work with. The
+files can be found on `/backup/harbor/`.
+
+ **Steps to restore:**
+
+  1. Copy `harbor-data.tar` to `/data` and `harbor-server.tar` to `/usr/local/docker/harbor-server/` location.
+
+  2. Go to `/usr/local/docker/harbor-server/` and shutdown the docker container for harbor-server using the following command.
+
+    
+    
+      
+    
+    
+    
+    cd /usr/local/docker/harbor-server/
+    sudo docker compose-down
+    
+    
+      
+    
+
+  1. Then unzip the files on their particular location.
+
+  2. Up the docker container by the following command.
+
+    
+    
+      
+    
+    
+    
+    sudo docker compose-up -d
+    
+    
+      
+    
+
+## Jenkins
+
+For Jenkins, we have to do the similar to Harbor restore. Two files are
+generated for the Jenkins backup which can be found on `/backup/jenkins/`.
+
+ **Steps to restore:**
+
+  1. Copy `jenkins-data.tar` to `/var/data/jenkins` and `jenkins-server.tar` to `/usr/local/tomcat/tomcat-jenkins` location.
+
+  2. Shutdown the tomcat for jenkins-server using the following command.
+
+    
+    
+    sudo systemctl stop tomcat-jenkins.service
+    
+    
+      
+    
+
+  1. Then unzip the files on their particular location.
+
+  2. Up the docker container by the following command.
+
+    
+    
+      
+    
+    
+    
+    sudo systemctl start tomcat-jenkins.service
+    
+    
+      
+    
+
+## MongoDB
+
+There is a script written on python named mongodb_backup. To restore the
+MongoProd backup all you need to do is run [the
+script](https://gitlab.infoimageinc.com/ajannat/backup-and-restore-
+procedure/-/blob/master/mongodb_backup.py
+"https://gitlab.infoimageinc.com/ajannat/backup-and-restore-
+procedure/-/blob/master/mongodb_backup.py").
+
+  
+
+  
+
+

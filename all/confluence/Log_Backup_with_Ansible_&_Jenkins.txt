@@ -1,0 +1,149 @@
+title: Log Backup with Ansible & Jenkins
+body:   
+
+  
+
+In order to backup logs you have to do 2 main steps
+
+  1. Specify where to find logs
+  2. Run Jenkins pipeline in order to backup logs
+
+# 1\. Specify where to find logs
+
+  
+
+IMPORTANT  
+---  
+  
+If you're deploying your application with Jenkins pipeline already. You don't
+have to do any log configuration manually. Jenkins will do this step
+automatically out of the box.  So, you can skip this step. All you've to care
+about is the next STEP:  Run Jenkins pipeline in order to backup logs  
+  
+  
+
+The Ansible script (which is responsible to backup logs) finds a log
+configuration txt file. The file should be located at Server you need to
+backup. **   **(Jenkins is running on this machine)
+
+The path for the file is below, (Note: if the file is not there, create it
+with 755 file permission.)
+
+ /usr/local/log-conf/directories.txt  
+  
+---  
+  
+  
+
+ **directories.txt** file is a simple text file where we store the
+
+<service name>:log-path:60:180  
+---  
+  
+there are 4 sections separated by colon
+
+  
+
+ **< service name>** is the app name which logs will be backup,
+
+log-path: is self explanatory, the root paths of the logs.
+
+60: is the duration in days (in this case 60 days logs will be kept, if the
+age is more than 60 days, then that logs will be cleaned)
+
+180: is the duration in days for backup server (in this case 180 days logs
+will be kept in backup server, if the age is more than that days, then that
+logs will be cleaned)
+
+### Example:
+
+If we want to backup logs for **infoservice** running on **ca-infotrac-
+dv-01.** The log conf directory and text will be as follow
+
+  
+
+Path:
+
+ca-infotrac-pr-01:  /usr/local/log-conf/directories.txt  
+  
+---  
+  
+  
+
+directories.txt
+
+infoservice:/usr/local/tomcat/infoservice/logs/:60:180  
+  
+---  
+  
+  
+
+That's it. The configuration is done
+
+  
+
+# 2\. Run Jenkins pipeline in order to backup logs
+
+  
+
+In order to create a Jenkins pipeline you have to create a pipeline project.
+Then specify the Git-lab repository with proper Git-lab credential, as this is
+a private Git repository
+
+Just like the below diagram
+
+  
+
+  
+
+Save the pipeline. Then trigger your first build.
+
+  
+
+ **IMPORTANT: No Surprise, the first build will get FAILED. Don't worry We're
+good so far**  
+---  
+  
+  
+
+Now when if you go to **Configure** the pipeline, you'll get to see some
+parameters are expected by Jenkins. There are four parameters:
+
+  1. server                                                                (Server Name where you want to backup logs: ie. ca-infotrac-dv-01.infoimageinc.com)
+  2. serverCredentialId                                        (ssh credential Id: checkout this page <https://confluence.infoimageinc.com/x/dQGSBQ> if you want the details on how to do it)
+  3. serverLogDeleteDuration                           (Server logs delete duration in Days: ie 60 means it will delete logs from ca-infotrac-dv-01.infoimageinc.com which is older than 2 months)
+  4. backupServerLogDeleteDuration            (Backup server log delete duration in Days: 180 means it will delete 6 months log from the backup location. i.e. from ca-utils-pr-01:/backup/log)
+
+You've to specify the correct value for the above parameters.
+
+  
+
+Save the configuration and you're good to trigger a new build. It should now
+backup the logs and delete the old logs.
+
+  
+
+But, you may want to run this pipeline often. Maybe once in a week or maybe in
+everyday. In that case you've to specify another configuration that is
+Periodic build
+
+  
+
+  
+
+This support cron expression. This example shows, this pipeline will get
+triggered everyday at 10 PM.
+
+  
+
+So, now your logs will get backup automatically through Jenkins
+
+  
+
+  
+
+  
+
+  
+
+

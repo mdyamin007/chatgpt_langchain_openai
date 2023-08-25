@@ -1,0 +1,566 @@
+title: UTCU Hypercube Migration Analysis
+body: ##
+
+## Frontend:
+
+##  _ **ROOT**_
+
+  
+
+  
+|  
+  
+---|---  
+ **Client Name**|
+
+Utah Community Credit Union  
+  
+ **Schema**
+
+|  CU  
+ **Account Types**|  NA  
+  
+ **Statement Types**
+
+|
+
+  * default
+  * visa
+  * analysis
+  * mortgage
+  * mortgage_2
+  * enotice
+  * etax
+
+  
+ **Archival Period**|
+
+  * default: 36 months
+  * visa: 36 months
+  * analysis: 36 months
+  * mortgage: 36 months
+  * mortgage_2: 36 months
+  * enotice: 36 months
+  * etax: 36 months
+
+  
+ **Batch Download**|  N/A  
+ **Delivery Preference**|
+
+  * Paper=B
+  * Digital=E
+
+  
+ **Enrollment**|
+
+  * Based on SSO date
+  * 3 steps
+
+  
+ **Login Method**|
+
+  * Q2SSO (SingleSignOn7Servlet)
+
+  
+ **Menu**|
+
+  * Monthly
+  * Visa
+  * Account Analysis
+  * Mortgage
+  * DMI Statements
+  * Notices
+  * Tax
+  * Disclosure
+  * Profile
+  * Exit
+
+  
+ **Notification Preference**|  Email  
+ **Paperless Configuration**|  bySelective  
+ **Welcome Email**|  N/A  
+ **User account relation**|  one-to-one  
+  
+### Login methods:
+
+  *  **Q2SSO (SingleSignOn7Servlet)**
+    * method: MD5, createLogin: true, updateEmail: true, updateMobileNumber: false, loginId: ACCT_NUM, createCif: true, acctNumLoginFinderCif: true
+    * remove leading zeores form loginId (loginId from sso request)
+    * Search for user by cifNum. (acctNum == cifNum)
+    * If user exists, then search for user profile by userId and orgId. 
+    * If user profile is null i.e. doesn't exists, create a new one.
+      * remove al leading zeroes from loginId. 
+      * Create a new fin_account. acctNum, acctName=acctNum, status="A"
+      * Search for paperless by acctId and stmtType="default". If not found, create a new one and insert.
+      * Create user. Set firstName=acctNum.
+      * Create user_fin_account with usr_id, acctId, ufa_status="active" and reg_date=current date.
+      * Insert cifNum=acctNum, usr_id, primary_user_flag="P" into usr_mapping table.
+    * Create a new user profile. loginName=!usrid.
+    * If email address is passed via sso request (not null and not empty string), update email.
+      * Search for ufas by usr_id (ufa order by acctNum asc). If ufa found, take the first ufa.
+      * search for npList by usr_id, acct_id, stmtType="default" (order by np_id asc).
+      * If npList not found
+        * Iterate through email list which were passed via sso.  For each email of sso, create a new np with usrId, acctId and stmtType="default". set emailStatus="Y", emailAttachmentStatus="N", smsStatus="N", emailAttachmentPassword=null, modifiedBy=userId, acctId=acctId, smsCarrierId=null, smsNumber=null, modifiedTime=currentDate, email_address=first email address of sso.
+        * Insert the np for the usrId, acctId. Multiple emails should be inserted for same usrId and acctId. (NOT found multiple row in prod db)  
+      * If npList found, update email of the npLists with the first email provided in sso.
+
+###  _SSO:_
+
+###  _Enrollment:_  
+
+Go through enrollment based on the following condition:
+
+  * If no SSO date in usr_session. (Q2_hblogin.jsp)
+
+ _ **Enrollment steps:**_
+
+  * Step 1 of 3: Pdf view
+    *   * Step 2 of 3: Online E-Statement Enrollment.
+    * Need to agree to use electronic statements and paperless. Can't proceed if not checked the agreement checkbox.
+    *  
+  * Step 3 of 3: Statement Delivery Method
+    * Selective paperless. Can select Digital(E) and/or paper(B) separately for Regular Statements and Visa. 
+    * Notification Preference: Email. (Uneditable)
+    * Email Address: Uneditable field. Displays the first email address provided in sso file.
+    * Regular Statements: Monthly, Quarterly, Mortgate, Tax and Notice
+    * 
+
+  
+
+###  _Homepage:_
+
+  * Disclosure: UTCU reconciliation disclosure pdf.
+  * 
+
+  
+
+###  _Monthly:_  
+
+  * 
+
+###  _Visa:_  
+
+  * Shows visa disclosure in disclosure
+  * 
+
+###  _Account Analysis:_  
+
+  * 
+
+###  _Mortgage:_  
+
+  * 
+
+###  _DMI Statements:_  
+
+  * 
+
+###  _Notices:_  
+
+  * 
+
+###  _Tax:_  
+
+  * 
+
+###  _Disclosure:_
+
+  * 4 types of Disclosures.
+
+  1.     1. Enrollment Disclosure
+    2. Monthly Statement Disclosure
+    3. Visa Statement Disclosure
+    4. Mortgage Statement Disclosure
+  2. Account Reconciliation: disclosure pdf
+
+  *   * 
+
+###  _Profile:_
+
+  * Digital: E, Paper: B
+  * Can't update delivery preference and email address.
+  * 
+
+ _ **Exit**_
+
+##  _ **Backend**_
+
+###  _ **Processes:**_
+
+  *  **doc**
+    * EnoticeRegistrar:
+      * createAcount=false, hasSelectivePaperless=false, nullDsoTime=true, acctNumAsLogin=false, autoRegister=true
+      * Doesn't create account. Update account_owner_name. Doesn't update name if "MEMBER","CUSTOMER", "USER" is passed via index file.
+      * Insert parentPath, fileName, fileType, presentmentType into arch_file table. 
+      * Insert enotice
+      * insert p_job_id, enotice_id into p_job_enotice
+    * AfpRegistrar:
+      * autoRegister=true, enableAccountType=false, enableAccountLookup=false, nullDsoTime=true, acctNumAsLoginId=false
+      * Search for account by orgId,acctNum. If account not found, create fa, usr, usr_session(!usrId as loginname and dso=null ), usr_mapping(acctNum=cifNum), ufa(status="active").
+      * If account found, update actName (except "MEMBER","CUSTOMER") and usr first name.
+      * Insert paperless if not found (acctId, stmtType).
+      * If paperless for stmtType="default". (If not found)
+      * registerMessages()
+  *  **check_index**
+    *  **Handler: DefaultCheckImageHandler2**
+      * Must have exact 6 columns. Every field is mandatory
+      * acctNum | checkAcctNum | number | check_date | amount | checkType
+      * faType="DD", parentPath="N/A", fileName="N/A", backParentPath="N/A", backFileName="N/A"
+    *  **CheckImageRegistrar** : 
+      * registeredUserOnly=false, multipleStmtType=false, hasFinAcctType=false
+      * search for acct_id from fin_acct by acctNum and orgId.
+      * Insert entry into account_check_image. (No data found in account_check_image table in prod db )
+  *  **etax**
+    *  **Handler: ETaxData3**
+      * Must to have 8 columns
+      * global.FItype=null, so acctName="Member"
+      * Format: **acctNum** | **type** | **afpFileName** | date | suffix | appType | ssn | zipFileName
+    *  **Registrar: ETaxREgistrar3**
+      * etax.createAccount=false, global.enableAccountType=false, appTypeRequired=false, global.autoRegister=true
+      * Fin account doesn't get created if not found on db.
+      * Search for paperless by acctId and stmtType. If not found, create a new one with acctId, modifiedDate=current date, new status="B",old status="N", stmtType.
+      * Insert parentPath, afpFileName, fileType into arch_file table.
+      * Insert acctId, type, arch_file_id, ssn and time into etax table.
+      * Insert p_job_id and etax_id into p_job_etax table.
+      * Database changes: fin_account, paperless, arch_file, etax, p_job_etax
+  *  **revert_to_paper**
+    *  **Handler: DefaultRevertToPaperData**
+      *  **acctNum**
+    *  **Registrar : DefaultRevertToPaperRegistrar**
+      * Search for acctNum from fin_account. If not found, return "acctNum does not exist".
+      * If found, 
+        * Search stmt_type from paperless2 by acctId. Update p_latest_status of the records to B. 
+  *  **ecl**
+    *  **Handler: DefaultEclHandler4**
+      * ecl.combination=AcctNum,Email
+    * ProcessingJob:
+      * ufa= Search for ufa by acctNum. If not found, throw exception.
+      * notifyList= Search for np using usrId, acctId and stmtType. If npList not found, 
+        * notifyPref= create a new np with ufa usrId, ufa acctId and stmtType. set email address from ecl file.
+      * If multiple np found i.e. npList>1, throw exception. Didn't found this exception in production pui. 
+      * Update email address from ecl file.
+
+###  _Reports:_
+
+  * Customized enrollment report:
+    * Displays acctNum and acctStatus.
+  * Paperless report
+  * Bounceback report
+
+  
+
+  
+
+##  _Analysis Summary(ROOT)_
+
+Scope| Feature| UTCU| Hypercube| Note  
+---|---|---|---|---  
+  
+ **Enrollment(SSO)**
+
+|  User enrollment|
+
+The user goes through enrollment if SSO is null in usr_session table.
+
+|  48 complete Supported  49 incomplete Not Supported |  
+  
+Enrollment Step 1| Pdf view|  50 complete Supported  51 incomplete Not
+Supported |  
+  
+Enrollment Step 2|
+
+  * Online E-Statement Enrollment.
+
+|  52 complete Supported  53 incomplete Not Supported |  
+  
+  
+  * User must agree checkbox to accept paperless to proceed.
+
+|  180 incomplete Supported  181 incomplete Not Supported 182 complete
+Supported alternatively |
+
+  * Doesn't support checkbox. The button verbiage will be changed to "Accept" or "Agree"
+
+  
+Enrollment Step 3  
+  
+  
+|
+
+Statement Delivery Method:
+
+  * Selective paperless. Delivery Preference can be chosen separately for Regular Statements and Visa Statements.
+  * Regular Statements include Monthly, Mortgage, Tax and Notices.
+
+|  161 incomplete Supported  162 incomplete Not Supported 183 complete
+Supported alternatively |
+
+  * In hypercube we can support this either of the following two:
+    1. Mortgage, Tax and Notices will be following "Monthly". Only "Monthly" will be interactable and the following types will be shown.
+    2. Only "Monthly" will be shown and the following types will be hidden (with the flag: "hideFollowingDeliveryType").
+
+  
+  
+  * Shows verbiage () at the bottom "Regular Statements include Monthly, Mortgage, Tax and Notices."
+
+|  
+|  
+  
+  
+  * Notification Preference: email
+
+|  184 complete Supported  185 incomplete Not Supported 186 incomplete
+Supported alternatively |  
+  
+  
+  * Email Address: Uneditable.
+
+|  187 complete Supported  188 incomplete Not Supported 189 incomplete
+Supported alternatively |  
+  
+**Homepage**|  Display popup for Paper (B)|
+
+  *   * Can view statements only if "I want digital" is selected.
+  * Redirect to profile page if "I want paper" is selected.
+
+|  61 incomplete Supported  25 incomplete Not Supported 163 complete Supported
+alternatively |
+
+  * User is asked to go to profile page to change delivery preference to see statements.
+
+  
+ **Profile**|  
+|
+
+  * Delivery Preference: User can't change dp. 
+  * Notification Options: Email
+  * Email Address: Uneditable
+
+|  71 complete Supported  72 incomplete Not Supported |  
+  
+**Monthly**|  
+  
+|  Date, Status, Monthly Inserts|  81 complete Supported  82 incomplete Not
+Supported
+
+  
+
+|
+
+  
+  
+  
+**Visa**  
+  
+ **Account Analysis**  
+  
+ **Mortgage**  
+  
+ **DMI Statements**  
+  
+ **Notices**
+
+|  
+|  Date, Status, Description|  83 complete Supported  84 incomplete Not
+Supported |  
+  
+  
+**Tax**
+
+|  
+|  Tax Date, Description|  164 complete Supported  165 incomplete Not
+Supported |  
+  
+**Disclosure**|  
+  
+|
+
+  * 4 type of disclosures.
+    * Enrollment Disclosure
+    * Monthly Statement Disclosure
+    * Visa Statement Disclosure
+    * Mortgage Statement Disclosure
+
+|  87 complete Supported  88 incomplete Not Supported |  
+  
+  
+  * Shows disclosure section and Account reconciliation.
+
+|  190 incomplete Supported  191 complete Not Supported |
+
+  * We show disclosure section on homepage.
+
+  
+ **Exit**|  
+|  
+|  166 complete Supported  167 incomplete Not Supported |  
+  
+  
+  
+
+## _Analysis Summary(MSM):_
+
+  * UTCU uses Infotrac
+
+##  _Analysis Summary(PUI)_
+
+Process
+
+|
+
+Prefix
+
+|
+
+Backend Business
+
+|
+
+Mismatch with hypercube business
+
+|
+
+Changes needed
+
+|
+
+Note  
+  
+---|---|---|---|---|---  
+ **doc**|
+
+  * ms1=default
+  * ms2=default
+  * mv1=visa
+  * mv2=visa
+  * pa1=default
+  * pa2=visa
+  * aa1=analysis
+  * dla=enotice
+  * etax.desc=E-Tax
+  * ml1=mortgage
+  * ml2=mortgage_2
+
+  
+
+  * createAcount=false
+  * hasSelectivePaperless=false
+  * nullDsoTime=true
+  * acctNumAsLogin=false
+  * autoRegister=true
+
+|
+
+  * EnoticeRegistrar
+    * Doesn't create account. Update account_owner_name. Doesn't update name if "MEMBER","CUSTOMER", "USER" is passed via index file.
+    * Insert parentPath, fileName, fileType, presentmentType into arch_file table. 
+    * Insert enotice
+    * insert p_job_id, enotice_id into p_job_enotice
+  * AfpRegistrar
+    * Search for account by orgId,acctNum. If account not found, create fa, usr, usr_session(!usrId as loginname and dso=null ), usr_mapping(acctNum=cifNum), ufa(status="active").
+    * If account found, update actName (except "MEMBER","CUSTOMER") and usr first name.
+    * Insert paperless if not found (acctId, stmtType).
+    * If paperless for stmtType="default". (If not found)
+    * registerMessages
+
+|  
+|  
+|  
+  
+ **check_index**|
+
+  
+
+|
+
+  *  **Handler: DefaultCheckImageHandler2**
+  *  **CheckImageRegistrar** :   
+
+    * search for acct_id from fin_acct by acctNum and orgId.
+    * Insert entry into account_check_image. 
+
+|  
+|  
+|
+
+  * No data found in account_check_image table in prod db.
+  * Checked on prod p-ui. Haven't processed this last 90 days. 
+
+  
+**etax**|
+
+  * etax.createAccount=false
+  * global.enableAccountType=false
+  * appTypeRequired=false
+
+|
+
+  *  **Handler: ETaxData3**
+  *  **Registrar: ETaxREgistrar3**
+    * Fin account doesn't get created if not found on db.
+    * Search for paperless by acctId and stmtType. If not found, create a new one with acctId, modifiedDate=current date, new status="B",old status="N", stmtType.
+    * Insert parentPath, afpFileName, fileType into arch_file table.
+    * Insert acctId, type, arch_file_id, ssn and time into etax table.
+    * Insert p_job_id and etax_id into p_job_etax table.
+
+|  
+|  
+|  
+  
+ **revert_to_paper**|
+
+  
+
+|
+
+  *  **Handler: DefaultRevertToPaperData**
+  *  **Registrar : DefaultRevertToPaperRegistrar**
+    * Search stmt_type from paperless2 by acctId. Update p_latest_status of the records to B. 
+
+|  
+|  
+|  
+  
+ **ecl**|
+
+  * ecl.combination=AcctNum,Email
+  * email.storage=notifyPref
+
+|
+
+  *  **Handler: DefaultEclHandler4**
+  * Processing Job:
+    * ufa= Search for ufa by acctNum. If not found, throw exception.
+    * notifyList= Search for np using usrId, acctId and stmtType. If npList not found, 
+      * notifyPref= create a new np with ufa usrId, ufa acctId and stmtType. set email address from ecl file.
+    * Update email address from ecl file.
+
+|  
+|  
+|
+
+  
+  
+  
+ **Reports**|  
+|
+
+  * Customized enrollment report:
+    * Displays acctNum and acctStatus.
+  * Paperless report
+    * Account Number | Paperless Status
+  * Bounceback report
+    * paperless_status.update=false
+    * unenroll_user=true
+
+|  
+|  
+|
+
+  *  **Customized Enrollment Report:  **No closed account found on prod db. Will client still need this report?
+
+  
+  
+  
+
+

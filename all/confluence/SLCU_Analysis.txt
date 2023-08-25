@@ -1,0 +1,478 @@
+title: SLCU Analysis
+body:   
+
+**Document Status**|
+
+YellowDRAFT  
+  
+---|---  
+Document Owner|  
+  
+#  **SELCO Community Credit Union**
+
+##  **ROOT**
+
+### At a Glance
+
+ **Login Method**|  SSO7, No DSO  
+---|---  
+ **Enrollment Step**|  N/A  
+ **Welcome Email**|  N/A  
+ **Menu**|  Statements  
+ **Account Types**|
+
+N/A  
+  
+ **Statement Types**|  Default, Escrow, Visa_Plat, Visa_Mbs, Visa_Gold,
+Visa_Duet, Enotice, Etax  
+ **Archival Period**|
+
+All: 24, Etax: 36  
+  
+ **Paperless Configuration**|  Non-Selective  
+ **On DP Change**|
+
+Can't change DP. No Enrollment  
+  
+ **Delivery Preference**|
+
+Paperless - E , Paper - B, New - N  
+  
+ **Notification Preference**|  Email only (Uses CONTACT_INFO table)  
+ **NP Link Type**|  byUSR (Uses CONTACT_INFO table)  
+ **Batch Download  **| N/A  
+ **Schema**|  DEFAULT  
+ **User-Account Relation**|
+
+One to One  
+  
+### Database
+
+ **USR_SESSION** : Account number as _sess_login_id._ DSO is null.  
+ **USR_MAPPING** : No data.  
+ **NOTIFICATION_PREFERENCE** : No data. Uses CONTACT_INFO table.
+
+### Login Method
+
+SSO7
+
+### SSO (SSO7)
+
+  * Only account number is needed for successful SSO, email is not mandatory.
+  * Does not update email.
+  * Account number will be zero-padded at the front if length is less than 10 digits. 
+  * Will create login if user is new.  
+
+### DSO
+
+N/A
+
+### Leading Zero Account
+
+  * No leading zero trimming while SSO. 
+  * If account number is less than 10 digits long, it will be zero-padded at the front to make it 10 digits long. 
+  * Database stores the account number with leading zero.
+  * In ROOT site, account numbers are shown by trimming leading zeros.
+
+### Welcome Email
+
+N/A
+
+### Enrollment
+
+N/A
+
+### Statement Types & Archival Period
+
+Eight types of statements are:
+
+  * ESTMT_DOC: default, escrow, visa_gold, visa_plat, visa_duet, visa_mbs ==> 24
+  * ENOTICE: enotice ==> 24
+  * ETAX: etax ==> 36
+
+### Delivery Preference
+
+  * Paper = B, Paperless = E, New = N
+  * Can't change delivery preference from ROOT/MSM site. 
+  * Delivery preference can only be changed by Paperless process. 
+
+### Notification Preference
+
+  * Only Email is supported. No SMS support. 
+  * Uses CONTACT_INFO table. No data in NOTIFICATION_PREFERENCE table.
+
+### Paperless Configuration
+
+Non-Selective. Can't assign different emails to different statement types.
+
+### NP Link Type
+
+byUSR. Uses CONTACT_INFO table.
+
+### Menu Tabs
+
+  *  **Statements**  
+    * eStatement, Visa Gold, Visa Platinum, MBS Visa, Visa Duet, Escrow, eNotices, Tax Form.
+    * Shows full account number without leading zero(s). 
+    * eStatement, Escrow and eNotices have inserts. 
+  *  **Billing Rights**  
+    * Shows billing rights for monthly and visa statements. 
+    * Two PDF links open in new tab: Account Statement Billing Rights, Visa Account Billing Rights. 
+  *  **Contact Us**  
+    * Opens in new tab. URL: <https://www.selco.org/contact-us> 
+  *  **Close**  
+    * Closes the tab. 
+
+> Image 1 - eStatements, Image 2 - eNotices
+
+> Image 3 - eTaxes, Image 4 - Billing Rights
+
+  
+
+### Concerns
+
+  1. Users can view their statements even though they are in paper (B). 
+  2. Account numbers are zero-padded while storing in the database. Hypercube has no such feature. 
+  3. Only database stores the account number with leading zero. ROOT and MSM site shows account number without leading zeroes. 
+
+  
+
+* * *
+
+##  **MSM**  
+
+### Statement Search
+
+  * Can search for an account's statements by account number only. 
+  * Can search with or without leading zero(s).
+  * Has statement transfer.
+
+> Image 5 - Statement Search(1), Image 6 - Statement Search(2)
+
+> Image 7 - Statement Search(3)
+
+### Admin Edit
+
+  * Can change admin user's password. 
+  * Can create/view/modify/remove other managers/users that have lower privileges.
+
+> Image 8 - Admin Edit(1), Image 9 - Image Edit(2)
+
+### Paperless Management
+
+  * Shows account number, enrollment date, current delivery mode and last change date. 
+  * Shows paperless history. 
+  * Can't change delivery mode (Paperless to paper or vice-versa).  
+
+> Image 9 - Paperless Management(1)
+
+> Image 9 - Paperless Management(2)
+
+> Image 9 - Paperless Management(3)
+
+### Banner Management
+
+  * Can find and preview a banner image based on the URL provided.
+  * Can change the banner in the root site.
+  * Can be added in Hypercube header-space (align-right). 
+
+> Image 10 - Banner Management
+
+### Email Proofing
+
+  * Email Notifications Templates: 
+    * Monthly
+    * Visa Gold
+    * Visa Platinum 
+    * Visa Mbs
+    * Visa Duet
+    * eNotice 
+    * eTax
+    * Escrow Analysis
+  * Notification Type: Email
+  * Keywords:
+    *  **MEMBER**
+    *  **ACCTNUMBER**
+    *  **NOTICE_LIST**
+    *  **TAX_LIST**
+  * Can upload email content from a file stored in the machine. 
+
+> Image 11 - Email Proofing
+
+### Paperless Report
+
+> Image 12 - Paperless Report
+
+### Login Activity Report
+
+> Image 13 - Login Activity Report
+
+### Upload Inserts
+
+  * Inserts available for eNotice, Monthly Statements and Escrow Analysis.
+  * PDF file only. File size limit 1.5 MB. 
+  * Closing date and Date range. 
+
+  
+
+> Image 14 - Upload Inserts
+
+  
+
+### Concerns
+
+  * Email proofing template shows the account number with first 6 digits masked.
+  * Login Activity Report shows account numbers with leading zeros. InfoTRAC supports leading zeros.
+
+* * *
+
+##  **PUI**
+
+###  _ **Backend Processes**_
+
+SLCU has 7 backend process:
+
+  1. Afp
+  2. Permission
+  3. Insert
+  4. Enotice
+  5. Paperless 
+  6. Etax
+  7. Doc
+
+#### Settings
+
+  * global.multipleStmtType=true
+  * global.multipleDocType=false
+  * global.enableAccountType=false
+  * global.autoRegister=true
+  * global.ssoKey=sl1!c2@u
+
+####  _ **Statement types and index file name**_
+
+  * global.ms1=default
+  * global.mv1=visa_gold
+  * global.mv2=visa_plat
+  * global.mv3=visa_mbs
+  * global.mv4=visa_duet
+  * global.ms4=default
+  * global.dla=enotice
+  * global.dna=enotice
+  * global.es1=escrow
+
+  
+
+###  _ **Afp Process**_
+
+Statements that will be processed by Afp:
+
+Flags:
+
+  * afp.compression=true
+
+#### Handler (data):  _ _AfpStatementData6__  
+
+ _ **fileName**  |  **acctNum**  |  **beginDate**  |  **closingDate**  |
+**numOfPages**  |  **acctName**  | ssn | appType | messageIds_
+
+  *  **Bold**  indicates mandatory field.
+  * Set sequence number from  **fileName**. Split File_Name with "_", if length == 5 take arr[3] as seqNum else take substring from arr[3] from 0 to starting of ".afp" or ".pdf". 
+
+#### Registrar:  _ _MessageEStmtRegistrar__
+
+  1. Always creates a new account if not found. 
+  2. As global.autoRegister is true, creates a new  ** _USR_**  and  ** _USR_SESSION_**  record. 
+  3. Set DSO date in  ** _USR_SESSION_**  table. 
+  4. Set account number as  _sess_login_id_  in  ** _USR_SESSION_**  table. 
+  5. Does not create user mapping. 
+  6. If a record is found in the  ** _FIN_ACCOUNT_**  table, update  _acct_owner_name,_  unless the name is "MEMBER". 
+  7. As multipleDocType is false, data will be blindly inserted while registering statements. 
+  8. Image_Message is true for " **default** ", " **visa** " and " **loan** ". Therefore registerMessage method will be called for those statement types. 
+  9. As multipleDocType is false, email notification will be turned on. So  ** _EmailNotification.register_**  method will be called.
+
+  
+
+ **getFinAccount()**
+
+  1. Search account with the  **account number** : 
+    1. If not found: 
+      1. Inserts into  _ **FIN_ACCOUNT**_  with the account number, name and set the status to NA,  **no acct_type**. 
+      2. Create  _ **USR**_ _ _ and  _ **USR_SESSION**_  with  **account number as sess_login_id, DSO date.**  
+      3. Insert into  _ **USR_FIN_ACCOUNT**_  with  **acct_id**  &  **usr_id**. 
+    2. If found: 
+      1. Updates the user's  **first_name**  to account name. 
+  2. Insert into paperless ( _ **PAPERLESS**_ )
+  3.  _FIN_ACCOUNT_ **:   type -> NA, Status -> A**.
+  4.  _USR_FIN_ACCOUNT:  _ **ufa_status  -> active.**
+  5.  _PAPERLESS **:**_    **p_new_status  -> B, p_old_status -> N. **
+  6.  _PAPERLESS2:  _ **p_latest_status  -> B, p_old_status -> N.**
+
+#### Mismatch with Hypercube Business:
+
+  1.  ** _sess_login_id_**   **= acctNum**  instead of  ** _!usr_id_**
+  2. Though  **autoRegister**  is set to true, no entry in  ** _USR_MAPPING  _**table. 
+  3.  **DSO**   **date**  not null.
+
+#### Changes Needed:
+
+  1.  **Registrar  -> **
+    1. Use  **HypercubeEStmtRegistrar**  as the registrar for Afp process instead of  **MessageEStmtRegistrar**. 
+    2. In  **HypercubeEStmtRegistrar.registerMessages()**  method, add a check to  **cast data1 to AfpStatmentData6.**  
+
+  
+
+###  _ **Paperless Process**_
+
+Statements that will be processed by Paperless:
+
+Flags:
+
+  * paperless.classPath=com.infoimage.processing.application.paperless.handler.SlcuPaperlessHandler
+
+#### Handler (data):  _ _SlcuPaperlessHandler__  
+
+ _ **acctNum**  |  **status**  | email_
+
+  1.  **Bold**  indicates mandatory field.
+  2. Only digits are allowed as account number.
+
+#### Registrar:  _ _EnrollmentRegistrar__
+
+  1. Sets DSO date in USR_SESSION table.
+
+ **enroll():**
+
+  1. Search for account by account number.
+  2. If account not found ->
+    1. Creates new account and user if account is not found ->  _FIN_ACCOUNT, USR, USR_SESSION._  
+    2. Creates user and account mapping ->  _USR_FIN_ACCOUNT._   
+  3. If account is found -> 
+    1. Search for user and account mapping by account number. 
+    2. If mapping not found -> 
+      1. Creates new user profile ->  _USR, USR_SESSION_
+    3. If mapping found ->
+      1. Get the user data by user id. 
+  4. Get the admin user profile by login id as "superuser". 
+  5. Search and insert/updates the email address by ci id.
+  6. If contact_info record not found -> 
+    1. Creates new contact_info record ->  _CONTACT_INFO_. 
+  7. If contact_info record found -> 
+    1. Get the old email address by ci id.
+    2. If (old email not found and new email is provided from index file) or (old email and new email does not match) -> 
+      1. Sets the email from index file as ci_email_addr ->  _CONTACT_INFO._
+      2. Creates a new audit log record ->  _AUDIT_LOG_SLCU_.  
+  8. Search for paperless record by account id and statement type as "default".
+    1. If paperless record not found -> 
+      1. Insert new papaerless record ->  _PAPERLESS  _(p_old_status -> "N", p_new_status -> "B"). 
+      2. If "E" was sent from index file ->  _PAPERLESS  _(p_old_status -> "B", p_new_status -> "E"). 
+    2.  If new status was "B" and index file sends "E" (opt-out) -> 
+      1. Update paperless reocrd ->  _PAPERLESS  _(p_old_status -> "B", p_new_status -> "E"). 
+    3. If new status was "E" and index file sends "B" (opt-in) -> 
+      1. Update paperless reocrd ->  _PAPERLESS  _(p_old_status -> "E", p_new_status -> "B"). 
+  9.  _FIN_ACCOUNT:   _acct_owner_name -> "New Member", last_modified_date -> today's date.
+  10.  _USR_SESSION:_  sess_login_id -> acccount number, dso -> today's date.
+  11.  _USR_FIN_ACCOUNT:  _ufa_status -> "pre_reg", ufa_registrationdate -> today's date.
+  12.  _USR:_  usr_firstName -> "New Member".
+  13.  _CONTACT_INFO:  _ci_email_addr -> email from index file or null.
+  14.  _AUDIT_LOG_SLCU:_  created_by -> admin id(1), target_user -> user id, old_value -> old email, new_value -> email from index file. 
+  15.  _PAPERLESS:  _p_old_status -> "N/B/E", p_new_status -> "B/E".
+
+  
+
+  1. Email is only updated through a paperless process. 
+  2. In process file email is not mandatory. So if null email is processed then, the existing email in the CONTACT_INFO table will be replaced by null value. 
+  3.  ** _sess_login_id_**   **= acctNum**  instead of  ** _!usr_id_**
+  4. No entry in  ** _USR_MAPPING  _**table.
+  5.  **DSO date**  not null.
+
+###  _ **Doc Process**_
+
+  1. No process file is found that will be processed by DOC.  
+  2.  ** _sess_login_id_**   **= acctNum**  instead of  ** _!usr_id_**
+  3.  **DSO**   **date**  not null.
+
+###  _ **Enotice Process**_
+
+  1. Will be done by Doc process. (Enotice process files has doc process data file format)
+  2. enotice.createAccount=false, no account will be created if not found.
+
+###  _ **Etax Process**_
+
+  1. No change needed. 
+  2. etax.createAccount=false, no account will be created if not found.
+
+### Permission Process
+
+  
+
+  
+
+Account created/updated by: AFP, DOC, PAPERLESS
+
+Account updated-only by: ENOTICE(doc), ETAX
+
+Contact info(email) created/updated by: PAPERLESS
+
+  
+
+### Accounting Report
+
+  
+
+### Paperless Report
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+

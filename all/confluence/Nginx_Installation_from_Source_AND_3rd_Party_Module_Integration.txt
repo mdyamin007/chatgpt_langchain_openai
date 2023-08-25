@@ -1,0 +1,469 @@
+title: Nginx Installation from Source AND 3rd Party Module Integration
+body:   
+
+The reader of this page should have fairly good knowledge over Nginx, Ubuntu
+Server 20.04 & Docker
+
+  
+
+Contents:
+
+  1. Installing Nginx from Source
+  2. ModSecurity Integration with Nginx Open Source
+  3. nginx_upstream_check_module for Active Healthcheck
+  4. nginx vts module for server traffic UI dashboard
+  5. docker image creation
+  6. systemd script for nginx
+
+  
+
+#  **1.   Nginx Installation from Source**
+
+  
+
+ _sudo apt-get update -y  _
+
+  
+ _sudo apt-get install -y apt-utils autoconf automake build-essential git
+libgd3 libgd-dev libcurl4-openssl-dev libgeoip-dev liblmdb-dev  libtool
+libxslt1.1 libxml2 libxslt1-dev libxml2-dev libyajl-dev pkgconf wget _
+
+  
+
+ _sudo groupadd nginx  
+sudo adduser --system --no-create-home --disabled-login --disabled-password
+--group nginx_
+
+###  **Installing NGINX Dependencies**
+
+  
+
+Prior to compiling NGINX Open Source from source, you need to install
+libraries for its dependencies:
+
+  * [PCRE](http://pcre.org/) - Supports regular expressions. Required by the NGINX [Core](https://nginx.org/en/docs/ngx_core_module.html) and [Rewrite](https://nginx.org/en/docs/http/ngx_http_rewrite_module.html) modules.
+    
+        $ wget <https://ftp.exim.org/pub/pcre/pcre-8.44.tar.gz>  
+    $ tar -zxf pcre-8.44.tar.gz
+    $ cd pcre-8.44
+    $ ./configure
+    $ make
+    $ sudo make install
+    
+
+  * [zlib](https://www.zlib.net/) - Supports header compression. Required by the NGINX [Gzip](https://nginx.org/en/docs/http/ngx_http_gzip_module.html) module.
+    
+        $ wget http://zlib.net/zlib-1.2.12.tar.gz
+    $ tar -zxf zlib-1.2.12.tar.gz   
+    $ cd zlib-1.2.12
+    $ ./configure
+    $ make
+    $ sudo make install
+    
+
+  * [OpenSSL](https://www.openssl.org/) - Supports the HTTPS protocol. Required by the NGINX [SSL](https://nginx.org/en/docs/http/ngx_http_ssl_module.html) module and others.
+    
+        $ wget <https://www.openssl.org/source/openssl-1.1.1o.tar.gz>  
+    $ tar -zxf [openssl-1.1.1o.tar.gz](https://www.openssl.org/source/openssl-1.1.1o.tar.gz)   
+    $ cd [openssl-1.1.1o](https://www.openssl.org/source/openssl-1.1.1o.tar.gz)   
+    $ ./config --prefix=/usr
+    $ make
+    $ sudo make install
+    
+
+  
+
+### Downloading the Sources
+
+Download the source files for both the stable and mainline versions from [
+**nginx.org**](https://www.nginx.org/en/download.html).
+
+To download and unpack the source for the latest  _mainline_  version, run:
+
+    
+    
+    $ wget <https://nginx.org/download/nginx-1.20.2.tar.gz>  
+    $ tar zxf [nginx-1.20.2.tar.gz](https://nginx.org/download/nginx-1.20.2.tar.gz)  
+    $ cd nginx-1.20.2
+    
+    
+
+# **2.  ** **Compiling and Installing ModSecurity for NGINX Open Source**
+
+  
+
+## 1 - Install Prerequisite Packages
+
+The first step is to install the packages required to complete the remaining
+steps in this tutorial. Run the following command, which is appropriate for a
+freshly installed Ubuntu/Debian system. The required packages might be
+different for RHEL/CentOS/Oracle Linux.
+
+    
+    
+    $ sudo **apt-get install -y apt-utils autoconf automake build-essential git libcurl4-openssl-dev libgeoip-dev liblmdb-dev libpcre++-dev libtool libxml2-dev libyajl-dev pkgconf wget zlib1g-dev**
+
+## 2 - Download and Compile the ModSecurity 3.0 Source Code
+
+With the required prerequisite packages installed, the next step is to compile
+ModSecurity as an NGINX dynamic module. In ModSecurity 3.0's new modular
+architecture, `libmodsecurity` is the core component which includes all rules
+and functionality. The second main component in the architecture is a
+connector that links `libmodsecurity` to the web server it is running with.
+There are separate connectors for NGINX, Apache HTTP Server, and IIS. We cover
+the NGINX connector in the next section.
+
+To compile `libmodsecurity`:
+
+  1. Clone the GitHub repository:
+    
+        $ **git clone --depth 1 -b v3/master --single-branch https://github.com/SpiderLabs/ModSecurity**
+
+  2. Change to the ModSecurity directory and compile the source code:
+    
+        $ cd ModSecurity
+    $ git submodule init
+    $ git submodule update
+    $ ./build.sh
+    $ ./configure
+    $ make
+    $ sudo make install
+    $ cd ..
+
+The compilation takes about 15 minutes, depending on the processing power of
+your system.
+
+ **Note:**  It's safe to ignore messages like the following during the build
+process. Even when they appear, the compilation completes and creates a
+working object.
+
+    
+    
+    fatal: No names found, cannot describe anything.
+
+## 3 - Download the NGINX Connector for ModSecurity and Compile It as a
+Dynamic Module
+
+Compile the ModSecurity connector for NGINX as a dynamic module for NGINX.
+
+    1. Clone the GitHub repository:
+        
+                $ **git clone --depth 1 https://github.com/SpiderLabs/ModSecurity-nginx.git**
+
+    2. Determine which version of NGINX is running on the host where the ModSecurity module will be loaded:
+        
+                $ **nginx -v**
+        nginx version: nginx/1.20.2
+
+    3. Download the source code corresponding to the installed version of NGINX (the complete sources are required even though only the dynamic module is being compiled):
+        
+                $ **wget http://nginx.org/download/nginx-1.13.1.tar.gz**
+        $ **tar zxvf nginx-1.13.1.tar.gz**
+
+  
+
+  
+
+  1. Compile the dynamic module and copy it to the standard directory for modules:
+    
+        $ **cd nginx-1.13.1**
+    $ **./configure --with-compat --add-dynamic-module=../ModSecurity-nginx**
+    $ **make modules**
+    $ **cp objs/ngx_http_modsecurity_module.so /etc/nginx/modules**
+    $ **cd ..**
+
+## 4 - Load the NGINX ModSecurity Connector Dynamic Module
+
+Add the following
+[`load_module`](https://nginx.org/en/docs/ngx_core_module.html#load_module)
+directive to the main (toplevel) context in  **/etc/nginx/nginx.conf**. It
+instructs NGINX to load the ModSecurity dynamic module when it processes the
+configuration:
+
+    
+    
+    load_module modules/ngx_http_modsecurity_module.so;
+
+## 5 - Configure, Enable, and Test ModSecurity
+
+The final step is to enable and test ModSecurity.
+
+  1. Set up the appropriate ModSecurity configuration file. Here we're using the recommended ModSecurity configuration provided by TrustWave Spiderlabs, the corporate sponsors of ModSecurity.
+    
+        $ **mkdir /etc/nginx/modsec**
+    $ **wget -P /etc/nginx/modsec/ https://raw.githubusercontent.com/SpiderLabs/ModSecurity/v3/master/modsecurity.conf-recommended**
+    $ **mv /etc/nginx/modsec/modsecurity.conf-recommended /etc/nginx/modsec/modsecurity.conf**
+
+  2. To guarantee that ModSecurity can find the  **unicode.mapping**  file (distributed in the toplevel  **ModSecurity**  directory of the GitHub repo), copy it to  **/etc/nginx/modsec**.
+    
+        $ **cp ModSecurity/unicode.mapping /etc/nginx/modsec**
+    
+
+  3. Change the `SecRuleEngine` directive in the configuration to change from the default "detection only" mode to actively dropping malicious traffic.
+    
+        $ **sed -i 's/SecRuleEngine DetectionOnly/SecRuleEngine On/' /etc/nginx/modsec/modsecurity.conf**
+
+  4. Configure one or more rules. For the purposes of this blog we're creating a single simple rule that drops a request in which the URL argument called `testparam` includes the string `test` in its value. Put the following text in  **/etc/nginx/modsec/main.conf** :
+    
+        # From https://github.com/SpiderLabs/ModSecurity/blob/master/
+    # modsecurity.conf-recommended
+    #
+    # Edit to set SecRuleEngine On
+    Include "/etc/nginx/modsec/modsecurity.conf"
+    
+    # Basic test rule
+    SecRule ARGS:testparam "@contains test" "id:1234,deny,status:403"
+
+In a production environment, you presumably would use rules that actually
+protect against malicious traffic, such as the free [OWASP core rule
+set](https://docs.nginx.com/nginx-waf/admin-guide/nginx-plus-modsecurity-waf-
+owasp-crs/).
+
+  5. Add the `modsecurity` and `modsecurity_rules_file` directives to the NGINX configuration to enable ModSecurity:
+    
+        server {
+        # ...
+        modsecurity on;
+        modsecurity_rules_file /etc/nginx/modsec/main.conf;
+    }
+    
+
+Issue the following `curl` command. The `403` status code confirms that the
+rule is working.
+
+    
+    
+    $ **curl localhost?testparam=test**
+    <html>
+    <head><title>403 Forbidden</title></head>
+    <body bgcolor="white">
+    <center><h1>403 Forbidden</h1></center>
+    <hr><center>nginx/1.13.1</center>
+    </body>
+    </html>  
+      
+      
+      
+    
+
+#  **3\. Nginx Upstream Check Module for  ** **Health check**
+
+  
+
+Download the latest version of the release tarball of this module from  
+github (<<http://github.com/yaoweibin/nginx_upstream_check_module>>)
+
+Grab the nginx source code from [nginx.org](http://nginx.org)
+(<<http://nginx.org/>>), for  
+example, the version 1.0.14 (see nginx compatibility), and then build  
+the source with this module:
+
+$ wget '<http://nginx.org/download/nginx-1.0.14.tar.gz>'  
+$ tar -xzvf nginx-1.0.14.tar.gz  
+$ cd nginx-1.0.14/  
+$ patch -p1 < /path/to/nginx_http_upstream_check_module/check.patch
+
+$ ./configure --add-module=/path/to/nginx_http_upstream_check_module
+
+$ make  
+$ make install
+
+## Synopsis
+
+  
+
+    
+    
+     http {
+    
+            upstream cluster {
+    
+                # simple round-robin
+                server 192.168.0.1:80;
+                server 192.168.0.2:80;
+    
+                check interval=5000 rise=1 fall=3 timeout=4000;
+    
+                #check interval=3000 rise=2 fall=5 timeout=1000 type=ssl_hello;
+    
+                #check interval=3000 rise=2 fall=5 timeout=1000 type=http;
+                #check_http_send "HEAD / HTTP/1.0\r\n\r\n";
+                #check_http_expect_alive http_2xx http_3xx;
+            }
+    
+            server {
+                listen 80;
+    
+                location / {
+                    proxy_pass http://cluster;
+                }
+    
+                location /status {
+                    check_status;
+    
+                    access_log   off;
+                    allow SOME.IP.ADD.RESS;
+                    deny all;
+               }
+            }
+    
+        }
+    
+
+# **4\. Nginx virtual host traffic status module  
+  
+**
+
+Clone the git repository.
+
+    
+    
+        shell> git clone git://github.com/vozlt/nginx-module-vts.git
+    
+
+Add the module to the build configuration by adding `--add-
+module=/path/to/nginx-module-vts`
+
+Build the nginx binary.
+
+Install the nginx binary.
+
+## Synopsis
+
+  
+
+    
+    
+    http {
+        vhost_traffic_status_zone;
+    
+        ...
+    
+        server {
+    
+            ...
+    
+            location /status {
+                vhost_traffic_status_display;
+                vhost_traffic_status_display_format html;
+            }
+        }
+    }
+
+  
+
+ **BUT, do we need to run all of these commands for installing nginx in new a
+new SERVER?**
+
+ **NO,  **we have a pre-built docker image, which has all the necessary steps
+configured already. So, we can run nginx with all of these 3rd party module in
+one **docker-compose up** command.
+
+### Configuring the Build Options
+
+Configure options are specified with the `./configure` the script that sets up
+various NGINX parameters, including paths to source and configuration files,
+compiler options, connection processing methods, and the list of modules. The
+script finishes by creating the `Makefile` required to compile the code and
+install NGINX Open Source.
+
+An example of options to the `configure` script (should be typed as a single
+line):
+
+ ~~$ ./configure --sbin-path=/usr/local/nginx/nginx --conf-
+path=/usr/local/nginx/nginx.conf --pid-path=/usr/local/nginx/nginx.pid --with-
+pcre=../pcre-8.44 --with-zlib=../zlib-1.2.11 --with-http_ssl_module --with-
+stream --with-mail=dynamic --add-module=/usr/build/nginx-rtmp-module --add-
+dynamic-module=/usr/build/3party_module~~  
+  
+  
+
+    
+    
+    ./configure \  
+        --prefix=/usr/share/nginx  \  
+        --user=nginx \  
+        --group=nginx \  
+        --sbin-path=/usr/sbin/nginx \  
+        --conf-path=/etc/nginx/nginx.conf  \  
+        --http-log-path=/var/log/nginx/access.log  \  
+        --error-log-path=/var/log/nginx/error.log  \  
+        --lock-path=/var/lock/nginx.lock  \  
+        --pid-path=/run/nginx.pid  \  
+        --modules-path=/usr/lib/nginx/modules  \  
+        --http-client-body-temp-path=/var/lib/nginx/body  \  
+        --http-fastcgi-temp-path=/var/lib/nginx/fastcgi  \  
+        --http-proxy-temp-path=/var/lib/nginx/proxy  \  
+        --http-scgi-temp-path=/var/lib/nginx/scgi  \  
+        --http-uwsgi-temp-path=/var/lib/nginx/uwsgi  \  
+        --with-debug  \  
+        --with-pcre-jit  \  
+        --with-http_ssl_module  \  
+        --with-http_stub_status_module  \  
+        --with-http_realip_module  \  
+        --with-http_auth_request_module  \  
+        --with-http_v2_module  \  
+        --with-http_dav_module  \  
+        --with-http_slice_module  \  
+        --with-threads  \  
+        --with-http_addition_module  \  
+        --with-http_geoip_module=dynamic  \  
+        --with-http_gunzip_module  \  
+        --with-http_gzip_static_module  \  
+        --with-http_image_filter_module=dynamic  \  
+        --with-http_sub_module  \  
+        --with-http_xslt_module=dynamic  \  
+        --with-stream=dynamic  \  
+        --with-stream_ssl_module  \  
+        --with-mail=dynamic  \  
+        --with-mail_ssl_module \  
+        --with-pcre=../pcre-8.44 \  
+        --with-zlib=../zlib-1.2.12 \  
+        --add-module=../nginx_upstream_check_module \  
+        --with-compat \  
+        --add-dynamic-module=../ModSecurity-nginx  
+      
+        
+    
+    
+    make  
+    make modules  
+    sudo make install  
+      
+      
+    # ModSecurity Configuration  
+    sudo cp ./objs/[ngx_http_modsecurity_module.so](http://ngx_http_modsecurity_module.so) /usr/lib/nginx/modules  
+    sudo mkdir /etc/nginx/modsec  
+    sudo wget -P /etc/nginx/modsec/ <https://raw.githubusercontent.com/SpiderLabs/ModSecurity/v3/master/modsecurity.conf-recommended>  
+    sudo mv /etc/nginx/modsec/modsecurity.conf-recommended /etc/nginx/modsec/modsecurity.conf  
+    sudo cp /tmp/ModSecurity/unicode.mapping /etc/nginx/modsec  
+    sudo sed -i 's/SecRuleEngine DetectionOnly/SecRuleEngine On/' /etc/nginx/modsec/modsecurity.conf
+
+#  **5\. NGiNX Docker Image**
+
+  
+
+You can find everything which are configured and ready to roll with an nginx
+docker image.
+
+Check this gitlab repository for details on Nginx Docker:
+**<https://gitlab.infoimageinc.com/docker-images/nginx-
+docker/-/tree/nginx-1.20.0-ubuntu-20.04>**
+
+  
+
+#  **6\. SystemD service for NGiNX docker**
+
+I know, not everyone like to go to the nginx location and run docker-compose
+comand to start/restart/reload nginx. So, we can have a nginx systemd script
+which will do that for us with systemctl command
+
+  
+
+  
+
+  
+
+  
+
+

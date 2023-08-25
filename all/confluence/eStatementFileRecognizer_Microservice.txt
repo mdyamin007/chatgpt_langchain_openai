@@ -1,0 +1,63 @@
+title: eStatementFileRecognizer Microservice
+body: # **Purpose**
+
+  * Receive requests to identify files from Scanner via a MessageQueue
+  * If file is recognized to be a file that needs to be processed on the PUI, perform necessary operations such as decryption and unzipping. Then make a call to the PUI to process the file.
+
+#  **Architecture**
+
+The microservice will be built on the Spring REST framework.
+
+The microservice will have a frontend Swagger for API documentation.
+
+The microservice will be contained in a Docker for deployment.
+
+## Connections
+
+  * FTPBU: Mount
+  * Input folder: Mount
+  * PUI server: HTTP
+
+##  **Core APIs**
+
+Name| Type| Parameter| Description  
+---|---|---|---  
+ **api/recognizeFileAndProcess**|  **POST**|  {"filepath":"..."}| Pass the
+filename obtained from the filepath through defined regex to determine if the
+file needs to be processed on the PUI. If it is, process the file on ftpbu  
+  
+  
+
+ **Auxilliary APIs**
+
+Name| Type| Parameter| Description  
+---|---|---|---  
+ **api/service/activeRequestCount**|  **GET**|  N/A| Return the number of
+active requests. Jenkins can use this to check when the count gets to zero
+before shutting down for deployment.  
+ **api/service/heartbeat**|  **GET**|  N/A|
+
+Heartbeat to monitor the service.
+
+Return: Status 200: OK when alive.  
+  
+ **api/service/pause**|  **PUT**|  N/A| Stop the microservice from sending out
+an active heartbeat. Jenkins can call this before a shutdown to stop requests
+from being sent to the microservice.  
+  
+  
+
+#  **Scenarios to Consider**
+
+#### Scenario 1
+
+Scanner sent 10 requests. eStatementFileRecognizer goes down.
+
+  * 5 requests are completely processed by the eStatementFileRecognizer.
+  * 3 requests got to the eStatementFileRecognizer, but recognizeAndProcess did not reach completion.
+  * 2 requests never got to the eStatementFileRecognizer.
+
+How do we ensure that when the eStatementFileRecognizer is brought up again
+that all 5 requests that didn't get processed completely are restarted?
+
+

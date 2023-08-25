@@ -1,0 +1,152 @@
+title: WASH - [28539][pvt] New Loan Notices
+description: None
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~dyuen] Can you put the 15 hrs for this? This is what I quoted in the ticket.
+
+
+author: JIRAUSER11102
+comment: [~Tin.Chak]Could you please attach the sow in this ticket?
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~jahid.hasan] I don't have the SOW because it's not attached to the ticket.
+
+[~dyuen] Please assist.
+
+
+author: bryanl
+comment: [~jahid.hasan] [~Tin.Chak]
+
+Please see attached SOW and let me know if I need to add anything, thanks!
+
+[http://sharepoint-svr/AS/Shared%20Documents/SOW%20Directory/WASH%20-%20Washington%20Trust%20Bank/SOW/WASH_DailyNotices_SOW.docx]
+
+
+author: JIRAUSER11102
+comment: To QA,
+
+*Issues to test:*
+ * Process sample file for WASH on PUI and check the database. If not already, you can process 'dla_20220523_1_20220717_0032_wash.txt' for testing.
+ * View Enotice statements on InfoTRAC stage.
+ * View Enotice statements on WASH stage prism root site. For some accounts, you may not find entry in usr_session table. For those accounts, you need to process an auth file.
+ * Check whether statements description matches its corresponding type code in doc_desc table. Statements type/letter code should be found in pui log for its corresponding line.
+ * Trigger Email notification to see whether email is sent to the allowed recipients.
+
+
+author: igor.khosid
+comment: [~Andrey.Kutsenko]
+Related to IS-1306
+
+
+author: JIRAUSER11104
+comment: [~jahid.hasan]FYI,the letter 068 - already QA is completed, but 059-067 - waiting for customer approval.
+
+
+author: sharmina.rahman
+comment: Hi Andrey,
+
+For email notification, we follow this process for testing,
+ 1. take a sample file (dla_20220523_1_20220717_0032_wash.txt)
+ 2. change data in sample file according to your test data. You can make new accounts or take accounts from existing data. 
+ 3. Change email for each account in database to your testing email address.
+ 5. process the file and email notification.
+
+We follow this process to check if everything is working properly or not and not to send email to our customers. I also remove the data from database after testing.
+
+Please note:
+
+**you have to change emails for each account you are processing otherwise our client will get emails for our tests so I suggest make a file with 10 accounts and check if its working.
+
+**add testing email addresses under "email.allowedEmail" flag inwash.conf file
+
+
+author: JIRAUSER11104
+comment: Hi,[~sharmina.rahman] thank you for the detailed instructions.
+
+However, I would like to clarify a little:
+ _{color:#0747a6}>>1. take a sample file (dla_20220523_1_20220717_0032_wash.txt){color}_
+ _{color:#0747a6}>>2. change data in sample file according to your test data. You can make new accounts or take accounts from existing data.{color}_
+ I took for example the file on ca-pui-st-01: /d/INPUT-DEV/I3/process-files/wash/dla_20220523_1_20220717_0032_wash.txt
+ Show by example what exactly I can change in this file.
+
+_{color:#0747a6}>>3. Change email for each account in database to your testing email address.{color}_
+ In which table on which scheme DB can I change the email for the accounts
+
+_{color:#0747a6}>>**add testing email addresses under "email.allowedEmail" flag in wash.conf file{color}_
+ I don't have the "email.allowedEmail" setting in /usr/local/processing-ui/conf/wash.conf
+
+[~jahid.hasan]FYI
+ **I only have +read-only files+, on this server +ca-pui-st-01+
+
+
+author: sharmina.rahman
+comment: Hi [~Andrey.Kutsenko]
+
+To answer your queries,
+ # Please look at the first line. There are details given for each column. you can change account number, account type (if you want), not other changes are necessary. For example, in row 2, you can change "1000087460" to "96835126", "D" to "S".1. Please look at the first line. There are details given for each column. you can change account number, account type (if you want), not other changes are necessary. For example, in row 2, you can change "1000087460" to "96835126", "D" to "S".***If you do not want to change any data you can also use these data for your process. changing data is not mandatory, its only for testing preference.
+ # Wash is running on "i3prod_bank" schema,You need few tables,
+ ** fin_account (to get account details)
+ ** usr_fin_account (to get usr details)
+ ** usr_Session( to check the user details)
+ ** usr_acct_type_mapping( to make sure testing account info are present in these table otherwise notification wont be sent)
+ ** notification_preference" to update email.
+
+[~jahid.hasan], Can you help him for allowed email and read-only file problem?
+
+
+author: JIRAUSER11102
+comment: Hi [~Andrey.Kutsenko],
+
+I have already sent you mail attaching sample file(dla_20220523_1_20220717_0032_wash.txt). Once you provide me the testing email addresses, I can add those in email.allowedEmail in stage wash.conf for you.
+
+Thank you.
+
+
+author: JIRAUSER11104
+comment: Hi[~jahid.hasan] please advise what tab I need to use for testing SSO:
+
+!image-2022-08-04-18-07-52-156.png!
+
+
+author: JIRAUSER11102
+comment: Hi [~Andrey.Kutsenko],
+
+You can use any of the three. But I would prefer net-teller.
+
+FYI add port number 9780 at the end of URL. Keep it like this :https://washstage.infoimageinc.com:9780/
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+
+*TEST-RESULT - {color:#00875a}PASS{color}*
+ //Environment - Stage
+
+*1. Checking eNotice on InfoTRAC* >>> {color:#00875a}*Verified* {color}(eNotices conform to the approved customer samples).
+ Index file: /d/INPUT-DEV/I3/process-files/wash/dla_20220530_1_20220728_0037_wash.txt
+
+*2. Checking* whether statements *description* matches its corresponding type code in doc_desc table >>> {color:#00875a}*Verified*{color} 
+ Statements type/letter code should be found in pui log for its corresponding line  {color:#00875a}*PASS*{color}.
+{code:sql}
+select * from DOC_DESC where org_id = getorgid('wash');
+{code}
+!scr_sql_DOC_DESC.png|thumbnail! 
+ Log file: /usr/local/processing-ui/station/logs/wash/doc/07282022_1241049.log
+ !scr_PUI-log_InfoTRAC_DB.png|thumbnail!
+
+*3. Checking eNotice statements on WASH stage prism root site* >>> {color:#00875a}*Verified* {color}(eNotices conform to the approved customer samples).
+ 3.1. Search UniqueID for SSO (see sql) and open SSO member site:
+ !scr_SSO_DB.png|thumbnail! 
+ 3.2. Checking whether statements description matches its corresponding type code in doc_desc table - {color:#00875a}*PASS*{color}
+ Log file: /usr/local/processing-ui/station/logs/wash/doc/07282022_1241049.log
+ !scr_PUI-log_SSO_DB.png|thumbnail!
+
+*4. Triggering Email notification to see whether email is sent to the allowed recipients* - {color:#00875a}*PASS*{color}
+ 4.1. Posting in PUI Stage > Job ID:[195157] (Index File: /d/INPUT-DEV/I3/process-files/wash/dla_20220530_1_20220728_9999_wash.txt) 
+ Log file: /usr/local/processing-ui/station/logs/wash/doc/08042022_0320032.log
+ 4.2. Triggering the notification email in PUI > Job ID:[195158]
+ Log file: /usr/local/processing-ui/station/logs/wash/email/08042022_0344051.log
+ !scr_triggering_email.png|thumbnail! 
+ !scr_email_notification.png|thumbnail!

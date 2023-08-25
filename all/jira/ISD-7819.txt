@@ -1,0 +1,375 @@
+title: HRTB - Heartland Bank - New client set up
+description: HRTB - Heartland Bank - API client
+
+Setup InfoSERVICE JAAS
+ Setup Processing-UI
+ Setup InfoCONFIG
+
+Timeline: https://app.smartsheet.com/sheets/8V3Rh9mwWVVvC372cMrf53GRwqw7x7wVM6pF7wM1
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: SOW Attached.
+
+
+author: azad
+comment: Thanks [~Tin.Chak]. I will check them out.
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~Azad] I attached the test pre-enrollment file. Please review and provide an update tomorrow. This is comment from Enrico:
+"HRTB sent us their test pre-enrollment file. One thing I noticed is that some account numbers are repeated because there are more than one users email. Can we accept it like this? Or do we need unique account numbers per line? "
+
+[~andreav] [~enricob] fyi
+
+
+author: azad
+comment: Hi [~enricob]
+
+We can accept same account number on multiple line but cif numbers on those lines have to be different. For example, in the test pre-enrollment file, I am seeing account number_40113603_ is repeated on 6 lines. But each line has same cif number_1AA0047_. We do not accept it like this. The cif numbers have to be different.
+
+[~Tin.Chak] [~andreav] [~rifat.mahmud]fyi
+
+Thanks
+Azhar
+
+
+author: enricob
+comment: Hi [~Azad]
+
+
+
+I just attached the updated Pre-enrollment file and CIF file from client.
+
+
+
+Thanks,
+
+
+Enrico
+
+
+author: azad
+comment: [~enricob]
+
+I just reviewed the Pre-enrollment file and it has a new "Product_Type" column which we do not support.
+
+N.B. Previously provided pre-enrollment file [^Pre-Enrollment_Test_10-7-22.txt]did not have this column.
+
+
+
+About the CIF file, as far as I know HRTB will not have an Auth setup. In the specification document, Auth setup was not marked. Will it be just an one-time setup or HRTB will send CIF file regularly? Either the case, we need to setup Auth for HRTB. Please let me know.
+
+
+
+[~Tin.Chak] [~meens] [~rifat.mahmud]fyi.
+
+Thanks
+
+
+author: azad
+comment: HI [~enricob]
+
+I just ran the cif file on Pilot after setting up a new Auth process for HRTB.
+
+[~Tin.Chak] [~meens] [~rifat.mahmud]fyi.
+
+Thanks
+
+
+author: enricob
+comment: Hi [~Azad]and [~Tin.Chak],
+
+
+
+Alkami tested and receive received an error - This has been configured in Staging, but we're getting an error trying to access:
+
+The remote server returned an error: (401) Unauthorized Can you confirm that Alkami should be able to access?
+
+Request/response for the attempt as well: 2022-10-17 16:13:21,154 |*| 514 |*| TRACE |*| Alkami.App.Providers.Shared.RestClient.RestClient |*| 86757438-1ebd-4d02-843e-b90c8711796c |*| c3bb4f6b-f4a5-42a4-8714-d4f7d1d2c11a |*| 7e9e00b8-815d-48c3-84f6-57e8bcabcd76 |*| GET to https://sandboxapi.infoimageinc.com/infoservice/v2/document/hrtb/search/all?acctTypes=NA&vendorId=915&searchCriteria=%5B%7B%22key%22%3A%22startDate%22%2C%22operator%22%3A%22%3D%22%2C%22operand%22%3A%222020-10-17T16%3A13%3A21.0596816%2B00%3A00%22%7D%2C%7B%22key%22%3A%22endDate%22%2C%22operator%22%3A%22%3D%22%2C%22operand%22%3A%222022-10-17T16%3A13%3A21.0596816%2B00%3A00%22%7D%5D&acctNums=hHwodCXoe9XzRfPP_aCM5Q: 2022-10-17 16:13:21,455 |*| 514 |*| DEBUG |*| Alkami.App.Providers.Shared.RestClient.RestClient |*| 86757438-1ebd-4d02-843e-b90c8711796c |*| c3bb4f6b-f4a5-42a4-8714-d4f7d1d2c11a |*| 7e9e00b8-815d-48c3-84f6-57e8bcabcd76 |*| Got REST response [401] <html><head><title>Apache Tomcat/7.0.63 - Error report</title><style><!--H1 \{font-family:Tahoma,Arial,sans-serif;color:white;background-color:#525D76;font-size:22px;} H2 \{font-family:Tahoma,Arial,sans-serif;color:white;background-color:#525D76;font-size:16px;} H3 \{font-family:Tahoma,Arial,sans-serif;color:white;background-color:#525D76;font-size:14px;} BODY \{font-family:Tahoma,Arial,sans-serif;color:black;background-color:white;} B \{font-family:Tahoma,Arial,sans-serif;color:white;background-color:#525D76;} P \{font-family:Tahoma,Arial,sans-serif;background:white;color:black;font-size:12px;}A \{color : black;}A.name \{color : black;}HR \{color : #525D76;}--></style> </head><body><h1>HTTP Status 401 - </h1><HR size="1" noshade="noshade"><p><b>type</b> Status report</p><p><b>message</b> <u></u></p><p><b>description</b> <u>This request requires HTTP authentication.</u></p><HR size="1" noshade="noshade"><h3>Apache Tomcat/7.0.63</h3></body></html>
+
+
+author: enricob
+comment: [~Azad], new pre-enrollment file attached here.
+
+
+author: azad
+comment: Hi [~enricob]
+
+Can you please ask Alkami to make the request again? The api is configured for them today. Also, it will be just a connection test and they will not get any statements data with the response. They may get a 204 (NO_CONTENT) and it's fine as there are no data for HRTB to return.
+
+A successful request can return a response like the following with a 200 OK status:
+{code:java}
+{
+    "message": "No result found. Please check input parameters.",
+    "status": "204"
+}
+{code}
+Also, about the pre-enrollment file, the file format is okay and we support the format. One thing is that, on some lines, they are passing the paperless status as 'E' which means the accounts will be on electronic. But they did not pass an email address on that line. For example,
+
+_AAV1084|B|579|D|Abraham Linc Memorial Hospital|*knauer.monica@mhsil.com|E*_  this line is okay.
+
+_DAU0794|B|10618|D|Dewitt County Farm Bureau|*|E*_  this line is not okay, email address is missing but paperless status is 'E'. This account's data will not get saved to database.
+
+Please let me know the feedback.
+
+[~Tin.Chak] [~meens] [~rifat.mahmud]fyi.
+
+Thanks
+Azhar
+
+
+author: azad
+comment: Hi [~enricob]
+
+I have a question about the Document processing setup. Do we need to configure document process so that it will create *users* for the accounts that do not have a user mapped with it? If we turn on the user creation for Document process, then for each new account in the index file, a new user will be created with a random name and will get mapped to that new account.
+
+Currently HRTB can create users by following ways:
+ # Via API: HRTB can make a post call to user api and it will create a new user.
+ # Infotrac: HRTB admins can use Infotrac and create new users and link them to accounts.
+ # Via AUTH: We have an auth file right now and by processing it users will get created. As far as I know, it will be just one time process. So, for future new accounts, Auth will not be an option to create users.
+
+Let me know,additionally if they will need Document process to create new users.
+
+[~Tin.Chak] [~meens] [~rifat.mahmud]fyi.
+
+Thanks!
+
+
+author: enricob
+comment: Hi [~Azad]
+
+Error log from Alkami attached here.Alkami_InfoIMAGE request and error log.docx
+
+
+
+Thanks,
+
+
+
+Enrico
+
+
+author: azad
+comment: Hi [~enricob]
+
+I reviewed their error logs and found that they are calling our GET /v2/user API. This API receives primaryCIF parameter which should contains the CIF_NUM of the user and this API will return the user profile from Oracle database.
+
+The primaryCIF parameter value has to be the CIF_NUM _(CFCIF#)_ of the user. Alkami was calling the API with the SSN number _(CFSSNO)_ of the user. For which the API was returning a _"No result found. Please check input parameter"_ error.
+
+Alkami request:
+
+_https://sandboxapi.infoimageinc.com/infoservice/api/v2/user/hrtb?primaryCIF=K41arSUS8mwTT1aThBFmcw&loginType=sso&vendorId=915_
+
+The decrypted_primaryCIF_ param value is_353685677_ which is the SSN number of an user. The parameter value should be the encrypted version of_CAC1271_ which is the CIF_NUM of that user.
+
+The correct request should be:
+
+[https://sandboxapi.infoimageinc.com/infoservice/api/v2/user/hrtb/?primaryCIF=VJuXEiKJtqQjFHnsmAciTg&vendorId=915&loginType=sso]
+
+And a successful response will be like following:
+{code:java}
+{
+    "message": "successful",
+    "usrId": 33381146,
+    "primaryCIF": "CAC1271",
+    "firstName": "Suzette E Chance",
+    "middleName": "",
+    "lastName": "",
+    "secQue": "",
+    "secQueAns": "",
+    "loginId": "!33381146",
+    "status": "active",
+    "dsoEnrollDate": "",
+    "ssoEnrollDate": "2022-10-11 01:25:18.0",
+    "accounts": [
+        {
+            "acctNum": "461010803",
+            "acctId": 44643440,
+            "acctName": "Suzette E Chance",
+            "acctType": "D",
+            "productType": "H2",
+            "status": "A",
+            "orgId": "18052",
+            "orgCode": "hrtb",
+            "orgName": "Heartland Bank",
+            "lastModified": "2022-10-28 07:40:21.0",
+            "notifyType": "email",
+            "paperlessStatus": {
+                "newDeliveryPref": "paperless",
+                "oldDeliveryPref": "paper",
+                "stmtType": "default",
+                "docType": "statement"
+            },
+            "notifyPref": [
+                {
+                    "npId": "15604791",
+                    "emailAddress": "suzette.chance@sbcglobal.net",
+                    "emailStatus": "Y",
+                    "emailAttachmentStatus": "N",
+                    "emailVerifyStatus": "C",
+                    "smsVerifyStatus": "C",
+                    "usrId": "33381146",
+                    "primaryCIF": "CAC1271"
+                }
+            ]
+        },
+        {
+            "acctNum": "2081002065",
+            "acctId": 44643441,
+            "acctName": "Suzette Chance",
+            "acctType": "D",
+            "productType": "H3",
+            "status": "A",
+            "orgId": "18052",
+            "orgCode": "hrtb",
+            "orgName": "Heartland Bank",
+            "lastModified": "2022-10-26 07:53:55.0",
+            "notifyType": "email",
+            "paperlessStatus": {
+                "newDeliveryPref": "paperless",
+                "oldDeliveryPref": "paper",
+                "stmtType": "default",
+                "docType": "statement"
+            },
+            "notifyPref": [
+                {
+                    "npId": "15604792",
+                    "emailAddress": "suzette.chance@sbcglobal.net",
+                    "emailStatus": "Y",
+                    "emailAttachmentStatus": "N",
+                    "emailVerifyStatus": "C",
+                    "smsVerifyStatus": "C",
+                    "usrId": "33381146",
+                    "primaryCIF": "CAC1271"
+                }
+            ]
+        },
+        {
+            "acctNum": "3081002065",
+            "acctId": 44643442,
+            "acctName": "Suzette Chance",
+            "acctType": "S",
+            "productType": "SV",
+            "status": "A",
+            "orgId": "18052",
+            "orgCode": "hrtb",
+            "orgName": "Heartland Bank",
+            "lastModified": "2022-10-26 07:53:55.0",
+            "notifyType": "email",
+            "paperlessStatus": {
+                "newDeliveryPref": "paperless",
+                "oldDeliveryPref": "paper",
+                "stmtType": "default",
+                "docType": "statement"
+            },
+            "notifyPref": [
+                {
+                    "npId": "15604793",
+                    "emailAddress": "suzette.chance@sbcglobal.net",
+                    "emailStatus": "Y",
+                    "emailAttachmentStatus": "N",
+                    "emailVerifyStatus": "C",
+                    "smsVerifyStatus": "C",
+                    "usrId": "33381146",
+                    "primaryCIF": "CAC1271"
+                }
+            ]
+        },
+        {
+            "acctNum": "461022121",
+            "acctId": 44645656,
+            "acctName": "Suzette Chance",
+            "acctType": "D",
+            "productType": "H2",
+            "status": "A",
+            "orgId": "18052",
+            "orgCode": "hrtb",
+            "orgName": "Heartland Bank",
+            "lastModified": "2022-10-26 07:53:55.0",
+            "paperlessStatus": {
+                "newDeliveryPref": "paperless",
+                "oldDeliveryPref": "paper",
+                "stmtType": "default",
+                "docType": "statement"
+            },
+            "notifyPref": []
+        }
+    ]
+}
+{code}
+Please let me know if they want us to treat the SSN numbers as unique user identification. We are treating the CIF_NUM that they provided on the AUTH file as unique user identification for HRTB users.
+
+
+
+[~Tin.Chak] [~meens] [~andreav] [~rifat.mahmud]FYI.
+
+Thanks!
+
+
+author: andreav
+comment: [~Azad] - I don't believe QA has reviewed this set up yet. Now that we have Daily Notices, DDA and Wealth Management posted on InfoTRAC, can we turn over to QA for preliminary review before I do the InfoTRAC training with the client? This item is very late so please turn over to QA ASAP.
+
+
+author: azad
+comment: [~andreav]QA review has started on Pilot for InfoTRAC. Also, for Processing-UI testing, do we have samples for different statements ready other than ms1 (DDA)?
+
+Wealth Management and Daily Notices are not being setup on e-side. There are no ISD tickets for those as far as I know. To see statements on InfoTRAC, those need to be posted on Processing-UI.
+
+Let me know. Thanks!
+
+[~Tin.Chak] [~meens] [~rifat.mahmud]fyi.
+
+
+author: azad
+comment: [~andreav]I have updated the configuration considering the Loan Bills, HELOC, PLOC and Mortgage statements as separate applications. On InfoTRAC, HRTB admins can add separate email templates. Also, after posting, those statements will be displayed under separate tabs.
+
+Let me know if that's the correct setup.
+
+[~Tin.Chak] [~meens] [~rifat.mahmud]fyi.
+
+Thanks!
+
+
+author: andreav
+comment: [~Azad] - Correct, Daily Notices and Wealth Management do not require eStatements but they are still posted on Job tracking for the print side. The index files are running very late for the rest of the applications. 
+For the Loans, yes, they are set up as separate applications and therefore, should be under their own application tabs and have separate email notifications based on internal meetings with Peter and Diego.
+
+
+
+author: JIRAUSER11701
+comment: @Azhar , we are getting error message  You cannot view the sample statement because *no pdf generated .* We apologize for the inconvenience. while trying to preview statement sample in Message manager / create campaign.
+!image-2022-11-15-08-47-19-557.png!
+ 
+
+Thanks,
+
+
+author: azad
+comment: Hi [~meens]
+
+I checked with Anwar from Print-side today and he confirmed me that this issue is solved now. Can you please check?
+
+Thanks
+
+
+author: JIRAUSER11701
+comment: [~Azad]: Client is not able to send from e-notification template. Please check if Heartland bank's email is whitelisted.
+
+!image-2022-11-16-08-08-16-108.png|width=633,height=233!
+
+
+
+Thanks,
+
+
+
+
+author: JIRAUSER11701
+comment: [~Azad], Could you please check if Loan Bills has Estmt?
+
+
+
+!image-2022-11-19-08-47-54-985.png|width=602,height=423!
+
+Thanks

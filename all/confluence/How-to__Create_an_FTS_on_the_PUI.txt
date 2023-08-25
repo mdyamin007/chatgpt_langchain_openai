@@ -1,0 +1,63 @@
+title: How-to: Create an FTS on the PUI
+body: This guide is to demonstrate how to create a file schedule under the File
+Transfer Status tab on the PUI.
+
+If an AC/IM makes this request, we should ask for the following information
+before proceeding. If absolutely necessary, we can sometimes find this
+information ourselves in the SOW. Details will be provided in the steps to
+follow.
+
+  * Title 
+  * Storage location (Secure3, Secure4, etc)
+  * Filename convention
+  * Frequency
+
+## Step-by-step guide
+
+  1. Set the title - this can be anything, as long as it relates to the file type (i.e. Auth file, Enrollment File, etc).
+  2. Set the scanner type aka storage location - most clients are using either Secure3 or Secure4, this can be checked by locating those folders on the Prod PUI server. 
+  3. Set the filename regex pattern for the filename convention
+    1. Use a regex validator to test and confirm the validity. This is especially handy when the file naming conventions are more complex.
+    2. If client intends to drop off the file in a specific folder, this needs to be included in the regex.
+  4. Set the example - this can be any example filename we would expect. This field will also show up in the missing alert emails, so it might be more suitable to set a generic filename rather than a specific one (i.e. ACBK_CIF_MMDDYY.txt instead of ACBK_CIF_042022.txt).
+  5. Set the Due method/Due time. Below is a list of all the different options:
+    1. Any Time - This is used whenever we just want the file to be recognized without sending a missing alert. If the client does not want missing file alerts, choose this option. 
+    2. Once - Checks only one time, non-recurring.
+    3. Daily - Checks 7 days a week
+    4. Weekly - This is used whenever clients are expected to send us the file on a weekly basis on certain days (i.e. Every Mon - Fri). If the file should be received every week, we need to toggle all of the 'Every __ Week' options. 
+    5. Monthly - This is used whenever clients are expected to send us files on a certain day of the month every month (i.e. Every month on the 15th). Below are a few notes:
+      1. If the client expects to send us the file within a certain range of days (i.e. once within 15th - 20th of every month), there will be a missing file alert sent on every day that we do not receive the file. If they cannot control the file sending date any further, it is probably best to set it to Any Time so that unexpected missing alerts will not be sent.
+      2. At the moment, we cannot set up schedules for the last day of the month since each month has a different number of total days.
+  6. Set the minimum files expected - most of the time this can be kept at the default value of 1, change if necessary.
+
+  
+
+## Troubleshooting
+
+Issues will typically stem from the emails that are sent out regarding the
+file. Depending on the type of email, the scanner will pull the email
+addresses from either of the two sections below:
+
+#### Confirmation Email:
+
+  * Confirmation - The file was received and matches an existing file path/pattern.
+  * Unrecognized - The filename does not match any existing file paths and/or patterns. This could be caused either due to the schedule setup or an issue with the filename sent by the client. Note: This does not necessarily mean that the file was not processed.
+
+#### FTS Email:
+
+  * Missing - The file was not received by the expected date/time. There is usually a follow-up email sent 2 hours after the first one if we still have not received the file. 
+
+## Additional Notes:
+
+  * Some clients may have a separate folder location in addition to their main (i.e. SANA has both a sana and an fis_sana folder).
+  * OSIW and JHA are shared between several clients, therefore do not setup missing file alerts if a file schedule is setup here. 
+  * We can also check the client_info table in the Default schema on SQL Oracle to see file schedule lists for any client.
+  * We cannot configure different email addresses for specific files. If an email is added to the Confirmation or the FTS Email list, they will receive emails for ALL files listed.
+
+  
+
+  
+
+  
+
+

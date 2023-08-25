@@ -1,0 +1,625 @@
+title: SPCU - [25976][pvt] Generate new letter for Address Changes
+description: IS Assessment
+ =============
+ Hours for development: 6 IS hours for adding new notice in DLB(not for new application) + 2hrs for ISD
+ Turnover Date : 2/14/2022
+ Sample to QA Date: 2/28/2022
+ Sample Approval Date: 3/7/2022
+ Go live date : 3/14/2022
+
+Assessment Details (IS):
+ - Parallel required: (Yes)
+
+Assessment Note (IS):
+ - Parallel required: (Yes)
+ - Add "address change" notice to spcudna and run as seg 2 at 12:00pm noon
+ - Print/Electronic
+ - The file will come outside of Keystone daily notices file, as a separate file will be sent to InfoImage daily at 12:00pm noon.
+ - Notice Name: Address Change Notification
+ - File name:dn\AddressChangedLetter-YYYYMMDD.pgp (needs to be PGP encrypted). Please confirm if SPCU can pgp encrypt.
+ - Letter template (in comment #20):
+ 194_Address_Change_Final.docx
+ - Test data (in comment #5):
+ AddressChangedLetter-20220124_Sample.csv
+ - File mapping from client in (comment #19)
+ (IGNORE),Account Number, First Name, Last Name,Date,Before Street Additional Details,Before Street,Before City,Before State,Before Zip,After Street Additional Details,After Street,After City, After State,After Zip
+ - Please double check with fields in test data file and confirm with client.
+ - Internal Notice Code is 038
+
+
+
+Updated SOW Link:[http://sharepoint-svr/AS/Shared%20Documents/SOW%20Directory/SPCU%20-%20San%20Francisco%20Police%20Credit%20Union/SOW/SPCU_CoreConversion_DailyNotice_PrintSOW.dotx]
+
+
+
+
+author: william.kong
+comment: [~Hamimul.Chowdhuri]& [~rony]: Updated address change file just uploaded to the /test folder and file name is "AddressChangedLetter-20220209.pgp". This is what the output file will be for the daily Address Change notices per the client via TS# 26074.
+
+
+
+Please place close attention to line 11, on of the fields have double-quotes & comma within; This may break your programming.
+
+
+
+[~dyuen]: I read SPCU's response that they will not include header, but I think it would be better to include it so that we can see what the column header meaning for maintenance whenever we have to troubleshoot longer term after go-live. It is recommended to include the header so that we can programmatically check the columns are in the right order based on reading the header. We've had other clients that accidentally swapped columns during production and we were not aware of it.
+
+
+
+However, if SPCU insist they do not want the header in the data file, then we will follow their specifications.
+
+
+author: dyuen
+comment: [~William.Kong], I've reached out to SPCU to see if they're willing to add the headers to the data file. I will update the Jira when I hear back.
+
+Thanks
+
+
+author: dyuen
+comment: [~Hamimul.Chowdhuri] [~rony] [~William.Kong], SPCU updated the ticket this morning that they will include the file to include column headers. The updated test file should be uploaded sometime today. I will update the Jira once I have it.
+
+Thanks
+
+
+author: rony
+comment: Hi [~dyuen]
+
+We started working on it. We have some questions:
+
+please attach the updated sow link
+
+The logo and return address in the template doesn't match with existing letters.
+
+!image-2022-02-15-16-11-33-911.png!
+
+
+
+If we need to use the logo and return address from the template docx file would you please provide the logo?
+
+
+
+Thanks
+
+
+author: dyuen
+comment: Hi [~rony], I'm almost certain we should only be using "The Police Credit Union" logo, but I reached out to SPCU to confirm. In the meantime, here is the link to the updated SOW. Can you confirm it will be Info Notice 038? I used the next available number. Thanks
+
+
+
+http://sharepoint-svr/AS/Shared%20Documents/SOW%20Directory/SPCU%20-%20San%20Francisco%20Police%20Credit%20Union/SOW/SPCU_CoreConversion_DailyNotice_PrintSOW.dotx
+
+
+author: rony
+comment: Hi [~dyuen]
+
+Yes 038 correct.
+
+
+author: dyuen
+comment: Hi [~rony] [~Hamimul.Chowdhuri], please use the "The Police Credit Union" logo. Do not use the SF Police one.
+
+Thanks
+
+
+author: rony
+comment: Hi [~dyuen]
+
+
+
+I think the correct sow should be this one instead of the one you provided the link for.
+
+
+
+!image-2022-02-17-14-22-07-779.png!
+
+
+
+The sow you provided link for is actually for DNA but we are asked to add this new letter in DLB.
+
+Thanks
+
+
+
+
+author: rony
+comment: Hi [~dyuen]
+
+
+
+Would you please ask for dt job id from PC for this project spcudlb both for pilot and stage?
+
+
+
+Thanks
+
+
+
+
+author: rony
+comment: Hi [~William.Kong],
+
+Is spcudlb_process.sh ( for which we are adding this letter ) is set as corn? I checked in rhs but it's commented .
+
+!image-2022-02-17-15-01-28-031.png!
+
+And it says discontinue in the snap. What does it mean?
+
+
+
+Thanks
+
+
+
+
+author: JIRAUSER11105
+comment: Hi [~dyuen] 
+
+Attached is the sample for you to review. Please review and if you see any issue let me know. I will provide to QA later.
+
+[^SPCUDL038.pdf]
+
+
+
+^Thanks^
+
+
+author: dyuen
+comment: [~rony], it looks like you are looking at the old SOWs. SPCU recently went through a core conversion, therefore I believe we should be working off of the SOW I highlighted below.
+
+I will have to get back to you about the dt Job_ID since ACs typically don't request for that.
+
+!image-2022-02-17-09-35-42-917.png!
+
+
+
+[~Hamimul.Chowdhuri], the samples look good to me but QA will still need to review before I send to the client.
+
+I also got a new test file.
+|*File Name*|*Size*|*MD5*|
+|test/AddressChangedLetter-20220217.pgp|1.34 kb|8cec2a79082608a46c07c5dd24da19b0|
+
+
+author: tuna
+comment: Hi [~rony],
+
+- Can you submit sample to internal QA team ([~Igor.Khosid]) first. Then, QA will pass it to [~dyuen].?
+
+- Client sent new test data file with heading. Can you please regenerate sample with following file?
+
+/d/infoftps3/Vend_DSI/client_pickup/print_process/spcu/IS-833/AddressChangedLetter-20220217.pgp
+
+- And , I think you are right. spcudlb is inactive. Because it is replaced by spcudna. (07/16/2021 ronyD JEF #48032 SPCU Core Conversion - Daily Notice).Are you adding to spcudna?
+
+
+
+[~William.Kong]
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+Attached is pdf sample.[^SPCUDL038-2.pdf]
+
+SPCUDL038.zip is in qa folder.
+
+dev id:20220218075719 . I guess at this point you don't it though.
+
+
+
+Thanks,
+
+Rony
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+
+
+!image-2022-02-18-22-32-35-793.png!
+
+Thanks
+
+
+
+
+author: igor.khosid
+comment: [~rony]
+this is correct - at this point, we need updated descriptions, mock up and pdf sample
+Please, clarify which one of the samples we should be looking for: SPCUDL038.pdf or SPCUDL038-1.pdf or SPCUDL038-2.pdf
+
+[~dyuen] could you please confirm if the "194_Address_Change_Final.docx" updated
+
+[~berezinez] Please compare and submit for the client review
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220218083104
+   Currently in development: Yes
+   User: ronyD
+   Description: is-833 spcu daily adding new letter for address change
+   Date Submitted: 2022-02-18 08:31:14
+   Date Last Updated: 2022-02-18 08:31:14
+   Files:
+      1) spcudna.procs
+      2) SPCUDL038.prj
+      3) SPCUDL038.dfa
+      4) spcudl038.control
+
+
+
+author: igor.khosid
+comment: [~berezinez] 
+As per Rony
+SPCUDL038-2.pdf you need to review
+
+[~rony] [~Hamimul.Chowdhuri] FYI
+
+
+author: dyuen
+comment: [~Igor.Khosid] [~berezinez]"194_Address_Change_Final.docx" is updated. It has the correct content/verbiage, it just has the old logo. Please disregard the logo in the .docx file.
+
+Thanks!
+
+
+author: berezinez
+comment: [~dyuen] [~Hamimul.Chowdhuri] [~rony]
+
+QA pass, the changes look good, ready for CU approval.
+
+
+
+**after approval, please request print samples, and please advise if this update is for the paper side only?
+
+
+author: dyuen
+comment: Samples submitted for client review.
+
+
+
+[~berezinez], it is for paper and electronic.
+
+
+author: dyuen
+comment: Comment from client: "the notices look good; however, I'm seeing instances of data on the address change file not being correct. This is something we have to research on the core so will ask for this to be placed on hold until I can identify why the raw data is not reliable."
+
+Client sample approval date is not until 3/7/22. If there is no response/update until then, then I will place Jira on hold. For now, I will leave the Jira as pending client approval.
+
+
+
+
+author: dyuen
+comment: [~Hamimul.Chowdhuri] [~rony], can you try processing samples from this file?
+|test/AddressChangedLetter-20220224.pgp|
+
+Thanks
+
+
+author: dyuen
+comment: [~Hamimul.Chowdhuri] [~rony], disregard my comment about new samples.
+
+Client approved samples. Please provide paperwork for print samples and parallel. We need to go live ASAP.
+
+Thanks
+
+
+author: rony
+comment: [~dyuen]
+
+We will provide it to QA on 28th.
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+SPCUDL038.zip is in qa folder. parallel id:20220225024333.
+
+dpvs[^spcudna203.print]print 4.2o1 file.
+
+index file:dna_20220216_2_20220228_0223_spcu.txt
+
+no new resources were needed.
+
+
+
+Thanks
+
+
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220225024333
+   Currently in parallel: Yes
+   User: ronyD
+   Description: is-833 spcu daily adding new letter for address change
+   Date Submitted: 2022-02-25 02:43:40
+   Date Last Updated: 2022-02-28 02:19:37
+   Files:
+      1) spcudna.procs
+      2) SPCUDL038.prj
+      3) SPCUDL038.dfa
+      4) spcudn038.control
+      5) spcudna_process.sh
+
+
+
+author: dyuen
+comment: [~rony], please provide the name of the print file for OPS to use for print samples. As well as the print range.
+
+
+author: berezinez
+comment: [~dyuen]
+ # please request print samples
+ # please advise, is there an endorsement on the notice? i dont see it in SOW...
+
+*****
+
+[~rony]
+
+Note, eside posting doesn't display enotice name, and displays the wrong logo, should usethe "The Police Credit Union" logo
+
+!wrong logo on eside.GIF!
+
+!enotice name is missing.GIF!
+
+
+author: tuna
+comment: Hey [~rony]
+
+[~dyuen] follow up for IS-833 SPCU. Can you please provide information for LASER sample printing (DPVS, print file name, print range, environment)?
+
+Thanks!
+
+Tun
+
+
+author: rony
+comment: Hi [~dyuen]
+
+dpvs already provided 7 hours ago . You can also ask Alis .
+
+
+
+[~berezinez], would you please contact with isd about notice name not displaying in eposting.
+
+And about logo the mapping has old one, you can also ask [~dyuen]to be confirmed about it.
+
+
+
+Thanks
+
+
+author: dyuen
+comment: [~rony], The mapping the client provided may have the old logo, but that does not mean we should be using the old logo in staging/pilot. We should only be using the "The Police Credit Union" logo. The samples you provided uses the correct one.
+
+[^SPCUDL038-1.pdf]
+h4. Print samples requested.
+
+
+author: igor.khosid
+comment: [~berezinez] [~dyuen]
+Print samples - attached >>>  [^IS-833_SPCU_Print samples 02282022.pdf] 
+
+
+author: berezinez
+comment: [~Hamimul.Chowdhuri] [~rony] [~dyuen]
+
+Tap test failed - the logo address is covered, the logo should be moved up 1/4"
+
+
+
+[~dyuen]- there is no endorsement on the notice, is it should be there? i dont see it in SOW
+
+
+
+!logo address is covered.GIF!
+
+!endorsement.GIF!
+
+
+author: dyuen
+comment: [~berezinez]SPCU DLs do not have endorsements. Thanks
+
+
+author: berezinez
+comment: [~Hamimul.Chowdhuri] [~rony]
+
+is there any update on the updated DPVS?
+
+Tap test failed - the logo address is covered, the logo should be moved up 1/4"
+
+
+author: rony
+comment: [~berezinez]
+
+dpvs:[^spcudna203-1.print]
+
+print 4.2o1 file.
+
+Thanks
+
+
+author: berezinez
+comment: [~rony] [~Shun.Kuwashima]
+
+Stage posting still showing incorrect logo, the notices shoulduse the "The Police Credit Union" logo.
+
+please provide resources to ISD.
+
+!wrong logo on eside.GIF!
+
+
+author: dyuen
+comment: Print samples requested with updated DPVS.
+
+
+author: berezinez
+comment: [~Shun.Kuwashima] [~rony]
+
+the eside posting looks good now with the correct logo and notice name.
+
+Waiting for the new set of the print samples.
+
+
+author: JIRAUSER11104
+comment: Print samples >>>[^IS-833_SPCU_Print_Samples_03022022.pdf]
+
+
+author: berezinez
+comment: [~dyuen] [~Hamimul.Chowdhuri] [~rony]
+
+is this update for the paper side and eside only? or does it have a pdf archival update as well?
+
+
+author: dyuen
+comment: [~berezinez], as mentioned above, the update is only for print and electronic. No archival.
+
+Please advise on the paperwork for parallel. I nee to turnover ASAP, so that we can release code early next week.
+
+[~Hamimul.Chowdhuri] [~rony]
+
+
+author: berezinez
+comment: [~dyuen]
+
+print and eside logo should be black/white color?
+
+
+author: dyuen
+comment: [~berezinez], yes
+
+
+author: berezinez
+comment: [~Hamimul.Chowdhuri] [~rony] [~dyuen]
+
+QA is completed, please attach IS checklist.
+
+
+author: dyuen
+comment: [~Hamimul.Chowdhuri] [~rony], please provide status on IS checklist. I need it ASAP to turnover parallel.
+
+[~berezinez] [~TunA] [~Igor.Khosid] [~Shun.Kuwashima]
+
+
+author: berezinez
+comment: [~Hamimul.Chowdhuri] [~rony] [~dyuen]
+
+Hamimul - please attach IS checklist, QA is completed yesterday.
+
+
+author: rony
+comment: Hi [~berezinez] 
+
+checklist.
+
+[^IS-833 Checklist for Paper Parallel Template.docx]
+
+
+author: berezinez
+comment: IS Checklist attached.
+
+[^SPCU_IS_833_IS_Checklist.docx]
+
+
+author: tuna
+comment: [~Hamimul.Chowdhuri], [~rony],
+
+[~dyuen]said the print sample has red color text in there. Can you please remove those red color text? We don't want to use color in notices, if possible.
+
+
+
+Thanks,
+
+Tun
+
+
+
+
+author: rony
+comment: Hi [~dyuen]
+
+[^spcudna203-2.print]
+
+print 4.2o1 file.
+
+
+
+Thanks
+
+
+author: dyuen
+comment: New print samples requested.
+
+
+author: JIRAUSER11104
+comment: New print samples >>>[^IS-833_SPCU_Print_Samples_03072022.pdf]
+
+
+author: dyuen
+comment: [~rony] [~Hamimul.Chowdhuri] [~berezinez] Masterparallel #27231 created. Please fill out ASAP.
+
+[~Shun.Kuwashima], electronic ticket #27232 assigned to you. FYI
+
+Thanks
+
+
+author: dyuen
+comment: [~rony], parallel passed. Please see update from OPS on parallel #27231 and confirm code will be released today.
+
+[~TunA]
+
+
+author: rony
+comment: [~dyuen] sorry not today tomorrow . I couldn't manage time to see this.
+
+
+author: rony
+comment: HI [~TunA]
+
+Resources are in my xfer folder.
+
+
+
+[^IS-833_PROGRAM_TRANSFER_FORM.doc]
+
+
+
+Please set the cron below. Per sow file arrival time: 12:15 pm and this will be run as segment 2 per description. Segment 1 is already set up to run at 10:03 am.
+
+30 12 * * 1,2,3,4,5,6,7 . /home/control/daily.control; /home/master/spcudna_process.sh 2 0 2>&1 >> /d/daily/spcu/today.log
+
+
+
+[~dyuen]
+
+
+author: tuna
+comment: Hi [~rony],[~dyuen], [~Hamimul.Chowdhuri]
+
+
+
+- Automation set to seg#1 for 10:03 AM and seg#2 for 12:30AM
+
+[oper1@rhs2 ~]$ crontab -l | grep spcudna
+03 10 * * 1,2,3,4,5,6,7 . /home/control/daily.control; /home/master/spcudna_process.sh 1 0 2>&1 >> /d/daily/spcu/today.log
+30 12 * * 1,2,3,4,5,6,7 . /home/control/daily.control; /home/master/spcudna_process.sh 2 0 2>&1 >> /d/daily/spcu/today.log
+
+
+
+- Following codes have been released.
+
+20220310084911 03/10/2022 ronyD IS-833 SPCU - [25976][pvt] Generate new letter for Address Changes
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/ronyD/
+total 288
+-rwxrwxrwx 1 ronyD DSI 15189 Mar 10 03:11 SPCUDL038.dfa
+-rwxrwxrwx 1 ronyD DSI 0 Mar 10 03:11 SPCUDL038.prj
+-rwxrwxrwx 1 ronyD DSI 961 Mar 10 03:11 spcudn038.control
+-rwxrwxrwx 1 ronyD DSI 18996 Mar 10 03:11 spcudna_process.sh
+-rwxrwxrwx 1 ronyD DSI 6191 Mar 10 03:11 spcudna.procs
+
+
+
+Thanks
+
+Tun

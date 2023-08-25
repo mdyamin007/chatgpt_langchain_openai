@@ -1,0 +1,118 @@
+title: Building Block - CD/IRA Statements
+body:   
+
+## What does this block hold?
+
+Mainly Transactions & details of corresponding CD/IRA Accounts. Usually there
+isn't much transaction/details regarding CD/IRA.  
+  
+
+## Cores evaluated
+
+  1. Symitar, Ultradata.
+
+  
+  
+
+## Attribute Structure
+
+Using the Loan Statement structure as foundation, adjusting the 'Account'
+structure to hold simplified info
+
+  1.  **Section Header Label**  (e.g. "Traditional IRA", "Certified Deposit")
+  2.  **Accounts**
+    1. Array of  **Account**
+      1.  **Name**  (e.g. Traditional IRA, CD)
+      2.  **Major Code**  (Code values to indicate type of account: share, loan, cd.)
+      3.  **Minor Code**  (Symitar use minor code with the actual values populated into this 'Minor Code'. OSI use combination of major and minor code)
+      4.  **Account Number**
+      5.  **Share Description**
+      6. Array of  **Account Owner Names**  (multiple names when there is co-borrower)
+        1.  **Full Name**  (!) Data are coming in as full name string only, if possible, should break this down into First/Middle/Last Names
+      7.  **Summary**
+        1.  **Start Date**
+        2.  **Start Balance**
+        3.  **End Date**
+        4.  **End Balance**
+        5.  **Escrow Balance**  (applicable to loan statements only)
+        6.  **Maturity Date**  (applicable to CD only)
+        7. Array of  **Item**
+          1.  **Item Name**  (Dividend / Disbursement / APR(%) / APY(%) / APY Earned($) / Deposit($) / Withdrawl($) / Service Charge($) )
+          2.  **Due Amount**
+          3.  **Current Period Amount**  (hold dollar values)
+          4.  **Current Period Non-Taxable Amount**
+          5.  **YTD Amount**
+          6.  **Last Year Amount**
+          7.  **Rate**  (hold percentage values)
+          8.  **Count**
+          9.  **Start Date**  (if different from above)
+          10.  **End Date**  (if different from above)
+          11.  **Due Date**
+      8.  **Transactions**
+        1. Array of  **Transaction**
+          1.  **Type**  (optional: specify value 'use_item_val' if special record needed to preserve where to show the data while values from Array of Items above)
+          2.  **ItemName**  (optional: only needed if  **Type**  == 'use_item_val' above. It should carry value like 'APYE' or 'APR')
+          3.  **Transaction Date**
+          4.  **Effective Date**
+          5.  **Description**
+          6.  **Principal**
+          7.  **Escrow**
+          8.  **Financial Charge**
+          9.  **Other Charge**
+          10.  **Deposit/Credit**
+          11.  **Withdrawal/Debit**  {FIXME} Tien: change this
+          12.  **Balance**
+
+  
+  
+
+## Suggested Sample XML
+
+    
+    
+      
+    
+    
+    
+      <section label="IRA" />
+      <accounts>
+        <account name="Traditional IRA" major_code="500" minor_code="123">
+          <account_num>4378291-8734</account_num>
+          <share_desc>Traditional IRA</share_desc>
+          <account_owners>
+            <name fullname="John Smith" />
+            <name fullname="Jame Smith" />
+          </account_owners>
+          <summary start_date="2013-07-01" start_bal="5143.43" end_date="2013-07-31" end_bal="6342.64" maturity_date="2014-08-05">
+            <item name="dividend"            rate="1.53"  ytd_amt="240.50"  start_date="2012-04-01"    end_date="2012-06-30" />
+            <item name="apr"                 rate="15.53" />
+            <item name="apy"                 rate="14.53" />
+            <item name="apye"                curr_period_amt="432.43" />
+            <item name="deposit"             curr_period_amt="155.33" />
+            <item name="withdrawl"           curr_period_amt="500.00" />
+            <item name="svc_charge"          curr_period_amt="8.42" />
+          </summary>
+          <transactions>
+            <transaction trn_date="2013-07-04" post_date="2013-07-06" desc="Contribution"  deposit="155.33" balance="5249.49" />
+            <transaction trn_date="2013-07-05" post_date="2013-07-08" desc="Dividend Paid"  deposit="4173.34" balance="12222.49" />
+            <transaction ... />
+            ...
+          </transactions>
+        </account>
+        <account name="Auto Loan" major_code="500" minor_code="523" >
+        ...
+        <account name="Certificate/IRA" major_code="601" minor_code="632" >
+      </accounts>
+    
+      
+    
+    
+      
+    
+
+  
+  
+
+## Statement Variations
+
+

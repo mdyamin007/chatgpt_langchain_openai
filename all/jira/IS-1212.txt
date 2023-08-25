@@ -1,0 +1,278 @@
+title: MIFE - Stmt - DDA & SAV (Redesign)PDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133580-C00.01-V21723
+
+Processing Scripts to modify:
+ mifems2_process.sh
+
+Data Files to use:
+ mife_dda_20220531203454.STMT.XML.PGP
+
+
+
+*NOTE*: This job runs on RH2. Since we are migrating from RHS to RH2, we should test all options so that we can do afpcompare and also ensure there is no errors in the processing logs.
+
+
+
+*CUSTOM:*
+
+The default setting JPEGQuality is set to 50; Because of the poor quality issue compared to PDFi, we need to add JPEGQuality=100 in the mifems2_pdf.control file.
+
+
+
+
+author: tanmay
+comment: Hi
+
+new sample has been placed at/z/dsi_pdfi_testing/mifems2/new/
+
+Please check and let me if there anything
+
+
+author: william.kong
+comment: Hi[~tanmay],
+
+
+
+Sorry to do this to you, but for some reason the production system only has the xml and not PDF data so I'm not sure what happened in production on 7/31. Can you help run cycle 6/30/2022 instead. Fortunately there is a bug in production where it retains the previous cycle's PDF archival so I copied to our test server in anticipation for your to re-run using this cycle.
+
+
+
+I've made a copy of themife/dda/mife_dda_20220630203658.STMT.XML.PGP data to the FTP parallel scanner so it should scan shortly to /z/ftpbu/mifebu/dda folder.
+
+
+
+Once you've re-ran, please changes status to 'QA Request' again. In the meantime, I'll change the status back to "In Progress"
+
+
+
+Thanks!
+
+-- Will
+
+
+
+
+author: tanmay
+comment: Hi [~William.Kong]
+
+samples from6/30/202 has placed at /z/dsi_pdfi_testing/mifems2/new/
+
+Please check
+
+
+
+
+author: william.kong
+comment: [~Igor.Khosid]: Please assign QA team member to QA this project.
+
+
+
+File are in:
+
+ca-isis-pr-04:
+
+/d/pdf_compare/mifems2_prod (Original)
+
+/d/pdf_compare/mifems2_parallel (New)
+
+
+
+
+
+
+author: igor.khosid
+comment: [~William.Kong] - assigned to [~Andrey.Kutsenko]
+
+
+author: JIRAUSER11104
+comment: Ran script:
+{code:sh}[andreyK@ca-isis-pr-04 pdf_compare]$ perl pdf_compare.pl mifems2_prod mifems2_parallel result_mifems2 -pixels 6 -threads 32{code}
+I'll report the result after the script is finished.
+
+
+author: JIRAUSER11104
+comment: [~William.Kong], FYI
+Test result - *FAILED*
+{code:sh}Total PDF Files Scanned: 6000
+allowedDifferenceInPercentPerPage: 6:
+Thread Count: 32
+
+Total PDF Files with Differences: 6000
+Please review the directory in /d/pdf_compare/result_mifems2 directory & /d/pdf_compare/result_mifems2/pdf_compare_rpt.txt report to see all the PDF differences
+WARNING:  We did not compare ALL the pdfs!
+          pdf_compare.pl will only process the first 6000 pdf files out of the total 11744 pdfs
+Start Time: Wed Aug 31 17:10:58 PDT 2022
+Finish Time: Wed Aug 31 20:44:33 PDT 2022{code}
+
+
+author: tanmay
+comment: [~William.Kong]
+
+Will you please place production sample here/z/dsi_pdfi_testing/mifems2/old
+
+
+author: william.kong
+comment: [~tanmay]: I'm currently reviewing the results from what Andrey reported above. Looks like this is a quality issue with the graphics resources.
+
+
+
+I need to see if there is another solution other than trying new graphics resources. I will keep you posted with my research and next steps.
+
+!image-2022-09-08-11-41-54-641.png!
+
+
+author: william.kong
+comment: [~tanmay]: Can you please update the control file to overload the default setting JPEGQuality=100.
+
+
+
+Quality is much better and fortunately the pdf file size will be less than PDFi (see attachments)
+
+MIFE_54700500000735_STATEMENT_06302022.prod.pdf (Original PDF version)
+
+MIFE_54700500000735_STATEMENT_06302022.parallel.pdf (AFP2PDF version with default settings that you created)
+
+mifems23018.JPEGQuality100.pdf (AFP2PDF version with JPEGQuality=100)
+
+
+
+
+
+there is still a slight color difference that I'm able to address, but with the additional JPEGQuality=100 setting, it should improve much better. Once you recreate, please let us know so that we can re-test.
+
+
+
+Please update Jira Status to "QA Request" when you've added this additional JPEGQualtiy parameter to the control file.
+
+
+
+
+author: tanmay
+comment: [~William.Kong]
+
+I have updated the control file withJPEGQuality=100
+
+Please check the new sample placed at
+
+/z/dsi_pdfi_testing/mifems2/new/
+
+
+author: william.kong
+comment: [~tanmay]: Can you revisit the script? I noticed the zip file is much bigger than original version. Is this because original version is using 7zip instead of zip compression? If so, please make sure zip logic matches what we are currently doing in production.
+
+
+
+I will mark status back to "In Progress".
+
+
+
+Also, I noticed a lot of lines of code is commented out. If code is no longer necessary, please delete the commented lines. Thanksl!
+
+
+author: tanmay
+comment: Hi @willaim
+
+Thanks for your feedbacks
+
+I have updated the code for zip logic to 7zip
+
+!image-2022-09-12-19-00-43-251.png!
+
+And also removed the unused code
+
+
+
+
+author: william.kong
+comment: [~tanmay]: Thanks for the fix. The method is using 7z zip.
+
+
+
+[~Andrey.Kutsenko]: I've extracted the new parallel pdf file to
+
+ca-isis-pr-04:/d/pdf_compare/mifems2_parallel
+
+
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: Please use the following setting plus the exclusion file mifems2.json file. The main issue is the color are slightly different but acceptable in my eyes.
+
+
+
+perl pdf_compare.pl mifems2_prod/ mifems2_parallel/ result_mifems2 -pixels 15 -threads 32 *{color:#FF0000}-exclusion mifems2.json{color}* -maxfiles 500
+
+
+
+It will ignored the areas on Page 1 shown below:
+
+!image-2022-09-15-11-23-27-682.png!
+
+
+author: JIRAUSER11104
+comment: Thank you [~William.Kong]
+ I ran the script:
+{code:sh}
+[andreyK@ca-isis-pr-04 pdf_compare]$ perl pdf_compare.pl mifems2_prod/ mifems2_parallel/ result_mifems2 -pixels 15 -threads 32 -exclusion mifems2.json{code}
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+Test result - PASSED.
+{quote}[andreyK@ca-isis-pr-04 ~]$ cat /d/pdf_compare/result_mifems2/pdf_compare_rpt.txt
+Total PDF Files Scanned: 6000
+allowedDifferenceInPercentPerPage: 15:
+Thread Count: 32
+
+Total PDF Files with Differences: 0
+WARNING:  We did not compare ALL the pdfs!
+          pdf_compare.pl will only process the first 6000 pdf files out of the total 11744 pdfs
+Start Time: Thu Sep 15 11:21:44 PDT 2022
+Finish Time: Thu Sep 15 12:20:10 PDT 2022{quote}
+
+
+author: william.kong
+comment: [~tanmay]: Please schedule code release for tomorrow (9/21) and prep File Transfer form. Please don't forget to update the procedure file to reflect that this job needs to process on RHS server moving forward.
+
+
+author: tanmay
+comment: [~yameelee] [~William.Kong]
+
+Transfer from([^IS_PROGRAM_TRANSFER_FORM_IS-1212.doc]) has been attached and files has been placed at/d/is/cvs/xfer/mahbuburT/
+
+Please proceed to production
+
+
+author: william.kong
+comment: [~yameelee]: Please confirm if you can assist with this code release request.
+
+
+author: tanmay
+comment: [~William.Kong] [~TunA] [~yameelee]
+
+Please do response on these. my xfer is busy due to this one. Please proceed to production *as soon as possible*
+
+
+author: yameelee
+comment: [~tanmay]
+
+code released.
+
+back up id:20220926114053
+
+
+author: tanmay
+comment: development and support

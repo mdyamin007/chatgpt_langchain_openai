@@ -1,0 +1,236 @@
+title: Part I Wrap-Up
+body: # Class Diagram (UML)
+
+### Author: Bhavani Sridharan  
+
+  
+
+  
+
+# Main logic
+
+### Author: Bhavani Sridharan
+
+  
+
+ **Flowchart**  
+
+ **Implementation in Java 1.5**
+
+/**  
+     * MAIN LOGIC FOR TEST CASE AND MSG ID GENERATION PER MSG AREA OF INDEX FILE  
+     * THE INDEX FILE IS ALREADY LOADED IN MEMORY IN THE RESPECTIVE CLASSES PRIOR TO THIS METHOD CALL  
+     *   
+     */
+
+  
+
+public void generateTestCasesPerMsgArea() {
+
+    
+    
+      
+      
+            // Initialize file for output (in JSON format)  
+            File json_file = new File(mmt_props.getJSONFile());  
+      
+            try {  
+                json_file.createNewFile();  
+            } catch (IOException e1) {  
+                System.out.println("JSON file for output cannot be created!");  
+                e1.printStackTrace();  
+            }  
+      
+            FileWriter fw=null;  
+            try {  
+                fw = new FileWriter(json_file.getAbsoluteFile());  
+            } catch (IOException e1) {  
+                System.out.println("Unable to create writer object for JSON file... program will quit!");  
+                e1.printStackTrace();  
+            }  
+      
+            Writer bw=new BufferedWriter(fw);  
+      
+            this.printCriteriaListPerMsgArea();  
+      
+            int testcase_counter=0; // For the purpose of JSON output; test case counter keeps a sequence of test cases across all message areas  
+      
+            // Iterate through the keys (message areas) and access records within their buckets  
+            // Message-Area Level  
+            Iterator<Integer> iterator = msg_area_hashmap.keySet().iterator();  
+            while (iterator.hasNext()) {  
+                Integer key = iterator.next();  
+                List<IndexFileRecord> ifr_list=msg_area_hashmap.get(key);  
+      
+                // Sort the records by priority  
+                Collections.sort(ifr_list,IndexFileRecord.ByPriority);  
+                System.out.println("No. of records in bucket for msg area "+key+" is "+ifr_list.size());  
+      
+                // Create test cases (AttributeTestCase objects) for the whole message area  
+                List<String> msg_area_criteria_phrases=this.getCriteriaListPerMsgArea(key);  
+                MsgAreaTestCaseGenerator msg_area_tc_gen=new MsgAreaTestCaseGenerator(msg_area_criteria_phrases);  
+                List<AttributeTestCase> attribute_test_case_list=msg_area_tc_gen.getAttribute_test_case_list();  
+      
+                // Happens when there are no criteria but just a default message definition for a message area if(attribute_test_case_list.size()==0) {  
+                    System.out.println("No test cases generated Msg Area "+ key);    
+                    break;  
+                }  
+                else  
+                    System.out.println("Test Cases Generated for Msg Area "+key);  
+      
+                msg_area_tc_gen.printMsgAreaTestCases();  
+      
+                // Pick the test case combo using PermutationCursorGenerator  
+                // Create an list of sizes of test case lists of each attribute  
+                int no_of_attributes_in_msg_area_testcase_list=attribute_test_case_list.size();  
+                List<Integer> list_for_permutator=new ArrayList<Integer>();  
+                for (int i=0;i<no_of_attributes_in_msg_area_testcase_list;i++)  
+                    list_for_permutator.add(attribute_test_case_list.get(i).getTest_case_list().size());  
+      
+                // Call the permutation generator class with list  
+                new PermutationCursorGenerator(list_for_permutator);  
+                //System.out.println("Attribute Test case size list"+list_for_permutator);  
+      
+                int msg_area_test_case_cnt=0; // cnt holds the total no. of test cases for this message area   
+      
+                // Attribute Test Case matrix level  
+                // Note that the matrix is NOT generated or loaded in memory  
+                // Instead, the static member PermutationCursorGenerator.permutation_cursor holds the indices of each attribute's test case that needs to be evaluated against the index file record  
+                do {   
+      
+                    msg_area_test_case_cnt++;  
+                    testcase_counter++;  
+      
+                    List<Integer> test_case_matrix_indices=PermutationCursorGenerator.permutation_cursor;  
+      
+                    // Record Level  
+                    // Traverse the records in the message area - note that records are arranged by priority  
+                    // Check test case values against criteria in the record  
+      
+                    boolean default_reached=false; // false until default priority record is reached  
+      
+                    for(int j=0;j<ifr_list.size();j++) {  
+      
+                        //Get Criteria list for the record  
+                        IndexFileRecord current_record=ifr_list.get(j);  
+                        List<Criteria> current_record_criteria_list=current_record.criteria_list;  
+      
+                        String compound=current_record.getCompound(); //Compound operator: AND or OR, used to combine individual criteria evaluations  
+      
+                        boolean evaluation=true;  
+                        if (compound!=null) {  
+                            if(compound.compareToIgnoreCase("AND")==0) evaluation=true; //Assumption: the test case combo evaluates true for this record; a single false evaluation of any criteria would break this  
+                            else {  
+                                if(compound.compareToIgnoreCase("OR")==0) evaluation=false; //Assumption: the test case combo evaluates to false for this record; a single true evaluation of any criteria would break this  
+                            }  
+                        }  
+      
+                        //Criteria List Level  
+                        for(int k=0;k<current_record_criteria_list.size();k++) {  
+      
+                            Criteria criteria_list_element=current_record_criteria_list.get(k);  
+      
+                            //     No criteria defined for this element in the list - need to check operator as operator may be "default" if(criteria_list_element.getAttribute()==null && criteria_list_element.getOperator()==null)  
+                                continue; //there may be other criteria defined in the record  
+                            else {  
+      
+                                // Default priority  
+                                if(criteria_list_element.getOperator().compareToIgnoreCase("default")==0 && default_reached==false) { default_reached=true;  
+                                } if(default_reached==false) {  
+      
+                                    // Cursor Level                           
+                                    for(int l=0;l<test_case_matrix_indices.size();l++) {  
+      
+                                    // Compare the record criteria's attribute with the attribute of the test case list   
+                                    // There is a 1-1 correspondence between the position of the cursor list element and the attribute_test_case_list index if(attribute_test_case_list.get(l).getAttribute().compareToIgnoreCase(criteria_list_element.getAttribute())==0) {  
+                                        // Now evaluate test case against criteria  
+                                        String test_case=attribute_test_case_list.get(l).getTest_case_list().get(test_case_matrix_indices.get(l));  
+                                        if(compound.compareToIgnoreCase("AND")==0) evaluation=evaluation && criteria_list_element.evaluateTestCase(test_case);  
+                                        else {  
+                                            if(compound.compareToIgnoreCase("OR")==0) evaluation=evaluation || criteria_list_element.evaluateTestCase(test_case);  
+                                        }  
+                                    }  
+                                    if((compound.compareToIgnoreCase("AND")==0 && evaluation==false) || (compound.compareToIgnoreCase("OR")==0 && evaluation==true))  
+                                        //No point of evaluating the rest of the criteria; get back to the record level  
+                                        break;  
+                                    }  
+                                }  
+                            }  
+                        } if(default_reached==true || evaluation==true) {  
+      
+                            // All criteria in record evaluated OR default priority has been reached  
+                            // If evaluation is true, there is no need to check the rest of the records in the message area; they will have a lower priority and will not matter  
+      
+                            //Prepare JSON output string  
+                            //The JSON string is prepared as list of attribute, value, attribute, value,.....strings   
+                            List<String> JSONString=new ArrayList<String>();  
+                            JSONString.add("TestCase");  
+                            JSONString.add(Integer.toString(testcase_counter));  
+                            for(int m=0;m<test_case_matrix_indices.size();m++) {  
+                                JSONString.add(attribute_test_case_list.get(m).getAttribute());  
+                                JSONString.add(attribute_test_case_list.get(m).getTest_case_list().get(test_case_matrix_indices.get(m)));  
+                            }  
+                            JSONString.add("Message Area");   
+                            JSONString.add(Integer.toString(current_record.getMessageArea()));  
+                            JSONString.add("Message ID");  
+                            JSONString.add(Integer.toString(current_record.getMessageID()));  
+                            try {  
+                                this.writeToJSON(bw,JSONString);  
+                            } catch (IOException e) {  
+                                System.out.println("Cannot generate JSON output... program will quit!");  
+                                e.printStackTrace();  
+                            }  
+                            catch(JSONException je){   
+                                System.out.println("JSONException while generating output... program will quit!");  
+                                je.printStackTrace();  
+                            }  
+      
+                            System.out.println(JSONString);  
+                            break;   
+                        }  
+                    }  
+                } while(PermutationCursorGenerator.isZeroCursor(PermutationCursorGenerator.getNextPermutationCursor())==false);  
+                System.out.println("Total test cases in message area "+ key+" : "+ msg_area_test_case_cnt);  
+            }  
+            System.out.println("Total test cases for the index file : "+testcase_counter);  
+            try {  
+                bw.close();  
+            } catch (IOException e) {  
+                System.out.println("Exception while trying to close BufferedWriter for JSON Object... program will quit!");  
+                e.printStackTrace();  
+            }   
+        }  
+      
+        /**  
+         * @param bw - Buffered Writer of Java  
+         * @param JSONString  
+         * @throws IOException  
+         * @throws JSONException  
+         * Simple function to write a string in JSON format to a file  
+         * File defined in message_managerInit.properties  
+         */  
+        public void writeToJSON(Writer bw, List<String> JSONString) throws IOException, JSONException {  
+                JSONObject obj=new JSONObject();  
+                for(int i=0;i+1<JSONString.size();i=i+2)   
+                    obj.put(JSONString.get(i),JSONString.get(i+1));  
+                bw.write(obj.toString());  
+                bw.write('\n');  
+      
+        }
+
+  
+
+  
+
+# Source Code
+
+### Author: Bhavani Sridharan
+
+Source code in src.zip  
+JavaDoc in doc.zip
+
+### Attachments
+
+250250
+
+

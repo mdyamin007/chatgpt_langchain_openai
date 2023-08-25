@@ -1,0 +1,179 @@
+title: BKPL - Business User Connection
+body:   
+
+  
+
+Target release| Release name or number  
+---|---  
+Epic| Link to related Jira epic or feature  
+Document status|
+
+DRAFT  
+  
+Document owner|  
+  
+Designer| Lead designer  
+Developers| Lead developer  
+QA| Lead tester  
+  
+  
+
+## Goals
+
+  * Set up subuser support for BKPL where a member within a business have access to a subset of the entire business' accounts.
+
+## Background and strategic fit
+
+Client's request. Additionally, this is an issue that has a high impact to the
+client.
+
+## Design
+
+Everything is dependent on NCR and what they can do.
+
+Use digitalInsightV1 for the business users, since it supports accepting of an
+account list.
+
+Actions| Notes  
+---|---  
+Require NCR to pass a "login_id" field for the subuser information.  What the
+login_id is can be determined by NCR as long as its alphanumeric, and unique
+within a business.| Need to confirm also whether NCR can pass the correct
+account types.  
+Update digitalInsightV1 to support reading the login_id so that the field can
+be passed to ssoEnrollmentApi.|  
+  
+For BKPL, the sso should check against primary user.|  
+  
+  
+  
+
+For the retail users, we have to change them from using v1. Here we have two
+options:
+
+Actions| Notes  
+---|---  
+Update V2 to have a "useDatabaseOnly" option.| This is actually more inline
+with the V2 signature. It accepts only the user_fi_number and an email
+address. However, instead of using it and setting it to be the only account
+number, the new option will search the database instead.  
+Create a V3.| V3 will be like V2 in the request signature. However, the
+"useDatabaseOnly" will be exactly what V3 logic is.  
+  
+  
+
+## User interaction and design
+
+ **Retail**
+
+Path: ssoKeyGen/digitalInsightV2 (or V3 - still being decided)
+
+Params (line separated for clarity):
+
+pswd=RETAILPWD
+
+&user_fi_number=123456789
+
+&email_address=dummy_email@email.com
+
+  
+
+ **Business**
+
+Path: ssoKeyGen/digitalInsightV1
+
+Params (line separated for clarity):
+
+ **Business A User 1**
+
+pswd=BUSINESSPWD
+
+&user_fi_number=123456789
+
+&email_address=user_1@businessA.com
+
+&login_id=ABCD
+
+&account_number1=1234567
+
+&atype1=D
+
+&account_number2=4445556
+
+&atype2=S  
+  
+---  
+  
+This user will only have acccess to account 1234567 and 4445556.
+
+  
+
+ **Business A User 2**
+
+pswd=BUSINESSPWD
+
+&user_fi_number=123456789
+
+&email_address=user_2@businessA.com
+
+&login_id=DEF3
+
+&account_number1=1234567
+
+&atype1=D  
+  
+---  
+  
+This user will only have access to account 1234567.
+
+  
+
+ **Business B User 1**
+
+pswd=BUSINESSPWD
+
+&user_fi_number=222333444
+
+&email_address=user_1@businessB.com
+
+&login_id=ABCD
+
+&account_number1=2344431
+
+&atype1=D
+
+&account_number2=6456344
+
+&atype2=S  
+  
+---  
+  
+This user will only have access to account 2344431 and 6456344. One thing to
+note is that the login_id for this user is also ABCD which is the same as User
+1 for Business A. However, this is okay because the login_id is only required
+to be unique within a business.
+
+  
+
+For the Primary Business user, they can either connect through the "Retail"
+connection which will have access to ALL accounts, which is expected. Or they
+can connect as a Business user where the account list provided during the sso
+Request will be ALL accounts. The decision is up to NCR, but it has to be one
+or the other for all primary users. It can't be that some primary users behave
+one way, and some another way.
+
+## Questions
+
+Below is a list of questions to be addressed as a result of this requirements
+document:
+
+Question| Outcome  
+---|---  
+(e.g. How we make users more aware of this feature?)| Communicate the decision
+reached  
+  
+## Not Doing
+
+  * Changing NECU and PFCU. They really should be using the new digitalInsightV2 (or V3). But changing them now is too complicated. We can simply add in V1 that the ignoreAccountMatching should no longer be used for newer clients.
+
+

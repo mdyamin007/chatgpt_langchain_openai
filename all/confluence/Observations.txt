@@ -1,0 +1,210 @@
+title: Observations
+body:   
+
+## Iteration 1: (Mongo test)
+
+ **client**  : infocloud02 (8 GB RAM, 4 core CPU; This server hosts other
+applications); Location : CA  
+ **mongo setup**  : pd-dev6 (32 gb RAM, single core cpu); Location : CA
+
+ **argument 1**  : number of inserts  
+ **argument 2**  :  _true_ : inserts using parallel stream;  _false_ :
+sequential insert  
+Notes: The Sharded setup is running on pd-dev6 ( _single core; 32 GB RAM_ )
+with 10 docker instances.  
+The mongo-client is running on infocloud02 ( _4 core; 8 GB RAM; this also
+hosts Swift ring for Hypercube project_ )  
+  
+
+### Without Sharded setup:
+
+dsarkar@infocloud02:~/benchmark$ java -jar SpringMongoDBBenchmarking-jar-with-
+dependencies.jar 100000 true  
+ Time taken: 107.349141253 Seconds  
+dsarkar@infocloud02:~/benchmark$ java -jar SpringMongoDBBenchmarking-jar-with-
+dependencies.jar 100000 false  
+ Time taken: 165.124897598 Seconds
+
+    
+    
+      
+    
+
+  
+  
+
+### With Sharded setup:
+
+db.document.ensureIndex({_id: "hashed"  
+})  
+    sh.shardCollection("hypercube10.document",  
+{_id: "hashed"  
+} )  
+dsarkar@infocloud02:~/benchmark$ java -jar SpringMongoDBBenchmarking-jar-with-
+dependencies.jar 100000 true  
+ Time taken: 140.045281319 Seconds  
+dsarkar@infocloud02:~/benchmark$ java -jar SpringMongoDBBenchmarking-jar-with-
+dependencies.jar 100000 false  
+ Time taken: 209.358549753 Seconds  
+dsarkar@infocloud02:~/benchmark$ java -jar SpringMongoDBBenchmarking-jar-with-
+dependencies.jar 100000 true   (repeat)  
+ Time taken: 177.653744869 Seconds  
+dsarkar@infocloud02:~/benchmark$ java -jar SpringMongoDBBenchmarking-jar-with-
+dependencies.jar 100000 true   (repeat)  
+ Time taken: 155.487898825 Seconds  
+dsarkar@infocloud02:~/benchmark$ java -jar SpringMongoDBBenchmarking-jar-with-
+dependencies.jar 100000 false   (repeat)  
+ Time taken: 217.879056384 Seconds
+
+  
+  
+
+## Iteration 2: (Mongo
+test)[](https://i3dev.easyredmine.com/projects/hypercube_meteor-multi-
+tenant/wiki/Observations#Iteration-2-Mongo-test)
+
+ **client**  : pd-dev6 (32 GB RAM, 4 core CPU); Location : CA  
+ **mongo setup**  : pd-dev5 (32 gb RAM, 4 core cpu); Location : CA
+
+ **single core pd-dev6**
+
+  
+
+dsarkar@pd-dev6:~/benchmark$ java -jar java8-job.jar 100000 true *(Java)*  
+ Time taken: 110.232109072 Seconds
+
+    
+    
+      
+    
+
+  
+
+###  **after multi core upgrade**
+
+without sharded setup
+
+dsarkar@pd-dev6:~/benchmark$ java -jar java8-job.jar 100000 true *(Java)*  
+ Time taken: 26.911861449 Seconds (java test performed only to measure it
+against similar test written in Scala)  
+dsarkar@pd-dev6:~/benchmark$ scala -classpath scala-job.jar com.infoimage.App
+100000 true *(Scala)*  
+ Time taken: 16 seconds  
+dsarkar@pd-dev6:~/benchmark$ scala -classpath scala-job.jar com.infoimage.App
+100000 false *(Scala)*  
+ Time taken: 27 seconds
+
+    
+    
+      
+    
+
+  
+
+with sharded setup
+
+dsarkar@pd-dev6:~/benchmark$ java -jar java8-job.jar 100000 true *(Java)*  
+ Time taken: 37.997340938 Seconds  
+dsarkar@pd-dev6:~/benchmark$ scala -classpath scala-job.jar com.infoimage.App
+100000 true *(Scala)*  
+ Time taken: 25 seconds  
+dsarkar@pd-dev6:~/benchmark$ scala -classpath scala-job.jar com.infoimage.App
+100000 false *(Scala)*  
+ Time taken: 42 seconds  
+dsarkar@pd-dev6:~/benchmark$ scala -classpath scala-job.jar com.infoimage.App
+100000 true *(Scala)*   (repeat)
+
+    
+    
+     Time taken: 28 seconds
+    
+
+  
+
+For information on Parallel processing, please check
+[here](https://i3dev.easyredmine.com/projects/hypercube_meteor-multi-
+tenant/wiki/Parallelstreaming).  
+  
+
+## Iteration 3: (Swift test)
+
+ **client**  : pd-dev6 (32 GB RAM, 4 core CPU); Location : CA  
+ **Swift setup**  : infocloud51 (TxSwift1) (8 GB RAM, 8 core cpu); Location :
+TX
+
+Swift upload of 10000 files from pd-dev6 (4 core machine) to the swift server
+on TxSwift machine
+
+dsarkar@pd-dev6:~/benchmark$ scala -classpath scala-job.jar
+com.infoimage.Upload false  
+Time taken: 1115 seconds  
+dsarkar@pd-dev6:~/benchmark$ scala -classpath scala-job.jar
+com.infoimage.Upload true  
+Time taken: 341 seconds
+
+    
+    
+      
+      
+      
+    upload locally on TxSwift1 server ( 8 core server along with swift installation)  
+      
+    root@TXSwift1:/home/dsarkar/benchmark# scala -classpath scala-job.jar com.infoimage.Upload false  
+    Time taken: 127 seconds  
+    root@TXSwift1:/home/dsarkar/benchmark# scala -classpath scala-job.jar com.infoimage.Upload true  
+    Time taken: 60 seconds
+
+  
+  
+
+## Iteration 4: (Mongo insert + Swift Upload test) [Across Datacenters]
+
+ **argument 1**  : number of inserts/uploads  
+ **argument 2**  :  _true_ : inserts using parallel stream;  _false_ :
+sequential insert  
+ **argument 3**  : 'upload' to file upload to swift  
+ _note: Although Mongo inserts are spawned across cores, the Swift upload
+would be part of each insert (one upload per insert)_
+
+ **client**  : pd-dev6 (32 GB RAM, 4 core CPU); Location : CA  
+ **Swift Setup**  : infocloud51 (TxSwift1) (8 GB RAM, 8 core cpu); Location :
+TX  
+ **Mongo Setup**  : pd-dev6 (32 GB RAM, 4 core CPU); Location : CA
+
+    
+    
+    dsarkar@pd-dev6:~/benchmark$ scala -classpath scala-job.jar com.infoimage.App 10000 true upload
+    Time taken: 346 seconds
+    
+
+  
+
+## Iteration 5: (Mongo insert + Swift Upload test) [All in one
+Datacenter][](https://i3dev.easyredmine.com/projects/hypercube_meteor-multi-
+tenant/wiki/Observations#Iteration-5-Mongo-insert-Swift-Upload-test-All-in-
+one-Datacenter)
+
+ **argument 1**  : number of inserts/uploads  
+ **argument 2**  :  _true_ : inserts using parallel stream;  _false_ :
+sequential insert  
+ **argument 3**  : 'upload' to file upload to swift  
+ _note: Although Mongo inserts are spawned across cores, the Swift upload
+would be part of each insert (one upload per insert)_
+
+ **client**  : infocloud51(TxSwift1) (8 GB RAM, 8 core cpu); Location : TX  
+ **Swift Setup**  : infocloud51 (TxSwift1) (8 GB RAM, 8 core cpu); Location :
+TX  
+ **Mongo setup**  : MongoDBTX1 (8 GB RAM, 4 core cpu); Location : TX
+
+    
+    
+    dsarkar@pd-dev6:~/benchmark$ scala -classpath scala-job.jar com.infoimage.App 10000 true upload
+    Time taken: 60 seconds
+    
+    dsarkar@pd-dev6:~/benchmark$ scala -classpath scala-job.jar com.infoimage.App 10000 false upload
+    Time taken: 140 seconds
+    
+    dsarkar@pd-dev6:~/benchmark$ scala -classpath scala-job.jar com.infoimage.App 10000 true upload   (repeat)
+    Time taken: 63 seconds
+
+

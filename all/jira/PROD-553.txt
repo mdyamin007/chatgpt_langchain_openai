@@ -1,0 +1,40 @@
+title: JWT Implementation on Prism
+description: None
+
+
+author: mamunur.rashid
+comment: Hi[~Tin.Chak],
+
+Here are my findings:
+
+*1.* JWT is more suitable with REST API based applications. Following steps are performed in JWT based authentication and authorization.
+ * At first necessary data for authentication is sent to a REST API endpoint. Using that data JWT token is generated and returned as a response payload.
+ * After that in every request that token is sent with the Authorization header.
+ * The API validates that token and ensures authorization.
+
+*2.* In PRISM there is no such REST API endpoint to generate and validate JWT token.
+
+*3.* I tried to send the token generated from sso method with the Authorization header and tried to get it from Servlet filter in every subsequent request. But this header is lost in page redirection. Cause when response.redirect() method is called a brand new response and request is generated and the header of the previous request is lost.
+
+*4.*Authorization header is not a storage like cookie so it cant be used as an alternative to cookie.
+
+*5.* HttpSession can be used here instead of cookie. It will solve the third party cookie issue.
+
+Thanks,
+
+Mamun
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: Hi Mamun,
+
+Please review my response below:
+ # JWT doesn't necessary needs to be used with API. It's just a way of encryption information that are used for authentication.
+ # There isn't one, but one can be created and be used by both Hypercube and Prism.
+ # Correct, the authorization header doesn't persist, it needs to be passed in through every page,
+ # See #3. Also, the authorization header won't behave the same as a cookie, but it can still be used as an alternative, it just needs more update and I need your help to identity it if the header works.
+ # HttpSession still utilizes cookies because it needs to store the session ID to retrieve the data in the server storage. If you look back at past projects, we made updated to take out usage of HttpSession. That is the stateless update that we did before.
+
+Thanks,
+
+Sean

@@ -1,0 +1,111 @@
+title: RH2-Prod: OSCU STMT Message Manager Error 
+description: [~William.Kong], OSCU STMT RH2 Prod - failed in mesage manager.
+
+
+
+[oper1@rh2 ~]$ /home/master/oscums2_process.sh 1 bypass s
+1, grep '^DT_JOB_ID:' /home/insert/oscums2.ins|cut -d ' ' -f2|cut -d '.' -f2|cut -d '-' -f1
+removing old /home/keep/oscums2.datatrack.tmp file
+Total Account Parsed: 126200
+--- 1288.12728596 seconds ---
+Total Account Parsed: 5989
+--- 2.58124303818 seconds ---
+Can't open /d/oscums2_sam.log
+Error within program: get_msg_v2_cu_std_prod.pl
+
+
+
+
+
+
+author: william.kong
+comment: [~rogelio_jira]: Can you retest? I think the is related to the issue this morning where /d/ directory did not have the correct permission. I retested earlier this morning and it should work now.
+
+
+
+This is the related ticket that I was talking about:
+
+https://jira.infoimageinc.com/browse/IBTL-124
+
+
+
+
+author: william.kong
+comment: [~rogelio_jira]: Oops! I thought this ticket was related to RHS2. But it is RH2. I just fixed the /d/ permission issue. Can you retest?
+
+
+author: rogelio_jira
+comment: [~William.Kong], I'm still getting message manager issue.
+
+
+
+[oper1@rh2 ~]$ /home/master/oscums2_process.sh 1 bypass s
+1, grep '^DT_JOB_ID:' /home/insert/oscums2.ins|cut -d ' ' -f2|cut -d '.' -f2|cut -d '-' -f1
+removing old /home/keep/oscums2.datatrack.tmp file
+rm: too few arguments
+Try `rm --help' for more information.
+Total Account Parsed: 126200
+--- 1303.16679096 seconds ---
+Total Account Parsed: 5989
+--- 2.88795804977 seconds ---
+Use of uninitialized value in concatenation (.) or string at /home/master/get_msg_v2_cu_std_prod.pl line 305.
+color flag is: in get_msg_v2_cu_std_prod.pl
+jobsel is : s
+Use of uninitialized value in split at /home/master/get_msg_v2_cu_std_prod.pl line 307.
+url: http://pui-prod.infoimageinc.com/MsgServlet22?cid=oscu&apptype=ms2&cycledate=09302020&services=print
+1|oscu_ms2_09262020_10252020.zip
+Successfully grabbed zip file given code 1 and file oscu_ms2_09262020_10252020.zip
+Basename of the file to be grabbed is oscu_ms2_09262020_10252020.zip
+zipfile - /d/isd_input/I3/IS/oscu/oscu_ms2_09262020_10252020.zip
+rm: cannot remove `/d/oscu/oscums2/*': Permission denied
+error: cannot create /d/oscu/oscums2/ms2_Default_15.tif
+error: cannot create /d/oscu/oscums2/ms2_Default_15_color.tif
+error: cannot create /d/oscu/oscums2/oscu_ms2_09262020_10252020.txt
+ls: /d/oscu/oscums2/oscu_ms2_*.txt: Permission denied
+*** Cannot open index file!!! ***
+Error within program: get_msg_v2_cu_std_prod.pl
+
+
+author: william.kong
+comment: [~lemoy28]: Can you help research this RH2 {color:#00875a}*production*{color} testing issue?
+
+
+author: lemoy28
+comment: Hi Will,
+
+Some of folders in /d/oscu only have root permissions.
+
+drwxrwxrwx 2 rayL opers 4096 Mar 30 2018 oscums1
+drwxrwxrwx 2 oper1 opers 4096 Mar 30 2018 oscums1-indiv
+drwx------ 2 root root 4096 Sep 21 19:43 oscums2
+drwx------ 2 root root 4096 Sep 21 19:43 oscums2_burnFrom
+drwxrwxrwx 2 oper1 opers 4096 Sep 1 15:19 oscums2-indiv
+drwx------ 2 root root 4096 Sep 21 19:43 oscums2_zip
+drwx------ 2 root root 4096 Sep 21 19:43 oscumv1
+drwx------ 2 root root 4096 Sep 21 19:43 oscumv1-indiv
+drwx------ 2 root root 4096 Sep 21 19:43 oscumv2
+drwx------ 2 root root 4096 Sep 21 19:43 oscumv2-indiv
+drwx------ 2 root root 4096 Sep 21 19:43 pdf
+drwx------ 2 root root 4096 Sep 21 19:43 visa
+
+
+author: william.kong
+comment: [~lemoy28]: thanks for the research. The syncing was not done properly last night. I'm re-syncing this folder again so that folder attributes are setup correctly. I'll keep this ticket on my court.
+
+
+author: william.kong
+comment: [~rogelio_jira]: I just completed re-syncing the menlo /d/oscu files into brisbane /d/oscu. I confirmed the permission looks correct now. Can you please re-test?
+
+!image-2020-10-15-18-15-48-453.png!
+
+
+author: rogelio_jira
+comment: [~William.Kong]
+
+
+
+Estatement is posted now in PUI Prod Brisbane
+
+
+author: william.kong
+comment: [~rogelio_jira]: Thanks for the update! I will consider this ticket completed.

@@ -1,0 +1,25 @@
+title: HTBK - Auth File Processing
+body: ## Auth File Processing
+
+HTBK's auth file processing is set up to maintain only the primary account
+relationships. For business users who have sub-users, the sub-users are
+maintained only through SSO.
+
+## SSO
+
+Retail users log into SSO via NCR (DI). Business users log into SSO via BB.
+
+### Business Rule
+
+Primary users who have logged in via SSO will not be removed in the post-
+process even if the account relationships are removed from the auth file.
+
+#### Technical Implications
+
+  1. Users who logged in via SSO will have the UFA.source set to SSO. These users will now be referenced as SSO Users.
+  2. Auth files will ignore UFAs with UFA.source == SSO. 
+  3. SSO Users can only be removed through the Delete User function on the Admin Site. (see  for more details)
+    1. Primary SSO Users will be reverted to having UFA.source == DSO, allowing the Auth file to remove the corresponding account relationships if they are no longer in the Auth file
+    2. Business Sub-users will be removed 
+
+

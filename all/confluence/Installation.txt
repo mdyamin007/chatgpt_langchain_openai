@@ -1,0 +1,382 @@
+title: Installation
+body:   
+
+## A. Apache Configuration in DMZ
+
+From a command shell, you will run the following commands:
+
+    
+    
+    sudo apt-get install apache2
+    sudo apt-get install php5
+    sudo apt-get install libapache2-mod-php5
+    sudo /etc/init.d/apache2 restart
+    
+
+Note that if apache is already installed you can omit the first line. Your web
+files will now be found in /var/www/
+
+    
+    
+    sudo /etc/init.d/apache2 restart
+    service apache2 restart
+    
+    cd /etc/apache2/sites-available
+    sudo cp default mulevirtualhost
+    
+    sudo ln -s /etc/apache2/sites-available/mulevirtualhost /etc/apache2/sites-enabled
+    sudo /etc/init.d/apache2 restart
+    /etc/ssl/certs/server.crt
+    /etc/ssl/private/server.key
+    /etc/ssl/private/server.key
+    
+
+service apache2 reload  
+References:
+
+    
+    
+    https://www.digitalocean.com/community/articles/how-to-install-linux-apache-mysql-php-lamp-stack-on-ubuntu
+    https://help.ubuntu.com/10.04/serverguide/httpd.html
+    https://help.ubuntu.com/10.04/serverguide/httpd.html
+    
+
+  
+  
+
+  
+
+## B. PostgreSQL 9.1 Database Server on Linux
+
+  * Login to Linux box console and run below command:
+
+    
+    
+    sudo apt-get install postgresql 
+    
+
+  * PostgreSQL Setup
+    * It will download the package and install under the folder: "/etc/postgresql/9.1"
+    * Edit below files to enable the TCP authentication:
+
+> /etc/postgresql/9.1/main/postgresql.conf  
+> /etc/postgresql/9.1/main/pg_hba.conf
+
+  * PostgreSQL has a super user is called "postgres". Change user to the PostgreSQL user:  
+
+    
+        sudo su - postgres
+    
+
+  * Change password of postgres user:  
+
+    
+        psql -d postgres -U postgres
+    psql (9.1.3) Type "help" for help
+    postgres=# alter user postgres with password 'YOUR_NEW_PASSWORD';
+    ALTER ROLE
+    postgres=# \q
+    
+
+  * logout postgres user  
+
+    
+        $ logout
+    
+
+  * Restart the PostgreSQL server:  
+
+    
+        sudo /etc/init.d/postgresql restart
+    
+
+URL:  
+<http://www.mulesoft.org/documentation/display/current/Persisting+Transaction+Data#PersistingTransactionData-
+PostgreSQL>  
+  
+
+  
+
+## C. pgAdmin III: PostgreSQL administration and management tools
+
+  1. Run below command to install the pgAdminIII admin utility:  
+
+    
+        sudo apt-get install pgadmin3
+    
+
+  2. Set up pgAdmin III server instrumentation:  
+When connecting to a PostgreSQL database using pgAdmin you may receive an
+error letting you know that the server instrumentation is not installed.  
+ Install postgresql-contrib package:  
+
+    
+        sudo apt-get install postgresql-contrib
+    
+
+  
+ Install adminpack extension:  
+
+    
+        sudo -u postgres psql
+    CREATE EXTENSION "adminpack";
+    
+
+* * *
+
+  
+  
+
+## D. MySQL 9.1 Database Admin
+
+  
+  
+
+### a). Login
+
+  * Using root user: Run the following commands to login as the mysql user and connect to mysql user/permission database  
+
+    
+         $ sudo mysql -u root mysql
+     $ sudo mysql --host=10.8.9.57 --user=root --password=<password> --port=3306 --protocol=tcp
+    
+
+  * Using MULE user:  
+
+    
+         $ sudo mysql --host=10.8.9.57 --user=MULE --password=<password> --port=3306 --protocol=tcp
+     $ sudo mysql --host=10.8.9.57 --user=MULE --password=<password>
+    
+
+  
+  
+
+### b). How do I change MySQL root Password?
+
+You can change MySQL root password using one of the following 3 methods.  
+If you have never set a root password for MySQL, the server does not require a
+password at all for connecting as root. To set up a root password for the
+first time, use the mysqladmin command at the shell prompt as follows:  
+  
+
+  
+
+#### Method 1. How to Change MySQL Root Password Using mysqladmin Command?
+
+You can change the mySQL root password using mysqladmin command as shown
+below. Please note that there is  **no space between -p and currentpassword**.
+
+    
+    
+     $ sudo mysqladmin -u root -pcurrentpassword password 'newpassword'
+     $ sudo mysqladmin -u root password 'newpassword'            <!-- alternatively, it can be used -->
+    
+
+Once you've changed it make sure you can login with your new password
+successfully as shown below.
+
+    
+    
+    # mysql -u root -pnewpassword
+    Welcome to the MySQL monitor.  Commands end with ; or \g.
+    Your MySQL connection id is 8
+    Server version: 5.1.25-rc-community MySQL Community Server (GPL)
+    mysql>
+    
+
+  
+  
+
+  
+
+#### Method 2. How to Change MySQL Root Password From MySQL Prompt Using
+UPDATE SQL Command?
+
+You can also use the standard update SQL command combined with the MySQL
+password function to change the password as shown below.
+
+  * Login to MySQL root account using old password*  
+
+    
+        # mysql -u root -poldpassword
+    Welcome to the MySQL monitor.  Commands end with ; or \g.
+    Your MySQL connection id is 8
+    Server version: 5.1.25-rc-community MySQL Community Server (GPL)
+    mysql>
+    
+
+  * Use the UPDATE Command to change root password.  
+
+    
+        mysql> UPDATE user SET password=PASSWORD('newpassword') WHERE user='root';
+    Query OK, 1 row affected (0.00 sec)
+    Rows matched: 1  Changed: 1  Warnings: 0
+    
+
+  * Verify the new MySQL root password
+    * Once you've changed it make sure you can login with your new password successfully as shown below.  
+
+        
+                # mysql -u root -pnewpassword
+        Welcome to the MySQL monitor.  Commands end with ; or \g.
+        Your MySQL connection id is 8
+        Server version: 5.1.25-rc-community MySQL Community Server (GPL)
+        mysql>
+        
+
+  
+  
+
+#### Method 3. How to Set MySQL Root Password Using mysqladmin Command?
+
+This method works only if there is no password currently assigned for the root
+account. If you don't have any password assigned to the root account, set the
+password without giving current password as shown below.
+
+    
+    
+    # mysqladmin -u root password 'newpassword'
+    [Note: There is no currentpassword for root in this example]
+    
+
+  
+  
+
+### c). How to Change MySQL Regular User (non-root) Password Using mysqladmin
+Command?
+
+  * You can use the same mysqladmin command to change password for a mySQL end-user account as shown below.  
+
+    
+        # mysqladmin -u jsmith -pcurrentpassword password 'newpassword'
+    
+
+  
+  
+
+#### How to Change MySQL Regular User (non-root) Password From MySQL Prompt
+Using UPDATE SQL Command?
+
+  * You can also use the standard update SQL command combined with the MySQL password function to change the password of a non-root user as shown below.  
+
+    
+        mysql> UPDATE user SET password=PASSWORD('YOURNEWPASSWORD') WHERE user='MULE';
+    Query OK, 1 row affected (0.00 sec)
+    Rows matched: 1  Changed: 1  Warnings: 0
+    mysql> FLUSH PRIVILEGES;
+    mysql> quit
+    
+
+> **Note:**  Replace newrootpassword with the new root password for MySQL
+> server. Flush Privileges is needed to making the password change effect
+> immediately. Exit mysql database client by typing exit.
+
+  * Verify the new MySQL root password
+    * Once you've changed it make sure you can login with your new password successfully as shown below.  
+
+        
+                # mysql -u root -pnewpassword
+        Welcome to the MySQL monitor.  Commands end with ; or \g.
+        Your MySQL connection id is 8
+        Server version: 5.1.25-rc-community MySQL Community Server (GPL)
+        mysql>
+        
+
+  
+  
+
+#### How to Change MySQL root User Password Using mysqladmin Command?
+
+MySQL stores usernames and passwords in the user table inside the MySQL
+database. You can directly update a password using the following method to
+update or change passwords:
+
+  * Login to the MySQL server, type the following command at the shell prompt:  
+
+    
+         $ sudo mysql -u root -p
+    
+
+  * Use the mysql database (type commands at the mysql> prompt):  
+
+    
+         mysql> use mysql;
+    
+
+  * Run the update queries to change the MySQL password:  
+
+    
+        mysql> UPDATE user SET password=PASSWORD("newpassword") where User='root';
+    mysql> flush privileges;
+    mysql> quit
+    
+
+  
+  
+
+### d). Create Database and User
+
+  * Create new database: 'MULEDB'  
+
+    
+         mysql> CREATE DATABASE MULEDB
+    
+
+  * Create new User: 'MULE'  
+
+    
+         mysql> CREATE USER 'MULE' IDENTIFIED BY 'YOURNEWPASSWORD';
+    
+
+  
+  
+
+### e). Grant connectivity access
+
+  * Grant connectivity to root use from local client on 10.8.9.57:  
+
+    
+         mysql> GRANT ALL PRIVILEGES ON *.* TO 'root'@'10.8.9.57' IDENTIFIED BY '<PASSWORD>' WITH GRANT OPTION;
+     mysql> FLUSH PRIVILEGES;
+    
+
+  * Grant connectivity to MULE user from local client on 10.8.9.57:  
+
+    
+         mysql> GRANT ALL PRIVILEGES ON *.* TO 'MULE'@'10.8.9.57' IDENTIFIED BY '<PASSWORD>' WITH GRANT OPTION;
+     mysql> FLUSH PRIVILEGES;
+     mysql> exit;
+    
+
+  
+  
+
+### f). Start/Stop the MySQL Service
+
+  * To start the server:  
+
+    
+          $ sudo start mysql    <!-- alternatively, below command can be used -->
+      $ service mysql start
+    
+
+  * Stop the MySQL server by using either of the following command:  
+
+    
+               
+      $ sudo stop mysql     <!-- alternatively, below command can be used -->
+      $ service mysql stop
+    
+
+**Note:**  If mysql doesn't run, you should check /var/log/mysql.err and
+/var/log/mysql.log for details.
+
+  * Check MySQL default Port (3306) status:  
+
+    
+        netstat -l --numeric-ports | grep 3306
+    sudo netstat -atpn | grep mysql
+    telnet 10.8.9.57 3306
+    <code></pre>
+
+

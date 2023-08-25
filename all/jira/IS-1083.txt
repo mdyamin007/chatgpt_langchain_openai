@@ -1,0 +1,239 @@
+title: SNFB - Guardian ARM Notices - TS28583 Update to process additional data file EXT0773 - LIVE 5/13
+description: Update code to process an additional data file named: snfb.prod.EXT0773.yymmdd.XXXX.pgp. This file may be sent occasionally when Black Knight has to send a file manually. It is possible to get this file at the same time or on the same day as the current EXT0774 data file. BK confirmed the files are identical in format and data to the EXT0774 files so this should not affect our processing/output. 
+
+Assessment: 
+Will process separately.  So if both files are in BU during processing, DP will need to move one to a temp folder until the other one is processed.
+
+1hr IS programming and testing.
+
+Timeline
+Turnover to IS 5/2 (with test file)
+QA sample 5/4
+Client sample 5/5
+Client approval 5/9
+Parallel 5/10
+LIVE 5/13
+
+*6/9 - Update *- Client does not expect to send a 0773 file. However, InfoIMAGE proposes to put a safety net so if this file is sent, the print program will send out an unidentified file email so the client can let us know how to proceed at that time.
+
+
+author: andreav
+comment: Pending test file from client. Looks like target for test file is on 5/5.
+
+
+author: JIRAUSER11101
+comment: [~andreav],
+
+any update on the test file?
+
+
+author: andreav
+comment: -Black Knight reported that the test file was pulled by InfoIMAGE on 5/9. However, the file is not correct.  Please check test file and advise what needs to be changes/corrected.- Update - Disregard comment. Black Knight was mistaken. Files are sent via FTP and the test file has not been sent yet.
+
+
+author: peter.dang
+comment: Andrea,
+
+Please revise new timeline
+
+
+author: peter.dang
+comment: [~andreav]move live date to 5/30 due to missing data.
+
+
+author: andreav
+comment: [~Peter.Dang][~zhuoxinT] - the client has sent the test file today. Please check and start coding. Please provide a sample date.
+
+Placed in the Test folder:
+
+  !screenshot-1.png|thumbnail! 
+
+
+
+author: JIRAUSER11101
+comment: [~andreav] 
+the data file should be named as the following: snfb.prod.EXT0773.yymmdd.XXXX.pgp.
+Please confirm with client that.
+
+Thanks
+
+
+author: andreav
+comment: [~zhuoxinT] - Client resent corrected file: 
+ !screenshot-2.png|thumbnail! 
+
+
+author: JIRAUSER11101
+comment: [~andreav] I cannot view anything on our software becauseI am not able to get any data from this file.snfb.prod.EXT0773.220517.1029.pgp
+
+maybe the data structure changed.
+Since the data file is encrypted, I cannot tell what is wrong.
+!image-2022-05-19-16-46-16-837.png!
+
+
+author: andreav
+comment: Please clarify what you are asking. Do you want me to ask the client for an unencrypted test data file? 
+
+
+author: JIRAUSER11101
+comment: [~andreav]
+ So the data file should be encrypted. Our program will decrypt it and we will get all the values we need. 
+ However, our program cannot get anything from this file snfb.prod.EXT0773.220517.1029.pgp.
+ That's why I am assuming that the data structure changed.
+
+Or maybe this file only has "NP" template only. the program will not generate anything.
+
+
+author: andreav
+comment: [~enricob] - I will need your assistance on the technical side to work with the client to resolve this issue. Please reach out to Tim and Earl on this matter.
+
+
+author: enricob
+comment: Sent email to client. It does looks like the data file does not contain any valid records.
+
+
+author: andreav
+comment: [~zhuoxinT] - See Black Knight's response below and advise:
+
+-	The layout for the 0773 and 0774 external output files are identical.  Please share an example where you are seeing differences.   There are 3 different record types within both files:
+o	Detail Record
+o	Detail Records  Attorneys 1 and 2
+o	ARM Calculation Information  Non-Borrower
+
+
+
+author: JIRAUSER11101
+comment: Hi [~andreav] ,
+
+According to the EXT0774 mapping record. [https://confluence.infoimageinc.com/x/3YjLBg]
+
+I also captured a screen shot below. 
+ from POS 18-19, we should be able to get the template type, For snfb arm, we are looking for IP and NB
+
+What I found: 
+ template_type => '+&'
+
+We should not have to unpack it if we dont see COMP-3 in the mapping record.
+ after unpack it, it is a string 4
+
+template_type => '4'
+
+ !image-2022-06-02-13-12-34-351.png|width=589,height=302!
+
+And client-no that should be three-digit number.
+
+What I found in the data file:
+ CLIENT_NO => ' '
+
+After I unpack it. It is a 6 digits number.
+ CLIENT_NO_PACK => '373430'
+
+!image-2022-06-02-13-12-15-200.png|width=530,height=93!
+
+Because these two values are wrong, the program cannot process with the data file.
+ And maybe all other values are having the same issue.
+
+
+author: tuna
+comment: Hi [~andreav],
+
+This project is overdue. Can you please provide feedback for above [~zhuoxinT]question.
+
+Also, Can you please update Due date to 06/30 for now?
+
+Thanks,
+
+Tun
+
+
+author: andreav
+comment: Hi Tun, per today's call with the client, they don't think they will ever send a EXT0773 file. However, I think we should still have some safety net just in case. What is the best way to handle it should we get this file, maybe have file receipt scanner send an unidentified file email or update code to accept and process the 0773 file since Black Knight said it will be exactly like the 0774? There is an approval process in place and we will be turning on AOLP so client validates every cycle. Client is willing to sign off on this.
+
+
+author: yameelee
+comment: [~andreav]
+
+we can add the unidentified file email for now. If client ever send the 0773, it will be unidentified and we will have to make the update then to handle it if they need it then.
+
+
+
+[~zhuoxinT], please add unidentified file email to the script and go through qa for this. No parallel. let me know if you have any questions.
+
+
+author: william.kong
+comment: [~andreav]: Please confirm if we can change this project from 5/31 to 6/30 as requested by Tun above. Please advise.
+
+
+author: JIRAUSER11101
+comment: [~Igor.Khosid] 
+ Parallel ID: 20220519162755
+ Currently in parallel: Yes
+ User: zhuoxinT
+ Description: Update to process additional data file EXT0773
+ Date Submitted: 2022-05-19 16:28:15
+ Date Last Updated: 2022-06-08 21:37:24
+ Files:
+ 1) snfbar1_process.sh
+
+Note: Modified the script, when there is more than 1 file in the directory, it will exit and email DP to handle the issue.
+And if there is a EXT0773 data file found. it will exit and email DP and Andrea.
+
+
+author: igor.khosid
+comment: [~Andrey.Kutsenko]
+Please check the script, validate unidentified file email
+
+[~zhuoxinT]
+Please attach sample of the email send to DP
+
+
+author: JIRAUSER11101
+comment: Sample for more than 1 file found.
+!image-2022-06-10-08-26-34-478.png!
+
+Sample for unidentified file found
+
+!image-2022-06-10-08-24-36-960.png|width=598,height=180!
+
+
+author: igor.khosid
+comment: Thank you, [~zhuoxinT]
+
+
+author: william.kong
+comment: [~andreav]: Please confirm if we can change this project from 5/31 to 6/30 as requested by Tun above. Please advise.
+
+
+author: andreav
+comment: Yes, that's fine. 
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+Added logic for sending emails to the Script (snfbar1_process.sh):
+- when there is  more than 1 data file found in the ${input_dir};
+- if a data file include "$data_type" == "EXT0773"
+
+
+author: andreav
+comment: [~zhuoxinT]  On 6/9, Client approved the proposed update on the ARM program so that if a 0773 file is sent to us, it will send out an unidentified file email and you'll need to let us know how to proceed at that time. Please advise when this code will be released to production.
+
+
+author: JIRAUSER11101
+comment: [~Andrey.Kutsenko] 
+[^IS-1083-QA Checklist.doc]
+
+
+author: JIRAUSER11104
+comment: Thank you [~zhuoxinT]
+IS checklist >>>  [^IS-1083_SNFB_CheckList.pdf] 
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+
+
+author: JIRAUSER11101
+comment: [~andreav] 
+code released
+backup id:20220615164403

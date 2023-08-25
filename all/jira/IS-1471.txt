@@ -1,0 +1,141 @@
+title: MFCU - [31778][pvt][in-house] Daily Letter #18.01 - Exception Error on Prisma
+description: UPDATE 8/24/22: Per ticket #31757, comment 22 and 25, MFCU has requested to use branch code 3 TIFF for 7. They want to HOLD the change of not using a TIFF if a branch code is not recognized. This will revisited at a later time.
+
+
+author: jun
+comment: [~dyuen] [~Igor.Khosid] [~berezinez]
+
+This is a hot fix to not use any tiff signature if the branch code is unknown.
+
+
+
+parallel id:20220819080250
+
+project:qa\MFCU\MFCUDL022.zip
+
+
+
+The accounts with issue is on page 1 and 13.
+
+[^mfcudl022.pdf]
+
+
+author: gthillaivel
+comment: QA in progress
+
+
+author: gthillaivel
+comment: [~jun][~dyuen]
+
+Verified the changes ,looks good.Ready for client review
+ !screenshot-1.png|thumbnail! 
+
+>         SIGNATURE_IMAGE = 'MFCU'!BRANCH_CODE ;
+>         CREATEOBJECT IOBDLL(TIFF_INFO)
+>           POSITION LEFT  LASTMAX
+>           PARAMETERS
+>            ('FILENAME'=SIGNATURE_IMAGE)
+>            ('VARPREFIX'='TIFF_INFO_');
+>         TIFF_WIDTH = TIFF_INFO_XSIZE*1 ;
+>         TIFF_HEIGHT = TIFF_INFO_YSIZE*1 ;
+>         TIFF_RATIO = TIFF_HEIGHT/TIFF_WIDTH ;
+>         PLACEHOLDER_HEIGHT = TIFF_RATIO*PLACEHOLDER_WIDTH ;
+>         IF PLACEHOLDER_HEIGHT>30 ;
+>         THEN ;
+>           PLACEHOLDER_HEIGHT = 30 ;
+>         ENDIF ;
+>         CREATEOBJECT IOBDLL(IOBDEFS)
+>           POSITION LEFT  LASTMAX
+>           PARAMETERS
+>            ('FILENAME'=SIGNATURE_IMAGE)
+>            ('OBJECTTYPE'='1')
+>            ('OTHERTYPES'='TIF')
+>            ('XOBJECTAREASIZE'=PLACEHOLDER_WIDTH)
+>            ('YOBJECTAREASIZE'=PLACEHOLDER_HEIGHT)
+>            ('OBJECTMAPPING'='2');
+
+
+
+author: dyuen
+comment: [~jun], does this need to be sent to MFCU for review since this is a hot fix? Is MFCU aware of this?
+
+Thanks
+
+
+author: jun
+comment: [~dyuen],
+
+In ticket 31757, MFCU is okay with releasing without the signature showing. In ticket 31778, I suggested to make the hot fix, but I don't know if MFCU is aware that we are making this hot fix.
+
+
+author: dyuen
+comment: [~jun], spoke with Jessica. She thinks we should do a sample review with the client. I'll update the Jira once I have approval.
+
+Thanks
+
+
+author: dyuen
+comment: [~jun], Jira description updated.
+
+[~Shun.Kuwashima] [~eric.yan], can one of you guys help upload the new resource for this update? We are using branch code 3 TIF for branch code 7.
+
+[~gthillaivel]FYI
+
+Thanks
+
+
+author: jun
+comment: [~Shun.Kuwashima] [~eric.yan] [~dyuen]- Sorry, I just saw that notice 022 is suppressed for enotice as I ran a test. We won't need to send resources.
+
+[~gthillaivel]- Attached is the new pdf samples.
+
+[^MFCUDL022_Samples_0824.pdf]
+
+project:qa\MFCU\MFCUDL022.zip
+
+parallel id:20220819080250
+
+
+author: gthillaivel
+comment: QA in progress
+
+
+author: gthillaivel
+comment: 
+
+  Parallel ID: 20220819080250
+   Currently in parallel: Yes
+   User: junM
+   Description: IS-1471 MFCU Fix empty tiff issue for unknown branch code
+   Date Submitted: 2022-08-19 08:03:20
+   Date Last Updated: 2022-08-24 11:36:33
+   Files:
+      1) MFCUDL022.dfa
+      2) MFCU7.TIF
+
+
+
+author: gthillaivel
+comment: [~Shun.Kuwashima][~eric.yan][~dyuen]
+[~jun]--Verified the signature update and it looks good
+Test results are in the location \\dell-2100\qa\2022\03_Change Request\Gnana T\IS-1471 MFCU
+
+Ready for Client Review
+
+
+
+
+author: dyuen
+comment: [~jun], please confirm once code has been released.
+
+
+author: jun
+comment: Attached transfer form
+
+[^IS_PROGRAM_TRANSFER_FORM_Rev 07132016.doc]
+
+
+author: jun
+comment: [~dyuen]
+
+Code released to prod

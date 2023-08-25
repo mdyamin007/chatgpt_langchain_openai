@@ -1,0 +1,391 @@
+title: SUCU - Annual Credit Card Summary eStatement Setup
+description: SOW link:
+
+[http://sharepoint-svr/AS/Shared%20Documents/SOW%20Directory/SUCU%20-%20Stanford%20Credit%20Union/SOWs/SUCU_Annual_Summary_CC_eStatement_SOW_IS_Setup.doc]
+
+
+
+DT JOB IDs:
+ SUCU| eStmt - Annual Summary Credit Card (stage) = 133005-C00.01-V22631
+
+SUCU| eStmt - Annual Summary Credit Card (pilot) = 139035-C00.01-V22702
+
+
+
++*IS Assessment:*+
+
+Create parsing script to unzip and parse indivdual PDF to extract member name, image count and account number
+
+Create cross-reference file mapping logic to translate the credit card number from pdf files to member account number.
+
+Create a global processing script that handles submitting DT_JOB_ID into print data base and invoking ISD eStatement platform. This generic global coding does not exist and will need to be created.
+
+{color:#de350b}One eStmt index file ( do +not+ split in chunks){color}
+
+
+
+
+author: phoebe.george
+comment: Adding DT JOB IDs:
+
+SUCU| eStmt - Annual Summary Credit Card (stage) = 133005-C00.01-V22631
+
+SUCU| eStmt - Annual Summary Credit Card (pilot) = 139035-C00.01-V22702
+
+
+author: william.kong
+comment: [~thomasY]: The following was from my email to you on 11/16/2021:
+
+
+
+SUCU +Annual+ Credit Card is an eStatement only application.
+
+
+
+*+Business Rule:+*
+
+Per Ratna, there will be a zip file containing all the individual PDF. She mentioned that client will give us a separate XREF file for us to use to translate the account number from the PDF file.
+
+
+
+*Test File*:
+
+We will need to work with Ratna to finalize zip file naming convention and ensure the contents of the file naming convention does not change:
+
+/d/iss/willK/sucu/ye1/Year_End_Sum_123120.ZIP
+
+
+
+
+
+*Sample Program that unzip pdf, extract the member name, get closing date from ZIP filename & get page count*
+
+/d/iss/willK/sucu/ye1/sucuye1_create_estmt.pl
+
+
+
+I have a lot of hard coded logic above, no error checking and incomplete logic to create the eStatement index file
+
+
+
+You will need to write a processing script that DP runs once a year that will take in the zip file & xref file. In the processing program, you will need to create the DT_JOB_ID even though there is no print processing. This is required for eStatement posting. Tun mentioned this program /home/master/etax_only_process.sh was written specifically for eTax process that has logic to create DT_JOB_ID and trigger eStatements. This etax_only_process.sh script intent was to create etax ONLY job (i.e. no print & no pdf archival). Please review this program and create a generic one for statement/daily notice process. We are going need to use this for future jobs that have eStatement ONLY pdf files coming from client.
+
+
+
+
+
+*+Action Items From Ratna/SUCU:+*
+ * Need confirmed ZIP file naming convention. Can it be sucu_year_end_sum_<mmddyy>.zip.pgp? (e.g.: sucu_year_end_sum_123121.zip.pgp File name is lower case)
+ * Need to get sample cross-reference file sample and file naming convention. Can it be sucu_year_end_sum_xref_<mmddyy>.txt.pgp? (e.g.: sucu_year_end_sum_xref_123121.txt.pgp File name is lower case)
+ * Need test xref file no later than 11/29/2021
+
+
+
+
+author: william.kong
+comment: [~ratnam]: On Monday, please confirm that you read the action items above and confirm if you have emailed the follow-up with SUCU to get the items above & expectation set. If they need a little more time on the XREF deliverable, then give them on extra week (i.e. instead of 11/29 it will be 12/6)
+
+
+
+[~thomasY]: Per our scrum meeting this morning you started a little on this project, so I'm going to place this into the "In Progress" status.
+
+
+author: phoebe.george
+comment: [~ratnam] I'll send a followup to SUCU today on the test files with the updated file names.
+
+[~thomasY] can you provide me with a target index file and sample date so I can factor into the timeline for internal approval and to send to customer? 
+
+Thanks!
+
+
+author: thomasy
+comment: [~phoebe.george]Samples should be ready by tomorrow or Friday, but I do need a cross reference file for member number.
+
+I'm assuming the cross reference will be coming in the zip file along with the pdfs?
+
+
+author: phoebe.george
+comment: [~ratnam] Can you confirm Thomas's question? Is ths XREF file the index file that will be coming in with the PDF file zipped together? Thanks!
+
+
+author: phoebe.george
+comment: [~thomasY] please use the same index file that is used for the regular CC for this test. I will request them to send the Annual CC index file along with the PDF's in the same zipped file, but didn't want to hold up testing for pilot. Thanks!
+
+
+author: thomasy
+comment: [~phoebe.george] [~ratnam]Can you confirm what the application type will be?
+
+
+author: phoebe.george
+comment: Hi Thomas, do you mean account type? SUCU is not setup for account types - i think this question came up for regular CC, can you use the same, or does it have to be different?
+
+thanks!
+
+
+
+
+author: thomasy
+comment: [~phoebe.george]That should be fine I think. I'm not sure how it's used on isd's side.
+
+Samples should be ready to post on pilot. Index file is:*ye1_20211217_1_20211217_112922_sucu.txt*
+
+Can you pass it on to whoever is working on this on isd?
+
+
+author: phoebe.george
+comment: [~thomasY] Thanks, I have forwarded to Shun on his story to post to pilot. Thanks!
+
+
+author: phoebe.george
+comment: [~thomasY] ISD provided the following feedback on the estmt index file - can you update and provide a new one?
+
+_I've added the prefix ye1 to our configurations and tried posting, however I think the index file format is incorrect. It seems to still be following the old AFP format without the header on line 1, SUCU should be using the newer Doc processing. Can we have IS take a look? Thanks!_
+
+
+author: thomasy
+comment: [~Shun.Kuwashima] [~phoebe.george]: I added the header to the index file. Please use the same one.
+
+
+author: shun.kuwashima
+comment: [~thomasY] [~phoebe.george] I was able to repost the index file successfully on pilot. Statements are showing under the eCredit Card tab as intended, here's a few accts:
+
+77808
+891291
+
+
+author: phoebe.george
+comment: [~Shun.Kuwashima] Thank you!
+
+[~thomasY] There are blank pages on the samples that I checked as the first page - I'm assuming this is coming in this way from the PDF file itself. I wanted to just ask if there is an option for us to remove it on our end? Wanted to check since I believe the customer will most likely ask this question once they review on pilot. Thanks!
+
+
+author: thomasy
+comment: [~phoebe.george]Do you mean the cover page? I don't see any fully blank pages in the pdfs.
+
+
+author: phoebe.george
+comment: [~thomasY] Sorry for my confusion, you're correct it's the cover sheet and is not blank!
+
+SUCU has approved the posted version on the pilot site; please proceed with next steps in preparation for QA. I'll inform ISD as well that the pilot is approved. Thanks!
+
+
+author: phoebe.george
+comment: [~thomasY] Can you provide an update on the status on your end in preparation for QA? Thanks!
+
+
+author: thomasy
+comment: I can send to QA this week. There are still some final things I need to take care of.
+
+
+author: thomasy
+comment: Parallel:20220113131455
+
+Index File:ye1_20220113_1_20220113_1330_sucu.txt
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220113131455
+   Currently in parallel: Yes
+   User: thomasY
+   Description: 584
+   Date Submitted: 2022-01-13 13:14:58
+   Date Last Updated: 2022-01-13 13:38:32
+   Files:
+      1) sucuye1.control
+      2) sucuye1_create_estmt.pl
+      3) estmt_only_process.sh
+      4) sucuye1.procs
+
+
+
+author: nprimak
+comment: [~thomasY] [~phoebe.george] [~Shun.Kuwashima] 
+
+The index file ye1_20220113_1_20220113_1330_sucu.txt not exists on pui staging and pilot
+
+
+
+
+author: shun.kuwashima
+comment: [~thomasY] I also don't see ye1_20220113_1_20220113_1330_sucu.txt in our input-dev folder, can you check if it was created on your end? 
+
+
+author: igor.khosid
+comment: [~thomasY]
+Any updates?
+
+cc to [~nprimak] [~Shun.Kuwashima]
+
+
+author: thomasy
+comment: [~nprimak]I'm not sure what happened to that index file. We can use the older index file that was already posted.
+
+*ye1_20211217_1_20211217_112922_sucu.txt*
+
+
+author: nprimak
+comment: [~thomasY] [~Igor.Khosid] [~phoebe.george] [~Shun.Kuwashima] 
+
+Thomas I processed file successfully, accounts from processing have cc statements with first and last pages empty too. Some accounts have 2 statements newer has this issue. older looks good. Can you please check?
+
+Exp acc #14282977
+
+
+author: thomasy
+comment: [~nprimak]What do you mean by new and old? There's only 1 index file that was posted.
+
+
+author: nprimak
+comment: [~thomasY] [~Igor.Khosid] 
+
+Thomas, the first and last page on pdfs on eSide are empty.
+
+Is it ok to see first/last pages empty o[^eCredit Card_2021-12-17.pdf] eSide for credit card statements?
+
+
+
+
+
+
+author: thomasy
+comment: [~nprimak]That is how they send it in data. The 1st page is a cover page and last has address.
+
+
+author: nprimak
+comment: [~thomasY] [~Igor.Khosid] 
+
+Tomas if I open pdf statement on eSide, last page is empty, is it how should be?
+
+If I am using download button from open pdf statement, then i see address on the last page
+
+
+author: thomasy
+comment: [~Shun.Kuwashima]
+
+Do you know why the last page is blank when viewing on eSide?
+
+
+author: shun.kuwashima
+comment: [~thomasY] If it's not a data file issue, the only thing I can think of is perhaps there's a resource file we're missing. Can you confirm if we need to upload any?
+
+
+author: shun.kuwashima
+comment: [~thomasY] Actually another thing could be transparency, I know I recently switched them to use a transparent ini file per request from Phoebe, although I don't remember which story that was for. Can you confirm whether transparency should have any effect on this?
+
+
+author: thomasy
+comment: [~Shun.Kuwashima]There aren't any resources. We're just posting the pdf that they provide us without any editing. I'm unsure if it would be a transparency issue, but it looks like the entire pdf uses a transparent background.
+
+[~nprimak]Can you confirm if the address is missing from eSide or if there is an extra blank page?
+
+
+author: shun.kuwashima
+comment: [~thomasY] I'm also seeing that the last page is simply blank, however when downloading the pdf and opening it locally, I can see that the last page contains addresses. Therefore it definitely seems like a transparency related issue.
+
+I looked back at past tickets and found that I enabled transparency in our site configurations in ISD-5714 because some text boxes were not colored properly. Unfortunately we cannot set transparency per application, it has to be all or nothing. Is it possible for you to change the background for those pages? I don't think I can switch the ini file on my end because that may impact previous applications.
+
+
+author: thomasy
+comment: [~Shun.Kuwashima]I don't think it will be possible on our end unless we go through a full formatting process. It's a little odd since all the pages use transparency but only the last page isn't showing up.
+
+[~phoebe.george]Will sucu be able to change how they create the last page (address page) of each account for production? I'm not sure why only the last page has issues displaying eSide.
+
+
+author: igor.khosid
+comment: [~phoebe.george] [~thomasY] [~Shun.Kuwashima] [~nprimak]
+
+Hi All,
+Please be advised that the blank is the last and the first page.
+
+
+author: william.kong
+comment: [~Shun.Kuwashima]: Can you escalate to Sean or David or Tai to help research this. The PDF we are providing comes straight from client. It is not fed through RedTitan and/or Papyrus. If it is provided in PDF file format to you (i.e not indiv afp), it should depend on any transparency settings on AFP2WEB.
+
+
+
+If you still feel you need more troubleshooting with us, please let us know so that we can schedule a troubleshooting session internal
+
+
+
+[~phoebe.george]: FYI. We have an issue here with eStatement presentment of the annual credit card application.
+
+
+author: shun.kuwashima
+comment: [~William.Kong] [~phoebe.george] yeah I just checked via SSO pilot and I can see the content on the first and last page just fine, so I think it may be an issue with infotrac for whatever reason. I will reach out to Anil about this. 
+
+
+author: william.kong
+comment: [~Shun.Kuwashima]/[~phoebe.george]: Guys, please provide another status today on this. SUCU is in a escalated situation so we need to make sure we are making progress.
+
+
+author: shun.kuwashima
+comment: [~William.Kong] [~phoebe.george] I talked to Tai and we're having DSI look into it, this appears to be a PDF viewing issue on InfoTRAC alone. We'll try to update asap.
+
+
+author: shun.kuwashima
+comment: DSI found that InfoTRAC is using an older version of pdf.js, which is causing the UI to show those blank pages. We've asked them to confirm if they can release this next monday 1/31 onto potentially all environments and also perform additional testing beforehand with archived documents to make sure it does not affect those. I'll follow up here again on monday.
+
+
+author: shun.kuwashima
+comment: Upon further pilot testing, DSI has encountered some issues with their initial update, so they'll continue to work on a fix and test thoroughly on dev first before moving it to pilot. 
+
+Just to note again that this should only be impacting the InfoTRAC admin site, not the member site. 
+
+
+author: shun.kuwashima
+comment: [~William.Kong] [~Igor.Khosid] [~phoebe.george] DSI fixed the statement issue on InfoTRAC, I also checked again on InfoTRAC stage and I am now able to see the content in the first and last page. 
+
+
+author: igor.khosid
+comment: [~Shun.Kuwashima]
+Thank you, Shun
+
+[~nprimak] - please review
+
+
+
+
+
+author: nprimak
+comment: [~Shun.Kuwashima] [~Igor.Khosid] 
+
+Verified on staging InfoTrac, I can see now first and last page of CC statements
+
+
+author: shun.kuwashima
+comment: Thanks [~nprimak], [~Igor.Khosid]
+
+[~phoebe.george] Is it ok for DSI to proceed with releasing the InfoTRAC site update to production? We were thinking maybe we should first test viewing their existing credit card apps on pilot/stage to make sure this change doesn't impact existing statements on production.
+
+
+author: phoebe.george
+comment: [~Shun.Kuwashima] yes that would be fine to do, thank you!
+
+
+author: william.kong
+comment: [~phoebe.george]: Just a reminder, we need to initiate the parallel for this project. [~thomasY]is pending Parallel now that this project is approved.
+
+
+
+[~thomasY]: Once parallel passess, we need to immediately do preingestion for 2021 & 2020 cycles.
+
+
+author: phoebe.george
+comment: [~thomasY] [~Igor.Khosid] [~nprimak] MPT #26596 for parallel test created for update.
+
+
+author: igor.khosid
+comment: [~thomasY]
+Please - attach IS checklist
+
+
+author: thomasy
+comment: [~Igor.Khosid]Checklist attached[^sucuye1.pdf]
+
+
+author: igor.khosid
+comment: IS checklist - attached >>>  [^IS-584_SUCU_IS checklist.pdf] 
+
+
+author: thomasy
+comment: Released

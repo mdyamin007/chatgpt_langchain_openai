@@ -1,0 +1,259 @@
+title: OSCU - StmtPDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133572-C00.01-V21052
+
+Processing Scripts to modify:
+ oscums2_process.sh
+
+Data Files to use:
+ OSCU_20210430_Monthly_Statement.xml.zip
+
+
+
+*NOTE*: This job runs on RH2 server. Since we are migrating from RH2 server to RHS, please test ALL job_sel options to ensure RHS can run with error messages in the processing log files.
+
+
+
+
+author: william.kong
+comment: [~anwarh]: I noticed that isisdisk_daily.sh has a special condition for oscums2 for pdf archival. Please remove the logic from isisdisk_daily.sh and convert this to use our standard afp2pdf.py program.
+
+
+author: anwarh
+comment: Hi [~William.Kong],
+
+Parallel ID: 20221022172957
+ production cycle: 09/30
+
+Data files:
+ /z/dsi_pdfi_testing/oscums2/data/OSCU_20220930_Monthly_Statement.xml.zip
+
+old zips: /z/dsi_pdfi_testing/oscums2/old/
+ new zips: /z/dsi_pdfi_testing/oscums2/new/
+
+Notes:
+ * You can't remove isisdisk logic for this, because it merges accounts from two different apps by sorting and suppressing.
+ ** But moved it from pdfi to e job option inside isisdisk_daily.sh
+ * Rony is also working on another change in the isisdisk in IS-418
+ * Not sure how it worked before but the script 'oscu_pdfi_zip2.pl' was calculating total size of pdf as 15GB (before zipping)
+ ** If I do that in rhs, it fails (when you try to unzip any of the file) because I think zip can not be larger than 4GB
+ ** Changed to back to 4GB
+ * afp2pdf has no option to suppress, neither are in papyrus if you use groupindex. So manually deleting those accounts using another script.
+
+Thanks,
+ Anwar
+
+
+author: william.kong
+comment: [~anwarh]: Please restore the original oscu_pdfi_zip2.pl code. I was able to use rhs server and zip without issue and will result in less zip files for client to download. I really don't want to increase the number of zip files with the afp2pdf logic. The following screenshot is what I did in parallel but invoking the original production version of the script:
+
+!image-2022-10-26-11-58-24-211.png!
+
+
+
+I checked the number of zip files and down to 2 zip files instead of 7. Parallel zip file size is 4.1GB compared to production 3.9GB which believe is an acceptable increase with the new afp2pdf change:
+
+
+
+the following is the command showing the difference between the parallel original zip script vs your version that I renamed to zip.org folder:
+
+ls -lhtr /z/pdf_afp/oscu/oscums2/zip /z/pdf_afp/oscu/oscums2/zip.orig
+
+!image-2022-10-26-12-02-54-614.png!
+
+
+
+Can you restore the code and re-run the job so I can pass this along with QA?
+
+
+
+In the meantime, I'm still struggling to see what I can do to help QA team to compare the pdf files. The PDF compare is complaining a lot of differences, but visually it is not big deal. This is mainly due to the header bar tiny color difference and the gradient header bar graphics. I don't believe there is anything you can do to address this issue at this time. So for now, please re-run again.
+
+
+
+
+
+
+author: anwarh
+comment: [~William.Kong], It can create zip fine, but I can't unzip. I just generated new zip file with the original code here /z/pdf_afp/oscu/oscums2/zip/
+Can you try? 
+
+
+
+author: william.kong
+comment: my apologies [~anwarh]! Your assessment of the larger 4GB assessment is correct. I forgot that zipping greater than 4GB is correct but not unzipping. I've been tweaking and testing on a pdf size specification and will inform you what the correct value is while you finish up the other PDFi conversion project for the other apps.
+
+
+author: anwarh
+comment: Another thing I forgot to add, the isisdisk_daily.sh changes are merged with IS-418 changes.
+Depending on which one goes first, we might need to remove the other one's changes. 
+
+
+author: william.kong
+comment: [~anwarh]: I'm not able to get the total number of zip files to match from parallel to match the total number of 3 zip files in production:
+
++Production*:*+
+{quote}**-rw-r--r--. 1 williamK isgroup 3.9G Oct 4 21:35 oscu_ms2_09302022_1.zip
+ -rw-r--r--. 1 williamK isgroup 3.8G Oct 4 21:58 oscu_ms2_09302022_2.zip
+ -rw-r--r--. 1 williamK isgroup 130M Oct 4 21:59 oscu_ms2_09302022_3.zip
+{quote}
+
+
+Strangely, the Parallel pdf & txt index file directory size is less than production, but yet, we create more zip files than production.
+{quote}[oper1@rhs oscums2]$ du -sh /d/pdf_afp/oscu/oscums2/pdf; du -sh /z/pdf_afp/oscu/oscums2/pdf
+
+31G /d/pdf_afp/oscu/oscums2/pdf
+
+27G /z/pdf_afp/oscu/oscums2/pdf
+{quote}
+
+
+Instead of 7 zip files you created, I've reduced it to 6:
+{quote}-rw-r--r--. 1 williamK isgroup 3.1G Oct 26 07:21 oscu_ms2_09302022_1.zip
+ -rw-r--r--. 1 williamK isgroup 3.1G Oct 26 07:28 oscu_ms2_09302022_2.zip
+ -rw-r--r--. 1 williamK isgroup 3.1G Oct 26 07:35 oscu_ms2_09302022_3.zip
+ -rw-r--r--. 1 williamK isgroup 3.1G Oct 26 07:41 oscu_ms2_09302022_4.zip
+ -rw-r--r--. 1 williamK isgroup 3.1G Oct 26 07:49 oscu_ms2_09302022_5.zip
+ -rw-r--r--. 1 williamK isgroup 3.1G Oct 26 07:58 oscu_ms2_09302022_6.zip
+ -rw-r--r--. 1 williamK isgroup 1.5G Oct 26 08:03 oscu_ms2_09302022_7.zip
+{quote}
+Here is the+slightly+ improved version using JPEGQuality=35:
+{quote}-rw-r--r-- 1 oper1 opers 3.8G Oct 31 17:22 oscu_ms2_09302022_1.zip
+ -rw-r--r-- 1 oper1 opers 3.8G Oct 31 17:35 oscu_ms2_09302022_2.zip
+ -rw-r--r-- 1 oper1 opers 3.8G Oct 31 17:49 oscu_ms2_09302022_3.zip
+ -rw-r--r-- 1 oper1 opers 3.8G Oct 31 18:02 oscu_ms2_09302022_4.zip
+ -rw-r--r-- 1 oper1 opers 3.8G Oct 31 18:14 oscu_ms2_09302022_5.zip
+ -rw-r--r-- 1 oper1 opers 805M Oct 31 18:16 oscu_ms2_09302022_6.zip
+{quote}
+
+
+Please use the following updated scripts:
+
+
+
+Updated the following script to improve performance to use perl function -s instead of stat linux command.
+
+Reduced the zipFileSize file size down to5200000000 bytes.
+{quote}md5sum /d/ac-secure-share/dsi_print/anwarH/IS-1204/oscu_pdfi_zip2.pl
+ 8ad357cf533a6b7ea2cd011c16b2838f /d/ac-secure-share/dsi_print/anwarH/IS-1204/oscu_pdfi_zip2.pl
+{quote}
+
+
+Use JPEGQuality of 35 instead of the default 50. This compresses the PDF file a little and not affect quality too much.
+{quote}md5sum /d/ac-secure-share/dsi_print/anwarH/IS-1204/oscums2_pdf.control
+ a8701c4dd0dbdfd7948d487b1f87096e /d/ac-secure-share/dsi_print/anwarH/IS-1204/oscums2_pdf.control
+{quote}
+
+
+
+
+Can you re-test later this week using the most current production file (i.e. Oct 31, 2022) cycle since we should be getting that production file today.
+
+
+
+Per [~terrencet]assessment as well, please use S1OSCUF1.300 for e option in the DFA. This resource file is smaller. Let's also hope this will improve the zipping as well too.
+
+
+
+
+author: anwarh
+comment: Hi [~William.Kong],
+New archival in : /z/pdf_afp/oscu/oscums2/zip/
+Thanks
+
+
+author: anwarh
+comment: although it's generating 1.7GB zip files now. 
+
+
+author: william.kong
+comment: [~anwarh]: Sorry! One last request. Can you change the zipFileSize to11000000000 instead of5200000000
+
+[williamK@rhs2 oscums2]$ diff oscu_pdfi_zip2.pl /home/test/master/oscu_pdfi_zip2.pl
+78c78
+< $zipFileSize=11000000000;
+---
+> $zipFileSize=5200000000;
+
+
+
+Now with Terrence's suggestion to use a different resource to decrease the individual PDF size, we can now increase the zip size. This should reduce the number of zip files to 3 instead 6 zip files.  
+
+
+
+
+
+
+
+
+
+
+
+
+author: anwarh
+comment: Hi, [~William.Kong], yes, it generates 3 files now. Please check again in: /z/pdf_afp/oscu/oscums2/zip/. Thanks
+
+
+author: william.kong
+comment: Thanks [~anwarh]! Much better!
+
+
+
+[~Igor.Khosid]/[~Andrey.Kutsenko]: Please resume QA this week. Files are in:
+
+ca-unittest-pr-02:/d/pdf_compare/oscums2_prod/
+
+ca-unittest-pr-02:/d/pdf_compare/oscums2_parallel/
+
+
+
+Bear in mind, b/c the headings are in dynamic location and the color is slightly different, you may run into the same issue where all PDF are reporting most documents are different.
+
+
+
+I even created a small test configuration:
+
+/d/pdf_compare/oscums2_wk.json
+
+
+
+
+
+
+author: igor.khosid
+comment: [~William.Kong]
+Andrey - is out of the office this week. Will be back and resume on Monday
+
+[~Andrey.Kutsenko] - FYI
+
+
+author: william.kong
+comment: [~Igor.Khosid]/[~Andrey.Kutsenko] : Would you be able to find time to review this particular QA request. We have 3 more projects to complete Phase I including this one. We are targeting to wrap up Phase I of this project next week before Thanksgiving so that we can shutdown RH2 server.
+
+[~Andrey.Kutsenko]: When you work on this, please review my comment above. There will be+alot+ of differences due to the dynamically located header where the color is slightly off. Please don't hesitate to reach out to me on this particular application if needed. Thanks!
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+ note: Parallel files look better. Differences in the final report files are mainly due to the background image on the first page.
+
+{code:title=$ export parallelProcessing=false; perl pdf_compare.pl oscums2_prod oscums2_parallel result_oscums2 -pixels 15 -threads 8 --exclusions oscums2_wk.json|borderStyle=solid}
+Total PDF Files with Differences: 6000
+ Please review the directory in /d/pdf_compare/result_oscums2 directory & /d/pdf_compare/result_oscums2/pdf_compare_rpt.txt report to see all the PDF differences
+ WARNING: We did not compare ALL the pdfs!
+ pdf_compare.pl will only process the first 6000 pdf files out of the total 129688 pdfs
+ Start Time: Wed Nov 16 15:57:00 PST 2022
+ Finish Time: Thu Nov 17 00:13:38 PST 2022{code}
+

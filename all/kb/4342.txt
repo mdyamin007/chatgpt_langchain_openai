@@ -1,0 +1,24 @@
+This code segment is from prepare_data_file.sh
+if [ $typeofile = "zip" ]; then
+(( zipFileCount ++ ))
+echo "unzip -jo ${outfiledir}/$outfile -d ${outfiledir}/" >> $taxdir/today.log
+unzip -jo ${outfiledir}/$outfile -d ${outfiledir}/
+rm ${outfiledir}/$outfile
+fi
+if [ $typeofile = "7z" ]; then
+(( zipFileCount ++ ))
+echo "7za e ${outfiledir}/$outfile -o${outfiledir}/" >> $taxdir/today.log
+if [[ $HOSTNAME =~ 'rh2' ]]; then
+7za e ${outfiledir}/$outfile -o${outfiledir}/
+else
+ssh -o BatchMode=yes $LOGNAME@rh2 "7za e ${outfiledir}/$outfile -o${outfiledir}/"
+fi
+rm ${outfiledir}/$outfile
+fi
+if [ $typeofile2 = "tar" ]
+then
+(( zipFileCount ++ ))
+echo "tar -xvf ${outfiledir}/$outfile -C ${outfiledir}/" >> $taxdir/today.log
+tar -xvf ${outfiledir}/$outfile -C ${outfiledir}/
+rm ${outfiledir}/$outfile
+fi

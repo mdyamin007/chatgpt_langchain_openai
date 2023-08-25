@@ -1,0 +1,111 @@
+title: SSCU - [31298] [pvt] Daily cycle 2 - duplicate data file
+description: IS Assessment
+=============
+ Hours for development:  4 IS hours + (ISD hours not require)
+ Turnover Date :  09/06/2022
+ Sample to QA Date:  09/16/2022 
+ Approval Date:    09/22/2022
+ Go live date :  09/26/2022
+ Engineering resource: Natalie Tom
+ 
+Assessment Details (IS):
+- Parallel required: (no)  
+- Output: (script update)
+- Application name: SSCUDLE
+- Re-arrange commands to perform check sum only for data files. (Do not include  sscu_productlist_LN_MATNT_*.dat and sscu_xfer_*.dat)
+- The processing script (sscudle_process.sh) is performing check sum for all the files in "/d/daily/sscudle/MMDD/" folder.
+- Example: Checksum error for sscu_productlist_LN_MATNT_08022022.dat
+/home/keep/cksum_log/sscudle_cksum.log:  36a549379f220071176ac04f332dde7f  
+/d/daily/sscudle/0802/sscu_productlist_LN_MATNT_08022022.dat,0802
+ 
+- Use this data file for testing: SSCU_DN_08022022_1.zip.pgp
+[oper1@rhs 0802]$ unzip -l SSCU_DN_08022022_1.zip
+Archive:  SSCU_DN_08022022_1.zip
+  Length     Date   Time    Name
+ --------    ----   ----    ----
+   242206  08-02-22 00:01   CCM_Overlimit_Notice_08022022.txt
+   170497  08-02-22 00:00   LN_LATE_080122.STM
+    22557  08-02-22 00:01   LN_MATNT_080122.STM
+     9546  08-02-22 00:00   LN_RPCHG_080122.STM
+     5824  08-01-22 21:00   PS-MINORCHNGAGE_080122.STM
+   114459  08-01-22 23:59   PS-OVDFT_080122.STM
+    50150  08-01-22 23:59   PS_DPIUD_080122.STM
+  2022997  08-01-22 19:52   PS_ENDDAY_FEE_NT_080122.STM
+      739  08-02-22 05:00   sscu_productlist_LN_MATNT_08022022.dat
+ 25132583  08-02-22 05:00   sscu_xfer_08022022.dat
+    55460  08-01-22 23:57   TD_NOTE_080122.STM
+ --------                   -------
+ 27827018                   11 files
+
+
+
+author: JIRAUSER11103
+comment: [~Igor.Khosid]
+ Parallel ID: 20220909145814
+ Currently in parallel: Yes
+ User: natalieT
+ Description: Update script to perform check sum only for data files (not productlist and xfer files)
+ Date Submitted: 2022-09-09 14:59:18
+ Date Last Updated: 2022-09-13 11:32:09
+ Files:
+ 1) sscudle_process.sh
+
+QA checklist:[^qa_check_list_sscudle.pdf]
+Please check to see that the code was updated to not include those 2 files in the checksum and ensure that the checksum doesn't include them from test data file
+
+[~Juliana Vannik] 
+Once QA is complete, please have Alex test it.
+
+
+author: igor.khosid
+comment: QA - completed
+1. Difference prod vs test
+> 		  if [[ $filename =~ 'sscu_productlist_LN_MATNT' || $filename =~ 'sscu_xfer' ]]; then
+> 			 echo "Skip cksum for productlist_LN_MATNT and xfer file - $filename"
+> 			 echo "Skip cksum for productlist_LN_MATNT and xfer file - $filename" >> ${targetDir}/today.log
+> 			 continue
+> 		  fi
+2. sscudle_cksum.log - validated
+
+
+author: JIRAUSER11103
+comment: [~Juliana Vannik] 
+Please have Alex test it as he made the request for this update on the team support ticket.
+
+
+author: phoebe.george
+comment: [~Natalie.Tom] Can you confirm if you just need Alex to reprocess the 8/2 production cycle (in parallel environment) that was noted in the ticket #31298 to perform the test?
+
+Thanks!
+
+[~Juliana Vannik] FYI
+
+
+author: JIRAUSER11103
+comment: [~phoebe.george] 
+Yes, please have Alex test it as he had asked for this update seen in the team support ticket 31298. There is no parallel, so he would have to check to see that the update was made before releasing.
+
+
+author: JIRAUSER11103
+comment: [~phoebe.george] [~Juliana Vannik] 
+Is there any update from Alex? Live date is today.
+
+
+author: JIRAUSER11103
+comment: [~phoebe.george] [~Juliana Vannik] 
+Per my conversation with Alex, he has tested the file:SSCU_DN_08022022_1.zip.pgp with no errors pertaining to the files in the cksum. After asking if he checked the logs for the comment regarding skipping those files and if there were no errors like he mentioned in team support 31298 comment 1, his response was "yes, it looks good. thanks!"
+
+This update will be released by today.
+
+
+author: JIRAUSER11103
+comment: [~phoebe.george] [~Juliana Vannik] [~Igor.Khosid] 
+Code has been released. Backup ID:20220927162428
+
+
+author: phoebe.george
+comment: [~Natalie.Tom] Thank you!
+
+
+
+[~Juliana Vannik] This ticket can be marked as done. Thanks!

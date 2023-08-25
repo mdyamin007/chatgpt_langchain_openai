@@ -1,0 +1,199 @@
+title: Black Knight API
+body: # Overview
+
+Black Knight (BKI) is a third-party vendor that is a core for mortgage
+statements. BKI provides a service portal to financial institutions that allow
+the end-users to access their mortgage data, and pull electronic mortgage
+statements. For certain mutual clients that BKI have with InfoIMAGE where
+InfoIMAGE is hosting the clients' electronic documents, BKI will call a
+specialized InfoIMAGE  **Black Knight API** to retrieve all the necessary
+data.
+
+The ** ** Black Knight API consists of two clusters of applications:  and .
+Connection between Black Knight and InfoIMAGE requires OAuth2 authentication.
+The Black Knight Auth Server is the authentication server that will handle the
+OAuth2 authentication. The Black Knight Docs Service is the resource server
+that will serve authenticated request with the requested data. Both
+applications are built using Spring Boot.
+
+The BKI Docs Service is coded to the specs provided by Black Knight:  (Note:
+this was obtained in 2022, so it may be out-of-date). The error responses
+follow this specs:  (Note: again obtained in 2022; use a Swagger yaml parser
+to display a legible UI).
+
+truenone  
+  
+---  
+  
+* * *
+
+# Vendor Information
+
+## BKI Document Portal
+
+The user will access the document portal shown above to access the documents.
+There are four categories:
+
+  * LoanStatement -> Billing
+  * EscrowStatement -> Escrow
+  * TaxStatement -> Taxes
+  * Other -> Other
+
+## Contact
+
+ **Credentials must be sent ONLY to
+**[API.Gateway@bkfs.com](mailto:API.Gateway@bkfs.com).
+
+## Release Schedule
+
+BKI has a monthly release schedule at around the third week of every month.
+Therefore, it is advised that InfoIMAGE should begin any new setup project
+(ISD side) at the start of a month. This will provide two weeks in UAT, and
+then release around the third week of the month to match BKI's release
+schedule.
+
+* * *
+
+# System Design
+
+Overall System
+
+## Internal System
+
+## Dev Ecosystem
+
+Proxy| Auth Server| Docs Service  
+---|---|---  
+ca-intproxy-st-02|
+
+ca-infotrac-dv-01  
+ca-infotrac-dv-02
+
+| ca-apipui-dv-01  
+  
+## Pilot Ecosystem
+
+Proxy| Auth Server| Docs Service  
+---|---|---  
+  
+ca-extproxy-pi-07  
+ca-extproxy-pi-08
+
+|
+
+ca-infotrac-pi-01  
+ca-infotrac-pi-02
+
+|
+
+ca-apipui-pi-01  
+ca-apipui-pi-02  
+  
+## Stage Ecosystem
+
+Proxy| Auth Server| Docs Service  
+---|---|---  
+ca-intproxy-st-02|
+
+ca-infotrac-st-01
+
+|
+
+ca-apipui-st-01  
+  
+## Prod Ecosystem
+
+Proxy| Auth Server| Docs Service  
+---|---|---  
+ **TODO**|
+
+ca-infotrac-pr-01  
+ca-infotrac-pr-02
+
+|  **TODO**  
+  
+* * *
+
+# General Guide
+
+## Requirements
+
+  * Statements/notices posted with Document Processing or taxes posted with EtaxData3 format.
+  * Statements should be posted to accounts with type BK. The account number should be the MSP Loan Number.
+  * Supported statement types: mortgage, escrow, enotice and etax. It is not expected that Black Knight will service any other type of statements.
+
+## Setup
+
+### Configuration (InfoConfig)
+
+Application| Objects| Description | Note  
+---|---|---|---  
+ **InfoConfig**|
+
+blackKnight
+
+archivalPeriod
+
+|
+
+  1. Application to apply: black-knight
+  2.  blackKnight
+    1. portfolioId: exactly the value provided by Black Knight
+    2. oAuth
+      1. id: (cid)-(random alphanumeric string of length 8)
+      2. secret: the secret is a 32-length alphanumeric string that is encrypted with Bcrypt
+        * It is defined as "{bcrypt}(encrypted-password)", e.g. {bcrypt}$2y$10$vsl5caS57Ke9tlsqsB3KY.f7/fLP8Mh4Ea2IMGasiqnzmbCj7GXKC. 
+        * Use this: <https://bcrypt.online/> to encrypt the password.
+        * All secrets are stored in . Update accordingly. The file stores unencrypted password, which will also be the value that must be provided to Black Knight.
+      3. scope: (cid).read
+  3. archivalPeriod
+    1. must be defined for statements that will be posted for the client
+      * applicable type: mortgage, escrow, etax, enotice (not all has to be defined if the client doesn't have the statement setup)
+
+|
+
+  * oAuth for Dev/Pilot should use the Pilot set of credentials. oAuth for Stage/Prod should use the Production set of credentials. This way, it makes deploying to client-facing environments a lot simpler. Pilot can simply copy from Dev. Prod can simply copy from Stage.
+
+  
+  
+ **Oracle DB**
+
+|  doc_desc| Descriptions for mortgage/escrow/enotices statements. For
+statements, this allows documents with the same statement type, e.g. mortgage,
+to have different descriptions ("First Mortgage" vs "Second Mortgage").|
+Assess with the client and Print team on the type code of each statement (by
+application), and their descriptions.  
+ **BKI Docs**|  Cache Configuration (ehcache.xml in code)| The BKI Docs
+Service store some data in local disk cache to optimize the API calls. Certain
+information like orgID should rarely change, and therefore, the application
+does not make the same query multiple times. The caches have default
+definition for how much space they should take up. As more clients are added,
+these configurations should be reviewed, and updated accordingly. | Reference
+for more information.  
+ **API Count Report**|  Scripts| Count API calls| The report scripts need to
+be updated to count for the new client.  
+  
+### Server Restart
+
+Due to how HttpSecurityFilter work, the Docs Service must be restarted to
+enable the new endpoint for the new client. This is only true for new client.
+
+R&D is required to see if it is possible to have a more dynamic security
+filtering.
+
+* * *
+
+## Discontinuation
+
+In the event that a client is no longer using the service, do the following:
+
+  1. Remove all InfoConfig configurations.
+  2. Delete the record for the CID in the oauth2_registered_client table in the default SCHEMA.
+
+sqlMidnightDelete Querytrue
+
+  
+
+  3. Restart Docs Service (not absolutely required, since the OAuth2 token can no longer be obtained if the configuration is removed and the DB record is deleted).
+
+

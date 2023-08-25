@@ -1,0 +1,577 @@
+title: RHS:  pdftk (deprecated);  qpdf replacement utility
+description: pdftk is no longer supported for Centos 7 or 8. (refer to[https://www.pdflabs.com/docs/install-pdftk-on-redhat-or-centos/])
+
+
+
+We installed qpdf on current RHT, {color:#ff0000}-RHS-{color}, RHS2, RH2 and the new bb-rhs.infoimageinc.com
+
+
+
+*NOTE*: RHS was+*not*+ installed in the menlo park server. Ernest could not compile this on this system. RHS will need to be an exception for now.
+
+
+
+*Objectives:*
+
+#1. Test on all systems: rh2, rhs2, {color:#ff0000}-rhs-{color}, and rht to make sure split, combine, and getting page count info functionality works exactly the same between all 4 Menlo Park System 
+
+#2. Evaluate/Benchmark if performance of qpdf is close or equivalent to pdftk
+
+#3. Make sure qpdf works on encrypted files (i.e. read encrypted pdf files as input); I did not verify if this functionality works or not.
+
+#4. Once all above objectives are achieved and confirmed working well, then we need to identify ALL existing shell and perl scripts using pdftk and convert them over one at a time to qpdf. Make sure both Terrence and Peter are in agreement before we start executing this objective.
+
+
+
+In reviewing the /home/master/* code, I believe we primarily us it for splitting PDF and getting information on the total number of page count.
+
+
+
+*Combining individual PDFs to Big PDF (pdftk vs qpdf)*
+
+
+{noformat}
+pdftk ${data_dir2}*.pdf cat output ${data_dir2}combined_remain.pdf
+qpdf --empty --pages indiv_pdf/*.pdf -- combined.pdf
+{noformat}
+
+
+*Extracting Total Number of PDF Pages Info (pdftk vs qpdf)*
+{noformat}
+pdftk $outputfile_final dump_data | grep NumberOfPages | cut -d: -f2 | tr -d ' '
+qpdf --show-npages{noformat}
+
+
+*Syntax Splitting PDF by range (pdftk vs qpdf)*
+
+
+{noformat}
+pdftk ${bigPDF} cat $pageRange output $pdfFile
+qpdf source.pdf --pages source.pdf $myRange -- output.pdf
+{noformat}
+
+
+Below are list of active programs that currently use pdftk tool.
+
+apcu_1099rgen_create_paper_index.pl
+apcu_create_paper_index.pl
+apcudl_pdf_process.sh
+apcuml4_process.sh
+apcuya1_process.sh
+apcuyl1_process.sh
+apcuyt1_process.sh
+bfcudlb_process.sh
+bkfndlc_process.sh
+bkgc_dda_process.pl
+cambaa1_process.sh
+catpdf.pl
+ccmc_epic_process.pl
+chcuea1_process.sh
+chcums4_estmt_index.pl
+chcums4_process.sh
+clcudlb_process.sh
+eecuml1_process.sh
+eecuyea_process.sh
+elcu_create_paper_index.pl
+entcla1_process.sh
+eqbk_dda_process.sh
+eqbkms1_estatement_index_file_conversion.pl
+eqbkyl1_process.sh
+esigmna_process.sh
+ewbb_dl_process.sh
+ewbb_dna_process.sh
+ewbbyt1_process.sh
+fffcdlb_getDataFile.pl
+fffcdlb_process.sh
+ffinms1_preingestion.pl
+flcudlb_process.sh
+flcuml1_process.sh
+flcuml2_process.sh
+frstcl1_process.sh
+frstcl2_process.sh
+frstcl3_process.sh
+frstcl4_process.sh
+frstes1_process.sh
+frstes2_process.sh
+frstyl1_process.sh
+gcbk_heloc_preingest.pl
+gcbk_ira_preingest.pl
+gcbk_preingest.pl
+htbkaa1_process.sh
+htbkpa1_process.pl
+idcuba1_process.sh
+idcudlg_process.sh
+isisdisk.sh
+jprirt1_process.sh
+lccuml_process.sh
+msbkms1_dda_preingest.pl
+msbkms1_sav_preingest.pl
+mtrodl_process.sh
+oscudlb_process.sh
+oscumlb_process.sh
+oscuyl1_process.sh
+pamd_process.sh
+prcu_1098gen_create_paper_index.pl
+redtitan_daily_process.sh
+redtitan_stmt_process.sh
+rwcudn_process.sh
+rwcuml8_process.py
+sanadlb_process.sh
+sanadl_process.sh
+sanaml1_process.sh
+sefcdlb_process.sh
+sheldla_arch_process.pl
+sheldla_arch_process.sh
+sheldla_process.pl
+sheldla_process.sh
+sheldld_process.sh
+slcudna_process.sh
+slcudnb_process.sh
+sncuml1_process.sh
+snfbdna_process.sh
+sunwym1_process.sh
+tkcuml_process.sh
+ucsf_epic_stmt.pl
+utcudlb_process.sh
+vwcu_create_paper_index.pl
+vwcuml2_process.sh
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~andyp]: Peter informed me that rhs2 did not have qpdf installed. I just installed it. Please retry. In addition, I've updated the description/specs above.
+
+
+author: peter.dang
+comment: Andy is testing Benchmark.
+
+
+author: andyp
+comment: Testing compatibility on RHS2.
+
+Data file: medium size pdf file: 37 MB
+
+-rwxrwxrwx 1 andyP isgroup 37016358 Dec 18 13:47 flcuml1_121819.pdf
+
+
+
+Individual pdf: small size individual pdf's indiv_pdf: around 30-40 KB each pdf
+
+
+
+It ran successfully for both pdftk and qpdf on RHS2.
+
+Here was the test result.
+
+[oper1@rhs2 data]$ ../ci/qpdf_test.sh
+Testing qpdf ...
+Testing number of pages operation ...
+/usr/bin/pdftk /d/iss/andyP/bb/data/flcuml1_121819.pdf dump_data | grep 'NumberOfPages' | cut -d' ' -f2
+10504
+qpdf --show-npages /d/iss/andyP/bb/data/flcuml1_121819.pdf
+10504
+Testing extract pages operation ...
+Testing combine operation ...
+[oper1@rhs2 data]$
+[oper1@rhs2 data]$
+[oper1@rhs2 data]$
+[oper1@rhs2 data]$ ../ci/qpdf_test.sh
+Testing qpdf ...
+Testing number of pages operation ...
+/usr/bin/pdftk /d/iss/andyP/bb/data/flcuml1_121819.pdf dump_data | grep 'NumberOfPages' | cut -d' ' -f2
+10504
+qpdf --show-npages /d/iss/andyP/bb/data/flcuml1_121819.pdf
+10504
+Testing extract pages operation ...
+pdftk /d/iss/andyP/bb/data/flcuml1_121819.pdf cat 1-1000 output /d/iss/andyP/bb/data/flcuml1_121819_out1.pdf
+qpdf /d/iss/andyP/bb/data/flcuml1_121819.pdf --pages /d/iss/andyP/bb/data/flcuml1_121819.pdf 1-1000 -- /d/iss/andyP/bb/data/flcuml1_121819_out2.pdf
+Testing combine operation ...
+pdftk indiv_pdf/*.pdf cat output flcudna_combine1.pdf
+qpdf --empty --pages indiv_pdf/*.pdf -- flcudna_combine2.pdf
+
+
+
+
+
+
+author: andyp
+comment: Review the extracted outputs:
+
+-rw-rw-rw- 1 oper1 opers 3508180 Jan 9 16:05 flcuml1_121819_out1.pdf (from pdftk)
+
+-rw-rw-rw- 1 oper1 opers 3488337 Jan 9 16:05 flcuml1_121819_out2.pdf (from qpdf)
+
+The file size were slightly different. Both ouputs look good.
+
+
+
+Review the combined outputs:
+
+-rw-rw-rw- 1 oper1 opers 3872874 Jan 9 16:05 flcudna_combine1.pdf (from pdftk)
+-rw-rw-rw- 1 oper1 opers 3750634 Jan 9 16:05 flcudna_combine2.pdf (from qpdf)
+
+
+
+The file size were also slightly different. Both outputs look good.
+
+
+
+I will have the benchmark numbers later.
+
+
+
+
+author: andyp
+comment: Here are some bench mark numbers.
+
+I will do analysis bench mark numbers after running with big PDF file.
+
+
+
+Data files:
+
+flcuml1_121819.pdf 37 MB for extract and page count
+
+individual for combine: 300 pdf files average 30-40 KB
+
+[oper1@rhs2 data]$ ../ci/qpdf_test.sh
+Testing qpdf ...
+1. Testing number of pages operation 10 iteration ...
+/usr/bin/pdftk /d/iss/andyP/bb/data/flcuml1_121819.pdf dump_data | grep 'NumberOfPages' | cut -d' ' -f2
+10504
+...
+10504
+Elapse time: 00:00:42 -- 42 sec
+qpdf --show-npages /d/iss/andyP/bb/data/flcuml1_121819.pdf
+10504
+...
+10504
+Elapse time: 00:00:02 -- 2 sec
+
+2. Testing extract pages operation 10 iteration ...
+pdftk /d/iss/andyP/bb/data/flcuml1_121819.pdf cat 1-1000 output /d/iss/andyP/bb/data/flcuml1_121819_extract_pdftk_seq.pdf
+Elapse time: 00:00:45 -- 45 sec
+qpdf /d/iss/andyP/bb/data/flcuml1_121819.pdf --pages /d/iss/andyP/bb/data/flcuml1_121819.pdf 1-1000 -- /d/iss/andyP/bb/data/flcuml1_121819_extract_qpdf_seq.pdf
+Elapse time: 00:01:42 -- 102 sec
+
+3. Testing combine operation 10 iteration ...
+pdftk indiv_pdf/*.pdf cat output flcudna_combine_pdftk_seq.pdf
+Elapse time: 00:01:23 -- 83 sec
+qpdf --empty --pages indiv_pdf/*.pdf -- flcudna_combine_qpdf_seq.pdf
+Elapse time: 00:02:55 -- 175 sec
+
+
+
+
+author: andyp
+comment: Bench mark for data:
+
+sccu_123119_monthlyOut.pdf  128 MB
+
+individual pdf: 300 pdf's average 30 - 40 KB
+
+[oper1@rhs2 data]$ ../ci/qpdf_test.sh
+Testing qpdf ...
+1. Testing number of pages operation 10 iteration ...
+/usr/bin/pdftk /d/iss/andyP/bb/data/sccu_123119_monthlyOut.pdf dump_data | grep 'NumberOfPages' | cut -d' ' -f2
+71281
+71281
+71281
+71281
+71281
+71281
+71281
+71281
+71281
+71281
+Elapse time: 00:08:19 -- 499 sec
+qpdf --show-npages /d/iss/andyP/bb/data/sccu_123119_monthlyOut.pdf
+71281
+71281
+71281
+71281
+71281
+71281
+71281
+71281
+71281
+71281
+Elapse time: 00:00:06 -- 6 sec
+
+2. Testing extract pages operation 10 iteration ...
+pdftk /d/iss/andyP/bb/data/sccu_123119_monthlyOut.pdf cat 1-1000 output /d/iss/andyP/bb/data/sccu_123119_monthlyOut_extract_pdftk_seq.pdf
+Elapse time: 00:08:04 -- 484 sec
+qpdf /d/iss/andyP/bb/data/sccu_123119_monthlyOut.pdf --pages /d/iss/andyP/bb/data/sccu_123119_monthlyOut.pdf 1-1000 -- /d/iss/andyP/bb/data/sccu_123119_monthlyOut_extract_qpdf_seq.pdf
+Elapse time: 02:20:46 -- 8446 sec
+
+3. Testing combine operation 10 iteration ...
+pdftk indiv_pdf/*.pdf cat output flcudna_combine_pdftk_seq.pdf
+Elapse time: 00:01:24 -- 84 sec
+qpdf --empty --pages indiv_pdf/*.pdf -- flcudna_combine_qpdf_seq.pdf
+Elapse time: 00:02:56 -- 176 sec
+
+
+
+
+author: peter.dang
+comment: Can you check if the qpdf has burst option (see below).
+
+bkgc_dda_process.pl: system("$pdftk $pdffile burst output ${pdf_split_dir}/pg_%d.pdf ");
+
+
+author: peter.dang
+comment: 
+
+Andy, please help us research another similar tool. qpdf is too slow and will have big impact base on your benchmark.
+
+
+author: andyp
+comment: More bench mark numbers for combine operation.
+
+Data files: 600 individual pdf files average 220 KB each
+
+
+
+3. Testing combine operation 10 iteration ...
+pdftk indiv_mvcums1/*.pdf cat output mvcums1_combine_pdftk_seq.pdf
+Elapse time: 00:04:59 -- 299 sec
+qpdf --empty --pages indiv_mvcums1/*.pdf -- mvcums1_combine_qpdf_seq.pdf
+Elapse time: 00:24:03 -- 1443 sec
+
+
+author: andyp
+comment: Looking at burst operation using qpdf.
+
+
+author: andyp
+comment: qpdf does not have support for burst operation.
+
+For bkgc_dda_process.pl, pdftk burst operation was used to split big PDF file into individual page pdf files. We will need to modify this logic for qpdf migration.
+
+
+author: andyp
+comment: *Bench mark analysis for qpdf vs pdftk*
+
+
+|*operation*|*pdf size*|*pdftk*|*qpdf*|*note*|
+|Num pages|37 MB|4 sec|1 sec|(1)|
+||128 MB|50 sec|1 sec||
+|Extract|37 MB|5 sec|10 sec|(2)|
+||128 MB|49 sec|845 sec||
+|Combine|300 40KB|9 sec|18 sec|(3)|
+||600 220KB|30 sec|144 sec||
+|Burst||support|N/A|(4)|
+
+
+
+Notes:
+
+(1) Num pages operation
+
+qpdf had this operation in constant time. No issue
+
+(2) Extract operation
+
+qpdf extract bench mark time decreases significantly to 14 minutes per iteration with file size 128 MB.
+
+Not a show stopper but this needs consideration when PDF data file size reaching 1 GB.
+
+(3) Combine operation
+
+qpdf combine bench mark time decreases to 144 sec per iteration for 600 individual PDF average 220 KB each.
+
+Still acceptable compared to pdftk 30 sec per iteration.
+
+(4) Burst operation
+
+qpdf does not have support comparable to pdftk burst operation.
+
+Need change this processing logic to handle burst operation.
+
+
+author: andyp
+comment: I just found this big PDF 473 MB for EWBB 1099
+
+IREOYIBS-ETAX-928.DPI7F928.DP7F.PDFE001.20191231.115230.pdf 473098461
+
+
+
+Bench mark for this big 473MB PDF is decreasing much more significant.
+
+Testing qpdf ...
+ # Testing number of pages operation 1 iteration ...
+
+/usr/bin/pdftk /d/iss/andyP/bb/data/EWBB_1099_20191231.pdf dump_data | grep 'NumberOfPages' | cut -d' ' -f2
+
+166066
+
+Elapse time: 00:01:10  70 sec
+
+qpdf --show-npages /d/iss/andyP/bb/data/EWBB_1099_20191231.pdf
+
+166066
+
+Elapse time: 00:00:02  2 sec
+
+
+ # Testing extract pages operation 1 iteration ...
+
+pdftk /d/iss/andyP/bb/data/EWBB_1099_20191231.pdf cat 1-1000 output /d/iss/andyP/bb/data/EWBB_1099_20191231_extract_pdftk_seq.pdf
+
+Elapse time: 00:01:11  71 sec
+
+qpdf /d/iss/andyP/bb/data/EWBB_1099_20191231.pdf --pages /d/iss/andyP/bb/data/EWBB_1099_20191231.pdf 1-1000  /d/iss/andyP/bb/data/EWBB_1099_20191231_extract_qpdf_seq.pdf
+
+Elapse time: 00:56:50  3410 sec
+
+
+
+qpdf extract operation ran one iteration in 57 minutes compared to pdftk in 71 sec.
+
+It looks like qpdf extract operation had an O(n^2) algorithm.
+
+
+author: andyp
+comment: I did more research on qpdf and found some interest way to handle extraction more efficiently.
+
+So instead of
+
+qpdf infile.pdf - pages infile.pdf 1-n  outfile.pdf
+
+
+
+Into
+
+qpdf --empty  pages infile.pdf 1-n outfile.pdf
+
+
+
+Bench mark this page extraction operation, processing time reduces significantly.
+
+2. Testing extract pages operation 1 iteration ...
+ pdftk /d/iss/andyP/bb/data/EWBB_1099_20191231.pdf cat 1-1000 output /d/iss/andyP/bb/data/EWBB_1099_20191231_extract_pdftk_seq.pdf
+ Elapse time: 00:01:14  74 sec
+ qpdf --empty --pages /d/iss/andyP/bb/data/EWBB_1099_20191231.pdf 1-1000  /d/iss/andyP/bb/data/EWBB_1099_20191231_extract_qpdf_seq. pdf
+ Elapse time: 00:00:39  39 sec
+
+
+
+So instead of running 57 minutes for a 473 MB pdf, now it runs only 39 sec.
+
+According to qpdf manual:
+
+"All non-page data (info, outlines, page numbers, etc.) are taken from the primary input file. To discard these, use{{--empty}}as the primary input."
+
+
+
+PDF output files from the 2 extraction operations are slightly different in size and both look normal.
+
+
+
+
+
+
+author: andyp
+comment: Testing and doing bench mark pdfinfo, pdfseparate and pdfunite on preprocessing02.
+
+Data for page count and extract: 473 MB input PDF
+
+Individual pdf for combine: 600 average 220 KB each
+
+Testing pdfinfo ...
+1. Testing number of pages operation 1 iteration ...
+/usr/bin/pdftk /d/iss/andyP/bb/data/EWBB_1099_20191231.pdf dump_data | grep 'NumberOfPages' | cut -d' ' -f2
+166066
+Elapse time: 00:01:46 -- 106 sec
+pdfinfo /d/iss/andyP/bb/data/EWBB_1099_20191231.pdf | grep 'Pages'
+Pages: 166066
+Elapse time: 00:00:01 -- 1 sec
+
+2. Testing extract pages operation 1 iteration ...
+pdftk /d/iss/andyP/bb/data/EWBB_1099_20191231.pdf cat 1-1000 output /d/iss/andyP/bb/data/EWBB_1099_20191231_extract_pdftk_seq.pdf
+Elapse time: 00:01:34 -- 94 sec
+pdfseparate -f 1 -l 1000 /d/iss/andyP/bb/data/EWBB_1099_20191231.pdf /d/iss/andyP/bb/data/EWBB_1099_20191231_extract_pdfseparate_%d.pdf
+Elapse time: 00:04:55 -- 295 sec
+
+3. Testing combine operation mvcums1_indiv 1 iteration ...
+pdftk mvcums1_indiv/*.pdf cat output mvcums1_combine_pdftk_seq.pdf
+Elapse time: 00:00:47 -- 47 sec
+pdfunite mvcums1_indiv/*.pdf mvcums1_combine_pdfunite_1.pdf
+Elapse time: 00:00:14 -- 14 sec
+
+
+
+Notes:
+
+(1) Page count operation of pdfinfo is compatible with pdftk and runs much faster.
+
+(2) Extract operation of pdfseparate is NOT compatible with pdftk. It actually is similar to burst operation which it extracts multiple SINGLE pages pdf. It ran slower 295 sec vs pdftk 94 sec per iteration.
+
+(3) Combine operation of pdfunite is compatible with pdftk. It ran faster 14 sec vs pdftk 47 sec.
+
+
+author: andyp
+comment: There is complexity of argument passing to qpdf/pdftk program, especially when it is passing lengthy multiple pdf files using wild character${prefix}_indiv/*.pdf into program. I have decide to use 3 separate scripts to simplify the interface.
+
+(1) qpdf_pages.sh
+
+. take one argument: input_file.pdf
+
+. return value: total page
+
+qpdf_pages.sh input_file.pdf
+
+
+
+(2) qpdf_extract.sh
+
+. take 2 or 3 arguments: input_file.pdf output_file.pdf [range
+
+. return error code
+
+qpdf_extract.sh input_file.pdf output_file.pdf [range]
+
+
+
+(3) qpdf_combine.sh
+
+. take 2 or many argument list: output_file.pdf input_file1.pdf ...
+
+. return error code
+
+qpdf_combine.sh output_file.pdf input_file1.pdf input_file*.pdf
+
+
+
+Code were checked in parallel.
+
+Parallel ID:20200205155043
+
+
+
+
+author: peter.dang
+comment: Andy per discussion, please pick one or two jobs to test qpdf scripts. Once done, we will assign to QA to verify the qpdf script and create a subtask for DSI to make changes to all.
+
+
+author: andyp
+comment: We could use the 2 following jobs:
+
+cambdlb:Daily PDF Letter (daily structure)
+
+flcumc1:Credit Score PDF Letter (statement structure)
+
+
+author: william.kong
+comment: [~Peter.Dang]: Per our conversation, we will close this ticket out. Andy has completed his portion of this project. Now left over is DSi testing and releasing code production. JEF has been assigned already to DSi several months ago.

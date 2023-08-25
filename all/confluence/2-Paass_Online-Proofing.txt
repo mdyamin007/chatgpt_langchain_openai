@@ -1,0 +1,348 @@
+title: 2-Paass Online-Proofing
+body:   
+
+# 2-Pass Online-Proofing Approval Workflow
+
+* * *
+
+  
+  
+
+# Introduction
+
+  
+  
+
+## Purpose/Objective Summary
+
+Incremental enhancement to allow client's different department to interact
+with only relevant application in Online Proofing module  
+  
+
+## Scope
+
+  
+  
+
+### In-Scope
+
+  1. Selective receive alert of different application based on department
+  2. Sequential approval
+  3. reminder email to avoid missing the SLA deadline
+
+  
+
+### Out-of-Scope
+
+  1. full-fletch rule-based workflow to allow multi-level approval process
+  2. integration with job-tracking
+
+  
+
+## Assumptions
+
+  1. Only need to support up to 2 levels currently.
+
+  
+  
+
+## Dependencies
+
+ **TODO: (If Applicable)**  List out all dependency component/service/library
+needed for this design
+
+  1. e.g. jQuery Library v1.9.2 or above
+  2. e.g. PC need to be responsible for entering XXX values into YYY input file
+
+* * *
+
+  
+  
+
+# Requirements
+
+  
+  
+
+## Business Requirements & Use Cases
+
+ID| Title| Details| ScreenMock| Importance  
+---|---|---|---|---  
+BRQ-01| receive alert for chosen app only|  **Requirement:**  introduce the
+selection list of applications in the 'manage alerts' view to allow choice of
+what application to receive email notification on.  
+ **Example:**  naim only get email if 'visa' job released, fakrul only get
+email if 'heloc' job released|  
+| P0-Show Stopper  
+BRQ-02| able to view/approve chosen app only|  **Requirement:**  utilize the
+same setting done in BRQ-01 to manage who get to see & approve jobs when it's
+released.  
+ **Example:**  naim only see the 'visa' jobs released in his 'online proofing'
+tab. fakrul only see the 'heloc' jobs released in his 'online proofing' tab|  
+| P0-Show Stopper  
+BRQ-03| sequenced approval|  **Requirement:**  allow a sequenced of people to
+approve the jobs.  
+ **Example:**  naim can see the 'monthly statement' jobs, and able to approve
+it. but AFTER naim approve it, it require tanveer's approval before the job
+get released back to infoimage for next action.  
+ **Example:**  both naim and tanveer should able to see the job after
+infoimage release the job. but tanveer cannot approve until naim approve a
+job.|  
+| P0-Show Stopper  
+BRQ-04| utilize URF|  **Requirement:**  ensure to utilize the URF framework to
+handle the 1st & 2nd level approval on the online-proofing.  
+ **Example:**  introduce 'initial approval' and 'final approval' permission in
+the role-setting screen.  
+ **Example:**  naim is assigned the 'staff' role that carry 'initial approval'
+permission only. tanveer is assigned the 'manager' role that carry both
+'initial approval' and 'final approval' permission.|  
+| P0-Show Stopper  
+BRQ-05| deadline reminder|  **Requirement:**  add 'deadline reminder' option
+in the 'manage alert' view. it should trigger a reminder email sent to
+subscribers N hours before the deadline.  
+ **Example:**  naim should receive a reminder email 4 hours before the SLA
+deadline.  
+ **SSCU Example:**  Application-approval deadline  
+Monthly Stmt- 3pm  
+Mortgage Stmt- 3pm  
+Visa- 3pm  
+Heloc- 3pm|  
+| P0-Show Stopper  
+  
+  
+  
+
+## Functional Requirements & Use Cases
+
+ **TODO:**   **(Required)**  List out all needs/requirement from
+engineering/functional perspective. Associate them with an ID for easier
+reference
+
+ID| Title| Details| Bus. Req. Ref.| Importance  
+---|---|---|---|---  
+FRQ-01| Generic Search by Sphinx| (example)  
+ **Requirement:**  Instead of constructing the SQL statements for search,
+utilize Sphinx to help build the index and support such generic search.  
+ **Use Case:**  enter "ben" into search box, search results returned should
+include both record of "Ben
+[Chan/bchan@infoimage.com](mailto:Chan/bchan@infoimage.com)" as well as "Jim
+[Wong/jwong@bigben.com](mailto:Wong/jwong@bigben.com)"| <optional>| one of
+following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+FRQ-02| ...| ...| ...| ...  
+  
+  
+  
+
+## Performance & Scalability Requirements (SLA)
+
+ **TODO: (Required)**  List out all needs/requirement from Performance
+perspective. Associate them with an ID for easier reference
+
+ID| Title| Details| Importance  
+---|---|---|---  
+PRQ-01| Fast Search response| (example)  
+ **Requirement:**  All Search operation should return results within 100ms.  
+ **Use Case:**  <enter if applicable>| one of following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+PRQ-02| ...| ...| ...  
+  
+  
+  
+
+## QA/Test Requirements
+
+ **TODO:**   **(Required)**  List out all needs/requirement from QA/Testing
+perspective. Associate them with an ID for easier reference
+
+ID| Title| Details| Importance  
+---|---|---|---  
+TRQ-01| Selectable Search Box element| (example)  
+ **Requirement:**  The search textbox AND the 'Search' button need to tagged
+with 'id' value so that Selenium could select it for entering value and
+subsequent submit  
+ **Use Case:**  Rely on Selenium to submit random search terms and capture
+response time as well as validation search results| one of following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+TRQ-02| ...| ...| ...  
+  
+* * *
+
+  
+  
+
+# Design
+
+  
+  
+
+## Architecture & Workflow Diagram
+
+  
+
+### Client Management - Feature Settings
+
+  1. Add 'Available Application' text field to allow enter a comma-separated string of all possible application names
+    1. the proper way is to query DataTRAC's application library to get this list, however we just do a quickfix to manually maintain this list for now because:
+      1. the existing PROOFING_LOG.JOB_ID is a simple text field that copied from application name (i.e. not FK)
+      2. only infoimage internal staff access this view
+  2. Add '2-Pass Online Proofing' as additional feature to enable/disable for any client
+    1. Keep the existing 'Online Proofing' permission to control the show/hide of the 'Online Proofing' tab itself
+    2. This new 'feature' will be used to control show/hide of the UI elements and business logic around 'review' (see below)
+  3. screen mock: [](https://i3dev.easyredmine.com/attachments/1878/ClientMgmt_manageSettingsView.png?t=1402373800 "Download file")
+
+  
+  
+
+### Account Center - Manage Alerts
+
+  1. All 'Application Subscription' section to show the list of 'Available Applications' from the 'Client Management - Feature Settings' view
+    1. List of comma separate application names should be exploded to become a list of checkbox items
+  2. screen mock: [](https://i3dev.easyredmine.com/attachments/1879/AccountCenter_ManageAlertsView.png?t=1402373800 "Download file")
+
+  
+  
+
+### Account Center - Role Management
+
+  1. Add corresponding 'Feature' and 'Feature Definition' records to handle the additional '2-Pass Online Proofing' permission shown in following screen mock
+  2. screen mock: [](https://i3dev.easyredmine.com/attachments/1880/AccountCenter_RolePermissionView.png?t=1402374690 "Download file")
+
+  
+  
+
+### Online-Proofing
+
+  1. Whenever a job is 'released' by InfoIMAGE staff and the code is about to send alert email to corresponding users, check against the 'Application Subscription' settings saved in the 'Account Center - Manage Alerts' area.
+  2. If the '2-Pass Online Proofing' feature is enabled in 'Client Management', show the 'Waiting for Review' and 'Waiting for Approval' sections according to the new logic listed below. (see screen mock below). Otherwise, show only 'Waiting for Approval' as before.
+  3. 'Waiting for Review' : All jobs that has status = 'released' and 'reviewed_by' is empty should be shown here
+    1. This section is shown only if '2-Pass Online Proofing' is enabled.
+    2. Only show the 'Review/Unapprove' button if user have a role that carry the '2-Pass Online Proofing => Review/Unapprove Samples' permission.
+  4. 'Waiting for Approval' : All jobs that has status = 'release' with 'reviewed_by' populated, yet with 'approved_by' empty should be shown here
+    1. This section is shown if existing 'Online Proofing' feature is enabled, regardless of '2-Pass Online Proofing' is enabled or not.
+    2. If 'Online Proofing' is ON, and '2-Pass Online Proofing' is OFF
+      1. Only show the 'Approve/Unapprove' button if user have a role that carry the 'Online Proofing => Approve/unapprove The Samples' permission.
+    3. If 'Online Proofing' is ON, and '2-Pass Online Proofing' is also ON
+      1. Only show the 'Approve/Unapprove' button if user have a role that carry the '2-Pass Online Proofing => Approve/Unapprove Samples' permission.
+  5. screen mock: [](https://i3dev.easyredmine.com/attachments/1881/OnlineProofing_ApprovalView.png?t=1402376791 "Download file")
+
+  
+  
+
+## Data Model changes (ER diagram & ddl.sql)
+
+  1. add FEATURE.META column as clob
+    1. it will allow application to save meta-data values in json and so.
+    2. In this feature, it will store the available applications admin-user have set in the Feature Setting view
+    3.  **IMPORTANT**  make sure this value is stored as an element so that we can re-use this column for future needs. (e.g. {'avalAppList': 'Mortgage_Statements,Monthly_Heloc_Statements,Monthly_Statements'} )
+  2. add ALERT.META column as clob
+    1. it will store the chosen application a user is subscribed to in this feature
+    2. this column could be used for other purpose in future.
+    3.  **IMPORTANT**  make sure this value is stored as an element so that we can re-use this column for future needs. (e.g. {'chosenAppList': 'Mortgage_Statements,Monthly_Heloc_Statements'} )
+
+ **TODO:**   **(Required if involve LARGE schema change)**  Draft a ER diagram
+of the existing AND new data-model design. Highlight the entity/relationship
+that is added/changed.
+
+ **TODO:**   **(Required if involve schema change)**  Include a ddl.sql file
+that could be executed against old schema in order to create/change
+table/columns, as well as handling the corresponding data-migration if
+applicable.  
+  
+
+## Application component functional details
+
+ **TODO:**   **(Required if involve big architectural change)**  List out the
+key class/method created/changed for this project. Highlight the changed
+portion (e.g. additional param for a method)
+
+ **Overview:**   **TODO:**  Provide an overview of what changes if not already
+illustrated in the Architecture diagram above
+
+Component| Class| Method| Params| Comments  
+---|---|---|---|---  
+...| ...| ...| ...| ...  
+  
+  
+  
+
+## Integration Points & Interface
+
+ **TODO: (If Applicable)**  List out Integration Points and corresponding
+interface
+
+From Component| To Component| Details| Error Handling  
+---|---|---|---  
+InfoTRAC| PUI| DT_JOB_ID need to be synchronized by...| If DT_JOB_ID during
+PUI processing is not found in ...  
+  
+* * *
+
+  
+  
+
+# Summarized Change Log
+
+Date| Who| Changes to Design Doc  
+---|---|---  
+3/11/2013| Ben C| Added some TODO notes and examples  
+3/08/2013| Ben C| Initial Draft  
+  
+* * *
+
+  
+
+# Sign-Off
+
+Group| Date| Who| Comment  
+---|---|---|---  
+Product Manager (Business)|  
+|  
+|  
+  
+Account Service (AS)|  
+|  
+|  
+  
+Dev./Impl. Manager (Technical)|  
+|  
+|  
+  
+Production Control (PC)|  
+|  
+|  
+  
+Data Processing (DP)|  
+|  
+|  
+  
+Accounting/Invoicing|  
+|  
+|  
+  
+  
+  
+  
+
+# Appendix  
+<add as you need>
+
+  
+
+# Attachments
+
+
+
+

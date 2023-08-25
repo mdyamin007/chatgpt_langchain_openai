@@ -1,0 +1,172 @@
+title: TKCU - STMT Processing Errors
+description: [~William.Kong]
+
+
+
+1) Missing folder errors:
+
+/d/ftpbu/tkcubu/stmt/
+/d/tkcu/stmt/
+/d/infoftp_int/tkcu/
+/z/isd_share/tkcu/afpfiles/
+ 
+2) Remove prompt for password when copying MM3 resource to TX
+
+cp: cannot stat /isis/pdel6761/pdol3: No such file or directory
+
+url: http://pui-pilot.infoimageinc.com/MsgServlet22?cid=tkcu&apptype=ms1&cycledate=01312020&services=print
+1|tkcu_ms1_11012019_02152020.zip
+Successfully grabbed zip file given code 1 and file tkcu_ms1_11012019_02152020.zip
+Basename of the file to be grabbed is tkcu_ms1_11012019_02152020.zip
+zipfile - /d/isd_input_dev/I3/tkcu/tkcu_ms1_11012019_02152020.zip
+/d/tkcu/tkcums1/tkcums1_msg_portal.txt
+scp /d/test/msgmgr/pseg_fs10/S142608.300 to oper1@texas:/d/test/msgmgr/pseg_fs10/
+oper1@texas's password:
+
+3) Paper error:
+
+/home/util/get_file_arrival.sh: line 27: sqlplus: command not found
+Error in job_list2: Number of argument - 3, expected 4 arguments: /d/tkcu/tkcums1314.2o1 tkcums1 rht . Please inform IS to check! Program still continues to run...
+
+Error in vcp /d/afp/tkcu/tkcums1315.2oz.afp /z/isd_share/tkcu/afpfiles/tkcums1315.2oz.afp.20210504122930
+/home/master/isisdisk.sh: line 4871: [: =: unary operator expected
+/home/master/isisdisk.sh: line 4881: [: =: unary operator expected
+/home/master/isisdisk.sh: line 4888: vcp: command not found
+Error in vcp /d/afp/tkcu/tkcums1315.mis.afp /z/isd_share/tkcu/afpfiles/tkcums1315.mis.afp.20210504122930
+/home/master/isisdisk.sh: line 4871: [: =: unary operator expected
+/home/master/isisdisk.sh: line 4881: [: =: unary operator expected
+/home/master/isisdisk.sh: line 4888: vcp: command not found
+
+Error printing page-location report for message manager 2.2
+Please manually print the following report, and attach it to the production docket: /d/tkcu/tkcums131_mm2_laser.rpt
+Can't locate Net/SSL.pm in @INC (@INC contains: /home/master /usr/local/lib64/perl5 /usr/local/share/perl5 /usr/lib64/perl5/vendor_perl /usr/share/perl5/vendor_perl /usr/lib64/perl5 /usr/share/perl5 .) at /home/master/MsgCriteria.pm line 15.
+BEGIN failed--compilation aborted at /home/master/MsgCriteria.pm line 15.
+Compilation failed in require at /home/master/msg_mgr2_count_report.pl line 17.
+BEGIN failed--compilation aborted at /home/master/msg_mgr2_count_report.pl line 17.
+Error within program: msg_mgr2_count_report.pl
+Error in program isisdisk job s
+
+4) archival error:
+
+Copying /d/tkcu/tkcums1318.afp to /d/Iswk/afp2web_v2.1b10/tkcums1/tkcums18_05042021.afp
+/home/master/isisdisk.sh: line 2360: vcp: command not found
+
+
+author: william.kong
+comment: [~tient]: Thanks for reporting the issues. Item #2 is fixed. Moving forward, no more password prompts will occur between ca-isis-dv-02 to texas server. I will update my setup notes so that I don't have a repeat issue when I setup the new production servers in a few weeks.
+
+I will keep this ticket assigned to me for now to address item #3 and item #4.
+
+
+author: william.kong
+comment: [~tient]: Here a few code that we need to release to dev & parallel environment. If there is no issues this week, then we will release everything into production. I've done all my unit testing on dev and it works:
+
+The program is located in:
+
+*/d/iss/willK/proj_64b/20210505_pdst-4/*
+
+0bc847441d451c87e564e0a43abf818d get_file_arrival.pl
+b75028356f6dfc5ba9b467821559a1a3 isiszipsep_new.pl
+62d606ae7c29aa0e2ed2bb9c3a47498a Setdb_estmt.pm
+
+
+
+/home/{color:#FF0000}*util*{color}/get_file_arrival.pl
+
+/home/master/isiszipsep_new.pl
+
+/home/master/Setdb_estmt.pm
+
+
+
+Once all the code is released, please re-run to see if issue occurs. The only left-over issue is/home/master/MsgCriteria.pm.  I think we need to remove Line 15: 'use Net::SSL' of code to see if it works. I'm+not+ able to install Net::SSL perl package, but i don't+think+ message manager requires this library. However, if it must have it let me know. We may need to change logic. 
+
+
+
+If it works, then can you also add/home/master/MsgCriteria.pm to be released as well.
+
+
+
+Thanks!
+
+
+
+-- Will
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+author: tient
+comment: [~William.Kong]
+
+Will, I'm still getting the Net/SSL.pm error below. Let me check if I can delete call to that library or not. Errors 1 and 2 resolved. I am working on error 4 now. Thanks
+
+Error printing page-location report for message manager 2.2
+Please manually print the following report, and attach it to the production docket: /d/tkcu/tkcums131_mm2_laser.rpt
+Can't locate Net/SSL.pm in @INC (@INC contains: /home/master /usr/local/lib64/perl5 /usr/local/share/perl5 /usr/lib64/perl5/vendor_perl /usr/share/perl5/vendor_perl /usr/lib64/perl5 /usr/share/perl5 .) at /home/master/MsgCriteria.pm line 15.
+BEGIN failed--compilation aborted at /home/master/MsgCriteria.pm line 15.
+Compilation failed in require at /home/master/msg_mgr2_count_report.pl line 17.
+BEGIN failed--compilation aborted at /home/master/msg_mgr2_count_report.pl line 17.
+Error within program: msg_mgr2_count_report.pl
+Error in program isisdisk job s
+
+
+author: tient
+comment: [~William.Kong]
+
+
+
+Hi Will, I removed the import call to Net/SSL.pm from MsgCriteria.pm and it ran fine. Here is the new error for the paper process. Looks like format_only_host was not exported correctly. Also, I cannot run pdfi option so I need to find a new app that runs e option.
+
+
+
+/home/master/msg_mgr3_convert_sample.sh: line 41: [: rht: unary operator expected
+/home/master/msg_mgr3_convert_sample.sh: line 48: [: rht: unary operator expected
+ssh: Could not resolve hostname /d/tkcu/tkcums131.msgmgr.pdel: Name or service not known
+/d/afp/tkcu/tkcums131.msgmgr.afp: No such file or directory
+unable to copy afp to preprocessing server
+** Generating new dpvs **
+DPVS generatedadd_full_imb_netsort.pl
+2
+Suppress printing DPVS
+[ 2 pages * 1 copy ] left in /d/tkcu/tkcums131.ps
+Renaming ncoa report to TKCU_NCOA_Update_<MMDDYY>.pgp...
+mv: cannot stat /d/tkcu/stmt/*coa*: No such file or directory
+ zip warning: name not matched: /d/tkcu/stmt/TKCU_NCOA_Update_050721.txt
+
+zip error: Nothing to do! (/d/tkcu/stmt/TKCU_NCOA_Update_050721.zip)
+rm: cannot remove /d/infoftps3/tkcu/client_pickup/*ms1*ncoa*.pgp: No such file or directory
+gpg: can't open `/d/tkcu/stmt/TKCU_NCOA_Update_050721.zip': No such file or directory
+gpg: /d/tkcu/stmt/TKCU_NCOA_Update_050721.zip: encryption failed: No such file or directory
+Error renaming the NCOA report.... Please check that the report should be in the following naming convention: TKCU_NCOA_Update_<MMDDYY>.zip.pgp
+
+
+author: tient
+comment: [~William.Kong]
+
+Hi Will, I processed asfcms1 archival option. Even though the job status from thea2wserver.log says "success", but there were no pdfs or index file created.
+
+JobPID: ""10355"", Filename: ""/d/pdf_afp/asfc/asfcms1/afp/asfcms18.afp"" }
+[2021-05-10 12:05:37.877] [INFO ] Pid=22856 ReqId=00036 Processing request completed. Processed request in 0 ms
+[2021-05-10 12:05:42.884] [INFO ] Pid=22856 ReqId=00037 Processing request: \{ ResponseFormat: "json", jobid: "96973016753947286278" }
+[2021-05-10 12:05:42.884] [INFO ] Pid=22856 ReqId=00037 \{ status: "success", httpStatusCode: "200", JobID: ""96973016753947286278"", JobPID: ""10355"", Filename: ""/d/pdf_afp/asfc/asfcms1/afp/asfcms18.afp"" }
+
+
+
+Here is the command:
+
+python /home/master/afp2pdf.py index_build InputFilename=/d/pdf_afp/asfc/asfcms1/afp/asfcms18.afp OutputFilePath=/d/pdf_afp/asfc/asfcms1/pdf/ data_input_file=/home/control/asfcms1_pdf.control

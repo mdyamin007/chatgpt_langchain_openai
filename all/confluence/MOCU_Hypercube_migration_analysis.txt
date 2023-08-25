@@ -1,0 +1,660 @@
+title: MOCU Hypercube migration analysis
+body: # _****_
+
+# _**ROOT**_
+
+ **Client Name**|
+
+Monterey Credit Union  
+  
+---|---  
+  
+ **Schema**
+
+|  Default  
+ **Account Types**|  NA  
+  
+ **Statement Types**
+
+|
+
+  * default
+  * heloc
+  * etax
+  * enotice
+
+  
+ **Archival Period**|
+
+  * default: 23 months
+  * heloc: 23 months
+  * etax: 24 months
+  * enotice: 4 months
+
+  
+ **Batch Download**|  N/A  
+ **Enrollment**|  Optout page is displayed as enrollment.  
+ **Login Method**|
+
+  * cusso (SingleSignOn7Servlet)
+
+  
+ **Notification Preference**|  Email  
+ **Menu**|
+
+  * eStatements
+  * HELOC/LOC
+  * eNotices
+  * eTax
+
+  
+  
+ **Welcome Email**|  N/A  
+ **User account relation**|  one-to-one  
+  
+##  _ **Login methods:**_
+
+  *  **CUBUS_SSO(SingleSignOn7Servlet)**
+
+    *  **createLogin=true, updateEmail=true**
+    * Search for user by sess_login_id(acctNum)
+    * If user not found, create fin_account (acctNum, acctName=acctNum, status="A"), paperless (stmtType="default",acctId) , user(firstName= acctNum), usr_profile( sess_login_id=acctNum, DSO=null), usr_fin_account (usrId, acctId, ufa_status="active", regDate=current date). 
+    * Update email address in contact_info table. and insert entry into audit_log_mocu.
+  *  **CUBUS_hoblogin.jsp**
+    * Sets sso date in usr_session table. 
+    * Redirects to splash page if the account is on paper(B). Otherwise, land on homepage.
+
+##  _ **Homepage:**_
+
+  * Users can view a demo site before start viewing the actual site. This page appears if the account is on paper i.e. paperelss status = "B"
+
+  
+
+##  _ **Demo site:**_
+
+ _ ****_
+
+##  _ **eStatement site:**_
+
+  * By clicking "START VIEWING YOUR STATEMENTS", a disclosure appears. Users must choose "I agree" to land on the eStatement site. By choosing "I agree", paperless status is changed to paperless (E).
+  * 
+
+##  _ **eStatement List:**_
+
+  * ###  _eStatements:_
+
+    * If the user wants to receive paper statements, he/she can click the link. If this link is clicked, the user is redirected to the homepage where the user can view the demo site or login to the eStatement site.
+    *   * ###  _HELOC/LOC:_
+
+    * same UI and functionality as eStatements
+  * ###  _eNotices:_
+
+    * Can be landed on this page either from side menu "eNotices List" or "eNotices" tab. 
+    * In the "Archived eNotices" table, display the last 4 months from the current date.
+
+    *   * ###  _eTax:_
+
+    *  __
+
+##  _ **Disclosure/Reconciliation:**_
+
+  * Opens disclosure in a new tab
+
+##  _ **Check Images:**_
+
+  * 
+
+##  _Our Privacy Statement:_
+
+  * Online Privacy Policy is displayed in a new tab.
+  * 
+
+##  _How do eStmts work:_
+
+  * Frequently Asked Questions (FAQ) opens in a new tab.
+  * 
+
+##  _Newsletter:_
+
+  * Redirects to MOCU's site.
+
+  
+
+#  _MSM_
+
+##  _STATEMENT & EMAIL SEARCH:_
+
+  * Statements can be searched by account number.
+  * Email is fetched from the contact info table. 
+  * 
+
+##  _CHECK SEARCH_ _:_
+
+  * Check search by account number.
+  * 
+
+##  _ADMIN EDIT:_
+
+  * 
+
+##  _PAPERLESS MANAGEMENT:_
+
+  * Max 5 account numbers can be given as input separated by space to change paperless status.
+  * Need to provide an email address when paperless status changed from paper to paperless.
+  * Email address is inserted/updated into contact_info table.
+  * An entry is inserted into audit_log_mocu. location="MSM" and event="email".
+  * 
+
+##  _EMAIL PROOFING:_
+
+  * Email proofing template available for eStatement, eNotice, Heloc/LOC, eTax
+  * Content is in HTML or text
+
+##  _OPTOUT REPORT:_
+
+  * Can be downloaded in Text or Excel format
+  * 
+
+##  _LATEST STATUS REPORT:_
+
+  * 
+
+##  _LOGOUT_
+
+#  _Processing UI_
+
+##  _Processes:_
+
+###  _afp_
+
+  *  **Handler:** AfpStatementData
+    * fileName acctNum **beginDate** **closingDate** numOfPages **acctName**
+  *  **Registrar:** DefaultEstmtRegistrar
+    * New fa created.
+    * New user created. firstName=acctName.
+    * New user profile created. loginName=acctNum, DSO=current date 
+    * Ufa created. ufa_status="active"
+    * Account owner name and user firstName is updated for existing accounts.
+    * New paperless inserted. new status="B", old status="N", stmtType. An default paperless entry also inserted i.e. stmtType="default" 
+    * Insert entry into estmt_doc
+    * p_job_id and esd_id is inserted into p_Job_estmt
+
+### check_image
+
+  *  **Handler:** DefaultCheckImageHandler 
+    * acctNum_date_amount_checkNum
+  *  **Registrar:**
+    * registeredUserOnly = false, multipleStmtType = false.
+    *  **Database changes:** account_check_image
+
+### enotice:
+
+  *  **Handler:** ENoticeData2
+    * acctNum | type_a | afpFileName | date | type_b
+  *  **Registrar:** DefaultENoticeRegistrar
+    * enotice.createAccount=false
+    * No account creation. Update account owner name. For enotice, acctName = acctNum
+    * Insert parentPath, afpFileName and fileType into arch_file table. 
+    * Insert entry into enotice and p_job_enotice(p_job_id and enotice_id) table.
+
+###  _etax:_
+
+  *  **Handler:** ETaxData3
+  *  **Registrar:** ETaxRegistrar3
+    * etax.createAccount = false
+    * No account creation. Insert paperless for stmtType = default
+    * Insert entry into arch_file, etax, p_job_etax
+
+###  _email notification:_
+
+  * Fetch email from contact_info table and paperless status is "E"
+
+### Reports:
+
+  *  **Accounting Report:** MocuReport
+    * Accounting report contains the following reports:
+      * Afp Report
+      * CheckImage Report
+      * Email Notification Report
+      * Accounting Report
+  *  **Paperless Report**
+
+  
+
+#  _ **Analysis Summary (ROOT)**_
+
+Scope| Feature| MOCU| Hypercube| Note  
+---|---|---|---|---  
+ **Homepage**|
+
+  * Option to view Demo site
+
+|
+
+  * If the paperless status is "B", this page appears. Users can view the demo before actual login to the eStatement site. ()
+
+|  1 incomplete Supported  2 complete Not Supported 3 incomplete Supported
+alternatively |  
+  
+  
+  * Login to the actual eStatement site
+
+|
+
+  * By clicking "START VIEWING YOUR STATEMENTS", a disclosure page appears.
+
+|  4 incomplete Supported  5 incomplete Not Supported 6 complete Supported
+alternatively |
+
+  * In Hypercube, We show a message to go to the profile page to change the delivery preference.
+
+  
+  
+  * User must agree to paperless by choosing "I agree" to proceed to the "Account Statements" page.
+
+  
+  
+ **Enrollment(SSO)**
+
+|  User enrollment|
+
+If the paperless status is chosen as 'B' i.e. paper, a disclosure page
+appears. The user must need to agree to receive paperless delivery to proceed
+to eStatements.
+
+|  7 incomplete Supported  8 incomplete Not Supported 9 complete Supported
+alternatively |
+
+  * This step will be split into two enrollment steps. 
+  * The first step will display online disclosure and the Second step will display account preference.
+  * Will need to use the flag "unenrollOnDeliveryPreferenceChange": true
+
+  
+ **eStatement List**|
+
+  * eStatements
+  * HELOC/LOC
+  * ()
+
+|
+
+  * Account Number
+
+|  10 incomplete Supported  11 incomplete Not Supported 12 complete Supported
+alternatively | In Hypercube, the Account number will be displayed in the
+account selector.  
+  
+  * Statement Date
+
+|  13 complete Supported  14 incomplete Not Supported 15 incomplete Supported
+alternatively |  
+  
+  
+  * Helpful Hints
+
+|  16 complete Supported  17 incomplete Not Supported 18 incomplete Supported
+alternatively | This portion will be displayed in the Important Disclosure
+section, under the account selector.  
+  
+  * Change Delivery Preference
+
+|  19 incomplete Supported  20 incomplete Not Supported 21 complete Supported
+alternatively | In Hypercube, changing delivery preference option is provided
+on the profile page. So, "Profile" page will be added.  
+eNotices|
+
+  * Account Number
+
+|  22 incomplete Supported  23 incomplete Not Supported 24 complete Supported
+alternatively | In Hypercube, the Account number will be displayed in the
+account selector.  
+  
+  * Letter Name
+  * Notice Date
+
+|  25 complete Supported  26 incomplete Not Supported 27 incomplete Supported
+alternatively | eNotice Description  
+  
+  * Archived eNotices: A table containing the last 4 months from the current month. We can view eNotice of a specific month by clicking a month from this table.
+
+|  31 incomplete Supported  32 incomplete Not Supported 33 complete Supported
+alternatively | In Hypercube, eNotices are displayed per month by default.
+Also, we can search for eNotice of a specific time range. "Archived eNotices"
+table will be lost, but user will be able to search notice by month
+alternatively.  
+eTax|
+
+  * Account Number
+
+|  34 incomplete Supported  35 incomplete Not Supported 36 complete Supported
+alternatively | In Hypercube, the Account number will be displayed in the
+account selector.  
+  
+  * Tax Year
+  * Form Type
+  * View Tax From
+
+|  37 complete Supported  38 incomplete Not Supported 39 incomplete Supported
+alternatively |  
+  
+  
+**Disclosure/Reconciliation**|  
+|
+
+  * Disclosure opens in a new tab
+
+|  46 complete Supported  47 incomplete Not Supported 48 incomplete Supported
+alternatively |  
+  
+**Check Images**|  
+|
+
+Displays the following:
+
+  * Check Number
+  * Date
+  * Image (Web Format): Front, Back
+  * Image (Requires Tiff viewer)
+
+|  49 complete Supported  50 incomplete Not Supported 51 incomplete Supported
+alternatively |  
+  
+**Our Privacy Statement**|  
+|
+
+  * Display Online privacy policy in a new tab
+
+|  52 incomplete Supported  53 incomplete Not Supported 54 complete Supported
+alternatively |
+
+We can support these features in the following two ways.
+
+  * Under the Important Notice section (Under the account selector), we can embed these three links
+  * We can add a new tab where these three links can be listed.
+
+  
+ **How do eStmts work**|  
+|
+
+  * Frequently Asked Questions
+
+|  55 incomplete Supported  56 incomplete Not Supported 57 complete Supported
+alternatively  
+**Newsletter**|  
+|
+
+  * Redirects to MOCU's site
+
+|  58 incomplete Supported  59 incomplete Not Supported 60 complete Supported
+alternatively  
+  
+  
+
+# _Analysis Summary(MSM)_
+
+Scope| Feature| MOCU| Infotrac| Note  
+---|---|---|---|---  
+ **STATEMENT & EMAIL SEARCH**
+
+  
+
+|
+
+  * Search by Account Number
+
+|
+
+  
+
+|  61 complete Supported  62 incomplete Not Supported 63 incomplete Supported
+alternatively |  
+  
+Email|
+
+  * Email Address fetched from contact_info table.
+
+|  64 complete Supported  65 incomplete Not Supported 66 incomplete Supported
+alternatively | After data migration, emails will be fetched from the
+notification preference table.  
+  
+Statement Listings
+
+|
+
+  
+
+  
+
+|
+
+  
+
+|  
+  
+Statements, HELOC/LOC| Account Number|  158 complete Supported  159 incomplete
+Not Supported |  
+  
+Statement Date|  160 complete Supported  161 incomplete Not Supported |  
+  
+Page Count|  162 incomplete Supported  163 complete Not Supported |  
+  
+View Statement|  164 complete Supported  165 incomplete Not Supported |  
+  
+eNotices| Account Number|  166 complete Supported  167 incomplete Not
+Supported |  
+  
+Letter Name|  168 complete Supported  169 incomplete Not Supported | eNotice
+Description  
+Notice Date|  170 complete Supported  171 incomplete Not Supported |  
+  
+  
+  * Archived eNotices: A table containing the last 4 months from the current month. We can view eNotice of a specific month by clicking a month from this table.
+
+|  172 incomplete Supported  173 incomplete Not Supported 174 complete
+Supported alternatively | In Hypercube, eNotices are displayed per month by
+default. Also, we can search for eNotice of a specific time range. "Archived
+eNotices" table will be lost, but the user will be able to search notice by
+month alternatively.  
+eTax  
+  
+|
+
+Account Number
+
+|  3525 complete Supported  3526 incomplete Not Supported 3711 incomplete
+Supported Alternatively |
+
+  
+  
+  
+Tax Year|  175 complete Supported  176 incomplete Not Supported |  
+  
+Form type|  177 complete Supported  178 incomplete Not Supported |  
+  
+View Tax Form|  179 complete Supported  180 incomplete Not Supported |  
+  
+**CHECK SEARCH**|  
+  
+  
+|
+
+Search check by account number
+
+|  3527 complete Supported  3528 incomplete Not Supported |  
+  
+**PAPERLESS MANAGEMENT**|  Change the paperless status of one or multiple
+accounts.|
+
+  * Max 5 account numbers can be given as input separated by space to change paperless status. ( )
+  * Need to provide an email address when paperless status changed from paper to paperless.
+  * Email address is inserted/updated into contact_info table.
+
+|  3529 incomplete Supported  3530 complete Not Supported |
+
+  * In Infotrac, paperless management is present in Account Management. Paperless status can be changed by searching the account number from the Account Management module. No multiple account searching is supported.
+
+  
+ **EMAIL PROOFING**|  
+|
+
+  * eStatement, eNotice, Heloc/LOC, eTax
+  * Templates are uploaded as plain text or html.
+
+|  3720 complete Supported  3721 incomplete Not Supported |  
+  
+**OPTOUT REPORT**|  
+|  
+|  3724 complete Supported  3725 incomplete Not Supported |
+
+  * Infotrac- Paperless Enrollment report
+
+  
+ **LATEST STATUS REPORT**|  
+|  
+|  181 complete Supported  182 incomplete Not Supported |
+
+  * Infotrac- Statements Posted report
+
+  
+ **ADMIN EDIT**|  Admin user management|
+
+Can create, update and delete new admin user.
+
+|  3551 complete Supported  3552 incomplete Not Supported |  
+  
+**LOGOUT**|  
+|  
+|  3716 complete Supported  3717 incomplete Not Supported |  
+  
+  
+  
+
+# _Analysis Summary(PUI)_
+
+Process
+
+|
+
+Prefix/Flags
+
+|
+
+Backend Business
+
+|
+
+Mismatch with hypercube business
+
+|
+
+Changes needed
+
+|
+
+Note  
+  
+---|---|---|---|---|---  
+afp|
+
+  * ms1=default
+  * me1=heloc
+
+|
+
+  *  **Handler: AfpStatementData**
+  *  **Registrar: DefaultEstmtRegistrar**
+    * fa, user, usr_profile, ufa, paperless created
+    * login_name=acctName, DSO=current date
+  * Database changes: FIN_ACCOUNT, USR_FIN_ACCOUNT, USR, USR_SESSION, PAPERLESS, ESTMT_DOC, P_JOB_ESTMT
+
+|
+
+  * Stores acctNum as sess_login_id
+  * Stores DSO
+  * Doesn't use usr_mapping table. 
+
+|
+
+If Afp is moved to Doc, then the following flags are needed:
+
+  * global.nullDsoTime=true
+  * global.acctNumAsLoginId=false
+
+|
+
+  
+  
+  
+enotice|
+
+  * enotice.createAccount=false
+
+|
+
+  *  **Handler: ENoticeData2**
+  *  **Registrar: DefaultEnoticeRegistrar**
+    * For existing accounts, update account_owner_name.
+    * Insert paperless (stmtType="enotice")
+    * Insert entry into enotice, arch_file, p_job_enotice
+  * Database changes: FIN_ACCOUNT, ARCH_FILE, ENOTICE, P_JOB_ENOTICE
+
+|  
+|  
+|
+
+  * Will be moved to DOC process
+
+  
+etax|
+
+  * etax.createAccount=false
+
+|
+
+  *  **Handler: ETaxData3**
+  *  ** **Registrar: ETaxRegistrar3****
+    * Insert entry into paperless.
+    * Insert parentPath, afpFileName, fileType into arch_file
+    * Insert actId, type, arch_file_id, ssn into etax
+    * Insert p_job_id and etax_id into p_Job_etax
+  * Database changes: paperless, arch_file, etax, p_Job_etax
+
+|  
+|  
+|
+
+  
+  
+  
+check_image|
+
+  * registeredUserOnly = false
+  * multipleStmtType = false
+
+|
+
+  *  **Handler: DefaultCheckImageHandler**  
+
+    * Insert/Update account_check_image table.
+
+|  
+|  
+|  
+  
+Reports|  
+|
+
+  * Paperless Report
+    * Displays account number and paperless status.
+  * Accounting Report
+
+|  
+|  
+|
+
+  
+  
+  
+  
+
+

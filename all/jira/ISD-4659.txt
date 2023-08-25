@@ -1,0 +1,334 @@
+title: 18575 / 48528 - WECU - Enable Both Email and SMS
+description: Turn on the ability for WECU customers to enroll into both email and SMS (get both when notifications go out for a cycle).
+
+
+author: patric k
+comment: awaiting client feedback
+
+
+author: patric k
+comment: DSI: Can you research if its possible to change the radio button label?
+ 1) Email 2) Text 3) Email & SMS
+
+Can we change it to "Email and Text" ?  !wecu_email&sms.jpg!
+
+
+author: moshiur.rahman
+comment: [~Patric K]
+Yes, It's possible. Do you want me to implement this? It'll look like the following:
+ !1.png|thumbnail!  !2.png|thumbnail! 
+
+
+author: patric k
+comment: [~moshiur.rahman],
+
+Yes please implement this for WECU on pilot.
+
+
+author: moshiur.rahman
+comment: [~Patric K]
+I've implemented and deployed on pilot. Release note is linked above. 
+Thanks
+Moshiur
+
+
+author: patric k
+comment: [~moshiur.rahman]Thank you!
+
+QA: Please test on pilot hypercube, You should be able to sso into pilot, and open the 'Statement Options' tab and view/add phone number. Also the radio button should now read "Email and Text"
+
+
+author: nprimak
+comment: Hi Moshiur,
+
+I have question for existing User and accounts on paper.
+
+If CIF number exists and accounts on paper, the user is not going through enrollment process to select "Email and Text" options, in this case on a Statement Options tab, selecting "Email and Text" option and Submit, does not do anything, button is not active.
+
+I need to choose Electronic options for each account additionally to selecting '' "Email and Text" and then after it only Submit.
+
+I don't remember any flow like this, it is by design and correct?
+
+Thank you,
+
+Natasha
+
+
+author: moshiur.rahman
+comment: [~nprimak]
+For existing CIF numbers and accounts on paper, it's expected scenario for WECU that the user will not go through enrollment. It displays "This account is not enrolled for electronic delivery. If you'd like to change the delivery type, click on Statement Options to change your preference."
+
+On Statement Optins tab, I'm getting the "Submit" button active If I change "Notify Me By" options. 
+ !submit_btn_active.png|thumbnail! 
+
+
+author: nprimak
+comment: Sorry Moshiur,
+
+May be my explanation was not clear enough.
+
+The issue ->Failed to change to delivery preferences to"Email and Text", if accounts on Paper with exisiting CIF number.
+
+Steps to reproduce:
+ # Use cif number you already submit and went though enrollment process, exp cif =1222576, or go through enrollment with any cif number
+ # Add new accounts (#0000208917, #0810095113) or any accounts with Paper status
+ # It will skip enrollment process
+ # Go to Statement Options tab and try to change Delivery preferences to "Email and Text" by selecting radio button
+ # Submit button is grey out. To activate button you need to choose electronic delivery pref for each account, and it should not work this way.
+
+Thank you,
+
+Natasha
+
+
+author: moshiur.rahman
+comment: Hi [~nprimak],
+
+Actually, I'm not getting this type of issue on wecu pilot. I've tried with cif =1222576 and accounts ((0000208917, 0810095113). Both of the accounts are on Paper. I'm able to change notification preference to "Email and Text" by selecting the radio button. Submit button gets activated when I change the notification preference.
+Please take a look at this screen-recorded video.
+[^ISD-4659.mkv]
+
+Thanks,
+Moshiur
+
+
+author: nprimak
+comment: Moshiur,
+
+I see these accounts still on paper on Pilot SSO, and I see same error.
+
+(see attachment)
+
+The button will activates only after I will change to electronic individuals account, it is not how should work
+
+Options "Email and Text" should be active without selecting individual account and changing them to electronic before.
+
+Thank you,
+
+Natasha
+
+!image-2021-07-19-10-03-23-540.png!
+
+
+author: nprimak
+comment: Just to make sure I am using correct sso:
+
+I am working with Firserv,Hypercub. first tab of three, the Fiserv Hypercube SMS gives me error on second key submit '{color:#000000}602: Invalid Request{color}'
+
+
+author: moshiur.rahman
+comment: [~nprimak]
+ I couldn't reproduce your issue. I followed the following steps with the CIF and account numbers you provided and got the same result every time :
+ # Logged in, went to Statement Options, changed to email, submit button is activated, accounts are in paper.
+ # Clicked submit, submit successfully
+ # Exit
+ # Logged in
+ # Went to Statement Options
+ # Email radio button is selected, accounts are in paper. At this point, Submit button will remain disabled as nothing is changed yet.
+ # Changed to Email and Text radio button, Submit button is activated, accounts are in paper
+ # Clicked submit, submit successfully
+ # Exit
+ # Logged in
+ # Went to Statement Options.
+ # Email and text radio button is selected, accounts are in paper, submit button is grayed out as expected(unless anything is changed).
+
+If "Email and Text" is submitted and then the page is reloaded or exit and then login again, "Email and Text" will remain selected, and Submit button will also be disabled as nothing is changed. 
+
+Fiserv Hypercube SMS is not used anymore.  
+
+Thanks,
+Moshiur
+
+
+author: moshiur.rahman
+comment: [~nprimak]
+If you still think that there are issues, please join our tomorrow's meeting with Joe. I think we can discuss it there.   
+
+
+author: shun.kuwashima
+comment: Hi [~nprimak],
+
+Can you try again? Previously you might have logged in after the 'Email and Text' option was already selected, which could be why you had to switch to 'Email' first and then back to 'Email and Text'. 
+
+Right now the 'Email' option should be selected, therefore you should have the ability to switch the option to 'Email and Text' without needing to update the delivery preference section at all.
+
+Feel free to spark me if you have any questions or are still encountering issues.
+
+Thanks,
+Shun
+
+
+
+
+
+author: nprimak
+comment: It is working correctly now, following same scenario
+
+
+author: patric k
+comment: Hi[~shahadet.hossain],
+
+Do you know if the enrollment report can support both SMS & Email option?
+
+Thanks,
+Patric
+
+
+author: shahadet.hossain
+comment: Hello Patric,
+
+I think the WECU enrolment report would support SMS and EMAIL. But it would not show BOTH if both of the email and sms is enabled.
+
+
+author: patric k
+comment: [~moshiur.rahman],
+
+Can you research this? Is the enrollment report able to capture both SMS & Email? If not, what effort is needed to update the report?
+
+
+author: azad
+comment: Hi [~Patric K],
+
+I'm looking into it.
+
+Thanks,
+
+Azad
+
+
+author: azad
+comment: Hi [~Patric K],
+
+The query to pull data for enrollment report shows the notification preference as follows:
+ # If _email_status_ or _email_attachment_status_ is 'Y', then it shows "email".
+ # If_sms_status_ is 'Y', then it shows "SMS".
+
+It does not show "both" if_email_status_ and_sms_status_ are both in 'Y'. Instead it shows "email".
+
+So, currently the enrollment report is not able to capture both SMS & Email.
+
+
+
+Now, if we want to support this, we can add a new WHEN clause in the existing sql CASE that shows the notification_preference. This condition can be like following,
+{code:java}
+WHEN (np.email_status = 'Y' OR np.email_attachment_status = 'Y') AND np.SMS_STATUS = 'Y' THEN 'both'
+{code}
+After updating, the CASE will look like this:
+{code:java}
+CASE
+  WHEN (np.email_status = 'Y' OR np.email_attachment_status = 'Y') AND np.SMS_STATUS = 'Y' THEN 'both'
+  WHEN np.email_status = 'Y' OR np.email_attachment_status = 'Y' THEN 'email'
+  WHEN np.sms_status = 'Y' THEN 'SMS'
+  ELSE 'email'
+END notification_preference
+{code}
+I've tested the query with this updated case and found "both" as notification preference for the users who are in both email and SMS.
+
+Should we proceed with this update?
+
+Thanks,
+
+Azad
+
+
+author: azad
+comment: Hi [~Patric K],
+
+I've committed the change to PUI pilot. But it is not tested.
+
+Let me know if anything is needed.
+
+Thanks,
+
+Azad
+
+
+author: patric k
+comment: [~Azad],
+
+Can you proceed on pilot. Also I ran a prelim test and received this error. Can you look into this?
+
+http://pui-pilot.infoimageinc.com/log.jsp?id=184605
+
+
+author: azad
+comment: Hi [~Patric K] ,
+
+After looking into the issue, we think that, gpg public key for pilot has been expired. For this reason, the key for _team.it.security@wecu.com_, can't be retrieved via WKD (Web Key Directory). Thus, the encryption process fails. You might need to extent expiration date on PILOT. For setting the new expiration date, I think you'll need the passphrase for your secret key which will be used to sign the new expiration date. We've gone through the logs for wecu enrollment process for the past few days as well, seems like all the jobs failed due to this reason. You might want to check with Tai/Sean regarding this. Let me know if it helps.
+
+Thanks,
+Azad
+
+
+author: patric k
+comment: client says they need more time on their end, and will give us live date after
+
+
+author: JIRAUSER10911
+comment: [~Tin.Chak]
+
+Per TS 18575. new timeline
+
+
+
+Pilot: 5/30
+
+Live: 6/7
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: Hi Azhar,
+
+The client said this was already on pilot and completed their testing. Please review the update and provide a date for when we can released to production. Remember we still have to go through on-shore QA for this. Thanks.
+
+
+author: azad
+comment: [~Tin.Chak]
+
+I have started working on updating both the Processing UI and the Hypercube code to support this feature on Stage. I will pass the ticket to QA tomorrow. If everything goes fine then I hope it could go live with the next Hypercube release on 24th. If not, then we can target the next release.
+
+Thanks.
+
+
+author: JIRAUSER10911
+comment: [~Azad] [~Tin.Chak]
+
+Are we still on track to go live tomorrow?
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~Kbittmann] We'll need to push it out to 5/26. There are some Hypercube code change and there's a scheduled release on 26th with other projects.
+
+
+author: JIRAUSER10911
+comment: [~Tin.Chak]
+
+Was this update released yesterday?
+
+
+author: rifat.mahmud
+comment: Hi [~Kbittmann],
+
+This was released today to production.
+
+Thanks.
+
+
+author: shun.kuwashima
+comment: [~rifat.mahmud] Client reported they are still not seeing the both Email and text option on the member site on production. Can you double check?
+
+[~Tin.Chak] [~Kbittmann] Fyi
+
+
+author: azad
+comment: [~Shun.Kuwashima]There were some configuration mismatch on Infoconfig. I've updated it. Please, let me know if any other issue is found.
+
+[~Tin.Chak] [~Kbittmann] [~rifat.mahmud] FYI.
+
+Thanks
+
+
+author: JIRAUSER10911
+comment: [~Azad]
+
+Client confirms that they can now see the update.

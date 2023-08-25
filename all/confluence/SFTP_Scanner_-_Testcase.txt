@@ -1,0 +1,147 @@
+title: SFTP Scanner - Testcase
+body: NOTE:
+
+  * Make sure email-id configured under the client-info is set to the internal email-id. The email should not be sent to the customer.
+
+  
+  
+
+## 1\. Functional Test Cases for Use Case: Move file
+
+This section provides an overview of functional test cases for  **moving
+files**  from  _ftproot_  to  _ftpbu_.
+
+Clients should have a File-Transfer-Status setup in PUI which contains the
+email-ids and file schedules for  _incoming-files_.  
+The  _config.properties_  file can define multiple  **ftproot**  machines
+using  _global.scanner.0.ftpRootPath_  variable.  
+  
+
+### 1.1 Test Case: Move File
+
+#.| CID| Condition being tested| Expected Result| Actual Result| DEV Testing  
+---|---|---|---|---|---  
+T1| Any client| Configure multiple ftproot machines in the
+_config.properties_  file. Define a schedule for a CID in DPJS->File-Transfer-
+Status screen in PUI.| File should be moved to the respective folder BU. Data
+should be recorded in the log file|  
+| Passed. File transferred/moved to target location from single source sftp
+server.  
+T2| Any client| Use a CID with no file schedule defined in DPJS->File-
+Transfer-Status screen in PUI.| Same as above|  
+| Passed. Test performed using EaiAdmin CID.  
+T3| Any client| Define a schedule for multiple CID in DPJS->File-Transfer-
+Status screen in PUI. Use a file with size greater than 4GB. Run the scanner
+multiple times.| Same as above|  
+| Passed. Test performed against ~4GB file with CID=EaiAdmin  
+  
+  
+  
+
+## 2\. Functional Test Cases for Use Case: Send Email
+
+This section provides an overview of functional test cases for  **sending
+confirmation and alert emails**  to clients.  
+CID's used for test cases in this section should have a schedule for a CID in
+DPJS->File-Transfer-Status screen in PUI.
+
+For alert emails, the alert interval and frequency should be specified in
+_CID.fts.alertCount_  and  _CID.fts.alertInterval_.  
+The confirmation email could be configured to send out multiple emails; one
+for each file received.  
+ _CID.confirmation.multipleEmail_  in config.properties sets this feature.  
+  
+
+### 2.1 Test Case: Move File
+
+#.| CID| Condition being tested| Expected Result| Actual Result| DEV Testing  
+---|---|---|---|---|---  
+T5| Any client| Configure a filename with a regular expression. Place an input
+file that satisfies this condition.| A confirmation email should be sent.|  
+| Passed.  
+T6| Any client| For the above test case, place an input file that does not
+match the regular expression.| A confirmation email should be sent but the
+contents should indicate that the file was not recognized|  
+| Passed.  
+T7| Any client| Select the case sensitive box and place an input file
+accordingly.| A confirmation email should be sent. If the file doesn't match
+the case, the contents should indicate that the file was not recognized|  
+| Passed.  
+T8| Any client| Select the various options in the "Due Method"| Confirmation
+email is expected|  
+| Passed.  
+T9| Any client| Run the scanner multiple times without an input file.
+Configure the alert count and alert Interval variables| If the file is
+overdue, an alert email should be sent. The frequency and interval is
+determined by the variables in the config file|  
+| Passed.  
+T10| Any client| Run the scanner for an input file| The email should contain
+the checksum value; MD5/CRC is determined by the client setting|  
+| Passed.  
+T11| SNFB| Set  _snfb.confirmation.multipleEmail=true_. Run the scanner with 2
+input files| 2 confirmation emails must be sent.The subject of each email
+contains the filename that was uploaded. The contents should contain all both
+the filenames|  
+| Passed.  
+  
+  
+  
+
+## 3\. Functional Test Cases for Use Case: Trigger a PUI process
+
+This section provides an overview of functional test cases for  **triggering
+PUI processes**  for specific clients.
+
+The input file must be  **decrypted**  and copied to Input server for use by
+the PUI process.  
+  
+
+### 3.1 Test Case: Trigger a PUI Process
+
+#.| CID| Condition being tested| Expected Result| Actual Result| Dev Testing  
+---|---|---|---|---|---  
+T15| MWCU| Place an input file for MWCU and run the scanner. The input file
+must be pgp encrypted.| The file should be moved to the corresponding BU
+folder. A copy should be decrypted placed in the Input Server  _( .\process-
+files\CID)_. The process must be triggered in PUI.|  
+| Not applicable for Phase-I  
+T16| WTCU| Place an input file for WTCU and run the scanner. The input file
+must be zipped| The file should be moved to the corresponding BU folder. A
+copy should be unzipped placed in the Input Server  _( .\process-files\CID)_.
+The process must be triggered in PUI|  
+| Not applicable for Phase-I  
+  
+  
+  
+
+## 4\. Reconcile Process Flow Testing
+
+This section provides an overview of functional test cases for  **reconcile**
+process flow for various file schedule.
+
+The file-schedule must have various scheduled like daily (one time & multiple
+time), weekly, monthly schedule configured.  
+Identify & select CID having covering various types of file schedule .  
+  
+
+### 4.1 Test Case: Reconcile Process
+
+#.| CID| Condition being tested| Expected Result| Actual Result| Dev Testing  
+---|---|---|---|---|---  
+T20| test| Select a file-name having schedule defined as daily.| The Reconcile
+flow must pick up & process the schedule. It should also send an email for the
+missing (not-received) files with given number of alerts & time-intervals.|  
+| Passed.  
+T21| cacu| Select a file-name having schedule defined as weekly.| The
+Reconcile flow must pick up & process the schedule. It should also send an
+email for the missing (not-received) files with given number of alerts & time-
+intervals.|  
+| Passed.  
+T22| test| Place a file where file-name is not defined under the file-schedule
+table.| The scanner service flow must pick up & process the file with
+unidentified file name. It should also send an email for the unknown(not-
+defined) file type.  
+  
+  
+
+

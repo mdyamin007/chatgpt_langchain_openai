@@ -1,0 +1,97 @@
+title: INFO - [34193][pvt][in-house] Graphic Messsage Configured Incorrectly
+description: In order to properly capture graphic message count correctly. Variable "img_msg_area"needs to*defined and exported*in control file.
+
+
+
+The InfoSync API will store the information in MM_PROCESS_COUNT table. To check the result after processing:
+
+
+
+select id, color, msg_box_num, msg_count, criteria_type, msg_area_type from mm_process_count where proc_id=$proc_id
+
+
+
+img_msg_area="1" or
+
+img_msg_area="2" or
+
+img_msg_area="1,2"
+
+
+
+Programmer Group - Yamee
+
+acbk -> ds1 -> acbkds1.control
+
+1. Need to set img_msg_area="2" in control file
+
+
+
+Programmer Group - Rony (DSI)
+
+ctcu -> ms1 -> ctcums1.control
+
+1. Variabe img_msg_area="1,2" is not exported
+2. Ensure DFA write the msg box indicator to the txt record.
+
+
+
+dacb -> ms1 -> dacbms1.control
+
+1. Issue - This job has no print. And it has two graphic messages. Currently, we don't capture graphic message count for estatement
+
+
+
+Programmer Group - Yamee
+
+elcu -> ms1 -> elcums1.control
+
+1. Issue - both msg 1 and 2 are graphic messages - need to set img_msg_area="1,2"
+
+
+
+Programmer Group - Tun
+
+gdcu -> ms1 -> gdcums1.control
+
+1. Issue - No Record in mm_process_count table - img_msg_area="1" is not exported in the control file
+
+
+
+Programmer Group - Yamee
+
+htbk -> ds2 -> htbkds2.control
+
+1. issue - default and msg01 are graphic msg - uncomment and export img_msg_area="1"
+
+
+
+Programmer Group - Tun
+
+kfcu -> ms1 -> kfcums1.control
+
+1. Issue - Msg count match Celeste's number. Color should be Y - missing color_flag='s' define in control file
+
+
+
+Programmer Group - Rony (DSI)
+
+mife -> ms2 -> mifems2.control
+
+1. Issue - Msg Area Type should be image - img_msg_area="1" is not define
+
+
+
+Programmer Group - Tun
+
+sncu -> ms1 -> sncums1.control
+
+1. Issue - Msg Area Type should be image (I checked the msg samples) - img_msg_area="1" is not defined or exported
+
+
+
+Programmer Group - Tun
+
+sscu -> me2 -> sscume2.control -> SSCUME21.dfa
+
+1. msg count is zero during the infosyn AFI call - missing MSG_AREA1_TYPE output to txt record from the format program

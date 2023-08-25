@@ -1,0 +1,28 @@
+title: Implementation of alternative to cookie (query parameter) fro PRISM (Clients having filter class)
+body: # SSO:
+
+## Enrollment (SSO Exchange):
+
+  1. Get the submitted key generated from SSO Login.
+  2. Decrypt the sso key and obtain the user id.
+  3. Create a new encoded key using that user id and current timestamp. There will be a space between usrId and timeStamp.
+  4. Get the browser information from the request header.
+  5. Finally, insert the browser information and encoded key into MongoDB. After inserting get the _id of MongoDB document and set it as query parameter while redirecting the request.
+
+## Filter Class:
+
+  1. Inside Filter, get the _id from query parameter and pull data (sso key and browser information) from MongoDB using the _id.
+  2. Validate the browser info.
+  3. If browser information is valid then obtain the user id and timestamp by decrypting the ssokey data and ensure that the data is expired or not from the timestamp value.
+  4. Using the user id obtain the account id and account number and store them in the request object.
+
+## selectAcct.jsp:
+
+  1. Inside selectAcct.jsp page create new encoded key using user id, newly selected account number, account id and new timestamp.
+  2. Update the ssoKey data in MongoDB with newly created encoded key.
+
+## Other places:
+
+  1. In every pages while redirecting to new page add the MongoDB document _id as query parameter.
+
+

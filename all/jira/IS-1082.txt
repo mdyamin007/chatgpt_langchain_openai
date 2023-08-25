@@ -1,0 +1,282 @@
+title: SSCU - [28431][pvt] DNA Notice Updates to S-271J (Letter Code 108)
+description: IS Assessment
+ =============
+ Hours for development: 4 IS hours + ISD hours required
+ Turnover Date : 05/04/2022
+ Sample to QA Date: 05/11/2022
+ Sample Approval Date: 05/16/2022 
+ Go live date : 05/23/2022
+ 
+ Assessment Details (IS):
+ - Parallel required: (Yes) Need to test pulling correct images because update from 1 Duplex to 2 Duplex notice.
+
+- Update notice images for (DL-108 Certificate Rollover Notification Letters S-271)
+ - Application name: SSCUDLE (daily notice - sscu_dn_<mmddyyyy>_<segment>.zip.pgp)
+
+ - Data file name: TD_NOTE.STM
+
+ - New letter template attached in TS#28431 comment# 3
+
+S-0271J-RFR-4-9-2022 Clean 3-24-2022 for InfoIMAGE.pdf
+ S-0271J-RFR-4-9-2022 Clean 3-24-2022 (1).docx
+
+Assessment Details (IS) new update:
+ - Update 'Payment Amount' value field for (SSCUDLE -> DL-111)
+
+ - Use (Total Amount Due  Late Charge ) to populate in the Payment Amount field. Currently, 'Payment Amount' is using "Past Due Amount". (see output from data dump image below).
+
+ - Borrower Late Notice Generation (IMS-651)
+ - data file name - LN_LATE.STM
+
+!screenshot-1.png|thumbnail!
+
+
+
+Adding additional update per TS#29089:
+
+
+
+Remove ".stm" for checking file names. So both file names will work. \{FILE NME KEYWORD}.stm or \{FILE NME KEYWORD}_MMDDYY.stm.
+
+Please add following description in IS-1082 and provide updated SOW.
+
+
+
+
+
+IS assessment:
+
+- Remove ".stm" for checking file names then both file names will work.
+
+{FILE NME KEYWORD}.stm or \{FILE NME KEYWORD}_MMDDYY.stm
+
+- Remove .STM extension from file pattern in script
+
+- Remove .STM from /home/keep/checklist/sscudle_checklist and back up the original one.
+
+- Update procedure file
+
+- Update SOW
+
+
+author: tuna
+comment: Hi [~jun],
+
+When you work on this project. Please review TS#28492. If [~phoebe.george]confirmed, please provide sample for that value update too.
+
+Thanks,
+
+Tun
+
+
+author: jun
+comment: [~Juliana Vannik]
+
+[^SSCU_IS-1082-Samples_0510.zip]
+
+Attached PDF samples.
+
+
+
+
+author: phoebe.george
+comment: [~jun] Updated description with additional change for TS#29089.
+
+
+author: JIRAUSER11300
+comment: Hi [~jun],
+
+For the file Letter Code 111 client comments that the samples provided did not include a "fee" for them to validate that the calculation is correct. 
+Please provide additional samples if possible
+
+Thank you!
+Juliana
+
+
+author: jun
+comment: [~Juliana Vannik],
+
+I see a value for "Payment Amount: " in the PDF samples. Which "fee" are they referring to?
+
+
+author: phoebe.george
+comment: [~jun] In the samples provided, because all the Late Charges are $0.00, they can't technically confirm that the calculation is working as expected. Would you by chance have any examples where there is an actual amount in the Late Charge so they can confirm if the calculation is working as expected?
+
+Here is an example:
+
+!image-2022-05-13-13-42-39-157.png!
+
+
+author: william.kong
+comment: [~jun]: Per our call on 5/13 with [~phoebe.george], we will do coding ahead expecting client to add MMDDYY into the individual Daily Notice file naming conventions.
+
+e.g.:
+
+PS_NSFNT.\{MMDDYY}.STM (PS_NSFNT.0513222)
+
+Please update the script logic to handle the file naming convention now so that we can use on Monday. Phoebe will inform client to make sure they will get the MMDDYY file naming updated correctly. We unfortunately will NOT have time for test files to arrive for testing. They just need to get it coded correctly.
+
+
+
+As for the requirement for adding the new letter templates logic, that will need to be a separate release date.
+
+
+
+
+
+
+author: phoebe.george
+comment: [~jun] As discussed on our call, customer sent this test file with the MMDDYY added:
+
+TEST/SSCU_DN_05132022_1.zip.pgp
+
+Please review and confirm if okay to use for final testing. Also, let me know if I should have DP turnoff CRON for this weekend depending on possible release.
+
+
+
+CORRECTION to Will's update. The file name should use an underscore:
+
+<filename>_MMDDYY.stm
+
+EXAMPLE: PS_NSFNT_051122.stm
+
+[~William.Kong] [~TunA] [~Juliana Vannik] FYI
+
+
+author: jun
+comment: [~phoebe.george], [~William.Kong], [~Juliana Vannik]
+
+The zip file contain data file for 8 letters which all added the MMDDYY at the end. I've updated the naming convention. Testing looks good.
+
+The 2 data files that weren't in the zip were (I didn't update these since it's not in test file):
+
+SDB_LATE.STM
+ CCM_Overlimit_Notice_<mmddyyyy>.txt
+
+
+author: phoebe.george
+comment: [~jun] As discussed on Friday, please confirm that you will also include the SDB late notice with the update. It actually should be included in all the Fiserv files on their job list. 
+
+Please confirm next steps for moving forward with this portion of the rush request for release, and/or if I should put on hold with DP.
+
+[~Juliana Vannik] [~William.Kong] [~TunA] FYI
+
+
+author: jun
+comment: [~phoebe.george] [~William.Kong] [~Juliana Vannik] [~TunA],
+
+I included the SDB late notice with the update.
+
+Just double checking that I didn't miss anything, I've updated the process so that it can pick up file names with and without a date. All the current notices are updated except "CCM_Overlimit_Notice_<mmddyyyy>.txt" since this file already have a date.
+
+
+
+An example of the change for one of the letters:
+
+diff sscudle_checklist.txt /home/keep/checklist/sscudle_checklist.txt
+
+< LN_MATNT=N=N
+
+---
+> LN_MATNT.STM=N=N
+
+
+
+diff sscudle_process.sh /home/master/sscudle_process.sh
+
+< elif [[ ${outfile_uc} =~ LN_MATNT_[0-9]\{6}.STM ]] || [[ ${outfile_uc} =~ LN_MATNT.STM ]];
+---
+> elif [[ ${outfile_uc} =~ LN_MATNT.STM ]];
+
+
+author: william.kong
+comment: [~jun]: Please go ahead and release the filenaming portion first since that should be a straightforward logic update. Please update [~phoebe.george]once you have it updated.
+
+
+
+[~phoebe.george]: FYI
+
+
+author: jun
+comment: [~phoebe.george],
+
+Code is released for updating the file naming convention
+
+
+author: william.kong
+comment: Per [~jun]: Pending test file on one notice and the other is pending customer approval.
+
+
+
+[~phoebe.george]: We need to revise the timeline for this project as the 5/23 date may be missed. Please advise when time permits.
+
+
+author: phoebe.george
+comment: [~jun] SSCU has confirmed that they would like to CANCEL the update for notice 111:
+ - Update 'Payment Amount' value field for (SSCUDLE -> DL-111)
+
+ - Use (Total Amount Due  Late Charge ) to populate in the Payment Amount field. Currently, 'Payment Amount' is using "Past Due Amount". (see output from data dump image below).
+
+ - Borrower Late Notice Generation (IMS-651)
+
+
+
+They have approved samples for Notice 108 - please confirm once okay to remove the previous update and continue with QA for Notice 108. Let me know any timeline adjustments and we can update the due date for this change.
+
+[~Juliana Vannik] FYI
+
+
+
+Thank you,
+
+Phoebe
+
+
+author: jun
+comment: [~Igor.Khosid] [~Juliana Vannik] [~phoebe.george]
+
+Update is only for notice 108 adding verbiage to disclosure.
+
+Parallel id:20220524101336
+
+project:qa\SSCU\SSCUDL108.zip
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220524101336
+   Currently in parallel: Yes
+   User: junM
+   Description: IS-1082 SSCU DL108 Add verbiage
+   Date Submitted: 2022-05-24 10:13:45
+   Date Last Updated: 2022-05-24 10:13:45
+   Files:
+      1) SSCUDL108.dfa
+
+
+author: igor.khosid
+comment: [~jun] [~Juliana Vannik] [~phoebe.george]
+QA - completed
+Letter 108 - Disclosure on the "Joint owner(s)" field is hard-coded to say "Refer to your account statement."
+
+
+author: JIRAUSER11300
+comment: Hi [~jun], we have just received SSCU approval to move forward with code release for Letter Code 108. 
+
+Please proceed and let us know if any questions
+
+Thank you!
+Juliana
+
+[~phoebe.george] FYI
+
+
+author: william.kong
+comment: [~jun]: Per our discussion, you plan to release today. [~Juliana Vannik]/[~phoebe.george]: FYI.
+
+
+
+
+author: jun
+comment: [~Juliana Vannik] [~phoebe.george]
+
+Code released to production

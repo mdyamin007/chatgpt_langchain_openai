@@ -1,0 +1,72 @@
+title: Global - Always Display DT Job ID if exists
+description: PC:
+#1 select estmtjobtracking from tblAL where vid = ? and active =1 
+
+IS:
+#2 select et.dt_job_id, pm.created_date 
+from estmt_dt et, process_main pm 
+where pm.dt_job_id = et.dt_job_id and pm.test = ? and pm.status >0 and et.cid = pm.cid
+and et.cid =? and estmt_idx_file = ?;
+ 
+#3 select INFOTRAC_FLAG from estmt_proc where ESTMT_IDX_FILE=? 
+
+For AFP, E-Notice, E-Tax, and Document processing, remove queries #1 and #3 so that the DT-Job-ID is always pulled and displayed on the front-end. See attached image for example. E-Notice does not have estmtjobtracking, which is why the DT-JOB-ID isn't being displayed, but the request is that we always display it for internal teams to reference.
+
+
+author: shahadet.hossain
+comment: Hello Tai,
+
+Inside Worker for EXEC methods we callcom.infoimage.processing.server.jobTracking.getJobTrackingInfo() method. This method calls another method to get dt_job_id from IS database using following query:
+
+String sql = "select et.dt_job_id, pm.created_date "+
+ " from estmt_dt et, process_main pm "+ 
+ " where pm.dt_job_id = et.dt_job_id and pm.test = 0 and pm.status >0 and et.cid = pm.cid"+
+ " and et.cid =? and estmt_idx_file = ?";
+
+If this query returns the dt_job_id. That would show in the front end PUI. I think for the screenshot that you have provided, this query doesn't return any value. I don;t have the access to IS database but as far as I can see, query #2 should return value to populate dt_job_id.
+
+
+author: tai.trinh
+comment: Hi [~shahadet.hossain] ,
+
+Yes, looking through the code, it seems like no conditions are required for the dt_job_id column to be populated. As long as a value exists, we will always insert. We do print out some logs dependent on the flags, but as far as I saw, they do not influence dt_job_id being inserted. Is this correct?
+
+Thanks,
+ Tai
+
+
+author: shahadet.hossain
+comment: Hello [~tai.trinh] ,
+
+Yes. That is what my finding is so far. I could be sure if there is a case where the above query returns data and we didn't populate that in front end.
+
+
+
+Thanks,
+
+Shahadet
+
+
+
+
+
+
+author: tai.trinh
+comment: [~shahadet.hossain],
+
+Actually, that seems to be the case. There are jobs that the query will return a value, but it is not inserted into the database.
+
+!image-2021-09-10-16-19-59-515.png!
+
+Thanks,
+Tai
+
+
+author: tai.trinh
+comment: Hi [~shahadet.hossain],
+
+I think I figured out the issue. In processing.conf, afp, doc, and enotice4 has "hasDtJobId" configured. The enotice job doesn't. This is probably why it's not working for GECU enotice.
+
+Thanks,
+
+Tai

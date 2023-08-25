@@ -1,0 +1,269 @@
+title: VWCU - [26380][pvt] Advanced Online Proofing
+description: Set-up Advanced Online Proofing for All Print & Electronic Applications
+
+IS Assessment
+ =============
+ Hours for development: 4 IS hours
+ Turnover Date : 3/21/2022
+ Sample to QA Date: 3/24/2022
+ Sample Approval Date: 03/28/2022 
+ Go live date : 03/31/2022
+ 
+ Assessment Details (IS):
+ - Parallel required: (No) Need sample in Pilot for client
+
+ - Setup AOLP for VWCU monthly and visa combined application.
+
+ - The application is processed for following 3 files.
+
+  1) VWCU_stmt_mmddyy.zip (Monthly stmt file )
+   2) VWCU_ba_mmddyy.zip (Business Analysis gold)
+   3) VWCU_visa_mmddyy.zip (Visa platinum)
+ - Update following AOLP flags in vwcums1.control, vwcumv1.control
+
+ - Add
+
+olp="y"
+ olp_prf_file="y"
+ olp_auto_rel="n"
+ olp_int_dlist=`grep ^olp_maillist ${home_env}/${keep_dir}/maillist/vwcums1_mail.lis | cut -d"=" -f2`
+ - Remove
+
+job_prf="y"
+
+
+author: william.kong
+comment: [~kdishroon]: Can we get a DT_JOB_ID in the pilot site? Jun will need this to process so you can train client AOLP. We are 1 day late but should be able to ready tomorrow as long as we have DT_JOB_ID.
+
+
+author: tuna
+comment: Hi [~kdishroon],
+
+[~jun]is working on this. But we have turnover date late and some environment issue for testing. So the sample date will be late.
+
+He will let you know when sample is ready.
+
+Thanks,
+
+Tun
+
+
+
+[~William.Kong]
+
+
+
+
+author: jun
+comment: [~kdishroon]
+
+Print is completed on Pilot.
+
+!image-2022-03-25-15-12-11-287.png!
+
+
+author: william.kong
+comment: [~kdishroon]: Live Date is tomorrow (4/1/2022); Please advise if client approved the pilot site. If not, we will not be able to make it for tomorrow EOM live date. Please advise.
+
+
+author: kdishroon
+comment: [~William.Kong] - No, there has not been time to train the client on AOLP so they are not ready to go live.
+
+
+author: william.kong
+comment: [~kdishroon]: I"m going to target the go live date for 4/29/2022 so that it give you time to train VWCU and also update the approval date to 4/20/2022.
+
+
+author: shun.kuwashima
+comment: [~kdishroon] the estatement index file is posted successfully onto pilot and viewable under InfoTRAC pilot Job Status, see jobID 139147-C00.01-V21194
+
+
+author: kdishroon
+comment: [~Shun.Kuwashima] -The client does not see the envelope icon to click on and review the sample in InfoTRAC Pilot; is that something that I need to address with PC?
+
+
+author: shun.kuwashima
+comment: [~kdishroon] They didn't have extended tracking enabled for any of their roles on infotrac pilot. I've added it to the Superuser and Online Proofing Role, so users with these roles should be able to see the envelope button now.
+
+
+author: william.kong
+comment: [~kdishroon]: I don't believe we are going live with this project this month (4/29). I will mark the live date to 5/31/2022 instead.
+
+
+author: william.kong
+comment: [~kdishroon]: are we going to be able to go live with this project by the end of this month or will this project be delayed by another month again?
+
+
+author: kdishroon
+comment: [~William.Kong],
+
+
+
+The client is asking if they will still be able to see the bulk PDF under Online Proofing?
+
+
+
+!image-2022-05-19-14-06-02-349.png!
+
+
+author: william.kong
+comment: [~kdishroon]: Looks like client wants to keep the proof file.
+
+
+
+[~jun]: Since the current code already has the custom prf afp file, can you enable job_prf="y" and re-run for them to review. If they agree this is the correct behavior, then we can update the job description correct it to require job_prf=y.
+
+
+author: jun
+comment: Currently rerunning on Pilot for new samples
+
+
+author: kdishroon
+comment: Hi Jun,
+
+Is this complete? I don't see the online proofing PDF in InfoTRAC pilot yet:
+
+!image-2022-05-27-17-37-07-216.png|width=337,height=359!
+
+
+
+
+author: jun
+comment: [~kdishroon] [~William.Kong],
+
+I'm not unable to run it with AOLP and job_prf flag on at the same time. The process exits out in print step. Is it because the process doesn't allow to have AOLP and old online proofing at the same time?
+
+
+author: tuna
+comment: Hi [~kdishroon],
+
+Please discuss with [~jun]for how to proceed and update DUE date to 06/15 for now.
+
+Thanks,
+
+Tun
+
+
+
+
+author: william.kong
+comment: [~jun]: I made some updates to olp_handler.sh to address the URL issue that Anil explained. We used the wrong URL (instead of ca-jobtrack-dv-01.infoimageinc.com:8980 it should be ca-jobtrack-pi-01.infoimageinc.com:8980. Not only did I fix the url, i changed the logic to inherit the URL via system environment variables instead of hard coding:
+
+
+
+9025ffd98df8a7a644d612c66cff24e0 /d/iss/willK/code_release/20220606/olp_handler.sh
+
+
+
+
+
+
+author: jun
+comment: [~kdishroon] [~William.Kong],
+
+Process ran successfully on Pilot environment.
+
+The proofing PDF can be viewed by clicking on "Job Details" for DT_JOB_ID "139223-C00.01-V21957"
+
+!image-2022-06-08-15-03-14-230.png!
+
+!image-2022-06-08-15-03-35-955.png!
+
+
+author: william.kong
+comment: [~kdishroon]/[~jun]: For now, i'm going to move the target live date to June 30, 2022
+
+
+
+
+author: william.kong
+comment: [~kdishroon]: Looks like again we are going to delay this project to next month since there is no responses.
+
+
+author: kdishroon
+comment: Hi [~jun],
+
+The client approved pilot; please let me know when code can be released.
+
+Thank you!
+
+Keri Y.
+
+
+author: jun
+comment: [~Igor.Khosid]
+
+Samples are on Pilot.
+
+parallel id:20220324103523
+
+[~kdishroon]
+
+Code can be released once QA completes since no parallel required.
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220324103523
+   Currently in parallel: Yes
+   User: junM
+   Description: IS-964 VWCU AOLP
+   Date Submitted: 2022-03-24 10:35:31
+   Date Last Updated: 2022-07-15 11:56:31
+   Files:
+      1) vwcumv1.control
+      2) vwcums1.control
+
+
+author: igor.khosid
+comment: [~berezinez]
+Please review and confirm
+
+
+author: berezinez
+comment: [~jun]
+
+please advise, what should be the "olp_prf_file" per description its "n"
+
+but in both control files, it shows "y"
+
+!olp_prf_file.GIF!
+
+
+author: jun
+comment: [~berezinez]
+
+After customer review, customer wanted the proof file. The description isn't updated. I will change it. It should be 'y'
+
+
+author: igor.khosid
+comment: [~kdishroon] 
+Please confirm if the descriptions need to be updated.
+
+[~berezinez] - FYI
+
+
+author: kdishroon
+comment: Hi [~Igor.Khosid],
+
+Can you please clarify what description you are referring to?
+
+Thank you,
+
+Keri
+
+
+author: igor.khosid
+comment: [~kdishroon]
+olp_prf_file should "y" instead of "n"
+
+
+author: berezinez
+comment: [~jun] [~kdishroon]
+
+Thank you, Description was updated, QA is completed.
+
+
+author: jun
+comment: [~kdishroon] [~Shun.Kuwashima]
+
+Code released to production

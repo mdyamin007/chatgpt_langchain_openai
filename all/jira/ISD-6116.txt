@@ -1,0 +1,217 @@
+title: FNBK - [23566][pvt] Narmi OLB Implementation
+description: FNBK - Narmi Online Banking SSO Setup (New/Additional SSO)
+
+
+
+Description of Work:
+
+Set-up new SSO for FNBK for Narmi Online Banking.
+
+This SSO will be in addition to the existing SSO for new business users.
+
+
+
+Timeline Target Dates (ISD to confirm):
+
+ISD Coding Start = 1/3/22
+
+ISD Provide Pilot URL's = 1/14/22
+
+SSO Testing = Begins 1/21/22
+
+Pilot Site/SSO Approval Date = 3/8 based on a target 3/15/22 live date
+
+NOTE: Once pilot site is approved, InfoIMAGE will need a 7 day lead time for code release.
+
+
+author: phoebe.george
+comment: [~shahadet.hossain] I received confirmation and updated the description as well:
+
+FNBK/NARMI confirmed: Use Tax ID as the CIF Number for the purpose of the SSO; Narmi uses the TIN as the 'primary key indicator'.
+
+
+author: phoebe.george
+comment: [~shahadet.hossain] This item came up this morning from FNBK and Narmi - can you confirm and provide the sample request noted below?
+
+We are working to set up InfoImage SSO to retrieve eStatements for First IB to pull into their new Narmi Digital Banking platform. Unfortunately, we are currently getting errors. We are looking for a sample request to help us troubleshoot. Or, perhaps it is worth a live call if you may be willing to jump on with our team.
+
+
+
+Here is the request from my engineer:
+
+_{color:#FF0000}I was wondering if info image could provide a sample request for an existing user on FirstIB UAT.{color} I'm currently getting a 404 while testing, not sure what is going wrong_
+
+
+
+_[~Tin.Chak] FYI_
+
+
+author: phoebe.george
+comment: [~shahadet.hossain] Also - update live date has been moved to 3/28/22. I have updated the Epic accordingly.
+
+
+author: phoebe.george
+comment: [~Tin.Chak] [~shahadet.hossain] Please provide an update on the request in my previous comment in red - customer is requesting this information ASAP.
+
+
+author: shahadet.hossain
+comment: Hello [~phoebe.george]
+
+Looks like there is an issue with proxy mapping. We have asked for help from the network team. We are still waiting for their response.
+
+
+author: azad
+comment: [~phoebe.george]
+
+Here is a sample request for an existing FNBK user on PILOT environment. 
+ The "data" is generated with User Identification Number (loginId): 316194749
+{code:java}
+// SSO Key Generation
+<form action="https://fnbkpilot.infoimageinc.com/ssoKeyGen/narmi" method="POST"> 
+  <input type="hidden" name="data" value="8c32c41f0810523ccdbaceb72afff891ac8fc322cfc54e04c180cf17fb25472d0000000000031619474903222022" /> 
+  <input type="hidden" name="email" value="test@infoimageinc.com"/> 
+  <input type=hidden name=selected_acct0 value=300857086/> 
+  <input type=hidden name=selected_acct_type0 value=1 /> 
+  <input type=hidden name=selected_acct_desc0 value=INTEREST /> 
+  <input type=hidden name=selected_acct1 value=301052362 /> 
+  <input type=hidden name=selected_acct_type1 value=EXT/> 
+  <input type=hidden name=selected_acct_desc1value=Cashback Rewards /> 
+  <input type=hidden name=selected_acct2 value="301351243 /> 
+  <input type=hidden name=selected_acct_type2 value=2 /> 
+  <input type=hidden name=selected_acct_desc2 value=FREE />
+</form>
+{code}
+{code:java}
+// SSO Exchange
+<form action="https://fnbkpilot.infoimageinc.com/ssoExchange" method="POST"> 
+<input type="hidden" name="key" value="mdgfbgWLRnRBbyFqu"/>
+</form>
+{code}
+[~Tin.Chak]FYI.
+
+Thanks
+
+
+author: phoebe.george
+comment: [~Azad] Thank you!
+
+Can you also provide the production URL's in the meantime?
+
+Narmi is requesting this in preparation once their live date is set. Thank you!
+
+
+author: azad
+comment: Hi [~phoebe.george]
+
+Here is the production request and redirect URLs. I've also sent an email to network with other necessary information.
+
+Request URL: [https://statements.myfirstib.com/ssoKeyGen/narmi|https://statements.myfirstib.com/ssoKeyGen/narmi_]
+ Redirect URL: [https://statements.myfirstib.com/ssoExchange|https://statements.myfirstib.com/ssoExchange_]
+
+Thanks.
+
+
+author: phoebe.george
+comment: [~Azad] [~shahadet.hossain] [~Tin.Chak] We have received FINAL approval of the pilot site for FNBK/Narmi SSO.
+
+I had noted a 7 day lead time for launching, but they are asking if we can launch sooner, targeted for end of week, or 4/25-4/26 at latest? Please confirm what is possible for a release date.
+
+Thank you,
+
+Phoebe
+
+
+author: azad
+comment: Hi [~phoebe.george],
+
+We can go forward and release the project on 4/26. I have already sent an email to network with necessary information. I am working on moving the code to Stage right now and then our QA will test it.
+
+FYI [~shahadet.hossain] [~Tin.Chak]
+
+Thanks you,
+
+Azad
+
+
+author: phoebe.george
+comment: [~Azad] Is this on schedule to release today? Thanks!
+
+
+author: azad
+comment: [~phoebe.george],
+
+Yes. This project has already been released.
+
+Thanks
+
+
+author: phoebe.george
+comment: [~Azad] [~shahadet.hossain] [~Tin.Chak] Thank you for completing coding release yesterday.
+
+Based on accessing production, FNBK reported the following issue below. They provided account #301938257 used for this access to production. They are checking with Narmi as well. Can you confirm if this may have to do with any CIF file processing that we do in production also that may impact being able to see the account through customer site? Here is their feedback below:
+
+
+
+We tested the account we have set up in Narmi Production and here is what we found. (Sarah/Sean please feel free to add anything that I missed or captured incorrectly)
+
+
+
+We went through the enrollment of the account ending in 8257 and there were no statements showing. We began troubleshooting and checked our InfoTrac site to verify that there was a statement available and there was (see Screenshot 1). So there should have been a statement showing and there wasnt.
+
+
+
+We identified the error was that there was a second account created in Info Trac as a new account separate from the one originally created when the customer is created in DNA (see Screenshot 2). This is a problem because a second account cannot be created when a user agrees to E-agreements because then they will lose all history and it can cause confusion with DNA. In our current set up with our online banking provider, the accounts never get separated  so we are confused as to why they are being separated now. See Screenshot 3 to show that the SSO created a new user as of today. It should not be doing this. The account name information and Account type are also not displaying correctly when being pulled over from Narmi. It should not be pulling over and creating a new account to begin with but just wanted to point that out as well.
+
+!image-2022-04-27-09-00-51-908.png!
+
+
+
+
+
+
+author: azad
+comment: Hi [~phoebe.george]
+
+We have analysed the log and found that they did not pass the account type during sso.
+
+Also there was another issue with the configuration that, user/account creation was set to true. We have turned those flags to false to prevent creating new account.
+
+Nevertheless, they *must* pass account type(*_selected_acct_type#_*) with the sso request. If request sample is needed, please check out this [comment|https://jira.infoimageinc.com/browse/ISD-6116?focusedCommentId=32805&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-32805]
+
+And as for CIF files, this issue is not related to CIF files.
+
+FYI [~shahadet.hossain] [~Tin.Chak]
+
+Thanks
+
+
+author: phoebe.george
+comment: [~mac] [~davidt] As discussed with David, Mac will proceed with the following:
+ # Purge account number 301938257 with N/A account type.
+ # 'Reset' delivery preference for this user with CK account type.
+
+Thanks again,
+
+Phoebe
+
+
+author: JIRAUSER10913
+comment: [~phoebe.george]
+
+Hi Phoebe,
+
+I have purged the *N/A* account and unenrolled the user so they can go through the enrollment steps again.
+
+
+author: phoebe.george
+comment: [~mac] As discussed with you and [~Tin.Chak] , please set the flag for the User/Account creation by SSO to TRUE (to be enabled).
+
+Thank you!
+
+
+author: JIRAUSER10913
+comment: [~phoebe.george]
+
+Hi Phoebe,
+
+The flags has been enabled.

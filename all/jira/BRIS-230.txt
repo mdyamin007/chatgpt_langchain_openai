@@ -1,0 +1,214 @@
+title: Install Mutt Utility ca-apipui-pr-01
+description: None
+
+
+author: kent.chan
+comment: Surekha
+
+We are not installing this. This should be done by dev. Are you asking about the config details?
+
+
+author: surekhadani1
+comment: ok, please provide config details.
+
+
+author: surekhadani1
+comment: Network,
+
+ I have installed mutt utility on ca-api-pui-pr-01. I was facing some issues so I also had to install sendmail utility.
+
+
+
+But now when I send email from ca-api-pui-pr-01, Im not able to receive email in inbox. In the logs it is shown as SENT
+
+
+
+Is there any blocking from ca-api-pui-pr-01 ? Because Im able to receive email from webapp-prod03 but not from ca-api-pui-pr-01?
+
+
+
+I have also found that webapp-prod03 is using *mailhub02.infoimageinc.com* mail server to send email notification, but I could not find where this configuration is being set.
+
+
+
+
+
+*ca-api-pui-pr-01:*
+
+**
+
+*command:*
+
+**
+
+root@ca-apipui-pr-01:/var/mail# mutt -s "Test Email" [surekha.dani@infoimageinc.com|mailto:surekha.dani@infoimageinc.com] < /dev/null
+
+**
+
+*syslog :*
+
+Oct 21 14:17:47 ca-apipui-pr-01 sendmail[121277]: 09LLHl4N121277: from=sdani, size=270, class=0, nrcpts=1, msgid=<[20201021211747.GA121262@ca-apipui-pr-01|mailto:20201021211747.GA121262@ca-apipui-pr-01]>, relay=root@localhost
+
+Oct 21 14:17:47 ca-apipui-pr-01 sm-mta[121278]: 09LLHlOm121278: from=<[sdani@ca-apipui-pr-01.infoimageinc.com|mailto:sdani@ca-apipui-pr-01.infoimageinc.com]>, size=465, class=0, nrcpts=1, msgid=<[20201021211747.GA121262@ca-apipui-pr-01|mailto:20201021211747.GA121262@ca-apipui-pr-01]>, proto=ESMTP, daemon=MTA-v4, relay=localhost [127.0.0.1]
+
+Oct 21 14:17:47 ca-apipui-pr-01 sendmail[121277]: 09LLHl4N121277: [to=surekha.dani@infoimageinc.com|mailto:to=surekha.dani@infoimageinc.com], ctladdr=sdani (1011/1011), delay=00:00:00, xdelay=00:00:00, mailer=relay, pri=30270, relay=[127.0.0.1] [127.0.0.1], dsn=2.0.0, stat=Sent (09LLHlOm121278 Message accepted for delivery)
+
+**
+
+
+
+*webapp-prod03:*
+
+**
+
+*command:*
+
+root@webapp-prod03:/home# mutt -s "Test Email" [surekha.dani@infoimageinc.com|mailto:surekha.dani@infoimageinc.com] < /dev/null
+
+
+
+*syslog :*
+
+
+
+Oct 21 14:19:54 localhost sendmail[1709]: 09LLJsN5001709: from=sdani, size=300, class=0, nrcpts=1, msgid=<[20201021211854.GA1690@webapp-prod03|mailto:20201021211854.GA1690@webapp-prod03]>, relay=root@localhost
+
+Oct 21 14:19:54 localhost sm-mta[1729]: 09LLJsKM001729: from=<sdani@localhost>, size=455, class=0, nrcpts=1, msgid=<[20201021211854.GA1690@webapp-prod03|mailto:20201021211854.GA1690@webapp-prod03]>, proto=ESMTP, daemon=MTA-v4, relay=localhost [127.0.0.1]
+
+Oct 21 14:19:54 localhost sendmail[1709]: 09LLJsN5001709: [to=surekha.dani@infoimageinc.com|mailto:to=surekha.dani@infoimageinc.com], ctladdr=sdani (1002/1002), delay=00:00:00, xdelay=00:00:00, mailer=relay, pri=30300, relay=[127.0.0.1] [127.0.0.1], dsn=2.0.0, stat=Sent (09LLJsKM001729 Message accepted for delivery)
+
+Oct 21 14:19:54 localhost sm-mta[1731]: 09LLJsKM001729: to=<[surekha.dani@infoimageinc.com|mailto:surekha.dani@infoimageinc.com]>, ctladdr=<sdani@localhost> (1002/1002), delay=00:00:00, xdelay=00:00:00, mailer=esmtp, pri=120455, relay=mailhub02.infoimageinc.com. [10.8.8.47], dsn=2.0.0, stat=Sent (ok: Message 4496897 accepted)
+
+**
+
+Thanks,
+
+Surekha Dani
+
+
+
+
+author: kent.chan
+comment: Hi Surekha
+
+I've allowed SMTP outbound from ca-apipui-pr servers. Can you try sending mail again.
+
+It appears to me the log for sendmail is merely stating it accepted the mail request, it doesn't appear that it shows it sent anything out.
+
+Thanks
+
+
+author: surekhadani1
+comment: Hi Kent,
+
+       I tried again, this time as well the logs says it is sent, but I did not receive email notification.
+
+
+
+Below are the logs :
+
+
+Oct 28 17:45:24 ca-apipui-pr-01 sendmail[199178]: 09T0jOOq199178: from=sdani, size=270, class=0, nrcpts=1, msgid=<20201029004524.GA199163@ca-apipui-pr-01>, relay=root@localhost
+Oct 28 17:45:24 ca-apipui-pr-01 sm-mta[199179]: 09T0jOOj199179: from=<sdani@ca-apipui-pr-01.infoimageinc.com>, size=465, class=0, nrcpts=1, msgid=<20201029004524.GA199163@ca-apipui-pr-01>, proto=ESMTP, daemon=MTA-v4, relay=localhost [127.0.0.1]
+Oct 28 17:45:24 ca-apipui-pr-01 sendmail[199178]: 09T0jOOq199178: to=surekha.dani@infoimageinc.com, ctladdr=sdani (1011/1011), delay=00:00:00, xdelay=00:00:00, mailer=relay, pri=30270, relay=[127.0.0.1] [127.0.0.1], dsn=2.0.0, stat=Sent (09T0jOOj199179 Message accepted for delivery)
+
+
+Oct 28 17:45:24 ca-apipui-pr-01 sm-mta[199181]: 09T0jOOj199179: to=<surekha.dani@infoimageinc.com>, ctladdr=<sdani@ca-apipui-pr-01.infoimageinc.com> (1011/1011), delay=00:00:00, xdelay=00:00:00, mailer=esmtp, pri=120465, relay=mailhub01.infoimageinc.com. [10.8.8.29], dsn=5.6.0, stat=Data format error
+Oct 28 17:45:24 ca-apipui-pr-01 sm-mta[199181]: 09T0jOOj199179: 09T0jOOj199181: DSN: Data format error
+Oct 28 17:45:24 ca-apipui-pr-01 sm-mta[199181]: 09T0jOOj199181: to=<sdani@ca-apipui-pr-01.infoimageinc.com>, delay=00:00:00, xdelay=00:00:00, mailer=local, pri=30000, dsn=2.0.0, stat=Sent
+
+
+
+Thanks,
+
+Surekha Dani
+
+
+
+
+
+
+author: kent.chan
+comment: [~surekha.dani]- Hi Surekha
+
+It appears based off this log entry:
+
+Oct 28 17:45:24 ca-apipui-pr-01 sm-mta[199181]: 09T0jOOj199179: to=<surekha.dani@infoimageinc.com>, ctladdr=<sdani@ca-apipui-pr-01.infoimageinc.com> (1011/1011), delay=00:00:00, xdelay=00:00:00, mailer=esmtp, pri=120465, relay=mailhub01.infoimageinc.com.[10.8.8.29], dsn=5.6.0, stat=Data format error
+
+
+
+The mail did get sent, but our mail server blocked it. I will confirm our internal spam filter.
+
+
+
+Reassigning to you for testing with gmail domain.
+
+
+author: surekhadani1
+comment: Kent,
+
+     I sent an email to my gmail account, but I did not receive - please see below logs :
+
+
+
+
+{color:#0747a6}Oct 29 09:13:21 ca-apipui-pr-01 sendmail[383494]: 09TGDLxS383494: from=sdani, size=262, class=0, nrcpts=1, msgid=<20201029161321.GA383477@ca-apipui-pr-01>, relay=root@localhost{color}
+{color:#0747a6}Oct 29 09:13:21 ca-apipui-pr-01 sm-mta[383495]: 09TGDLfG383495: from=<sdani@ca-apipui-pr-01.infoimageinc.com>, size=449, class=0, nrcpts=1, msgid=<20201029161321.GA383477@ca-apipui-pr-01>, proto=ESMTP, daemon=MTA-v4, relay=localhost [127.0.0.1]{color}
+{color:#0747a6}Oct 29 09:13:21 ca-apipui-pr-01 sendmail[383494]: 09TGDLxS383494: to=danisurekha@gmail.com, ctladdr=sdani (1011/1011), delay=00:00:00, xdelay=00:00:00, mailer=relay, pri=30262, relay=[127.0.0.1] [127.0.0.1], dsn=2.0.0, stat=Sent (09TGDLfG383495 Message accepted for delivery){color}
+{color:#0747a6}Oct 29 09:13:21 ca-apipui-pr-01 sm-mta[383497]: STARTTLS=client, relay=gmail-smtp-in.l.google.com., version=TLSv1.3, verify=FAIL, cipher=TLS_AES_256_GCM_SHA384, bits=256/256{color}
+{color:#0747a6}Oct 29 09:13:22 ca-apipui-pr-01 sm-mta[383497]: 09TGDLfG383495: to=<danisurekha@gmail.com>, ctladdr=<sdani@ca-apipui-pr-01.infoimageinc.com> (1011/1011), delay=00:00:01, xdelay=00:00:01, mailer=esmtp, pri=120449, relay=gmail-smtp-in.l.google.com. [74.125.137.27], dsn=2.0.0, stat=Sent (OK 1603988030 n3si3357838plp.85 - gsmtp){color}
+
+{color:#0747a6}{color}
+
+
+
+Thanks,
+
+Surekha Dani
+
+
+author: kent.chan
+comment: Did you check junk mail?
+
+It does appear that its connecting correctly. Can you try to reformat the from address? It seems malformed which might be causing the delivery status.
+
+
+author: surekhadani1
+comment: Hi Kent,
+
+       Actually, I did receive test email on my gmail account.
+
+
+
+Thanks,
+Surekha Dani
+
+
+author: kent.chan
+comment: [~surekha.dani]- Can you change the from address to a proper format and retest to infoimageinc.com email address?
+
+
+author: surekhadani1
+comment: Kent,
+
+    I just did but but did not get email. I also sent a test email to your email id - did you receive it ?
+
+
+
+Thanks,
+
+Surekha Dani
+
+
+author: kent.chan
+comment: Hi Surekha
+
+
+
+I am seeing an email on our internal system from Mutt. It was rejected because the request was malformed
+
+!image-2020-10-29-19-25-19-500.png!
+
+
+
+I did not see one for today though.

@@ -1,0 +1,77 @@
+Steps:
+Have to include func_set4
+. ${home_master}/master/func_set4.sh
+Remove previous index files
+			cd_cleanup(){
+				cd_idx_file="${d_dir}/${cid}/${cid^^}${app^^}_PDF_INX.lis"
+				cd_img_file="${d_dir}/${cid}/${cid^^}_IMG.lis"
+				[-s"${cd_idx_file}"]&&rm-rf"${cd_idx_file}"
+				[-s"${cd_img_file}"]&&rm-rf"${cd_img_file}"
+			}	
+Call isisdisk.sh for e
+Need to call archival to generate pdf and index file with pdf name only
+					#Archival Process
+					if [[ $job_sel =~ "e" ]]; then
+						echo "Processing archival option"
+						archival_process
+						echo "Processing commercial CD"
+						commercial_cd
+					fi			  
+ffinms2_pdf.control
+					prefix			    =  ffinms2
+					rename_idx_pdf_after_parse  =  y
+					clear_output_path_files     =  y
+					PDFVersion                  =  1.2
+					afp2pdf_time_limit          =  8
+					index_parameter             =  START
+					output_index_file           =  index.csv
+					index_file_type             =  flatfile
+					index_format                =  delimited
+					index_delimiter             =  ,
+					index_fields                =  PDF_FILE_NAME
+					index_parameter             =  END
+Need to call commercial_cd which is in func_set4.
+					#Archival Process
+					if [[ $job_sel =~ "e" ]]; then
+						echo "Processing archival option"
+						archival_process
+						echo "Processing commercial CD"
+						commercial_cd
+					fi			  
+#Commercial CD
+commercial_cd () {
+    comm_cd_test_flag=""
+    if [ ${testmode} -a $testmode = "y" ]; then
+        comm_cd_test_flag="t"
+    fi
+    run_commercial_cd_set4 ${working_dir}
+    if [ $comm_cd_cripple_percent -gt 99 ]
+    then
+        echo "Cripple for CD is greater than 99%"
+            # exit 1 #Test
+        fi
+    if [ $pdf_potential_error_flag != "1" ]; then
+        ssh -o BatchMode=yes ${LOGNAME}@preprocessing02 "export d_dir=${d_dir}; perl ${home_master}/master/COMMERCIAL_CD.pl ${cid}${jid}_${proc_date}_PDF_INX.lis ${cid}_${proc_date}_IMG.lis $comm_cd_test_flag"
+    else
+        echo -e "PDF index empty -> skipping CD step"
+    fi
+}
+As you are seeing this is calling run_commercial_cd_set4 which comes from func_set4 and then calling COMMERCIAL_CD.pl which does the actual conversion to cd
+run_commercial_cd_set4()
+{
+     local my_working_dir=$1
+     comm_cd_maillist_set4
+     comm_cd_get_mmddyyyy_set4
+     comm_cd_clean_up_set4
+     comm_cd_idx_chk_set4 ${my_working_dir}
+     if [ $pdf_potential_error_flag != "1" ]
+     then
+          comm_cd_pdf_mover_set4 ${my_working_dir}
+     fi
+     if [ $tiff_potential_error_flag != "1" ]
+     then
+          comm_cd_tiff_mover_set4 ${my_working_dir}
+     fi
+}
+comm_cd_pdf_mover_set4 function moves the pdf mentioned in the _PDF_INX.lis ( generated from dfa ) from ${d_dir}/pdf_afp/${cid}/${cid}${jid}/pdf/ to ${d_dir}/pdf_afp/${cid}/${cid}${jid}/cd_pdf/ also moves the index file itself to same directory.
+comm_cd_tiff_mover_set4 moves the tiff images mentioned in the _IMG.lis ( generated from dfa ) from tiffdir (mentioned in control file where the actual check images reside) to ${d_dir}/pdf_afp/${cid}/${cid}${jid}/tiff/ also moves the index file to ${d_dir}/pdf_afp/${cid}/${cid}${jid}/tiff_index/

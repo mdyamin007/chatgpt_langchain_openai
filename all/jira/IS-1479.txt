@@ -1,0 +1,83 @@
+title: FFIN - [31044][pvt] PGP Removal Request 
+description: Dev Hour: 7H ( 1 hour for each of 5 applications + 2 hour for testing )
+
+Turnover Date: 08/22/22
+
+Qa date: 08/24/22
+
+Live date: 08/26/22
+
+
+
+Parallel required: no
+
+Programmer: Leo
+
+
+
+Details
+
+---------------
+
+applications: dla,dlb,dna. and ilt.
+
+remove pgp encryption for invalid address report
+
+
+author: rodriguez
+comment: QA: Only DLA and DLB have invalid address report
+
+Parallel ID: 20220825124347
+ Currently in parallel: Yes
+ User: leoR
+ Description: IS-1479 Remove PGP
+ Date Submitted: 2022-08-25 12:44:09
+ Date Last Updated: 2022-08-25 12:44:09
+ Files:
+ 1) ffindla_redtitan.control
+ 2) ffindlb_redtitan.control
+
+
+author: igor.khosid
+comment: QA - completed
+
+Difference test vs prod 
+ffindla_redtitan.control
+<         echoLog "ENCRYPTING: ${dir}${misc_csv}"
+<         gpg --always-trust -o ${dir}${misc_csv}.pgp -r 'ksumansky@first-online.com' -e --yes ${dir}${misc_csv}
+<         if [ $? != 0 ]; then
+<             echoLog "FAILED AT ENCRYPTING INVALID ADDRESS REPORT !!!"
+<         fi
+---
+<             cp ${dir}$misc_csv.pgp $client_pickup_dir
+---
+>             cp ${dir}$misc_csv $client_pickup_dir
+<             inv_rpt_completion_body="Dear Customer,\n\nThe below file is now available for retrieval from your FTP Client Pick Up folder.\nNote: This file will automatically be purged from the directory after 5 days.\n\n${misc_csv}.pgp\n\nThank You,\n\nData Center\nInfoIMAGE Inc.\n650.473.6388\nData_Center@infoimageinc.com"
+---
+>             inv_rpt_completion_body="Dear Customer,\n\nThe below file is now available for retrieval from your FTP Client Pick Up folder.\nNote: This file will automatically be purged from the directory after 5 days.\n\n${misc_csv}\n\nThank You,\n\nData Center\nInfoIMAGE Inc.\n650.473.6388\nData_Center@infoimageinc.com"
+
+
+ffindlb_redtitan.control
+47,51c46
+<         echoLog "ENCRYPTING: ${dir}${misc_csv}"
+<         gpg --always-trust -o ${dir}${misc_csv}.pgp -r 'ksumansky@first-online.com' -e --yes ${dir}${misc_csv}
+<         if [ $? != 0 ]; then
+<             echoLog "FAILED AT ENCRYPTING INVALID ADDRESS REPORT !!!"
+<         fi
+---
+55c50
+<             cp ${dir}$misc_csv.pgp $client_pickup_dir
+---
+>             cp ${dir}$misc_csv $client_pickup_dir
+61c56
+<             inv_rpt_completion_body="Dear Customer,\n\nThe below file is now available for retrieval from your FTP Client Pick Up folder.\nNote: This file will automatically be purged from the directory after 5 days.\n\n${misc_csv}.pgp\n\nThank You,\n\nData Center\nInfoIMAGE Inc.\n650.473.6388\nData_Center@infoimageinc.com"
+---
+>             inv_rpt_completion_body="Dear Customer,\n\nThe below file is now available for retrieval from your FTP Client Pick Up folder.\nNote: This file will automatically be purged from the directory after 5 days.\n\n${misc_csv}\n\nThank You,\n\nData Center\nInfoIMAGE Inc.\n650.473.6388\nData_Center@infoimageinc.com"
+
+
+author: mattl
+comment: [~rodriguez]Can you please provide the status for this update?
+
+
+author: rodriguez
+comment: Code has been released, backup id =20220826182107

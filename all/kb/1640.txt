@@ -1,0 +1,102 @@
+As we don't have any way of functional programming in papyrus, we can follow some standards to achieve this:
+First line will always be a comment, it will hold following information
+PARAMETERS
+RETURN VALUE
+or On which variable or array they will work on
+Small description on how they works
+PARAMETERS:
+They should have a prefix "PARAMS_"
+RETURN VALUE:
+If there is only a single value, it should be named as "RETURN_VALUE"
+if multiple than "RETURN_VALUE1"..... "RETURN_VALUE100"
+if array "RETURN_ARRAY"
+Return values or array should be cleared or emptied at the top before using them
+Params value should also be cleared or emptied at the bottom
+Also if possible track and share them somehow.
+Anything else? Please contribute here.
+This code is shit, give a better one.....
+  /*Params: PARAMS_DATE : a single date string*/
+  /*or*/
+  /*Params: PARAMS_FIELDS_NO : comma delimited field position*/
+  /**/
+  /*Usage: */
+  /*if PARAMS_FILEDS_NO defined, there should be a array named 'FIELDS_ARRAY' that holds all the filed of this account*/
+  /*if PARAMS_DATE is defined, convert and outputs it to RETURN_VALUE, */
+  /**/
+  /*Return: 
+  /*Noting if PARAMS_FIELDS_NO defined */
+  /*Or */
+  /*RETURN_VALUE if PARAMS_DATE is defined*/
+  /*Description: Converts any of the following date formate to MM/DD/YYYY */
+  /*01 APR 2018 */
+  /*01 APR 18 */
+  /*04/01/2018*/
+  /*04/01/18*/
+RETURN_VALUE =  '' ;
+IF EXIST(PARAMS_FIELDS_NO) AND  NOT EMPTY(NOSPACE(PARAMS_FIELDS_NO)) ;
+THEN ;
+  ~RETURN_VAL = EXTRACTALL(PARAMS_FIELDS_NO_ARRAY,PARAMS_FIELDS_NO,
+   ',',0) ;
+  FOR ~I
+    REPEAT MAXINDEX(PARAMS_FIELDS_NO_ARRAY) ;
+    ~CONVERT_DATE = NOSPACE(FIELDS_ARRAY[PARAMS_FIELDS_NO_ARRAY[~I]]) 
+     ;
+    _SELECT 1 ;
+      _CASE MATCH(~CONVERT_DATE,'00 @@@ 0000') ;
+        MMM_MONTH = EXTRACT(~CONVERT_DATE,' ',2) ;
+        MM_MONTH = SUBSTITUTE(CONVERT_MONTH_MMM_TO_MM,MMM_MONTH) ;
+        FIELDS_ARRAY[PARAMS_FIELDS_NO_ARRAY[~I]] = MM_MONTH!'/'!
+         EXTRACT(~CONVERT_DATE,' ',1)!'/'!EXTRACT(~CONVERT_DATE,' ',
+         3) ;
+      _CASE MATCH(~CONVERT_DATE,'00 @@@ 00') ;
+        MMM_MONTH = EXTRACT(~CONVERT_DATE,' ',2) ;
+        MM_MONTH = SUBSTITUTE(CONVERT_MONTH_MMM_TO_MM,MMM_MONTH) ;
+        FIELDS_ARRAY[PARAMS_FIELDS_NO_ARRAY[~I]] = MM_MONTH!'/'!
+         EXTRACT(~CONVERT_DATE,' ',1)!'/20'!EXTRACT(~CONVERT_DATE,' ',
+         3) ;
+      _CASE LENGTH(~CONVERT_DATE)==8 AND MATCH(~CONVERT_DATE,'00/00/0'
+  '000') ;
+      _CASE LENGTH(~CONVERT_DATE)==8 AND MATCH(~CONVERT_DATE,'00/00/0'
+  '0') ;
+        FIELDS_ARRAY[PARAMS_FIELDS_NO_ARRAY[~I]] = 
+         EXTRACT(~CONVERT_DATE,'/',1)!'/'!EXTRACT(~CONVERT_DATE,'/',
+         2)!'/20'!EXTRACT(~CONVERT_DATE,'/',3) ;
+      _CASE DEFAULT ;
+        MESSAGE -1,2,'WARNING: Date field format dosen"t match! Print'
+  'ing as it is. VALUE: '!~CONVERT_DATE;
+    ENDSELECT ;
+  ENDFOR ;
+ELSE ;
+  IF EXIST(PARAMS_CONVERT_DATE) AND  NOT 
+   EMPTY(NOSPACE(PARAMS_CONVERT_DATE)) ;
+  THEN ;
+    _SELECT 1 ;
+      _CASE MATCH(PARAMS_CONVERT_DATE,'00 @@@ 0000') ;
+        MMM_MONTH = EXTRACT(PARAMS_CONVERT_DATE,' ',2) ;
+        MM_MONTH = SUBSTITUTE(CONVERT_MONTH_MMM_TO_MM,MMM_MONTH) ;
+        RETURN_VALUE = MM_MONTH!'/'!EXTRACT(PARAMS_CONVERT_DATE,' ',
+         1)!'/'!EXTRACT(PARAMS_CONVERT_DATE,' ',3) ;
+      _CASE MATCH(PARAMS_CONVERT_DATE,'00 @@@ 00') ;
+        MMM_MONTH = EXTRACT(PARAMS_CONVERT_DATE,' ',2) ;
+        MM_MONTH = SUBSTITUTE(CONVERT_MONTH_MMM_TO_MM,MMM_MONTH) ;
+        RETURN_VALUE = MM_MONTH!'/'!EXTRACT(PARAMS_CONVERT_DATE,' ',
+         1)!'/20'!EXTRACT(PARAMS_CONVERT_DATE,' ',3) ;
+      _CASE LENGTH(PARAMS_CONVERT_DATE)==8 AND 
+       MATCH(PARAMS_CONVERT_DATE,'00/00/0000') ;
+        RETURN_VALUE = EXTRACT(PARAMS_CONVERT_DATE,'/',1)!'/'!
+         EXTRACT(PARAMS_CONVERT_DATE,'/',2)!'/'!
+         EXTRACT(PARAMS_CONVERT_DATE,'/',3) ;
+      _CASE LENGTH(PARAMS_CONVERT_DATE)==8 AND 
+       MATCH(PARAMS_CONVERT_DATE,'00/00/00') ;
+        RETURN_VALUE = EXTRACT(PARAMS_CONVERT_DATE,'/',1)!'/'!
+         EXTRACT(PARAMS_CONVERT_DATE,'/',2)!'/20'!
+         EXTRACT(PARAMS_CONVERT_DATE,'/',3) ;
+      _CASE DEFAULT ;
+        MESSAGE -1,2,'WARNING: Date field format dosen"t match! Print'
+  'ing as it is. VALUE: '!PARAMS_CONVERT_DATE;
+    ENDSELECT ;
+  ENDIF ;
+ENDIF ;
+PARAMS_FIELDS_NO =  '' ;
+PARAMS_DATE =  '' ;
+~RETURN_VAL = CLEAR(PARAMS_FIELDS_NO_ARRAY) ;

@@ -1,0 +1,397 @@
+title: Deconversion Notes
+body:   
+
+Client Deconversion Notes:
+
+On Server: PDF-conv01 (10.8.9.19)  
+** Usual login id (Ask to be created if it doesn't already exist, default
+password - infoimage - ) **  
+Example - login: ethany
+
+*** Commands - If Needed - docker is not running - ***  
+Command to start docker:  
+sudo service docker start
+
+Command to restart docker:  
+sudo service docker restart
+
+Command to start a stopped/exited container:  
+sudo docker container start container_name  
+********************************************
+
+(Create a script for the docker contaner creation process)
+
+1\. Inside PDF-conv01 (10.8.9.19) - run command to create the container from
+the image:  
+\- Template Command:  
+sudo docker run --cap-add SYS_ADMIN --cap-add DAC_READ_SEARCH --security-opt
+apparmor:unconfined --add-host a2w-prod:10.8.9.14 --name cid_userid_jef#_con
+-d pdf_conv_seanc_img
+
+\- Example Commmand:  
+sudo docker run --cap-add SYS_ADMIN --cap-add DAC_READ_SEARCH --security-opt
+apparmor:unconfined --add-host a2w-prod:10.8.9.14 --name prcu_ethany_1111_con
+-d pdf_conv_seanc_img
+
+*** After you'll see the hash id printed out as confirmation that command
+successfully ran.
+
+  
+2\. Run command to enter the container environment:  
+\- Template Command:  
+sudo docker exec -it cid_userid_jef#_con choiceofkernel
+
+\- Example Command:  
+sudo docker exec -it prcu_ethany_1111_con bash
+
+*** You'll see the path change to
+root@[hashid:/usr/local/apache2](http://hashid/usr/local/apache2)  
+*** Now you're inside the docker container that's created from the image.
+
+  
+3\. Add in the client hard drive path to fstab file:  
+Go into /etc/fstab file -  
+*** Ask network to mount the required hard drive and provide the ip address
+and path  
+*** Add in fstab line for mounting the hard drive  
+\- Template Line:  
+//ipAddress/path /mnt/cid cifs
+user=script,password=3statements*,vers=2.0,file_mode=0777,dir_mode=077 0 0
+
+\- Example Line:  
+//10.8.9.46/prcu1 /mnt/prcu cifs
+user=script,password=3statements*,vers=2.0,file_mode=0777,dir_mode=077 0 0
+
+4\. Add folder path to /mnt and then run command to mount all paths in the
+fstab file:
+
+  * First note the mount path that you set in the fstab file: 
+    * Ex. //10.8.9.46/prcu1 **/mnt/prcu** cifs user=script,password=3statements*,vers=2.0,file_mode=0777,dir_mode=077 0 0
+  * Go to /mnt and make the directory inside /mnt:
+    * Ex. mkdir prcu
+  * Exit out and run: mount -a
+
+5\. Inside docker container go to file path: /home/script
+
+6\. Open PDF_ARCHIVAL-forked.pl file in /home/script path
+
+  * Edit contents in 4 possible places
+  * Line 21 - DBUSER - use correct db schema user
+  * Line 22- DBPASSWD - use correct db schema password
+  * Line 31 $orgName - use orgId; Examples - necu, prcu, acbk
+  * Line 45 $ini_file_name - if the cid uses a unique ini file, use that one instead
+
+7\. Command to create 3 month cycle folders and the certain application types
+(default, heloc, mortgage, vip, visa, enotice, etax)  
+*** You only need to create cycles for client requested period as well as for
+application types that the cid runs, no need to create folders for application
+types the client doesn't have  
+\- Template Command:  
+for i in mon-monYYYY mon-monYYYY mon-monYYYY mon-monYYYY ...; do mkdir ${i}
+./${i}/default ./${i}/heloc ./${i}/mortgage ./${i}/vip ./${i}/visa
+./${i}/enotice ./${i}/etax; done  
+\- Example Command:  
+for i in may-jul2018 aug-oct2018 nov2018-jan2019 feb-apr2019; do mkdir ${i}
+./${i}/default ./${i}/heloc ./${i}/mortgage ./${i}/vip ./${i}/visa
+./${i}/enotice ./${i}/etax; done
+
+8\. Command to copy the deconversion script into each of the cycle/stmtType
+folders  
+for d in */*/; do cp [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+"$d"; done
+
+9\. Then go into each cycle/applicationType folder and run the deconversion
+script command for that application type:  
+*** Recommendations ***  
+*** Write out all the perl commands beforehand for the required period in 3
+month cycles, making sure the dates are correct as well as application types.  
+*** Run deconversion script for every aplication type in a 3 month cycle
+period  
+*** Once every application type for a 3 month cycle has been deconverted, go
+to step 8  
+*** Repeat steps 9 - 14 for each 3 month cycle
+
+\- Example Command inside /home/script to go into a cycle/applicationType
+folder:  
+\- Template Command:  
+cd mon-monYYYY/appType
+
+\- Example Command:  
+cd may-jul2018/default
+
+\- Template Command to Run Deconversion Script:  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+{startDate MM/DD/YY} {endDate MM/DD/YY} {statement type} {(optional)
+notice/tax type} 2>&1 < /dev/null | cat >> ./log_prcu.log &
+
+\- Example Commands For Each Application Type:  
+*** Cycles for 2018 ***  
+May - July  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 07/31/18 heloc 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 07/31/18 vip 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 07/31/18 default 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 07/31/18 mortgage 2>&1 < /dev/null | cat >> ./log_prcu.log &
+
+August - October  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+08/01/18 10/31/18 heloc 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+08/01/18 10/31/18 vip 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+08/01/18 10/31/18 default 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+08/01/18 10/31/18 mortgage 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+  
+November - January 2019  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+11/01/18 01/31/19 heloc 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+11/01/18 01/31/19 vip 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+11/01/18 01/31/19 default 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+11/01/18 01/31/19 mortgage 2>&1 < /dev/null | cat >> ./log_prcu.log &
+
+*** Cycles for 2019 ***  
+February - April  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+02/01/19 04/30/19 heloc 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+02/01/19 04/30/19 vip 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+02/01/19 04/30/19 default 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+02/01/19 04/30/19 mortgage 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+  
+May - July  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/19 07/31/19 heloc 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/19 07/31/19 vip 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/19 07/31/19 default 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/19 07/31/19 mortgage 2>&1 < /dev/null | cat >> ./log_prcu.log &
+
+August - October  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+08/01/19 10/31/19 heloc 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+08/01/19 10/31/19 vip 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+08/01/19 10/31/19 mortgage 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+08/01/19 08/31/19 default 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+09/01/19 09/30/19 default 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+10/01/19 10/31/19 default 2>&1 < /dev/null | cat >> ./log_prcu.log &
+
+November - January 2020  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+11/01/19 01/31/20 heloc 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+11/01/19 01/31/20 vip 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+11/01/19 01/31/20 mortgage 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+11/01/19 11/30/19 default 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+12/01/19 12/31/19 default 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+01/01/20 01/31/20 default 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+  
+*** Cycles for 2020 ***  
+February - April  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+02/01/20 04/30/20 heloc 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+02/01/20 04/30/20 vip 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+02/01/20 04/30/20 mortgage 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+02/01/20 02/29/20 default 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+03/01/20 03/31/20 default 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+04/01/20 04/30/20 default 2>&1 < /dev/null | cat >> ./log_prcu.log &
+
+*** Enotices ***  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 enotice 001 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 enotice 002 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 enotice 003 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 enotice 004 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 enotice 009 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 enotice 012 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 enotice 013 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 enotice 014 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 enotice 015 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 enotice 016 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 enotice 017 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 enotice 018 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 enotice 019 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 enotice 020 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 enotice 021 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 enotice 022 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 enotice 023 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 enotice 024 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 enotice 026 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 enotice 028 2>&1 < /dev/null | cat >> ./log_prcu.log &
+
+*** Etaxes ***  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 etax 1 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 etax 1024 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 etax 16 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 etax 2048 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 etax 256 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 etax 4096 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 etax 512 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 etax 524288 2>&1 < /dev/null | cat >> ./log_prcu.log &  
+/usr/bin/nohup perl [PDF_ARCHIVAL-forked.pl](http://PDF_ARCHIVAL-forked.pl)
+05/01/18 04/30/20 etax 64 2>&1 < /dev/null | cat >> ./log_prcu.log &
+
+*** The script will create log files inside the folder where [PDF_ARCHIVAL-
+forked.pl](http://PDF_ARCHIVAL-forked.pl) script is  
+*** An error log file - heloc_20180501-20180731_ERR.log  
+*** A processing log file - heloc_20180501-20180731_Processing.log  
+*** A summary report file - heloc_20180501-20180731_SummaryReport.log  
+*** A log file - log_prcu.log
+
+*** The script will also create a folder in the /home/script/output/
+directory! *** yyyyMMdd-yyyyMMDD (startDate-endDate)  
+*** With a sub folder inside for the application type in the command  
+*** Inside the application type folder will be 3 folders afp, zip, pdf  
+*** afp folder holds the afp files  
+*** zip folder holds the zip file containing the afps  
+*** pdf file holds the pdf statements (what we want)  
+  
+10\. Go in to the cycle's output directory  
+\- Template Command:  
+cd /home/script/output/yyyyMMdd-yyyyMMDD/appType
+
+\- Example Command:  
+cd /home/script/output/20180501-20180731/heloc
+
+  
+11\. Delete the afp and zip folders  
+rm -r afp zip
+
+  
+
+12\. Copy over the Summary Report from the folder where the perl command was
+run into the current folder  
+\- Template Command:  
+cp summaryReportPath .
+
+\- Example Command:  
+cp /home/script/may-jul2018/heloc/heloc_20180501-20180731_SummaryReport.log .
+
+*Note: Do this for each app type before moving on to the zip phase.
+
+  
+
+13\. Go to the output directory and start zipping up the folders  
+\- Template Command:  
+/usr/bin/nohup zip -r mon-monYYYY.zip yyyyMMdd-yyyyMMDD/ &  
+\- To run in background and redirect output to a nohup file.  
+or  
+/usr/bin/nohup zip -rmT mon-monYYYY.zip yyyyMMdd-yyyyMMDD/ &  
+\- To run in background and redirect output to a nohup file. AND delete file
+after successful zip/compression.  
+  
+\- Example Command:  
+/usr/bin/nohup zip -r jan-mar2018.zip 20180101-20180331/ &  
+\- To run in background and redirect output to a nohup file.  
+or  
+/usr/bin/nohup zip -rmT jan-mar2018.zip 20180101-20180331/ &  
+\- To run in background and redirect output to a nohup file. AND delete file
+after successful zip/compression.
+
+  
+
+14\. Move zipped cycle file into client hard drive  
+\- Template Command:  
+cp mon-monYYYY.zip /mnt/cid
+
+*** After file is sucessfully copied over to hard drive  
+rm mon-monYYYY.zip /mnt/cid
+
+\- Example Command:  
+cp jan-mar2018.zip /mnt/prcu
+
+Note: Copying files may take a while depending on folder size.
+
+*** After file is sucessfully copied over to hard drive  
+rm jan-mar2018.zip /mnt/prcu
+
+  
+*** Useful Query to compare pdf statement count in pdf folder to what we have
+in database, it should match, except the pdf folder should have 1 extra file
+count ***  
+*** That file is the mapping file that maps the pdf to the account  
+*** Use "ls /home/script/output/20180501-20180731/heloc/pdf | wc -l" to get
+count of files inside output pdf file
+
+Testing Query Output with Oracle SQL Developer -
+
+Template Query:  
+Select fa.acct_number, fa.type, fa.acct_owner_name,
+TO_CHAR(ed.esd_closingdate, 'mmddyyyy') AS closing_date, ed.esd_filename,
+ed.esd_parent_path, ed.esd_page_count as page_count, et.loan_num as note_num  
+from Fin_Account Fa, Estmt_Doc Ed left join estmt_type_desc et on
+et.esd_id=ed.esd_id  
+and Fa.Acct_Id = Ed.Acct_Id  
+where Fa.org_id = getorgid(?)  
+AND (Ed.status IS NULL OR Ed.status=9)  
+and ed.esd_closingdate >= to_date(?, 'MM/DD/YY')  
+and ed.esd_closingdate <= to_date(?, 'MM/DD/YY')  
+and Ed.Stmt_Type = ?  
+order by fa.acct_number, fa.type, ed.esd_closingdate };  
+  
+Example Query:  
+Select fa.acct_number, fa.type, fa.acct_owner_name,
+TO_CHAR(ed.esd_closingdate, 'mmddyyyy') AS closing_date, ed.esd_filename,
+ed.esd_parent_path, ed.esd_page_count as page_count, et.loan_num as note_num  
+from Fin_Account Fa, Estmt_Doc Ed left join estmt_type_desc et on
+et.esd_id=ed.esd_id  
+where Fa.org_id = getorgid('prcu')  
+and Fa.Acct_Id = Ed.Acct_Id  
+AND (Ed.status IS NULL OR Ed.status=9)  
+and ed.esd_closingdate >= to_date('02/01/19', 'MM/DD/YY')  
+and ed.esd_closingdate <= to_date('04/30/19', 'MM/DD/YY')  
+and Ed.Stmt_Type = 'default'  
+order by fa.acct_number, fa.type, ed.esd_closingdate
+
+

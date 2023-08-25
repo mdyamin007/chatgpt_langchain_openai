@@ -1,0 +1,170 @@
+title: TKCU - Letter - DailyPDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133574-C30.01-V21606
+
+Processing Scripts to modify:
+ tkcuds1_process.sh
+
+Data Files to use:
+ TKCU_SYMstmt_043021.zip.pgp
+
+
+
+*CUSTOM:*
+
+Update script to delete the contents of $d_dir/pdf_afp/tkcu/tkcuds1/zip/ folder before running the job. Today in production, the zip files are not purged and just accumulates in this folder endlessly and waste storage space.
+
+
+
+*NOTE*: This job runs on RH2. Since we are migrating from RHS to RH2, we should test all options so that we can do afpcompare and also ensure there is no errors in the processing logs.
+
+
+
+
+
+
+author: jira_naru
+comment: QA:
+
+First round sample attached.
+
+[^tkcu_ds1_06272022_1.7z]
+
+
+
+Project exported to/d/iss/qa/TKCU/TKCUDS11.zip
+
+Parallel id:20220624094040
+
+
+author: tuna
+comment: Hi[~jira_naru],
+
+This project is overdue. I updated the due date to 07/22. Please let me know if we should use other due date.
+
+Thanks!
+
+Tun
+
+P.S. I don't see AC in JIRA.
+
+
+author: william.kong
+comment: [~jira_naru]: There is one logic I want to confirm if you can fix. Can you please ensure the script deletes all the contents of $d_dir/pdf_afp/tkcu/tkcuds1/zip/*. In production today, it accumulates zip files endlessly and wasting storage.
+
+Thanks!
+
+
+
+-- Will
+
+
+author: jira_naru
+comment: [~William.Kong]:
+
+Yes, we left the zip files and encrypted file ind_dir/pdf_afp/tkcu/tkcuds1/zip/ for DP the burn DVD.
+
+I think this DP is still doing this since we do not place the encrypted file on the client pickup.
+
+
+author: william.kong
+comment: Thanks for the feedback [~jira_naru]! I will double-check with DP if that is still the case that we are still burning these files to DVD manually.
+
+
+author: william.kong
+comment: [~jira_naru]: I verified with DP that they are still depending on the accumulation of these file for burning DVDs. Fortunately, there is an open ticket that TKCU 30905 in TeamSupport which will convert them to ftp client_pickup so that we can eliminate this non-standard approach of storing and accumulating these files.
+
+
+
+[~Igor.Khosid]: I've ran the pdf_compare.pl last week and the results are good with just one difference:
+
+
+
+ca-isis-pr-04:/d/pdf_compare/result_tkcuds1/pdf_compare_rpt.txt:
+
+
+
+
+
+Total PDF Files Scanned: 19
+allowedDifferenceInPercentPerPage: 8:
+Thread Count: 5
+
+Total PDF Files with Differences: 1
+Start Time: Thu Jul 21 17:22:52 PDT 2022
+Finish Time: Thu Jul 21 17:23:44 PDT 2022
+
+
+author: william.kong
+comment: [~jira_naru]: Sorry to do this! But would can you run all options on RHS server instead of RH2. Once done, please let me know so that I can run afpcompare on the ca-isis-dv-02 server by comparing your /z/afpformat/#####_tkcu.afp big afp format file.
+
+
+
+Please use the same cycle that you tested above (ie.tkcu_ds1_07202022_1.7z)
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+
+Ran script:
+{code:sh}
+[andreyK@ca-isis-pr-04 pdf_compare]$ sh /d/pdf_compare/tkcuds1.sh
+{code}
+{quote}perl pdf_compare.pl tkcuds1_prod/ tkcuds1_parallel/ result_tkcuds1 -pixels 8
+{quote}
+Report:
+{code:sh}
+[andreyK@ca-isis-pr-04 pdf_compare]$ cat /d/pdf_compare/result_tkcuds1/pdf_compare_rpt.txt{code}
+{quote}Total PDF Files Scanned: 19
+ allowedDifferenceInPercentPerPage: 8:
+ Thread Count: 5
+
+Total PDF Files with Differences: 1
+ Start Time: Wed Aug 10 16:57:52 PDT 2022
+ Finish Time: Wed Aug 10 17:00:50 PDT 2022
+{quote}
+The Results are good with one minor difference >>>  [^diff_7474304_07202022_9_tkcu.pdf.pdf] 
+bq. rw-rw-rw-. 1 andreyK isgroup 681890 Aug 10 17:00 /d/pdf_compare/result_tkcuds1/diff_7474304_07202022_9_tkcu.pdf.pdf
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: Thank you for your update! The minor difference with the PDF mentioned above is ok. Thanks!
+
+
+
+[~jira_naru]: When you return from vacation, please prep File Transfer Form for code release. This project will not need to go through Parallel Run. 
+
+
+author: JIRAUSER11104
+comment: Hi [~William.Kong], [~jira_naru]
+please provide the checklist if needed and update the status of this story based to SOP.
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: [~jira_naru]will return on Monday. He's take 3 weeks off so he will probably respond early next week after he catches up.
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: I must've missed this when I last made the comment 6 days ago. But I do see the checklist attached. Is this project formally "Passed" since I see status "QA Completed". If so, I will request [~jira_naru]to release code as early as today.
+
+
+author: JIRAUSER11104
+comment: Thanks [~William.Kong]
+QA - PASSED.
+IS checklist >>>  [^IS-1206_TKCU_IS_Checklist.pdf] 
+
+
+author: jira_naru
+comment: Code release completed.

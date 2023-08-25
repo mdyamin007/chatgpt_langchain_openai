@@ -1,0 +1,291 @@
+title: SEFC Mortgage (BK Conversion) - Setup Auto Email DPVS
+description: SEFC Mortgage (BK Conversion) - Setup Auto Email DPVS
+
+
+
+Assessment Details (IS):
+- Parallel required: (no)
+
+- Auto email dpvs toinfoimage@sefcu.com,dp@infoimageinc.com,daphne.yuen@infoimageinc.com
+
+- Use in external_maillist= ${home_env}/${keep_dir}/maillist/${cid}${jid}_mail.lis
+
+- CID: SEFC
+
+- App: Mortgage (BK Conversion) - SEFCML5
+
+- Processing Script: sefcml5_process.sh
+
+
+author: tuna
+comment: Hi Wilson,
+
+Please work on this project with Steve. I will email you and [~stephen.yee@infoimageinc.com], since you don't have email address for Jira for now.
+
+Thanks,
+
+Tun
+
+
+
+[~OIR]
+
+[~TunA]
+
+
+
+
+author: terrence.tong
+comment: [~stephen.yee@infoimageinc.com] Hello Stephen, I finished writing and testing the code needed to send the dpvs. The block of code is located in the sefcml5_processing.sh from line 432 -439.
+
+Testing method:
+1. Created a dpvs file containing 
+this is a test dpvs for sefc ml5 auto script
+
+-- delete this when finish testing --
+
+2. comment out every other section irrelevant to the test and run the script in rhs
+The result is:
+!sefc_dpvs_testing.PNG|thumbnail! 
+
+Please review this script and let me know if it's ready for QA. Thank you!
+
+
+author: stephen.yee@infoimageinc.com
+comment: Hi,
+
+
+
+Can you please send me the dpvs to review? stephen.yee@infoimageinc.com
+
+
+author: terrence.tong
+comment: [~stephen.yee@infoimageinc.com] Sorry for the delay, I had to make some last-minute changes to the script using Tanmay's script. The updated script and dpvs are available for review. The code can be located from lines 432 - 439.
+
+
+author: terrence.tong
+comment: [~tanmay] Please let me know if I can use parallel id: 20220825070255 to release the code. Thank you!
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~OIR]- Looks good!
+
+
+author: terrence.tong
+comment: [~tanmay] Did you release the code?
+
+
+author: tanmay
+comment: No that one is still parallel testing, after passing we will release .
+
+
+author: tanmay
+comment: [~OIR]
+
+Did you merge your code in parallel , i dont see your code in parallel. Please let me know
+
+
+
+
+author: terrence.tong
+comment: [~tanmay] The code is merged and updated using parallel id: 20220825070255. I forgot to mention that Stephen looked at the code last time and he said it's good. Please release the code once you're ready, thank you!
+
+
+author: terrence.tong
+comment: [~Igor.Khosid] There are no changes to the DFA, dpvs, etc. The script is updated to send the dpvs to the client once it's available. Please let me know if there's anything else that you need to look at. 
+
+Here is a snippet of the change from sefcml5_process.sh (line 432 - 439):
+
+fn="${working_dir}/${cid}${jid}${g_segment}${cycle_no}"
+
+if [ -e ${fn}.print ]; then
+    subject="SEFC Monthly Loan - cycle ${cycle_no}"
+    message="SEFC: Monthly Loan DPVS for cycle ${cycle_no} is ready"
+    python ${home_master}/master/daily_mail.py 0 "${subject}" "${message}" ${maillist_external} "${fn}.print"
+    echo "done sending email"
+fi
+
+
+author: tanmay
+comment: [~OIR]
+
+I am requesting for code release with your updates. [~TunA]is on to it .
+
+Reference:https://jira.infoimageinc.com/browse/IS-1333
+
+
+author: igor.khosid
+comment: [~Andrey.Kutsenko] - please review and confirm if it is ready for release.
+[~OIR] - where is you PR - located? do not see it on 
+/home/master/parallel_report.pl?
+/home/master/dev_report.pl?
+> rhs or rht ?
+
+
+author: igor.khosid
+comment: [~stephen.yee@infoimageinc.com] - what is the due date?
+
+[~Andrey.Kutsenko] [~TunA] [~OIR]
+QA - not completed yet
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~Igor.Khosid] [~Andrey.Kutsenko]- CU would like this to be LIVE by EOM. Date is set for 9/29/22.
+
+
+author: terrence.tong
+comment: [~Igor.Khosid] For PR do you mean parallel id? 
+parallel id: 20220825070255
+
+
+author: igor.khosid
+comment: [~OIR]
+I can't find the PR report anywhere ... not on rhs / rht 
+>> /home/master/parallel_report.pl
+>> /home/master/dev_report.pl
+
+[~Andrey.Kutsenko] FYI
+
+
+author: terrence.tong
+comment: [~Igor.Khosid] The code is going to be released by [~tanmay], I believe tanmay already move the code to production so the report is no longer available.
+
+
+author: igor.khosid
+comment: [~OIR] [~stephen.yee@infoimageinc.com] [~tanmay] [~Andrey.Kutsenko]
+*{color:red}The testing - is not completed. How come the code - was released?{color}*
+
+As you can see the status on this story "QA in Progress"
+
+
+
+author: terrence.tong
+comment: [~TunA] [~tanmay] Please hold on the release for IS-1333 igor need to complete the QA for IS-1572.
+
+
+author: terrence.tong
+comment: [~Igor.Khosid] Sorry for the confusion, the parallel ID:  20220916113544 is available for review. Thanks!
+
+
+author: JIRAUSER11104
+comment: ****************************************************
+   Parallel ID: 20220916113544
+   Currently in parallel: Yes
+   User: wilsonY
+   Description: IS-1572 auto email dpvs
+   Date Submitted: 2022-09-16 11:36:24
+   Date Last Updated: 2022-09-16 11:36:24
+   Files:
+      1) sefcml5_process.sh
+****************************************************
+
+
+author: JIRAUSER11104
+comment: Thanks,[~OIR] (Wilson Yu)
+
+QA is completed.
+ The script is updated.
+
+Wilson Yu a couple of questions:
+{quote} - you also changed *sefcml5_mail.lis* (adding the new parameter "test=Wilson.Yu@infoimageinc.com"), will you keep those changes?
+ - in addition, the file (*/home/test/master/daily_mail.py*) has been changed (new verbiage has been added to the body of the letter), will you send these changes to Prod?{quote}
+ !scr_determine_content.png|thumbnail! 
+
+
+
+author: JIRAUSER11104
+comment: [~OIR]please attach IS checklist if needed.
+Thanks.
+
+
+
+author: terrence.tong
+comment: [~Andrey.Kutsenko] 
+1. -I don't plan on removing it since it doesn't cause any issues.- Updated the maillist and removed test email
+2. I didn't make any changes to /home/test/master/daily_mail.py, where did you see that?
+
+
+author: JIRAUSER11104
+comment: Hi [~OIR] (Wilson Yu).
+ [~terrencet], fyi
+
+1. You didn't fix this file on Prod:
+{code:sh}
+[oper1@rhs ~]$ cat /home/keep/maillist/sefcml5_mail.lis
+internal_maillist=infoimage@sefcu.com,dp@infoimageinc.com,daphne.yuen@infoimageinc.com
+external_maillist=infoimage@sefcu.com,dp@infoimageinc.com,daphne.yuen@infoimageinc.com
+test=Wilson.Yu@infoimageinc.com{code}
+2. On the Parallel the file (/home/test/master/daily_mail.py) has been changed. New verbiage has been added to the body of the letter (see screenshot):
+ !scr_determine_content.png|thumbnail!
+{code:sh}
+[oper1@rhs ~]$ diff /home/master/daily_mail.py /home/test/master/daily_mail.py
+62,65c62,65
+<         "0" : "DPVS for cycle " + format_arg3 + " has been attached for your review.\n\n",
+<         "1" : format_arg3 + " - This email is to inform you that we have not received data files at the scheduled time.\n\nIf this cycle date falls on a legal holiday. Please disregard this notification.",
+<         "2" : format_arg3 + "\n\n",
+<         "3" : format_arg3 + "\n\n",
+---
+>         "0" : "DPVS for cycle " + format_arg3 + " has been attached for your review.\n\nThis email was sent from an automated system.\nIf you need to reach us for any inquiry, please open a ticket in Team Support to your Account Coodinator.\nThank you\n\n",
+>         "1" : format_arg3 + " - This email is to inform you that we have not received data files at the scheduled time.\n\nIf this cycle date falls on a legal holiday. Please disregard this notification.\n\nThis email was sent from an automated system.\nIf you need to reach us for any inquiry, please open a ticket in Team Support to your Account Coodinator.\nThank you\n\n",
+>         "2" : format_arg3 + "\n\nThis email was sent from an automated system.\nIf you need to reach us for any inquiry, please open a ticket in Team Support to your Account Coodinator.\nThank you\n\n",
+>         "3" : format_arg3 + "\n\nThis email was sent from an automated system.\nIf you need to reach us for any inquiry, please open a ticket in Team Support to your Account Coodinator.\nThank you\n\n",{code}
+
+
+author: terrence.tong
+comment: [~Andrey.Kutsenko] [~terrencet] 
+1. updated maillist in production.
+2. The only script I modified is sefcml5_process.sh, not sure where you see that I changed daily_mail.py.
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~OIR]- Is this ready for release? I see QA is complete.
+
+
+author: JIRAUSER11104
+comment: HI [~stephen.yee@infoimageinc.com].
+QA is completed.
+
+
+author: terrence.tong
+comment: [~TunA] [~tanmay] Hi Tun, I just moved the files to /d/is/cvs/check_in/wilsonY can you please release it for me?
+
+
+author: terrence.tong
+comment: Hi [~Andrey.Kutsenko] it seems like chad ingram is modifying daily_mail.py, please ask him to confirm the change, thanks!
+
+Enter the filename: daily_mail.py
+
+****************************************************
+   Parallel ID: 20220916142855
+   Currently in parallel: Yes
+   User: chadI
+   Description: is1584- daily scripts update
+   Date Submitted: 2022-09-16 14:29:47
+   Date Last Updated: 2022-09-16 14:29:47
+   Files:
+      1) daily_mail2.pl
+      2) daily_mail_is.pl
+      3) daily_mail.py
+      4) daily_mail.pl
+      5) daily_mail_html.pl
+****************************************************
+
+
+author: JIRAUSER11104
+comment: Thank you Wilson Yu.
+
+
+author: terrence.tong
+comment: [~TunA]  transfer form is attached, thanks! [^SEFCML5_IS_PROGRAM_TRANSFER_FORM_Rev 07132016.doc] 
+
+
+author: terrence.tong
+comment: [~stephen.yee@infoimageinc.com] yamee release code for tanmay which contains my code. No need to release at my end. Relase is complete, thanks!
+
+jira: IS-1333 SEFC Mortgage Bounceback Setup
+
+[~Andrey.Kutsenko] FYI
+
+
+author: terrence.tong
+comment: finished releasing.

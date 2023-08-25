@@ -1,0 +1,46 @@
+title: Licensed Users List
+body: 
+    ## Macro title: Last Login
+    ## Macro has a body: N
+    ## Body processing: Selected body processing option
+    ## Output: Selected output option
+    ##
+    ## Developed by: Andrew Frayling
+    ## Modified by: Michael Seager [Atlassian Support]
+    ## Date created: 11/02/2012
+    ## Installed by: <your name>
+    ## Macro to display the last login date of users who have access to the current space
+    ## @noparams
+    
+    #set($containerManagerClass = $content.class.forName('com.atlassian.spring.container.ContainerManager'))
+    #set($getInstanceMethod = $containerManagerClass.getDeclaredMethod('getInstance',null))
+    #set($containerManager = $getInstanceMethod.invoke(null,null))
+    #set($containerContext = $containerManager.containerContext)
+    #set($loginManager = $containerContext.getComponent('loginManager'))
+    #set($users = $userAccessor.getUsers())
+    
+    <table class="confluenceTable">
+      <tr>
+        <th class="confluenceTh">Count</th>
+        <th class="confluenceTh">User</th>
+        <th class="confluenceTh">Last Successful Login</th>
+      </tr>
+    
+    #set($count = 0)
+    
+    #foreach($user in $users)
+      ## list the last login date of users who can view the current space
+      #if ($permissionHelper.canView($user, $space))
+        #set($count = $count + 1)
+        <tr>
+          <td class="confluenceTd">$count</td>
+          <td class="confluenceTd">#usernameLink($user.name)</td>
+       
+          <td class="confluenceTd">$action.dateFormatter.formatDateTime($loginManager.getLoginInfo($user.name).lastSuccessfulLoginDate)</td>
+        
+        </tr>
+      #end
+    #end
+    </table>
+
+

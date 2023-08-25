@@ -1,0 +1,281 @@
+At this point we already know our project/dfa run for 3 main options, paper(s), estatement(f), archival(e). For paper(s) option run , target is to send physical sample to client.
+When we run for s option a big afp gets generated containing all customers. And this afp gets printed by afp printer (a programmable printer that can scan afp ) and afp printer needs to print each customer statement and insert that statement into the envelope separately. So for afp printer and also for some other reason, we need to build some configuration called index file in a specific format with correct information so that printer will know how to separate and print and insert into an envelope each customer correctly. Below is a snapshot from dfa of writerecord commandthat we use to make the index file and since it will be used to generate paper sample correctly it is also called paper index.
+In this video there are some discussion of each field we use in writerecord command to build paper index.
+https://kb.dsinnovators.com/wp-content/uploads/2020/07/writerecord.mp4
+You can download and check the doc file for record layout from here
+txt_file_record_layout
+Paper writerecord are done under s option.
+Here are the mapping for all paper index values and their positions
+Name
+Length (Start-End)
+Justification
+psnet_hold
+12 1 (1-12)
+Left (postnet info from Ace Plus)
+divert_flag
+1 (13-13)
+Right (divert the piece to divert bin at the inserter)
+weight
+1 (14-14)
+Right (for indicia project)
+acct_seq
+8 (15-22)
+Right (position of acct in file, ie 1 = first account)
+zip_code
+10 (23-32)
+Left (from customer data)
+acct_num
+20 (33-52)
+Right (customer account number)
+mail_code
+1 (53-53)
+Right (see bottom for list of mailcodes)
+ac_image
+5 (54-58)
+Right (# images in the acct)
+insert_code
+5 (59-63)
+1 in a column pulls the insert from that insert bin
+addr1
+40 (64-103)
+Left
+addr2
+40 (104-143)
+Left
+addr3
+40 (144-183)
+Left
+addr4
+40 (184-223)
+Left
+addr5
+40 (224-263)
+Left
+addr6
+40 (264-303)
+Left
+start_page
+7 (304-310)
+Right (starting page # of acct)
+ltr type
+1 (311)
+letter type for Daily Letter, AFP code for others
+ltr code
+3 (312-314)
+can be use for all purpose
+afp code
+3 (315-317)
+can be use for all purpose
+stmt image count
+5 (318-322) STMT_PAGES
+image count for stmt pages, not including chk image pages
+enotice date
+8 (323-330) ENOTICE_DATE
+enotice date. DL only
+afp code
+1 (331) AFP_CODE
+name of afp file that contains the letter. DL only (1 for new format)
+EOC flag
+3 (332-334)
+1  last letter of grp, 0 otherwise. DL only
+group image count
+5 (335-339)
+total image count for the group. DL only
+group sheet count
+5 (340-344)
+physical sheet count for the group. DL only
+e-suppression Flag
+1 (345)
+z for eStatement/eNotice suppression. Normally not used in statement
+grouping Flag
+1 (346)
+for DL only
+application code
+2 (347-348)
+for DL only
+acct_no_type
+1 (349)
+for DL only (1=acct#, 2=loan#, 3=cif#, 4=plan#)
+ncoa indicator
+1 (350)
+c mean address has changed
+acct sheet count
+5 (351-355) PHY_PAGES
+Right (total physical sheet count for the account)
+sheet count tray1 4
+(356-359) TRAY1_SHEETS
+Right (tray1 sheet count for the account)
+tray1 mode indicator
+1 (360) TRAY1_MODE
+s  simplex, d  duplex
+sheet count tray2 4
+(361-364) TRAY2_SHEETS
+Right (tray2 sheet count for the account)
+tray2 mode indicator
+1 (365) TRAY2_MODE
+s  simplex, d  duplex
+sheet count tray3 4
+(366-369) TRAY3_SHEETS
+Right (tray3 sheet count for the account)
+tray3 mode indicator
+1 (370) TRAY3_MODE
+s  simplex, d  duplex
+sheet count tray4 4
+(371-374) TRAY4_SHEETS
+Right (tray4 sheet count for the account)
+tray4 mode indicator
+1 (375) TRAY4_MODE
+s  simplex, d  duplex
+sheet count tray5 4
+(376-379) TRAY5_SHEETS
+Right (tray5 sheet count for the account (for future use)
+tray5 mode indicator
+1 (380) TRAY5_MODE
+s  simplex, d  duplex (for future use)
+filler
+20 (381-400)
+fixed-msg1 indicator
+1 (401) FIXED_MSG1
+1  fixed message1 is used,   otherwise
+fixed-msg2 indicator
+1 (402) FIXED_MSG2
+1  fixed message2 is used,   otherwise
+fixed-msg3 indicator
+1 (403) FIXED_MSG3
+1  fixed message3 is used,   otherwise
+fixed-msg4 indicator
+1 (404) FIXED_MSG4
+1  fixed message4 is used,   otherwise
+fixed-msg5 indicator
+1 (405) FIXED_MSG5
+1  fixed message5 is used,   otherwise
+sel-msg1 indicator
+1 (406) SEL_MSG1
+1  selective message1 is used,   otherwise
+sel-msg2 indicator
+1 (407) SEL_MSG2
+1  selective message2 is used,   otherwise
+sel-msg3 indicator
+1 (408) SEL_MSG3
+1  selective message3 is used,   otherwise
+sel-msg4 indicator
+1 (409) SEL_MSG4
+1  selective message4 is used,   otherwise
+sel-msg5 indicator
+1 (410) SEL_MSG5
+1  selective message5 is used,   otherwise
+msg-box1 indicator
+1 (411)
+0  default message; 1-9 indicates message type
+msg-box2 indicator
+1 (412)
+0  default message; 1-9 indicates message type
+msg-box3 indicator
+1 (413)
+0  default message; 1-9 indicates message type
+msg-box4 indicator
+1 (414)
+0  default message; 1-9 indicates message type
+msg-box5 indicator
+1 (415)
+0  default message; 1-9 indicates message type
+hvy account indicator
+1 (416)
+1 need to pull cover sheet,  otherwise
+mail_conf_acct_seq
+9(417-426)
+Use for unique sequence number use for full imb and outbound
+mc_current_balance
+10(477)
+Current Stmt Balance capture for mail confirm inbound
+mc_total_amt_due
+8(488)
+Total Stmt due amount for mail confirm inbound
+ace_error_code
+4(497-500)
+Error Code returned from ACE (ie, E412, E601, etc) if any
+Careful about the starting position, length and justification of each field. Because this writerecord file is used in many ways in the process of isisdisk. Any wrong info may lead to unwanted/serious/destroyable error.
+txt_file_record_layout
+acct_seq:
+Variable name used in papyrus &SEQ_NUM. This is the sequence/serial number of the current document. When you are sure that the current document is going to be displayed/entered in writerecord, you must put it in the writerecord.
+zip code:
+Variable name used in papyrus zip_code. It is extracted from the customer address line. Usually in the last address line zip code is found.
+Generally zip codes are 5 digits. Sometimes zip code appears as a format like having a dash between it.
+In the zip_code variable we should store only the data before the dash.
+acct_num:
+Remove leading zeros from account number before putting account number in writerecord.
+mail_code:
+Mail code is a special code that defines what to do with the statement. Different suppression logic is defined according to this code. For example, if you set mail_code to z for a customer, then isisdisk will generate a writerecord file that has an extension nop. nop files contain those customers whose statement will not be printed.
+Like this if you set mail_code to e, that means the customer wants the statement only electronically (no print).
+a
+Audit (aud)
+f
+Foreign (fgn)
+m-q
+Print and Mail, no inserts (pm1-pm5)
+M-Q
+Print and Mail with inserts (sm1-sm5)
+r-v
+Print and Return back to BANK/CU flat (rt1-rt5)
+z
+non print (nop) (print hobe na)
+y, x, w
+non print (np1- np3)
+1-9
+Special files (sf1-sf9)
+h-l
+UCSF Blue and White returns (rt6-rt0)
+e
+Estatement suppression from paperless file (e.sup) (paper hobe na because they have estatement)
+d
+Estatement suppression from datafile (e.sup2)
+A, B, C
+suppressed accts. Create pdf only for these selective accts (pdf1-pdf3)
+ac_image:
+Total images in the statement. Image means a side of a paper. Either front or back. Usually we put &TTL_PAGES variable in its place.
+Insert_code:
+Sometimes in SOW you will see this table where Bin assignment is provided. There are 5 Bins. In SOW some bins are populated with a number and some are selective.
+Here in the snap, only the first bin is populated with a number. So in the dfa, we have to assign the variable INSERT_CODE like below-
+if SOW has data in 1st and 3rd column in insert table INSERT_CODE value will be '1 1 '
+addr1 to addr6:
+These are the address lines of a customer. There can be max 6 address lines of a customer. While printing, print them in uppercase format.
+start_page:
+This value determines the start page of a particular customer in the whole statement. Usually we use the variable &PAGE_FROM_HOLD for the start page. Another variable &PAGE_FROM is used to keep track of the value of &PAGE_FROM_HOLD. &PAGE_FROM is global and it is incremented for each logical page. For a new customer the ttl_pages variable is reinitialized. So when a new customer arrives, we follow below approach-
+Letter code and afp code:
+Letter code and afp code is mainly used for daily letters. These are defined in a 3 digit format in format dfa like '001' or '002' etc.
+The afp which is generated from the format_only.sh, has the 3 digit afp code in its name like gcbkdl001.afp.
+For example, In control file cid=gcbk and jid=dl001. The fn has the directory and the cid jid like fn="$dir$prefix" (prefix=$cid$jid).
+In format_only.sh output is assigned using the "fn".
+When the processing script starts to process the print dfa (2dSDDAILYN.dfa for daily), the print dfa reads the writerecord txt file (c1bmcok file). c1bmcok file is a combined txt file, that means all the dl txt file is written/merged in c1bmcok file.
+In c1bmcok file each record is from different letter. That means in each line will have its own afp code and letter code.
+In print dfa afp code is used to decide which afp file to load. And the start page of that afp is decided using the field (304-310) (PAGE_FROM_HOLD in writerecord)
+Letter code is printed like the below snap in print dfa-
+Sometimes in writerecord txt file in one record line afp code and letter code is kept different in format dfa. Due to some project specific requirement, one afp represents multiple letter code. That means print step will load a afp code like 001 but it may show the letter code 002 or 003 etc.
+STMT_PAGES:
+It represents image count for statement pages, not including check image pages.
+EOC flag:
+'1'  last letter of grp, '0' otherwise. DL only
+EOC flag is always set to 1. That means normally each rec in txt file is a single group.
+Suppose there is 5 records on txt file. and first 4 of them have eoc flag 0 and the last one has 1. In this case these 5 rec statement should be printed in one afp.
+group image count and group sheet count:
+By the term 'group' it means the group of letters. The groups are determined by the EOC flag. Each group statement goes in their respective envelope.
+e-suppression Flag
+Sometimes customer wants to suppress the online statements under some condition which are mentioned in the SOW. If a statement need to be e-suppressed then in paper writerecord 345 field must be updated with a 'z'. By doing this, in dpvs the count of e-supressed document is showed up. And afp generation of that statement must be disabled and estmt writerecord must not have an entry for that doc.
+acct sheet count (PHY_PAGES)
+A physical page consists of the front and back side of the page.
+Tray counts and Tray modes
+There can be 4 trays. In SOW there is a tray assignment table.
+Different type of papers are used in different tray.
+Tray values are given in SOW. These values are used in control file.
+PP1 for tray1, PP2 for tray2, PP3 for tray3, PP4 for tray4. If there is no value assigned in any tray, then the pp value is not needed to include in control file.
+In dpvs it is shown which tray processed how many sheets.
+Tray mode can be simplex or duplex. In writerecord we have to put 's' for simplex and 'd' for duplex.
+Filler
+Filler is a 20 lenghted string which usually remains empty unless any special requirement appears to have some extra info need to be printed in txt record.
+MSG area type
+If the project requires message manager, you need to include MSG_AREA1_TYPE (if only one msg) in writerecord. For the 2nd msg use MSG_AREA2_TYPE. These variable names are fixed because the msg manager related external dfa uses this variables. When the program runs through infoimage server, the external dfa decide the value of these variables.
+Heavy account indicator
+This field is populated in a special way. It is not populated in the format dfa. The control file has a variable "hvy_cnt". According to the page size the hvy_cnt variable is assigned to 7 or 15. The page size and heavy criteria is defined in SOW.
+This heavy field in writerecord is used in print dfa. That means before processing the print dfa the processing script (isisdisk) updates the writerecord by populating the hvy_cnt flag (field 416).
+In print dfa if it finds value in 416 field, a cover page is printed at the beginning of the statement. Sometimes cleint wants to have their own overlay on the cover page. So it is important to check if the statement needs a heavy cover overlay or not.
+Tagged:c1bmockindexpaper index

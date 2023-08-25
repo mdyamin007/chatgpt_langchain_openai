@@ -1,0 +1,200 @@
+title: SLCU API and Hypercube Migration
+description: Change the script to post SLCU Account Analysis ms9 as "Statement" ms1.
+
+Please assign to Rony:
+
+Turnover date: 11/7/2022
+
+Sample to QA: 11/7/2022
+
+QA complete by 11/8/2022
+
+Parallel test: 11/9/2022
+
+Live: 11/10/2022
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+In https://jira.infoimageinc.com/browse/IS-920we worked to convert from the old index format to the new index format.
+
+The prefix is slcums9 (analysis statement).
+
+But the business rule is to post this as ms1(monthly statement).
+
+If you look at slcums1.procs and slcums9.procs data file is the same. But the data file contains data for both monthly and account analysis.
+
+So inside the slcums1_process.sh and slcums9_process.sh script these actually parse the original data and extract data applicable for these. Meaning slcums1 extract monthly data from the data file and slcums9 extracts account analysis data from the same file.
+
+So let's say for example the original data file can have 100 accounts among them 5 can be account analysis and rest can be monthly.
+
+So isd index for ms9 ( it will be named to ms1 since this was the business rule. For example ms1_20220228_1_20221109_0133_slcu.txt) should contain only 5 accounts and 5 individual afp.
+
+Individual afp and initial isd index file were created in /d/afp/slcu folder for ms9. And for ms1 it was a regular /d/slcu/ folder.
+
+
+
+!image-2022-11-09-16-05-03-610.png!
+
+As you see from the above folder structure /d/afp/slcu
+
+slcums1-indiv/ actually contains indiv afp for account analysis and ms1_pdfidx.txt contains records for account analysis.
+
+
+
+But when working inhttps://jira.infoimageinc.com/browse/IS-920we did a mistake. Previously isisdisk_daily.sh was using move_afp2.sh but to convert to new index format we used move_afp_threads.sh . move_afp2.sh actually have the feature to correctly process the index file and indiv afp from /d/afp/slcu folder.
+
+But after using move_afp_threads.sh it was actually using the index file and indiv afp from /d/slcu folder which is for monthly actually, not for an account analysis. And for this reason after releasing the change when Dp processed the slcums9 script the index file and indiv afp generated for slcums1 got processed again and get posted. You can check the issue reported by Dp in [https://app.na3.teamsupport.com/?TicketNumber=35572]comment 1.
+
+
+
+To fix this, we needed to add a few lines of code in isisdisk_daily.sh and move_afp_threads.sh so that it can process from the appropriate directory.
+
+
+
+Development ( not parallel ) id20221108014559
+
+index file:ms1_20220228_1_20221109_0133_slcu.txt
+
+
+
+The files used to process and commands to run script (in case you want to run):
+rm ${d_dir}/ftpbu/slcubu/*
+rm ${d_dir}/ftpbu/slcubu/ms9/*
+cp /z/download/slcu/SLCU1101.zip ${d_dir}/ftpbu/slcubu/ms9/
+cp /z/download/slcu/slcuanaly1101.stmt  ${d_dir}/ftpbu/slcubu/ms9/
+cp /z/download/slcu/SLCU1101_MemberSince.txt  ${d_dir}/ftpbu/slcubu/
+rm $home_master/keep/cksum_log/slcums9_cksum.log
+sh -x /t/ronyD/slcums9_process.sh slcu ms9 f
+
+
+The index file contains only 5 which it should be. Those are the files that also got processed in production.
+
+
+
+Let me know if you need any more information.
+
+
+
+Thanks
+
+
+
+
+
+
+
+
+
+
+author: igor.khosid
+comment: [~avannik]
+Please review and please come over to discuss it
+
+
+
+author: JIRAUSER11700
+comment: [~rony]I can see a freshms1_20220228_1_20221109_0133_slcu.txt file in processing UI on staging. Please confirm if this index file for ms9 was produced after the fix.
+
+Because the job runs OK, but the results look broken. There are missing pages and pages getting into from different accounts.
+
+[^530569_eStatement_2022-02-28.pdf][^517463_eStatement_2022-02-28.pdf][^462440_eStatement_2022-02-28.pdf][^421877_eStatement_2022-02-28.pdf][^334183_eStatement_2022-02-28.pdf] [^11092022_0418053.log]
+
+
+author: rony
+comment: Hi [~avannik]
+
+
+
+Yes, this looks wrong. Would you please check this onems1_20221031_1_20221110_0328_slcu.txt.
+
+
+
+Thanks
+
+
+author: JIRAUSER11700
+comment: [~rony]yes, results from this one look right.
+
+[^334183_eStatement_2022-10-31.pdf][^421877_eStatement_2022-10-31.pdf][^462440_eStatement_2022-10-31.pdf][^517463_eStatement_2022-10-31.pdf][^530569_eStatement_2022-10-31.pdf]
+
+I guess this means processing works properly now.
+
+
+author: rony
+comment: Hi [~avannik]
+
+[^IS_Checklist.docx]
+
+Although Peter provided a new version of checklist but that one is actually hard to select the boxes. We are working on converting that to a doc file in easily clickable version, after that we will start providing the new checklist.
+
+[~kericapote]
+
+Please create a parallel form.
+
+
+
+Thanks
+
+
+author: kericapote
+comment: [~rony] does this parallel need to go all t he way through  mailing or just through dp?
+
+
+author: rony
+comment: I am not sure about this statement _all the way through mailing._If this means to mail to client then no we don't need that, Dp verification would be enough.
+
+
+
+[~kericapote]
+
+Thanks
+
+
+author: rony
+comment: Hi [~Peter.Dang]
+
+I am going to release this but since I made the change in 2 core script isisdisk_daily.sh and move_afp_threads.sh , I would like to do a code review with you first.
+
+****************************************************
+ Parallel ID: 20221108014559
+ Currently in development: Yes
+ User: ronyD
+ Description: https://jira.infoimageinc.com/browse/IS-1789
+ Date Submitted: 2022-11-08 01:46:07
+ Date Last Updated: 2022-11-18 00:56:22
+ Files:
+ 1) isisdisk_daily.sh
+ 2) move_afp_threads.sh
+ 3) SLCUMS29.dfa
+
+[~kericapote]
+
+
+
+I already tested my change for 4 different application
+
+slcums9 (for which I needed to make change )
+
+apcums2( new style index)
+
+sanaml3( old style index)
+
+apcudlc ( daily , new style )
+
+
+
+attached are the processing log file that shows index file and indiv afp have been created correctly
+
+[^slcums9_dev.log]
+
+[^sanaml3_dev.log]
+
+[^apcums2_dev.log]
+
+[^apcudlc_dev.log]
+
+
+
+Thanks

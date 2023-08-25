@@ -1,0 +1,205 @@
+title: Email Address Validation to support "+", "-", ".", "_"
+description: None
+
+
+author: JIRAUSER11102
+comment: To QA,
+
+The purpose of this task is to supportplus( + ), minus( - ), period(.) and underscore( _ ) sign for email validation both in hypercube and processing UI.
+
+*Previous implementation:*
+||No.||Previously Supported Email||
+|1.|test@infoimageinc.com|
+|2.|( _ , - )test@infoimageinc.com|
+|3.|te( . , - , _ )st@infoimageinc.com|
+|4.|test( - , _)@infoimageinc.com|
+|5.|test@info( . , - , _)imageinc.com|
+|6.|test@infoimageinc( - , _ ).com|
+|7.|test.( - , _)@infoimageinc.com|
+
+*Current Requirement:*
+ * Previous implementation + following implementation:
+
+||No.||Supported Email||
+|1.|+test@infoimageinc.com|
+|2.|te+st@infoimageinc.com|
+|3.|test+@infoimageinc.com|
+|4.|test.+@infoimageinc.com|
+ * But we will not support underscore( _ ) in domain name which was previously supported.
+
+        ****N.B.*General email format: [userName@domainName.com|mailto:userName@domainName.com]
+
+
+||No.||Unsupported Email||
+|1.|test@info( _ )imageinc.com|
+|2.|test@( _ )infoimageinc.com|
+|3.|test@infoimageinc( _ ).com|
+
+*Changes on:*
+ * Profile, DSO enrollment and SSO enrollment pages on hypercube.
+ * StandardEnrollment and StandardAuth Email validation on processing UI.
+
+*Test Requirements for hypercube:*
+ * Check the email addresses using different combinations stated above whether they are supported or not.
+ * Check using different invalid email addresses.
+ * Check those areas where email can be updated.
+ 
+
+*Test Requirements for processing-ui:*
+ * Try combinations of email address while processing files for client having StandardAuth and StandardEnrollment.
+ * Check process operation is failed or successful using combinations of email addresses.
+
+
+author: igor.khosid
+comment: [~nprimak] - Please proceed with the testing after completing - IS-836 / IS-861 / ISD-6709
+
+[~jahid.hasan] - who is initiator and what is the due date
+
+
+author: nprimak
+comment: [~jahid.hasan] [~Igor.Khosid]
+
+Janid, please provide
+ * suggested for testing CIDs for SSO and DSO sites
+ * instructions and CIDs for testing PUI , I don't create index files with different emails to test this feature
+
+Thank you,
+
+Natasha
+
+
+author: nprimak
+comment: [~jahid.hasan] [~Igor.Khosid]
+
+Jahid,
+
+I tested TKCU SSO for email validation, I did not have any errors for any combinations of emails including (_) what it should be unsupported if used in domain name
+
+Thank you,
+
+Natasha
+
+
+author: JIRAUSER11102
+comment: [~Igor.Khosid]
+
+Igor, [~Tin.Chak]is the initiator and due date has been updated.
+
+
+author: JIRAUSER11102
+comment: [~nprimak]TKCU is one of the prism clients. This email validation change is not applicable for prism clients. You can test it for hypercube clients like demo, acbk, milb, bril, fffc etc.
+
+
+author: JIRAUSER11102
+comment: [~nprimak]I will provide the index files for testing in pui tomorrow.
+
+
+author: JIRAUSER11102
+comment: [~nprimak]I have provided two index files named "alcu_auth_04202022_test.txt" and "ml1_enrollment_04202022_test.txt" under location: "/d/INPUT-DEV/I3/process-files/alcu" in pui stage server(ca-pui-st-o1.infoimageinc.com).
+
+The steps for processing these files:
+ # First you need to create a new job using EPJS tab in pui-stage frontend.
+ # Select 'ALCU' for which cid you will be processing files.
+ # Then give a job number and submit.
+ # For Auth Processing, select "alcu_auth_04202022_test.txt" file and for Paperless File Loading, select "ml1_enrollment_04202022_test.txt" file using browse button. Then press next button.
+ # Press skip button for other processing menus.
+ # On the final page, for question "Do you want to start the processing now?", select "Yes, please start it immediately." and submit.
+ # Then get back to the Job Status.
+
+*Result:*
+
+*Auth process:*
+
+Inside auth process log, you will find invalid email warning for incorrect email address like ".test@infoimageinc.com is not a valid email!". For for valid email, there should be message like " --------Update NP email!". There are in total 35 lines inside auth index file. There should be invalid email warning for 15 lines. You can check whether email address is updated or not in NOTIFICATION_PREFERENCE table under CU schema.
+
+*Paperless/Enrollment process:*
+
+Inside paperless process log, you will find DataException message for invalid email. For for valid email, there should be message like " --------Update NP email!".There are in total 35 lines inside paperless index file. There should be invalid email message for 15 lines. You can check whether email address is updated or not in NOTIFICATION_PREFERENCE table under CU schema.
+
+You can ask me or [~Tin.Chak]if you need any help.
+
+Thank you,
+
+Jahid
+
+
+
+
+author: nprimak
+comment: [~jahid.hasan] 
+
+Janid, I verified changes on PUI staging they look good, I see in a log file 20 valid and 15 invalid emails for both processing.
+
+I did not verify in DB, if you can please give me a query to filter result , when I run simple query it gave too many rows.
+
+On SSO site I verified only on ACBK and it is good, I will test on more CIDs
+
+Thank you,
+
+Natasha
+
+[~Igor.Khosid]
+
+
+author: JIRAUSER11102
+comment: [~nprimak]Here is the query for getting Email Address in NOTIFICATION_PREFERENCE table:
+
+select EMAIL_ADDRESS from NOTIFICATION_PREFERENCE where USR_ID in (select USR_ID from USR_MAPPING where CIF_NUM='101' and ORG_ID=GETORGID('alcu'));
+
+List of CIF_NUM in auth index file:
+
+101, 156, 158, 166, 172, 192, 26086, 38198, 45026, 45961, 49998, 59905, 64761, 88704, 104908, 108747, 148818, 166950, 210987, 404074, 9900407, 413057, 413058, 413059, 413060, 413061, 413062, 413063, 413064, 413065, 9535, 26086, 38198, 45026, 49998
+
+List of CIF_NUM in paperless index file:
+
+700418933, 700414741, 700418131, 700419048, 700414957, 700413925, 700413016, 700408158, 700418561, 700412795, 700397434, 700418199, 700409247, 700413941, 700415905,, 700415377, 700415509, 700411987, 700414080, 700417464, 700418876, 700417886, 700404924, 700417307, 700416284, 700421374, 700418157, 700419775, 70041686, 700415096, 700416185, 700421176, 700421465, 700398036, 700420376
+
+By changing the CIF_NUM you can get the email address for corresponding user. If it was invalid email address, then you will find empty column. Remember to run this query in CU schema.
+
+Thank you,
+
+Jahid
+
+
+
+
+author: nprimak
+comment: [~jahid.hasan]
+
+Jahid, thank you for additional information, I verified some of of the CIF_NUM, it is a lot, all good, no issues
+
+From the list of CIDs you gave me to test SSO site only acbk and bril are working, something not set up for others, I can't verify emails on login, we have test page to go to SSO site, it does not verify email address, but i can verify from Profile tab by changing email address and it working correctly.
+
+I did not test all combinations of emails bad and good, let me know when you need me to complete testing, but all changes are working correctly.
+
+Thank you,
+
+Natasha
+
+[~Igor.Khosid]
+
+
+
+
+author: JIRAUSER11102
+comment: Hi [~nprimak],
+
+You can do a test in enrollment page for acbk. Login with some random CIF and ACCT_NUM. Then it will take you to 3 step enrollment process. In the last step, you can verify emails. If this goes well, you can finish testing.
+
+Remember, this feature will go live on 26th of this month.
+
+
+author: JIRAUSER11102
+comment: Hi [~nprimak],
+
+We have released this feature today. You can go on with the test on enrollment page on your side.
+
+
+author: nprimak
+comment: [~jahid.hasan]
+
+Verified email address changes on Member site hypercube during enrollment process and on Profile tab, all good, no issues
+
+Thank you,
+
+Natasha

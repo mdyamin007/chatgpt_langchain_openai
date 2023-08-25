@@ -1,0 +1,158 @@
+title: SHBK - Letter - Daily PDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133594-C30.01-V21203
+
+Processing Scripts to modify:
+ shbk_dl_process.sh
+
+Data Files to use:
+ SHBK_LB_060922.txt.pgp
+
+
+
+*NOTE*: This job runs on RH2. Since we are migrating from RHS to RH2, we should test all options so that we can do afpcompare and also ensure there is no errors in the processing logs.
+
+
+author: anwarh
+comment: Hi,
+
+Parallel Id: 20220810083726
+
+data file used
+ SHBK_LB_081022.txt.pgp(/d/download/shbk/daily_letter/SHBK_LB_081022.txt.pgp )
+
+productions tiff's are kept at: /z/dsi_pdfi_testing/shbkdla/old/tiff
+
+parallel (rhs) server tiff's are kept at: /z/dsi_pdfi_testing/shbkdla/new/tiff
+
+This project is slightly different, here pdf's are generated first and then tiff's are generated from those corresponding pdf's;
+
+Thanks.
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]/[~berezinez]: Who can work on this QA? In the meantime, I will move the Due Date from 8/17 to 8/22.
+
+
+author: JIRAUSER11104
+comment: Hi [~William.Kong], 
+I'll work on this today.
+
+
+author: JIRAUSER11104
+comment: [~anwarh] can you please provide link to the pdf files.
+[~William.Kong] please advise how can I compare TIF files. 
+Thanks!
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: I did not release the output is TIFF format. I don't have utility to compare. Please hold on for now until I can advise a solution.
+
+
+
+
+author: william.kong
+comment: [~anwarh]: Please review the new TIFF. I noticed the bottom left corner has black box issue.  Can you compare the PDF first prior to conversion to TIFF to see if the PDF has same issue? Maybe disable TRANSPARENCY in afp2pdf.py and then convert to TIFF?
+
+Please scroll left and right on the image below because the screenshot is very big
+
+
+
+!image-2022-08-17-12-15-06-622.png|width=1438,height=740!
+
+
+author: anwarh
+comment: Hi [~William.Kong],
+
+I tried with and without transparency, but none worked.
+
+But I converted the image (SHBKDLPC.TIF) to discard "RGB" information. It's working now.
+This image is only used for "archival" so no need to check for print.
+
+Fixed output is in: /z/dsi_pdfi_testing/shbkdla/new_fix/
+
+Thanks,
+Anwar
+
+
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: The work around to QA the tiff files was for me to convert the tiff to PDF. After doing so, i was able to compare without issue.
+
+
+
+{{ca-isis-pr-04:/d/pdf_compare/result_shbkdla/pdf_compare_rpt.txt}}
+
+
+
+{{Total PDF Files Scanned: 26}}
+{{allowedDifferenceInPercentPerPage: 2:}}
+{{Thread Count: 12}}{{Total PDF Files with Differences: 0}}
+{{Start Time: Tue Aug 23 15:57:49 PDT 2022}}
+{{Finish Time: Tue Aug 23 15:58:20 PDT 2022}}
+
+
+
+
+
+{{Please advise if you can resume QA.}}
+
+
+author: JIRAUSER11104
+comment: Thanks, [~William.Kong]
+
+QA is completed.
+ Test result - *PASSED*.
+{panel:title=[andreyK@ca-isis-pr-04 ~]$ /d/pdf_compare/result_shbkdla/pdf_compare_rpt.txt|borderStyle=dashed}
+Total PDF Files Scanned: 26
+ allowedDifferenceInPercentPerPage: 2:
+ Thread Count: 12
+
+Total PDF Files with Differences: 0
+ Start Time: Tue Aug 23 16:40:09 PDT 2022
+ Finish Time: Tue Aug 23 16:40:36 PDT 2022
+{panel}
+
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: Thanks!
+
+
+
+[~anwarh]: Please prep File Transfer form so that we can schedule release as early as tomorrow (Wednesday).
+
+
+author: anwarh
+comment: Hi [~TunA],
+
+Transfer form:[^IS-1225 Transfer Form.docx]
+
+Code is in:
+/d/is/cvs/xfer/anwarH_backup/is-1225
+
+Can you please move them into /d/is/cvs/xfer/anwarH/ and then release?
+
+Thanks,
+Anwar
+
+
+author: william.kong
+comment: [~rodriguez]: Per my email, would you assist with the code release today?
+
+
+author: rodriguez
+comment: [~anwarh] [~William.Kong]Code had been released, Backup ID =20220825164921

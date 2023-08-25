@@ -1,0 +1,241 @@
+title: 11810 / 44090 - TKCU - Add Year Group Tabs for Checks
+description: Update Checks jsp on both admin and eStatement site to have an additional tab row that group years together in unit of 5, e.g. 2020-2016, 2015-2011, 2010-2006, etc.
+
+
+
+Then the year tabs would only display the 5 years in the group. The page will only load data within the 5 year. Every time the year group is changed, the entire jsp is reloaded with data for the selected 5 year group.
+
+
+
+Also, refactor some HTML element to exist only in one line of code.
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi DSI,
+
+I did some of the changes to the msm site, but I will need some help finishing the rest of the work.
+ # Account number8189116 on dev_cu can be used as the testing account.
+ # The year group tabs are not displayed as part of the entire table, similar to how the years tabs have lines connected to the cycle tabs.
+ # Changing years is bugged. In group 2015-2011, I can't change to year 2011.
+ # This update will also need to be done to the ROOT checkimage module.
+
+Let me know if it's possible to get this done by 6/24. If not, I'll inform the client we'll have to delay. Ideally, we would like to finish this asap.
+
+Thanks,
+
+Tai
+
+
+author: tai.trinh
+comment: @dsi
+
+This is deployed on Dev yet. I have been using my local.
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Mamunur Rashid made the following comment in DSI-263
+
+@isd
+
+Hi [~tai.trinh],
+
+I am looking into it. I need some time to implement this. Please inform the client.
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi[~mamunur.rashid],
+
+How much time do you need? Can I say we can get it on Pilot by 7/1?
+
+Thanks,
+
+Tai
+
+
+author: tai.trinh
+comment: @dsi
+
+Also, feel free to ask me any questions. I know the specs are a bit vague.
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Mamunur Rashid made the following comment in DSI-263
+
+@isd
+
+Hi [~tai.trinh],
+
+I did something like the screenshot below:
+
+!year range tab 1.png!
+
+!year range tab 2.png!
+
+What I did is pulled all the year data and divided it into groups. And then showed it like above. I used javascript to switch between those tabs. So no page reload is needed now.
+
+Is it okay? Actually I didn't understand why page reload is needed. Can you please tell me the reason?
+
+Thanks.
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~mamunur.rashid],
+
+The page reload is necessary, because the source code generator has a buffer limit. The html elements are procedurally generated. For users who have 6000+ checks, there would be too many lines of code and the page does not get fully generated. It stops at around 38000 something lines.
+
+Thanks,
+
+Tai
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Mamunur Rashid made the following comment in DSI-263
+
+@isd
+
+Hi [~tai.trinh],
+
+I have fixed the year tab switching bug in your code for tkcu msm. I have also done that for ROOT side.
+
+The code is now under testing. Here are some screenshots:
+
+
+
+!year group tab 1.png!
+
+!year group tab 3.png!
+
+Is it okay? Should I commit the code to trunk after testing finished?
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~mamunur.rashid],
+
+Awesome. Yes, please commit to trunk once you finished testing.
+
+Is it not possible to have the tabs be connected to the other tables like the previous two screenshots?
+
+Thank you very much for your help,
+
+Tai
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Mamunur Rashid made the following comment in DSI-263
+
+@isd
+
+Hi [~tai.trinh],
+
+!year tab old site.png!
+
+The old implementation looks like this if there is a huge number of year tabs. So if I make new implementation like this then the UI will look like the following:
+
+!gropu year tab for a lot of group.png!
+
+It doesn't look good.
+
+Here is how my current implementation looks like for a huge number of year group tabs.
+
+!current implementation.png!
+
+I think it's better. What do you think? Let me know.
+
+Thanks.
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Mamunur Rashid made the following comment in DSI-263
+
+@isd
+
+Hi [~tai.trinh],
+
+The year group tab style looks good till the number of year group tab is <= 6.
+
+!year group tab 5.png!
+
+Please let me know which style do you want?
+
+Thanks.
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Mamunur Rashid made the following comment in DSI-263
+
+@isd
+
+Hi [~tai.trinh],
+
+I have committed the code to trunk with the following style:
+
+!current implementation.png|thumbnail!
+
+Just for your information:
+
+If something is searched and on result user always lands on the first group tab. If there are 2 groups then clicking group 2 will load all the year group tab again.
+
+
+
+Thanks,
+
+Mamun
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~mamunur.rashid],
+
+Sorry, that's a part that I also missed. We will need to also store the search criteria and pass it into the url just like how startDate and endDate are passed, so that whenever the year group tab is clicked, the search criteria can be loaded again.
+
+Thanks,
+Tai
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Mamunur Rashid made the following comment in DSI-263
+
+@isd
+
+Hi [~tai.trinh],
+
+I fixed the year group tab switching issue after searching check by some search criteria. I have passed search criteria into url like startDate and EndDate.
+
+!check search.png|width=518,height=272!
+
+The code has been tested and committed to trunk.
+
+Thanks,
+
+Mamun
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Mamunur Rashid made the following comment in DSI-263
+
+@isd
+
+Hi [~tai.trinh],
+
+What is the update on this ticket? Should we close this ticket?
+
+Thanks,
+
+Mamun
+

@@ -1,0 +1,404 @@
+title: Proposal - SSO from InfoTRAC to InfoREACH
+body: ## Objective
+
+The objective is to enable infoTRAC users to directly login to InfoREACH
+system with SSO.  
+  
+
+  
+
+## Proposal
+
+The usual scenerio of SSO is to share the same information in both systems but
+in our case the user base for InfoREACH and InfoTRAC are completely separated.
+So the challenge to keep the InfoREACH system client and urf data synced with
+InfoTRAC's. To do so we need to have a way to send data from InfoTRAC to
+InfoREACH. The first option for us was to do scheduled lightweight batch sync
+which would automatically sync the data but would require some manual
+processing later as we have some client specific json for InfoREACH. So, we
+are proposing to have a lightweight service called urfSyncService which will
+communicate with LDAP and contain API endpoints that would enable InfoTRAC to
+manage InfoREACH features without storing anything in InfoTRAC system.
+
+Following workflow explains how workflow of syncing the client management
+would work.
+
+  
+
+  
+
+### Client Management
+
+Following workflow explains how workflow of syncing the users, roles and
+features would work.  
+  
+
+  
+
+### URF Management
+
+Following workflow explains how SSO from InfoTRAC to InfoREACH would work.  
+  
+
+  
+
+### SSO
+
+  
+  
+
+  
+
+### Infotrac
+
+ **Client Management**  
+POST/v1/clients/create  
+Description : Store the provided jso when InfoREACH feature is enabled for the
+particular client.  
+Response : "success" if infoREACH successfully stored the provided jso,
+otherwise "error"  
+ **Payload**  :
+
+    
+    
+      
+    
+
+{  
+    "clientInfo": {  
+        "id": "demo",  
+        "clientName": "Guidance Financial Institution",  
+        "type": "R"/"W"/"B",  
+        "parentId": "root",  
+        "accountManagerId": "",  
+        "accountCoordinatorId": "",  
+        "accountServiceManagerId": "",  
+        "clientEnabled": "TRUE/FALSE",  
+        "address": "141 Jefferson Drive",  
+        "city": "Menlo Park",  
+        "state": "AL"/"AK"/"AZ"......,  
+        "zip": "94025",  
+        "website": "[www.infoimageinc.com](http://www.infoimageinc.com)",  
+        "phone": "(650)473-6388",  
+        "fax": "(650)473-6300",  
+        "bAddress": "123 N CENTRAL",  
+        "bCity": "Dhaka",  
+        "bState": "AK"/"AZ"/"AR"....,  
+        "bZip": "3600",  
+        "bPhone": "560000",  
+        "bFax": "12500",  
+        "bEmail": "example@[gmail.com](http://gmail.com)",  
+        "bCaTaxRate": 0.055,  
+        "paymentTerms": "Update payment terms",  
+        "bTxTaxRate": 9.3,  
+        "taxExempt": 0/1  
+    },  
+    "clientSetting": {  
+        "targetingRule": {  
+            "tabs": [  
+                "Standard",  
+                "Segments and Formulas"  
+            ],  
+            "fields": {  
+                "cifNumber": {  
+                    "fieldLabel": "Account Number",  
+                    "type": "number",  
+                    "parentTab": "Standard"  
+                },  
+                "age": {  
+                    "fieldLabel": "Age",  
+                    "type": "number",  
+                    "parentTab": "Standard"  
+                },  
+                "city": {  
+                    "fieldLabel": "City",  
+                    "type": "string",  
+                    "inputType": "text",  
+                    "parentTab": "Standard"  
+                },  
+                "state": {  
+                    "fieldLabel": "State",  
+                    "type": "string",  
+                    "inputType": "text",  
+                    "parentTab": "Standard"  
+                },  
+                "fico": {  
+                    "fieldLabel": "Credit Score",  
+                    "type": "number",  
+                    "parentTab": "Standard"  
+                },  
+                "zip": {  
+                    "fieldLabel": "Zip Code",  
+                    "type": "number",  
+                    "parentTab": "Standard"  
+                },  
+                "gender": {  
+                    "fieldLabel": "Gender",  
+                    "type": "string",  
+                    "inputType": "dropdown",  
+                    "values": [  
+                        "M",  
+                        "F",  
+                        "NA"  
+                    ],  
+                    "parentTab": "Standard"  
+                },  
+                "currBranch": {  
+                    "fieldLabel": "Branch Code",  
+                    "type": "number",  
+                    "parentTab": "Standard"  
+                },  
+                "segments": {  
+                    "fieldLabel": "Segments",  
+                    "type": "segment",  
+                    "parentTab": "Segments and Formulas"  
+                },  
+                "formula": {  
+                    "fieldLabel": "Formulas",  
+                    "type": "formula",  
+                    "parentTab": "Segments and Formulas"  
+                }  
+            }  
+        },  
+        "defaultOptions": {  
+            "fromSMS": [  
+                "12105190240",  
+                "12105190241"  
+            ],  
+            "fromName": [  
+                "Guidance Financial Institute",  
+                "Guidance Marketing Team",  
+                "Demo Bank"  
+            ],  
+            "emailList": [  
+                "marketing@[guidancefinance.com](http://guidancefinance.com)",  
+                "accounts@[guidancefinance.com](http://guidancefinance.com)",  
+                "donotreply@[guidancefinance.com](http://guidancefinance.com)"  
+            ]  
+        },  
+        "audienceInfo": {  
+            "validationRules": {  
+                "User Name": {  
+                    "type": "string",  
+                    "required": true  
+                },  
+                "Age": {  
+                    "type": "number",  
+                    "required": true  
+                },  
+                "SSN": {  
+                    "type": "number",  
+                    "required": true  
+                },  
+                "Email Address": {  
+                    "type": "email",  
+                    "required": true  
+                },  
+                "Account Number": {  
+                    "type": "number",  
+                    "required": true  
+                },  
+                "optedIn": {  
+                    "type": "string(4,5)",  
+                    "required": true  
+                },  
+                "city": {  
+                    "type": "string",  
+                    "required": true  
+                },  
+                "zip": {  
+                    "type": "number",  
+                    "required": true  
+                }  
+            },  
+            "columnMappers": {  
+                "name": "User Name",  
+                "age": "Age",  
+                "cifNumber": "SSN",  
+                "accountNumber": "Account Number",  
+                "email": "Email Address",  
+                "subscription": {  
+                    "key": "optedIn",  
+                    "condition": "true",  
+                    "ifTrue": "SUBSCRIBED",  
+                    "ifFalse": "UNSUBSCRIBED",  
+                    "default": "SUBSCRIBED"  
+                }  
+            },  
+            "uniqueColumns": [  
+                "email",  
+                "cifNumber"  
+            ]  
+        },  
+        "audienceView": {  
+            "listItems": [  
+                {  
+                    "title": "Name",  
+                    "data": "name",  
+                    "orderable": true  
+                },  
+                {  
+                    "title": "E-mail",  
+                    "data": "email",  
+                    "orderable": true  
+                },  
+                {  
+                    "title": "City",  
+                    "data": "city",  
+                    "orderable": true  
+                },  
+                {  
+                    "title": "Age",  
+                    "data": "age",  
+                    "orderable": true  
+                },  
+                {  
+                    "title": "Account Number",  
+                    "data": "cifNumber",  
+                    "orderable": true  
+                }  
+            ],  
+            "detailItems": [  
+                [  
+                    "name",  
+                    "User Name"  
+                ],  
+                [  
+                    "cifNumber",  
+                    "Account Number"  
+                ],  
+                [  
+                    "email",  
+                    "Email Address"  
+                ],  
+                [  
+                    "branchCode",  
+                    "Branch Code"  
+                ],  
+                [  
+                    "phone",  
+                    "Phone Number"  
+                ],  
+                [  
+                    "ssn",  
+                    "SSN"  
+                ]  
+            ]  
+        }  
+    }  
+}
+
+    
+    
+      
+    
+
+  
+
+PUT/v1/clients/{cid}  
+Parameters : cid  
+Description : Update the provided jso when InfoREACH feature is enabled.  
+Response : "success" if infoREACH successfully stored the provided jso,
+otherwise "error"  
+ **Payload**  : Same as POST/v1/clients/{cid}
+
+ **URF Management**  
+GET/v1/user/{cid}/{userName}  
+Parameter1 : cid  
+Parameter2 : userName  
+Description : Get the user information related data.  
+Response : "success" if get user info data successfully, otherwise "error"  
+ **Payload**  :
+
+    
+    
+      
+    
+
+{  
+    "userInfo": {  
+        "dn": "cn=demo_manager,cn=demo-USER,clientId=demo,ou=CLIENTS,dc=infoimageinc,dc=com",  
+        "clientId": "demo",  
+        "userName": "demo_manager",  
+        "firstName": "DEMO",  
+        "lastName": "Manager",  
+        "userPassword": "{SHA}tr7/W9Yk37oNue0d3I/VJcPkmBI=",  
+        "clientType": "W",  
+        "state": "AL",  
+        "email": "imadul.islam@[dsinnovators.com](http://dsinnovators.com)",  
+        "cn": "demo_manager",  
+        "sn": "demo_manager",  
+        "objectClass": [  
+            "user",  
+            "top"  
+        ],  
+        "role": "cn=demo-demo_manager,cn=demo-ROLES,clientId=demo,ou=CLIENTS,dc=infoimageinc,dc=com"  
+    }  
+}
+
+    
+    
+      
+    
+
+  
+
+POST/v1/user/create  
+Description : Store the provided jso when InfoREACH feature is enabled for the
+particular user.  
+Response : "success" if infoREACH successfully stored the provided jso,
+otherwise "error"  
+ **Payload**  :
+
+    
+    
+      
+    
+
+{  
+    userInfo: {  
+        "clientId": "demo"   
+   "username": "demo_test",  
+        "userPassword": "123456",  
+        "firstName": "demo",  
+        "lastName": "test",  
+        "userEnabled": "TRUE/FALSE",  
+        "title": "Account Manager",  
+        "description": "this is test.",  
+        "address": "141 Jefferson Dr.",  
+        "city": "Menlo Park",  
+        "state": "AL"/"AZ"/"AR"...,  
+        "zip": "94025",  
+        "website": "[www.infoimageinc.com](http://www.infoimageinc.com)",  
+        "phone": "(650)473-6388",  
+        "ext": "314",  
+        "fax": "(650)473-6300",  
+        "email": "mohammad.imran@[dsinnovators.com](http://dsinnovators.com)"  
+    },  
+    "role": {}  
+}
+
+    
+    
+      
+    
+
+  
+
+PUT/v1/user/update  
+Description : Update the provided jso when InfoREACH feature is enabled.  
+Response : "success" if infoREACH successfully stored the provided jso,
+otherwise "error"  
+ **Payload**  : Same as POST/v1/user/create
+
+ **InfoREACH Setting**  
+GET/v1/settings  
+Description : Get the infoREACH feature setting jso
+
+  
+
+### Attachments
+
+  
+
+

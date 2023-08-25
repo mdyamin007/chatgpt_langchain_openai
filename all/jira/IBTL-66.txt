@@ -1,0 +1,216 @@
+title: Test External Client FTP Servers
+description: e.g.:
+
+osi ftp server
+
+frst server
+
+web-vault
+
+
+
+Peter to add a list of server/scripts to test into this ticket.
+
+
+
+Attached list contain number of scripts that using SFTP. We will need to test connection for each of this site.
+
+[^sftp_list.xlsx]
+
+
+
+
+
+
+author: william.kong
+comment: [~Peter.Dang]: Just a reminder, we need to have this task completed by EOD 10/6/2020 so that we know which scripts are using external URLs and which ones don't work.
+
+
+author: william.kong
+comment: [~Peter.Dang]: I just glanced through the report. Can you add another column to tell me which protocol it is using?
+
+
+
+e.g.:
+
+ftp
+
+ftps (ftp over ssl)
+
+sftp (ssh ftp)
+
+https
+
+etc..
+
+
+
+For example, cambdla_sftp.pl is using sftp (ssh ftp) and it did not allow connection
+
+
+
+I need to run a quick connection testing to see if we can login or not.
+
+
+
+
+
+
+author: william.kong
+comment: [~Peter.Dang]: Per our conversation, all of these are sftp (ssh ftp) protocol.
+
+
+author: william.kong
+comment: [~Peter.Dang]: Per our conversation, please have your team test the connection to see if it can connect and all the ssh key is accepted upon first time connecting.
+
+
+author: william.kong
+comment: [~Peter.Dang]: Per our meeting today, please try to have the team complete this task by EOD Thursday.
+
+
+author: peter.dang
+comment: Will,
+
+
+
+Yamee and I tried to test sftp from BB servers, but all were not able to connect.
+
+
+author: peter.dang
+comment: Try to test sftp but all test failed at connection stage.
+
+
+author: william.kong
+comment: [~Peter.Dang] and [~yameelee]:  Can you review attachment [^sftp_list.xlsx]
+
+Would like to have the CID document? I highlighted yellow cells that either I don't know the CID and need to confirm if client is no longer with us? If so, please strikethrough and delete the code.
+
+
+
+[~kent.chan]: You can see a preview of the results? As promised, this is the list of clients we need to inform that we need access. There is just a few rows in the excel spreadsheet that i do not know the CID and if they are still active.
+
+
+author: peter.dang
+comment: update to sftp_lsit.xlsx with cid/app/server process colums.
+
+
+author: william.kong
+comment: [~kent.chan]: Please ignore HICU. They are no longer client of ours when review the attached list. Per our meeting this morning, this report should conclude the list of clients we identified for sftp connections.
+
+
+
+[~Peter.Dang]: Thanks for the update!
+
+
+author: william.kong
+comment: [~William.Kong]: Per Kent's request, i need to simplify this spreadsheet to CIDs and server name
+
+
+author: william.kong
+comment: [~kent.chan]: Here is the spreadsheet summary. Please note in column 1 "InfoIMAGE Vendor". For those, we need to contact our vendor instead of client.
+
+
+||*CID*|*SFTP URL*|*Username*|
+|||||
+||FRST|SSH.Transmissions.OpenSolutionsASP.com|ba003000|
+||EWBB|fts.eastwestbank.com|infoimageftp|
+||FRST|webvault.vaultguard.com|FRBK_sa|
+|InfoIMAGE Vendor|FRST|transfer.walzgroup.com|wg1246frst|
+||FRST|smft.firstrepublic.com|infoimage|
+||HTBK|SSH.Transmissions.OpenSolutionsASP.com|ba003000|
+|InfoIMAGE Vendor|SANA|sftp.newcoursecc.com|InfoImage23|
+|InfoIMAGE Vendor|SHEL|transfer.walzgroup.com|wg1245sfcu|
+|InfoIMAGE Vendor|FRST|transfer.walzgroup.com|infoimage|
+|InfoIMAGE Vendor|SHEL|transfer.walzgroup.com|infoimage|
+
+
+author: kent.chan
+comment: I've created tickets for:
+
+FRST- ticket 14644
+
+SANA- ticket 14666
+
+EWBB-14665
+
+
+
+did not open tickets for the other clients since they are all using transfer.walzgroup.com, so as long as the FRST ticket is complete, it will work for SHEL
+
+
+author: kent.chan
+comment: [~Peter.Dang]- can you test EWBB, they have whitelisted the BB IP
+
+
+author: peter.dang
+comment: Test connect to sftp infoimageftp@fts.eastwestbank.com
+
+sftp infoimageftp@fts.eastwestbank.com
+ Connecting to fts.eastwestbank.com...
+ ssh: connect to host fts.eastwestbank.com port 22: Connection timed out
+ Couldn't read packet: Connection reset by peer
+
+
+
+Tried to ping the ftp site and it is reachable.
+
+ping fts.eastwestbank.com
+PING fts.gslb.eastwestbank.com (63.157.54.88) 56(84) bytes of data.
+64 bytes from 63.157.54.88: icmp_seq=0 ttl=117 time=26.6 ms
+64 bytes from 63.157.54.88: icmp_seq=1 ttl=117 time=26.3 ms
+64 bytes from 63.157.54.88: icmp_seq=2 ttl=117 time=26.2 ms
+64 bytes from 63.157.54.88: icmp_seq=3 ttl=117 time=26.2 ms
+
+
+
+
+author: kent.chan
+comment: [~Peter.Dang]
+
+I found the issue. We needed to allow this outbound
+
+I tested all the FTP servers listed. I am able to connect to the following:
+
+walz, newcourse, ewbb
+
+I am not able to connect to opensolutionsasp, vaultguard and smft
+
+The Opensolutions ftp server has an issue where the old verison of the sftp module does not have the newer ciphers. How do you do it now?
+
+
+author: william.kong
+comment: [~Peter.Dang]: Per our meeting today, Kent enabled ca-preproc-pr-02 for opensolutionsasp
+
+Can you please double-check:
+
+walz, newcourse, ewbb
+
+
+
+
+
+
+
+The other two still does *NOT* work webvault.vaultguard.com and smft.firstrepublic.com; Kent is assuming it may be related to their server having IP filtering in place.
+
+
+
+[~kent.chan] is going to reach out these two vendors to ask them to add our outgoing IP address.
+
+
+
+
+
+
+
+
+author: kent.chan
+comment: [~William.Kong], [~Peter.Dang]- Ticket to Keri has been created in TS to contact FRST to whitelist
+
+
+author: william.kong
+comment: [~kent.chan]: Per our conversation, you followed up with Keri, but still no updates.
+
+
+author: kent.chan
+comment: request for update sent to Keri on saturday 11/7

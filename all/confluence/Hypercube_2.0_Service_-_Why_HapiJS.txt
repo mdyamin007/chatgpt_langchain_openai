@@ -1,0 +1,190 @@
+title: Hypercube 2.0 Service - Why HapiJS
+body:   
+Overview
+
+For Hypercube 2.0 we have been thinking about a micro-service based system so
+we can use the service for other applications as well. For example if after
+some years we have an mobile app to serve the features we are going to serve
+from Hypercube 2.0, we can reuse the same app without cost of rebuilding the
+server side again. Also sharded pattern allows us to distribute the systems
+thus allowing us to manage these applications separately. Let's say after a
+year we have a whole new revolutionary technology available for the view
+renderer, we can just change it separately without touching the server side
+code.  
+  
+
+## Node Frameworks - Express and HapiJS
+
+There are so many different kinds of Node.js frameworks and each helps us to
+build large scale, scalable web applications in real time with JavaScript
+alone. As the demand grew, there arose the need for frameworks that would help
+build high speed real time end to end applications, without using third party
+web server, or any kind of tool, technology or app server. Currently the
+biggest community available are for HapiJS and Express. Based on performance,
+support and stability we have chosen HapiJS and Express as primary candidates
+for service part of Hypercube 2.0.  
+  
+
+## Express and HapiJS - How are they similar?
+
+Basically both frameworks are solving the same basic problem: Providing a
+convenient API for building HTTP servers in node. That is to say, more
+convenient than using the lower-level native http module alone. The http
+module can do everything we want but it's tedious to write applications with.
+
+To achieve this, they both use concepts that have been around in high level
+web frameworks for a long time: routing, handlers, plugins, authentication
+modules. They might not have always had the same names but they're roughly
+equivalent.
+
+Most of the basic examples look something like this:
+
+Create a route  
+Run a function when the route is requested, preparing the response  
+Respond to the request  
+Express:
+
+app.get('/', function (req, res) {
+
+    
+    
+      
+      
+        getSomeValue(function (obj) {  
+      
+            res.json({an: 'object'  
+            });  
+        });  
+    });  
+    hapi:  
+      
+    server.route({  
+        method: 'GET',  
+        path: '/',  
+        handler: function (request, reply) {  
+      
+            getSomeValue(function (obj) {  
+      
+                reply(obj);  
+            });  
+        }  
+    });
+
+The difference is not exactly groundbreaking here right? So why choose one
+over the other?
+
+## How are they different?
+
+The simple answer is hapi is a lot more and it does a lot more out-of-the-box.
+That might not be clear when we just look at the simple example from above. In
+fact, this is intentional. The simple cases are kept simple. So let's examine
+some of the big differences:  
+  
+
+## Philosophy
+
+Express is intended to be very minimal. By giving us a small API with just a
+thin dusting on top of http, we're still very much on our own in terms of
+adding additional functionality. If we want to read the body of an incoming
+request (quite a common task), we need to install a separate module. If we're
+expecting various content-types to be sent to that route, we also need to
+check the Content-type header to check which it is and parse it accordingly
+(form-data vs JSON vs multi-part for example), often using separate modules.
+
+hapi has a rich feature set, often exposed through configuration options,
+rather than requiring code to be written. For instance, if we want to make
+sure a request body (payload) is fully read into memory and appropriately
+parsed (automatically based on content-type) before the handler is ran, it's
+just a simple option:
+
+server.route({  
+    config: {  
+        payload: {  
+            output: 'data',  
+            parse: true  
+        }  
+    },  
+    method: 'GET',  
+    path: '/',  
+    handler: function (request, reply) {
+    
+    
+      
+      
+            reply(request.payload);  
+        }  
+    });  
+      
+    
+
+## Features
+
+We only need to compare the API documentation on both projects to see that
+hapi offers a bigger feature set.
+
+hapi includes some of the following features built-in that Express does not
+(as far as I know):
+
+  * Input and response validation (through Joi)
+  * Server-side caching with multiple storage options (mongo, S3, redis, riak), that can be enabled with a few lines of configuration
+  * Cookie-parsing
+  * Sessions
+  * File uploading/multipart parsing
+  * CORS support
+  * Logging
+  * Extensibility & modularity  
+hapi and Express go about extensibility in quite a different way. With
+Express, we have middleware functions. Middleware functions are kind of like
+filters that we stack up and all requests run through them before hitting the
+handler.
+
+hapi has the request lifecycle and offers extension points, which are
+comparable to middleware functions but exist a several defined points in the
+request lifecycle.
+
+One of the reasons that Walmart built hapi and stopped using Express was a
+frustration with how difficult it was to split a Express app into separate
+parts, and have different team members work safely on their chunk. For this
+reason they created the plugin system in hapi.
+
+A plugin is like a sub-application, we can do everything we can in a hapi app,
+add routes, extensions points etc. In a plugin we can be sure that we're not
+breaking another part of the application, because the order of registrations
+for routes doesn't matter and we can't create conflicting routes. We can then
+combine this plugins into a server and deploy it.  
+  
+
+## Ecosystem
+
+Because Express gives us so little out of the box, we need to look outside
+when we need to add anything to the project. A lot of the times when working
+with hapi, the feature that we need is either built-in or there's a module
+created by the core team.
+
+Minimal sounds great. But if we're building a serious production app, the
+chances are we're going to need all of this stuff eventually.  
+  
+
+## Security
+
+hapi was designed by the team at Walmart to run Black Friday traffic so
+security and stability have always been a top concern. For this reason the
+framework does a lot of things extra such as limiting incoming payload size to
+prevent exhausting the process memory. It also has options for things like max
+event loop delay, max RSS memory used and max size of the v8 heap, beyond
+which the server will respond with a 503 timeout rather than just crashing.  
+  
+
+## Summary
+
+For all the reasons mentioned above, clearly Hapi wins. Moreover, for
+Hypercube 2.0, we are going to need a lot of request validation along with
+authentication and authorizations. Also as a multi tenant applicationit holds
+a lot of features for which we will eventually have to add third party
+packages. Express is only faster in performance as it is minimal and comes
+with lighter package which is not our case for Hypercube 2.0. Also Hapi has
+the bigger community support. So we choose Hapi over ExpressJs.
+
+ **HAPI WINS!**
+
+

@@ -1,0 +1,695 @@
+title: SNFB Hypercube Migration Analysis(In progress)
+body: ## Schema: Default
+
+## Frontend:
+
+##  _ **ROOT**_
+
+  
+
+  
+|  
+  
+---|---  
+ **Account Types**|  SD, 99, LN, CK, CD, SV, TM  
+ **Archival Period**|  Default: 24, Enotice: 24  
+ **Batch Download**|  N/A  
+ **Delivery Preference**|
+
+  * Paper=B
+  * Paperless=E
+  * Both=W
+
+  
+ **Enrollment**|
+
+  * SSO: 3 steps
+  * DSO: 5 steps
+
+  
+ **Login Method**|
+
+  * FISERVSSO (SingleSignOn7Servlet)
+  * FISERVSSO2 (SingleSignOn7Servlet)
+  * DSO
+
+  
+ **Menu**|
+
+  * eStatements
+  * Analysis Statement
+  * DDA/Savings Notice
+  * Disclosure
+  * Profile 
+  * Exit
+
+  
+ **Notification Preference**|  Email  
+ **NP Link Type**|  byUsr  
+ **Paperless Configuration**|  bySelective  
+ **Statement Types**|
+
+  * default
+  * heloc
+  * analysis
+  * enotice
+
+  
+ **Unenrollment of DP change**|  False. If dp is changed from paperless to
+paper, users are redirected to opt out page to view statements of that account  
+ **Welcome Email**|  Yes  
+  
+  
+
+### Login methods:
+
+  *  **FISERVSSO  (SingleSignOn7Servlet)**
+    * createLogin: true, hasMultipleAcct: true, updateEmail: true, updateMobileNumber: false, linkUFA: true, updateEmailIfExist: false, hasAcctType: true, createAcct: true, createCif: true, loginId: VENDOR_USER_ID, accountDigits: 20, subusers: true, ufaSourceValue: fiservSso
+    * Mandatory fields: data, selected_acct, selected_acct_type. For N type users, login_id and user_type(N) is mandatory. Otherwise, the user will be login as subuser.
+    * User type N as considered as primary users or vendor users. For vendor users, 
+      * compCif=last 9 digit of loginId. combinedCif = compCif|vendorLoginId
+      * Check whether this primary user exists. primaryUsers = search from USR_MAPPING by compCif (last 9 digit of loginId) and primary_user_flag is null or not S
+      * createCifForSubusers is false. subUser = search userId from usr_session by vendor_user_id (vendor_login_id from sso request) and gets the user from USR table by that usrId.
+      * If primaryUsers exists, take the first one as primaryUser **.**
+      * user = subuser. [user from USR table]
+    * For those users, who are not vendor (user type is not N)
+      * user = search userId from usr_session by vendor_user_id (vendor_login_id from sso request) and gets the user from USR table by that usrId. 
+    * if user found, search for its login information from USR and USR_SESSION by usrId. If login not found, create login.  
+      * For vendor users,
+        * login = create vendor login. Create a new user with sess_login_id="!"usrId, permission=1, vendor_user_id=loginId.
+      * For not vendor users,
+        * login = createLogin. and createAcct = true. Create a new user with permission=1, vendor_user_id=loginId, ssoKey, sess_login_id= "!"usrId, status=New and insert into USR_SESSION.
+    * If email is provided in sso file, updates email address in CONTACT_INFO table and insert an entry in AUDIT_LOG_SNFB (location="sso").
+    * Updates ufa links.
+      * If a new account is provided in sso file,  create a new fa with acctName, acctType (provided in sso file), status=A and current date as last modified. Also insert into paperless. new status=B, old status=N
+      * New UFA is created with the newly created fa. Expiration date = Current date, email = from sso file, ufaSource=fiservSso, ufaStatus="pre_reg". Every account is linked with the user with its account type. That means, if we provide 5 account types for the same account, 5 accounts will be created and will be linked with that user as ufa.
+      * Searches uat from USR_ACCT_TYPE_MAPPING by usrId,acctId,stmtType="default" and letterType=0. If selected_acct_desc is passed via sso file but no uat found, insert usrId, acctId, stmtType=default and acctDesc. Or if found, update acct_desc.
+      * If selected_acct_desc is not passed via sso file, delete that uat (by usrId, acctId) from USR_ACCT_TYPE_MAPPING table. 
+      * Removes all leftover ufa links as they are not defined in sso request. Deletes np by usrId and acctId from notification_preference table. Also remove from usr_acct_type_mapping table.
+  *  **FISERVSSO2 (SingleSignOn7Servlet)**
+
+###  _SSO:_
+
+###  _Enrollment:_  
+
+Go through enrollment based on the following conditions:
+
+  1. If no np found(byUsr) in notification preference table (fiserv_hblogin.jsp)
+  2. If no SSO date in usr_session. (fiserv_hblogin.jsp)
+  3. If user status is "NEW" (homepage)
+
+ _ **Enrollment steps:**_
+
+  * Step 1 of 3: Pdf view
+  * Step 2 of 3: Online E-Statement Enrollment.
+    * Input field for the email address. Can't proceed if the email is not given in this step. Email is updated from this step.
+  * Step 3 of 3: Np and Dp selection
+    * Selective Paperless. Can select either Paper(B) or Paperless(E) as dp for Analysis, Savings, Associated Account Notices. If the paperless status is both(W) for any account type, the user can't change dp in this step. " I agree to receive paper and paperless statements." remains auto-selected.
+    * Notification Preference: Email
+
+Welcome email is sent after enrollment.
+
+###  _Homepage:_
+
+  * For closed accounts, shows a message that says, user will not have access to this account after one year since the last modified date.
+  * User goes through optout page if either paperless status is B (If the account is selected in account select dropdown or being clicked in tab) or ufa status is "pre_reg".
+
+###  _eStatements:_  
+
+3 columns. Date, Status, Monthly Inserts
+
+###  _Analysis Statement:_
+
+3 columns. Date, Status, Monthly Inserts
+
+###  _Loan Statements:_
+
+4 columns. Date, Status, Description, Inserts
+
+###  _eNotice:_
+
+  * First check in USR_ACCT_TYPE_MAPPING table. If stmtType="cd", eNotice is displayed as "CD".  If stmtType="sdb", eNotice is displayed as "Save Deposit Box. If stmtType of the USR_ACCT_TYPE_MAPPING is neither "cd" nor "sdf", check the acct_type of that acct_id from fin_account table. For LN, enotice tab is displayed as "Loan Notice". For other account types, enotice tab is displayed as "DDA/Savings Notice"
+  * In USR_ACCT_TYPE_MAPPING table, if the acctId doesn't exist or stmtType = default, enotice is displayed as " eNotice".
+
+###  _Disclosure:_
+
+4 types of Disclosures.
+
+  1. Heloc Statement Disclosure
+  2. Mortgage Statement Disclosure
+  3. Personal Savings & DDA Disclosure
+  4. Non-Personal Savings & DDA Disclosure
+
+###  _Profile:_
+
+ ** _User Information:_  **The user can change the email address.
+
+  * Current Email Address: Not editable. Email address is pulled from the notification preference table.
+  * New Email Address: Editable
+  * Confirm New Email Address: Editable. New email address is saved in the notification preference table.
+
+ _ **Profile:**_ User can choose a delivery preference. "Paperless and Paper"
+option is available, but user can't choose it as dp.
+
+  * Savings: Paperless(E), Paper(B), Paperless and Paper(W)
+  * Associated Account Notices: Paperless(E), Paper(B), Paperless and Paper(W)
+
+  
+
+###  _DSO:_
+
+###  _Enrollment:_  
+
+  * Step 1: eStatement Verification pdf view
+  * Step 2: Terms and conditions
+  * Step 3: Account Verification
+    * Application: Select Drowdown. 
+      * Checking (CK)
+      * Certificate of Deposit/IRA (CD)
+      * Loan (LN)
+      * Save Deposit Box (SD)
+      * Savings (SV)
+    * Account Number: The side verbiage shows not to enter any account number with leading zeroes. For example, If the 10 digit account number is 0000012345, the user should enter 12345. But, the user can't proceed if the account number is given without leading zeros. The user needs to input the account number with leading zeroes to go to enrollment step 4.
+    * Social Security Number
+    * Security Code
+  * Step 4: Login Information
+    * Login Name
+    * Password
+    * Confirm Password
+    * Password Hint Question
+    * Hint Phrase Answer
+    * E-Mail Address
+    * Confirm E-mail Address
+  * Step 5: Preferences
+    * Account Number: Shows account number with leading zeroes and Account Type.
+      * Delivery Preference: Can choose a delivery preference for each of the account types.
+      * Notification Preference: Email
+  * Sends welcome email after enrollment.
+  * Insert event and location into audit_log_snfb table after enrollment.
+
+###  _Forget Password:_
+
+  * Security Check:
+    * Submit Username, 4 digits of SSN, Account Number
+    * Submit security check answer, new password and confirm new password
+    * Password reset successfully
+
+###  _Login:_
+
+  * If user status is "blacklisted", redirect to error page. "blacklisted" is not found in prod db.
+  * If user is inactive, redirect to login page. Can't login.
+  * After 5 unsuccessfull attempts to login, lockout the account for 30 minutes.
+  * After submitting Login name and password, Go to Token Recovery page. Need to submit last 4 digit of SSN.
+
+###  _Homepage:_
+
+  * If user's password is expired, or user's password was set to "temporary", go to reset password page.
+  * View Account: Acount type-Account number including leading zeroes.
+  * Important Disclosures is different for eStatements and eNotice.
+  * For closed accounts, shows a message that says, user will not have access to this account after one year since the last modified date. 
+  * Shows system maintenance message
+
+ _ **eStatement:**_
+
+ _ **eNotice:**_
+
+ _ **Disclosure:**_ ** ** 4 types of disclosures
+
+  * Heloc Statement Disclosure
+  * Mortgage Statement Disclosure
+  * Personal Savings & DDA Disclosure
+  * Non-Personal Savings & DDA Disclosure
+
+  
+
+ _ **Profile:**_
+
+  *  **User Information:** The user can update email address, password, password hint question, and hint phrase answer through this section. If the user tries to change a password that was used 10 times previously, an error message shows and the user can't choose that password. 
+
+
+
+  *     * After password successfully changed, an entry gets inserted into LOGIN_PASSWORD_HISTORY table.
+  *  **Profile:** Shows account number including leading zeroes and account types. User can't choose "Paperless and Paper" as dp though the option is visible. As selective paperless, users can choose different dp for each of the account types.
+
+ _ **Exit**_
+
+##  _ **Mismatch with Hypercube:**_
+
+  *  **FISERVSSO/ FISERVSSO2 (SingleSignOn7Servlet):**
+    * Searches with vendor_user_id from usr_session. But hypercube searches with cif_number form usr_mapping.
+    * Email from sso file gets updated in contact_info
+  *  **Enrollment logic** : 
+    * If no np found (byUsr) in notification preference table (fiserv_hblogin.jsp)
+    * If user status is "NEW" (homepage)
+  *  **Enrollment step 3:**
+    * If the paperless status is both(W) for any account type, the user can't change dp in this step. " I agree to receive paper and paperless statements." remains auto-selected.
+  * User goes through optout page if either paperless status is B (If the account is selected in account select dropdown or being clicked in tab) or ufa status is "pre_reg".
+  * ENotice tab name is changed dynamically. First check in USR_ACCT_TYPE_MAPPING table. If stmtType="cd", eNotice is displayed as "CD".  If stmtType="sdb", eNotice is displayed as "Save Deposit Box. If stmtType of the USR_ACCT_TYPE_MAPPING is neither "cd" nor "sdf", check the acct_type of that acct_id from fin_account table. For LN, enotice tab is displayed as "Loan Notice". For other account types, enotice tab is displayed as "DDA/Savings Notice".
+  *  **Profile** : "Paperless and Paper" option is available, but user can't choose it as dp.
+  * After DSO enrollment, Insert event and location into audit_log_snfb table after enrollment.
+  * During DSO login, after submitting Login name and password, Go to Token Recovery page. 
+  * For DSO, if user's password is expired, or user's password was set to "temporary", go to reset password page.
+  * For DSO, user can't choose a previously 10 times used password as a new password.
+  * After the password successfully changed, an entry gets inserted into the LOGIN_PASSWORD_HISTORY table.
+
+  
+
+  
+
+##  _ **MSM**_
+
+###  _ **Account Management**_
+
+  * Search by account number and email address.
+  * For DSO users, can update password, Password Hint phrase, password hint answer, and Login Status. Login, Direct-Sign-on Registration Date are displayed. 
+  * For SSO users, Single-Sign-on Registration Date is displayed.
+  * Admin can make an inactive user to active and vice versa.  
+  * Admin can unlock a lockout user.
+
+  * Admin can update delivery preference (paperless, paper and both). Can also browse history for each type of statement.
+  * Notification preference is Email. Can't change it. 
+  * Can change the email address.
+  * Admin can re-assign the enotices to the right application type.
+
+###  _ **Email proofing:**_
+
+The following email templates are available
+
+  *  **eStatements:** Uses $sdv_txt_userName
+  *  **Loan Statement:** Uses $sdv_txt_userName
+  *  **Analysis Statement:** Uses $sdv_txt_userName
+  *  **eNotices:  **Uses $sdv_txt_userName and $sdv_txt_eNoticeList
+  *  **Welcome:  **Uses $sdv_txt_userName
+  *  **Password Update:** Option available to upload email content in Rich text format also.
+
+  *  **AI User Removal:  **Option available to upload email content in Rich text format also. 
+  *  **Reminder:** Uses $sdv_txt_userName. Option available to upload email content in Rich text format also.
+  *  **Reminder2:  **Uses $sdv_txt_userName. Option available to upload email content in Rich text format also.
+  *  **New Account Marketing(MKT):** Doesn't use any variable. Only preview and RTF option are available.
+
+  *  **MKT Reminder email 15 day:  **Doesn't use any variable. Only preview and RTF option are available.
+  *  **MKT Reminder email 30 day:  **Doesn't use any variable. Only preview and RTF option are available.
+
+###  _ **Email Reminder**_
+
+ _ ****_
+
+###  _ **Upload Inserts:**_
+
+Inserts can be uploaded online for eNotices, eStatemenst, Analysis Statements,
+Loan Statements .
+
+###  _ **Product Type:**_
+
+Can add product type. A report for all product type can be generated either in
+text or excel format.
+
+###  _ **Reports:**_
+
+  *  **Latest Stats:**
+
+  *  **User Login Activity:** Generates a user login activity report within a time range. Can see a detailed list of accounts. In the details list, Can search by login name.
+
+  *  **AI Login Activity:** Generates Admin login activity report within a time range. Can see a detailed list of accounts. In the details list, Can search by login name.
+  *  **Admin User Report:** Downloads as an excel file. Shows Login Id, Name, Role, Last Login, and Status.
+  *  **Email Address Collection:** Downloads as a .txt file. Shows Account Number, Application, Account Owner Name and E-mail ADdress.
+  *  **Paperless:**
+    * Generates paperless report for the following stmt types:
+      * All statement types
+      * eStatements
+      * Loan Statements
+      * Analysis Statements
+      * eNotices.
+
+  *     * Report can be downloaded in either .txt or excel format. Shows Date, number of opt-in, opt-out, both and accumulative opt-out counts.
+    * Opt-in, Opt-out, Both, Acct. Opt-out reports are generated separately as a .txt file. These separate reports show Account Number, Application, Statement Type, Status Mofidifed Date.
+  *  **Registered users:** This report can be downloaded as text or excel file. Shows Month, Number of registered users and number of accumulative registered users . Registered Users report and Accumulative registered users report can be downloaded separately as text file. These contains Account Number, Application and Status Modified Date.
+
+  *  ** **Email Reminder:   ****The report shows the number of email reminders that were sent for each month. Can be downloaded in either text or excel format.
+  *  **Marketing Insert Report:** Generates insert report for eStatements, Loan Statements, Analysis Statement and eNotices. Can be downloaded in either text or excel format. The insert can be viewed on the browser by clicking the title. Individual Insert report can be viewed or downloaded either in text of excel format by clicking "Total Viewed".
+
+  *  **MKT Report:** This report can be downloaded in either text or excel format.
+
+###  _ **Administartion:**_
+
+Can create, update and delete new admin user.
+
+###  _ **Exit**_
+
+##  _ **Backend**_
+
+###  _ **Processes:**_
+
+  *  _ **Auth**_
+    *  **Data Handler: SnfbAuthHandler**
+      * Must have 13 columns separated by tab i.e. "\t"
+      * Fields: cifNum SSN fullName acctNumber productType LoanNumber LoanType Analysis CDNumber CDType SavingDepositBox SavingDepositBoxType ApplicationType
+      * Data Validation: 
+        * SSN must be a number and of length 11
+        * acctNumber Must be a number and length must be greater than 10.
+        * FullName must be provided
+        * The value of Analysis must be either Y or N or A or B or D (A/B/D is considered as Y)
+        * acctNumber, CDNumber, LoanNumber and SavingDepositBox can't be 0
+        * ApplicationType must contain either 0 or 1 or 6. 
+    *  **Registrar: SnfbAuthRegistrar**
+      * Search for user by cifNumber. If no user found, attach CIF to the user. Insert into USR_MAPPING table.
+      * If firstName or SSN are not matched with existing, update USR
+      * For applicationtype 1, acctType="SV". For 6, acctType="CK". For appType=0, accType="LN" or "CD" or "SD" . 
+      * acctType="CK" or "SV", stmtType= default. acctType="CD", stmtType="cd". acctType="LN", stmtType="heloc". acctType="SD", stmtType="sdb"
+      * Search for an account by acctNum, acctType. If not found, create and insert acctNum, acctName, acctType, status=A, lastModified=current date into FIN_ACCOUNT.
+      * Insert paperless for that account (stmtType= enotice).
+      * Insert paperless only for default and heloc account.
+      * Insert paperless as stmtType = "analysis" if Analysis is passed as Y and stmtType="default".
+      * If analysis is passed through index file and stmtType=default then Insert usrId, acctId, stmtType="analysis", acctType="A", acctTypeDesc="analysis" into USR_ACCT_TYPE_MAPPING if no uat found searching by usrId, acctId, stmtType="analysis", letterType="A".
+      * If "analysis" is not passed, then search for uat by usrId, acctId, stmtType and productType. If not found, insert. Update if description is not matched. 
+      * For stmtType="default", search for uat by stmtType="enotice" and letterType="E". If not found, insert usrId, acctId, stmtType="enotice", acctType="E", acctTypeDesc="Associateed Account Notices".
+      * For stmtType="heloc", search for uat by stmtType="enotice" and letterType="E". If not found, insert usrId, acctId, stmtType="enotice", acctType="E", acctTypeDesc="Loan Notice".
+      * Insert into USR_FIN_ACCOUNT table if no ufa found for that user. For new ufa, ufa status = "pre_reg". ufa email is set as null. For existing ufas, set ufaSource as null. 
+      * Post Processes:
+        * Deactivate user session if cif not found in auth file. For an existing cif (USR_MAPPING table), delete from USR_SESSION, USR_ACCT_TYPE_MAPPING, NOTIFICATION_PREFERENCE, USR_MAPPING by that usrId and insert into AUDIT_LOG_SNFB (event="remove", location="auth").
+        * Process remaining non viewer ufas(having ufaSource=null and user type is null of not V) entries.
+          * Delete from USR_ACCT_TYPE_MAPPING by usrId and acctId
+          * Delete from USR_FIN_ACCOUNT by ufaId.
+          * Insert into AUDIT_LOG_SNFB (event="unlink", location="auth")
+        * Generates a missing product type report. If prodType is anything except 0, 1 and 6, then displays the count of these unknown prod types.
+      *  **Database changes:** USR_MAPPING, USR, FIN_ACCOUNT, PAPERLESS, USR_ACCT_TYPE_MAPPING, USR_FIN_ACCOUNT, USR_SESSION, NOTIFICATION_PREFERENCE, AUDIT_LOG_SNFB
+  *  _ **Afp**_
+    * global.me1=heloc, global.me2=heloc, global.ml1=heloc, global.ms1=default, global.ms2=analysis, global.ms3=default, global.aa1=analysis
+    *  **Data Handler:AfpStatementData9**
+      * Format:  **fileName** | **accountNumber** | **beginDate** | **closingDate** | **numberOfPages** | **accountName** |SSN| **appType** |messageIDs|hasCheckStr|insertId|regionCode|crippleFlag|zipFileName|outputFormat [bold fields are mandatory]
+    *  **Registrar: SnfbEstmtRegistrar**
+      * Creates new account if not found(searched by acctNum and appType). Or update acctName. Insert paperless for the account.
+      * multipleDoctype is false. Insert into estmt_doc, estmt_file and arch_file, p_job_estmt
+      * Selective insert is true for default and heloc. Insert into estmt_sel_insert and **inventory_pdfs(which data is being insert)**
+      *  **Database changes:** FIN_ACCOUNT, PAPERLESS, ESTMT_DOC, ESTMT_FILE, ARCH_FILE, P_JOB_ESTMT, ESTMT_SEL_INSERT, INVENTORY_PDFS
+  *  _ **Permission**_
+    *  **Data Handler:  DefaultPermHandler**
+      *  **Format:** acctType|acctNum
+    *  **Registrar:  DefaultPermRegistrar**
+      * Update permission level for acctounts in acct_access table. Permission level=3
+      *  **Database changes:** ACCT_ACCESS
+  *  _ **Insert_range**_
+    *  **Data Handler:  RangeInsertHandler**
+    *  **Registrar: InsertRegistrar**
+      * Udates email_attach, insert, p_job_insert table. 
+  *  _ **Enotice4**_
+    *  **Data Handler: ENoticeData7**
+      * Field count should be 11 or 12. The 1st field value must be L. otherwise throw error.
+      *  **LetterRecord** | **acctNum** | **acctType** |acctName|afpFileName|type|closingDate|imagecount|postCardFlag| **zipFileName|** region
+    *  **Registrar:SnfbEnoticeRegistrar**  
+
+      * enotice.createAccount=true. Search for account by acctNum and acctType. If not found, create and insert acctNum, acctName,acctType,status=A into fin_account table.
+      * Insert paperless for the account. stmtType is set to either "enotice" or any of the following.
+        * If acctType is neither  "CK" nor "SV", stmtType="default". Otherwise, if acctType="CD", stmtType="cd", acctType="LN", stmtType="heloc", acctType="SD", stmtType="sdb". For other acctTypes, stmtType=null.
+      * For existing accounts, update acct owner name.
+      * Register the statement. Insert into arch_file, enotice, p_job_enotice.
+      *  **Database changes:** FIN_ACCOUNT, PAPERLESS, ARCH_FILE, ENOTICE, P_JOB_ENOTICE
+  *  _ **Estmt_notification:**_
+    *  **Data Handler: SnfbEstmtNotificationData**
+      * Should have 7 columns.
+      * Format: cif|SSN|acctName| **acctNum** | **prodType** | **acctType** | **email**
+    *  **Estmt notification handler: DefaultEstmtNotificationHandler**  
+      * Gets recipient list searching by actNum and acctType. Recipients are those accounts for which no paperless is found or latest status is B.
+  *  _ **Auth2**_
+    *  **Data Handler:  SnfbFiservAuthHandler**
+      * Should have at least 9 columns 
+      * Format: existingUserId| **SSN** |fullName|email| **appType** | **acctNum** |NickName|FiservInstitutionId|RoutingNumber
+    *  **Registrar: SnfbFiservAuthRegistrar**
+      *  **ufaMap:** get all ufa where user type is null or not V and ufa source type="fiservSso"
+      *  **vendorIdSet:** Get all distinct vendor_user_id where ufaSource is "fiservSso" and sess_active_status is not "inactive"
+      * Search for vendor user id from usr_session by orgId and vendor_user_id (existing user id from index file). If not found, create user.
+        * Sets acctName as user first name, user type=N (commercial user). Set email address to contact_info. Set existing user id as vendor user id and "!"userId as sess_login id in usr_session table. Insert user into usr, contact_info and usr_session table.
+      * Search for an account by acctNum and acctType. If not found,
+        * create a new account with acctNum, acctName, acctType, status=A and insert into fin_account table.
+        * Insert paperless for this account (stmtType="enotice")
+        * Insert paperless only for default and heloc. (stmtType is neither "cd" nor "sdb")
+      * Insert/update into usr_acct_type_mapping
+        * For acct_type= "CK" or "SV", insert stmtType="enotice", letter_type="E", description ="Associated Account Notices"
+        * For acct_type="LN",  stmtType="enotice", letter_type="E", description ="Loan Notices"
+        * For acct_type="CD", stmtType="cd", For acct_type="SD", stmtType="sdb" 
+      * Searches for ufa for the user. If no ufa found, insert into usr_fin_account table (ufaSource="fiservSso", status="pre_reg"). Otherwise, update
+      * Post process:
+        * Deactivate user session if vendor user id not found in auth file. For leftover vendor usr ids, delete from usr_session and insert ito audit_log_snfb (event="remove", location="auth"). Also remove from usr_acct_type_mapping
+        * Remove remaining ufa, uat for the user. Insert into audit_log_snfb (event="unlink", location="auth2") 
+      *  **Database changes:** USR, CONTACT_INFO, USR_SESSION, FIN_ACCOUNT, PAPERLESS, USR_ACCT_TYPE_MAPPING, USR_FIN_ACCOUNT
+
+###  _Reports:_
+
+  *  **Accounting report:** Accounting report contains the following reports
+    *  **Afp report:** Pulls data from p_job and p_estmt_count and displays information about a job such as image count, success,warning, failed count etc.
+    *  **Email notification report:  **Pulls data from p_job searching by name="email" and status="1" i.e. success. Displays description and other information about this job.
+    *  **ENotice Report:**  Pulls data from p_job searching by name="enotice" and status="1" i.e. success. Displays information about this job.
+    *  **ENotice email notification report:  **Pulls data from p_job searching by name="email" and status="1" i.e. success. Displays description and other information about this job.
+    *  **Reminder email notification report:  **Pulls data from p_job and p_job_email searching by name="email" and stmt_type like "reminder%. Displays report i.e. job number, description, success, warning, failed count.
+    *  **Auth bank report:** Pulls data from p_job searching by name="auth_bank" and displays information about the job i.e. number of accounts processed, success, warning, failed.
+    *  **Marketing promo email notification report:**  Pulls data from p_job, p_job_email table searching by stmtType="marketing1" and status=1. 
+    *  **Welcome email report:** Pulls data from EMAIL_WELCOME_LOG and displays the total number of welcome emails within a time range.
+    *  **Inserts report:** Pulls data from p_job searching by name="insert" and displays the information about a job. 
+    *  **Active users report:** Pulls data from ACTIVE_USER_REPORT table. Displays number of sso users, dso users and active users.
+    *  **Accounting report:** Pulls data from p_job and p_job_email.
+    * Total number of reminder email, promotion email and welcome emails are displayed.
+  *  **Active users report:** This report displays the number of active users. Also insert data into ACTIVE_USER_REPORT table.
+  *  **Paperless report**
+  *  **Alt Name report:** This report acct_number, type, co_owner_name from fin_account table and displays co_owner_name along with acct_number, and type in the report.
+  *  **Missing Product Type report:** Gets the missing product type report from the pickup path and creates a zip with a protected password.
+
+  
+
+  
+
+##  _Analysis Summary(ROOT)_
+
+Scope| Feature| SNFB| Hypercube| Note  
+---|---|---|---|---  
+ **Login(SSO)**|  FISERVSSO/ FISERVSSO2 (SingleSignOn7Servlet)|
+
+  * Searches with vendor_user_id from usr_session. 
+  * Email from sso file gets updated in contact_info
+
+|  1 incomplete Supported  2 complete Not Supported | Hypercube searches with
+cif_number form usr_mapping.  
+  
+ **Enrollment(SSO)**
+
+|  User enrollment|
+
+The user goes through enrollment based on the following 3 conditions.
+
+  1. If the user never logged in via SSO
+  2. If no np found in notification preference table
+  3. If the user status is "New"
+
+|  48 incomplete Supported  49 complete Not Supported | In Hypercube, a user
+goes through enrollment if he/she never logged in via SSO  
+Enrollment Step 1| Pdf view|  50 complete Supported  51 incomplete Not
+Supported |  
+  
+Enrollment Step 2| Online E-Statement Enrollment|  52 complete Supported  53
+incomplete Not Supported |  
+  
+Enrollment Step 3 | Set Delivery Preference, Notification preference|  
+|  
+  
+If the paperless status is both(W) for any account type, user can't change dp.
+|  55 incomplete Supported  56 complete Not Supported |  
+  
+Send welcome email|  3 complete Supported  4 incomplete Not Supported |  
+  
+**Enrollment (DSO)**|  Enrollment Step 1| eStatement Verification pdf view|  5
+complete Supported  6 incomplete Not Supported |  
+  
+Enrollment Step 2| Terms and conditions|  7 complete Supported  8 incomplete
+Not Supported |  
+  
+Enrollment Step 3| Account Verification|  9 complete Supported  10 incomplete
+Not Supported |  
+  
+Enrollment Step 4|  Login Information|  11 complete Supported  12 incomplete
+Not Supported |  
+  
+Enrollment Step 5| Preferences|  13 complete Supported  14 incomplete Not
+Supported |  
+  
+Send Welcome email|  15 complete Supported  16 incomplete Not Supported |  
+  
+Insert event and location into audit_log_snfb table|  17 incomplete Supported
+18 complete Not Supported |  
+  
+**Login(DSO)**|  Token recovery| After submitting Login name and password, go
+to token recovery page. Need to submit last 4 digit of SSN.|  19 incomplete
+Supported  20 complete Not Supported |  
+  
+Inactive Users| Inactive users can't login|  21 complete Supported  22
+incomplete Not Supported |  
+  
+Lockout User| Lockout the user after 5 unsuccessful attempts|  23 complete
+Supported  24 incomplete Not Supported |  
+  
+**Homepage (SSO)**|  Account Optout|
+
+A user is redirected to the opt-out page based on the following 2 conditions:
+
+  1. If any account is in paper
+  2. If ufa status is "pre_reg"
+
+|  61 incomplete Supported  25 complete Not Supported |  
+  
+**Homepage (DSO)**|  Reset Password| If the user's password is expired or the
+user password was set to "temporary", go to the reset password page.|  67
+incomplete Supported  68 complete Not Supported |  
+  
+**Profile (SSO)**|  User Information| User can change email address|  71
+complete Supported  72 incomplete Not Supported |  
+  
+Profile| "Paperless and Paper" option is available but user can't choose it as
+dp|  73 incomplete Supported  74 complete Not Supported |  
+  
+**Profile (DSO)**|  User Information| The user can update email address,
+password, password hint question, and hint phrase answer |  26 incomplete
+Supported  27 complete Not Supported |  
+  
+The user can't choose a password that was used 10 times previously.|  79
+incomplete Supported  28 complete Not Supported |  
+  
+Profile| "Paperless and Paper" option is available but user can't choose it as
+dp|  29 incomplete Supported  30 complete Not Supported |  
+  
+**eStatements**|  
+|  Date, Status, Monthly Inserts|  81 complete Supported  82 incomplete Not
+Supported |  
+  
+**eNotice**|  
+|  E-Notices tab name changes based on statement types and account types.|  83
+incomplete Supported  84 complete Not Supported |  
+  
+**Disclosure**|  
+|
+
+4 type of disclosures.
+
+|  87 complete Supported  88 incomplete Not Supported |  
+  
+  
+  
+
+  
+
+## _Analysis Summary(MSM)_
+
+Scope| Feature| SNFB| Infotrac| Note  
+---|---|---|---|---  
+ **Account Management**
+
+  
+
+|  Account search|
+
+Search by account number and email address.
+
+|  31 complete Supported  32 incomplete Not Supported |  
+  
+Update DSO user info| Admin can update password, password hint phrase,
+password hint answer, and login status for DSO users.|  33 incomplete
+Supported  34 complete Not Supported |  
+  
+Activate/Inactive user| Admin can make an active user inactive and vice
+versa.|  35 complete Supported  36 incomplete Not Supported |  
+  
+Unlock user| Admin can unlock a lockout user.|  37 incomplete Supported  38
+complete Not Supported |  
+  
+Change delivery preference|
+
+Admin can update delivery preference (paperless, paper and both). Can also
+browse history for each type of statement.
+
+|  39 complete Supported  40 incomplete Not Supported |  
+  
+Notification preference| Can't change np|  41 complete Supported  42
+incomplete Not Supported |  
+  
+Re-assignment of enotices|
+
+Admin can re-assign the enotices to the right application type.
+
+  
+
+|  43 complete Supported  44 incomplete Not Supported |  
+  
+**Email proofing**|  12 templates for email proofing  
+  
+  
+  
+| eStatements|  45 complete Supported  46 incomplete Not Supported |  
+  
+Loan Statement|  47 complete Supported  0 incomplete Not Supported |  
+  
+Analysis Statement|  54 complete Supported  58 incomplete Not Supported |  
+  
+ eNotices|  59 complete Supported  60 incomplete Not Supported |  
+  
+Welcome|  57 complete Supported  57 incomplete Not Supported |  
+  
+Password Update|  57 complete Supported  57 incomplete Not Supported |  
+  
+AI User Removal|  57 incomplete Supported  57 complete Not Supported |  
+  
+Reminder|  57 incomplete Supported  57 complete Not Supported |  
+  
+Reminder2|  57 incomplete Supported  57 complete Not Supported |  
+  
+New Account Marketing (MKT)|  57 incomplete Supported  57 complete Not
+Supported |  
+  
+MKT Reminder email 15 day|  57 incomplete Supported  57 complete Not Supported
+|  
+  
+MKT Reminder email 30 day|  57 incomplete Supported  57 complete Not Supported
+|  
+  
+**Email Reminder**|  
+|  Admin set the time period of first email reminder and second email
+reminder|  57 complete Supported  57 incomplete Not Supported |  
+  
+**Upload Inserts**|  
+|  Inserts can be uploaded online for eNotices, eStatemenst, Analysis
+Statements, Loan Statements |  57 complete Supported  57 incomplete Not
+Supported |  
+  
+**Product Type**|  
+|  Can add product type. A report for all product type can be generated either
+in text or excel format.|  57 incomplete Supported  57 complete Not Supported
+|  
+  
+**Reports**|  10 types of reports are available| Latest Stats|  57 complete
+Supported  57 incomplete Not Supported |  
+  
+User Login Activity|  57 complete Supported  57 incomplete Not Supported |  
+  
+AI Login Activity|  57 complete Supported  57 incomplete Not Supported |  
+  
+Admin User Report|  57 complete Supported  57 incomplete Not Supported |  
+  
+Email Address Collection|  57 complete Supported  57 incomplete Not Supported
+|  
+  
+Paperless|  57 complete Supported  57 incomplete Not Supported |  
+  
+Registered Users|  57 complete Supported  57 incomplete Not Supported |  
+  
+Email Reminder|  57 complete Supported  57 incomplete Not Supported |  
+  
+Marketing Insert Report|  57 complete Supported  57 incomplete Not Supported |  
+  
+MKT Report|  57 incomplete Supported  57 complete Not Supported |  
+  
+**Administration**|  Admin user management|
+
+Can create, update and delete new admin user.
+
+|  57 complete Supported  57 incomplete Not Supported |  
+  
+  
+  
+
+

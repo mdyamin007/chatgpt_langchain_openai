@@ -1,0 +1,191 @@
+title: Hypercube - Application Setup
+body: # EStatement
+
+* * *
+
+## Hypercube
+
+### Client Properties JSON
+
+##### 1\. Define Application
+
+Define the app (stmt_type) in the **statementType  **property which represents
+a JSON array object. Each app must be its own JSON object within the
+**statementType  **property, i.e. a value in an array.
+
+ **Correct**
+
+"statementType": [  
+   {"default": "Member Statements"},  
+   {"comm_loan": "Commercial Statements"},  
+   {"notice": "eNotices"}  
+]
+
+Note: For hypercube code, name must be "notice"
+
+ **Incorrect**
+
+"statementType": [  
+   {"default": "Member Statements",  
+   "comm_loan": "Commercial Statements",  
+   "notice": "eNotices"}  
+]
+
+  
+
+##### 2\. Define Archival Period
+
+Archival Period can be defined in one of two ways: the global property
+**statementArchivalPeriod  **or the app-specific property  **archivalPeriod**.
+To enable setting archival by application, the property
+**archivalPeriodPriority  **must also be defined.
+
+Global Archival Period
+
+"statementArchivalPeriod": 24
+
+  
+
+App-Specific Archival Period
+
+"archivalPeriodPriority" : [  
+   "appType"  
+]
+
+"archivalPeriod" : {  
+   "default" : 24,  
+   "enotice" : 15  
+}
+
+  
+
+Optional Properties
+
+ **defaultStartDate**  defines the default archival search space, so that
+Hypercube will not query for the entire archival period by default. This
+speeds up the query and loading of EStatements.
+
+"defaultStartDate": 24
+
+##### 3\. Define Selective Paperless (Dependent on Client Setup)
+
+Define paperless setup with  **statements** configuration. THIS SECTION IS
+INCOMPLETE.
+
+Example
+
+"statements" : {  
+   "default" : {  
+      name" : "eStatement"  
+   },  
+   "enotice" : {  
+      "name" : "eNotice",
+
+      "following": "default" \- define that this statement type will be using the paperless status of another statement type, e.g. default  
+   },  
+   "etax" : {  
+      "name" : "eTax"
+
+      "disablePaper":"true" \- define that for this paperless status, the user will not be able to change to Paper  
+   },  
+   ...  
+}
+
+  
+
+### MongoDB JSON
+
+MongoDB Client Properties requires the these same properties, if applicable,
+defined: **statements** , **statementType** ,  **statementArchivalPeriod** ,
+**archivalPeriod** , and  **archivalPeriodPriority**.
+
+## InfoTRAC
+
+### Client Management
+
+Define the these same properties, if applicable, in the InfoDOCS Account
+Management Properties:  **statements** ,  **statementArchivalPeriod** ,
+**archivalPeriod** , **archivalPeriodPriority** , and  **defaultStartDate**.
+
+### E-Notification
+
+Add the app description, which  **must be the same as the description used on
+the PUI** , to the Notification Template Names list (comma-separated).
+
+## Processing
+
+### EStatement Processing
+
+  1. Pui Configuration
+    1. Document Processing as a processing step if not already defined
+    2. Define the global.appPrefix property, e.g. global.ms1, global.ml1, etc.
+    3. Define the global.app.desc property, e.g. global.default.desc, global.loan.desc, etc.
+    4. Define email properties.
+    5. Define AOLP related properties if necessary.
+
+### Email
+
+  1. Modify EmailHandlerFactory getEstmtEmailHandler() to provide NotifyPrefEmailHandler for the client if not already defined.
+
+## Database
+
+Insert the the description for the statement type into the doc_desc table.
+
+# ENotice
+
+* * *
+
+## Hypercube
+
+Same as eStatement, but define for "enotice" app.
+
+## InfoTRAC
+
+Same as eStatement.
+
+## Processing
+
+### ENotice Processing
+
+  1. Standard eNotice setup will use Document Processing.
+  2. Pui Configuration
+    1. Same as eStatement, but define for "enotice" app.
+
+### Email
+
+  1. Modify EmailHandlerFactory getEnoticeEmailHandler() to provide NotifyPrefEmailHandler for the client if not already defined.
+
+## Database
+
+Insert the the letter code description mappings into the doc_desc table.
+
+# ETax
+
+* * *
+
+## Hypercube
+
+Same as eStatement, but define for "etax" app.
+
+## InfoTRAC
+
+Same as eStatement.
+
+## Processing
+
+### ETax Processing
+
+  1. Modify the EtaxRegistrarFactory to provide HypercubeEtaxRegistrar for the client if not already defined.
+  2. Pui Configuration
+    1. Same as eStatement, but define for "etax" app.
+
+### Email
+
+  1. Modify EmailHandlerFactory getEtaxEmailHandler() to provide NotifyPrefEmailHandler for the client if not already defined.
+
+## Database
+
+If the etax is a completely new eTax type, insert the eTax code and its
+corresponding description into the doc_desc table (select org_id = null).
+
+

@@ -1,0 +1,136 @@
+title: Standalone eSafetyBox Design
+body:   
+
+## Summary:
+
+This feature will be installed as a standalone product for existing InfoImage
+client. We will have the authorization file which create the user and account
+relationship. However, we may not host their eStatement online. The
+information in the authorization file will be used to authorize the user to
+enroll/register to the eSafetyBox site. This design is based on most of the
+SSO client, which by default has 1-1 relationship between user and account
+number. In case of the 1 -many or many-1 relationship, some extra programming
+will be needed.  
+For stand-alone client (with only eSafetyBox feature enabled ), we will not
+going to check the paperless status for the user's account. (probably for all
+clients in the future) In order to use this feature, the user needs only to
+enroll for eSafetyBox.  
+  
+
+  
+
+## Estimation Summary
+
+Incoming Auth file| 0 day  
+---|---  
+Processing-UI| 1 day  
+Member/AI side| 8 days  
+Standard setup| 1 day  
+QA| 3 days  
+Total| 13 days  
+  
+> Please note, some logic need move to Spring from current logic, or call
+> current core code from Spring. There is a potential issue with database to
+> pass the connection from Spring to current core code.
+
+  
+
+## Incoming Auth file:
+
+We will need a full membership account list from client side (if not already
+provided for paper processing). If DSO, we need work with client to get the
+relationship between user (some unique information such as CIF from client)
+and accounts.  
+  
+
+  
+
+## Processing-UI:
+
+  1.  **Auth processing:**  Existing process need to be updated to create entries in the corresponding tables below properly. Especially around the  **Paperless**  table
+    1. during processing, entries will be inserted to above tables:
+
+Fin_account| account information  
+---|---  
+Usr_session| login information  
+Usr| user extent information  
+Usr_fin_account| link between user and fin_account  
+Paperless| account paperless informtion  
+  
+  
+
+    2. The status information saved in table will be "paper" status  
+Make sure the filter layer which navigates from plain logic (for eStmt) to
+Spring (eBox) will able to deal with this.  
+
+  2.  **Backend report for billing:**  do not check the paperless status anymore.
+
+  
+
+## Member Site: (please note for SSO, it may last 2 weeks to test with client)
+
+  1.  **DSO Enrollment:**  Enrollment process is applicable to DSO only. If we are integrating via SSO only, the enrollment workflow need to be by-passed. Only enable the DSO flow for development purpose.
+  2.  **SSO:**  similar to setup eStatement. Fine-tune to fit eSafetyBox sign-in flow.
+  3.  **UI Tabs:**  Update the UI to control what feature/tabs to show via CID.conf keys, including:
+    1. eStatements
+    2. eStatement related such as disclosure
+  4.  **Enrollment Management:**  Currently the application is relying on two separate database tables to keep track of whether  **eStatement**  and  **eSafetyBox**  is enrolled or not. An implied logic is enforced that  **eStatement**  much be enrolled if  **eSafetyBox**  is enrolled. Evaluation logic around that need to be updated to allow independent enrollment of eSafetyBox. Including:
+    1. Migrate the DB-triggers (that update the paperless (i.e. eStatement opt-in) status when eSafetyBox is enrolled) over to application layer.
+    2. Add a filter logic for clients with only eSafetyBox feature enabled:
+      1. To redirect to eSafetyBox customized enrollment page (with password) if not enrolled
+      2. To display eSafetyBox files if already enrolled.
+      3. Please note that for eSafetyBox feature enabled client, we will have not check the paperless status anymore for using the eSafetyBox feature.
+    3. Collect email address when opt-in. (Display whatever in database, but allow they update the email address)
+    4. When display the security question and answer, blank out all the fields. (Do not read-in from usr_session table)
+    5. When save the enrollment information to database, do not sync information(security Question and Answer) in usr_session table (remove the database triggers), save the email information.
+    6. Please note the paperless status will not be changed when enroll
+  5.  **Update the profile features:**  Profile will contain only the following features:
+
+E-mail Address| Logic stay the same  
+---|---  
+eSafetyBox Services| Need to be in-sync with Enrollment logic above.  
+Potentially remove from profile if only one of eStatement/eSafetyBox is
+enabled.  
+Need to show for both eStatement/eSafetyBox when both are enabled.  
+Security Question & Answer| DB columns shared by eStatement DSO and eSafetyBox
+File Password Reset. UX might not be optimal in the combination of
+eStmt+eSafetyBox+DSO, but functionally still works.  
+File Password| Logic stay the same  
+  
+  
+
+  6.  **Opt-out:**  Should stay the same.  
+For security question and security answer logic, we need revisit the logic to
+update current logic to remove the triggers:
+
+    1. Save to box_current_status/box_history_status (trigger may still apply between those two tables -- *{color:red} Those two tables should will need to be paired together, box_current_status only keep the current status for better online performance and the box_history_status is for the reports. *)
+    2. Update usr_session (currently it is triggered by box_current_status).  
+For standalone application, we will need to update the box_current_status
+table only.
+
+I site:
+
+  1. Update the UI to control what feature/tabs to show via CID.conf keys, including:
+    1. eStatements
+  2. Update the reports accordingly so that status values in paperless status table is not mandatory, including:
+    1. When search an account
+    2. Reports for the whole client -> current month (dynamically generated)
+  3. Other logic will stay the same:
+    1. Lockout an user's box
+
+  
+
+## Standard setup:
+
+  1. Set up and customize the sites
+  2. Release the table structures
+  3. Processing logic setup. (backend billing processing)
+  4. Basic functional test
+
+  
+
+### Attachments
+
+250
+
+

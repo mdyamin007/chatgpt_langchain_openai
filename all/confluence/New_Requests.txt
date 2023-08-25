@@ -1,0 +1,151 @@
+title: New Requests
+body: # AI site for Nordis
+
+estimated 2 weeks for implementation
+
+250
+
+  
+
+# CHR with only one time payment flow
+
+  *  **Table of contents**
+  * [CHR with only one time payment flow](https://i3dev.easyredmine.com/projects/payebill/wiki/CHR_with_only_one_time_payment_flow#CHR-with-only-one-time-payment-flow)
+    * [Home page](https://i3dev.easyredmine.com/projects/payebill/wiki/CHR_with_only_one_time_payment_flow#Home-page)
+    * [PUI](https://i3dev.easyredmine.com/projects/payebill/wiki/CHR_with_only_one_time_payment_flow#PUI)
+    * [One time payment flow](https://i3dev.easyredmine.com/projects/payebill/wiki/CHR_with_only_one_time_payment_flow#One-time-payment-flow)
+    * [AI site](https://i3dev.easyredmine.com/projects/payebill/wiki/CHR_with_only_one_time_payment_flow#AI-site)
+    * [Testing time](https://i3dev.easyredmine.com/projects/payebill/wiki/CHR_with_only_one_time_payment_flow#Testing-time)
+    * [Time estimate](https://i3dev.easyredmine.com/projects/payebill/wiki/CHR_with_only_one_time_payment_flow#Time-estimate)
+    * [Documents from client](https://i3dev.easyredmine.com/projects/payebill/wiki/CHR_with_only_one_time_payment_flow#Documents-from-client)
+    * [Documents sent to client](https://i3dev.easyredmine.com/projects/payebill/wiki/CHR_with_only_one_time_payment_flow#Documents-sent-to-client)
+
+  
+  
+
+## Home page
+
+  * Home screen would need to be modified so that it redirects to step 1 of one time payment flow. This would need to be with configuration toggle -  **1 day**
+
+  
+  
+
+## PUI
+
+  * pui need to be modified maybe it needs a new handler for this client based on following things -  **2 days**
+    * Auth/Balance sheet File Processing
+      * if ssn needs to be supported??
+      * if they are not providing the current required values
+        * Seed Acct Number
+        * Guarantor Number
+        * Patient Account number
+        * Disposition
+        * Patient DOB
+        * Guarantor Last Name
+        * Guarantor First Name
+        * Statement Date
+        * Amount Due
+        * Current Balance
+      * If there is not going be a seed number and hospital number can they populate guarantor no for all first three columns.
+    * Index file Processing (ones in green are required)
+      * acctNbr
+      * name
+      * totalDue
+      * minDue
+      * dueDate
+      * billingDate
+      * docGUID
+      * pageCount
+      * docType
+      * docTitle
+
+  
+  
+
+## One time payment flow
+
+  * Step 1 (account verification) -  **1 day**  
+Page 1 and 2 of the mockup can be incorporated into current step 1  
+
+    * We can use guarantor account number, lastname and patients DOB for validating the account.
+    * If above validation is sufficient we don't need to validate against SSN
+    * Earlier we used to authenticate against hospital account number now we would need to do so against guarantor account number.
+    * If there is no hospital patient no in PUI file can we populate guarantor number in the seed account and patient number column.
+  * Step 2 (payment details) -  **.25 day days without check payment and cvv code**  
+Page 3 and 4 of mockup can be incorporated into current step 2  
+
+    * From mockup page 3 the $5 charge checkbox can be included in the payment screen we currently have. You won't be able to go past the payment screen still the checkbox is checked. We can include the checkbox right above email address above.
+    * In mockup page 4 we don't support many of the fields.Can we just stick to the fields as mentioned in the screen shot above?
+    * We currently don't support check billing address,payment type, cvv code and phone number.
+    * Currently For credit card validation we only use the card number and expiration date
+      * Looks like authorize has support for handling checks but does the client and authorize need to have it set up? -- might take  **We need to test if existing configuration works - 2 days. Depending on that it might take atleast 1 week - 2.5 weeks to implement.We need to check with authorize if merchant needs to do anything or is it just a configuration**
+      * cvv code support is there not sure if anything needs to be set at authorize end need to test  **2 days**
+    * Above screen will be modified so that we don't show fields which are not applicable such as last bill date ( no bills), due date, warning area, min due.
+    * We will rename "statement details" to "account details"
+    * Account details section will show total amount due , which will be coming from balance sheet. Correct us if it is different.
+    * Can the user enter any custom amount or it has to be equivalent to the total amount??
+    * If a bill is present or not needs to be confirmed from CHR since payments depend on a bill being present. If they say no bill lot of places needs to be modified where it is looking for a bill
+    * is zipcode used in cc validation if not how long to implement this
+    * why isn't address used for cc validation?
+  * Step 3 (payment summary) -  **.75 day**  
+
+    * This screen will be modified to reflect only the relevant fields
+  * Step 4 (payment confirmation) -  **0 day**  
+
+    * This screen will be modified to reflect only the relevant fields
+
+  
+  
+
+## AI site
+
+  *  **0 days**
+  * home page needs to be modified to use configuration to have only search by guarantor number
+  * Emails which are not need should not be set up
+  * Payment history section is the one which should reflect all the one time payments
+  * All other areas will be updated if needed or left blank if it is not applicable
+
+## Testing time
+
+  * Bhavani needs  **1 week**  to test this client which includes 1 day for AI site
+  * For check feature she needs another  **1 week**
+
+  
+  
+
+## Time estimate
+
+  * Home screen would need to be modified - 1 day
+  * PUI - 2 days
+  * One time step 1 - 0 day
+  * One time step 2
+    * without check and cvv code -.25 days
+    * check implementation 1-2.5 weeks
+    * cvv code - 2 days
+
+  * One time step 3 - .75 days
+  * One time step 4 - 0 day
+  * AI site - 0 days
+
+  
+
+## Documents from client
+
+  * Mockup from client [[<http://redmine.infoimage.com/attachments/download/397/CHR_EBPP.pdf>]]
+  * Email Thread
+
+  
+
+## Documents sent to client
+
+  * 07/27/2013 - [[<http://redmine.infoimage.com/attachments/download/418/Requirements.docx>]] *
+
+  
+
+###  Attachments
+
+  
+
+250
+
+

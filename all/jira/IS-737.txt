@@ -1,0 +1,190 @@
+title: MVCU [1874] [pvt] Tax Prorgramming Update for Core Updates (Corelation/FICS)
+description: Keystone Corelation Data (TS#25079)
+ ========================
+ INFOIMAGE INTERNAL: Segment to process 1-10
+
+Test data file:
+
+/d/ftpbu/mvcubu/Test/20211223_092519_000.IRS_1098_Fed_Reporting_File.txt.pgp
+
+/d/ftpbu/mvcubu/Test/20211223_103818_000.IRS_1099INT_Fed_Reporting_File.txt.pgp
+
+
+
+1098:
+
+Account number pattern:
+
+Truncate first 10 digits (field 21-30) for member# , display all numbers in field 21-40 in Account Number box.
+
+Mailing Address in Second Payee Name Line:- Move data from "Second Payee Name Line (field 328-387)" to "Payee Mailing Address (field 368-407)"- Only update to move address if 368-407 is already empty; if not empty, display field as provided in the file for 368-407.
+
+1099-INT:
+
+No Account Numbers in field 21-40; do not display.
+ Mailing Address in Second Payee Name Line:
+
+Move data from "Second Payee Name Line (field 328-387)" to "Payee Mailing Address (field 368-407)"
+ Only update to move address if 368-407 is already empty; if not empty, display field as provided in the file for 368-407.
+
+
+
+1099-C:
+
+Configure for new 1099-C form to be setup for this tax year. Include same updates noted for 1099-INT:
+ # No Account Numbers in field 21-40; do not display.
+ # Mailing Address in Second Payee Name Line:
+
+ * Move data from "Second Payee Name Line (field 328-387)" to "Payee Mailing Address (field 368-407)"
+ * Only update to move address if 368-407 is already empty; if not empty, display field as provided in the file for 368-407.
+
+
+
+FICS (TS#24587)
+ ===========
+ INFOIMAGE INTERNAL: Segment to process 11-20
+
+Test data file:
+
+/d/ftpbu/mvcubu/Test/FICS_1098_Sample.txt.pgp
+
+/d/ftpbu/mvcubu/Test/FICS_1099_Sample.txt.pgp
+
+
+
+1098:
+
+Account Number Pattern:- Display as is as provided in IRS file for 21-40
+ Mailing Address in Second Payee Name Line:
+
+Move data from "Second Payee Name Line (field 328-387)" to "Payee Mailing Address (field 368-407)"
+ Only update to move address if 368-407 is already empty; if not empty, display field as provided in the file for 368-407.
+
+1099-INT:
+
+Account Number Pattern:- Display as is as provided in IRS file for 21-40
+ Mailing Address in Second Payee Name Line:
+
+Move data from "Second Payee Name Line (field 328-387)" to "Payee Mailing Address (field 368-407)"
+ Only update to move address if 368-407 is already empty; if not empty, display field as provided in the file for 368-407.
+
+
+author: phoebe.george
+comment: [~SamV2021] [~TunA] Sorry, I had to update the description, as I forgot to include the configuration update to include the 1099-C form for setup. Thanks!
+
+
+author: tuna
+comment: Hi [~phoebe.george], Do we get 1099C data file to test? We can add code for 1099C but we need to test to make sure working correctly.
+
+Hi [~SamV2021], As I mentioned yesterday, please review description and tax training document. We can go thru today. I will call you.
+
+
+
+Thanks,
+
+Tun
+
+
+author: phoebe.george
+comment: [~SamV2021] [~TunA] MVCU sent their FICS production files, can we use these for test processing samples once the updates are made? These files arrived today (1/14/22):
+|Taxes/mvcu_1098_FICS_011322_1127_PROD.001.pgp|
+|Taxes/mvcu_1099_FICS_011322_1127_PROD.001.pgp|
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george] [~TunA]
+
+I can try using those FICS production files to generate samples and for testing in parallel.
+
+
+author: tuna
+comment: Hi [~SamV2021],
+
+Just follow up, Is samples ready? Can you please check with [~jun], if you stuck with something to generate sample?
+
+Thanks,
+
+Tun
+
+[~phoebe.george]
+
+
+
+
+
+
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george] [~TunA]
+
+Finished updating the special handling preprocessing script. Processed the (4) data files in parallel environment, and attached samples to the corresponding TeamSupport tickets.
+
+
+author: phoebe.george
+comment: [~SamV2021] Thank you, sending to customer for final approval!
+
+
+author: phoebe.george
+comment: [~SamV2021] [~TunA] 
+
+Hi Sam, just a quick update:
+
+FICS samples look good based on our programming changes overall. MVCU let me know that they have to send a replacement file for the 1098 though due to bad data, but confirmed that our programming updates for the address and account number box updates are good.
+
+For Corelation, we just got their full files today - is it possible to provide samples for each of these from test environment, similar to what you did for the FICS files? I want to ensure the coding updates are good and if so, I'll request DP to process in full production. Here are the file names that we got this morning:
+|Taxes/MVCU_1098_Corelation_011922_0952_PROD.txt.pgp|
+|Taxes/MVCU_1099C_Corelation_011922_0952_PROD.txt.pgp|
+|Taxes/MVCU_1099INT_Corelation_011922_0952_PROD.txt.pgp|
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george] [~TunA]
+
+Processed the above new Corelation data files in parallel environment, and attached samples to TS#25079.
+
+Note that the 1099C data file actually contains the account number (fields 21-30), so it is being displayed.
+
+
+author: phoebe.george
+comment: [~SamV2021] Thanks so much, this has been forwarded to customer for review/approval. Thanks!
+
+
+author: phoebe.george
+comment: [~SamV2021] Corelation tax samples are approved. Tun let me know that the code releases are completed, I will submit this to DP to process. Thanks!
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+Hi Phoebe, has DP finished processing the data files in production to get final counts and approval?
+
+
+author: phoebe.george
+comment: [~SamV2021] Yes, correct! All production tax files have been processed in production and approved. Thanks!
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+At this point, should I hand this Jira over to QA for review?
+
+
+author: JIRAUSER10906
+comment: Hi QA,
+
+This is ready for final review. There is no existing parallel id as the code has already been released to production since tax jobs need to create samples from production, and the samples have already been approved by client.
+
+The following files were changed:
+ * /home/master/tax_extra_addr_position1.pl (Previous version: tax_extra_addr_position1.pl.20220118143503)
+ ** This preprocessing script was repurposed in order to movedata from "Second Payee Name Line (field 328-387)" to "Payee Mailing Address (field 368-407)" if the destination is empty.
+ * /d/iss/Terrence/2021_tax/tax_sql/tax_insert_table.sql (Old version:tax_insert_table_011320221243.sql; Version containing the changes made for this update: tax_insert_table.011720221254)
+ ** Entries were also inserted/updated in the TAX_ACCTNUM_REF database table for customized account number display and extraction
+
+
+author: igor.khosid
+comment: QA - completed
+
+
+author: JIRAUSER10906
+comment: Code has been released to production.

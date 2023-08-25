@@ -1,0 +1,223 @@
+title: HEBC - Stmt PDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133604-C30.01-V21724
+
+Processing Scripts to modify:
+ hebcms1_process.sh
+
+Data Files to use:
+ heb_stmt_05312022_1.xml.pgp
+
+
+
+*NOTE*: This job runs on RH2. Since we are migrating from RHS to RH2, we should test all options so that we can do afpcompare and also ensure there is no errors in the processing logs.
+
+
+author: anwarh
+comment: Hi [~William.Kong]/ [~Igor.Khosid]
+
+Parallel ID: 20220629075644
+data file used:  heb_stmt_05312022_1.xml.pgp
+pdfs are kept at: /z/dsi_pdfi_testing/hebcms1/normal/pdf
+
+Thanks,
+Anwar
+
+
+author: william.kong
+comment: [~anwarh]: Sorry to do this to you! But can you re-run all job_sel options again using the latest production file in parallel? Unfortunately, I do not have the original AFP file to compare in production (i.e. using afpcompare).
+
+I've placed a copy of the production data file into:
+
+/d/ac-secure-share/dsi_print/anwarH/hebc/is-1235/heb_stmt_07312022_1.xml.pgp
+
+Please re-run all job_sel options again.
+
+
+
+
+
+Thanks!
+
+
+
+-- Will
+
+
+
+
+
+
+
+
+author: anwarh
+comment: Hi [~William.Kong],
+I ran the script in rhs server for all job_sel options, and the archival's output (pdfs) are kept at this location: /z/dsi_pdfi_testing/hebcms1/new/pdf
+
+Thanks,
+Rakib.
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]/[~berezinez]: Who will be assigned to work on this? In the meantime, I will also move Due date from 8/17 to 8/22.
+
+
+author: JIRAUSER11104
+comment: Hi [~William.Kong], 
+I'll work on this today.
+
+
+author: JIRAUSER11104
+comment: Hi [~anwarh] please provide the location of the production PDF files.
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: Please use the following:
+
+
+
+/d/pdf_compare/hebcms1_prod
+
+/d/pdf_compare/hebcms1_parallel
+
+
+
+They contain cycle 2/28/2022 for PDF archival.
+
+
+
+They cycle 7/31/2022 i asked to reprocess is for me to use AFPCompare to make sure there is no AFP file issues. I will share my AFPcompare results later today.
+
+
+
+
+
+
+
+
+
+
+author: JIRAUSER11104
+comment: Thanks [~William.Kong]
+I'll use these pdf for comparison and run the script with the same parameters you used earlier.
+{code:sh}perl pdf_compare.pl hebcms1_prod hebcms1_parallel result_hebcms1 -pixels 12 -threads 32 -maxfiles 15000 -exclusions hebcms1.json{code}
+I'll publish the results after working out the script.
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+Report:
+{quote}
+[andreyK@ca-isis-pr-04 pdf_compare]$ cat /d/pdf_compare/result_hebcms1/pdf_compare_rpt.txt
+Total PDF Files Scanned: 11083
+allowedDifferenceInPercentPerPage: 12:
+Thread Count: 32
+
+Total PDF Files with Differences: 136
+Start Time: Wed Aug 17 12:00:18 PDT 2022
+Finish Time: Wed Aug 17 14:04:03 PDT 2022
+{quote}
+I looked at some diff files and as for me - everything is fine.
+[~William.Kong] take a look, please >>> /d/pdf_compare/result_hebcms1/
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: Sorry for the delay! I had to work with Network Team to move the afpcompare testing server to the production environment in order for the afpcompare to use the production resources for testing.
+
+
+
+Here is the output of the results: /d/iss/afp_compare/Summary_Diff_2413040_hebcms1131.afp_result.log:
+
+
+
+AFPCompare testing results are complete. Now that you completed PDFCompare and my AFPCompare results are good, can you update status that QA passed so that we can schedule release next week?
+
+
+
+afpcompare stdout log: /x/afpcompare/hebcms1/2413040_hebcms1131.afp.stdout_0.log
+
+NO Difference found in 2413040_hebcms1131.afp_1_38250_diff.xml
+
+Compared /x/afpcompare/hebcms1/2413040_hebcms1131.afp vs /x/afpcompare/hebcms1/709294_hebcms1131.afp
+a1887a6a45b7db9e95916c148f781ba3 /x/afpcompare/hebcms1/2413040_hebcms1131.afp
+120ae92cc3bd091aa7b09de8ca8863fe /x/afpcompare/hebcms1/709294_hebcms1131.afp
+
+Start Time: Thu Aug 18 14:13:52 PDT 2022
+Finish Time: Thu Aug 18 21:04:47 PDT 2022
+
+***********************************************************************
+
+
+Total Page Count: /x/afpcompare/hebcms1/2413040_hebcms1131.afp (38250)
+Total Page Count: /x/afpcompare/hebcms1/709294_hebcms1131.afp (38250)
+~
+
+
+
+
+
+
+author: JIRAUSER11104
+comment: QA - PASSED (based on the previous post - [~William.Kong]).
+
+
+author: william.kong
+comment: Thanks [~Andrey.Kutsenko]!
+
+
+
+[~anwarh]: Please prepare code transfer form and schedule release on August 22, 2022. Please let me know or email [dp@infoimageinc.com|mailto:dp@infoimageinc.com]that this code is released. DP needs to know to start using RHS server moving forward.
+
+
+author: anwarh
+comment: Hi [~TunA],
+Files are kept at: /d/is/cvs/xfer/anwarH
+
+Can you please release this?[^IS-1235 Transfer Form.doc]
+
+[~William.Kong]
+
+Thanks,
+Rakib
+
+
+author: william.kong
+comment: [~anwarh]/ Rakib: Please see email 'RE: PDFi to AFP2PDF: Code Release Request'. There was an issue in your transfer directory preventing Tun to release the code.
+
+
+author: william.kong
+comment: [~anwarh]/ Rakib: Please advise response above? We just need to clarify why the extra files before Tun can release code.
+
+
+author: anwarh
+comment: Hi [~TunA],
+
+Transfer form:[^IS-1235 Transfer Form.doc]
+
+I emptied my xfer folder and put this projects file in 
+ /d/is/cvs/xfer/anwarH_backup/is-1235
+
+Can you please move them into /d/is/cvs/xfer/anwarH/ and then release?
+
+Thanks,
+ Anwar
+
+
+author: william.kong
+comment: [~rodriguez]: Per my email, would you assist with the code release today?
+
+
+author: rodriguez
+comment: [~anwarh] [~William.Kong]Code has been released, backup ID =20220825165302

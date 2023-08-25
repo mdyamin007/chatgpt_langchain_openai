@@ -1,0 +1,27 @@
+title: Question to dsi on 6/6/2013
+body:   1. General:
+    1. Lots of methods are having 'void' return type. If so, how do you determine whether the method/operation success or fail?
+    2. Will the parameter to methods be the entity/domain object? In this case, the object will be updated after perform the DB actions.
+    3. Please include the class diagrams.
+  2. FeatureAccessDao, how about any changes around the 'add' capability? If exist already, change to the params needed?
+  3. UserRoleDao:
+    1. findByUser: do we need findByRole()?
+  4. ClientService:
+    1. Should there be a getChildClients(parentClient)?
+    2. getFeatureDefinitions: how exactly to handle/differentiate whether to "fetch all internal features also" vs "fetch features turned on for this client only"? Please clarify how this will work for different kind of users.
+  5. RoleService:
+    1. findByRole: Please be explicit for the method names: findUsersByRole
+    2. Similarly, findByFeature: findRolesByFeature
+    3. And given above two, wouldn't you need findFeatureByRole, findFeatureByUser also?
+    4. deleteAlertsByRole: are we doing this by Role or by User now?
+  6. UserService:
+    1. getFeatureAccessByUserAndClient: from User, you should know Client already. Shouldn't need to pass in explicitly.
+    2. getFeatureAccessByUserAndClient: in comments, you said this should not be used anymore. My suggestion is actually keep it but modify the logic inside it to get the featureAccess via Roles. Since I see this as a very commonly called method throughout the application for 'permission check' type of thing. Or introduce the method I propose below.
+    3. updateFeatureAccess: comments indicate this method shouldn't be used anymore, planning to scrub through code to remove usage of this method? Please indicate the action item for this method.
+    4. getManageableRoles & getManageableLevels: I'm not sure if you want to keep using these method. There shouldn't be differentiation between 'manageable' vs 'nonmanageable'. Also the 'levels' are not really applicable anymore. Code around these method should be cleaned up.
+    5. Suggestion: add <Boolean> checkFeatureAccess(User, Feature). This would be call by functional modules quite commonly for ACL and show/hide certain things.
+  7. Controller components
+    1. I'm not quite clear why we need to use all these 'XXXXForm' objects around the controller classes?
+  8. Models and JSP: Seems like still need work around these sessions.
+
+

@@ -1,0 +1,633 @@
+title: LDAP Installation and Configuration for Infoeach
+body: ## Introduction:
+
+This wiki is about how to install and configure  _ **" openLDAP"**_ and  _ **"
+phpldapadmin"**_. For this process we will need some files (ldap_dump.ldif,
+user.schema and client.schema). All this files are attached below.
+
+## Schema files:
+
+On LDAP there are lots of build in classes like account, country, device,
+domain etc. which defines corresponding objects. But for  _ **InfoReach**_  we
+will need two different objects which will define our  _ **client**_  and  _
+**user**_  objects.  _ **client.schema**_  and  _ **user.schema**_  are those
+classes. When we will import this two files  _ **Client**_  and  _ **User**_
+class will be added on LDAP.
+
+ **Client class:**  
+This class has 26 attributes.
+
+#  _Required Attributes:_
+
+  * clientId
+  * clientName
+  * clientType
+  * parentId
+
+#  _Optional Attributes:_
+
+  * accountCoordinatorId
+  * accountManagerId
+  * accountServiceManagerId
+  * address
+  * bAddress
+  * bCaTaxRate
+  * bCity
+  * bEmail
+  * bFax
+  * bPhone
+  * bState
+  * bTxTaxRate
+  * bZip
+  * city
+  * fax
+  * paymentTerms
+  * phone
+  * state
+  * taxExempt
+  * terms
+  * website
+  * zip
+
+The following image will give you better understanding about  _ **Client**_
+class:  
+
+ **User class:**  
+This class has 76 attributes.
+
+#  _Required Attributes:_
+
+  * clientId
+  * email
+  * firstName
+  * lastName
+  * userName
+  * cn
+  * sn
+
+#  _Optional Attributes:_
+
+  * address
+  * adminLevel
+  * city
+  * clientType
+  * createdTime
+  * disabledTime
+  * ext
+  * failedAttempt
+  * fax
+  * lastLoginTime
+  * lockExpTime
+  * passwordExpTime
+  * phone
+  * role
+  * securityQuestion
+  * securityQuestion2
+  * securityQuestionAnswer
+  * securityQuestionAnswer2
+  * state
+  * title
+  * website
+  * zip
+  * audio
+  * businessCategory
+  * carLicense
+  * departmentNumber
+  * displayName
+  * employeeNumber
+  * employeeType
+  * givenName
+  * homePhone
+  * homePostalAddress
+  * initials
+  * jpegPhoto
+  * labeledURI
+  * mail
+  * manager
+  * mobile
+  * o
+  * pager
+  * photo
+  * preferredLanguage
+  * roomNumber
+  * secretary
+  * uid
+  * userCertificate
+  * userPKCS12
+  * userSMIMECertificate
+  * x500uniqueIdentifier
+  * destinationIndicator
+  * facsimileTelephoneNumber
+  * internationaliSDNNumber
+  * l
+  * ou
+  * physicalDeliveryOfficeName
+  * postOfficeBox
+  * postalAddress
+  * postalCode
+  * preferredDeliveryMethod
+  * registeredAddress
+  * st
+  * street
+  * telephoneNumber
+  * teletexTerminalIdentifier
+  * telexNumber
+  * x121Address
+  * description
+  * seeAlso
+  * userPassword
+
+The following image will give you better understanding about  _ **User**_
+class:
+
+  
+  
+
+## Copy files:
+
+Please copy the files on the "/home/" directory or your current directory of
+terminal. You can check your current directory with the following command.
+
+> pwd
+
+At first we have to copy those files on the remote machine with the following
+commands. Please execute this commands one by one.
+
+> scp ldap_dump.ldif aurick@10.0.0.133:/home/  
+> scp user.schema aurick@10.0.0.133:/home/  
+> scp client.schema aurick@10.0.0.133:/home/
+
+In here  _ **" aurick"**_ is the remote PC's username and  _ **"
+10.0.0.133"**_ is that PC's IP address. And  _ **" /home/"**_ is the directory
+location. In your case you have to use your own PC's username and IP address.  
+  
+
+## Connect to remote PC by SSH:
+
+Please run the following command on terminal to connect on remote PC through
+SSH:
+
+> ssh [aurick@10.0.0.133](mailto:aurick@10.0.0.133)
+
+In here "aurick" is the remote PC's username and "10.0.0.133" is that PC's IP
+address. In your case you have to use your own PC's username and IP address.  
+  
+
+## Update repository:
+
+Now we are connected on remote PC through SSH. Please copy the following
+command and run it on terminal for update that PC's repository.
+
+> sudo apt-get update
+
+## Steps for Install openLDAP:
+
+  * Please copy the following command and run it on terminal.
+
+> sudo apt-get install slapd ldap-utils
+
+# While installing it will prompt for admin password. Please enter a suitable
+password In my case I use  _ **aurick**_.
+
+  * Now run the following command.
+
+> sudo dpkg-reconfigure slapd
+
+#  **There are quite a few new questions that will be asked as you go through
+this process. Let's go over these now:**  
+ **1\. Omit OpenLDAP server configuration?**
+
+  * Please choose  _ **" No"**_ and press enter. Because we will configure LDAP. By default  _ **" No"**_ is selected. if not then use  _ **" Tab"**_ button to choose  _ **" No"**_.
+
+#  **2\. DNS domain name?**
+
+  * This option will determine the base structure of your directory path. Read the message to understand exactly how this will be implemented.
+  * This is actually a rather open option. You can select whatever "domain name" value you'd like, even if you don't own the actual domain. However, if you have a domain name for the server, it's probably wise to use that.
+  * For now we will be using  _ **" infoimageinc.com"**_.
+
+#  **3\. Organization name?**
+
+  * This is again pretty much entirely up to your preferences.
+  * For now we will be using  _ **" infoimageinc"**_ as the name of our organization.
+
+#  **4\. Administrator password?**
+
+  * While installation we already give an admin password, this is your real opportunity to select an administrator password. Anything we select here will overwrite the previous password we used.
+
+#  **5\. Database backend?**
+
+  * Please select  _ **" HDB"**_. Use  _ **" Tab"**_ button to choose  _ **" HDB"**_ if not selected by default.
+
+#  **6\. Remove the database when slapd is purged?**
+
+  * Please select  _ **" No"**_ then press enter. Use  _ **" Tab"**_ button to choose  _ **" No"**_ if not selected by default.
+
+#  **7\. Move old database?**
+
+  * Please select  _ **" Yes"**_ then press enter. Use  _ **" Tab"**_ button to choose  _ **" Yes"**_ if not selected by default.
+
+#  **8\. Allow LDAPv2 protocol?**
+
+  * Please select  _ **" No"**_ then press enter. Use  _ **" Tab"**_ button to choose  _ **" No"**_ if not selected by default.
+
+ **9\. We are done with reconfiguration.**  
+  
+
+##  Steps for install phpldapadmin:
+
+Please copy the following command and run it on the terminal.
+
+> sudo apt-get install phpldapadmin
+
+## Steps for configure  _" phpldapadmin"_ to  _" openldap"_:
+
+Now we will edit the  _ **" phpldapadmin/config.php"**_ Please copy the
+following command and run it on the terminal.
+
+> sudo nano /etc/phpldapadmin/config.php
+
+  * In this file, we need to add the configuration details that we set up for our LDAP server. We will first edit the following line which contains the IP of "openldap"  
+
+$servers->setValue('server','host','127.0.0.1');
+
+    
+          
+    
+
+  
+I use localhost=127.0.0.1 because my  _ **" phpldapadmin"**_ and  _ **"
+openldap"**_ running on the same machine. If your  _ **" openldap"**_ running
+on a remote server please use that server's IP address instead  _
+**127.0.0.1**_.
+
+  * Next up, we will need to configure the domain name that we selected for our LDAP server. We will edit the following line.  
+
+$servers->setValue('server','base',array('dc=example,dc=com'));
+
+    
+          
+    
+
+  
+We already used "[infoimageinc.com](http://infoimageinc.com)" for this
+installation. You will use your own one. This need to be converted on LDAP
+format. Like:  
+
+$servers->setValue('server','base',array('dc=infoimageinc,dc=com'));
+
+    
+          
+    
+
+  * Now we will do the same thing for next parameter.  
+
+    
+        $servers->setValue('login','bind_id','cn=admin,dc=example,dc=com');
+    
+
+  
+The cn parameter is already set as "admin". This is correct. We just need to
+adjust the dc portions again, just as we did above:  
+
+$servers->setValue('login','bind_id','cn=admin,dc=infoimageinc,dc=com');
+
+    
+          
+    
+
+  * Then we will edit the following line:  
+
+$servers->setValue('server','name','My LDAP Server');
+
+    
+          
+    
+
+  
+I use the name "InfoIMAGEInc". You will use your own LDAP Server name.  
+
+$servers->setValue('server','name','InfoIMAGEInc');
+
+    
+          
+    
+
+  * At last we will have to uncomment and edit the following line.  
+
+// $config->custom->appearance['hide_template_warning'] = false;
+
+    
+          
+    
+
+  
+On the terminal press  _ **" Ctrl+w"**_ and search for  _
+**hide_template_warning**_. Uncomment that line and replace  _ **" false"**_
+by  _ **" true"**_.  
+
+$config->custom->appearance['hide_template_warning'] = true;
+
+    
+          
+    
+
+  
+Press  _ **" Ctrl+x"**_ then type  _ **" y"**_ and then press Enter to save
+the file.
+
+We almost finished this process. Now restart LDAP by running the following
+command on the terminal.
+
+> sudo /etc/init.d/slapd restart
+
+Now we need to make sure we successfully installed LDAP. On web browser please
+type.
+
+> 10.0.0.133/phpldapadmin
+>
+>  
+> In your case you will use your own server's IP address:
+
+ **Press enter** , you will see the login page. Our  **Login DN**  is
+
+    
+    
+    cn=admin,dc=infoimageinc,dc=com
+    
+
+#  
+In your case please replace "infoimageinc" and "com" portion with your domain
+and use your password for login.
+
+  
+
+## Add custom attributes:
+
+At first edit the following file by running this command on terminal:
+
+> sudo nano /etc/ldap/slapd.d/cn\=config/olcDatabase\=\\{0\\}config.ldif
+
+Paste this lines at the end of the file.
+
+olcRootDN: cn=admin,cn=config  
+olcRootPW: aurick
+
+    
+    
+      
+    
+
+#  
+Please replace  _ **" aurick"**_ with your password.  
+Press  _ **" Ctrl+x"**_ then type  _ **" y"**_ and press enter to save the
+file.  
+ _ **Note:**_  Do not keep any extra new line while pasting. Otherwise it may
+cause problem.
+
+  
+
+Now we need to restart  _ **slapd**_. Please copy the following command and
+run it on terminal:
+
+> sudo /etc/init.d/slapd restart
+
+### Now we need to test whether we successfully completed this process or not.
+
+Please copy the following command and execute on the terminal:
+
+> ldapwhoami -H ldapi:/// -D "cn=admin,cn=config" -x -w aurick
+
+Please replace  _ **" aurick"**_ with your password. This is the password that
+you use above on  _ **" olcRootPW"**_ this command return:  _ **"
+dn:cn=admin,cn=config"**_ then it's OK!!  
+  
+
+## Adding entry for client:
+
+  * At first we need to copy  _ **client.schema**_  file on  _ **" /etc/ldap/schema/"**_ location. Please copy the following command and execute it on terminal.
+
+> sudo cp client.schema /etc/ldap/schema/
+
+  * Create a directory by running the following command:
+
+> sudo mkdir /tmp/ldifOutput
+
+  * Now edit the following file by running this command:
+
+> sudo nano /etc/ldap/ldap.conf
+
+Then copy and paste this 4 lines at the end of the file:
+
+include         /etc/ldap/schema/core.schema  
+include         /etc/ldap/schema/cosine.schema  
+include         /etc/ldap/schema/inetorgperson.schema  
+include         /etc/ldap/schema/client.schema
+
+    
+    
+      
+    
+
+  
+
+  * Same as before edit this file by running the following command:
+
+> sudo nano ./convert.conf
+
+Now copy and paste this 4 lines at the end of the file:
+
+include         /etc/ldap/schema/core.schema  
+include         /etc/ldap/schema/cosine.schema  
+include         /etc/ldap/schema/inetorgperson.schema  
+include         /etc/ldap/schema/client.schema
+
+    
+    
+      
+    
+
+  
+
+  * After that run the following command to create "client.ldif" file:
+
+> sudo slapcat -f ./convert.conf -F /tmp/ldifOutput -n0 -s
+> 'cn={3}client,cn=schema,cn=config' > client.ldif
+
+Edit the following file with this command:
+
+> sudo nano ./client.ldif
+
+Change  _ **" dn: cn={3}client,cn=schema,cn=config"**_ to  _ **" dn:
+cn={4}client,cn=schema,cn=config"**_ and  _ **" cn: {3}client"**_ to  _ **"
+cn: {4}client"**_. After that remove all lines from:  _ **"
+structuralObjectClass"**_ to end.
+
+  * At last we need to add this entry for client on ldap. Please use this command:
+
+> sudo ldapadd -x -W -D 'cn=admin,cn=config' -W -f ./client.ldif
+
+If the output is  _ **adding new entry "cn={4}client,cn=schema,cn=config"**_
+then we successfully added the entry for client.
+
+Now we need to restart  _ **slapd**_. Please copy the following command and
+run it on terminal:
+
+> sudo /etc/init.d/slapd restart
+
+## Adding entry for user:
+
+  * At first we need to copy  _ **user.schema**_  file on  _ **" /etc/ldap/schema/"**_ location. Please copy the following command and execute on terminal.
+
+> sudo cp user.schema /etc/ldap/schema/
+
+  * This process is similar as "client". But first we need to run this three command one by one on the terminal.
+
+> sudo rm ./local.ldif  
+> sudo rm -r /tmp/ldifOutput  
+> sudo mkdir /tmp/ldifOutput
+
+  * Now edit the following file with this command.
+
+> sudo nano /etc/ldap/ldap.conf
+
+Then add the following line at the end of the file.
+
+include         /etc/ldap/schema/user.schema
+
+    
+    
+      
+    
+
+#  
+Press  _ **" Ctrl+x"**_ then type y and then press Enter to save the file.
+
+  
+
+  * Same as before edit this file by running the following command.
+
+> sudo nano ./convert.conf
+
+And add the following line at the end of the file:
+
+include         /etc/ldap/schema/user.schema
+
+    
+    
+      
+    
+
+#  
+Press  _ **" Ctrl+x"**_ then type  _ **" y"**_ and then press  _ **" Enter"**_
+to save the file.
+
+  
+
+Now we need to restart  _ **slapd**_. Please copy the following command and
+run it on terminal:
+
+> sudo /etc/init.d/slapd restart
+
+  * After that run the following command to create  _ **" user.ldif"**_ file.
+
+> sudo slapcat -f ./convert.conf -F /tmp/ldifOutput -n0 -s
+> 'cn={3}client,cn=schema,cn=config' > user.ldif
+
+Edit the following file by.
+
+> sudo nano ./user.ldif
+
+Change  _ **" dn: cn={3}client,cn=schema,cn=config"**_ to  _ **" dn:
+cn={5}user,cn=schema,cn=config"**_ and  _ **" cn: {3}client"**_ to  _ **" cn:
+{5}user"**_. After that remove all lines from  _ **" structuralObjectClass"**_
+to end.
+
+  * At last we need to add this entry for user on LDAP. Please copy the following command and execute it on terminal.
+
+> sudo ldapadd -x -W -D 'cn=admin,cn=config' -W -f ./user.ldif
+
+If the output is  _ **adding new entry "cn={5}user,cn=schema,cn=config"**_
+then we successfully added the entry for user. Else if you find any problem
+like
+
+adding new entry "cn={5}user,cn=schema,cn=config"  
+ldap_add: Other (e.g., implementation specific) error (80)  
+additional info: olcAttributeTypes: Duplicate attributeType:
+"1.3.6.1.4.1.47919.2.1.1"
+
+Then please download the attached  **" user.ldif"** file and copy it on the
+"/home/" or on the current working directory. And then again nrun the
+following command.
+
+> sudo ldapadd -x -W -D 'cn=admin,cn=config' -W -f ./user.ldif
+
+## Delete data on LDAP:
+
+  * Please run the following command for delete any existing data:
+
+> ldapdelete -r -D "cn=admin,dc=infoimageinc,dc=com" "dc=infoimageinc,dc=com"
+> -W
+
+ **Note:**  This will delete all data under
+**[infoimageinc.com](http://infoimageinc.com)**  domain.
+
+## Import data from ldap_dump.ldif file:
+
+  * Please run the following command for import  _ **" ldap_dump.ldif"**_ file:
+
+> ldapadd -x -D "cn=admin,dc=infoimageinc,dc=com" -W -f ldap_dump.ldif
+
+## Export data from ldap as ldap_dump.ldif file:
+
+  * Please run the following command for export  _ **" ldap_dump.ldif"**_ file:
+
+> ldapsearch -Wx -D "cn=admin,dc=infoimageinc,dc=com" -b
+> "dc=infoimageinc,dc=com" -H ldap:// -LLL > ldap_dump.ldif
+
+## Add a feature on LDAP:
+
+  * At first we need to create a "accessSMSTab.ldif" file. Edit the file with the following command:
+
+> sudo nano accessSMSTab.ldif
+
+Copy and paste the following lines.
+
+dn: cn=accessSMSTab,cn=OfferCatalog,ou=INFOREACH-FEATURES,ou=FEATURE-DEFINIT  
+ ION,dc=infoimageinc,dc=com  
+cn: accessSMSTab  
+description: To access offer sms tab  
+l: N  
+objectClass: organizationalRole  
+objectClass: top  
+ou: cn=OfferCatalog,ou=INFOREACH-FEATURES,ou=FEATURE-DEFINITION,dc=infoimagein  
+ c,dc=com
+
+    
+    
+      
+    
+    
+
+  
+
+  * Please run the following command for add the SMS feature:
+
+> ldapadd -x -D cn=admin,dc=infoimageinc,dc=com -W -f accessSMSTab.ldif
+
+If the output is  _ **adding new entry
+"cn=accessSMSTab,cn=OfferCatalog,ou=INFOREACH-FEATURES,ou=FEATURE-
+DEFINITION,dc=infoimageinc,dc=com"**_ then the ftature is added.
+
+## Delete a feature on LDAP:
+
+  * Please run the following command for add the SMS feature:  
+
+ldapdelete -D "cn=admin,dc=infoimageinc,dc=com"
+"cn=accessSMSTab,cn=OfferCatalog,ou=INFOREACH-FEATURES,ou=FEATURE-
+DEFINITION,dc=infoimageinc,dc=com" -W
+
+  
+
+250250250250250
+
+

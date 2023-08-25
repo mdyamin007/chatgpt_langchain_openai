@@ -1,0 +1,97 @@
+title: Infoservice_Configuration
+body: **Infoservice App Configs:**  
+
+  1. To enable sso access for hypercube, add the cid to below property in the apps-config file (/usr/local/tomcat/app-configs/infoservice/config.properties) and reboot server
+
+**sso.enabled.client**
+
+  1. To add the archival period, connect to mongo and add the cid archival in client properties database
+
+Dev : DV_clientProperties (mongo-dev01, 10.8.9.187)  
+Pilot : PT_ClientProperties(mongo-dev01, 10.8.9.187)  
+Stage : ST_ClientProperties(mongo-dev01, 10.8.9.187)  
+Production: PN_ClientProperties (pd-grid02, mongo-prod01)  
+e.g.  
+{  
+"_id": "acbk",  
+"cid": "acbk",  
+"archivalPeriodPriority": [  
+"appType"  
+],  
+"archivalPeriod": {  
+"default": 24,  
+"enotice": 4  
+},  
+"statements": {  
+"default": {  
+"name": "eStatement"  
+},  
+"etax": {  
+"name": "eTax"  
+},  
+"loan": {  
+"name": "Loan"  
+},  
+"enotice": {  
+"name": "eNotice"  
+}  
+}  
+}
+
+  1. To add passphrase for notifyservice for sending email notificatins via api, generate a passphrase using below side and add to notifyservice config properties (/usr/local/tomcat/app-configs/notifyservice/notifyservice.properties)
+
+<https://strongpasswordgenerator.com/>
+
+  1. Passphrase on infoservice API is only needed if batch download feature is enabled for any client.
+
+  
+**Deployment Procedure:**
+
+  1. **Hot Fix** : Take the current production tag, merge the bug fix on the tag, deploy the tag on Stage/Pilot for QA testing and move it to production after QA
+  2. **Planned Release** : Verify commits and cut the tag from trunk (include only those changes that need to go to production), the tag name should match with the release date. Indicate major minor version depending on the release. Deploy the tag on Stage and have it validated by QA and then move it to production. 
+    1. Drop an email to ISD to let everyone know. Include all the details - tag name, list of changes going live.
+    2. Monitor each and every commit from the DSI/onshore that needs to be included in the tag and have it tested by QA
+  3. Hypercube deployment 
+    1. If there are only hypercube changes for the release, can directly deploy code on hypercube servers - one server at a time (webapp-prod03 and webapp-prod04)
+    2. For any API release, make sure to shutdown hypercube first and then deploy the code on API - one server at a time
+
+  
+
+  1. Shutdown hypercube on prod03
+  2. Deploy the API changes on prod03 and make sure api is up and running and then start hypercube deployment on prod03
+  3. Shutdown hypercube on prod04
+  4. Deploy the API changes on prod04 and make sure api is up and running and then start deployment hypercube on prod04 
+    1. Monitor API/hypercube logs on both the servers and check for incoming traffic on both the servers.
+
+  
+**JAAS Config:**  
+To enable API integration, update the following files  
+
+  1. /conf/tomcat-users.xml - create user and role for cid
+
+<role rolename="vwcu"/>  
+<user username="vwcu" password="password" roles="vwcu" />
+
+  1. conf/web.xml - specify the list of api you want a cid to access
+
+<security-role>  
+<role-name>vwcu</role-name>  
+</security-role>  
+<security-constraint>  
+<web-resource-collection>  
+<web-resource-name>Users</web-resource-name>  
+<url-pattern>/api/v1/authcheck/*</url-pattern>  
+<url-pattern>/api/v2/document/vwcu/*</url-pattern>  
+<url-pattern>/api/v2/account/vwcu/*</url-pattern>  
+<url-pattern>/api/v2/user/vwcu/*</url-pattern>  
+</web-resource-collection>  
+<auth-constraint>  
+<role-name>vwcu</role-name>  
+</auth-constraint>  
+</security-constraint>  
+**Mongo Credentials:**  
+User: root  
+Pwd: Pa$$W0rd  
+_GoBack
+
+

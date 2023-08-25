@@ -1,0 +1,43 @@
+title: Afp Text Extract with AFP2web
+body: **Ben** : Hi. Amjad,
+
+Please see attached for the sample AFP2TXT files that Ernest generated.  
+It looks like the TXT files need some clean-up to read the values inside those
+tags only for ES to crawl.  
+Check it out to see if that's something you can use as-is. If not, would you
+need some pre-processing? or in other format?
+
+Thanks.
+
+ **Amjad** : Hi Ben,
+
+I am not sure why we are using txt files (AFP2TXT) for ES to crawl, whereas we
+can use pdf (AFP2PDF) for ES to crawl, Finally based on ES search result we
+have to open corresponding pdf.
+
+ **Ben** : Because we don't have PDF stored at rest. All the documents are
+stored as AFP at rest.  
+Ernest provided us the PDF for ease of viewing.  
+Here is the flow:
+
+AFP & TXT --> ES Crawl & Index  
+Search Query with 'keyword' to SearchAPI (developed by you), which internally
+call ES  
+ES find 'keyword' in 12345.TXT  
+ES respond result with 12345.TXT to SearchAPI  
+SearchAPI use the '12345' filename to locate the corresponding 12345.AFP  
+Call AFP2WEB with 12345.AFP to convert 12345.AFP to 12345.PDF  
+Open 12345.PDF and locate all instances of 'keyword' and highlight them using
+iText (or equivalent)  
+Return 12345.PDF with 'keyword' highlighted.  
+I think there are still adjustment need to be made for the workflow above.
+e.g. search and PDF render should really be separated as two steps, because
+there could be multiple hits and only need to show PDF when user click on one
+of the search results.
+
+Another one being I'm not sure how exactly the AFP2WEB is done currently. Jay,
+could you chime in on how this particular step should be handled? If we have
+an API readily available for fetching PDF based on 12345 (or EDOC_ID, etc),
+maybe the step 1 above only need the TXT, not the AFP at all?
+
+

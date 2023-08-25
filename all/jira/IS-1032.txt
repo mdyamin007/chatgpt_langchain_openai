@@ -1,0 +1,462 @@
+title: PFCU - [27619][pvt][in-house] Paperless File - Addition of Acct-Type
+description: Hours for development: 3H + 2 H for ISD = TOTAL = 5 hours
+Turnover Date: 04/13/22
+Sample to Date: 04/15/22
+Sample Approval Date: 04/20/22
+Go live date : 04/22/22
+
+
+
+applications that will be updated are ....
+
+pfcu - dda(ms1),heloc(ml1),mortgage(ml2)
+
+
+
+Update print txt files to include app code
+
+ISD to update paperless file to add appcode
+
+IS to update processing script to read additional appcode in paperless file.
+
+
+
+Customer needs needs to review DPVS totals to make the eSuppression counts is correct as part of their approval.
+
+
+
+Parallel is required.
+
+
+author: william.kong
+comment: [~Hamimul.Chowdhuri]: Here's the new project for you to start on.
+
+
+author: dawnl
+comment: Hamimul - can you provide sample today as scheduled? Thanks.
+
+
+author: rony
+comment: Hi [~dawnl]
+
+
+
+To provide a sample we need a paperless file. Please ask Isd to provide a paperless file.
+
+
+
+Thanks
+
+Rony
+
+
+author: dawnl
+comment: Sean - can you provide a paperless file so DSI can provide sample? Thanks.
+
+
+author: dawnl
+comment: Hamimul - please see ISD-6879 for the paperless file and provide sample. Thanks.
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+Parallel id:20220323020607
+
+This update is for pfcums1(monthly), ml1(heloc), ml2(mortgage) . Previously paperless file had no account type but now it has. Please check this file:
+
+/z/ftpbu/pfcubu/paperless/pfcu_paperless.4-19-2022.txt.
+
+For that we just needed to update the account type column in paper txt file.
+
+!image-2022-04-21-21-24-42-569.png!
+
+
+
+pfcuml2 had it already added so no need to change there. In parallel id you will see only ms1 and ml1.
+
+
+
+Today we ran with the updated paperless file. You can check pfcuml1.ins pfcuml2.ins pfcums1.ins in /home/test/insert/ folder.
+
+!image-2022-04-21-21-26-00-969.png!
+
+
+
+And this paperless file looks like this:
+
+!image-2022-04-21-21-26-30-978.png!
+
+3rd column is the account type.
+
+As you might already know that paperless suppression will go to e.sup category.
+
+So you can check the dpvs :
+
+/z/pfcu/pfcuml2120.print
+
+/z/pfcu/pfcuml1115.print
+
+/z/pfcu/pfcums1131.print
+
+to check the e.sup entry.
+
+As well as you can check
+
+/z/pfcu/pfcuml2120e.sup
+
+/z/pfcu/pfcuml1115e.sup
+
+/z/pfcu/pfcums1131e.sup
+
+Those are paper txt files where you can account no in the (33-52) column as well as account type in the (347-348) column. And if check all those accounts no and account type in those e.sup files are also in paperless file/z/ftpbu/pfcubu/paperless/pfcu_paperless.4-19-2022.txt. Which is proof that it is suppressing based on account no and account type combination.
+
+
+
+Let me know if anything you need.[^IS_1032_Checklist for Paper Parallel Template.docx]
+
+
+
+Hi [~dawnl]we can go straight to release after qa passed. If you want to display the dpvs to customer qa can help you to provide those since I already mentioned the dpvs names.
+
+
+
+Thanks
+
+Rony
+
+
+
+
+
+
+
+
+author: dawnl
+comment: [~rony]
+
+Please attached the DPVS to this ticket. DSI needs to provide it. "Customer needs to review DPVS totals to make the eSuppression counts is correct as part of their approval."
+
+Thanks.
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220323020607
+   Currently in parallel: Yes
+   User: ronyD
+   Description: TS 26761 - blank line before EOF
+   Date Submitted: 2022-03-23 02:07:56
+   Date Last Updated: 2022-04-21 08:03:27
+   Files:
+      1) PFCUMS11.dfa
+      2) PFCUML11.dfa
+
+
+author: igor.khosid
+comment: [~rony] - please move it to QA - you you done with the ticket
+
+
+author: rony
+comment: Hi [~dawnl] 
+
+[^pfcuml2120.print][^pfcums1131.print][^pfcuml1115.print]
+
+
+Thanks
+
+
+author: berezinez
+comment: [~dawnl] [~rony]
+
+QA pass, ready for customer review.
+
+
+author: dawnl
+comment: Hi [~rony],
+
+Do you have any thoughts on how best to make sure the eSuppression counts is correct?
+
+Here is client's feedback:
+
+"I have been reviewing the numbers, but really do not have a good way to tie them back to anything here. At first I tried to use the 'non-print' numbers from each actual print job, but those numbers seem to include suppression from the InfoIMAGE paperless management function as well as the phase 13 from the MRD009 file. Do you have any thoughts on how best to go about this? I am thinking that the data that InfoIMAGE has access to is probably the best source to work from for reconciling the numbers. "
+
+Thanks,
+
+Dawn
+
+
+author: rony
+comment: Hi [~dawnl] 
+
+Let's see if this explanation helps:
+
+[^pfcums1131.zip]
+
+has 2 files.pfcums1131e.sup andpfcums1131.c1bmcok. Those we normally call paper txt file.
+
+Each file column 33-52 is the account no and 347-348 is account type.pfcums1131.c1bmcok has 22702 entries , which is total accounts inpfcu_stmt_03312022_1.zip.pgp file as you can also see in dpvs for pfcums1.
+
+
+
+Andpfcums1131e.sup includes only those account which got paperless suppressed. This is a subset of pfcums1131.c1bmcok file. Total entires in this file is 64 which you can see in dpvs too.
+
+
+
+And this is paperless file[^pfcu_paperless.4-19-2022.txt]
+
+You can now check all the accounts inpfcums1131e.sup is also in this paperless file which got matched by account no + account type combination.
+
+
+
+Thanks
+
+Rony
+
+
+
+
+author: dawnl
+comment: [~rony],
+
+Can you test with theproduction file? See below.
+
+Here is client's feedback.
+
+" do the 64 records match up to what members selected as estatement only in the paperless management system at InfoIMAGE? That number seems quite low for the end of month statements though.If Diego is still on this project, maybe you, he and I can get on a call to go over this so we can work through it quickly. "
+
+
+
+Diego also response to client as below.
+
+"Dan, the 64 number is based on a small file. For some reason they didnt run this with the full enrollment paperless. There was only about 115 accounts in the test account list and 64 matched. The production file contains something like 8500 accounts that are enrolled in paperless. Dawn, can we have them test with the full file."
+
+
+author: rony
+comment: Hi [~dawnl]
+
+The problem is paperless file is small as Diego already mentioned. So provide us with a bigger paperless file.
+
+
+
+[~diegof]
+
+Thanks
+
+Rony
+
+
+author: mahbubs
+comment: Hi [~dawnl],
+
+In ISD ticketISD-6879 i see Mackenzie provided a paperless file.
+
+!image-2022-05-05-13-35-50-207.png!
+
+
+
+Should i use it to process?
+
+Thanks
+
+
+author: dawnl
+comment: Hi [~mahbubS]- yes please. thanks.
+
+
+author: mahbubs
+comment: Hi [~dawnl],
+
+I ran the process using the updated paperless file (pfcu_paperless.5-4-2022.txt).
+
+Data file used:pfcu_stmt_03312022_1.zip.pgp
+
+Please check the attached zip file.[^pfcums1131_IS-1032_05062022.zip]
+
+It has 3 files.
+
+pfcums1131.c1bmcok (the paper txt file)
+
+pfcums1131.print (the dpvs)
+
+pfcums1131e.sup (paperless suppressed txt file)
+
+Now the total paperless suppressed entry inpfcums1131e.sup file is 9987.
+
+Thanks
+
+
+author: dawnl
+comment: Hi [~mahbubS],
+
+See client's response below:
+
+"I went through various accounts that were listed as non-print at the end of March and they are listed in the e.sup file as expected. The paper txt file seems to have all statements that we sent and was not sure if 'paper txt' label was accurate since it has both statements that should be printed as well as statements that should be electronic only. In the end, I can't really provide a solid confirmation since the enrollment file is dated and we do not track enrollment on our core any longer. The most accurate source of paperless enrollment is now a combination of what members chose in the InfoIMAGE paperless management system as well as the phase 13 setting in MRD009. If I look at it from a high level, it seems to 'feel' like this is accurate so at this point I have to rely on your expertise of the programming for full confirmation. Thanks, Dan"
+
+
+author: billr
+comment: [~mahbubS] [~TunA]
+
+Customer responded below asking for a call to discuss. Customer isavailable today (5/9/22) until 5pm eastern and tomorrow (5/10/22) from 9a-5p except for 10a-11:30a. Let me know if you are available or please provide times when you can join a call.
+
+Hi Dawn, it is a bit challenging to make a solid decision based off of those files since it was based on enrollment data from 2021. Can I get a call with the developer or you so you can walk me through their comfort level and process in order to be comfortable enough to give an approval? Just like we do with our own internal development here, the developers can provide us with some background on their comfort level since the were the ones working with the data directly. Thanks, Dan
+
+
+author: mahbubs
+comment: Hi [~billr],
+
+If [~Peter.Dang] or [~TunA]is available please arrange a meeting today at 11:30am your time.
+
+Thanks
+
+
+author: peter.dang
+comment: Dawn, We will need a new live date. Please update when you have a new live date with client.
+
+
+author: dawnl
+comment: Hi [~mahbubS],
+
+Have youpost the 4/30 file on pilot yet?Per the meeting, , the pilot site and reports should be ready for client to review by Tuesday, 5/17/22.
+
+Here is the meeting note from Jessica:
+
+"Thank your for taking the time to talk through this with us. As discussed we will post the 4/30 file on pilot and confirm once ready.
+
+The pilot site and reports should be ready for you to review by Tuesday, 5/17/22. Once we have your approval, we will schedule final QA, testing and a release date.
+
+Also discussed was adding a checkpoint on the first live run. InfoIMAGE will provide the suppressed counts/paperless list to ensure everything is checking as expected."
+
+
+author: mahbubs
+comment: Hi [~dawnl],
+
+I ran the process using data cycle 0331 of pfcums1 for pilot today.
+
+It should be ready now.
+
+Thanks
+
+
+author: dawnl
+comment: Hi [~mahbubS],
+
+Please rerun it with 4/30 production file and post to pilot.
+
+Here is client's feedback:
+
+When I spoke with Jessica and Peter last Thursday, I thought they mentioned that they were going to refresh the Pilot system with the enrollments from the Production system as of 4/30/22 and then repost the 4/30/22 statement file so we could match that up to the production counts. It sounds like 3/31 file was used, do you know if the pilot system was refreshed from production? Also, when I try to compare the counts, they are different for 3/31 Pilot compared to 3/31 Production. If this is what I am supposed to be comparing, then since the numbers do not match, it seems like something is not correct. Unless the production numbers are not accurate."
+
+Thanks.
+
+
+
+
+author: mahbubs
+comment: Hi [~dawnl],
+
+Ran the ms1 process in dev using 0430 cycle data.
+
+Paperless file usedpfcu_paperless.5-4-2022.txt.
+
+It should be ready in pilot.
+
+Thanks
+
+
+author: dawnl
+comment: Hi [~mahbubS],
+
+Can you research the discrepancy as Peter said in today meeting? Here is the differences client presented.
+
+
+
+!https://app.na3.teamsupport.com/dc/1888578/images/1cf444fc-11eb-429e-bc7f-8640af3b9a02.png!
+
+
+
+Thanks.
+
+
+author: mahbubs
+comment: Hi [~Peter.Dang] [~dawnl],
+
+For pilot run I used the paperless file provided by ISD team (pfcu_paperless.5-4-2022.txt). We got this paperless file from the Jira ISD-6879. This paperless file has the acct-type in below format:
+
+!image-2022-05-24-14-27-34-036.png!
+
+Thispfcu_paperless.5-4-2022.txt file has12889 lines.
+
+Where in production no paperless file has the acct-type.
+
+I looked in the production insert file and therepfcu_paperless.4-30-2022.txt is used. And this file has like below format (without acct-type):
+
+!image-2022-05-24-14-32-44-364.png!
+
+Thispfcu_paperless.4-30-2022.txt has8504 lines.
+
+And, in production DFA program the ms1 and ml1 don't have the acct-type in the paper writerecord index file.
+
+So it's obvious to have so many diff between pilot and production esup count.
+
+For any suppression confusion client can check pilot and provide any account or member. We can explain suppression logic for any particular customer.
+
+Thanks
+
+
+author: mahbubs
+comment: Hi [~dawnl],
+
+I hope customer review is done of this ticket.
+
+Should we prepare for code release?
+
+Or should we release it on 6/13 as client mentioned in teamsupport?
+
+Thanks
+
+
+author: dawnl
+comment: Hi [~mahbubS],
+
+Here is the feedback from client on 5/25. Please release it on 6/13 per client's comment #92 on TS #27619.
+
+"Hi Dawn, since we can't validate with live data, I think at this point we have to put faith into the developers and rely on their capabilities that they programmed this correctly. From what I can gather, the logic makes sense and the test lists seem to make sense as well. Please go ahead and move forward with adding the account type to the paperless file and related applications in production. Thank you all for all of your help with this project, Dan
+
+
+author: mahbubs
+comment: Hi [~TunA],
+
+Please release code of this jira.
+
+I did cvs checkin.
+
+I am facing error to upload the transfer form in this jira.
+
+So I kept it in/d/ac-secure-share/dsi_print/mahbubS/IS_PROGRAM_TRANSFER_FORM-2.doc
+
+Thanks
+
+
+author: tuna
+comment: Hi [~mahbubS], [~dawnl],
+
+Following codes have been released.
+
+I see description for "ISD to update paperless file to add app code".
+
+*Please make sure work with* [~mac] *to release code in ISD side too.*
+
+Thanks,
+
+Tun
+
+
+
+20220613083935 06/13/2022 mahbubS IS-1032 PFCU - [27619][pvt][in-house] Paperless File - Addition of Acct-Type
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/mahbubS/
+total 648
+-rwxrwxrwx 1 mahbubS DSI 64984 Jun 13 02:17 PFCUML11.dfa
+-rwxrwxrwx 1 mahbubS DSI 147793 Jun 13 02:17 PFCUMS11.dfa
+
+

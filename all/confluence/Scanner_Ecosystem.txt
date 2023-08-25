@@ -1,0 +1,36 @@
+title: Scanner Ecosystem
+body: ## Scanner -> MessageQueue  eStatementFileRecognizer Microservice -> PUI
+(Application and Directories)
+
+  
+
+Scanner -> MessageQueue:
+
+  1. Every single files that are scanned are sent to the Message Queue
+
+MessageQueue -> eStatementFileRecognizer:
+
+  1. While the eStatementFileRecognizer is still active, the MessageQueue will send requests to the eStatementFileRecognizer to identify and/or process the files.
+  2. If the eStatementFileRecognizer is down, the MessageQueue will continue to queue all requests from the scanner and will start sending requests to the eStatementFileRecognizer once it is up and running again.
+
+eStatementFileRecognizer -> MessageQueue:
+
+  
+
+eStatementFileRecognizer -> PUI
+
+  1. Process incoming files (decrypt/unzip/move).
+  2. Trigger PUI.
+
+  
+
+The following may necessitate PUI enhancement.
+
+  1. PUI should return a response every time a command is call. This will allow the eStatementFileRecognizer to know whether a request was successfully accepted (though doesn't imply that the entire process finished successfully). Once this is possible, the eStatementFileRecognizer can be enhanced to retry requests.
+  2. PUI should also have a heartbeat so that the eStatementFileRecognizer can know whether it can even make requests, and subsequently will save all the requests instead. 
+
+Alternatively, we could also use a MessageQueue again to facilitate the above.
+Maybe the same MessageQueue as the one between Scanner and
+eStatementFileRecognizer?
+
+

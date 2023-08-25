@@ -1,0 +1,237 @@
+title: Hypercube Data Model - Cassandra
+body: ## Column Family : USER
+
+ **Column**|  **Type**|  **Description**  
+---|---|---  
+ **Row Key**|  **UUID type 1**|  unique user id  
+login_id| (UTF8Type)| login id of the user  
+org_uniquename| (UTF8Type)| unique code name of the organization  
+parent_id| (UUID Type 1)| parent of this user in case of normal user this wont
+be a part of the row  
+ssn| (UTF8Type)| social security number  
+b_date| (DateType)| birth date  
+gender_scode| (UTF8Type)| gender string codes: M(male),F(female)  
+m_status_scode| (UTF8Type)| marital status :
+S(single),M(married),D(divorced),W(widowed)  
+f_name| (UTF8Type)| first name  
+l_name| (UTF8Type)| last name  
+m_name| (UTF8Type)| middle name  
+p_scode| (UTF8Type)| promotion code(string)  
+c_by| (UTF8Type)| created by  
+source| (UTF8Type)| source using which the user is registered might be
+CreditCard etc..in case it is a person then this field is null  
+exp_date| (DateType)| expiry date of the above source in case it is not a
+person otherwise null  
+usertype_scode| (UTF8Type)| user type string codes : A,R,P,N,C(C will be a
+newly added user type 'Case')  
+case_id| (LongType)| case is not an actual user but an entity to support the
+type,in case of normal user this wont be a part of the row  
+contact_info| (UTF8Type)| whole address stored in json format.  
+
+    
+    
+      
+    
+
+[  
+    {  
+        "id": "home",  
+        "addr1": "",  
+        "addr2": "",  
+        "city": "",  
+        "state": "",  
+        "counrty": "",  
+        "zipcode": "",  
+        "dayphone": "",  
+        "mobile": "",  
+        "faxNumber": ""  
+    },  
+    {  
+        "id": "office",  
+        "addr1": "",  
+        "addr2": "",  
+        "city": "",  
+        "state": "",  
+        "counrty": "",  
+        "zipcode": "",  
+        "dayphone": "",  
+        "mobile": "",  
+        "faxNumber": ""  
+    }  
+]
+
+    
+    
+      
+  
+email| (UTF8Type)| emailAddress  
+lastlogin_date| (DateType)| last login date  
+permissions_ncode| (LongType)| numeric code for permissions :  
+NO_PERMISSION = 0  
+BASIC_PERMISSION = 1  
+BASIC_PERMISSION2 = 2 (admin manager report)  
+POWER_USER_PERMISSION = 3  
+ADMIN_PERMISSION = 7  
+SUPER_PERMISSION = 15(the super user permission for limited clients)  
+SUPER_USER_PERMISSION = 0x7fffffff (2147483647) //decimal value  
+watchword| (UTF8Type)| password  
+ww_hint_phrase| (UTF8Type)| password security question  
+ww_hint_ans| (UTF8Type)| password security answer  
+ww_changed_date| (DateType)| password changed date  
+ww_exp| (UTF8Type)| no of days for password expiry  
+login_failed_date| (DateType)| login failed date  
+failed_counter| (LongType)| no of times login failed  
+  
+  
+  
+
+## Column Family : FIN_ACCOUNT
+
+ **Column**|  **Type**|  **Description**  
+---|---|---  
+ **Row Key**|  **UUID type 1**|  unique acct_id  
+user_id| (UUID 1)| user id  
+acct_number| (UTF8Type)| account number  
+acct_owner_name| (UTF8Type)| account owner name  
+org_uniquename| (UTF8Type)| unique code name of the organization  
+type| (UTF8Type)| account type chkng,loan etc  
+last_modified_date| (DateType)| last modified date  
+status_scode| (UTF8Type)| fin_account status (active,inactive,pre-reg)  
+  
+  
+  
+
+## Column Family : USER_FIN_ACCOUNT
+
+ **Column**|  **Type**|  **Description**  
+---|---|---  
+ **Row Key**|  **UUID type 1**|  unique ufa_id  
+user_id| (UUID 1)| user id  
+acct_id| (UUID 1)| account id  
+ufa_status| (UTF8Type)| enrolled account status (I,D,A,C,B)  
+email| (UTF8Type)| email address  
+ufa_reg_date| (DateType)| enrollment date  
+source| (UTF8Type)| source using which the user is registered might be
+CreditCard etc..in case it is a person then this field is null  
+exp_date| (DateType)| expiry date of the above source in case it is not a
+person otherwise null  
+  
+  
+  
+
+## Column Family : ORGANISATION
+
+    
+    
+    // CAN BE ENUM HANDLED IN THE APPLICATION LAYER ITSELF ALONG WITH A COPY IN DB
+
+ **Row Key : org_id (UUID Type 4)**  
+org_uniquname (UTF8Type)  
+org_dispalyname (UTF8Type)  
+org_servername (UTF8Type)  
+  
+
+## Column Family : STATEMENT_TYPE
+
+    
+    
+     // CAN BE ENUM HANDLED IN THE APPLICATION LAYER ITSELF ALONG WITH A COPY IN DB
+
+ **Row Key : stmt_type (UTF8Type)**  
+stmt_type_desc (UTF8Type)  
+create_user (UTF8Type)  
+create_date (DateType)  
+last_change_user (UTF8Type)  
+last_change_date (DateType)  
+  
+
+## Column Family : DOCUMENT
+
+ **Column**|  **Type**|  **Description**  
+---|---|---  
+ **Row Key**|  **UUID type 1**|  Global identifier doc_id  
+acct_id| (UUID 1)| acct_id  
+begindate| (DateType)| document start date  
+closingdate| (DateType)| document end date (same as etax_stamp or
+enotice_stamp)  
+parent_path| (UTF8Type)| absolute path of the physical document  
+filename| (UTF8Type)| name of the document file  
+page_count| (Int32Type)| no of pages  
+hosted_inhouse| (BooleanType)| whether the document is hosted in house  
+type| (UTF8Type)| document type as in eStmt,eTax,eNotice  
+format| (UTF8Type)| AFP/PDF  
+email_addr| (UTF8Type)| email address : TO BE MOVED  
+email_date| (UTF8Type)| date of email sent :TO BE MOVED  
+email_status_scode| (UTF8Type)| email status code : TO BE MOVED  
+stmt_type| (UTF8Type)| statement type (default,visa,heloc etc)  
+seq_num| (CounterColumnType)| unique sequence number per job in case the same
+acct is getting multiple documents in the same cycle  
+is_viewed| (UTF8Type)| Y,N  
+message_id| (LongType)| infotrac message id  
+insert_id| (LongType)| infotrac insert id  
+letter_scode| (UTF8Type)| used by old structure for Enotice while storing in
+binary format : NEED TO BE REMOVED  
+create_date| (DateType)| created date  
+change_date| (DateType)| change date  
+  
+  
+  
+
+## Column Family : NOTIFICATION
+
+ **Row Key : nf_id (UUID type 4)**  
+org_id (LongType) // may be org_uniquename  
+nf_content (UTF8Type) // template content or something new  
+nf_content _type (UTF8Type)  
+nf_from_addr (UTF8Type)  
+nf_reply_addr (UTF8Type)  
+nf_to_addr (UTF8Type)  
+nf_cc_addr (UTF8Type)  
+nf_bcc_addr (UTF8Type)  
+nf_sub (UTF8Type)  
+nf_last_mod_date (DateType)  
+nf_is_approved (UTF8Type)  
+stmt_type (UTF8Type)  
+nf_new_content (UTF8Type)  
+nf_salutation (UTF8Type)  
+nf_stylesheet (UTF8Type)  
+nf_header (UTF8Type)  
+nf_footer (UTF8Type)  
+<attach_filename>|content (UTF8Type, UTF8Type)  
+<attach_filename>|file_type (UTF8Type, UTF8Type)  
+<attach_filename>|size (UTF8Type, UTF8Type)  
+  
+
+## Column Family : NOTIFICATION_TEMPLATE
+
+ **Row Key : org_uniquename|template_name (UTF8Type,UTF8Type)**  
+nf_template_content (UTF8Type)  
+nf_modified_date (DateType)  
+nf_modified_by (LongType)  
+  
+
+## Column Family : PAPERLESS
+
+ **Row Key : acct_id|stmt_type (LongType,UTF8Type)**  
+p_old_status (UTF8Type)  
+p_latest_status (UTF8Type)  
+p_modified_date (DateType)  
+p_modified_by (LongType)  
+  
+
+## Column Family : BOX_CURRENT_STATUS
+
+ **Row Key : bstatus_id(UUID type 1) // need to clarify shld be some
+combination of usr_id + modified_by**  
+usr_id (UUID type 4)  
+flag(UTF8Type)  
+question(UTF8Type)  
+answer(UTF8Type)  
+password(UTF8Type)  
+status(UTF8Type)  
+tier(LongType)  
+created_time(DateType)  
+alert(UTF8Type)  
+modified_by(UUID type 4)
+
+

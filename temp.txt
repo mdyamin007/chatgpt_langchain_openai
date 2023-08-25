@@ -1,0 +1,198 @@
+2D barcode updates
+
+Objective:  
+Update 2D barcodes to generate vector instead of raster 2D.
+Append a 2digit perf recipe code at the end of the page-2d    
+
+Old:
+           CREATEOBJECT DATAMATX(DATAM)
+            POSITION (INCH(&THOR_POS))  (INCH(&TVER_POS))
+            PARAMETERS
+             ('CELLDIMENSION'='2')
+             ('FONTNAME'='X0DM6X6')
+             ('STRINGTOBECODED'=2D_BAR);
+           IF INCH(&PAGE2D_HOR)<> '' AND INCH(&PAGE2D_VER)<> '' ;
+           THEN ;
+            CREATEOBJECT DATAMATX(DATAM)
+             POSITION (INCH(&PAGE2D_HOR))  (INCH(&PAGE2D_VER))
+             PARAMETERS
+              ('CELLDIMENSION'='2')
+              ('FONTNAME'='X0DM4X4')
+              ('STRINGTOBECODED'=&SEQ_NUM!RIGHT(&CURR_PGCOUNT,4,'0')!
+               ACT_PGCOUNT_FOR!&PP1);
+           ELSE ;
+            CREATEOBJECT DATAMATX(DATAM)
+             POSITION 0.15  10.5
+             PARAMETERS
+              ('CELLDIMENSION'='2')
+              ('FONTNAME'='X0DM4X4')
+              ('STRINGTOBECODED'=&SEQ_NUM!RIGHT(&CURR_PGCOUNT,4,'0')!
+               ACT_PGCOUNT_FOR!&PP1);
+           ENDIF ;
+
+New:
+           CREATEOBJECT DATAMATX(DATAM)^M
+            POSITION (INCH(&THOR_POS))  (INCH(&TVER_POS)) ^M
+            PARAMETERS^M
+             ('CELLDIMENSION'='6')^M
+             ('EBC2ASCIIFORBCOCA'='1')^M
+             ('OUTPUTTYPE'='2')^M
+             ('STRINGTOBECODED'=2D_BAR);^M
+           IF INCH(&PAGE2D_HOR)<> '' AND INCH(&PAGE2D_VER)<> '' ;^M
+           THEN ;^M
+            CREATEOBJECT DATAMATX(DATAM)^M
+             POSITION (INCH(&PAGE2D_HOR))  (INCH(&PAGE2D_VER)) ^M
+             PARAMETERS^M
+             ('CELLDIMENSION'='4')^M
+             ('EBC2ASCIIFORBCOCA'='1')^M
+             ('OUTPUTTYPE'='2')^M
+              ('STRINGTOBECODED'=&SEQ_NUM!RIGHT(&CURR_PGCOUNT,4,'0')!^M
+               ACT_PGCOUNT_FOR!&PP1!&PP1_RECIPE_CODE);^M
+           ELSE ;^M
+            CREATEOBJECT DATAMATX(DATAM)^M
+             POSITION 0.15  10.5 ^M
+             PARAMETERS^M
+             ('CELLDIMENSION'='4')^M
+             ('EBC2ASCIIFORBCOCA'='1')^M
+             ('OUTPUTTYPE'='2')^M
+              ('STRINGTOBECODED'=&SEQ_NUM!RIGHT(&CURR_PGCOUNT,4,'0')!^M
+               ACT_PGCOUNT_FOR!&PP1!&PP1_RECIPE_CODE);^M
+           ENDIF ;^M
+
+DOCFORMAT $_BEFOREFIRSTDOC;
+    …
+    …
+  USE^M
+    FORMAT PP_RECIPE_CODE EXTERNAL ;^M
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PP_RECIPE_CODE:
+
+/* CODESRC : 850 */
+
+IF EXIST(&PP1) ;
+THEN ;
+  TEMP_PP = &PP1 ;
+  USE
+    FORMAT ASSIGN_RECIPE_CODE EXTERNAL ;
+  &PP1_RECIPE_CODE = TEMP_RECIPE_CODE ;
+ENDIF ;
+IF EXIST(&PP2) ;
+THEN ;
+  TEMP_PP = &PP2 ;
+  USE
+    FORMAT ASSIGN_RECIPE_CODE EXTERNAL ;
+  &PP2_RECIPE_CODE = TEMP_RECIPE_CODE ;
+ENDIF ;
+IF EXIST(&PP3) ;
+THEN ;
+  TEMP_PP = &PP3 ;
+  USE
+    FORMAT ASSIGN_RECIPE_CODE EXTERNAL ;
+  &PP3_RECIPE_CODE = TEMP_RECIPE_CODE ;
+ENDIF ;
+IF EXIST(&PP4) ;
+THEN ;
+  TEMP_PP = &PP4 ;
+  USE
+    FORMAT ASSIGN_RECIPE_CODE EXTERNAL ;
+  &PP4_RECIPE_CODE = TEMP_RECIPE_CODE ;
+ENDIF ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ASSIGN_RECIPE_CODE:
+
+/* CODESRC : 850 */
+
+_SELECT 1 ;
+  _CASE TEMP_PP=='4000' OR TEMP_PP=='4004' ;
+    TEMP_RECIPE_CODE = '00' ;
+  _CASE TEMP_PP=='4001' OR TEMP_PP=='4008' OR TEMP_PP=='3379' OR
+   TEMP_PP=='3207' OR TEMP_PP=='3077' OR TEMP_PP=='3143' OR TEMP_PP==
+  '3455' ;
+    TEMP_RECIPE_CODE = '01' ;
+  _CASE TEMP_PP=='4005' OR TEMP_PP=='3475' OR TEMP_PP=='3476' OR
+   TEMP_PP=='3472' OR TEMP_PP=='3477' OR TEMP_PP=='3478' OR TEMP_PP==
+  '3479' OR TEMP_PP=='3480' ;
+    TEMP_RECIPE_CODE = '02' ;
+  _CASE TEMP_PP=='4006' ;
+    TEMP_RECIPE_CODE = '03' ;
+  _CASE TEMP_PP=='4007' ;
+    TEMP_RECIPE_CODE = '04' ;
+  _CASE TEMP_PP=='4229' ;
+    TEMP_RECIPE_CODE = '05' ;
+  _CASE TEMP_PP=='4354' ;
+    TEMP_RECIPE_CODE = '06' ;
+  _CASE TEMP_PP=='3160' ;
+    TEMP_RECIPE_CODE = '07' ;
+  _CASE TEMP_PP=='3004' ;
+    TEMP_RECIPE_CODE = '08' ;
+  _CASE TEMP_PP=='3459' OR TEMP_PP=='3462' OR TEMP_PP=='3440' OR
+   TEMP_PP=='3437' OR TEMP_PP=='3075' OR TEMP_PP=='3193' OR TEMP_PP==
+  '3199' OR TEMP_PP=='3471' OR TEMP_PP=='3388' OR TEMP_PP=='3308' OR
+   TEMP_PP=='3359' OR TEMP_PP=='3072' OR TEMP_PP=='3446' OR TEMP_PP==
+  '3093' OR TEMP_PP=='3447' OR TEMP_PP=='3622' OR TEMP_PP=='3255' OR
+   TEMP_PP=='3140' OR TEMP_PP=='3116' OR TEMP_PP=='3007' OR TEMP_PP==
+  '3070' OR TEMP_PP=='3196' ;
+    TEMP_RECIPE_CODE = '09' ;
+  _CASE TEMP_PP=='3460' OR TEMP_PP=='3033' OR TEMP_PP=='3436' OR
+   TEMP_PP=='3183' OR TEMP_PP=='3113' OR TEMP_PP=='3114' OR TEMP_PP==
+  '3115' OR TEMP_PP=='3286' OR TEMP_PP=='3301' OR TEMP_PP=='3302' OR
+   TEMP_PP=='3071' OR TEMP_PP=='3320' OR TEMP_PP=='3278' OR TEMP_PP==
+  '3315' OR TEMP_PP=='3062' OR TEMP_PP=='3415' OR TEMP_PP=='3178' OR
+   TEMP_PP=='3486' OR TEMP_PP=='3110' OR TEMP_PP=='3294' OR TEMP_PP==
+  '3295' OR TEMP_PP=='3139' OR TEMP_PP=='3141' OR TEMP_PP=='3123' OR
+   TEMP_PP=='3350' OR TEMP_PP=='3130' OR TEMP_PP=='3131' OR TEMP_PP==
+  '3416' OR TEMP_PP=='3417' OR TEMP_PP=='3441' OR TEMP_PP=='3448' OR
+   TEMP_PP=='3449' OR TEMP_PP=='3450' ;
+    TEMP_RECIPE_CODE = '10' ;
+  _CASE DEFAULT ;
+    TEMP_RECIPE_CODE = '00' ;
+ENDSELECT ;
+
+
+
+
+RECIPE CODES:
+
+
+
+A Recipe Code is used to let the finishing equipment know how to handle perforation and 3hole-punching on the sheet.  It is a 2- digit code appended to the end of page-2d barcode.
+

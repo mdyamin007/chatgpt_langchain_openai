@@ -1,0 +1,102 @@
+title: WECU - [29844][pvt] Test Visa Statement After Core Upgrade
+description: Dev Hour: 2 hours no ISD hours needed .
+
+
+
+Turnover Date: 07/05/22
+
+Sample Date: 07/07/22
+
+Approval Date: 07/11/22
+
+Qa Date: 07/12/22
+
+Live Date: 07/13/22
+
+
+
+Details:
+
+------------------
+
+Dfa: WECUMV11.dfa
+
+Check comment 23, 24 to see the requirement.
+
+- Currently the description display logic is:
+
+NOT EMPTY(GRP3_F13[TRANS]) OR NOT EMPTY(GRP3_F14[TRANS])
+
+FONT AR080 ALIGN LEFT (CHANGE(GRP3_F14[TRANS]!'-'!GRP3_F13[TRANS],'- ', ''))
+
+- Need to check the value of GRP3_F13[TRANS] if it is payment orPeriodicFinanceCharge display only GRP3_F13[TRANS]
+
+Programmer: Faiza
+
+
+
+----------------------Per Tricia (comment 23)----------------------------------
+
+We are upgrading our system on 8/7/22 and there are a couple of new transaction descriptions in the statement raw data file that we will need to change for our 8/15/22 Visa statements.
+
+This is the current mapping for the transaction descriptions:
+
+
+ # There are some accounts that will have a description noted after a payment. We dont want this description listed after payment, we only want it to list Payment.
+
+<Transaction AmountType="Credit">
+
+ <FeatureName>Purchases</FeatureName>
+
+ <MerchantCategoryCode>6012</MerchantCategoryCode>
+
+ <ChannelType>ExternalInteractive</ChannelType>
+
+ <TransactionType>Payment</TransactionType>
+
+ <TransactionDate>6/7/2022</TransactionDate>
+
+ <PostingDate>6/7/2022</PostingDate>
+
+ <EffectiveDate>6/7/2022</EffectiveDate>
+
+ <Amount>-2501.68</Amount>
+
+<Description>Highest rate payment applied to PrincipalDebit transactions.</Description>
+
+ <DescriptionSummary>Payment</DescriptionSummary>
+ # There are also some accounts that will have a description noted for the periodic finance charge. We dont want this description listed after the periodic finance charge, we only want it to list PeriodicFinanceCharge
+
+
+
+</Transaction>
+
+ <Transaction AmountType="Debit">
+
+ <FeatureName>Purchases</FeatureName>
+
+ <MerchantCategoryCode>6012</MerchantCategoryCode>
+
+ <ChannelType>Batch</ChannelType>
+
+ <TransactionType>PeriodicFinanceCharge</TransactionType>
+
+ <TransactionDate>6/9/2022</TransactionDate>
+
+ <PostingDate>6/15/2022</PostingDate>
+
+ <EffectiveDate>6/15/2022</EffectiveDate>
+
+ <Amount>1.26</Amount>
+
+<Description>DaysInPeriod=31; Balance=115.00; Rate(APR)=12.900000; Rate(Daily)=0.035342</Description>
+
+ <DescriptionSummary>PeriodicFinanceCharge</DescriptionSummary>
+
+
+
+-------------------------------Per Tricia (comment 24)----------------------------
+
+Here is a snip of the payment with the black line through what we don't want to print on the statement.
+
+!image-2022-06-29-10-23-37-448.png!

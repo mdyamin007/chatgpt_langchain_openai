@@ -1,0 +1,116 @@
+title: Missing button 'Disagree' on the Enrollment - Step 2 of 3
+description: # Log-in to the SSO site with the credentials:
+CIFN  445150461
+ACCN 7307004259
+ACC_T DD
+ # Click "I can view the statement" on the Enrollment - Step 1 of 3
+
+Actual result:
+ !scr_mis_disagree.png|thumbnail! 
+Expected result: The form should have a button "Disagree"
+
+
+author: JIRAUSER11002
+comment: Hi [~Andrey.Kutsenko],
+
+The 'Agree' and 'Cancel' buttons were implemented as previous business. For 'pre_enroll' users I implemented 'Agree' and 'Disagree' buttons.
+
+Now I did sync those buttons with previous implementation. So, now will show 'Agree' and 'Cancel' buttons for all steps.
+
+Thanks!
+
+
+author: JIRAUSER11104
+comment: Hi [~sahossain],
+In this example (USR_ID ='29924145') is the 'pre_enroll' USER. 
+Why is there no 'Disagree' button on the Enrollment - Step 2 of 3 (see screenshot)? 
++The entire tab is closed+ if you press the 'Cancel' button.
+
+
+author: JIRAUSER11002
+comment: Hi [~Andrey.Kutsenko],
+
+1. In this example (USR_ID ='29924145') is the 'pre_enroll' USER: You will see 3 steps of enrollment because user SSO is null which means the user didn't enroll yet. Probably somehow SSO date was added "null" manually or status added 'pre_enroll' in usr_session table.
+
+2. Please ignore the 'Disagree' button, I replaced it into the 'Cancel' button. So now you will see 'Agree' & 'Cancel' button.
+
+3. The entire tab is closedif you press the 'Cancel' button: Yes it was a previous business for a new user. When a user goes through 3 steps of enrollment that time if the user click on 'Cancel' button in step 2 of 3 then closed the entire tab. But for the 'pre_enroll' user, if they click on the 'Cancel' button they will redirect to the statement page.
+
+Thanks,
+ Sarwar Hossain
+
+
+author: JIRAUSER11104
+comment: Hi [~sahossain] this is a bug regarding +the 'pre_enroll' user+:
+
+TEST: for the 'pre_enroll' user, if they click on the 'Cancel' button they will redirect to the statement page. - *{color:#de350b}FAILED{color}*
+
+*test credentials 1:*
+ orgId: 12552
+ CIF Number: 509568597
+ selected_acct1: 500089574
+ selected_acct_type1: DD
+
+*test credentials 2:*
+ orgId: 12552
+ CIF Number: 445150461
+ selected_acct1: 7307004259
+ selected_acct_type1: DD
+
+
+author: JIRAUSER11002
+comment: Hi [~Andrey.Kutsenko],
+
+For your given user credentials where sess_active_status is 'pre_enroll' but SSO date is null that's why goes through 3 steps of enrollment and it behaves as new user. When you click on the 'Cancel' button in steps 2 of 3 then close the entire tab as new user logic.
+
+*'pre_enroll' user* means they must have SSO date and sess_active_status='pre_enroll'. But your provided credentials where the SSO date is null.
+
+*New user means* they don't have SSO date whatever they have sess_active_status.
+
+
+||Case||Expected behavior||
+|SSO date is null, whatever about sess_active_status|Go through 3 steps of enrollment, In step 2, if click on the 'Agree' button then redirect to the next page.|
+|SSO date is null, whatever about sess_active_status|Go through 3 steps of enrollment, In step 2, if click on the 'Cancel' button then closed the entire tab.|
+|Have SSO date and sess_active_status='pre_enroll'|Shows the disclosure document page, if click on the 'Agree' button update sess_status_active='active' and redirect to the statement page. They will not see the disclosure again when they log in next time.|
+|Have SSO date and sess_active_status='pre_enroll'|Shows the disclosure document page, if click on the 'Cancel' button does not update sess_active_status and redirect to the statement page. They will see the disclosure again when they log in next time.|
+|Have SSO date and sess_active_status='active'|Direct redirect to the statement page.|
+|Have DSO date and sess_active_status='pre_enroll'|Shows token recovery page, after enter the zip code redirect to the disclosure document page. If click on the 'Agree' button update sess_status_active='active' and redirect to the statement page. They will not see the disclosure again when they log in next time.|
+|Have DSO date and sess_active_status='active'|Shows token recovery page, after enter the zip code redirect to the disclosure document page. If click on the 'Cancel' button does not update sess_active_status and redirect to the statement page. They will see the disclosure again when they log in next time.|
+
+
+
+
+
+You can use the following credentials for SSO:
+ # sess_active_status = 'pre_enroll'; SSO date is null.
+ ** *CIF_NUM*: 770072450
+ ** *ACCT_NUM1*: 2501008421
+ ** *ACCT_TYPE1*: DD
+ ** *ACCT_NUM2*: 2507004827
+ ** *ACCT_TYPE2*: DD
+ # sess_active_status = 'pre_enroll'; Have SSO date.
+ ** *CIF_NUM*: 512821685
+ ** *ACCT_NUM1*: 202015011
+ ** *ACCT_TYPE1*: TD
+ ** *ACCT_NUM2*: 80000215
+ ** *ACCT_TYPE2*: DD
+ # sess_active_status = 'active'; Have SSO date.
+ ** *CIF_NUM*: 001829672
+ ** *ACCT_NUM1*: 6000296842
+ ** *ACCT_TYPE1*: LN
+ ** *ACCT_NUM2*: 6000315322
+ ** *ACCT_TYPE2*: LN
+
+You can use the following credentials for DSO:
+ # sess_active_status = 'pre_enroll'; Have DSO date.
+ ** Username:dsotest
+ ** Password: dsotest
+ ** Zipcode: 65360
+ # sess_active_status = 'active';Have DSO date.
+ ** Username: testdso
+ ** Password: testdso
+ ** Zipcode: 64112
+
+
+author: JIRAUSER11104
+comment: Thanks [~sahossain]. Test result report [here|https://jira.infoimageinc.com/browse/ISD-7138?focusedCommentId=48839&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-48839].

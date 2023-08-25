@@ -1,0 +1,231 @@
+title: RHS - Prod:  CHCU Statement Aug EOM Production 'f' option error
+description: jobsel is f in isisdisk.sh
+
+Use of uninitialized value in concatenation (.) or string at /home/master/get_msg_v2_cu_std_prod.pl line 305.
+color flag is: in get_msg_v2_cu_std_prod.pl
+jobsel is : f
+Use of uninitialized value in split at /home/master/get_msg_v2_cu_std_prod.pl line 307.
+url: http://pui-prod.infoimageinc.com/MsgServlet22?cid=chcu&apptype=ms1&cycledate=09012020&services=estmt
+17
+Failed grabbing the zip file given code 17 (Error When Check Cycle Duplicate Area)
+Use of uninitialized value in concatenation (.) or string at /home/master/get_msg_v2_cu_std_prod.pl line 220.
+Error within program: get_msg_v2_cu_std_prod.pl
+Error within program: isisdisk.sh
+Error within program: chcu_secu_ms1_process.sh
+
+
+author: william.kong
+comment: [~lemoy28]: Can you help me verify this issue? Is it because message manager folder missing from /d/isd_input/I3/MsgMgr/
+
+If not, please advise what the issue is. Thanks!
+
+
+
+[~Terrence.Tong]: FYI.
+
+
+author: lemoy28
+comment: Will,
+
+I think the script/home/master/get_msg_v2_cu_std_prod.pl would need to be updated for the brisbane server.
+
+Below are the urls for message manager pui in Menlo, so we need to check with ISD
+
+!image-2020-10-07-16-33-54-666.png!
+
+
+author: william.kong
+comment: [~lemoy28]: Can you double check again? I manually did a curl command to test the site and it is responding:
+
+!image-2020-10-07-21-26-01-871.png!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~lemoy28]: Going to re-assign it back to Ernest. I think the issue is with the pseg convert again. This time it crashed and has a segmentation fault.
+
+
+
+[~ernestw]: Can you review why pseg converter is constantly throwing a segmentation fault?
+
+!image-2020-10-07-22-33-24-866.png!
+
+
+author: ernestw
+comment: 
+
+/ is at 100%. Nothing wrong with pseg conversion
+
+
+
+
+author: william.kong
+comment: [~ernestw]: Thanks for helping on this.
+
+[~premraj.patil]: Thanks for expanding the root partition from 246GB to 4TB
+
+[~lemoy28]: FYI. That was the root cause of the issue, i think.
+
+[~cesarg]: Can you retest?
+
+
+author: cesarg
+comment: Retest failed again, see below for details.
+
+
+
+jobsel is f in isisdisk.sh
+
+Use of uninitialized value in concatenation (.) or string at /home/master/get_msg_v2_cu_std_prod.pl line 305.
+color flag is: in get_msg_v2_cu_std_prod.pl
+jobsel is : f
+Use of uninitialized value in split at /home/master/get_msg_v2_cu_std_prod.pl line 307.
+url: http://pui-prod.infoimageinc.com/MsgServlet22?cid=chcu&apptype=ms1&cycledate=09012020&services=estmt
+17
+Failed grabbing the zip file given code 17 (Error When Check Cycle Duplicate Area)
+Use of uninitialized value in concatenation (.) or string at /home/master/get_msg_v2_cu_std_prod.pl line 220.
+Error within program: get_msg_v2_cu_std_prod.pl
+Error within program: isisdisk.sh
+Error within program: chcu_secu_ms1_process.sh
+
+
+author: william.kong
+comment: [~cesarg]: Sorry Cesar! There is another issue that ISD needs to look at. I will update you once the following ticket is resolved by Sean:
+
+
+
+https://jira.infoimageinc.com/browse/IBTL-106
+
+
+
+
+
+
+author: william.kong
+comment: [~cesarg]: The message manager issue reported in IBTL-106 if fixed. Can you retest?
+
+
+author: rogelio_jira
+comment: Will,
+
+
+
+It's missing directory.
+
+
+
+grep '^estmt_trac=' /home/control/chcums1.control|cut -d '=' -f2
+y, infotrac=m
+y, g_infotrac_flag=Y; infotrac=m
+Mon Oct 12 10:31:45 PDT 2020
+insert estmt_proc: ms1_08312020_10122020_1031_chcu.txt, Y, 10122020 10:31:45, 10122020 10:31:45, 543,chcu, ms1, 543
+perl /home/master/estmt_dt_tb_upd.pl prod chcu ms1 ms1 ms1_08312020_10122020_1031_chcu.txt \n
+Mon Oct 12 10:31:45 PDT 2020
+insert estmt_dt: ms1_08312020_10122020_1031_chcu.txt, 10122020 10:31:45, 10122020 10:31:45, 543, 161473-C00.01-V20058
+Copying individual afps to /d/isd_input/indiv_afp/chcu/afp-archive/chcums1-08312020/
+cp: cannot create regular file `/d/isd_input/I3/process-files/chcu/ms1_08312020_10122020_1031_chcu.txt': No such file or directory
+Copying chcu_pdfidx.txt to /d/isd_input/I3/process-files/chcu/ms1_08312020_10122020_1031_chcu.txt
+DT_JOB_ID: | Index_File: ms1_08312020_10122020_1031_chcu.txt
+/home/master/move_afp2.sh: line 199: [: =: unary operator expected
+eStmtSelInsFlag is NOT set in .control file!
+estmtSelInsFlag: \n
+/home/master/move_afp2.sh: line 309: [: =: unary operator expected
+startime:Start 10:10:53 10122020 infotrac: dt_jid: endtime:End 10:36:18 10122020 user:oper1 cid:chcu jid:ms1
+DT_JOB_ID in f option:
+home_master=/home
+new online proofing check flags .....
+new online proofing url is [http://is-apps-prod.infoimage.com/infosync/v1]
+
+
+
+
+
+
+
+Thanks,
+
+Rogelio
+
+
+author: william.kong
+comment: [~lemoy28] & [~Terrence.Tong]: Can you guys review this issue? I do not see the ms1_08312020_10122020_1031_chcu.txt file placed into
+
+/d/isd_input/I3/process-files/chcu/
+
+Here's the screenshot
+
+
+
+
+
+!image-2020-10-13-16-31-12-110.png!
+
+
+
+
+
+
+
+
+
+
+author: lemoy28
+comment: Will,
+
+Here's the index file:
+
+/d/isd_input/I3/process-files/chcu/ms1_08312020_10132020_1542_chcu.txt
+
+
+author: lemoy28
+comment: It was reprocessed again today. I only see the index file from today.
+
+10122020 1011 oper1 rhs f /d/chcu/ms1/chcu_090120_stm
+10132020 1145 oper1 rhs s /d/chcu/ms1/chcu_090120_stm
+10132020 1431 oper1 rhs s /d/chcu/ms1/chcu_090120_stm
+10132020 1522 oper1 rhs f /d/chcu/ms1/chcu_090120_stm
+
+
+
+Index file here:
+
+{color:#172b4d}/d/isd_input/I3/process-files/chcu/ms1_08312020_10132020_1542_chcu.txt{color}
+
+
+
+
+
+
+author: william.kong
+comment: [~lemoy28]: Thanks!
+
+
+
+@[~rogelio_jira] and [~Velasco]: Per Le, it looks like you guys reprocessed and it worked. Can you confirm that it is true and there is no more issue?
+
+
+author: rogelio_jira
+comment: [~William.Kong],[~lemoy28]: This is completed yesterday. ESTMT is posting in PUI
+
+
+author: william.kong
+comment: [~rogelio_jira]: Thanks for confirming. going to close this ticket now.

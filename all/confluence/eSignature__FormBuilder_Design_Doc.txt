@@ -1,0 +1,596 @@
+title: eSignature/ FormBuilder Design Doc
+body: # Introduction
+
+  
+
+## Purpose/Objective Summary
+
+  1. We are trying to create system which allow to create new form, and customize existing form.
+  2. eSingature is part of system, where Admin can place the signature and other fields for different user, and send document for signing ceremony.
+  3. Input for eSingature will be document uploaded from file system, or form created using Form Builder.
+
+  
+
+## Scope
+
+  
+
+### In-Scope
+
+  1. Select multiple singers for document, and also select the order in which signers will sign the document.
+  2. Admin should able to create and customize the form.
+  3. Input for eSignature can be document coming from formBuilder or FileSystem.
+
+  
+  
+
+### Out-of-Scope
+
+  1. Difficult to keep eSignature part inside the form Builder itself.
+  2. Form builder features will be decided after complete exploration of Orbeon.
+
+  
+
+## Assumptions
+
+ **IMPORTANT:**  All assumptions need to be confirmed with corresponding
+stake-holder during design review. Assumptions would likely become
+Dependencies upon confirmation/design-review.
+
+  1. eSingature module expects pdf in order to put signatures on document.
+  2. Orbeon Form Builder is complex system, and after proper understanding of the system, we will have better idea about Form Builder.
+  3. Form create from Form Builder, when send to the client, client need to fill the information online, and then after new pdf will get generated where client can sign.
+
+  
+
+## Dependencies
+
+  1. Silansis Maven Dependency.
+  2. Customized version of Orbeon Form Builder.
+  3. apache-fob to convert form into PDF using XSLT.
+
+  
+  
+
+# Requirements
+
+## Business Requirements & Use Cases
+
+ **(Required)**  List out all needs/requirement from business/end-user
+perspective.
+
+ID| Title| Details| ScreenMock| Importance  
+---|---|---|---|---  
+BRQ-01| Admin side requirements|  **Requirement** : Allow ESaftyBox
+administrator(s) to Create package under a user(s) and control other
+functional component for this packge.  
+ **Use Case 1** : Admin user create a package(Test) under a user.  
+ **Use case 2** : Admin user add or delete any number of signer for any
+package.  
+ **Use case 3** : Admin user add or delete any number of Document for any
+package.  
+ **Use case 4** : Admin user add or delete any number of signature and field
+in any uploaded document.  
+ **Use case 5** : Admin user finally send package with added signer list
+,document list with signature list and field list to the Silanis API to create
+package in Silanis API database and store returned session in local database.  
+ **Use case 6** : Admin user able to view the created package in send folder
+with pending status.If status is signed then user can download package and
+other document at inbox folder from Silanis API.| Screenmock is in attachment|
+one of following:  
+P0-Show Stopper  
+BRQ-02| Client side requirements|  **Requirement** : Allow ESaftyBox Client(s)
+to view and approve the sign in document.  
+ **Use Case 1** : Client user able to view the package or document created by
+admin side.  
+ **Use case 2** : Client user able to approve the sign using per session on
+the document at Silanis API.| Screenmock is in attachment| one of following:  
+P0-Show Stopper  
+  
+  
+
+## Functional Requirements & Use Cases
+
+ **TODO:**   **(Required)**  List out all needs/requirement from
+engineering/functional perspective. Associate them with an ID for easier
+reference
+
+ID| Title| Details| Bus. Req. Ref.| Importance  
+---|---|---|---|---  
+FRQ-01| Generic Search by Sphinx| (example)  
+ **Requirement:**  Instead of constructing the SQL statements for search,
+utilize Sphinx to help build the index and support such generic search.  
+ **Use Case:**  enter "ben" into search box, search results returned should
+include both record of "Ben
+[Chan/bchan@infoimage.com](mailto:Chan/bchan@infoimage.com)" as well as "Jim
+[Wong/jwong@bigben.com](mailto:Wong/jwong@bigben.com)"| <optional>| one of
+following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+FRQ-02| ...| ...| ...| ...  
+  
+  
+
+## Performance & Scalability Requirements (SLA)
+
+ **TODO: (Required)**  List out all needs/requirement from Performance
+perspective. Associate them with an ID for easier reference
+
+ID| Title| Details| Importance  
+---|---|---|---  
+PRQ-01| Fast Search response| (example)  
+ **Requirement:**  All Search operation should return results within 100ms.  
+ **Use Case:**  <enter if applicable>| one of following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+PRQ-02| ...| ...| ...  
+  
+  
+
+## QA/Test Requirements
+
+ **TODO:**   **(Required)**  List out all needs/requirement from QA/Testing
+perspective. Associate them with an ID for easier reference
+
+ID| Title| Details| Importance  
+---|---|---|---  
+TRQ-01| Selectable Search Box element| (example)  
+ **Requirement:**  The search textbox AND the 'Search' button need to tagged
+with 'id' value so that Selenium could select it for entering value and
+subsequent submit  
+ **Use Case:**  Rely on Selenium to submit random search terms and capture
+response time as well as validation search results| one of following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+TRQ-02| ...| ...| ...  
+  
+* * *
+
+  
+  
+
+# Design
+
+  
+
+# Architecture & WorkFlow Diagram
+
+ _ **Form Builder and eSignature Architecture**_
+
+ **Workflow:**
+
+ _ **eSignature/ Form Builder Combined WorkFlow**_
+
+ ** _Form Builder Workflow_**
+
+  
+  
+
+# Data Model
+
+ **NOTE:**  We need to have following schema in MySQL for eSignature. For form
+Builder, we need to decide the database and schema.
+
+ _ **Table: esign_package**_
+
+Property| Type| Description  
+---|---|---  
+pkgId| String| PK to silanis_package table.  
+cid| String| cid value of organization.  
+pkgName| String| Package Name of Esignature.  
+pkgDescription| String| Package Description of Esignature.  
+pkgMessage| String| Package Message of Esignature.  
+apiPkgId| String| Silanis API returned Packge ID of Esignature.  
+pkgStatus| String| Silanis API returned Packge Status of Esignature.  
+pkgDueDate| Date| Package Expire date of Esignature.  
+revNo| float| revision for template.  
+isTemplate| boolean| flag represents template or actual package.  
+createdTime| Date| This represents the instance the Packge was created.  
+createdBy| String| This represents the user who created the Packge .  
+modifiedTime| Date| This represents the instance the Packge was last modified.  
+modifiedBy| String| This represents the user who modified the Packge.  
+  
+ _ **Table: esign_document_signer**_
+
+Property| Type| Description  
+---|---|---  
+signerId| String| PK to document_signer table.  
+firstName| String| Signer first Name of a Packge's Signer.  
+lastname| String| Signer Last Name of a Packge's Signer.  
+email| String| Signer Email of a Packge's Signer.  
+title| String| Signer Title of a Packge's Signer.  
+company| String| Signer Company Name of a Packge's Signer.  
+authMethod| String| This property represents Signing Method of a Packge's
+Signer.  
+authMessage| String| Signer Message of a Packge's Signer.  
+authPhone| String| Signer Phone (if exist)of a Packge's Signer.  
+authQuestion1| String| Signer question1 (if exist)of a Packge's Signer.  
+authQuestion2| String| Signer question2 (if exist)of a Packge's Signer.  
+authAnswer1| String| Signer answer1 (if exist)of a Packge's Signer.  
+authAnswer2| String| Signer answer2 (if exist)of a Packge's Signer.  
+pkgId| String| FK to silanis_package table.  
+sessionToken| String| Silanis API returned individual signer session token for
+approve sign in client of a single packge.  
+type| String| actual signer or place holder for template.  
+  
+ _  
+ **Table: esign_document**_
+
+Property| Type| Description  
+---|---|---  
+docId| String| PK to silanis_document table.  
+name| String| document Name of a Packge's Document.  
+description| String| document description of a Packge's Document.  
+fileId| String| fileId of a Packge's Document for Swift.  
+count| int| document page count of a Packge's Document.  
+size| Long| This property represents document size of a Packge's Document.  
+type| String| document type of a Packge's Document.  
+uploadDate| Date| This property represents document upload time of a Packge's
+Document.  
+status| String| document signed status of a Packge's Document.  
+pkgId| String| FK to silanis_package table.  
+  
+ _ **Table: esign_document_field**_
+
+Property| Type| Description  
+---|---|---  
+fieldId| String| PK to document_signature table.  
+positionX| Long| Signature X position of a Packge's Document.  
+positionY| Long| Signature Y position of a Packge's Document.  
+sizeX| Long| Signature size X of a Packge's Document.  
+sizeY| Long| Signature size Y of a Packge's Document.  
+fieldType| String| Can be signature type capture/click/initial of the
+document.  
+pageNumber| int| signatured page number of a Packge's Document.  
+fieldSubType| String| Different types of signature/
+Fields(signature/name/title/company/date).  
+signerId| String| FK to document_signer table.  
+docId| String| FK to silanis_document table.  
+  
+  
+
+# Controller Component
+
+1.  **EsignatureMainController**
+
+Method| Status| Description  
+---|---|---  
+public ModelAndView createPackage(HttpServletRequest request, ModelAndView
+model)| NEW| This method create the new package by calling "POST
+/v1/esign/package/{cid}" api to infoservice.  
+public ModelAndView viewPackge(HttpServletRequest request, ModelAndView
+model)| NEW| This method view the created package with signer and document
+list by calling "GET /v1/esign/package/{cid}" api to infoservice.  
+public String addSigner(HttpServletRequest request)| NEW| This method add new
+signer for a package by calling "POST /v1/esign/signer/{pkgId}" api to
+infoservice.  
+public String updateSigner(HttpServletRequest request)| NEW| This method
+update signer for a package by calling "PUT /v1/esign/signer/{pkgId}" api to
+infoservice.  
+public String deleteSigner(HttpServletRequest request)| NEW| This method
+delete signer by calling "DELETE /v1/esign/signer/{pkgId}/{signerId}" api to
+infoservice.  
+public String deleteDocument(HttpServletRequest request)| NEW| This method
+delete signer by calling "DELETE /v1/esign/document/{pkgId}/{docId}" api to
+infoservice.  
+public ModelAndView viewDocument(HttpServletRequest request, ModelAndView
+model)| NEW| This method view document with signer and signature list by
+calling "GET /v1/esign/signer/{pkgId}","GET /v1/esign/document/{pkgId}" api to
+infoservice.  
+public @ResponseBody String addSignatureOrField(@RequestParam("jsonObject")
+String jsonString, HttpServletRequest request)| NEW| This method add signature
+and field in document by calling "POST
+/v1/esign/document/field/{pkgId}/{docId}" api to infoservice.  
+public @ResponseBody String updateSignatureOrField(@RequestParam("jsonObject")
+String jsonString, HttpServletRequest request)| NEW| This method update
+signature and field in document by calling "PUT
+/v1/esign/document/field/{pkgId}/{docId}" api to infoservice.  
+public @ResponseBody String deleteSignatureOrField(HttpServletRequest
+request)| NEW| This method delete signature and field from a document during
+view by calling "DELETE /v1/esign/document/field/{pkgId}/{docId}" api to
+infoservice.  
+public ModelAndView sendPackge(HttpServletRequest request, ModelAndView
+model)| NEW| This method send package by calling "PUT
+/v1/esign/package/{cid}/{pkgId}" api to infoservice.  
+public ModelAndView viewPackageList (HttpServletRequest request, ModelAndView
+model)| NEW| This method view created package list,Template list,
+status,enable or edit download by calling "GET /v1/esign/package/{cid}" api to
+infoservice.  
+public ModelAndView updatePackage (HttpServletRequest request, ModelAndView
+model)| NEW| This method update package which is not send to the silanis api
+by calling "PUT /v1/esign/package/{cid}/{pkgId}" api to infoservice.  
+public ModelAndView getImage(HttpServletResponse response, HttpServletRequest
+request)| NEW| This method get png file for per PDF by calling "GET
+/v1/esign/document/{pkgId}/{docId}" api to infoservice.  
+public @ResponseBody String createTemplateFromPackage(HttpServletRequest
+request)| NEW| This method create template from any package by calling "POST
+/v1/esign/package/{cid}" api to infoservice.  
+public String createPackageFromTemplate(HttpServletRequest request)| NEW| This
+method create package from any template by calling "POST
+/v1/esign/package/{cid}" api to infoservice.  
+public String deletePackage(HttpServletRequest request)| NEW| This method
+delete any package or template by calling "DELETE
+/v1/esign/package/{cid}/{pkgId}" api to infoservice.  
+public String downloadPackge(HttpServletRequest request, HttpServletResponse
+response)| NEW| This method download package zip by calling "GET
+/v1/esign/package/{pkgId}/download" api to infoservice.  
+public String downloadEvidence(HttpServletRequest request, HttpServletResponse
+response)| NEW| This method download audit by calling "GET
+/v1/esign/package/{pkgId}/download" api to infoservice.  
+  
+  
+
+# InfoService BreakDown
+
+ _ **API Specs for eSignature**_
+
+URL| Description  
+---|---  
+POST /v1/esign/package/create| Create package.  
+PUT /v1/esign/package/{pkgId}| Update/Send package.  
+DELETE /v1/esign/package/{pkgId}| Delete Package.  
+GET /v1/esign/package/{pkgId}| Get all data for package.  
+GET /v1/esign/package/{pkgId}/download| Download archive (zip) of package
+containing signed documents.  
+  
+|  
+  
+POST /v1/esign/signer/{pkgId}/{usrId}| Add signer to package.  
+DELETE /v1/esign/signer/{pkgId}/{usrId}| Remove signer from package.  
+PUT /v1/esign/signer/{pkgId}/{usrId}| Update signer inside package.  
+GET /v1/esign/signer/{pkgId}| Get signer information.  
+  
+|  
+  
+POST /v1/esign/document/{pkgId}| preScan Create entry for document.  
+PUT /v1/esign/document/{pkgId}/{docId}| Update the existing document.  
+DELETE /v1/esign/document/{pkgId}/{docId}| Delete the document, and all
+document specs for that document.  
+GET /v1/esign/document/{pkgId}| Get all documents inside the package.  
+  
+|  
+  
+POST /v1/esign/document/field/{pkgId}/{docId}/{signerID}| Create document
+field (Signature field or some other field) for a document and signer.  
+PUT /v1/esign/document/field/{pkgId}/{fieldId}| Update the document field.  
+DELETE /v1/esign/document/field/{pkgId}/{docId}| Remove all fields for
+specific document.  
+GET /v1/esign/document/field/{pkgId}| Get all document fields for package.  
+  
+  
+  
+
+# Q & A
+
+  1. Do we need signing order? If yes, will it be at package level or document level?  
+ **Ans:**  Right now, silanis support signing order at package level. We can
+target document level signing workflow in later versions.
+
+  2. Storage: Data Model - the data model as well as API model on our side should be generic, Silanis being one implementation of that. In the future - we may switch eSignature vendor or develop that part of the function ourselves. In that context - should the database columns be called Silanis_XXX or Signature_XXX? Please ensure there is a pluggable model for the ESignature provider.  
+ **Ans:**  Good point. Most of the schema is generic, and it's not depend on
+silanis. We need to change the names so that it looks like generic.
+
+  3. Storage: DB - can we do a comparison chart of Mongo vs Cassandra to show which one is more appropriate for this feature?  
+ **Ans:**  We are using MySQL for eSignature due to complex relationships.
+Mongo and Cassnadra, will not be good fit for this use case, because of
+dependencies between different entities.
+
+  4. Functional: eSignature should be embeddable as in the eSafetyBox, Integrate-able as with the Forms and Standalone. Please ensure we can support all of these models.  
+ **Ans:**  It will be configurable as per the above requirements.
+
+  5. Functional: Is there any additional function, step or evidence for signatures done on mobile devices? Do we need to invoke a different version of the Silanis API for mobile signatures?  
+User can use the same application on mobile device for eSignature. Since we
+are usin Silanis UI, we should not have an issue with mobile devices.
+
+  6. Functional: Is there a need to have each document be signed in a sequence by each signer in a multi-document package with multiple signers?  
+ **Ans:**  Right now, we will support signing at package level. We do not have
+signing order for each document. We can target this in later verisons.
+
+  7. Functional: How do we handle partial failure, i.e, either if a signer refuses to sign or loses connections in the middle of signing.  
+ **Ans:**  We are using Silanis UI for signing ceremony, even inside
+eSafetybox as well. So if signer loses the connection in middle of singing,
+Silanis will take care of that. If signer refuses to sign, we will get
+notification and we will update the status.
+
+  8. API - I don't see a way to handle templates via the API in swagger  
+ **Ans:**  We do not need another API for template. We are storing package as
+template, with revisions and isTempalte flag in package table. We will use
+existing API to create template and package based on different parameters.
+
+  9. Batch - We need a design for how do we invoke templates in a batch process, i.e., generate documents/packages for eSignature in batch  
+ **Ans:**  Yes. We can do the batch process. For template, we are using the
+existing schema with some modification. Since for batch process, we need to
+supply singers dynamically, we can have holder for signer, and we will update
+it run time while running batch process based on the information provided.
+
+  10. Integration - Is there any way to invoke eSignature from our document composition (Papyrus) process to add in the signature fileds?
+  11. API - can we get the exact status on the signing of a package - ie., which signer has completed signing which documents in the package?  
+ **Ans:**  We need to expose on URL to Silanis, which send the notification
+for different events. Based on the event, we will get different payloads. We
+can get notification for following events:
+
+    * Package created
+    * Package activated
+    * Package deactivated
+    * Package ready for completion
+    * #Package completed
+    * Package trashed
+    * Package restored
+    * Package deleted
+    * Package declined
+    * Package expired
+    * Package opted out of
+    * Document signed
+    * Role reassigned
+    * Signer completed signing
+
+More Question based on Exmaple:
+
+ **Condition:**  According to Silanis, you can download the package if state
+is Completed or Archived.
+
+ **Example:**  
+Let's say package have 2 documents (doc1, doc2), and 3 signers (signer1,
+signer2, signer3).  
+Doc1 need be signed by signer1 and signer2.  
+Doc2 need to be signed by signer2 and signer3.  
+Now, send the package.
+
+ _Opt-out Scenario:_
+
+Now, signer1 and signer2 has signed the doc1.  
+Signer2 signed the doc2, but signer3 opt-out doc2  
+So, now whole package has been opt-out.
+
+ **Issue:**  So, in above scenario, we want be able to download the package.
+(Refer condition.)
+
+ **Soln1:**  Rather downloading zip file from Silanis, there is an API to
+download the document. If we want to use this approach, we need to change the
+design. We can download the individual files, and on Admin site we can zip all
+completed files before downloading.
+
+ **Soln2:**  I'm not sure about downloading individual files as it could leads
+to many complex situations. I'd rather keep it clean as long as we can get a
+clear status that the package is 'opt-out' and then have the package-creator
+to follow-up as offline process. The chance of some-signed-some-declined
+within a package should be small because package-creator wouldn't initiate in
+the first place. And it's matter of business process if any of the electronic
+package failed to get fully signed.
+
+ _After Opt-out (Re-Sent):_
+
+ **Q.**  Another thing, I noticed today is after opt-out, package has been
+moved from Inbox to Draft tab.  
+From Draft, we can resent the opt-out package.  
+In above example, doc1 has been signed successfully.  
+But, when you resent the package, signer1 and signer2 will get another email
+with link.  
+When signer clicks on that link, page is being loaded, and it shows that
+singer has signed already.
+
+ **Concern:**  Here, if document has been signed, then for that document,
+email should not be sent to signers of that document.
+
+ **Ans:**  Instead of re-send, wouldn't we be better off to just create new
+package with same doc & signers and send? Hence it's important to have the
+template mechanism working properly.
+
+ _Email Notification:_
+
+ **Q.**  Another thing, I noticed that, email notification with link has been
+sent to user as soon as we send the package. Now, we are planning to show the
+document in Client site for eSignature. In this case, we will generate session
+token as well. However, in this scenario, user should not get email with link.
+Correct? We should only send email to external users.
+
+ **Ans.:**  Not necessary. All signers should just receive email notification
+with the corresponding link regardless of they are esafetybox user or not.
+It's just that esafetybox user can login to the site and access same link (in
+addition to the link in their email).  
+  
+
+# New Requirements
+
+1\. Batch process to take signer and document dynamically, and send for
+eSignature.  
+2\. Document should get picked up dynamically based on signer.  
+3\. Signing and Document Ordering.  
+4\. Implement inbound to receive notification from Silanis.  
+5\. Banner and Message customization at Organization level in Silanis. Right
+now, It shows Message is being sent by Ben Chan.  
+6\. Member UI implementation (Need to show different packages for user, and
+then load document of package.).  
+7\. Retrieve status about pending signers, and pending documents inside
+package.  
+8\. Different colors for box based on different signers.  
+9\. Signing ceremony work-flow (Combined work-flow for signer and document.).
+
+TODO in v1.0:  
+3\. Signing and Document Ordering.  
+9\. Signing ceremony work-flow (Combined work-flow for signer and document.).  
+6\. Member UI implementation (Need to show different packages for user, and
+then load document of package.).  
+7\. [already done] Retrieve status on package level only. Details could be
+determine by looking at the audit report.
+
+5\. Banner and Message customization at Organization level in Silanis. Right
+now, It shows Message is being sent by Ben Chan.  
+8\. Different colors for box based on different signers. (Dipak) * No schema
+should be changed to accomodate this.  
+1\. Batch process to take signer dynamically, and send for eSignature. *
+document out the exact details and steps on how the batch process will work,
+implement only a simple version of replacing the signer info for now. Don't
+implement the document replacement yet until we have real client sign-up to
+use this process as the real-scenario might differs from what we envision. **
+Document should get picked up dynamically based on signer.
+
+TODO in v1.2  
+4\. Implement inbound to receive notification from Silanis.  
+7\. Retrieve status about pending signers, and pending documents inside
+package. * This item depends on Silanis API to provide signer/doc-level
+details in the package-status-call response.  
+  
+
+# Summarized Change Log
+
+Date| Who| Changes to Design Doc  
+---|---|---  
+3/01/2014| Ben C| Added some TODO notes and examples  
+3/08/2014| Ben C| Initial Draft  
+4/08/2014| Pritish| Updated Design  
+5/06/2014| Pritish| Updated schema. Added Q&A section.  
+  
+* * *
+
+  
+
+# Sign-Off
+
+Group| Date| Who| Comment  
+---|---|---|---  
+Product Manager (Business)|  
+|  
+|  
+  
+Account Service (AS)|  
+|  
+|  
+  
+Dev./Impl. Manager (Technical)|  
+|  
+|  
+  
+Production Control (PC)|  
+|  
+|  
+  
+Data Processing (DP)|  
+|  
+|  
+  
+Accounting/Invoicing|  
+|  
+|  
+  
+  
+  
+
+# Appendix
+
+<add as you need>
+
+### Attachments
+
+250
+
+

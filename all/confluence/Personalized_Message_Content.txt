@@ -1,0 +1,288 @@
+title: Personalized Message Content
+body:   
+
+# Introduction
+
+  
+
+## Purpose/Objective Summary
+
+Support dynamic content that's personalized to each statement. e.g. statement-
+specific barcode/qrcode. Greeting Names  
+  
+
+  
+
+## Rough draft for quick estimation:
+
+  
+
+### The overall high-level design of this are as follow:
+
+  1. Update the InfoTRAC Feature Setup module to accommodate additional type of 'personalized barcode' and 'personalized qrcode'.
+  2. Update the InfoTRAC MM Step 3 to understand the personalized-barcode/qrcode types and prompt users for textual content with variable specifications:
+    1. E.g. {barcode-number}
+    2. E.g. [http://www.somefi.com/payment?user_id={uid}&referral=stmtQrCode](http://www.somefi.com/payment?user_id={uid}&referral=stmtQrCode)
+    3. InfoTRAC would save the textual content only, and use it as template for actual content producing in the MMService below
+  3. Produce a MMService that produce the dynamic content on run-time
+    1. GET request on infoservice/mm/content/{campaign_id}/{target_group_id}/{message_area_id}?vars={json_string_with_variable_values}
+    2. Upon each request, use the content provided via [#2](https://i3dev.easyredmine.com/issues/2 "Bug: test notif \(Closed\)") above, fill in the values as provided during this WebService call, and return the actual barcode/qrcode image
+    3. Modify the Print Process code to accommodate the updated index-file spec, so that it would call the MMService above to fetch a dynamic image instead of using some static image within the currently packaged zip file.
+
+  
+
+### Assumption:
+
+  1. Print side DFA can handle Message-Areas to be overlapping to each other. This would make the content design more flexible and easier to maintain. If not, we can carve out the banner into pieces in worst case scenario.
+  2. Print side processing can make HTTP calls based on the data-source values, subsequently fetch/store/use the image returned. If it's perl/shell script, should be fine, but it'd be unknown if it's DFA.
+
+  
+
+### Estimate:
+
+  1. For the Design #1-#3, it would take roughly 4 weeks of dev work
+  2. For the Design #4, need your help to get estimate from Peter/Terrence. I had a brief chat with Tien about it and she throw some rough range of 2-6 weeks depends on complexity.
+  3. We should account for ~1-2 weeks of integration testing effort.
+
+  
+
+## Scope
+
+ **TODO: (Required)**  List out the itemized features of what's inside/outside
+of the scope of current project/phase  
+  
+
+  
+
+### In-Scope
+
+  1. Feature #1
+  2. Feature #2
+  3. ...
+
+  
+
+### Out-of-Scope
+
+  1. Feature #3
+  2. Feature #4
+  3. ...
+
+  
+
+## Assumptions
+
+ **TODO: (If Applicable)**  List out assumptions made during this design.  
+ **IMPORTANT:**  All assumptions need to be confirmed with corresponding
+stake-holder during design review. Assumptions would likely become
+Dependencies upon confirmation/design-review
+
+  1. e.g. This tool is meant to be used by internal people only, hence it will only support FF/Chrome. No IE supported needed.
+
+  
+
+## Dependencies
+
+ **TODO: (If Applicable)**  List out all dependency component/service/library
+needed for this design
+
+  1. e.g. jQuery Library v1.9.2 or above
+  2. e.g. PC need to be responsible for entering XXX values into YYY input file
+
+  
+
+# Requirements
+
+  
+
+## Business Requirements & Use
+Cases[](https://i3dev.easyredmine.com/projects/msgmgr/wiki/Personalized_Message_Content#Business-
+Requirements-amp-Use-Cases)
+
+ **TODO:**   **(Required)**  List out all needs/requirement from business/end-
+user perspective. Assign an ID for each requirement/use-case item for easier
+reference in future
+
+ID| Title| Details| ScreenMock| Importance  
+---|---|---|---|---  
+BRQ-01| Generic Search box| (example)  
+ **Requirement:**  Instead of showing a drop-down to ask user to choose what
+attribute to search against,  
+just have a simple search box that will search against all potential
+attributes like name/email/address/phone.  
+ **Use Case:**  enter "ben" into search box, search results returned should
+include both record of "Ben
+[Chan/bchan@infoimage.com](mailto:Chan/bchan@infoimage.com)" as well as "Jim
+[Wong/jwong@bigben.com](mailto:Wong/jwong@bigben.com)"| <attach file>| one of
+following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+BRQ-02| ...| ...| ...| ...  
+  
+  
+  
+
+## Functional Requirements & Use Cases
+
+ **TODO:**   **(Required)**  List out all needs/requirement from
+engineering/functional perspective. Associate them with an ID for easier
+reference
+
+ID| Title| Details| Bus. Req. Ref.| Importance  
+---|---|---|---|---  
+FRQ-01| Generic Search by Sphinx| (example)  
+ **Requirement:**  Instead of constructing the SQL statements for search,
+utilize Sphinx to help build the index and support such generic search.  
+ **Use Case:**  enter "ben" into search box, search results returned should
+include both record of "Ben
+[Chan/bchan@infoimage.com](mailto:Chan/bchan@infoimage.com)" as well as "Jim
+[Wong/jwong@bigben.com](mailto:Wong/jwong@bigben.com)"| <optional>| one of
+following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+FRQ-02| ...| ...| ...| ...  
+  
+  
+
+## Performance & Scalability Requirements (SLA)
+
+ **TODO: (Required)**  List out all needs/requirement from Performance
+perspective. Associate them with an ID for easier reference
+
+ID| Title| Details| Importance  
+---|---|---|---  
+PRQ-01| Fast Search response| (example)  
+ **Requirement:**  All Search operation should return results within 100ms.  
+ **Use Case:**  <enter if applicable>| one of following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+PRQ-02| ...| ...| ...  
+  
+  
+
+## QA/Test Requirements
+
+ **TODO:**   **(Required)**  List out all needs/requirement from QA/Testing
+perspective. Associate them with an ID for easier reference
+
+ID| Title| Details| Importance  
+---|---|---|---  
+TRQ-01| Selectable Search Box element| (example)  
+ **Requirement:**  The search textbox AND the 'Search' button need to tagged
+with 'id' value so that Selenium could select it for entering value and
+subsequent submit  
+ **Use Case:**  Rely on Selenium to submit random search terms and capture
+response time as well as validation search results| one of following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+TRQ-02| ...| ...| ...  
+  
+  
+
+# Design
+
+  
+
+## Architecture & Workflow Diagram
+
+ **TODO:**   **(Required for medium/large feature)**  Draft a diagram to show
+how various functional component work with each other, also how data flow from
+one component to another.  
+  
+
+  
+
+## Data Model changes (ER diagram & ddl.sql)
+
+ **TODO:**   **(Required if involve LARGE schema change)**  Draft a ER diagram
+of the existing AND new data-model design. Highlight the entity/relationship
+that is added/changed.
+
+ **TODO:**   **(Required if involve schema change)**  Include a ddl.sql file
+that could be executed against old schema in order to create/change
+table/columns, as well as handling the corresponding data-migration if
+applicable.  
+  
+
+  
+
+## Application component functional details
+
+ **TODO:**   **(Required if involve big architectural change)**  List out the
+key class/method created/changed for this project. Highlight the changed
+portion (e.g. additional param for a method)
+
+ **Overview:**   **TODO:**  Provide an overview of what changes if not already
+illustrated in the Architecture diagram above
+
+Component| Class| Method| Params| Comments  
+---|---|---|---|---  
+...| ...| ...| ...| ...  
+  
+  
+
+## Integration Points & Interface
+
+ **TODO: (If Applicable)**  List out Integration Points and corresponding
+interface
+
+From Component| To Component| Details| Error Handling  
+---|---|---|---  
+InfoTRAC| PUI| DT_JOB_ID need to be synchronized by...| If DT_JOB_ID during
+PUI processing is not found in ...  
+  
+  
+
+# Summarized Change Log
+
+Date| Who| Changes to Design Doc  
+---|---|---  
+3/11/2013| Ben C| Added some TODO notes and examples  
+3/08/2013| Ben C| Initial Draft  
+  
+  
+
+# Sign-Off
+
+Group| Date| Who| Comment  
+---|---|---|---  
+Product Manager (Business)|  
+|  
+|  
+  
+Account Service (AS)|  
+|  
+|  
+  
+Dev./Impl. Manager (Technical)|  
+|  
+|  
+  
+Production Control (PC)|  
+|  
+|  
+  
+Data Processing (DP)|  
+|  
+|  
+  
+Accounting/Invoicing|  
+|  
+|  
+  
+  
+  
+
+

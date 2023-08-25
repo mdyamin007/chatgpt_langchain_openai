@@ -1,0 +1,182 @@
+title: RHS - Prod: BKFN DLB REPO - Process Failed
+description: [~William.Kong] - See error below for BKFN DLB Repo
+
+
+
+[oper1@rhs ~]$ echo `date` >> /d/iss/dp/bkfndlb_runtime_01272020.txt;/home/master/bkfndlb_process.sh 2>>/d/daily/bkfn/dlb/today.log;echo `date` >> /d/iss/dp/bkfndlb_runtime_01272020.txt;
+fileDate: 20201027-1603824491
+Copy file to /d/daily/bkfn/dlb
+inputFilePGP BKFN_REPO_08252020.TXT.pgp
+chk_sum2
+Back up file to /d/download/bkfn/dlb
+creation of BKFN repo csv file /d/isd_share/bkfn/MKTEMAIL/dlb/20201027-1603824491/BKFN_NDD994.csv completed
+-- Starting Notify Services Client ## --
+[INFO]: OPTIONAL additional HTTP NotifyServices Param enabled in control file: genArchival=y
+url: http://infocloud01.infoimageinc.com:8080/notifyservice/api/v1/notification/bkfn/autocampaign?csvDir=MKTEMAIL/dlb/20201027-1603824491&requireApproval=n&appId=marketing&genArchival=y
+-- ERROR: Notify Service Failed !!! --
+create BKFN REPO REPO emails failed
+
+
+author: velasco
+comment: [~William.Kong] - Also email below that went out for processing.
+
+
+
+Prod Dev and ISD Team,
+
+
+
+The Notify Service wrapper Perl script: /home/master/trigger_notify_services.pl bkfn dlb 20201027-1603824491 encountered the following error...
+
+
+
+FATAL ERROR: (Status 500) Undefined Interal Server Error
+
+
+
+This means there was a problem sending the HTTP Request to the Notify Service API with the following URL:
+
+[http://infocloud01.infoimageinc.com:8080/notifyservice/api/v1/notification/bkfn/autocampaign?csvDir=MKTEMAIL/dlb/20201027-1603824491&requireApproval=n&appId=marketing&genArchival=y]
+
+
+
+The response body is below:
+
+Can't connect to infocloud01.infoimageinc.com:8080 (Connection timed out)
+
+
+
+LWP::Protocol::http::Socket: connect: Connection timed out at /usr/lib/perl5/site_perl/5.8.5/LWP/Protocol/http.pm line 51.
+
+
+
+
+
+IS Team: If Prod Dev or ISD needs your support, you can review the following log file for more details:
+
+/home/keep/logs/bkfn/bkfndlb/notify_services_email.20201027-1603824491.log
+
+
+author: william.kong
+comment: [~davidt]:  We have issue. This url is still pointing to Menlo. What is the brisbane IP address so that we can either JAIL the DNS or update the /etc/hosts file.
+
+
+
+[williamK@rhs ~]$ ping infocloud01.infoimageinc.com
+PING infocloud01.infoimageinc.com (10.8.9.55) 56(84) bytes of data.
+64 bytes from infocloud01.infoimageinc.com (10.8.9.55): icmp_seq=0 ttl=59 time=7.06 ms
+64 bytes from infocloud01.infoimageinc.com (10.8.9.55): icmp_seq=1 ttl=59 time=7.83 ms
+
+--- infocloud01.infoimageinc.com ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1001ms
+rtt min/avg/max/mdev = 7.064/7.449/7.834/0.385 ms, pipe 2
+
+
+author: trang809
+comment: William,
+
+Here is the URL for the BKFN Email Notification Jobs.
+
+[http://notifyservice-common.infoimageinc.com/]
+
+Thanks
+
+David
+
+
+author: william.kong
+comment: [~davidt]:
+
+
+
+On Menlo, I can update the code to use [notifyservice-common.infoimageinc.com|http://notifyservice-common.infoimageinc.com/]instead ofinfocloud01.infoimageinc.com.  
+
+On Menlo, i will update the /etc/hosts file to reference[notifyservice-common.infoimageinc.com|http://notifyservice-common.infoimageinc.com/]to point to 10.8.9.55
+
+After above two steps are completed, we we sync code to Brisbane; We do not have to modify /etc/hosts since[notifyservice-common.infoimageinc.com|http://notifyservice-common.infoimageinc.com/]points to IP address of10.4.16.91
+
+
+
+
+
+
+author: trang809
+comment: Surekha,
+
+
+
+Can you see what we can do on Menlo Site to use port 80. William mention that Anil did similar thing on the index file processing
+
+
+author: surekhadani1
+comment: Will,
+
+    OnMenlo, you call the direct tomcat url for notifyservice that uses port. On Brisbane you need to call proxy url which is without port. Also on Brisabane there is no context path(/notifyservice) in the proxy url
+
+For e.g : On Menlo : [http://infocloud01.infoimageinc.com:8080/notifyservice/]
+
+
+
+The Brisbane equivalent of this url is : [https://notifyservice-common.infoimageinc.com/](OR)[http://notifyservice-common.infoimageinc.com/]
+
+
+
+Notice that there is no port number in the url, also the /notifyservice has been removed from the context path in the proxy url
+
+
+I recommend using proxy url, because of one node goes down we will have a failover node . But if you plan to keep the configs same in both Menlo and Brisbane then you can use any of the below port url for notifyservice on Brisbane
+
+
+[http://ca-infotrac-pr-01.infoimageinc.com:8080/notifyservice/]
+
+[http://ca-infotrac-pr-02.infoimageinc.com:8080/notifyservice/]
+
+
+
+Thanks,
+
+Surekha Dani
+
+
+author: william.kong
+comment: [~Peter.Dang]: Please update the code in Menlo to use:
+
+
+
+[http://ca-infotrac-pr-01.infoimageinc.com:8080/notifyservice|http://ca-infotrac-pr-01.infoimageinc.com:8080/notifyservice/]
+
+
+
+Please remember to keep port 8080.
+
+I've updated Menlo rhs, rhs2, rh2, rht, pp03 & pp02 /etc/hosts file:
+
+!image-2020-10-29-14-50-28-389.png!
+
+
+
+
+
+
+author: peter.dang
+comment: When can we release the update? [~William.Kong]
+
+
+author: peter.dang
+comment: Per our discussion, we will generate a dummy snfb gaurdian mortgage file with [dp@infoimageinc.com|mailto:dp@infoimageinc.com] email. Just let us know when we can change the link. [~William.Kong]
+
+
+author: william.kong
+comment: [~Peter.Dang]: Is the /home/master code manually copied over to Brisbane? I don't see it in /home/master brisbane?
+
+
+author: william.kong
+comment: [~Peter.Dang]: Just a reminder per our conversation on Friday. You were going to release the code today and to coordinate the testing of snfb in replacement of of bfkn repo.
+
+
+author: peter.dang
+comment: We updated the url "http://ca-infotrac-pr-01.infoimageinc.com:8080", but the test failed to trigger.
+
+
+author: william.kong
+comment: [~Peter.Dang] and [~albert.chen]: Can you please re-test and confirm that it works? Prem updated the ticket 262 and stated it has been updated.

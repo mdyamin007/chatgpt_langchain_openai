@@ -1,0 +1,123 @@
+title: GCBK - [28747][pvt][in-house] Escrow Analysis Closed Accounts INHS
+description: From what I can gather, this would entail:
+-Creating a new statement type/email template for Closed Accounts prefix ea2
+-Updating the Number of Statements report on the admin site
+-Migrating all the existing ea2 statements to the new statement type
+-Disable AOLP for the ea2 prefix tied to the new statement type
+-Adding new statement type to Infoconfig for API
+-Adding new statement type to the optoutFeature in the conf file (Needed for email sending for now, not sure if we have an internal project yet to fix this).
+
+Internal notes:
+-For SSO users, closed escrow will be viewed under the Statements tab.
+-For admin users, closed escrow will be viewed under the Loan tab.
+-Inserts will need to be created under the Loan app type in order to show next to closed escrow statements.
+-Closed Escrow emails tested successfully on pilot. Test emails on stage before releasing project to production.
+-Double check code changes on pilot are all moved over to stage/production branch.
+
+8 Hr
+Turnover: 5/12
+Pilot: 5/25
+Live: 5/31
+
+
+author: shun.kuwashima
+comment: Hi [~dyuen], the updates have been made on pilot. Most of the updates are not really transparent from the admin/customer perspective, so there's not much for the client to verify. If anything, they can login to the pilot admin site and verify that there is now a Closed Escrow email template option. If we're good to proceed, then I can work on making these updates onto stage.
+
+
+
+
+author: dyuen
+comment: Thanks [~Shun.Kuwashima]! I notified GCBK about this. I think they will want to verify the email template before we proceed with anything. I'll let you know as soon as I have a response.
+
+
+author: eric.yan
+comment: -Migrating all the existing ea2 statements to the new statement type ea2
+
+"/usr/local/processing-ui/conf/gcbk.conf"
+optoutFeature.enable=true
+optoutFeature.statementType=default,enotice,loan,escrow (email will not sent out if stmt_type not in this list) - closed_escrow
+
+copy modified files from pilot to production when release.
+
+
+author: dyuen
+comment: Note: Updated due date in Jira and followed up with GCBK on sample.
+
+
+author: dyuen
+comment: [~Shun.Kuwashima] [~eric.yan], this is approved! Please proceed with final testing, etc. Do we need to do parallel?
+
+Thanks
+
+
+author: shun.kuwashima
+comment: Hi [~dyuen], no we don't need parallel but I will work on moving my updates over to stage and ask QA to test before we look to release to production. 
+
+
+author: shun.kuwashima
+comment: Moved code to stage and was able to test everything successfully. I'll work on prepping all the details/instructions for QA tomorrow.
+
+
+author: dyuen
+comment: Per SCRUM, updated due date to 7/6.
+
+Thanks
+
+
+author: shun.kuwashima
+comment: Hi [~Igor.Khosid],
+
+We are separating statements from index file prefix ea2 into its own app type, Closed Escrow Analysis, apart from regular escrow ea1. Below are the items we need to test:
+
+1. Please post index file ea2_20220301_1_20220503_9999_gcbk.txt onto stage, it should skip checking for AOLP and post successfully.
+2. Please verify the statement is viewable on both stage admin site and stage sso. Note: Closed escrow is expected to show under different tab name depending if it is on the admin site or sso, details below.
+-For admin site, please search account: 2438729. There should be a March 01, 2022 statement under the *Loan* tab.
+-For sso test page, please use cif_num: 002704226. All prefilled fields can remain. Once logged in, there should be a March 01, 2022 statement under the *Statements* tab.
+3. Please test retrieving the api response, here is the page for stage: http://ca-infotrac-st-01.infoimageinc.com:8580/infoservice/#!/documentV1/listAllStmt_get_4
+-Go to documentV1 and click on /v1/document/{cid}/search/all
+-Please enter the following fields as such, the rest can be left blank: 
+cid: gcbk
+acctNum: 2438729
+acctType: DD
+searchCriteria: [{'key':'startDate','operator':'=','operand':'2022-01-01'}, {'key':'endDate','operator':'=','operand':'2022-06-30'}]
+-Take the Request URL and paste it into a web browser at the top. You should see an instance of 'closed_escrow' appear. That is all we can verify, no need to actually view any statement.
+4. Check email and sms template exists for closed escrow.
+5. Test email/sms. Please provide me with a phone number to test sms and I can trigger this. 
+
+There are quite a few items, so we can hop on a call if that would make it easier to test. Thanks
+
+
+author: igor.khosid
+comment: Thank you, [~Shun.Kuwashima] for the very detailed instructions.
+Most likely, I will start on this tomorrow if time allows.
+
+[~gthillaivel] [~berezinez] [~Andrey.Kutsenko]
+
+
+author: igor.khosid
+comment: [~Shun.Kuwashima]
+QA - completed
+QA - test file - attached >>> [^ISD-7045 - test.txt] 
+>>> Closed Escrow Stage Test ******8729 email - received
+
+
+author: shun.kuwashima
+comment: Thanks [~Igor.Khosid]
+
+[~dyuen] QA is completed on stage. I'm going to have someone else from ISD review all the changes today. Once that's done, I plan on releasing to production near eod today. I'll provide another update at that time.
+
+
+author: dyuen
+comment: Thanks [~Shun.Kuwashima], GCBK has been notified of code release later today.
+
+
+author: shun.kuwashima
+comment: [~dyuen] Code has been released to production. 
+
+Fyi, I saw that they already updated the email content for Closed Escrow which is awesome, but we also need the SMS template to be updated as well. Once that is updated, then emails and texts should send out smoothly. 
+
+I will be actively monitoring the PUI the next few days for any incoming closed escrow cycles as well as checking on the email jobs. 
+
+
+author: dyuen
+comment: Thanks [~Shun.Kuwashima], I notified GCBK to update the SMS templates. I'll confirm once completed.

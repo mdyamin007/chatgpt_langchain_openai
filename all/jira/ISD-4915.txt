@@ -1,0 +1,67 @@
+title: Hypercube - Supporting statement for close account
+description: The Document Search API should have an optional parameter to determine whether we would also include closed accounts. Currently, I do not think the Hypercube has an option to pass this flag to also retrieve closed accounts.
+I think it should be a simple enhancement to add in such a configuration so that for clients that we enable it for, will be able to access the accounts/statements for closed accounts.
+Please confirm that it's as simple as I believe it to be, or would there be any complication?
+
+
+author: sadman anik
+comment: Hi [~tai.trinh],
+
+For hypercube, if there is a closed account then we show verbiage saying "_T*his account has been closed since +{color:#FF0000}date{color}+. You will not have access to this account after +{color:#FF0000}date.{color}+*"_ and this massage is not based on any flag. It's global for all close accounts. Also, we do not show any statements for closed accounts.
+
+For this ticket, we will show statements.
+
+Should I also remove this verbiage for closed accounts based on the new flag that we will introduce for this ticket or should this verbiage be as it is and just show the statement?
+
+
+
+Let me know. What should I do?
+
+Thanks,
+
+Sadman
+
+
+author: tai.trinh
+comment: Hi [~sadman anik],
+
+NECU, cif052586005. Can you check why the "Service Temporarily Unavailable" is occurring? I think this is due to the fact that we are sending a closed account to the API without setting the "closed account" flag to be true, right?
+
+For the verbiage, there is no logic that will prevent documents from showing after the specified date? Is this happening on the Infoservice level (let me know if this should be reviewed by me)? If the verbiage is not true, then yes, we should remove it. I find it a bit odd, too, that the verbiage is a sliding text across the top of the screen... That's pretty bad UI/UX in my opinion.
+
+Thanks,
+Tai
+
+
+author: sadman anik
+comment: Hi [~tai.trinh] ,
+ * Hypercube does not only check the account status for determining the closed account true or false. If the status is "C" that means closed then it checks if (account lastModified date + acctExpiryDays from properties file) is in current date range. if it is in current date then it return false for closed account. so during statement API it call the API because it returns false but the API does not return any result may be because of account status is "C" in the database. API returns as below,
+
+{code:java}
+etatement API Error: failed [600] {"Message": "No result found. Please check input parameters.","status": "600"}{code}
+ * 
+Since this 600 is not handled in the code so it's showing that"Service Temporarily Unavailable"error.
+We need to introduce the existingincludeClosed parameter in document search all API for the hypercube.
+ * Yes. There is no logic that will prevent documents from showing after the specified date because we always send (startDate and endDate) to the API from the immediate previous year till the current year.
+ * For the closed account verbiage, we can remove it for those who will show statements for closed accounts based on the flag.
+ * I also thought about that floatedsliding text. I will change that sticky.
+
+I will provide you a design doc regarding the changes so that you can review this.
+
+
+
+Thanks,
+
+Sadman
+
+
+author: sadman anik
+comment: Hi [~tai.trinh],
+
+I have linked a design doc to this ticket. Take a look and let me know.
+
+
+
+Thanks,
+
+Sadman

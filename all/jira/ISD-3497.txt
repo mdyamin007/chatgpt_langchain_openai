@@ -1,0 +1,448 @@
+title: INHS - Backup Logic Update
+description: None
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+
+Please do not commit to pilot. I'll review your code in trunk first, and once it looks good, I'll ask you to commit to pilot branch.
+
+Thanks,
+
+Tai
+
+
+author: azad
+comment: Hi [~tai.trinh],
+
+The functions _updateStatusAfterSuccess_ and_updateStatusAfterFailure_functions will be called from_backup_ method. But_backup_ method is not being called from anywhere in the code except for Worker.java class. So, I need some clarification about backup business.
+
+Thanks,
+
+Azad
+
+
+author: azad
+comment: Hello [~tai.trinh],
+
+Should the backup method be called always after exec method? If that so, I have added a _backup_ method call in the _*Worker* *class*_ after calling the _exec_ method.
+
+Also some of the applications/process like _accounting_, _acctlookup_ or _acctremap_ has a backup method with no code in it. i.e. if called, those backup methods will do nothing. Do you want the current backup logic to be implemented in those processes too?
+
+Thanks,
+
+Azad
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+
+No, do not update the Worker class or update the backup functions for any classes that do not already have it. That just mean we determined that there is nothing to backup. You may need to double check Pilot code, because sometimes dev may not have all the code.
+
+The backup method is called through a command, but the command is never really directly called. There is a backup ProcessingJob (inside application/backup) that is triggered everyday to call the backup for any jobs that need it (backup status of 10 but only if the job was successfully run).
+
+If you need to trigger the backup manually for an individual job (it's not advised that you trigger the batch backup, because then that will backup all of our test files), you can go onto ca-pui-dv-01. Go to /usr/local/processing-ui/schedule/, then run: sudo bash exec.bat [application] action:backup id:[p_job_id/ref# on front-end] orgName:[cid] userName:[pui username].
+
+A working example is: "sudo bash exec.bat etax action:backup id:101930 orgName:idcu userName:ttrinh"
+
+Thanks,
+
+Tai
+
+
+author: azad
+comment: Hi [~tai.trinh],
+
+I've committed the changes in the following two repositories.
+
+
+
+_Processing UI backend: *svn+ssh://ca-utils-pr-01.infoimageinc.com/srv/is_svn/trunk/processing-ui*_
+
+_Processing UI frontend: *svn+ssh://ca-utils-pr-01.infoimageinc.com/srv/svn/estmt2/processing/ui/trunk*_
+
+
+
+Thanks,
+
+Azad
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+
+For the files that have a try/catch block, in the catch block, please include the line:e.printStackTrace(pc.getWriter().getLog()); before updateStatusAfterFailure(). We need that to print out the error if it does happen to see what the issue is.
+
+Thanks,
+Tai
+
+
+author: azad
+comment: Hi[~tai.trinh],
+
+Before every call of_updateStatusAfterFailure()_ method, I've added the following line:
+
+_e.printStackTrace(pc.getWriter().getLog());_
+
+I've committed the changes in the following repository.
+
+_Processing UI backend:*svn+ssh://ca-utils-pr-01.infoimageinc.com/srv/is_svn/trunk/processing-ui*_
+
+Thanks,
+
+Azad
+
+
+author: tai.trinh
+comment: [~Azad],
+
+Thank you. This can be moved to Pilot now.
+
+You'll also need to move the code for the two functions in the backup helper. Please do the necessary testing on Pilot. I will use Pilot PUI to showcase to the rest of the onshore team later.
+
+Thanks,
+
+Tai
+
+
+author: azad
+comment: Hi [~tai.trinh],
+
+The following changes are done in PUI Pilot svn repo
+
+_*svn+ssh://ca-utils-pr-01.infoimageinc.com/srv/is_svn/branches/pilot/processing-ui*_
+
+__
+
+BackupHelper.java => updateStatusAfterSuccess and updateStatusAfterFailure methods added.
+
+JobStatus.java => BACKUP_FAILURE flag added to ArchivalStatus class with value 9.
+
+ProcessingJob classes => backup methods are refactored to call those two methods.
+
+
+
+I've done some tests from my end and backup method is working as expected and also frontend is showing the archival status in a new column.
+
+Please conduct a thorough test before showcasing to the rest of the team and let me know if you need anything.
+
+
+
+Thanks,
+
+Azad
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+
+The onshore team is in the process of implementing a more hands-off coordination approach with the offshore team. Now that you guys have access to all environments, we believe that you should be able to handle deployment and testing at least all the way up to Staging.
+
+Please deploy code to the Pilot environment, and create the different cases on the Pilot PUI. I think using the demo enrollment process would be a good idea. We can just use empty files for those if I'm not mistaken. Then just trigger the backup and have the different situations happen so that we have all the UI to show.
+
+Another thing you should know about the pui server is that you can run "sudo console.sh" and it will open up a pui console. The two commands "list running" and "list waiting" will list out the running jobs and waiting jobs. "exit" will exit that console. If there are stuck jobs, you can also use "remove [jid]" to remove it from the queue.
+
+Thanks,
+
+Tai
+
+
+author: azad
+comment: Hi [~tai.trinh],
+
+Currently we don't have access on PUI PILOT. We have talked with Joe about it and after we get the access, I will start the test.
+
+Thanks,
+
+Azad
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+
+Do you still have issue accessing PUI PILOT?
+
+Thanks,
+
+Tai
+
+
+author: azad
+comment: [~tai.trinh],
+
+Yes, we still can't access PUI PILOT.
+
+Thanks,
+
+Azad
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+
+How about now?
+
+Thanks,
+Tai
+
+
+author: azad
+comment: Hi [~tai.trinh],
+
+Still can't access.
+
+Thanks,
+Azad
+
+
+author: azad
+comment: Hi [~tai.trinh],
+
+We now have access to PUI PILOT. Should I resume work in this ticket?
+
+Thanks,
+ Azad
+
+
+author: tai.trinh
+comment: [~Azad] 
+Yes. Please resume if you have the time. Please set up examples on Pilot PUI of:
+ # Successful Job that was backed up successfully
+ # Successful Job that was NOT backed up successfully
+ # Successful Job that has no backup needed
+ # Failed Job that won't be backed up
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+
+Also, I'm not sure if this is related to what we're doing. But can you confirm something.
+
+On the pui servers, if you run sudo console.sh, it will open a simple console.
+
+Then when we call "list running" or "list waiting" it will list out all the waiting jobs or the running jobs. This is all tied to how the PUI works. Occasionally, when I check these list, it seems like some jobs get stuck. I want to confirm if what we're doing didn't introduce some sort of bug.
+
+I think the case is usually when a job failed. Maybe an exception happened and it does not properly remove the job from the list.
+
+Attached is an image of how I use it, and what I see when I check. It's atypical that OSCU would show up so many time and be stuck like that.
+
+!image-2021-06-14-14-03-57-633.png!
+
+Thanks,
+
+Tai
+
+
+
+
+
+
+author: azad
+comment: Hi [~tai.trinh],
+
+About triggering backup manually for an individual job -
+
+I ran a paperless process for SLCU in pui-dev. It ran successfully with "_Green EXEC_" in action column and "_PENDING_" in the archival status column. Then, I triggered the backup manually for this job in the pui-dv server.
+
+I've ran this command in /usr/local/processing-ui/schedule: _*sudo bash exec.bat paperless action:backup id:102474 orgName:slcu userName:admin*_
+
+After that, UI is showing archival status as "_SUCCEED_" as the backup is successfull, but the action column is changed to "_Red BACKUP_". Why did the JobStatus shifted to FAILED?
+
+*Note:*Before using _updateStatusAfterSuccesss_ and _updateStatusAfterFailure_ methods, if a backup was successful, the code in the backup method explicitly sets the JobStatus as SUCCESS. I've reverted the backup method to previous version and after triggering backup manually, UI is showing _SUCCEED_ in archival status and a "_Clear BACKUP_" in the action column.
+
+Thanks,
+
+Azad
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+
+Somehow, the backup is being run twice:
+
+First backup attempt is successful.
+{code:java}
+[06/15/2021 03:11:12] ======================================
+[06/15/2021 03:11:12] Backup
+[06/15/2021 03:11:12] ======================================
+[06/15/2021 03:11:12] Copying /d/INPUT-DEV/I3/process-files/slcu/ms1_paperless_slcu_06102021
+[06/15/2021 03:11:12] [INFO] Backup successful!
+[06/15/2021 03:11:12] paperless.docService is: [false]
+[06/15/2021 03:11:12] Application Error: null
+[06/15/2021 03:11:12] Report status for job Id: [102460]{code}
+
+
+Backup is called a second time somehow, and so the file to-be-backed up can no longer be found. At this point, the logic is that it should register BACKUP FAILED instead of the whole job failed. Maybe this requirement hasn't been coded for yet?
+{code:java}
+[06/15/2021 03:12:25] need check sum for paperless is null
+[06/15/2021 03:12:25] 
+[06/15/2021 03:12:25] 
+[06/15/2021 03:12:25] ======================================
+[06/15/2021 03:12:25] Backup
+[06/15/2021 03:12:25] ======================================
+com.infoimage.processing.common.InputException: source file not found
+ at com.infoimage.processing.common.BackupHelper.backupFile(BackupHelper.java:43)
+ at com.infoimage.processing.application.paperless.ProcessingJob.backup(ProcessingJob.java:33)
+ at com.infoimage.processing.server.Worker.run(Worker.java:84)
+ at java.lang.Thread.run(Thread.java:748)
+[06/15/2021 03:12:25] [INFO] Backup failed!
+[06/15/2021 03:12:25] paperless.docService is: [false]
+[06/15/2021 03:12:25] Application Error: Application Error: null
+[06/15/2021 03:12:25] Report status for job Id: [102460]{code}
+Thanks,
+Tai
+
+
+author: azad
+comment: Hi [~tai.trinh] ,
+
+
+About _"Successful Job that was backed up successfully"_ and _"Successful Job that was NOT backed up successfully"_ -- 
+Check the attached screenshot:
+
+!Screenshot from 2021-06-16 23-27-29.png!
+JobId 102491: Successful Job and Successful backup
+JobId 102486: Successful Job with Failed backup
+JobId 102489: Tried to create the scenario for "_Failed Job that won't be backed up_" by the 1st way discussed below.
+
+
+
+About _"Failed Job that won't be backed up"_ --
+Currently, if a job fails, Archival Status shows "PENDING" in the UI. Should I show "N/A" instead? like the job 102489.
+
+
+If so, I've found two ways to show "N/A" in archival status in the UI.
+  1. At the start of the exec method, set archival status as "DO_NOTHING" and when JobStatus is being set to success, set archival status to "WAITING_TO_BACKUP". If job fails, archival status remains "DO_NOTHING". I've only done this in etax/ProcessingJob to do the testing. 
+Or,
+  2. In Worker.java file, after job.exec() call returns, we can check for JobStatus -- if JobStatus is failed, we can set archival status to "DO_NOTHING". If JobStatus is success, archival status will not be changed, it remains "WAITING_TO_BACKUP".
+
+In the first way, a lot of files need to be modified.
+About the second way, there are some jobs that doesn't need to be backed up, right? So, we have to add a clause for those jobs so that, if their JobStatus is success, their archival status should be set to "DO_NOTHING".
+
+Give me your feedback.
+
+Thanks, 
+Azad
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+
+I think what you're suggesting makes sense. But I don't think we really need to manage the archival status if a job fails.
+
+Can we just have the front-end check the Job Status also? If the Job Status is failed, then we display N/A and skip checking the archival status.
+
+Thanks,
+Tai
+
+
+author: azad
+comment: Hi [~tai.trinh],
+
+Yes, we can do that.
+
+
+author: azad
+comment: Hi [~tai.trinh],
+
+Check the attached image from PUI PILOT,
+ # Successful Job that was backed up successfully - jid:*184035*
+ # Successful Job that was NOT backed up successfully - jid:*184036*
+ # Successful Job that has no backup needed - jid:*184025*
+ # Failed Job that won't be backed up - jid:*184018*
+
+!Screenshot from 2021-06-17 16-14-40.png|thumbnail!
+
+You can run some processes to create those scenarios to cross-check everything.
+
+Please, let me know if anything is needed.
+
+Thanks,
+
+Azad
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+
+After internal review, it is decided that we do not need the additional column on the front end. Please remove that. We will not make any update to UI. So this will be backend changes only now.
+
+Thanks,
+Tai
+
+
+author: azad
+comment: [~tai.trinh],
+
+Archival Status column is removed. Changes are deployed to both dev and pilot.
+
+Thanks,
+Azad
+
+
+author: tai.trinh
+comment: Hi [~Azad]
+
+We shouldn't move this to Done yet. We have to go all the way to Production.
+
+Please move code to Staging now.
+
+If I'm not mistaken, now:
+ # Nothing on front-end is changed.
+ # Multiple Processing Jobs in the PUI code is changed.
+ # Backup Helper is changed.
+
+Is there anything else I'm missing? I will review your changes on Staging. Please make sure to update the release notes so that it's most up-to-date. I know I did some of the functions, but also consider those changes.
+
+Thanks,
+
+Tai
+
+
+author: azad
+comment: Hi [~tai.trinh],
+
+The changes you mentioned are correct. Plus, BACKUP_FAILURE = 9 is added in JobStatus.
+
+I will move the changes to Staging. I had considered your changes in release note. I'll double check then. Let me know if I had missed anything.
+
+Thanks
+
+Azad
+
+
+author: azad
+comment: Hi [~tai.trinh],
+
+I've moved the changes to Staging. And, release note is updated to consider the changes in Staging.
+
+Also, as we are not changing anything in front-end, there is no way for a dev to know a backup is failed by just looking at the UI. He/she has to open process log to know that the backup process is failed. Will it be okay?
+
+Thanks
+
+Azad
+
+
+author: tai.trinh
+comment: Hi [~Azad],
+
+Yes, that was considered. Since the backup process is not a high-priority operation, it was deemed that this is okay. Even if the backup failed, after 5 days, files will be moved to the "idle" folder as part of that cleanup process also.
+
+Additionally, through code analysis, we have pretty much confirmed that the backup process is unlikely to fail now. I have already fixed all the bugs related to that (Job Status is extremely unlikely to be set to FAILED due to the backup failing). This update we are doing is for just in case something else break that's going to affect the Job Status.
+
+Thanks,
+Tai

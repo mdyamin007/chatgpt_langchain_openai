@@ -1,0 +1,88 @@
+title: 13428 - DACB - Commercial user error stmt via SSO
+description: None
+
+
+author: sadman anik
+comment: Hi [~Patric K],
+
+Can you provide the list of possible cif number that has special characters for DACB?
+
+Thanks
+
+
+author: patric k
+comment: [~sadman anik]
+
+Try testing these:MOTHERT#00,# 2W00,KINNER&C00,SM F&00
+
+
+author: sadman anik
+comment: Hi [~Patric K],
+
+I have committed the code in the trunk and deployed on the pilot. Take a look and let me know.
+
+Thanks.
+
+
+author: patric k
+comment: Hi [~sadman anik],
+
+This fix is working for the personal accounts but not when we try to sso in as the business user/subuser.From the infoservice logs (2020-09-04 16:32:07), I tried to pass in cif:SM P&00#00|7777 but it did not encode properly and came out withprimaryUserId: SM P. There is an index file posted on pilot PUI 8/13 you can get some cifs from there. Let include testing other characters like right parenthesis ( and forward slash / .
+
+[08/13/2020 12:56:10] AcctNum: [750000244] Cif: [PATTER&P00]
+
+
+
+Thanks,
+
+Patric
+
+
+
+
+author: sadman anik
+comment: Hi [~Patric K],
+
+I have committed the change in the trunk and deployed in the pilot. Let me know when you check.
+
+I have one concern aboutPrimary_user_flag column in the usr_mapping table.
+
+Currently when we sso with sub user then it insert "S" otherwise it insert "null" inPrimary_user_flag column. Is it following the current business?
+
+
+
+Thanks,
+
+Sadman
+
+
+author: patric k
+comment: Hi [~sadman anik],
+
+I have build your code on pilot. I also noticed that too about the primary_user_flag, and I am unsure. I was getting either null or 'S'. It appears to work withprimary_user_flag = 'N'. So far the CIF *cannot* accept percent sign or underscore.
+
+Thanks,
+
+Patric
+
+!dacb_biz.PNG|thumbnail!
+
+
+author: sadman anik
+comment: Hi [~Patric K],
+
+Joe confirmed the primary_user_flag is working as business logic.
+
+I have tried to log in with "_" underscore in the CIF number and it's working. But "%" will not work because of some cookie issues.
+
+And I have also check for CIF number with "%" in the DACB index file and there is no CIF number with "%".
+
+
+
+Thanks,
+
+Sadman
+
+
+author: patric k
+comment: [~sadman anik] Released to production.

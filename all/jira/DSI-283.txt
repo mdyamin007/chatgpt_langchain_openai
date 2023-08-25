@@ -1,0 +1,12 @@
+title: INHS - GLOBAL - Update API bounceback report byUsr
+description: Hi [~rifat.mahmud],
+
+We have ran into the issue where we need to support the byUsr (which is only usr_id in notification_preference table) to pull reports.
+
+Can you look into this and make updates and let me know? We will need to have a flag to turn on byUsr, as the byAccount will be default.
+
+We can use theglobal.emailUserAcctRef=user flag that is already there and the two methods that need to be updated inside the *ReportGenerator.java* are*handler.resetPaperlessStatus* and*handler.updateEmailError*. Those are the only places which use the acct_id which is why it is not working.
+
+
+author: mamunur.rashid
+comment: We found that although "bounceBackReportAPI.paperless_status.update" flag is false the code will not work when handler.updateEmailError() method will be called. Cause in this method paperless status update is not flag based. So there will be NullPointerException for byUsr client as account id is null. That's why some code change is needed.

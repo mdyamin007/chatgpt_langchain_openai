@@ -1,0 +1,92 @@
+title: 6594 - New CID for CAMB
+description: Per Heather:
+
+Also, just as a side note, thenew Digital Bank's name will be *Ivy Bank*will be set up as another branch (they don't know the branch code yet) on DNA. This is not public knowledge yet so please keep the name quiet for now.
+
+
+
+Please proceed with what we discussed yesterday that I have outlined below as a recap and please correct anything I misstate. I have sent the client the addendum to sign (we are doing this project direct with the bank and NOT through Fiserv)
+
+
+ * Set up a new Sub CID on the Hypercube platform
+ * Update the CAMB CID to move from the Admin Site to InfoTrac so the bank only has one login (timing as part of the overall Digital Bank project TBD but should be close to go live)
+ * This will then look like a Parent/child CID setup using one login and separate permissions
+ * Leave Cambridge (CAMB) on Prism platform for now but discuss moving them to Hypercube once new Digital Bank is live, etc...
+
+
+author: mamunur.rashid
+comment: @isd
+
+CAMB msm has been moved to infotrac dev. It will be tested tomorrow. Will the hypercube setup of Ivy Bank be done by using the same configuration of CAMB?
+
+
+author: mamunur.rashid
+comment: @isd
+
+While migrating CAMB msm to infotrac i have found that In camb msm there is a report called update email address report. It uses the following query to show data in a text file.
+{code:java}
+select um.CIF_NUM, fn.ACCT_NUMBER,fn.TYPE, DECODE(nh.EMAIL_ADDRESS,null,' ',nh.EMAIL_ADDRESS) as EMAIL_ADDRESS, (select USR_FIRSTNAME FROM usr where USR_ID=nh.MODIFIED_BY) as USR_FIRSTNAME, nh.MODIFIED_TIME FROM NOTIFICATION_HISTORY nh, usr us, USR_MAPPING um, FIN_ACCOUNT fn, USR_FIN_ACCOUNT ufa where fn.ORG_ID=? and ufa.USR_ID=us.USR_ID and us.USR_ID=nh.USR_ID and um.USR_ID=nh.USR_ID and ufa.ACCT_ID=nh.ACCT_ID and ufa.ACCT_ID=fn.ACCT_ID ORDER BY nh.MODIFIED_TIME DESC;{code}
+In infotrac there is no update email address report. Will camb use custom report for this in infotrac?
+
+
+author: mamunur.rashid
+comment: @isd
+
+We need details of *Ivy Bank* for hypercube setup.
+
+
+author: 5ba31365b1a4b82e99864b78
+comment: [~mamunur.rashid],
+
+I am currently working with the IMP team to get you an SOW and answer on the update email address report. I will let you know once I have it.
+
+
+author: mamunur.rashid
+comment: @isd
+
+In camb msm the side box-menu of statement types are generated from STMT_TYPES array defined in define.jspf. But it follows a condition. If STMT_TYPES[i][2].equals("O") then that statement type will be added to the box menu if that statement type is present in the ACCOUNT_STMT_TYPE table mapped with the ACCT_ID of searched account.
+But in infotrac statement type tab is generated without such condition. It shows all the statement types we provide in Account Management Properties JSON.
+
+Here I am providing statement type menu for same account.
+
+*MSM:*
+
+!camb msm statement type menu.png!
+
+
+
+*infotrac:*
+
+*!infotrac stmt type menu.png!*
+
+
+
+Should this feature of camb msm be implemented in infotrac? Or it is okay with the default feature of infotrac? Let me know your feedback.
+
+
+
+
+author: 5ba31365b1a4b82e99864b78
+comment: [~mamunur.rashid]
+
+It is okay to leave it as is for infotrac since it is an admin interface.
+
+What is the status on the CAMB setup?
+
+
+author: mamunur.rashid
+comment: [~Bryant.Tran]
+
+I have setup CAMB to infotrac dev, it is now under testing.
+
+
+author: mamunur.rashid
+comment: @isd
+
+Hi [~Bryant.Tran],
+
+Isthe SOW of new CID for CAMB ready?
+
+Thanks.
+
+Mamunur Rashid

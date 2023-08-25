@@ -1,0 +1,164 @@
+title: POC exercise to migrate to MySQL with Xtradb cluster setup
+body:   
+
+## Hardware Setup
+
+ **Host**|  **IP**|  **Type**|  **Env.**|  **for App**|  **OS**|  **CPU**|
+**RAM**|  **HD**|  **App/Svc hosted**  
+---|---|---|---|---|---|---|---|---|---  
+pd-dev4| 10.8.9.135| VM| Dev| Oracle -> MySQL XtraDB Test| Ubuntu 12.04 LTS|  
+| 4GB| 140GB|  
+  
+pd-dev5| 10.8.9.136| VM| Dev| Oracle -> MySQL XtraDB Test| Ubuntu 12.04 LTS|  
+| 8GB| 140GB + 500GB|  
+  
+pd-dev6| 10.8.9.137| VM| Dev| Oracle -> MySQL XtraDB Test| Ubuntu 12.04 LTS|  
+| 8GB| 140GB + 500GB|  
+  
+  
+  
+
+## Software Versions
+
+  1. Xtradb Version??  
+Percona XtraDB Cluster (GPL), Release 25.6, wsrep_25.6.r4111
+
+  1. MySQL Version?? 5.6.19
+
+## Migrate Data from Oracle to MySQL
+
+  
+
+### What Tool/Utility/Script is used?
+
+    
+    
+    Mysql migration toolkit was used to move data from Oracle to Mysql.  
+       This is not the current "mysql workbench" toolkit produced by oracle, but previous version of  
+       mysql toolkit which was created when mysql was owned by Sun.
+    
+    
+    Current "mysql workbench" only offer ability to migrate from mysql to oracle but not vice versa as  
+       Oracle eliminated that capability in this toolkit.
+    
+    
+    Older version allows migration from Oracle to Mysql, but it is incompletely developed tool, and  
+       offer no ability to automatically migrate any stored procedure/function/triggers
+    
+    
+    In addition this tool has defect in that when it performs online transfer of data, it   
+        attempts to do it in single transaction, which will always fail if the table is larger than   
+        moderate size (few 100K rows).  
+        But it offers ability to dump oracle data in mysql friendly format, and this can be used to import   
+        large tables from oracle to mysql.
+    
+    
+    Another way to migrate data from oracle to mysql is to use oracle gateway (dg4odbc) which allows   
+         data to be pushed from oracle to mysql.   This is useful for creating real time replication from   
+         oracle to mysql.
+    
+    
+    Another way to move data from oracle to mysql is to create java program which uses jdbc to copy data from   
+          oracle to mysql.  This is more or less what Mysql migration toolkit already does, but script would be  
+          more flexible.
+
+  
+
+### How to Setup the XtraDB cluster?
+
+  1. Need to put configuration values/details
+  2. installation steps
+
+Installation of percona xtradb cluster is straightforward:
+
+1) configure percona apt repository:  
+a) $ apt-key adv --keyserver [keys.gnupg.net](http://keys.gnupg.net) \--recv-
+keys 1C4CBDCDCD2EFD2A
+
+    
+    
+    b) Add this to /etc/apt/sources.list
+
+  1. VERSION is version of ubuntu, like "lucid" ############  
+deb <http://repo.percona.com/apt> VERSION main  
+deb-src <http://repo.percona.com/apt> VERSION main  
+Remember to update the local cache:
+
+c) apt-get update
+
+2) install xtradb cluster
+
+    
+    
+    a) $ sudo apt-get install percona-xtradb-cluster-56
+
+  1. tool/util execution steps
+
+  
+
+## Stored Procedures Migration
+
+  
+
+### Laundry list of all stored procedures/triggers involved that need to be
+migrated
+
+  * [I3 eStmt Stored Procedures and Triggers](https://i3dev.easyredmine.com/projects/relmgmt/wiki/I3_eStmt_Stored_Procedures_and_Triggers)
+  * [InfoTRAC Stored Procedures and Triggers](https://i3dev.easyredmine.com/projects/relmgmt/wiki/InfoTRAC_Stored_Procedures_and_Triggers)
+  * [DataTrac Stored Procedures and Triggers](https://i3dev.easyredmine.com/projects/relmgmt/wiki/DataTrac_Stored_Procedures_and_Triggers)
+
+  
+  
+
+### Any tool used for such migration? If no, what's the general rules that we
+follow to convert them?
+
+There are number of commercial stored procedure conversion tools. But there
+are no open source/free tools that I am aware of. I am not sure how good these
+commercial tools are. There are many oracle stored procedure
+features/functions/syntax for which there are no mysql equivalent, so there
+can be no conversion tool which can do 100% automated conversion.  
+  
+
+## View Migration
+
+  
+
+## Backup/DR strategy
+
+  1. full backup? Or replication across datacenter?
+
+Full backup can be created using percona xtrabackup.  
+Because backup process can put load on the production server,  
+it's advisable to create a slave from the xtradbcluster and  
+take backup using the slave.  
+Slave is also useful for executing reporting queries/ long running jobs  
+  
+
+## Source Control of Schema Definition & Stored Procedures
+
+  
+
+### How to do source control over all of the details in database, including
+full-ddl, delta-ddl for upgrades, schema-upgrade-data-migration, stored
+procedures,
+etc.[](https://i3dev.easyredmine.com/projects/relmgmt/wiki/Ora2my_xtradb_poc#How-
+to-do-source-control-over-all-of-the-details-in-database-including-full-ddl-
+delta-ddl-for-upgrades-schema-upgrade-data-migration-stored-procedures-etc)
+
+For mysql, full schema ddl can be generated using mysqldump with --no-data
+option.  
+dump can include all triggers/events/stored procedures using --events
+--routines --triggers options  
+  
+
+## Q&A
+
+  1. We have separated into 3 schemas (i.e. CU, Bank, Default) mainly due to (1) large volume of records, (2) schema usage different between CU and Bank. Do we still need such break-down in the Xtradb Cluster setup?
+    1. Yes it's good to plan for future sharding (due to growing traffic/data), and being able to split database on functional lines easily. Even if all three schemas will run adequately on single server, xtradb cluster does  
+not load balance write load, as all write loads go to all members of cluster.
+Therefore, if write load becomes  
+too high, it will be necessary to create separate clusters housing each of I3,
+I3_CU and I3_BANK
+
+

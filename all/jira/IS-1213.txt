@@ -1,0 +1,214 @@
+title: HCCU - Invoice - LoanPDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133581-C30.01-V20988
+
+Processing Scripts to modify:
+ hcculs1_process.sh
+
+Data Files to use:
+ HCCU_RSTATLOC_050522.pgp
+
+
+
+*NOTE*: This job runs on RH2. Since we are migrating from RHS to RH2, we should test all options so that we can do afpcompare and also ensure there is no errors in the processing logs.
+
+
+
+
+author: tanmay
+comment: Hi [~William.Kong]
+
+We have already discussed about this. still giving a status here
+
+
+
+Parallel id20210528142128 already created by [~jun]
+
+I guess he is working on it pdfi to archival conversion.
+
+let me know if he finished it or we need to complete it .
+
+
+author: william.kong
+comment: [~tanmay]: I've confirmed with [~OIR](Terrence) that [~jun]can take over since he completed this last year, but just needing testing.
+
+
+
+[~jun]: Thank you for confirming the status this morning. Can you please take this project back and test this on*RHS* server with ALL job_sel options. We also plan to migrate this application to run on RHS server moving foward.
+
+
+author: jun
+comment: [~William.Kong]
+
+I've completed runningHCCU_RSTATBIL_ARCHIVAL_071522.pgp andHCCU_RSTATBIL_071522.pgp for all job options.
+
+Output is here:/z/pdf_afp/hccu/hcculs1/
+
+The PDF name uses the system time so the naming convention and index file is a little different from parallel vs production. The content of the PDF looks same.
+
+
+
+For example:
+
+Prod index:
+
+632932-01_071522_*1234*_00855.pdf|
+
+Prod Filename:
+
+632932-01_071522_*1234*_00855.pdf
+
+
+
+Test Index:
+
+632932-01_071522_*1456*_00855.pdf|
+
+Test filename:
+
+632932-01_071522_*1456*_00855.pdf
+
+
+author: william.kong
+comment: [~jun]: Thanks for the heads up! I will take a took.. Be prepared to submit this to QA if my initial pdf_compare assessment is good and likewise afp_compare. I will rely on you to help check error in logs and DPVS to make sure all is good. Thanks!
+
+
+author: william.kong
+comment: [~jun]: Results are good! Great job and thanks for taking on this additional project. Please submit this to QA:
+
+
+
+[~Igor.Khosid]:
+
+
+
+*PDF Compare:*
+
+PDF Compare Results are good. 0 Differences:
+
+Total PDF Files Scanned: 6008
+allowedDifferenceInPercentPerPage: 5:
+Thread Count: 128
+
+Total PDF Files with Differences: 0
+Start Time: Thu Jul 28 09:13:36 PDT 2022
+Finish Time: Thu Jul 28 09:48:30 PDT 2022
+
+
+
+*AFP Compare:*
+
+NO Difference found in hcculs1115.afp_1_758_diff.xml
+
+Compared /d/iss/willK/proj_64b/afpcompare_test/hcculs1/prod/hcculs1115.afp vs /d/iss/willK/proj_64b/afpcompare_test/hcculs1/parallel/708492_hcculs1115.afp
+90419edba15b1e8d3b95a15597c9ec25 /d/iss/willK/proj_64b/afpcompare_test/hcculs1/prod/hcculs1115.afp
+83ba44a2488253e6486583bfde850839 /d/iss/willK/proj_64b/afpcompare_test/hcculs1/parallel/708492_hcculs1115.afp
+
+Start Time: Fri Jul 29 15:24:52 PDT 2022
+Finish Time: Fri Jul 29 17:45:33 PDT 2022
+
+Total Page Count: /d/iss/willK/proj_64b/afpcompare_test/hcculs1/prod/hcculs1115.afp (758)
+Total Page Count: /d/iss/willK/proj_64b/afpcompare_test/hcculs1/parallel/708492_hcculs1115.afp (758)
+
+
+
+
+
+
+
+
+author: jun
+comment: [~Igor.Khosid]
+
+parallel id:20210528142128
+
+Output is here:/z/pdf_afp/hccu/hcculs1/
+
+
+author: igor.khosid
+comment:    Parallel ID: 20210528142128
+   Currently in parallel: Yes
+   User: junM
+   Description: 48153 HCCULS1 PDFI Conversion
+   Date Submitted: 2021-05-28 14:21:43
+   Date Last Updated: 2022-08-02 09:40:18
+   Files:
+      1) hcculs1.control
+      2) hcculs1_pdf.control
+      3) hcculs1.procs
+      4) hcculs1_pdf_template.control
+      5) HCCULS11.dfa
+      6) hcculs1_process.sh
+
+
+author: william.kong
+comment: [~Igor.Khosid]/[~Andrey.Kutsenko]: Is this project still in QA? Please advise status if we are going to make it ready by today (8/10). If not, can I reschedule this for 8/16?
+
+
+author: JIRAUSER11104
+comment: ...script started
+
+
+author: JIRAUSER11104
+comment: QA test - *PASSED*
+
+Ran script:
+{code:sh}
+[andreyK@ca-isis-pr-04 pdf_compare]$ perl pdf_compare.pl hcculs1_prod/ hcculs1_parallel/ result_hcculs1 -pixels 8 -threads 32 -regex '[0-9]+-[0-9]+_[0-9]+_<CUSTOM=[0-9]+_[0-9]+>.pdf'{code}
+Report:
+{code:sh}
+[andreyK@ca-isis-pr-04 pdf_compare]$ cat /d/pdf_compare/result_hcculs1/pdf_compare_rpt.txt
+Total PDF Files Scanned: 855
+allowedDifferenceInPercentPerPage: 8:
+Thread Count: 32
+
+Total PDF Files with Differences: 0
+Start Time: Thu Aug 11 12:04:08 PDT 2022
+Finish Time: Thu Aug 11 12:12:13 PDT 2022{code}
+
+
+author: jun
+comment: Attached code transfer form
+
+[^IS_PROGRAM_TRANSFER_FORM_Rev 07132016.doc]
+
+
+author: tuna
+comment: Hey [~jun],
+
+Following codes have been released. Per our conversation, parallel test is bypass by [~William.Kong].
+
+Thanks,
+
+Tun
+
+
+
+total 6 files
+
+20220816141520 08/16/2022 junM IS-1213 HCCU - Invoice - LoanPDFi Conversion to AFP2PDF Python [InHse]
+
+[oper1@rhs docdef]$ ll /d/is/cvs/xfer/junM/
+total 336
+-rwxrwxrwx 1 junM isgroup 12959 Aug 16 14:01 HCCULS11.dfa
+-rwxrwxrwx 1 junM isgroup 1240 Aug 16 14:00 hcculs1.control
+-rwxrwxrwx 1 junM isgroup 411 Aug 16 14:01 hcculs1_pdf.control
+-rwxrwxrwx 1 junM isgroup 16 Aug 16 14:01 hcculs1_pdf_template.control
+-rwxrwxrwx 1 junM isgroup 11671 Aug 16 14:01 hcculs1_process.sh
+-rwxrwxrwx 1 junM isgroup 2795 Aug 16 14:01 hcculs1.procs
+
+
+author: jun
+comment: Code released to prod

@@ -1,0 +1,154 @@
+title: HTBK - Letter - NSF ( Process Only )PDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133578-C30.01-V22558
+
+Processing Scripts to modify:
+ htbkdl_nsf_process.pl
+
+Data Files to use:
+ 1349.0530.1305474.CK_NSFNT-HERI1.STM.pgp
+
+
+
+*NOTE*: This job runs on RH2. Since we are migrating from RHS to RH2, we should test all options so that we can do afpcompare and also ensure there is no errors in the processing logs.
+
+
+author: tanmay
+comment: Hi [~William.Kong]
+Sample form production has bee placed at /z/dsi_pdfi_testing/htbkdlb/old
+and from parallel has been placed at z/dsi_pdfi_testing/htbkdlb/new
+
+Parallel ID : 20220803043752
+
+
+author: JIRAUSER11104
+comment: QA test - *PASSED*
+
+Ran script:
+{code:sh}
+[andreyK@ca-isis-pr-04 pdf_compare]$ perl pdf_compare.pl htbkdlb_prod htbkdlb_parallel result_htbkdlb -pixels 5 -threads 32 -regex='htbk_[0-9]+_[0-9]*_[0-9]+_<SEQ>.pdf'{code}
+Report:
+{code:sh}
+[andreyK@ca-isis-pr-04 pdf_compare]$ cat /d/pdf_compare/result_htbkdlb/pdf_compare_rpt.txt
+Total PDF Files Scanned: 238
+allowedDifferenceInPercentPerPage: 5:
+Thread Count: 32
+
+Total PDF Files with Differences: 0
+Start Time: Mon Aug 15 13:25:35 PDT 2022
+Finish Time: Mon Aug 15 13:26:59 PDT 2022{code}
+
+
+
+author: william.kong
+comment: [~tanmay]: Can you please prepare the File Transfer form and have this released on Monday, August 22, 2022? Once completed, please alert me or email [dp@infoimageinc.com|mailto:dp@infoimageinc.com]because we need to advise DP that they need to start running this program via RHS server moving forward.
+
+
+author: tanmay
+comment: [~TunA]
+
+Transfer form([^IS_PROGRAM_TRANSFER_FORM_IS-1210.doc]) has attached and files has been placed at my check in folder
+
+/d/is/cvs/check_in/mahbuburT . Currently my xfer folder is busy .
+
+
+
+Please proceed to production
+
+
+author: anwarh
+comment: Please hold off, there are some issues. 
+I'll re-request again.
+Thanks
+
+
+author: william.kong
+comment: [~anwarh]: I'm going to change the status from "QA In Progress" to "In Progress". When issues resolved, please change status back to "QA Request"
+
+
+author: tanmay
+comment: [~anwarh]i don't find any issues so i am preparing for code release
+
+[~TunA]
+
+Updated files has been placed at/d/is/cvs/xfer/mahbuburT/
+
+and transfer form has been attached.
+
+
+author: william.kong
+comment: [~rodriguez]: Per my email, would you assist with the code release today?
+
+
+author: william.kong
+comment: [~tanmay]: Can you resubmit the code? There was a code release issue [~rodriguez]had where the release program complained about:
+
+
+
+htbkdl_nsf_process.sh in /d/is/cvs/xfer/mahbuburT
+
+
+
+This file is still in there. We got confused so we rolled back everything. Base on Leo's assessment, it looks like thishtbkdl_nsf_process.sh is a perl script and not bash.
+
+
+
+Can you clear this up and start over again with checking out and checking back in all the programs you have for this release?
+
+
+
+
+
+
+author: tanmay
+comment: [~William.Kong]
+
+Yes. Initially wrong file has been placed in xfer folder but i have updated it last day. now right one is in xfer folder. Please proceed to production
+
+
+author: william.kong
+comment: [~rodriguez]: Can you confirm if [~tanmay]placed the files correctly this time around in the xfer folder so that we can get it released today? Thanks!
+
+
+
+-- Will
+
+
+author: rodriguez
+comment: [~William.Kong] [~tanmay]The correct script is in there, however he needs to add all the other files as well; dfa files, control files, etc. Currently he only hashtbkdl_nsf_process.sh andHTBKDL015.prj.
+
+The other files were removed during our first release attempt.
+
+Also, since we had to rollback and check out / check in the old code in my name, to be safer and so we don't have any more issues, Im going to suggest that[~tanmay]re check out the code and check in his new code again under his name.
+
+
+author: tanmay
+comment: Hi [~rodriguez]
+
+I have checked in again under my name . Please check
+
+updated files has been placed at/d/is/cvs/xfer/mahbuburT
+
+
+author: william.kong
+comment: [~rodriguez]: Please confirm when time permits if you are able to release the code successfully this time around. Thanks!
+
+
+author: rodriguez
+comment: [~William.Kong] [~tanmay]Code has been released, backup ID =20220831174449
+
+
+author: tanmay
+comment: development and support

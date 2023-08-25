@@ -1,0 +1,55 @@
+title: Apache Mod Security Reference
+body:   
+  
+
+MULTIPART_UNMATCHED_BOUNDARY
+
+Captured from a forum:
+
+As you may know, this rule is pretty simple and generic. It just does this:
+SecRule MULTIPART_UNMATCHED_BOUNDARY "!@eq 0" That means, it just triggers if
+modsecurity cant reassembly multiple part message because it has an unmatched
+boundary. Multipart messages are web requests/posts from the client that come
+in multiple parts. Each part has a boundary, sent by the client. The client
+defines these, and sends them. The server then tries to put them back
+together. When, during the parsing phase of a multipart/request-body,
+ModSecurity encounters what the client has presented as a boundary but is not
+one, this variable gets set to other than 1. In other words, the client has
+sent the server a multipart message. These parts have boundary markers. The
+client didnt send a valid multipart message because one of the boundary
+markers either didnt exist (its missing), or its not part of one of the
+multiple parts (doesnt match). Its a garbled message and the WAF is hopelessly
+unable to reconstruct it. Such an event may occur when evasion of ModSecurity
+is attempted, which is why you want to block these. It can also happen if the
+client is sending something garbled, broken, or incomplete. Or if the web
+application just doesnt care about using properly formated multupart messages.
+If the WAF cant put it back together, it cant figure out what it is (attack or
+not an attack). . This is a serious condition, and can mean only one of two
+things: 1) An attacker is attempting to bypass the WAF by constructing a body
+that will not be parsed correctly by the WAF, in hopes of bypassing the WAF.
+2) The client side application (browser, application, etc.) is generating
+broken message bodies that the WAF is unable to assemble. This can also occur
+with a broken server side application thats causing the client to send broken
+multi part messages, or a combination of both buggy clients and buggy app(s)
+on the server side. It can even happen if the client has a broken connection
+and didnt complete the multipart message. Most of the time buggy server side
+apps do this. Its pretty rare for most web applications, but word press seems
+to attract extensions that dont seem to care about doing things sanely. Theres
+not much you can do on your end, other than to look at the debug data for the
+recorded event, and look into the multipart message to see why its corrupt. If
+its happening with one web application, you have your culprit - the
+application is just buggy. You could disable the rule, but that would open the
+server to attack. A "middle" ground would be to set the rule to not shun. That
+way the client just gets an error, instead of being blocked. Since its the web
+apps and clients that cause this, you're best solution is to report this to
+the web application developers and share the debug data recorded by
+modsecurity with them. This isnt caused by modsecurity, its just telling you
+the client is sending an invalid multipart message. I wish I could tell you
+more than that, but its being caused by garbled multipart messages. And in
+general, its the server side app that usually causes this (the client can also
+do this if its generating broken multipart messages, but is rare). If its just
+wordpress doing this, then you have your root cause, something in either
+wordpress itself, or one of its extensions is generating invalid multipart
+messages. Have you discussed this with the developer(s) of those extensions
+
+

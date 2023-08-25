@@ -1,0 +1,101 @@
+title: Temporary Deployment Steps
+body: Hypercube is now containerized in Docker. To deploy Hypercube code, the
+following steps must be taken:
+
+  1. Pull the code from SVN to ca-hypercube-dv-01 in the correct environment directory.
+  2. Build the meteor bundle.
+  3. If the settings.json was changed, update the docker-compose.yml file on the application servers.
+  4. Contact Aurick or other Harbor maintainers to create the new Docker image.
+  5. Restart the applications and deploy new image.
+  6. If static (public) files were changed, trigger the original (env)-01 Jenkins build job. The only purpose of this is to sync the static files to the proxies. Remember to still change the repo URL.
+
+  
+
+Below are more in-depth details regarding some of the steps.
+
+# Pulling Code and Preparing Bundle
+
+## Build Folder Structure
+
+All the build folders are housed under /usr/local/docker/hypercube on ca-
+hypercube-dv-01. This is also the build and deployment folder for DEV
+hypercube.
+
+Inside /usr/local/docker/hypercube, there are pilot/stage/prod folders
+respectively for each of the environment. All build folders follow this
+format:
+
+\--Build Folder
+
+\----bundle
+
+\----docker-compose.yml
+
+\----Dockerfile
+
+\----hypercube-code
+
+  
+
+There is a script written to perform both of these steps. However, review the
+steps individually below if you need to perfrom them one-by-one or
+troubleshoot.
+
+  1. Go to the Build Folder, e.g. cd /usr/local/docker/hypercube or cd /usr/local/docker/hypercube/pilot
+  2. ./prepare-bundle.sh SVN_URL
+    1. The SVN_URL can be obtained on Jenkins in the template configuration, e.g. template-hypercube-pilot/template-hypercube-stage/etc. This is also a good time to update the SVN_URL in the template, which is important for static files syncing.
+
+Sample SVN URL
+
+svn+ssh://jenkins@ca-utils-pr-01.infoimageinc.com/srv/svn/hypercube/trunk
+
+  
+
+## Pulling Code  from SVN
+
+  1. Go to the Build Folder.
+  2. cd hypercube-code
+  3. (cd hypercube-code && sudo -u meteor svn switch SVN_URL --accept theirs-full --ignore-ancestry)
+
+## Building Bundle
+
+  1. Inside the Build Folder.
+  2. sudo rm -r bundle
+  3. (cd hypercube-code && sudo -u meteor meteor build --release=1.2.1 ../ --directory)
+  4. (cd bundle/programs/server && sudo npm install --production)
+
+# Updating METEOR_SETTINGS in docker-compose.yml
+
+  1.  Go to the Deployment Folder.
+    1. This is /usr/local/docker/hypercube on the deployment servers, e.g. ca-hypercube-pi-01, ca-hypercube-pi-02, ca-hypercube-st-01.
+  2. sudo vim docker-compose.yml
+  3. (Optional) Copy the content of docker-compose.yml to a local text editor like Notepad++ for easier editing UI.
+  4. Obtain the METEOR_SETTINGS string
+    1. Go to the hypercube-code and view the settings JSON for the respective environemnt (settings_dev.json -> DEV)
+    2. Copy the contents of the settings JSON.
+    3. Open a Web Broswer.
+    4. Open the Developer Tools.
+    5. Go to the Console tab.
+    6. Type into the console "JSON.stringify("
+    7. Copy the JSON content in your clipboard.
+    8. Close the function with ")".
+    9. Click Enter and a stringified version should return.
+    10. Copy the stringified JSON.
+  5. Replace the METEOR_SETTINGS with the new stringified JSON.
+  6. Save the edited docker-compose.yml file.
+
+# Deploying New Image
+
+  1.  Go to the Deployment Folder.
+    1. This is /usr/local/docker/hypercube on the deployment servers, e.g. ca-hypercube-pi-01, ca-hypercube-pi-02, ca-hypercube-st-01.
+  2. sudo docker login harbor.infoimageinc.com --username hypercube
+  3. Enter password when password prompt appear.
+    1. Obtain password from a developer who knows (Aurick/Naim/Tai).
+  4. sudo docker-compose pull
+  5. sudo docker-compose down
+  6. sudo docker-compose up -d
+  7. To tail the docker output to monitor: sudo docker-compose logs -f
+
+  
+
+

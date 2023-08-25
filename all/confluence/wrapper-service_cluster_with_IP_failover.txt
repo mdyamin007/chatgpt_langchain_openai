@@ -1,0 +1,143 @@
+title: wrapper-service cluster with IP failover
+body: **Technologies :** Spring-boot, Docker, HAProxy, Keepalived
+
+ **Outline:** There are two dockerized wrapper-service instance, two
+dockerized afp2web instance and two dockerized Haproxy instance. Two HAProxy
+instance have the same functional objectives, each of them  
+have two listening ports. One for the two instance of wrapper-service and
+another for the two instance of afp2web web. Keepalived Service runs in the
+same machine as two HAProxy. It determines one of the proxies as master and
+another as slave. It attach the VIP with the network interface  of the master
+instance. Clients would always communicate with the system through this VIP.
+Keepalived always tracks the two proxy instance. Once master proxy dies
+Keepalived nominates the slave proxy as the master. Hence  
+the system remain uninterrupted. Following figure demonstrates the full
+workflow  
+  
+
+  
+
+  
+ _ **Following are the resources url:  **_
+
+wrapper-service (VIP) : <http://mp-a2wprxy-pr-
+vip.infoimageinc.com:8080/wrapperservice>  
+afp2web (VIP) : <http://mp-a2wprxy-pr-vip.infoimageinc.com:9090/services>
+
+HAProxy Report: <http://mp-a2wprxy-pr-vip.infoimageinc.com:8080/stats>  
+NOTE: Authentication required
+
+wrapper-service (proxy-01): <http://mp-a2wprxy-
+pr-01.infoimageinc.com:8080/wrapperservice>  
+wrapper-service (proxy-02): <http://mp-a2wprxy-
+pr-02.infoimageinc.com:8080/wrapperservice>
+
+afp2wer (proxy-01): <http://mp-a2wprxy-pr-01.infoimageinc.com:9090/services>  
+afp2wer (proxy-02): <http://mp-a2wprxy-pr-02.infoimageinc.com:9090/services>
+
+wrapper-service (instance-01): <http://mp-wrapper-
+pr-01.infoimageinc.com:8081/wrapperservice>  
+wrapper-service (instance-02): <http://mp-wrapper-
+pr-02.infoimageinc.com:8081/wrapperservice>
+
+afp2wer (instance-01): <http://mp-afp2web-
+pr-03.infoimageinc.com:9091/services>  
+afp2wer (instance-02): <http://mp-afp2web-
+pr-04.infoimageinc.com:9091/services>
+
+  
+_**Followings are the detailed list of heartbeat api of all services:**_
+
+wrapper-service (VIP) : GET <http://mp-a2wprxy-pr-
+vip.infoimageinc.com:8080/wrapperservice/heartbeat>  
+wrapper-service (proxy-01): GET <http://mp-a2wprxy-
+pr-01.infoimageinc.com:8080/wrapperservice/heartbeat>  
+wrapper-service (proxy-02): GET <http://mp-a2wprxy-
+pr-02.infoimageinc.com:8080/wrapperservice/heartbeat>  
+wrapper-service (instance-01): GET <http://mp-wrapper-
+pr-01.infoimageinc.com:8081/wrapperservice/heartbeat>  
+wrapper-service (instance-02): GET <http://mp-wrapper-
+pr-02.infoimageinc.com:8081/wrapperservice/heartbeat>
+
+afp2web (VIP) : GET <http://mp-a2wprxy-pr-
+vip.infoimageinc.com:9090/services/version>  
+afp2web (proxy-01): GET <http://mp-a2wprxy-
+pr-01.infoimageinc.com:9090/services/version>  
+afp2web (proxy-02): GET <http://mp-a2wprxy-
+pr-02.infoimageinc.com:9090/services/version>  
+afp2web (instance-01): GET <http://mp-afp2web-
+pr-03.infoimageinc.com:9091/services/version>  
+afp2web (instance-02): GET <http://mp-afp2web-
+pr-04.infoimageinc.com:9091/services/version>
+
+** ** Keepalived reads the PID of hAProxy container to determine its
+availability. There is a script **/usr/local/bin/chk_haproxy.sh** in
+mp-a2wprxy-pr-01 and mp-a2wprxy-pr-02.
+
+  
+
+ **Keepalived Configuration:  **  
+There one Keepalived service running for each of the mp-a2wprxy-pr-01 and
+mp-a2wprxy-pr-02 machine.  Keepalived service's configuration file
+**keepalived.conf  **has all necessary configuration regarding VIP and HAporxy
+track script.  
+Location:  /etc/keepalived/keepalived.conf
+
+ **HAProxy Configuration:** We kept the deodorized  HAProxy configurable
+through HAProxy configuration file  haproxy.cfg  
+Location: /usr/local/docker/haproxy/keepalived.conf  
+  
+ **Wrapper-service Configuration:  **  
+Location:  /usr/local/docker/app-configs/wrapper-
+service/wrapperservice.properties
+
+  
+
+ **FAQ-1:** How to use proxy only without the VIP?  
+**Answer:** There are two proxies, use either of them
+
+afp2wer (proxy-01): <http://mp-a2wprxy-pr-01.infoimageinc.com:9090/services>  
+afp2wer (proxy-02): <http://mp-a2wprxy-pr-02.infoimageinc.com:9090/services>  
+  
+
+wrapper-service (proxy-01): <http://mp-a2wprxy-
+pr-01.infoimageinc.com:8080/wrapperservice>  
+wrapper-service (proxy-02): <http://mp-a2wprxy-
+pr-02.infoimageinc.com:8080/wrapperservice>  
+  
+
+  
+
+**FAQ-2:** How to use instance only without the proxies?  
+**Answer:**  
+  
+There are two wrapper-service instance, use either of them.  
+wrapper-service (instance-01): <http://mp-wrapper-
+pr-01.infoimageinc.com:8081/wrapperservice>  
+wrapper-service (instance-02): <http://mp-wrapper-
+pr-02.infoimageinc.com:8081/wrapperservice>  
+  
+There two afp2web instance, use either of them.  
+afp2wer (instance-01): <http://mp-afp2web-
+pr-03.infoimageinc.com:9091/services>  
+afp2wer (instance-02): <http://mp-afp2web-
+pr-04.infoimageinc.com:9091/services>  
+  
+
+  
+**FA!-3:** How to change the afp2web service that wrapper-service communicates
+in the time of emergency?  
+Answer: Modify the following properties of wrapperservice.properties file with
+corresponding information
+
+  1. afp2web.host  
+  2. afp2web.port
+  3.  afp2web.host-protocol
+
+  
+
+  
+  
+
+
+

@@ -1,0 +1,276 @@
+title: 6132013 meeting
+body: ## Test cases:
+
+The test cases are too brief, and I forwarded a sample from our message
+manager integration for their reference.  
+  
+
+## Feature and Sub-Features:
+
+Ben and I finalized the documentation, and we need review this internally with
+the parties who are actually use infoTrac. Once we finalize this internally, I
+will forward this to DSI. However, this shouldn't be a blocker for DSI to
+start development. DSI can create any test roles to test their logic during
+development.  
+  
+
+## Design doc:
+
+Current design has lots of detail information in the application component
+function details. For the current logic, their listed the flow and they
+proposed the changes. Could you update the flow with sequence diagram for the
+proposed flow?  
+Also, please include the class diagram in the design doc. The following are
+some questions that I had by reviewing the design doc.  
+  
+
+### 1.BRQ-01 (Client Management):
+
+a.When assigning features to a client, will the default features which apply
+to all user be included, for example, by default those features will be
+checked and the check box will be editable? For example, Inventory & Job
+Tracking and etc. are default features for all basic clients' users, and Alert
+&update user profile and etc. are default to all users.  **How will you manage
+those default features?**
+
+ **SM:**  When assigning features to a client, default features will be
+displayed as checked and those check boxes will be non-editable.
+FEATURE_DEFINITION table has no column to identify a feature as 'default'.
+Therefore it will identified with a method in the code.  
+ **LZ:**  Please handle it as other features, and the user need check to turn
+the permission on for that feature.  
+ **SM:**  So, no feature should exist as default feature. All features will be
+handled in the same way and the user needs to check to turn the permission on
+for all features.  
+ **LZ:**  At this moment, yes, we will treat them the same way and users need
+turn the permissions on for the roles. Again, we will try to avoid the hard-
+coded logic in future implementation.  
+  
+
+### 2.BRQ-02 (User/Role Management):
+
+a.*When a user creates another user, can he/she assign more roles than he/she
+has to new created user?* For example, User UA under client C, and UA has
+permission to create users. Under C, there is a role list "Manager",
+"Production", "Developer", "Implementation" and etc. While UA has role of
+"Manager", "Production", when UA create a new user UB, can UA assign other
+roles such as "Developer", "Implementation" to UB?
+
+ **SM:**  When a user creates a new user, the new user can be assigned any
+role available for the corresponding client (as outlined in the given
+example).  
+ **LZ:**  Per Ben, this is OK.
+
+b.*How will the roles be visible to the user themselves?* For example, when a
+user login, when the user views its own profile (under home tab), will he/she
+sees his/her roles? I understand the user may not able to modify his roles.
+
+ **SM:**  Under home tab, a box will be included to display all roles assigned
+to the logged in user.  
+ **LZ** : Will this be included in the box on right top, together with user's
+other information such as email, account manager and etc? Will the role be
+extensible to see a list of features under that role, or you have any way to
+display all the features that the user have permission to access?  
+ **SM:**  The box on the right top on the Home tab will be used. The roles
+will be extensible to display the features under it.  
+ **LZ:**  Got it.  
+  
+
+### 3.Work flows:
+
+Could you list your new flows also. With the role entity was introduced, even
+the flow doesn't change; the method signature may change also. Could you
+update the flow accordingly? For example, for flow 6, create new user, the
+method signature is still returning list of Feature and etc.
+
+ **SM:**  All flows with their method signatures will be reviewed again.  
+ **LZ:**  Ok.  
+  
+
+### 4.Application Component functional details - workflow 1:
+
+a.Create new client in "Changes required in data model": if feature setting is
+no longer a part of client creation process,  **how will we manage the feature
+setting for a client?**  When the features for a client will be saved?
+
+ **SM:**  When a client gets created (without any feature setting), a link to
+feature setting page appears at the bottom of the client profile page.
+Therefore, assigning features to a client in "Feature Setting" page is treated
+as updating the client.  
+ **LZ** : Per Ben, creating client will not create the feature, and feature
+creation is under update the client.
+
+b.Under current workflow (The main steps in moving on to 'Feature Setting'
+screen from 'Create Client' screen are the following- ): "feature setting" can
+be accessed as the design doc mentioned, also, "feature setting" link can be
+clickable to access "feature setting".
+
+ **SM:**  yes
+
+c.Also for the changes proposed to current workflow, if
+"CreateClientController call to getFeatureDefinitions() on ClientService
+should be removed and CreateClientController creates an instance of
+CreateClientForm without List<FeatureDefinition>" (1 & 2), how will you setup
+the features for a client? If no such setting, how will you manage roles to
+access features only subscribed by that client?
+
+ **SM:**  After creating the client, it can be assigned features by clicking
+on "Feature Setting" link on client profile page. After selecting features,
+save button will be clicked to execute client update in the background.  
+ **LZ:**  Ok.  
+  
+
+### 5.Workflow2:
+
+didn't mention how the features for a client got solved. Also this is not
+mentioned at workflow1. "Feature setting" should be able to update the feature
+list for a client.
+
+ **SM:**  Client update takes place in 2 ways. 1. Client info can be changed
+in "Account Information" page and saved. 2. Client can also be updated by
+adding/removing features in the "Feature Setting" page. Workflow 2 describes
+case [#2](https://i3dev.easyredmine.com/issues/2 "Bug: test notif \(Closed\)")
+where feature settings to a client are changed. When a client is created and
+saved for the first time, no features are set for it. When the client is
+updated with feature setting, the feature info gets saved in the database.  
+ **LZ:**  got it.  
+  
+
+### 6.Role entity:
+
+a.Please add "created_time", "created_by", "last_modified", "updated_by" for
+research purpose, where the updated_by and created_by should be usr_id (refer
+to usr table)
+
+ **SM:**  ok
+
+b.It should contain a list of features for that role (refer to feature_access)
+
+ **SM:**  Features are mapped to client and sub-features to role. In order to
+keep the entity structure consistent with other entities and for ease of
+implementation of many-to-many relationship between ROLE and
+FEATURE_DEFINITION the list of features will be constructed dynamically rather
+than declaring a property for it.  
+ **LZ:**  OK  
+  
+
+### 7.UserRole entity:
+
+similar to Role model, please add the above information.
+
+ **SM:**  ok  
+  
+
+### 8.Methods:
+
+please fill in the parameters for the methods. For example in
+FeatureAccessManager class "public List<FeatureDefinition>
+getNonInternalFeatureDefinitions()".
+
+ **SM:**  ok  
+  
+
+### 9.FeatureDefinitionDao interface:
+
+a.Is there a way to know this is a default feature apply to everyone or not,
+for example, "Alert" and "update profile". Also, "job tracking" and
+"inventory" default to all basic clients' user?
+
+ **SM:**  A method will be added to identify default features.  
+ **LZ:**  Ok
+
+b.Which function you will call for InfoImage and wholesaler
+
+ **SM:**  getAll() is for InfoImage and getAllNonInternalType() for
+Wholesale/Basic clients.  
+ **LZ:**  Ok  
+  
+
+### 10.FeatureDao interface:
+
+a.Which method you will call for InfoImage and wholesaler. Are handling
+everything within the getAll()?
+
+ **SM:**  Each Feature is identified by the corresponding Client and Feature
+Definition. So this question does not apply for FeatureDao. It applies to
+FeatureDefinitionDao and it has been answered there.  
+ **LZ:**  will you also map the features in FEATURE_DEFINITION & CLIENT for
+infoimage to FEATURE table?  
+ **SM:**  We will map the feature definitions in FEATURE_DEFINITION to FEATURE
+for infoimage.  
+  
+
+### 11.RoleDao Interface:
+
+a.Looks OK to me  
+b.Please be advised when deleting a role, the user who is in this role will be
+got affected and also the alerts corresponding to the features of this role
+will be got affected.
+
+ **SM:**  yes  
+  
+
+### 12.FeatureAccessDao Interface:
+
+a.You may need add insertOrUpdate(Role role, List<Feature> features) to insert
+or update feature_access table.
+
+ **SM:**  FeatureAccessDao already has a insertOrUpdate(List<FeatureAccess>
+access) to insert or update feature_access table.  
+ **LZ:**  This will also work.  
+  
+
+### 13.UserRoleDao Interface:
+
+a.deleteAllByUser(User user) ? please give me a case we need this method
+
+ **SM:**  This method has no use and should be removed.  
+ **LZ:**  Ok
+
+b.deleteAllByRole(Role role) ? please give me a case we need this method
+
+ **SM:**  A role can be deleted from the "Available Roles" page. When a role
+gets deleted its corresponding userRoles can be deleted using this method.  
+ **LZ:**  Ok  
+  
+
+### 14.ClientService:
+
+a.public List<FeatureDefinition> getFeatureDefinitions() should return all the
+available feature for the selected/created client. Please pay attention to
+Root, Wholesale and basic client.
+
+ **SM:**  yes
+
+### 15.UserService:
+
+a.For the removed method, will you replace them with new method? For example:  
+public void insert(User user, List<ClientAccess> clientAccess,
+List<FeatureAccess> featureAccess, User creator)
+
+can be replaced with
+
+public void insert(User user, List<ClientAccess> clientAccess, List<Role>
+roles, User creator)
+
+ **SM:**  Each removed method will have its corresponding new method in the
+component.  
+ **LZ:**  Got it.
+
+b.Is deleteAlert(Alert alert, User user) necessary? Currently existing system
+also need remove alerts (un-check) for a user.
+
+ **SM:**  The existing method updateAlerts(List<Alert> alerts) can be used to
+remove alerts. So, this new method is not necessary.  
+ **LZ:**  Ok.
+
+### 16.FeatureAccessManager:
+
+a.What is var in "public List<FeatureAccess> findByUserAndClient(User user,
+Client client, boolean var)" (1st method)
+
+ **SM:**  var stands for activeOnly parameter. The parameter name in the code
+will remain unchanged.  
+ **LZ:**  Ok
+
+

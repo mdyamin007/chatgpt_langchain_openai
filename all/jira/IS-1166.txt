@@ -1,0 +1,231 @@
+title: MFCU - [28957][pvt] Additional Signers _ Duplicate
+description: During out review of the member monthly statements, we found that the "Additional Signers" line will show the same name repeated 2 or 3 times.
+
+We believe this is happening because the statement process must be looking for Joint members at both the+account+and+loan+levels.
+
+While it is correct for the logic to show the member's name each time the account is flagged as a joint, we would prefer for each unique additional signer's name be printed only once.
+
+Please see the attached document for 2 examples.
+
+
+
+From Diego:
+
+The specs the client gave are correct. We just need to check the additional signer names and compare the names to only show unique names.
+
+Record 300 is where the signers are in which is very easy to see in either the mapping doc or in the dfa the developers worked on.
+
+
+
+*IS**Assessment ( no need for ISD hours)*
+
+IS Hour: 3h
+
+Turnover: 6/1
+
+Sample: 6/7
+
+Approval: 6/9
+
+QA: 6/10
+
+No Parallel
+
+No ISD
+
+Live: 6/14
+
+IS Assignee: Anwar
+
+
+author: dyuen
+comment: [~anwarh], confirming if samples will be ready today.
+
+[~Igor.Khosid], FYI.
+
+[~rony]
+
+
+author: anwarh
+comment: Hi [~dyuen], Here is the sample:[^MFCUMS11.pdf]. Thanks
+
+
+author: dyuen
+comment: Hi [~Igor.Khosid], I'm going to send the sample to the customer at the same time QA reviews this so that we don't miss the sample date.
+
+Thanks
+
+
+author: igor.khosid
+comment: [~anwarh]
+Please provide PR ID and move the project into the folder after the client's approval.
+
+[~dyuen] - FYI
+
+
+author: dyuen
+comment: [~anwarh], Please see below feedback from MFCU and advise.
+
+Thanks
+
+"I looked through all the samples, most of them look really good.
+
+There was one sample, however, that for some reason is listing the member's name both at the address line at the top, and repeated in the additional signer's line below.
+
+
+
+I reviewed the account, and cannot determine why the name was listed twice. Can you please review? I am available tomorrow afternoon if you want to have a short call. Please advise."
+
+!image-2022-06-09-12-32-30-155.png!
+
+
+author: dyuen
+comment: [~anwarh], any updates on this? Please advise ASAP.
+
+[~rony][~TunA] [~Peter.Dang] [~William.Kong]FYI
+
+
+author: anwarh
+comment: Hi [~dyuen],
+
+We are constructing the address form record line 200, and field 7-11.
+ Data:
+{code:java}
+200~01~020032120327~03612-10-6200~04~0505012022~0605312022~07JOSEPH V GUIDO~08NAHED H MOHAMED~09532 JEFFERSON AVE~10CHULA VISTA CA 91910-5104~11~12CHULA VISTA~13CA~1491910-5104~15~16~17~18~1916~20~21~22~231~24jvguido81@gmail.com~251`
+{code}
+As you can see the name "NAHED H MOHAMED" comes from field 8.
+
+But the additional signers come from record "300"
+ Data:
+{code:java}
+500~0105012022~0250~032016 LANDROVER DISCOVERY SPORT~04~05Previous Balance~06798116~0772~0816~09~10~11~12~13~14~15~16~17~182~19~20~21Original Balance~221307127~23~241639`
+300~01NAHED MOHAMED~021`
+{code}
+That's why it's showing up twice. Let me know if this clarifies the confusion.
+
+Thanks
+
+
+author: dyuen
+comment: Hi [~anwarh], I'm not sure I still understand... Is the Additional signers field pulling from two places in the data file? If so, why is that? Shouldn't it only pull from record 300?
+
+Thanks
+
+
+author: anwarh
+comment: Yes, it's pulling only from 300.
+
+If you look at the screenshot client provided, he mentioned why the name "NAHED MOHAMED" was "listed twice", one in address line and another in "Additional Signers" section.
+
+My explanation was for this. Address comes from 200 and"Additional Signers" comes 300 record line.
+
+
+author: dyuen
+comment: Thank you, this has been forwarded to MFCU. Pending response/feedback.
+
+
+author: dyuen
+comment: Hi [~anwarh], this is approved!
+
+Per MFCU:
+
+"These changes completed make sense. We approve these changes.
+
+Please confirm if we will see them in place for June's month-end member statements?"
+
+Can you confirm we can go live with these changes for this coming month end production? Per Jira description, parallel is not needed.
+
+[~Igor.Khosid], FYI
+
+Thanks
+
+
+author: anwarh
+comment: Hi [~Igor.Khosid],
+
+Parallel ID:20220629033116
+Print file:  [^mfcums1129.print] 
+print 2o1 file, page 1-3
+ISD Index: ms1_20220131_1_20220629_0403_mfcu.txt
+Checklist:  [^IS-1166 Checklist.docx] 
+
+Thanks,
+Anwar
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220629033116
+   Currently in parallel: Yes
+   User: anwarH
+   Description: IS-1166
+   Date Submitted: 2022-06-29 03:31:22
+   Date Last Updated: 2022-06-29 03:31:22
+   Files:
+      1) MFCUMS11.dfa
+
+
+author: igor.khosid
+comment: [~dyuen] - please request the print samples
+
+[~Andrey.Kutsenko] - the samples already approved, please review and complete
+
+
+
+author: dyuen
+comment: [~Igor.Khosid] [~Andrey.Kutsenko], Print samples requested.
+
+
+
+
+author: JIRAUSER11104
+comment: Print samples >>>[^IS-1166_MFCU_PrntSmpls_06292022.pdf]
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+There are no duplicate lines in the "Additional Signers" field in the printed statement and electronic statement.
+
+IS checklist >>>  [^IS-1166_MFCU_CheckList.pdf] 
+
+
+author: dyuen
+comment: Thank you [~Andrey.Kutsenko]
+
+[~anwarh], please confirm when code is released since Jira description states no parallel.
+
+
+author: dyuen
+comment: [~anwarh] please confirm if code will be released today. MFCU would like this change to be live with coming month end processing.
+
+[~TunA] [~rony] FYI
+
+
+author: anwarh
+comment: Hi [~TunA],
+
+Can you please release this fil:MFCUMS11.dfa
+Code is in my xfer folder.
+
+Thanks
+
+
+author: tuna
+comment: Hi [~anwarh],
+
+Following code has been released.
+
+Thanks,
+
+Tun
+
+
+
+20220630093856 06/30/2022 anwarH IS-1166 MFCU - [28957][pvt] Additional Signers _ Duplicate
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/anwarH/
+total 488
+-rwxrwxrwx 1 anwarH DSI 212965 Jun 30 09:32 MFCUMS11.dfa
+
+
+
+[~dyuen]

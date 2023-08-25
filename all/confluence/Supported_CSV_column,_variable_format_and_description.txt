@@ -1,0 +1,178 @@
+title: Supported CSV column, variable format and description
+body: ## Supported CSV column
+
+templateId = template service template id (Mandatory column)
+
+subject = To replace template subject line.
+
+from = To replace template from.
+
+fromName = To replace template from name.
+
+to = Recipient address. (Mandatory column)
+
+toName = Recipient Name.
+
+replyTo = To replace template reply to.
+
+replyToName = To replace template reply to Name.
+
+type = Type of the notification. (Mandatory column)
+
+carrier = Previously before nexmo inplimentation for SMS, notify service use
+email gateway to send SMS, not it's not used by any feature, to send SMS we
+simply give "na" as carrier.(Mandatory column)  
+  
+
+  
+
+## Supported Variables
+
+```
+
+udv_txt_{variableName} = User defined text type variable which is mainly used
+to replace variable in body and subject line
+
+sdv_txt_{variableName} = Same as udv_txt_{variableName}
+
+tdv_txt_{variableName} = Same as udv_txt_{variableName} (OfferMgnt use this
+type)
+
+udt_url_{variableName} = User defined URL type variable which is mainly used
+to replace variable in body and subject line (previously it was separated from
+text time so we can make trackable URL from it, no that feature is absolute.
+So now there is no basic difference between  _txt_  and  _url_  )
+
+sdt_url_{variableName} = Same as udt_url_{variableName}
+
+tdt_url_{variableName} = Same as udt_txt_{variableName} (OfferMgnt use this
+type)
+
+udv_bar_{variableName} = With the provided text of this variable,
+notifyservice will be make a BR code image and attach it with the email. also
+add a tag reference of that image to the body.
+
+sdv_bar_{variableName} = Same as udv_bar_{variableName}
+
+tdv_bar_{variableName} = Same as udv_bar_{variableName} (OfferMgnt use this
+type)
+
+udt_bar_{variableName} = Same as udv_bar_{variableName}
+
+sdt_bar_{variableName} = Same as udv_bar_{variableName}
+
+tdt_bar_{variableName} = Same as udv_bar_{variableName} (OfferMgnt use this
+type)
+
+udv_qr_{variableName} = With the provided text of this variable, notifyservice
+will be make a QR code image and attach it with the email. also add a tag
+reference of that image to the body.
+
+sdv_qr_{variableName} = Same as udt_bar_{variableName}
+
+tdv_qr_{variableName} = Same as udt_bar_ (OfferMgnt use this type)
+
+udt_qr_{variableName} = Same as udt_bar_{variableName}
+
+sdt_qr_{variableName} = Same as udt_bar_{variableName}
+
+tdt_qr_{variableName} = Same as udt_bar_{variableName}
+
+tdt_qr_{variableName} = Same as udt_bar_ (OfferMgnt use this type)
+
+sdo_attach_{variableName} = (System defined object for attachment) With this
+variable type we can directly add attachment file link, this link may contains
+sdo_txt_/udo_txt_{variableName} type variable. There are two way to give URL.
+
+```
+
+Example:
+
+> 1\. Add URL as column header:
+>
+
+>>
+sdo_attach_stmt=<http://internal.afp2web.server/get_stmt?account_num=${sdo_txt_acctnum>}  
+> This total line is a column header, rest of the column is empty. From this
+> column we will pick the URL, replace sdo_txt_/udo_txt_{variableName}
+> variable's value of the URL.
+>
+> 2\. Also you can give URL as column value.
+
+sdo_txt_{variableName} = Contains value which be used to replace variable
+attachment URL
+
+udo_attach_{variableName} = Same as udo_txt_{variableName}
+
+umo_attach_{variableName} = Same as udo_txt_{variableName} this is for mounted
+attach
+
+udo_txt_{variableName} = Same as sdo_txt_{variableName}
+
+udp_txt_{variableName} = Passthrough variable from Job CSV to Report CSV.
+Meaning, there may be several column which may need to be carried to report
+CSV for reference. (OfferMgnt use this variable to pass various variable to
+clicktrack record)
+
+udf_txt_{variableName} = Mainly introduced for OfferMgnt, to add footer test
+at the end of the email we use this variable
+
+sdm_txt_{variableName} = Store info for track.
+
+  
+
+## Usage Example:
+
+ **udo_attach_{variable} / umo_attach_{variable}**
+
+  
+
+Attachment can be attached in two way
+
+From a GET API or from mount path
+
+URL or mount path can be provided with a veritable udo_attach_test01 and
+umo_attach_test01
+
+ **udo - user defined object for attachment**  
+ **umo - user defined mounted object for attachment**
+
+if every recipient get same file then use CSV column header like this  
+udo_attach_test01=<https://abc.xyz/mydocs.pdf>  
+udo_attach_test01=<https://this.service.com/api/v1/getAsset?name=common.pdf>
+
+NB: this column will only have header and
+
+udo_attach_test01=<https://this.service.com/api/v1/getAsset?name=common.pdf>
+
+this whole text is a header.
+
+if every recipient get different file then use CSV column header like this  
+udo_attach_test01=<https://abc.xyz/${udo_txt_accountNumner}.pdf>  
+udo_attach_test01=[https://this.service.com/api/v1/getdocs?acctNum=${udo_txt_accountNumner}&name=statement.pdf](https://this.service.com/api/v1/getdocs?acctNum=${udo_txt_accountNumner}&name=statement.pdf)
+
+NB: same as before
+
+you will also need to give the reference column this time caz you have used
+another referance veritable udo_txt_accountNumner
+
+referance column will be like -  
+udo_txt_accountNumner  
+1  
+2  
+3
+
+so for row number 1 when notifyservice will try to fetch the attachment from
+the url it will be like
+
+udo_attach_test01=<https://abc.xyz/1.pdf>  
+udo_attach_test01=[https://this.service.com/api/v1/getdocs?acctNum=1&name=statement.pdf](https://this.service.com/api/v1/getdocs?acctNum=1&name=statement.pdf)
+
+lets say your URL pattern is completely different for each row, for this
+situation that column will be like
+
+udo_attach_test01  
+<https://abc.xyz/1.pdf>  
+<https://def.pqr/my_attachemnt.png>
+
+

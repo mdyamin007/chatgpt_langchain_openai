@@ -1,0 +1,134 @@
+title: BKPL LN Notices - Disable Electronic notices
+description: BKPL LN Notices - Disable Electronic notices
+
+details:
+
+-----------
+
+bkpllna_process.sh
+
+Change in parse_n_option to set job set only s. (see attached)
+
+
+author: JIRAUSER11501
+comment: Hi [~Igor.Khosid]
+
+Parallel Id -20220823103151
+
+Previously, the script bkpllna_process.sh used to run for both s and f option
+ Now, it runs just for s option, that is for paper option only.
+
+Here attached is my processing log file which clearly indicates that enotice was not processed.
+
+[^bkpllna_rhs2.log]
+
+
+
+[~stephen.yee@infoimageinc.com]
+
+Thanks
+
+
+author: JIRAUSER11104
+comment: ****************************************************
+   Parallel ID: 20220823103151
+   Currently in parallel: Yes
+   User: faizaT
+   Description: IS-1478 BKPL LN Notices - Disable Electronic notices
+   Date Submitted: 2022-08-23 10:32:00
+   Date Last Updated: 2022-08-23 10:32:00
+   Files:
+      1) bkpllna_process.sh
+****************************************************
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~Tasneem]- Thank you. this looks good.
+
+[~Andrey.Kutsenko]- Please advise when QA is done so we can run parallel.
+
+Thanks!
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+ The script contains announced changes.
+{code:java|title=/home/test/master/bkpllna_process.sh|borderStyle=dashed|borderColor=#cccccc}
+494 #    if [ "$job_opts" = 'n' ]; then job_opts='s,f'; fi
+495    if [ "$job_opts" = 'n' ]; then job_opts='s'; fi
+496    IFS=','
+497    read -ra tmp_array <<< "$job_opts"
+498    for i in "${tmp_array[@]}"; do
+499        if [ $i = 'n' ]; then continue; fi
+500     #    if [ $i = 's' -o $i = 'f']; then
+501        if [ $i = 's' ]; then
+502             job_list=( "${job_list[@]}" "$i" )
+503        else
+504             echo "Invalid job: $i"
+505             echo "Please use n option"
+506             # echo "ex: n,s,f"
+507             echo "ex: n,s" {code}
+
+
+author: JIRAUSER11104
+comment: Hi [~Tasneem] please attach the checklist if needed.
+
+
+author: JIRAUSER11501
+comment: Hi [~Andrey.Kutsenko]
+
+Checklist is attached below.
+
+[^IS_Checklist.docx]
+
+
+
+
+
+Thanks
+
+
+author: JIRAUSER11104
+comment: Thanks, [~Tasneem]
+IS checklist >>>  [^IS-1478_BKPL_IS_Checklist.pdf] 
+
+
+author: JIRAUSER11501
+comment: Hi [~TunA]
+
+Need to release this.
+
+Resources are in/d/is/cvs/xfer/faizaT.
+
+[^IS_PROGRAM_TRANSFER_FORM.doc]
+
+
+
+[~stephen.yee@infoimageinc.com]
+
+Thanks
+
+
+
+
+author: tuna
+comment: HI [~Tasneem],[~stephen.yee@infoimageinc.com]
+
+Following codes have been released.
+
+Thanks
+
+Tun
+
+
+
+20220829092318 08/29/2022 faizaT IS-1478 BKPL LN Notices - Disable Electronic notices
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/faizaT/
+total 408
+-rwxrwxrwx 1 faizaT DSI 22064 Aug 28 23:37 BKPLLN205.dfa
+-rwxrwxrwx 1 faizaT DSI 24098 Aug 28 23:37 BKPLLN212.dfa
+-rwxrwxrwx 1 faizaT DSI 22739 Aug 28 23:37 BKPLLN214.dfa
+-rwxrwxrwx 1 faizaT DSI 25791 Aug 28 23:37 bkpllna_process.sh
+
+

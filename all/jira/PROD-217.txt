@@ -1,0 +1,85 @@
+title: create POC for replication from oracle to postgresql
+description: Per discussion with Kent and David, create POC of replication from oracle 11g to postgresql using oracle logminer, ora2pg and postgresql FDW for oracle
+
+
+author: trang809
+comment: [~jwhang] Is this something that you are still working on?  I just want to see if this task is still active.
+Thanks
+David
+
+
+author: jwhang
+comment: Hi David,
+
+Yes I am still working on it. I have all the scripts/routines ready and there is no technical obstacles. I should have couple of tables replicating from oracle to postgres using oracle XE as archive log reader, and add additional tables as testing proceeds.
+
+Thank you
+
+
+author: jwhang
+comment: ==== E drive disappeared on the jumphost where postgres and oracle was installed. Will need to recreate oracleXE and postgres installation =====
+
+
+author: jwhang
+comment: ==== After windows jumphost outage, reinstalled oracle, postgresql 13 and added all necessary extensions (oracle_fdw, orafce) on the new jumphost vm. ====
+
+
+author: jwhang
+comment: ====== replication from oracle to postgres works pretty well. I3_CU.USR and I3_CU.FIN_ACCOUNT has been replicated to postgresql for few days without issue. However, there are some oustanding issues. Rollback transactions cannot be executed directly as logminer output contain oracle rowid. Further coding is needed to resolve by find matching transaction. =====
+
+
+author: jwhang
+comment: ===== modified apply procedure to handle rollbacks correctly (logmnr_apply_redo3.sql). now scaling up test to include all tables in I3_CU =======
+
+
+author: jwhang
+comment: ==== now replicating 45 tables in I3_CU schema from oracle to postgres =========
+{code:java}
+ applied_scn  | seg_owner |       table_name
+--------------+-----------+------------------------
+ 194667919568 | I3_CU     | PAPERLESS2
+ 194667919509 | I3_CU     | USR_SESSION
+ 194667919039 | I3_CU     | PAPERLESS
+ 194667918767 | I3_CU     | LOG_RECORD
+ 194667918684 | I3_CU     | ESTMT_DOC
+ 194667917891 | I3_CU     | USR_FIN_ACCOUNT
+ 194667917052 | I3_CU     | USR
+ 194667917052 | I3_CU     | CONTACT_INFO
+ 194667911114 | I3_CU     | FIN_ACCOUNT
+ 194667908620 | I3_CU     | USR_ACCT_TYPE_MAPPING
+ 194667907534 | I3_CU     | IP_ATTACK_DET_INFO
+ 194667905571 | I3_CU     | IP_ATTACK_GEN_INFO
+ 194667905270 | I3_CU     | AUDIT_TABLE
+ 194667904980 | I3_CU     | ENOTICE
+ 194667897709 | I3_CU     | USR_MAPPING
+ 194667895888 | I3_CU     | EMAIL_WELCOME_LOG
+ 194667893162 | I3_CU     | INSERT_INFO
+ 194667876259 | I3_CU     | AUDIT_LOG_TKCU
+ 194667871023 | I3_CU     | P_JOB
+ 194667868608 | I3_CU     | P_ESTMT_EMAIL
+ 194667868352 | I3_CU     | ACCT_ACCESS
+ 194667868169 | I3_CU     | P_JOB_EMAIL
+ 194667858990 | I3_CU     | ETAX
+ 194667852603 | I3_CU     | ARCH_FILE
+ 194667852603 | I3_CU     | P_JOB_ENOTICE
+ 194667852568 | I3_CU     | P_JOB_CHECKSUM
+ 194667840902 | I3_CU     | PATHWAY_LOG
+ 194667204548 | I3_CU     | P_ENOTICE_COUNT
+ 194666723950 | I3_CU     | P_ESTMT_COUNT
+ 194666723328 | I3_CU     | ACCOUNT_STMT_TYPE
+ 194666723310 | I3_CU     | ESTMT_MSG
+ 194666723310 | I3_CU     | ESTMT_FILE
+ 194666723310 | I3_CU     | P_JOB_ESTMT
+ 194666661303 | I3_CU     | ESTMT_MSG_DETAIL
+ 194666175865 | I3_CU     | EMAIL
+ 194665507968 | I3_CU     | ACCOUNT_CHECK_IMAGE
+ 194665507966 | I3_CU     | P_JOB_CHECK
+ 194665476940 | I3_CU     | SUMMARY_REPORTS
+ 194665093283 | I3_CU     | P_ENOTICE_EMAIL
+ 194664360799 | I3_CU     | LOGIN_PASSWORD_HISTORY
+ 194664220915 | I3_CU     | REMINDER_STATUS
+ 194664200383 | I3_CU     | P_BACKUP
+ 194664198416 | I3_CU     | EMAIL_ERR
+ 194661358176 | I3_CU     | USR_TREE
+ 194654932083 | I3_CU     | AUDIT_LOG_PPCU
+{code}

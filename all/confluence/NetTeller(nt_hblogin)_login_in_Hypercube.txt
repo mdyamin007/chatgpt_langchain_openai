@@ -1,0 +1,98 @@
+title: NetTeller(nt_hblogin)_login_in_Hypercube
+body: # NetTeller Login In Hypercube
+
+# How NetTeller login method works in hypercube:
+
+  * 1\. SSO file contains the following contents - FI_Number, UniqueID, ConnectionString, cid, DateTimeValue.  
+-> UniqueID is usually the hash of NetTeller ID, Cash Management ID and Provider Name.  
+-> UniqueID works as  ** _vendor_user_id_**  of  ** _usr_session_**  table.  
+-> ConnectionString is the hash of UniqueID, FI_Number, SharedKey, DateTimeValue.
+  * 2\. Based on ConnectionString, hypercube matches it with the hash of UniqueID(from request), FI_Number(from request), DateTimeValue(from request) and shared key(from client property file). If it matches, the site redirects to key generation and validation part. If it doesn't, it generates error.
+  * 3\. After validating token, if everything is working accordingly then hypercube redirects the user to home page based on the user and client configuration.
+
+  
+  
+
+## Why it needs to be changed?
+
+As per the structure of  **mainRoutes/ssoExchange** ,  ** _ssoEnrollment_**
+flag needs to be  ** _true_**  for a client to go through enrollment process(
+**ssoEnrollmentApi** ). Previously netTeller login method was used by COBZ
+only in hypercube. For this client,  ** _ssoEnrollment_**  flag was false, so
+it didn't need to go through enrollment. But for other clients who have
+enrollment and have to use netTeller login method, auth.js needed to be
+changed. As  **ssoEnrollmentApi**  requires account object, netTeller login
+method has to have the support to create account object. Previously account
+object was not being created in auth.js or anywhere else for netTeller login
+as the client didn't have any enrollment.  
+  
+
+## What are the changes?
+
+To create the account object for  **ssoEnrollmentApi** ,
+**userAccountsApiServer**  needs to be called with  **extUserId** ,  **cid** ,
+**loginType** , and  **searchByVendorUsrId**  has to be  **Y**  as it allows
+the  **extUserId**  to behave as  ** _vendor_user_id_**  of  **
+_usr_session_**  table. If the value of  **searchByVendorUsrId**  is  **N**
+or  **empty** ,  **extUserId**  behaves as  ** _cif_num_**  of  **
+_usr_mapping_**  table.So, to search by  ** _vendor_user_id_** ,
+**searchByVendorUsrId**  always has to be  **Y**.  **searchByVendorUsrId**
+can be set in the client property file. So following are the values that needs
+to be passed to  **userAccountsApiServer**  -
+
+    
+    
+    cid - (Passed from SSO/Can be achieved from property file)
+    extUserId - UniqueID(vendor_user_id)
+    loginType - sso
+    searchByVendorUsrId - Y
+    
+
+And in auth.js, following is the change that is added to create account object
+for  **ssoEnrollmentApi**  -
+
+    
+    
+      
+    
+
+if(paramJson.searchByVendorUsrId){  
+    searchByVendorUserId = paramJson.searchByVendorUsrId;  
+}else{  
+    searchByVendorUserId = 'N';  
+}
+
+    
+    
+      
+      
+    
+
+f(mergedProperties.ssoEnrollment){  
+        Meteor.call('userAccountsApiServer',  cid, extId, loginType, searchByVendorUserId, function (error, result) {  
+            if (error) {  
+                logger.error(cid + " serverMethods/auth.js - nt_hblogin - Error occured while receiving user data.");  
+                errorCode = 602;  
+                return errorCode;  
+        } else {  
+                if(result == false){  
+                    [logger.info](http://logger.info)(cid + " serverMethods/auth.js - nt_hblogin - Returning false");  
+                    errorCode = 602;  
+                    return errorCode;  
+            }  
+                userApi = result;  
+                for(var i=0;i<userApi.accounts.length;i++) {  
+                    accounts.push(userApi.accounts[i  
+                ]);  
+            }  
+                paramJson.accNo = accounts;  
+        }  
+    });  
+}FF
+
+    
+    
+      
+    
+
+

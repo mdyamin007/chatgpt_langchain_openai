@@ -1,0 +1,210 @@
+title: Postage Report Instructions
+body:   
+
+## Step 1: Run commands to generate Postage Report
+
+First change the dates in the query!
+
+Populates Data into Database (run first!):
+[http://10.8.8.225:9092/prpGen?sdate=MM/DD/YYYY&edate=MM/DD/YYYY&flag=$flag](http://10.8.8.225:9092/prpGen?sdate=MM/DD/YYYY&edate=MM/DD/YYYY&flag=$flag)
+
+Example:
+[http://10.8.8.225:9092/prpGen?sdate=06/01/2012&edate=06/30/2012&flag=prod](http://10.8.8.225:9092/prpGen?sdate=06/01/2012&edate=06/30/2012&flag=prod)
+
+Generates Postage Report and Issue List:  
+<http://10.8.8.225:9092/prpIssue?sdate=> MM/DD/YYYY &edate=
+MM/DD/YYYY&flag=$flag
+
+Example:
+[http://10.8.8.225:9092/prpIssue?sdate=06/01/2012&edate=06/30/2012&flag=prod](http://10.8.8.225:9092/prpIssue?sdate=06/01/2012&edate=06/30/2012&flag=prod)
+
+Reports get generated into /dell-2100/share/Lisa/prp/YYYYMM/
+
+Please note, if the report is not ready for ACCOUNTING, please use flag=test  
+  
+
+  
+
+## Step 2: Resolve any issues
+
+Issue report is located in /dell-2100/share/Lisa/prp/YYYYMM/issue/
+
+Send out email to Alice Lai, Terrence, Neil, Calvin Choy, Peter to research
+the issues on the list. Allow a few days for people to get back to you.
+
+After all issues have been resolved, rerun the 2 commands from Step 1.
+
+Example issue research request email:
+
+Issues regarding PRP report between 05/01/2012 to 05/31/2012
+
+==========================================  
+Missing Markup Rate Database [ALICE: Please fill in mark-up rates for these
+applications]
+
+CID appType  
+FFDM TX: Stmt - Supplemental  
+STLU MP: Stmt - Budget
+
+==========================================  
+Missing Proc_id in Mimi's Database which processed before 05/31/2012 [JOE:
+Please research these items.]
+
+CID VID dt_job_id jobNo drop_date proc_id AppType  
+ABMC 20309 107966-C29.01-V20309 107966 05/01/2012 null MP: Invoice - Det Bill  
+BBBB 21013 108855-C00.01-V21013 108855 05/29/2012 null TX: Stmt - Reg Z LOC  
+BBBB 20310 108476-C30.01-V20310 108476 05/31/2012 null TX: Stmt - DDA & SAV  
+BBBB 20310 108476-C29.01-V20310 108476 05/30/2012 null TX: Stmt - DDA & SAV  
+BBBB 20310 108476-C14.01-V20310 108476 05/15/2012 null TX: Stmt - DDA & SAV  
+BBBB 20310 108476-C01.01-V20310 108476 05/02/2012 null TX: Stmt - DDA & SAV  
+CPMC 20413 108816-C23.01-V20413 108816 05/23/2012 null MP: Invoice - Daily  
+CPMC 20413 108816-C16.01-V20413 108816 05/18/2012 null MP: Invoice - Daily  
+FCSB 21285 108565-C04.01-V21285 108565 05/04/2012 null TX: Letter - Daily MRA  
+FFDM 21133 108083-C30.01-V21133 108083 05/01/2012 null TX: Letter - Daily NSF  
+PROV 20423 108668-C10.01-V20423 108668 05/11/2012 null MP: Invoice - Loan
+Commercial  
+PROV 20423 108668-C09.01-V20423 108668 05/10/2012 null MP: Invoice - Loan
+Commercial  
+PROV 21045 108671-C10.01-V21045 108671 05/11/2012 null MP: Invoice - Reg Z LOC  
+SAVB 20818 108693-C29.01-V20818 108693 05/29/2012 null TX: Letter - Daily  
+SAVB 20822 108692-C29.01-V20822 108692 05/29/2012 null TX: Invoice - Loan  
+SFCE 21241 108714-C00.01-V21241 108714 05/18/2012 99 MP: Letter - Postcards  
+UCCU 20320 108763-C29.01-V20320 108763 05/29/2012 null MP: Invoice - Loan
+Coupon Daily  
+UCCU 20320 108763-C28.01-V20320 108763 05/29/2012 null MP: Invoice - Loan
+Coupon Daily
+
+==========================================  
+Good processing status but with mis-matched netsort counts( >=100 pieces
+difference)
+
+CID drop_date proc_id NetSort_count DPVS_Count status AppType  
+EWBB 05/03/2012 182086 243 153127 4 MP: Stmt - DDA & SAV [CALVIN/PETER:
+~153,000 pieces missing from NetSort for this job. Please research. ]
+
+==========================================  
+Failed status: status not in (1, 3,4,9) [TERRENCE/NEIL: Why do these jobs have
+negative statuses?]
+
+CID drop_date proc_id status AppType  
+FNBS 05/09/2012 182946 -11 TX: Stmt - DDA & SAV  
+NTSB 05/14/2012 183510 -9 TX: Invoice - Loan  
+RABO 05/03/2012 182335 -5 MP: Letter - Daily
+
+==========================================  
+The following proc_id may not existed in Peter's database or status<=0 or jid
+not in job_type table
+
+CID drop_date proc_id status jid AppType Error  
+FNBS 05/09/2012 182946 -11 ms1 TX: Stmt - DDA & SAV Can't link the job with
+process_main or job_type for proc_id=182946  
+NTSB 05/14/2012 183510 -9 ls1 TX: Invoice - Loan Can't link the job with
+process_main or job_type for proc_id=183510  
+RABO 05/03/2012 182335 -5 dla MP: Letter - Daily Can't link the job with
+process_main or job_type for proc_id=182335
+
+End of report  
+  
+
+  
+
+## Step 3: Do manual calculations
+
+Current manual applications include:
+
+1\. All Phoenix jobs <= permanently manual
+
+> a. PHLE Paladin  
+> b. PHLE Uniprop  
+> c. PHLE Sentio Healthcare Properties
+
+2\. All Direct Mail jobs (regular and one-time) <= permanently manual
+
+> a. RWCU Youth Bday Postcard  
+> b. RWCU Youth Letters  
+> c. SFCE New Member Letter  
+> d. SECU New Member Letter
+
+3\. All Postcard jobs <= will eventually be automated
+
+> a. BKFN Daily Postcard  
+> b. SCCU Daily Postcard  
+> c. PRCU Bad Email Postcards  
+> d. UTCU Daily Postcard
+
+4\. All Certified Mail jobs <= will eventually be automated
+
+> a. FFDM Certified Mail  
+> b. MEGA/FRMG Certified Mail
+
+5\. Misc <= permanently manual
+
+> a. GOCU Daily Letters  
+> b. SMGH EH Bill  
+> c. SLCU Statement (Monthly, Kitty, Analysis)
+
+  
+  
+
+## Step 4: Calculate postage totals
+
+Automated Reports:
+
+Import reports from /dell-2100/share/Lisa/prp/YYYYMM/report/ into an Excel
+spreadsheet.
+
+  * Total Count = Column C
+  * Total Billed = Column D
+  * Presort Profit = Column I
+
+Manual Calculations:
+
+  * Total Count = Column F
+  * Total Billed = Column G
+  * Presort Profit = Column H
+
+## REFERENCE
+
+PRP STATUS CODES
+
+-1 EXTERNAL CUSTOMER REQUEST  
+-2 EXTERNAL HIGH CRIPPLE RATE  
+-3 EXTERNAL BAD FILE  
+-4 EXTERNAL RE-PROCESS MISSING FILE FROM 1ST RUN  
+-5 EXTERNAL OTHER  
+-6 INTERNAL USED WRONG FILE  
+-7 INTERNAL INSERT FILE CONFIGURED INCORRECTLY  
+-8 INTERNAL BAD MESSAGE FILE  
+-9 INTERNAL WRONG PROGRAMMING RESOURCES  
+-10 INTERNAL DVD/CD ERROR  
+-11 INTERNAL OTHER  
+-20 ?
+
+1 - Processing complete, but have not gone through NetSort.  
+2 - Missing from NetSort. No piece accounted for.  
+4 - Error reconcile with NetSort; "100" pieces or more are missing.  
+9 - No error; all NetSort piece accounted for.
+
+LISA'S MANUAL FILTER LIST  
+\\\10.8.8.225\d\hosts\postage\ROOT\WEB-
+INF\classes\com\infoimage\postagerpt\report\custom\Filter.java
+
+CALVIN CHOY'S MANUAL INSTRUCTION CODES  
+[http://10.8.8.14/prod/presort.php?dept=MAILING&appl=presort](http://10.8.8.14/prod/presort.php?dept=MAILING&appl=presort)
+
+0: No Postage  
+1: Normal Billing  
+2: Bill at First Class
+
+AUTOPROGRAM ON SCRIPT SERVER:  
+\\\10.8.9.34\c$\scripts\prp:  
+1: prod_prpGen.pl --> generate the reports and send email to people in PC, IS,
+DP to resolve the issue (10th each month)  
+2: final_prpGen.pl --> generate the reports and email to ACCOUNTING and PC and
+etc. (15th each month)
+
+### Attachments
+
+250
+
+

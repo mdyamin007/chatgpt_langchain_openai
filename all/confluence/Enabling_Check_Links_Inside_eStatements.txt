@@ -1,0 +1,31 @@
+title: Enabling Check Links Inside eStatements
+body: Display Requirements:
+
+  * Account Number
+  * Check Number
+  * Check Date
+  * Check Amount
+
+  
+
+Instructions:
+
+  1. ssh into isd@afp2web-prod01 (10.8.9.14)
+  2. cd ~/a2w-dev/ini/dev
+  3. customize ini file for customized ScriptProcedure (pm file)
+  4. Use an existing pm file as template, and modify / define the following configs
+    1. SpecialCharXPos: set the coordinates that define checks location
+    2. StaticCheckURL (optional): we might need to hardcode this, because some browsers do not prepend the base URL
+  5. Manually convert some afp files to find out where the SpecialCharXPos coordinates are (use site such as 10.8.9.9/services/InfoIMAGETransform.html)
+    1. Change LoggingLevel to ALL.
+    2. Site config
+      1. Input File: the afp to manually transform
+      2. Location: Dev
+      3. INI File: full ini path
+    3. Look at log file: /var/log/apache2/error.log. For every afp processed, the log will print out all the items.
+      1. Search for afp file name / cid
+      2. Seach for Text = CHECKS
+      3. Parse through the CHECKs section log to find the xPos. 
+  6. May need to modify the pm script; the logic loop.
+
+

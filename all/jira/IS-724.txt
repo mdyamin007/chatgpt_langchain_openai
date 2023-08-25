@@ -1,0 +1,339 @@
+title: PPCU - [23875][pvt] Add PDF Archival to Tax Stmts
+description: IS Assessment
+ =============
+ Hours for development: 40 IS hours (10 hours x 4 applications) + ISD hours not required
+ Turnover Date : 02/08/2022
+ Sample Date: 03/01/2022
+ Sample Approval Date: 03/08/2022
+ Go live date : 03/18/2022
+
+Assessment Details (IS):
+ - Parallel required: (yes)
+ - Setup pdf archival for Monthly/Heloc/Visa/Tax Stmts
+ - specification for individual PDF archival with index file
+
+ * Fields in index file
+ Account#|Name|PDFFileName
+ * PDF file name
+ ppcu_monthly_account#_seq#.pdf
+ ppcu_heloc_account#_seq#.pdf
+ ppcu_visa_account#_seq#.pdf
+ ppcu_tax_account#_seq#.pdf
+ * zip/pgp file name
+ ppcu_monthly_statement_MMDDYYYY_Sequence.zip.pgp
+ ppcu_visa_MMDDYYYY_Sequence.zip.pgp
+ ppcu_heloc_MMDDYYYY_Sequence.zip.pgp
+ ppcu_tax_MMDDYYYY_Sequence.zip.pgp
+
+*Per client's comment #53 on TS#23875 1/12/2022:*
+
+*What is the split count or size for each batch?*
+
+500mb is fine.
+
+*What will be the index filename?*
+
+Happy to hear your suggestion. I'm just making this up on the fly but I'd assuming, something like... statementType-index-date
+
+*What is the archival email recipient's address?*
+
+itadmin@ppcu.org and possibly accounting@ppcu.org. The itadmin email I'm thinking should be the main email, so we can monitor any issues with the import.
+
+
+author: dawnl
+comment: *From:*William Kong <William.Kong@infoimageinc.com>
+*Sent:*Monday, January 10, 2022 12:30 PM
+*To:*Dawn Lin <Dawn.Lin@infoimageinc.com>
+*Cc:*Tun Aung <Tun.Aung@infoimageinc.com>; Le Tuan La <LeTuan.La@infoimageinc.com>; Eric Yan <Eric.Yan@infoimageinc.com>
+*Subject:*PPCU: Add PDF Archival Project (Needing Separate Stories)
+*Importance:*High
+
+Hi Dawn,
+
+Can you please separate the following JIRA tickets to 4 stories? One per each application.
+
+I will have two ppl working on this project. Le will take on 3 applications and I would like Eric to take on the tax portion:
+
+AC-389PPCU -[23875][pvt]Add PDF Archival to Monthly/Heloc/Visa/Tax Stmts - Jira (infoimageinc.com)
+
+Le: Monthly
+
+Le: Heloc
+
+Le: Visa
+
+Eric: Taxes (Please identify which forms need taxes).
+
+
+author: william.kong
+comment: [~eric.yan]: Please work with Dawn to confirm which Tax Forms to implement.
+
+I gave the other three application to Le. Just need you to assist on the Taxes.
+
+
+author: eric.yan
+comment: [~dawnl]
+
+Archival has been setup for 1098, 1099i and 1099div
+
+
+
+Tax archival samples have been placed in client pickup folder.
+
+PPCU_1098_311_2021_1.zip
+
+PPCU_1099I_311_2021_1.zip
+
+password is PPCU_tax3s_0403
+
+
+
+pr_id is 20220224192657
+
+
+
+
+
+
+
+
+author: eric.yan
+comment: [~dawnl]
+
+Is there any update on this?
+
+
+author: dawnl
+comment: 3/17 from client:" Sorry for the delay, my Laserfiche guy seems like a one-man-band. Hes taken a look, asked a few questions about mapping. I think hes close, Ill let you know when hes done. Crossing my fingers we can get this all set up soon."
+
+
+author: william.kong
+comment: [~dawnl]: Is there any updates on this project? I'm marking this project status to be on "Hold" since there has not been any progress in the last few weeks since 2/24/2022.
+
+
+author: eric.yan
+comment: File was backed up to/d/iss/ericY/ppcu/IS-724
+
+
+author: tuna
+comment: Hi [~dawnl],
+
+This project is holding for a while.
+
+I will remove from developer resource list, if we don't have any action within one week from now.
+
+Developer will not reinitiate project until we setup new timeline.
+
+Please let me or Peter know if we need to restart the project.
+
+Thanks,
+
+Tun
+
+
+
+
+
+[~eric.yan], [~Peter.Dang], [~William.Kong]
+
+
+
+
+author: tuna
+comment: Hi [~dawnl],
+
+Just FYI. I removed from resource schedule. We can just leave as "hold" for this Story.
+
+But we will need new timeline when client wants to resume this project. 
+ Because the developer may busy with other projects.
+
+Please let [~Peter.Dang] or me know when client wants to resume project.
+
+Thanks
+ Tun
+
+[~William.Kong]
+
+
+
+
+
+Internal note for IS: I released following control files. from Eric folder Because Tax core files are consistently changing for other FI.
+
+Still need to updatecdtax.control to change from readable DVD archival to individual PDF archival.
+
+[tun@rhs tun]$ grep ppcu /home/control/cdtax.control
+ppcu|dvd
+
+
+
+
+
+
+
+20220524085955 05/24/2022 tun Initial release for ON HOLD ppcu tax project for ericY, IS-724 PPCU - [23875][pvt] Add PDF Archival to Tax Stmts
+
+[oper1@rhs ~]$ ll /d/iss/ericY/ppcu/IS-724/
+total 28
+-rwxr-xr-x 1 ericY isgroup 511 Feb 24 19:24 ppcutax_1098gen_pdf.control
+-rwxr-xr-x 1 ericY isgroup 506 Feb 24 19:49 ppcutax_1099divgen_pdf.control
+-rwxr-xr-x 1 ericY isgroup 512 Feb 24 19:48 ppcutax_1099igen_pdf.control
+-rwxr-xr-x 1 ericY isgroup 134 Feb 24 19:26 ppcutax_pdf_template.control
+-rwxr-xr-x 1 ericY isgroup 69 Feb 24 19:26 ppcutax_pdf_template_header.control
+-rwxr-xr-x 1 ericY isgroup 4284 Feb 24 19:32 tax_archival_key.control
+
+
+
+
+
+
+author: dawnl
+comment: Hi[~TunA],[~Peter.Dang],
+
+Client approved the sample. See client's comment below.
+
+"Hello and sorry for the ultra-long delay. So I recently received approval from the archival team that the PDFs and Index files will work. What do you need from me to start producing the previous X-# months statement PDF files?"
+
+Please note that the service cancellation for Pacific Postal CU (PPCU) will be effective August 1, 2022.
+
+Please note that PPCU will terminateInfoImage Services effective August 1, 2022. The termination takes place AFTER the July Month end statement cycle, InfoImage will be processing this month end file.
+
+Thanks.
+
+
+author: william.kong
+comment: [~dawnl]: If we are going to resume this Tax project and client is leaving August, then what is the client's intention. Do they want us to process last year's Tax PDF archival.
+
+
+
+Regardless, all the programming is done; Whether or not we release this project willl still need to be billed out. Please let us know the plan on this project. If we release, what do we do next after code release. If there is NO processing needed, then we should not spend the effort to release this project.
+
+
+author: dawnl
+comment: [~William.Kong]- I have reached out to client regardinglast year's Tax PDF archival.
+
+
+author: dawnl
+comment: [~William.Kong], [~TunA],
+
+Yes, client wants us to process last year's Tax PDF archival.
+
+
+author: tuna
+comment: Hi [~dawnl]
+
+I copied new set of tax archival samples\ac-secure-share\ac\dawn\IS-724\ from Eric's latest codes. I cannot tell those are correct archival format. Because the project is HOLD for long time.
+
+PPCU_1098_311_2021_1.zip
+
+PPCU_1099I_311_2021_1.zip
+
+
+
+Please request DP to copy to client_pickup folder and request client to approve again. If client can approve as is, I will release rest of the codes to production. If client do not approve, let me know the reason of not approve. We will need to re-assess this project.
+
+
+
+Thanks,
+
+Tun
+
+
+
+[~Jessica]
+
+[~William.Kong],
+
+[~Peter.Dang] ,
+
+
+
+
+
+
+author: dawnl
+comment: [~TunA]- client approved. Thanks.
+
+
+author: igor.khosid
+comment: [~berezinez] - please review and confirm when the story will be turned over to QA
+
+
+author: tuna
+comment: Hi [~Igor.Khosid],
+
+Please see information for QA. As I mentioned, The codes are already in production for tax process.
+
+Let me know if you have question.
+
+Thanks,
+
+Tun
+
+
+
+
+
+- Following programs are released.
+
+ppcutax_1098gen_pdf.control
+ppcutax_1099divgen_pdf.control
+ppcutax_1099igen_pdf.control
+ppcutax_pdf_template.control
+ppcutax_pdf_template_header.control
+tax_archival_key.control
+
+cdtax.control
+
+
+
+- Samples are in /z/pdf_afp/ppcu/ppcutax/zip
+
+- Individual PDFs tax archival specification:
+
+Index file naming convention:
+{CID}TAX._fileSequencetxt
+Example,
+PPCUTAX_1.txt
+
+Index file content (Pipe delimited):
+Account Number|SSN Number|Account Name|Tax Year|Tax Form Type|PDF File Name
+example,
+10050|557044981|POQUIS DUANE A|2021|1098|ppcu_tax_10050_20.pdf
+
+Individual PDF file naming convention:
+CID_tax_AccountNumber-fileSequence.pdf
+example:
+ppcu_tax_10050_20.pdf
+ppcu_tax_10128_21.pdf
+
+Zip file naming convention for index file and the individual PDF files.
+CID_formType_CycleSegment_YYYY_fileSequence.zip
+e.g.
+PPCU_1098_311_2021_1.zip
+
+
+
+
+
+
+
+
+author: berezinez
+comment: [~TunA] [~dawnl]
+
+QA is completed, please attach IS checklist if needed.
+
+
+author: tuna
+comment: Thanks, [~berezinez]. We do not need check list because we do not need parallel test.
+
+Hi [~dawnl]: I will close this story. The codes are already in production.
+
+Thanks,
+
+Tun
+
+
+
+

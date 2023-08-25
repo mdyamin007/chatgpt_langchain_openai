@@ -1,0 +1,300 @@
+title: OSCU - [22485][pvt][in-house] Online Viewer / Proof file correction
+description: OSCU - Online Viewer / Proof file correction (Inhouse)
+
+*App*: Stmt
+Description:Create a plugin script call withinget_sample_by_account.plto get a list of different account type for .prf proofing file. This is to correct OSCU issue with the proof file (T#22451).
+
+*Timeline:*
+Estimate 5 hours programming.
+Turnover to DSI: 2/15/2022
+Sample to QA: (TBD)
+Live: 3/30/2022 (Pushed back)
+
+
+author: peter.dang
+comment: Rony, Please assign to engineer to work on this update.
+
+
+author: barnetts
+comment: Hi [~rony],
+
+Can you please advise if you assigned to engineer to work on this update?
+
+Thanks, Barnett 
+
+
+author: barnetts
+comment: Hi [~rony] / [~Peter.Dang] 
+
+Can you please assign to work on this update?
+
+Thanks, Barnett
+
+
+author: rony
+comment: Hi [~barnetts]
+
+I will work on this.
+
+
+author: barnetts
+comment: Thank you [~rony]
+
+
+author: rony
+comment: Hi [~William.Kong]
+
+Need some discussion here. I see you did some research in[https://app.na3.teamsupport.com/?TicketNumber=22485]comment 14 to find bug in prf file.
+
+This has householding to household the main statement and account analysis statement. But in prf sample it was showing only one account analysis statement.
+
+So probable guess was get_ms_sample.sh cannot handle grouping. But that's quite not fact here.
+
+get_ms_sample.sh can actually handle grouping if the c1bmcok file ( the input file for get_ms_sample.sh) is already grouped.
+
+In isisdisk.sh when it comes the get_ms_sample.sh c1bmcok file is already grouped. In /home/test/master/isisdisk.sh around line 5247 It checks the$group_type value and call necessary grouping script to group and after that and around line 5538 it calls get_ms_sample.sh.
+
+But in isisdisk_daily.sh whenit comes the get_ms_sample.sh c1bmcok file is not grouped at that point.In /home/test/master/isisdisk_daily.sh around line 5033 It calls get_ms_sample.sh and around line 5538 checks the$group_type value and call necessary grouping script to group .
+
+I am not sure why this is flow is opposite between isisdisk.sh and isisdisk_daily.sh.
+
+For oscums2_process.sh it runs format_only 2 times, for main statement (jid ms2) and then for account analysis statement (jid ba1). After that it is calling isisdisk_daily.sh for the combined the paper txt file for ms2 and ba1 generated from format_only.sh.
+
+In isisdisk_daily.sh at some point isisace2.sh gets called which creates the c1bmcok file. Before that it sorts the combined txt file by account no and what happened that after sorting a account analysis statement got appeared for cycle 08312021.
+
+And after that at some point get_ms_sample.sh get called it select 30 groups ( not individual account but groups) from c1bmcok file to build the prf file. But that point c1bmcok file is not grouped and prf txt file built from get_ms_sample.sh doesn't have the correct grouping. And for 08312021 cycle the top entry in prf txt file is a account analysis record.
+
+
+
+And one other thing for prf file when olp is on we are actually showing one account the top entry of prf txt file. In olp_handler.sh
+
+!image-2022-03-06-10-46-34-467.png!
+
+when I was working to add advanced online proofing feature in isisidisk.sh or isisdisk_daily.sh I was asked to do so. So for oscums2 cycle 08312021 since the initial prf file has a account analysis at the top after this *head -1 it* only has that record.
+
+
+
+I was debugging in parallel and I put oscu.zip file in /d/infoftps3/Vend_DSI/client_pickup/print_process/OSCU which contains:
+
+oscums2131.txt the combined file from the format_only.sh paper txt file for ms2(main) and ba1(account analysis).
+
+oscums2131.c1bmcok_after_ace_before_household this is c1bmcok file after isisace2.sh but before householding. You can see here that the top entries are from
+
+account analysis . Letter code(312-314) , afp(315-317) code are ba1.
+
+oscums2131.prf file which has 30 accounts not groups since the c1bmcok file at this point was not grouped.
+
+oscums2131.c1bmcok_after_household file after householding. From which all the print txt and print afp files got generated.
+
+You can check "ORE AGRICULTURAL EXTENS ASSOC" inoscums2131.c1bmcok_after_ace_before_household andoscums2131.c1bmcok_after_household to see the householding.
+
+Not sure if I am clear about what is causing the issue here. If you have time we can do a short discussion.
+
+If we can flip the flow of calling grouping and get_ms_sample.sh the issue will be automatically resolved. And I believe it will not cause to existing projects as well. Or if you think this is risky then while grouping for oscu i.e.oscums2_combine_acct.pl in this script at the end after grouping I can create prf txt file again.
+
+
+
+And if you want to change the current olp proof file that is showing only top record, let me know.
+
+
+
+Thanks,
+
+Rony
+
+
+
+
+
+
+
+
+
+
+
+
+author: rony
+comment: Hi [~William.Kong]
+
+Let me know your feedback on this.
+
+
+author: william.kong
+comment: [~rony]: We need to get [~Peter.Dang]involved in this discussion. I'm not familiar with thec1bmcok file and cannot provide the correct guidance on this especially if this is going to be related to the core script module above.
+
+
+
+[~Peter.Dang]: Can you please help review Rony's comment assessment above and discuss this?
+
+
+author: barnetts
+comment: Hi Peter,
+
+Can you please review this?
+
+Thanks, Barnett
+
+
+author: rony
+comment: Hi [~barnetts]
+
+Would it be possible to provide me with the 08312021 cycle?
+
+From ts [https://app.na3.teamsupport.com/?TicketNumber=22451]comment 14 from William, he found bugs in the proof file generated from this 08312021 cycle.
+
+
+
+
+author: barnetts
+comment: Hi [~rony]
+
+I will check to see if this can be done.
+
+Thanks, Barnett 
+
+
+author: rony
+comment: Hi [~barnetts]
+
+Can we change the due date to month end 03/30? The coding is done just need the data to test.
+
+
+author: barnetts
+comment: HI [~rony],
+
+The due date has been pushed back to 3/30.
+
+Thanks, Barnett 
+
+
+author: barnetts
+comment: Hi [~rony], 
+
+The data file is in oscu/test folder.
+* monthly/OSCU_20210831_Monthly_Statement.xml.zip / 355.48 Mb (08/31/2021 23:00 PST)
+
+
+Thanks, Barnett 
+
+
+author: rony
+comment: Thanks, [~barnetts]I am still working on testing. I will let you know.
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+parallel id:20220314060415
+
+The issue was in the proof file. If you see ts [https://app.na3.teamsupport.com/?TicketNumber=22451]comment 14 William attached proof file[^bad_proof_file_0831.pdf] and this proof file had account analysis statements at the beginning.
+
+
+
+And now if you check the proof file[^stage_proof.pdf]which is in stage for apcums2(stmt) dt job id133301-C00.01-V21052.
+
+
+
+!image-2022-03-24-01-28-48-464.png!
+
+
+
+This problem is not in the proof sample now.
+
+
+
+Thanks
+
+Rony
+
+
+
+
+author: berezinez
+comment: Parallel ID: 20220314060415
+ Currently in parallel: Yes
+ User: ronyD
+ Description: is-674 ts 27375
+ Date Submitted: 2022-03-14 06:05:08
+ Date Last Updated: 2022-03-15 11:16:01
+ Files:
+ 1) isisdisk_daily.sh
+ 2) get_ms_sample.sh
+
+
+author: berezinez
+comment: [~rony] [~barnetts]
+
+QA pass, the changes look good.
+
+
+author: barnetts
+comment: Thank you [~berezinez],
+
+[~rony], Please release code.
+
+Thanks, Barnett 
+
+
+author: rony
+comment: Hi [~TunA]
+
+get_ms_sample.sh isisdisk_daily.sh are in my xfer folder. Would you please release?
+
+Thanks
+
+
+
+
+author: tuna
+comment: Hi [~rony],
+
+Thanks for explaining codes. Follow codes have been released.
+
+Tun
+
+
+
+20220325091929 03/25/2022 ronyD IS-674 OSCU - [22485][pvt][in-house] Online Viewer / Proof file correction
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/ronyD/
+total 632
+-rwxrwxrwx 1 ronyD DSI 13007 Mar 24 23:53 get_ms_sample.sh
+-rwxrwxrwx 1 ronyD DSI 280465 Mar 24 23:53 isisdisk_daily.sh
+
+
+
+
+
+[~William.Kong],[~Peter.Dang], [~barnetts]
+
+
+author: barnetts
+comment: Thank you [~rony]
+
+
+author: barnetts
+comment: [~TunA]/[~William.Kong],
+
+Can you please confirm that we are good on this now?
+
+Thanks, Barnett 
+
+
+author: tuna
+comment: [~barnetts]: Rony requested to released codes in Friday (03/25). So I released code to production (see above comment). The update is completed. Please contact [~rony], if you need anything to confirm.
+
+Thanks,
+
+Tun
+
+
+
+
+
+
+
+
+
+
+author: barnetts
+comment: Thank you [~TunA]

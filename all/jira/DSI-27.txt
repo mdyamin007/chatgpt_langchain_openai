@@ -1,0 +1,61 @@
+title: Migrate to Tomcat from resin
+description: Migrate the client from Resin to tomcat.
+
+
+author: rifat.mahmud
+comment: [~admin] Currently Im working on the client CTCU. Ive noticed that in the *Estatement Client Version List* that the sso-vendor for this client is *WESCOM*. But I dont see any information about sso in web.xml file in the resin codebase. Can someone please check it out? If you can provide any sso file for the client, it would be helpful. 
+
+
+author: admin
+comment: [~rifat.mahmud] If you look at web-prod.xml youll see {{WESCOMSSO}} defined there.
+
+{code}	<servlet>
+		<servlet-name>sso</servlet-name>
+		<servlet-class>com.infoimage.security.SingleSignOn7Servlet</servlet-class>
+		<init-param>
+			<param-name>method</param-name>
+			<param-value>MD5</param-value>
+		</init-param>
+		<init-param>
+			<param-name>password</param-name>
+			<param-value>aF#7jT**bE</param-value>
+		</init-param>
+		<init-param>
+			<param-name>createLogin</param-name>
+			<param-value>false</param-value>
+		</init-param>
+		<init-param>
+			<param-name>accountDigits</param-name>
+			<param-value>10</param-value>
+		</init-param>		
+		<init-param>
+			<param-name>updateEmail</param-name>
+			<param-value>false</param-value>
+		</init-param>
+		<init-param>
+			<param-name>debug</param-name>
+			<param-value>true</param-value>
+		</init-param>
+	</servlet>	
+	<servlet-mapping>
+		<servlet-name>sso</servlet-name>
+		<url-pattern>/WESCOMSSO</url-pattern>
+	</servlet-mapping>	{code}
+
+
+
+
+author: rifat.mahmud
+comment: From production,we've seen that a tomcat version is already running for ctcu. As far as we checked, the version that is running in production is revision no 8863 from estmt2 repository.
+
+
+author: rifat.mahmud
+comment: For CHCU, the code has been committed in SVN. I had to add the following dependency in master pom as it was causing errors while building the client.
+
+{code}	<dependency>
+		<groupId>org.apache.poi</groupId>
+		<artifactId>poi-ooxml</artifactId>
+		<version>3.8</version>
+	</dependency>{code}
+
+

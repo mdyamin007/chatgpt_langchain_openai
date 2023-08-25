@@ -1,0 +1,162 @@
+title: Logstash Installation Steps
+body: ## Cent OS
+
+Run the following command to import the Elasticsearch/Logstash public GPG key
+into rpm:
+
+    
+    
+        
+    sudo rpm --import <http://packages.elasticsearch.org/GPG-KEY-elasticsearch>
+    
+
+  
+
+### Install Logstash
+
+The Logstash package shares the same GPG Key as Elasticsearch, and we already
+installed that public key, so let's create and edit a new Yum repository file
+for Logstash:
+
+    
+    
+        
+      sudo vi /etc/yum.repos.d/logstash.repo
+    
+
+  
+
+Add the following repository configuration:
+
+  
+
+    
+    
+      [logstash-1.4]  
+      name=logstash repository for 1.4.x packages  
+      baseurl=<http://packages.elasticsearch.org/logstash/1.4/centos>  
+      gpgcheck=1  
+      gpgkey=<http://packages.elasticsearch.org/GPG-KEY-elasticsearch>  
+      enabled=1  
+    
+    
+
+Install Logstash 1.4.2 with this command:
+
+    
+    
+      
+      sudo yum -y install logstash-1.4.2
+    
+
+  
+
+**NOTE:**  Logstash is installed but it is not configured yet.
+
+Logstash will get installed in following directory:
+
+    
+    
+      
+      /opt/logstash/
+    
+
+### Log Files:
+
+Logstash logs: /var/log/logstash/
+
+Zimbra Logs: /var/log/zimbra.log
+
+### Logstash Contrib Installation:
+
+Logstash 4.1.2-modified plugin is broken. So first, we need to change version
+of logstash.
+
+    
+    
+      
+    
+
+  sudo vi /opt/logstash/lib/logstash/version.rb
+
+  Change
+
+  LOGSTASH_VERSION = "1.4.2-modified"
+
+  to
+
+  LOGSTASH_VERSION = "1.4.2"
+
+  
+
+    
+    
+      
+    
+
+Now, we will able to install logstash contrib plug-in.
+
+  
+
+    
+    
+      cd /opt/logstash
+    
+      sudo ./bin/plugin install contrib  
+    
+    
+
+### Configure Logstash
+
+For zimbra log gathering, We have created postfix pattern file to filter logs.
+Put postfix file at following location:
+
+  
+
+    
+    
+      /opt/logstash/patterns/  
+    
+    
+
+Make sure owner of this postfix file should be logstash. Run following command
+to make owner logstash.
+
+    
+    
+        
+      sudo chown logstash:logstash postfix  
+    
+    
+
+Logstash configuration files are in the JSON-format, and reside in
+/etc/logstash/conf.d. The configuration consists of three sections: inputs,
+filters, and outputs.
+
+I have attached zimbra.conf file. Copy this file at below location:
+
+    
+    
+      
+      /etc/logstash/conf.d/
+    
+
+  
+
+Now restart the logstash by below commands:
+
+  
+    
+    
+      sudo service logstash restart
+
+##  
+  
+ Attachments  
+  
+
+250250250250
+
+  
+
+

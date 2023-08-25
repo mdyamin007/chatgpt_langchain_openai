@@ -1,0 +1,215 @@
+title: jobDataErrorTracking
+body: In this design doc, we are presenting how the data exception log will be
+collected from different processing jobs. Currently, we will work on the etax
+and document process. We can add this functionality to the processes as well.
+
+We will be collecting the following data in general ( **if available** ).
+
+All the data will come directly from the index file. We will not run any
+function to get extra data that is not present in the client's index file.
+
+Following new Tables will be added:
+
+ **Table Name:** P_JOB_DATA_ERROR
+
+Column Name
+
+|
+
+Type  
+  
+---|---  
+  
+P_JOB_DATA_ERROR_ID
+
+|
+
+NUMBER (Mandatory P_KEY)  
+  
+P_JOB_ID
+
+|
+
+NUMBER   (Mandatory)  
+  
+ACCT_NAME
+
+|
+
+VARCHAR2(100 BYTE)  
+  
+ACCT_NUMBER
+
+|
+
+VARCHAR2(100 BYTE)  
+  
+ACCT_TYPE
+
+|
+
+VARCHAR2(2 BYTE)  
+  
+USR_SSN
+
+|
+
+VARCHAR2(256 BYTE)  
+  
+DOCUMENT_CODE
+
+| VARCHAR2(250 BYTE)  
+  
+P_JOB_ERROR_CODE
+
+|
+
+NUMBER (Mandatory F_KEY
+
+P_JOB_ERROR (No action))  
+  
+LINE_NUMBER| NUMBER  
+  
+**Sequence name:** P_JOB_DATA_ERROR_ID_SEQ
+
+  
+
+ **Table Name:** P_JOB_ERROR
+
+Column Name| Type  
+---|---  
+ERROR_CODE| NUMBER  
+MESSAGE| VARCHAR2(100 BYTE)  
+  
+Following insert queries to add seed data:
+
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(100, 'Unidentified Error');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(101, 'One or more data
+missing');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(102, 'Account Number is
+Missing');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(103, 'Account Type is
+Missing');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(104, 'AFP File Name
+missing');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(105, 'Etax- description not
+found');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(106, 'Etax- different form
+number');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(107, 'Etax- Type is
+Missing');[ Task list
+](https://confluence.infoimageinc.com/pages/resumedraft.action?draftId=110329909&draftShareId=32bf7dea-d418-40fd-8853-71d34de38e99&)  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(108, 'Account Number is not
+found in DB');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(109, 'Etax- Date is
+missing');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(110, 'Etax- Provided date
+format is not correct');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(111, '(Required) Zip file
+name missing');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(112, 'AFP file does not
+exist inside the Zip file');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(113, 'AFP file does not
+exist');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(114, 'Region Code doesn''t
+match with existing account');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(115, 'Account type does not
+contains two character');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(116, 'Missing Header');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(117, 'Document Begin Date
+format is not correct or Missing');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(118, 'Document End Date
+format is not correct or Missing');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(119, 'Document Image count
+format is not correct or Missing');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(120, 'Document Post card
+flag is not set correctly');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(121, 'Document ADA flag is
+not set correctly');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(122, 'Document Job Type
+missing');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(123, 'Document Presentment
+Type missing');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(124, 'Document Code
+missing');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(125, 'Document File Name
+missing');  
+INSERT INTO P_JOB_ERROR(ERROR_CODE,MESSAGE) VALUES(126, 'Document Account Name
+missing');
+
+  
+
+A package will be added in **processing UI** :
+
+ **/processing-ui-dev/com/infoimage/processing/server/jobDataErrorTracking**
+
+There will be one bean class and one service class for DB queries:
+
+ **DataError:** Bean class for P_JOB_DATA_ERROR table
+
+ **DataErrorManager :** Service class for P_JOB_DATA_ERROR table.
+
+  
+
+ **DataErrorCodes Enum (processing-ui-
+dev.com.infoimage.processing.common.DataErrorCodess):**
+
+To centralize all the error codes and corresponding messages we will use an
+Enum named **DataErrorCodess**  
+
+ **Error Codes and messages:**
+
+   UNKNOWN_ERROR                      (100, "Unidentified Error"),  
+    MISSING_DATA                            (101, "One or more data missing"),  
+    MISSING_ACCOUNT_NUMBER    (102, "Account Number is Missing"),  
+    MISSING_ACCOUNT_TYPE           (103, "Account Type is Missing"),  
+    MISSING_AFP_FILE_NAME           (104, "AFP File Name missing"),  
+    ETAX_DESC_NOT_FOUND            (105, "Etax- description not found"),  
+    ETAX_FORM_TYPE_MISSMATCH  (106, "Etax- different form number"),  
+    MISSING_ETAX_TYPE                   (107, "Etax- Type is Missing"),  
+    ETAX_ACCT_NOT_FOUND            (108, "Etax- Account Numberr is not found in DB"),  
+    ETAX_DATE_NOT_FOUND            (109, "Etax- Date is missing"),  
+    ETAX_DATE_FORMAT_ERROR       (110, "Etax- Provided date format is not correct"),  
+    ZIP_FILE_NAME_MISSING             (111, "(Required) Zip file name missing");
+
+ _ **ETAX:**_
+
+ **Processing Job update:**
+
+In the Processing job, we have replacement file logic that traverses through
+each line of the index file. It first creates a hashmap with each account in
+the index file. Compared with existing etax data, it adds account_id from the
+Database in the hashmap. We will not add the job data error tracking for
+replacement file logic. One reason is replacement file logic is based on a
+flag for certain clients and secondly, we traverse each line of the index file
+again after replacement logic.
+
+Data handler: Added the code for logging the error from the data handler
+
+Register: Added the code for logging in the error for account not exist
+(clients with creat account flag as false)
+
+ **Etax Data Hanlder Update:**
+
+EtaxData3: while we are parsing each line from the index file, first we check
+whether we have the expected number of data ( 8 or 6 tokens). If the token
+count is not 6 or 8 we don't further parse the line and throw data exception.
+
+For the missing column in the data, we will insert an error message - "Data
+Missing" and the above-mentioned errors for different data missing.
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+

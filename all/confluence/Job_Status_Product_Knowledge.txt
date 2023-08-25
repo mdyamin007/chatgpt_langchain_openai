@@ -1,0 +1,211 @@
+title: Job Status Product Knowledge
+body: Job Status module on Infotrac product will show information of clients
+statements which are posted or printed in last 90 days. This module will show
+print statements and e-statements together under one job.
+
+  
+
+ **Terminology:**
+
+ **dt_job_id :**   Both paper and e-statement job are tied together using
+dt_job_id. Below highlighted screen shot shows dt_job_id
+
+ **Proc id and PJob ID:** Proc_id is kind of job number for paper job and PJOB
+ID is unique job number for e-statements.
+
+  
+
+ **Features and sub features:**
+
+  * Viewing print and electronic pdf documents in a cycle.
+  * Advanced online proofing. This is a process where bank staff can verify statements and approve each cycle before we send statements to end customers. 
+  * Tracking print statements delivery. We fetch information from post office and show delivery information.
+  * Scan Images. For every print statement that we deliver to end customer, our print staff will scan envelope and we show that info. 
+
+  
+
+ _ **Client feature settings:**_
+
+Extended Tracking- This needs to be enabled and set to level 3 to show job
+details information on Job Status tab. Mail Tracking also need to be set to
+level 3.
+
+Job Status - This need to enabled for cid to show Job Status icon. Also we
+have a flag to enable filter.
+
+Mail Tracking - Both Extended Tracking and mail tracking should be set to
+level 3 to show job information.
+
+E-statement Online Proofing - This is to enable advanced Online Proofing for
+E-statement jobs. Also we have a text input to enter reminder hour. By
+configuring an hour, we send reminder emails to customers if jobs are pending
+to be approved on their side.
+
+E-Statement Divert - This will show divert option while client is approving an
+E-job.
+
+Print Online Proofing - This is to enable Advanced Online Proofing for paper
+jobs. Also we can input reminder hour to send any reminder emails for pending
+jobs for customer approval. Paper jobs proofing and divert is also controlled
+by print team and those are configured per cycle and statement type. We don't
+control much on paper side.
+
+  
+
+ **Role Settings:**
+
+Some of the Job status features set on client features may not be visible for
+customer side employees. This depends on roles enabled to that users. Details
+about flags on user roles are mentioned in user guide.
+
+  
+
+We have user guide stored at below link. User guide may change continuously.
+At this time latest user guide is [Job Status- User Guide
+(8_2_21).pdf](https://confluence.infoimageinc.com/download/attachments/73629710/Job%20Status-%20User%20Guide%20%288_2_21%29.pdf?api=v2
+"Download"). This user guide will have all information related to Job Status
+UI.
+
+  
+
+ **Alerts and Dashboards notifications on clients login home page:**
+
+As soon as customer logins to Infotrac site, on Home they see alerts related
+to jobs that are released or pending on Recent Alerts. They can also navigate
+to job Status module from links on Dashboard.
+
+  
+
+  
+
+Dependent Systems and databases:
+
+  * Infoservice : We have few apis developed to fetch and update jobs for advanced online proofing jobs. 
+  * Infosync : This service is owned by print team and basically used to fetch information related paper jobs.  Infotrac will call Infoserice and Infoservice will call Infosycn apis for paper related jobs.
+  * Mongo Database : This module connects to mongo database to fetch print side documents information. We have mongo database cluster. For production, we have one instance as ca-mongojob-pr-01.infoimageinc.com. On this we have database name as i3jobtrack. Information related to cycle can be found in cid_proc_id collection. Example of collection name is apcu_2333312. 
+  * Camera Image database : We connect to camera image database to envelope scans.
+  * PC database : We connect to this database to fetch drop dates information on main home screen.
+  * IS database :  We connect to IS team database to show jobs on home page. 
+  * Infotrac and prsim oracle database.
+
+We can find user name and passwords of database on gitlab configuration files.
+Also work with Network team to give port access to connect to databases from
+your local machine.
+
+  
+
+ **Data on JobStatus:**
+
+  **Paper Job data:  **Paper job data is posted from IndexFileProcess
+    application. Data is stored on mongo database. Link to indexFileProcess is
+    given below.
+
+<http://ca-jobtrack-pi-01.infoimageinc.com:8980/indexFileProcess/>
+
+  
+
+We can view list of collections posted from below link and UI looks as below.
+We have search option to search by any field shown below. Easy way to filter
+job is to use proc_id in search option.
+
+<http://ca-jobtrack-
+pi-01.infoimageinc.com:8980/indexFileProcess/getIndexFileRecord>
+
+ **E-statement Job data:** E-statement job is posted on processing ui and
+stored on oracle database.
+
+  
+
+ **Common issues related to Job Status:**
+
+  *  **Missing job from job status home screen** : There are many reasons why job is not showing up on job status. 
+    *  **Reason 1** : One reason is job is not posted on indexFileProcess application.  We can verify this monitoring infotrac logs. On Infotrac, we have log of infosync response. Below response shows state as "submitted". state submitted means job is submitted to indexFileProcess application.
+
+ **Example of Infosync response:**
+
+{  
+    "finish_time": null,   
+    "olp": "y",   
+    "olp_auto_rel": "y",   
+    "olp_divert": "y",   
+    "olp_id": 8358,   
+    "olp_int_dlist": "Email_Test@[infoimageinc.com](http://infoimageinc.com)",   
+    "olp_prf_file": "y",   
+    "proc_id": "700090",   
+    "start_time": "Tue, 14 Sep 2021 16:55:12 GMT",   
+    "state": "submitted",   
+    "success": true,   
+    "total_divert_pieces": 0,   
+    "user_id": "oper1"  
+  },
+
+  
+
+  *     *  **Reason 2** : We cannot view job on home screen if some of the fields are not correct on IS database. On job Status home screen, we query IS database to show list of jobs in a tabular format. Below is the sample query. Tables used in query are process_main, dpvs_count and file_process. We have to modify query accordingly to view why certain job is missing .
+      * Status column should be positive value. If a job is undone on print side, they update this column value to a negative number. We don't show jobs with negative status value.
+      * Some times file_process table entry will be missing. This happened some times and we have inform print team to verify why this is missing. Because of missing entry, we cannot show job. 
+
+ **Query to fetch data from IS database:**
+
+select distinct detail.*  
+                from (  
+                    SELECT temp.proc_id,temp.arrival_time,job_num,dt_job_id,site,app_num,acct_count,page_count,image_count,COUNT(*) AS file_count, temp.olp_id    
+                    FROM (SELECT m.proc_id,m.arrival_time,job_num,dt_job_id,site,app_num,SUM(acct_cnt) AS acct_count, SUM(page_cnt) AS page_count, SUM(image_cnt) AS image_count, m.olp_id     
+                    FROM PROCESS_MAIN m, DPVS_CNT c   
+                    WHERE m.proc_id='948652'   
+                    AND m.proc_id=c.proc_id and   
+                    created_date > '21-AUG_17'  
+                    AND dt_job_id = '136759-C01.01-V21305'   
+                    AND TEST=0   
+                    AND status > 0   
+                    AND m.job_sel = 's'   
+                    AND c.FILE_ID != 'nonEstmt'   
+                    GROUP BY m.proc_id,m.arrival_time,job_num,dt_job_id,site,app_num,m.olp_id) temp, FILE_PROCESS f   
+                    WHERE temp.proc_id=f.proc_id   
+                    GROUP BY temp.proc_id,temp.arrival_time,job_num,dt_job_id,site,app_num,acct_count,page_count,image_count,temp.olp_id   
+                    \--ORDER BY "\+ orderBy   
+                    ) detail, estmt_dt et   
+                where detail.dt_job_id = et.dt_job_id(+)   
+                ORDER BY detail.arrival_time desc;
+
+ **Missing E-mail notifications for advanced online Proofing jobs:  **For
+advanced online proofing jobs, we send emails to respective subscribes to
+notify about job status. Infoservice end points will take care of triggering
+emails for this purpose. We keep log of all emails sent for this process and
+log is maintained in a table called email. This table is present on Infotrac
+database. We store content and one record per email sent. Below is the screen
+shot of email table. We can search on this table to verify about missing
+emails. We can also search Infotrac logs on the day when job status changed to
+verify about missing email.
+
+  
+
+  
+
+ **E-statement failed to post :**
+
+Pc needs to enable few flags on data trac system. For below error message on
+pui posting, we should reach to PC team to enable same. This happens specially
+while setting up new applications.
+
+ **Error message**
+
+[08/19/2021 20:17:20] Application Error: Job requires Approval but
+ESTMTJOBTRACKING is not Y
+
+  
+
+ **E-job may not be visible:  **This happens mostly on lower environments. We
+have to post e-statement index file on processing-ui to view job. From IS
+database, we can query on table called "esmt_dt" to search estmt index file
+name for a given dt_job_id.
+
+  
+
+  
+
+  
+
+  
+
+

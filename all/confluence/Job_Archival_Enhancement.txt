@@ -1,0 +1,444 @@
+title: Job Archival Enhancement
+body: 1.Add properties -
+
+> [is.job.as](http://is.job.as).zip.archiving.location.remote.host = true
+>
+>
+> [job.as.zip.archiving.location.remote.host.name](http://job.as.zip.archiving.location.remote.host.name)
+> = 10.8.9.111  
+> [job.as](http://job.as).zip.archiving.location.remote.host.user = username  
+> [job.as](http://job.as).zip.archiving.location.remote.host.password =
+> password  
+> [job.as](http://job.as).zip.archiving.location.remote.host.port = 422  
+> [job.as](http://job.as).zip.archiving.location.remote.host.known.host =
+> .knownhost  
+> [job.as](http://job.as).zip.archiving.location.remote.host.file.location =
+> /z/job
+
+2\. With job creation POST API call introduce optional parameter genArchival
+
+> genArchival default value is n
+
+3\. If genArchival's value set as y then, while processing that job, before
+sending any notification save each email notification object as eml format.
+
+> eml files will be temporarily saved like followed
+
+> ${notif.folder}/${job_id}/${notif_id}.eml
+
+4\. After the job process completion make a zip of ${notif.folder}/${job_id}
+folder as ${notif.folder}/${job_id}.zip then upload it to remote mount drive
+or S3 or swift based of property configuration.
+
+> For S3 and Swift location will be like
+> /notifyservice-${env}/${cid}/${appid}/archive/${job_id}.zip
+>
+> For remote host location will be like
+> ${[job.as](http://job.as).zip.archiving.location.remote.host.file.location}/notifyservice-${env}/${cid}/${appid}/archive/${job_id}.zip
+
+5\. Clean ${notif.folder}/${job_id} folder and delete the uploaded zip file.
+
+6\. Zip file can be password protected to configure the password and
+encryption the available setting are followed -
+
+> [job.as](http://job.as).zip.archiving.compression.method = COMP_AES_ENC
+>
+
+>> Possible values -  
+> COMP_STORE  
+> COMP_DEFLATE (default)  
+> COMP_AES_ENC
+>
+> [job.as](http://job.as).zip.archiving.compression.level =
+> DEFLATE_LEVEL_ULTRA
+>
+
+>> Possible values -  
+> DEFLATE_LEVEL_FASTEST  
+> DEFLATE_LEVEL_FAST  
+> DEFLATE_LEVEL_NORMAL  
+> DEFLATE_LEVEL_MAXIMUM  
+> DEFLATE_LEVEL_ULTRA (default)
+>
+> [job.as](http://job.as).zip.archiving.encryption.method =
+> ENC_METHOD_STANDARD
+>
+
+>> Possible values -  
+> ENC_METHOD_STANDARD (default - if only password is available for cid)  
+> ENC_METHOD_AES
+>
+> [job.as](http://job.as).zip.archiving.aes.key.length = AES_STRENGTH_128
+>
+
+>> Possible values -  
+> AES_STRENGTH_128 (default - if only password is available for cid)  
+> AES_STRENGTH_192  
+> AES_STRENGTH_256
+
+To configure the password for some CID, it can be configured like followed -
+
+> [job.as](http://job.as).zip.archiving.password.bkfn = bkfn!pdfarchive  
+> [job.as](http://job.as).zip.archiving.password.demo = mypassword
+
+7\. Zip upload location can be a mounted network drive
+
+For network mount location settings -
+
+> [is.job.as](http://is.job.as).zip.archiving.location.ftp = true  
+> [job.as](http://job.as).zip.archiving.ftp.location.hard.coded.folder =
+> client_pickup  
+> [job.as](http://job.as).zip.archiving.ftp.location = /mnt/infoftps1,
+> /mnt/infoftps2, /mnt/infoftps5, /mnt/infoftps6  
+> [job.as](http://job.as).zip.archiving.ftp.location.demo = /mnt/infoftps3,
+> /mnt/infoftps4, /mnt/infoftps7, /mnt/infoftps8
+
+ **[is.job.as](http://is.job.as).zip.archiving.location.ftp** property is the
+parent property of
+**[is.job.as](http://is.job.as).zip.archiving.location.remote.host**
+
+7\. Add GET api to download archived zip file
+
+> API path: /v1/notification/{cid}/{jobId}/archivedownload
+>
+> Query parameter -
+>
+> 1.  
+> Name: zipFileName  
+> Type: String  
+> Mandatory: Yes  
+> Description: Zip file will be downloaded as this name.
+
+8\. Add DELETE api to delete archived zip
+
+> API path: /v1/notification/{cid}/{jobId}/archivedownload
+
+  
+[Edit this
+section](https://i3dev.easyredmine.com/projects/notifsvc/wiki/Job_Archival_Enhancement/edit?section=2)
+
+#
+History:[](https://i3dev.easyredmine.com/projects/notifsvc/wiki/Job_Archival_Enhancement#History)
+
+ **Ben:**
+
+Hi. Naim
+
+For one of the Email notification job that we have, client is in need of some
+export of the email job, so that they can store them in cold-storage for
+archival purposes. What that means to us is:
+
+1\. for any given email notification job, accept an optional flag of
+'genArchival=y'  
+2\. if flag is on, then for each of the email sent (regardless of success or
+fail), output the raw email head & body into some file. I'm not familiar with
+any particular format, hence need help do some research on what's the best
+format to use. (.html? .msg? .txt? .pdf?)  
+3\. upon the end of the job, zip all individual email files produced into a
+single zip file and upload to swift/s3. allow to be download via API
+
+Could you do some evaluation of this enhancement and provide ETA, please?
+
+Thanks.
+
+ **Naim:**
+
+Hello Ben,
+
+So far I can remember, we have discussed about similar type of enhancement
+earlier, Most probably Ferhat proposed to add one BCC with the email.
+
+And for No 2, we can export email as eml/mht file format.
+
+<https://fileinfo.com/extension/eml>  
+<https://fileinfo.com/extension/mht>
+
+This format can contain everything in a single file, header, multipart body,
+all images and attachments. And it can be opened by any email client easily.
+
+We can also export email as single file plain text.
+
+Thanks
+
+ **Ben:**
+
+Right. We did went back to client and suggested to just add a BCC. However
+client said they cannot use an email inbox as their archival cold storage
+system. Hence they need something more as file-based.
+
+I like the eml since it contains all info into the single file. However, is
+eml openable in outlook only?
+
+Thanks.
+
+ **Naim:**
+
+Hello Ben,
+
+If you check the link then you can see, most email clients have support to
+open eml file.
+
+Thanks
+
+ **William :**
+
+Hi Guys,
+
+I spoke with Kent and I think the best route is to have this service copy the
+files directly to the client_pickup directory.
+
+NAIM: Can you create new logic to read an ftp server client_pickup directory
+routing table logic. Based on CID, the developer can define the folder
+location and the ftp server(s) in some sort of configuration file.
+
+e.g.:
+
+cid: bkfn  
+ftpserver_target: {"infoftps3", "infoftps4"}
+
+Then you can pass the file arguments to this code to route the files.  
+e.g.:  
+If the source files are:  
+reports/bkfn_something_08172017.txt.pgp  
+bkfn_archive_08.17.2017
+
+Then you code will copy the files above to the following locations:
+
+\\\infoftps3\bkfn\client_pickup\reports\bkfn_something_08172017.txt.pgp  
+\\\infoftps3\bkfn\client_pickup\bkfn_archive_08.17.2017  
+\\\infoftps4\bkfn\client_pickup\reports\bkfn_something_08172017.txt.pgp  
+\\\infoftps4\bkfn\client_pickup\bkfn_archive_08.17.2017
+
+* The fonts in red came from the configuration file.
+
+* client_pickup is hard coded folder. This is InfoIMAGE's standard for placing files into the client_pickup directory.
+
+* The fonts in green are the file arguments that you pass into your program.
+
+ftpserver_target:  
+Bear in mind, the reason why we need to support multiple ftpservers is because
+there are periods of time we may migrate a client from one server to the next.
+During these types of projects, we need to be flexible to have the program
+copy to two locations until the official are absolutely sure they have
+migrated over. In the example above, I'm using infoftps3 or infoftps4 values.
+Please replace this value to the correct mapped folder points.
+
+Can you please remind me which server this application is running off from? I
+will need to ask Kent and his team to ensure there is access to mount from
+this server to the multiple FTP servers.
+
+Thanks!
+
+\-- Will
+
+ **Naim -**
+
+Hello William,
+
+I have gone through your email. Current logic is generated zip file (not pgp)
+will be SCP to remote location like followed -
+
+${[job.as](http://job.as).zip.archiving.location.remote.host.file.location}/notifyservice-${env}/${cid}/${appid}/archive/${job_id}.zip
+
+Blue : coming from property.  
+Green : API calling parameters.  
+Yellow : Generated by notifyservice.
+
+According to your email changes are -
+
+1\. Remove SCP logic.  
+2\. In place of SPC processor will write the zip file to some mounted disk
+location(s).  
+3\. Location can be more then one based on client specific properties.  
+4\. Example client specific property.
+
+Example : BKFN
+
+email.archival.ftp.server.bkfn = infoftps3, infoftps4
+
+If no client specific property is given then default property can be -
+
+email.archival.ftp.server = infoftps1, infoftps2
+
+5\. Archival writing location path -
+
+//${ftc.server.location.from.property}/${cid}/client_pickup/${job_id}.zip  
+Where client_pickup will be hard coded.
+
+Do we need to add pgp conversation functionality?
+
+Thanks
+
+ **Naim -**
+
+Hello William,
+
+Sorry for being a little bit late, if everything is OK we can do the dev
+deployment next day.
+
+I have some queries.
+
+I have done some research on network folder sharing. To share a folder over
+the network we several protocol like - samba/CIFS or NFS.
+
+I have checked the shared folders of pd-pilot1 and RTH, have seen we have used
+both protocol.
+
+pd-pilot1:
+
+[isd_input_dev:/estmt/indiv_afp](http://isd_input_dev/estmt/indiv_afp)
+/mnt/PV-NAS/indiv_afp nfs timeo=14,intr,nolock  
+[isd_input_dev:/estmt/peb3](http://isd_input_dev/estmt/peb3) /mnt/PV-NAS/peb3
+nfs timeo=14,intr,nolock  
+[isd_input_dev:/estmt/input](http://isd_input_dev/estmt/input) /mnt/INPUT nfs
+timeo=14,intr,nolock  
+[isd_input_dev:/estmt/indiv_afp](http://isd_input_dev/estmt/indiv_afp)
+/mnt/PV-NAS/indiv_afp_pilot1 nfs timeo=14,intr,nolock
+
+RTH:
+
+//Infoftp/ftproot on /d/infoftp type cifs (rw)  
+//10.8.11.16/ftproot on /d/infoftp2 type cifs (rw)  
+//10.8.11.15/Usr on /d/infoftps2 type cifs (rw)  
+//10.8.11.17/Usr on /d/infoftps3 type cifs (rw)  
+//10.8.9.35/ftpbu on /d/ftpbu type cifs (rw,mand)
+
+Now here comes 2 scenario -
+
+1\. The protocol will not be matter once we mount the network drove to some
+path. like already we have -
+
+At PC name - RHT (10.8.9.71)
+
+//10.8.11.15/Usr on /d/infoftps2 type cifs (rw)  
+//10.8.11.17/Usr on /d/infoftps3 type cifs (rw)
+
+So our property should look like -
+
+[job.as](http://job.as).zip.archiving.ftp.location = /d/infoftps2,
+/d/infoftps3  
+[job.as](http://job.as).zip.archiving.ftp.location.demo = /d/infoftps4,
+/d/infoftps5
+
+2\. If we don't have those network folders mounted to that machine where the
+notifyservice will run then we have to provide the protocol name also.
+
+Example -
+
+[job.as](http://job.as).zip.archiving.ftp.location = /d/infoftps1||smb,
+/d/infoftps2||cifs  
+[job.as](http://job.as).zip.archiving.ftp.location.demo = /d/infoftps3||nfs,
+/d/infoftps4||nfs  
+Because to upload file to unmounted network drive we have to use different
+type of code.
+
+Current codes only support the scenario 1.
+
+Thanks
+
+ **Will -**
+
+Thanks for the update.
+
+What about the pgp encryption? Has that been put into consideration? Please
+advise.
+
+Please proceed with the logic that you've described below.
+
+\-- Will
+
+ **Will:**
+
+Hi Naim,
+
+I need to change specifications. For BKFN, I do not see any pgp keys setup.
+They are using zip w/ password. Please change the logic to use zip w/
+password. Here's the pw:  
+bkfn!pdfarchive
+
+When you return from the holiday, I need a project status and timeline. We
+need to be able to provide the client our timeline for the rest of this
+project:
+
+* Development completion date
+
+* Testing / integration w/ Clay's programming
+
+* QA
+
+* Parallel
+
+* Live Date
+
+Please be able to come back with the date for the two red bullet points above.
+
+Thanks!
+
+\-- Will
+
+ **Naim :**
+
+Hello Surekha and William,
+
+I have committed the changes to trunk, please deploy the build to pilot -
+
+To configure the encryption for the password protected zip I have introduced
+the following optional properties -
+
+> [job.as](http://job.as).zip.archiving.compression.method = COMP_AES_ENC
+>
+
+>> Possible values -  
+> COMP_STORE  
+> COMP_DEFLATE (default)  
+> COMP_AES_ENC
+>
+> [job.as](http://job.as).zip.archiving.compression.level =
+> DEFLATE_LEVEL_ULTRA
+>
+
+>> Possible values -  
+> DEFLATE_LEVEL_FASTEST  
+> DEFLATE_LEVEL_FAST  
+> DEFLATE_LEVEL_NORMAL  
+> DEFLATE_LEVEL_MAXIMUM  
+> DEFLATE_LEVEL_ULTRA (default)
+>
+> [job.as](http://job.as).zip.archiving.encryption.method =
+> ENC_METHOD_STANDARD
+>
+
+>> Possible values -  
+> ENC_METHOD_STANDARD (default - if only password is available for cid)  
+> ENC_METHOD_AES
+>
+> [job.as](http://job.as).zip.archiving.aes.key.length = AES_STRENGTH_128
+>
+
+>> Possible values -  
+> AES_STRENGTH_128 (default - if only password is available for cid)  
+> AES_STRENGTH_192  
+> AES_STRENGTH_256
+
+To configure the password for some CID, it can be configured like followed -
+
+> [job.as](http://job.as).zip.archiving.password.bkfn = bkfn!pdfarchive  
+> [job.as](http://job.as).zip.archiving.password.demo = mypassword
+
+For network mount location settings -
+
+> [is.job.as](http://is.job.as).zip.archiving.location.ftp = true  
+> [job.as](http://job.as).zip.archiving.ftp.location.hard.coded.folder =
+> client_pickup  
+> [job.as](http://job.as).zip.archiving.ftp.location = /mnt/infoftps1,
+> /mnt/infoftps2, /mnt/infoftps5, /mnt/infoftps6  
+> [job.as](http://job.as).zip.archiving.ftp.location.demo = /mnt/infoftps3,
+> /mnt/infoftps4, /mnt/infoftps7, /mnt/infoftps8
+
+Imran,
+
+Please share the testing status.
+
+Thanks
+
+

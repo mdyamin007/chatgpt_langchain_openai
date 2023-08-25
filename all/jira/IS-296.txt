@@ -1,0 +1,320 @@
+title: IDCU -[21757] [pvt] Updates needed to Escrow Analysis Statement [fast track]
+description: Turnover to IS: 9/17/2021
+
+Sample to client: 10/6/2021
+
+Client approval: 10/8/2021
+
+QA: 10/11/2021
+
+Parallel test: 10/13/2021
+
+Live: 10/15/2021
+
+Update IDCUEA11.dfa
+
+Based on the new data format from IDCU_EA_STMT_072321.7z,
+
+-new month: pos 1-2
+
+-new year: pos 4-7
+ -new to escrow amount: pos 8-24
+ -new from escrow amount: pos 27-46
+ -new description: pos 50-71
+ -new balance should be 81-90
+
+2 hours programming.
+
+Additional update below:
+
+Estimate would be 4 programming hours.
+
+Program will skip and bypass generating the statement for print/e archival/estatement when a account data is missing the dollar values for "new principal and interest" and "new escrow.
+
+Generate a report and send to client. (need client email contact).
+
+We will treat this as a new change request since we would not have to time launch before 9/15 live date.
+
+
+author: JIRAUSER10906
+comment: QA
+
+This update to the escrow projections section of the outputted document (to accommodate formatting changes in the data file) is complete. Please review.
+ * Exported project file to shared drive: /d/iss/qa/IDCU/IDCUEA11.zip
+ * DPVS, IS form, and sample PDF are all attached to this Jira ticket
+ * I have also attached the file[^comparison_of_files.docx] provided by client showing differences in the outputted document using the code that is currently in production
+
+****************************************************
+ Parallel ID: 20210812120454
+ Currently in parallel: Yes
+ User: samV
+ Description: IS-296 IDCU Escrow Update (changes in data format)
+ Date Submitted: 2021-08-12 12:06:03
+ Date Last Updated: 2021-08-12 12:06:03
+ Files:
+ 1) IDCUEA11.dfa
+ ****************************************************
+
+
+author: JIRAUSER10906
+comment: [~Kbittmann]
+
+Once QA is done and we proceed with client approval, please also confirm with the client whether the following phenomenon is desired:
+
+Is the 'Mortgage Payment' section correct given what is provided in the data file IDCU_EA_STMT_072321.stm? Please see attached photos for clarity. This potential error is unrelated to the changes made in this ticket, so additional programming/changes in their provided data file would need to be done if what is shown is undesirable.
+
+!idcu_err_doc.PNG|thumbnail! !idcu_err_data.PNG|thumbnail!
+
+
+author: JIRAUSER10911
+comment: [~SamV2021]
+
+
+
+Per IDCU:
+
+This loan will be paid off before the new escrow amount takes effect. This is one you InfoImage would suppress from processing.
+
+
+author: JIRAUSER10906
+comment: [~Kbittmann]
+
+Currently, we do not have that suppression as part of our programming logic, so we have been manually pulling these accounts from production after printing so that they are not sent.
+
+If the client would like to have these accounts (in which the loan will be paid off prior to any new escrow charges) suppressed from processing, we would need a billable programming update since the changes made in this ticket are unrelated.
+
+
+author: gthillaivel
+comment: [~Kbittmann] [~SamV2021] --Compared the PDF ,ready for Client Approval
+
+
+author: JIRAUSER10906
+comment: [~Kbittmann]
+
+Can you provide the sample[^idcuea1123.sam.pdf]for client approval?
+
+Thanks!
+
+
+author: billr
+comment: Customer approved the updated sample[idcuea1123_new.sam.pdf|https://app.na3.teamsupport.com/dc/1/attachments/10681530]. They are asking if this can be completed the week of October 12.
+
+
+author: JIRAUSER10906
+comment: [~billr]
+
+Thanks for the update. Yes, this can be completed by the week of October 12.
+
+Could you please have the client provide us with the e-mail address for where they would like the report of suppressed accounts to be sent?
+
+Thanks!
+
+
+author: billr
+comment: Thanks Sam, I have asked the customer for the email address.
+
+
+author: billr
+comment: Sam, customer responded:
+
+Can the list of suppressed accounts be uploaded to Client Pickup? Where the report contains account numbers, we would prefer that it not be emailed.
+
+
+author: JIRAUSER10906
+comment: [~billr]
+
+Yes, as requested we will place the report of suppressed accounts (encrypted) to the FTP client pickup. We will also send an e-mail notification stating that the report is available for retrieval to the same mailing list used for pdf archival and the invalid address report.
+
+Also, is the following file name convention okay for the suppressed accounts report? _idcu___[app]_suppressed_accts_rpt_<mmddyyyy>__<seg#>.txt.pgp_
+
+Thanks!
+
+
+author: billr
+comment: Sam - I am following up with the customer.
+
+
+author: billr
+comment: Sam,
+
+Customer responded:
+
+Yes, this naming convention is good. We will begin setting up our automation to pull in this file.
+
+
+author: billr
+comment: On ticket 21757 comment# 29 customer asked to push this to week of Oct 12:
+
+We need to push back the production live date on this, as we have pushed our DNA upgrade to October 17. Can InfoImage plan to place the updated code in your production system the week of October 12?
+
+
+author: JIRAUSER10906
+comment: [~billr]
+
+Yes, that will work!
+
+
+author: JIRAUSER10906
+comment: QA
+
+This update to suppress customer accounts from print, estmt, and archival (for cases in which account in data file does not have all payment information specified, indicating that the loan will be paid off and no payment is needed). In addition, the original update to the escrow projections section of the outputted document (to accommodate formatting changes in the data file) is complete. Please review.
+ * Exported project files to shared drive: /d/iss/qa/IDCU/IDCUEA11.zip
+ * DPVS [^idcuea1115_dpvs.pdf], IS/QA form [^idcu_is-296_checklist.pdf], and 4.2o1 print file (in PDF)[^idcuea11154.2o1_small.pdf]are all attached to this Jira ticket
+ * IDCUEA11.dfa has been updated to suppress the accounts in question, generating a report of all suppressed accounts, along with the original task of accommodating format changes in the data file
+ * idcuea_process.sh has been updated to take the suppressed accounts report generated during the format step, encrypt it, place it in client pickup, and send an e-mail notification
+
+****************************************************
+ Parallel ID: 20210812120454
+ Currently in parallel: Yes
+ User: samV
+ Description: IS-296 IDCU Escrow Update (changes in data format)
+ Date Submitted: 2021-08-12 12:06:03
+ Date Last Updated: 2021-09-16 10:37:52
+ Files:
+ 1) IDCUEA11.dfa
+ 2) idcuea_process.sh
+****************************************************
+
+
+author: JIRAUSER10906
+comment: [~billr]
+
+Please note that I have manually modified IDCU_CrossRef_07232021.txt for testing purposes as the original one that the client provided is missing account numbers, preventing our program from processing all accounts in the data file. I have packaged this file into IDCU_EA_STMT_091521.7z.gpg for processing/testing.
+
+Attached is a list of account numbers missing from the cross reference file that I have manually inserted. The client does not need to send a new one, but I thought it'd be good to make note of.
+
+!idcu_xref_missing.PNG|thumbnail!
+
+
+author: JIRAUSER10906
+comment: Updated with new IS/QA checklist. Also attached index file:
+
+[^ea1_20210723_1_20210916_1055_idcu.txt]
+
+
+author: igor.khosid
+comment: Signed IS Checklist - attached >>>[^IS-296_IDCU_IS_Checklist.pdf]
+
+
+author: igor.khosid
+comment: [~SamV2021]
+
+QA - completed
+
+Index file - processed, content validated with in the following accounts
+
+[09/16/2021 15:16:03] Insert estmt_doc & estmt_file & arch_file for acctNum: [877807] Closing date: [Fri Jul 23 00:00:00 PDT 2021]
+[09/16/2021 15:16:03] Insert estmt_doc & estmt_file & arch_file for acctNum: [921114] Closing date: [Fri Jul 23 00:00:00 PDT 2021]
+[09/16/2021 15:16:03] Insert estmt_doc & estmt_file & arch_file for acctNum: [1105374] Closing date: [Fri Jul 23 00:00:00 PDT 2021]
+
+
+author: JIRAUSER10906
+comment: [~billr]
+
+Could you have the client review the following?
+
+I have placed a sample of the encrypted suppressed accounts report _idcu_ea1_suppressed_accts_rpt_09152021_1.txt.gpg_ in the client pickup folder:_/d/infoftps3/IDCU/client_pickup/test_
+
+This is to confirm that they can open the encrypted report and that the format of the data inside is okay. Note that 2 of the account numbers in the report were manually suppressed for testing purposes.
+
+
+author: billr
+comment: Hi Sam,
+
+I am following up with the customer.
+
+
+author: JIRAUSER10906
+comment: [~billr]
+
+As client has approved and is able to retrieve/open the encrypted suppressed accounts report, can we move this to parallel testing?
+
+Here are the IS programmer details to process this job in parallel:
+
+Processing procedure: /home/test/procs/idcuea1.procs
+Input file location and name: /z/ftpbu/idcubu/ea/IDCU_EA_STMT_091521.7z.gpg
+Cycle #15
+Special instructions: /home/test/master/idcuea_process.sh 1 bypass
+
+[~gthillaivel] [~Igor.Khosid]
+
+Just to confirm, QA does not need to see print samples because of the nature of the changes made in this ticket, correct?
+
+
+author: igor.khosid
+comment: [~gthillaivel] [~SamV2021]
+
+Sam, QA completed - means we are done with testing and do not need any additional information. Unless it was further development after QA completed testing
+
+Gnana - please confirm
+
+
+author: gthillaivel
+comment: [~SamV2021][~Igor.Khosid]
+
+We can pass the print samples for this change. Can you update the IS checklist 
+
+
+author: JIRAUSER10906
+comment: [~gthillaivel]
+
+Updated the date on IS checklist.[^idcu_is-296_checklist.pdf]
+
+
+author: gthillaivel
+comment:  [^idcu_is-296_checklist.pdf] 
+
+[~SamV2021][~billr]
+Attached is the IS check list
+
+
+author: JIRAUSER10906
+comment: [~Kbittmann]
+
+Hi Kris, what's the status of this job? We haven't moved this to parallel testing yet right?
+
+
+author: JIRAUSER10911
+comment: [~SamV2021]
+
+
+
+Parallel ticket 23178 created.
+
+
+author: shun.kuwashima
+comment: [~SamV2021] [~Kbittmann] I was just assigned parallel TS 23189. Does this update affect estatements as well?
+
+
+author: JIRAUSER10906
+comment: [~Shun.Kuwashima]
+
+I believe so. Changes were made to the positions in which information from the data file were extracted, so an update should be seen on estatement as well. Also, some accounts will be suppressed from print, estatement, and archival.
+
+Attached latest index file from parallel if needed:[^ea1_20210723_1_20211007_1512_idcu.txt]
+
+
+author: shun.kuwashima
+comment: Thanks [~SamV2021], this looks like only content changes so I don't think there's anything needed from ISD.
+
+
+author: JIRAUSER10906
+comment: [~Shun.Kuwashima]
+
+Ok sounds good, thanks!
+
+
+author: JIRAUSER10906
+comment: [~Kbittmann]
+
+Please let me know when you would like these changes to be released.
+
+
+author: JIRAUSER10911
+comment: 10/15 @ 2pm cst
+
+
+author: JIRAUSER10906
+comment: [~Kbittmann]
+
+Code has been released.

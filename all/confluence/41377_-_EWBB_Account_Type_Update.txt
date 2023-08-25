@@ -1,0 +1,116 @@
+title: 41377 - EWBB Account Type Update
+body:   
+
+  
+
+Target release| Release name or number  
+---|---  
+Epic| Link to related Jira epic or feature  
+Document status|
+
+GreenDONE  
+  
+Document owner|  
+  
+Designer|
+
+  
+  
+Developers|  
+  
+QA| Lead tester  
+  
+  
+
+## Goals
+
+  * Add in Account Type as an additional identifier for a unique account. Bank sends account type information via CIF file and API.
+  * Group statements from similar account types under the same account, and also restrict some account types as its own type separately.
+  * Have the flexibility to allow for Account Type descriptions to show on the site and be updated as needed. In customer site, the type description is under Profile at the account level.
+
+## Background and strategic fit
+
+Allow the bank to define unique account records with account number and
+product type.
+
+## Assumptions
+
+  * Allow the bank to define unique account records with account number and product type.
+  * When account type is updated within a pre-determined product group, don't restrict account type code (allow it to be interchangeable).
+  * For account types that is not included in the group, do not commingle statement and do not update account type and type description with new input data.
+  * Same structure for multiple application type: Deposit statements / HK statements / Loan Statement etc.
+  * We will use fin_account.type to be the internal account type, and fin_account.sub_type to be the changing external type. 
+  * Each acct_number/type pair is unique (existing database constraint/global business rule).
+
+## Requirements
+
+#| Title| User Story| Importance| Notes  
+---|---|---|---|---  
+1| EWBB AppDesc| Update i3core EWBBFinAcctDesc|  _Must have_|
+
+Map external type to internal type.
+
+Map internal type to description.  
+  
+2| ACI SSO| Update ACI SSO to support sub_type and update sub_type if the
+sub_type is different from current sub_type|  _Must have_|  
+  
+3| ACI SSO Agent| Update ACI SSO Agent to invalidate request if null or
+unknown type|  _Must have_|  
+  
+4| BB SSO| Update BB SSO to support sub_type and update sub_type depending on
+SSO request|  _Must have_|
+
+  
+  
+  
+5| Validate SSO Request| For ACI SSO, deny the SSO if the type is invalid.|
+_Must have_|  
+  
+6| API| Update API to support sub_type|  _Must have_|  Pass type and subtype
+back.  
+7| PUI| Update PUI processes to support and update sub_type|  _Must have_|  
+  
+8| PUI Conf| Turn on account type flag|  _Must have_|
+global.enableAccountType=true  
+9| MSM Site App Display| Update MSM site to display apptype based on sub type|
+_Must have_|  FinAccountBean.getSubType() instead of FinAccountBean.getType()  
+10| MSM Search| Update account/email/customer search to account for account
+numbers with multiple types|  _Must have_|
+
+Update search.
+
+Update search result to display AppType also.  
+  
+11| SSO Site Display| Update SSO site to display apptype based on sub type|
+_Must have_|  
+  
+  
+## User interaction and design
+
+Include any mockups, diagrams or visual designs relating to these
+requirements.
+
+## Questions
+
+Below is a list of questions to be addressed as a result of this requirements
+document:
+
+  
+
+Question| Outcome  
+---|---  
+(e.g. How we make users more aware of this feature?)| Communicate the decision
+reached  
+  
+  
+
+## Not Doing
+
+  
+
+##  **Original Business Rule Document**
+
+  
+
+

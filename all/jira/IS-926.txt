@@ -1,0 +1,125 @@
+title: FCBT - [26927][pvt] ETAXES 1099MISC & 1099NEC account type.
+description: 2hrs IS programming
+
+Turn over to IS 3/9/22
+
+Samples to QA 3/16/22
+
+Samples to client 3/18/22
+
+Client approval 3/25/22
+
+LIVE date 3/31/22
+
+
+Assessment Details (IS):
+- Parallel required: (Yes) for etax posting
+
+- Update following for /home/master/fcbt_spec_handle_tax.pl
+
+From
+
+}elsif ( $longformtype eq '1099miscgen' )
+
+To
+
+}elsif ( $longformtype eq '1099miscgen' or $longformtype eq '1099necgen' )
+
+
+
+From
+
+#hard code account type "LN" per Phoebe
+$space2 = " " x (780-length($line));
+$line = "${line}${space2}LN";
+
+To
+
+#hard code account type "TX" per Phoebe
+$space2 = " " x (780-length($line));
+$line = "${line}${space2}TX";
+
+
+
+- Test process and see if the account types in etax index files are changed to "TX" for all FCBT branches
+
+
+author: yameelee
+comment: [~MattL] I am changing the QA date to 3/18 and the client sample date to 3/22. They should still be able to give approval by 3/25.
+
+
+author: tuna
+comment: Hey[~jasonV]
+
+
+
+You don't need to test all branches. Just test FCBA and LACA with following files. The main thing is to test for posting etax correctly in ISD side. I talked to [~MattL]too.
+
+
+[oper1@rhs ~]$ ls -ltr /d/ftpbu/fcbtbu/tax/*misc* -rwxrwxrwx 1 root root 1502 Mar 11 10:04 /d/ftpbu/fcbtbu/tax/laca.1099miscgen.for1 -rwxrwxrwx 1 root root 11265 Mar 11 10:56 /d/ftpbu/fcbtbu/tax/fcba.1099miscgen.for1 [oper1@rhs ~]$ ls -ltr /d/ftpbu/fcbtbu/tax/*nec* -rwxrwxrwx 1 root root 2253 Mar 11 10:05 /d/ftpbu/fcbtbu/tax/laca.1099necgen.for1 -rwxrwxrwx 1 root root 2253 Mar 11 10:56 /d/ftpbu/fcbtbu/tax/fcba.1099necgen.for1
+
+
+author: JIRAUSER11003
+comment: [~MattL]Samples:
+
+FCBA:
+ * NEC: [^fcba_1099nec_221_cd.pdf]
+ * MISC: [^fcba_1099misc_221_cd.pdf]
+
+LACA:
+ * NEC: [^laca_1099nec_221_cd.pdf]
+ * MISC: [^laca_1099misc_221_cd.pdf]
+
+
+author: JIRAUSER11003
+comment: 1099misc
+
+etax index file: [^etax_1099misc_12312021_221_03222022_130123_fcba.txt]
+
+Afp Zip file location:
+
+/z/isd_input/indiv_afp/fcba/etax/afp-archive/1099misc-12312021-221/fcba_1099misc_12312021_221_0.zip
+
+
+
+1099nec
+
+etax index file: [^etax_1099nec_12312021_221_03222022_130124_fcba.txt]
+
+Afp Zip file location:
+
+/z/isd_input/indiv_afp/fcba/etax/afp-archive/1099nec-12312021-221/fcba_1099nec_12312021_221_0.zip
+
+
+
+
+author: JIRAUSER11003
+comment: Hi [~Shun.Kuwashima],
+
+We need to test for etax posting for1099misc and1099nec. In my above comment I provided the etax index file and afp zip file location. Please let me know if you need more information.
+
+
+author: shun.kuwashima
+comment: Hi [~MattL], can you create an ISD story and assign to me? In terms of hours I think 1 is fine for now, since it seems to require only testing and no actual updates from us.
+
+[~jasonV] I see that these files were already posted on stage but as replacement files. Does it need to be posted as such or can we post these normally? Lower environment data is not synced with production, so there might not be enough data to test replacements on stage or pilot.
+
+
+author: JIRAUSER11003
+comment: [~Shun.Kuwashima]I dont know the answer to that question can you please ask Tun?
+
+
+author: mattl
+comment: Hi [~jasonV]since this programming request never went to ISD, I have placed the EPIC ticket on internal hold and requested that InfoCARE reopen the PR so ISD can research on their end.
+
+
+
+I have notified the client.
+
+
+
+
+
+
+author: mattl
+comment: [~jasonV]This may be cancelled.

@@ -1,0 +1,73 @@
+title: Existing ETA Board Code Evaluation
+body:   1. main entry point login.php
+  2. use OCI to connect to ORACLE database for login info
+  3. authentication is done via plain password on oracle db, store info in php session to maintain valid session
+  4. use IP address to determine whether they want to access TX/CA site
+  5. use login's meta to determine what division/data to show
+  6. 1000+ lines in job_tracking.php
+    1. contains many JS to show interactions, but would've strip them out into seperate js file instead of inline echo
+  7. Oracle db for login, and MSSQL for dataTRAC info, job data in ORACLE
+  8. to find all subsequent report/actions, search for 'popup' and 'href' in job_tracking.php. i.e. onclick popup:
+    1. show_sort_file.php
+    2. show_mail_file.php
+    3. show_prn_file.php
+    4. get_all_message.html
+    5. get_rtwo_info.php
+    6. dpvs.php
+    7. select_sort_file.php
+    8. select_mail_file.php
+    9. select_prn_file.php
+    10. release_update.php
+    11. hold_update.php
+    12. check_in(_new).php
+    13. check_out(_new).php
+    14. bridge.php
+    15. capacity.php
+    16. research.php
+    17. dds_report.php
+    18. cid_report.php
+    19. mgm_report.php
+    20. crm_report.php
+  9. using php GD library to build the native PNG images for graphs. could've used js library out there to do it.
+    1. this is probably the reason needed the apache module to be compiled customly, TBD
+  10. apache module enabled from phpinfo:
+    1. EXIF -- really needed? don't see any related method calls
+    2. filter (input validation)
+    3. FTP
+    4. GD
+    5. gettext -- used in js, but non in php, confirm?
+    6. gmp -- math calc (e.g. xor, pow, abs.) really needed? don't see any related method calls
+    7. hash
+    8. iconv
+    9. json
+    10. libxml
+    11. mime_magic
+    12. mssql
+    13. mysql
+    14. oci8
+    15. odbc
+    16. openssl
+    17. pcre (perl regular expression)
+    18. pdf -- see some system command to 'gs' to convert from gs to pdf. but not from the php PDF module. needed?
+    19. PDO
+    20. pspell
+    21. reflection ?? -- probably not needed
+    22. session
+    23. shmop -- shared memory block operations, not needed?, probably installed coz of sysvmsg below
+    24. SimpleXML
+    25. SPL
+    26. Sockets
+    27. sysvmsg
+    28. tokenizer -- probably not needed
+    29. wddx
+    30. zlib
+    31. additional custom modules: dbase, sysvsem, sysvshm  
+ **From[php.net](http://php.net):** Support for this functions are not enabled
+by default. To enable System V semaphore support compile PHP with the option
+--enable-sysvsem . To enable the System V shared memory support compile PHP
+with the option --enable-sysvshm . To enable the System V messages support
+compile PHP with the option --enable-sysvmsg  
+ **Question:**  what functionality need to use semaphore? searched around for
+the semaphore related methods and don't find any.
+
+

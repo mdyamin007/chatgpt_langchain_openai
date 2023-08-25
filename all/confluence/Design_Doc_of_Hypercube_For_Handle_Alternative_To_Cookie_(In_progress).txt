@@ -1,0 +1,198 @@
+title: Design Doc of Hypercube For Handle Alternative To Cookie (In progress)
+body: ## **Introduction**
+
+This design documentation is to represent the necessary information and
+changes required for the Hypercube to managing something that will be an
+alternative to cookie.
+
+This feature will allow hypercube to get rid of cookie usage.  As the cookie
+is occurring problem because of third party cookie policy
+
+ **Purpose/Objective Summary**
+
+The main objective of this feature is to handle hypercube without the cookie
+procedure. By default, third-party cookies are blocked from some of the
+browsers already e.g. latest version of safari. and others will do this change
+in the near future e.g. chrome in 2023.
+
+This third-party cookie policy will create problems for hypercube user's who
+use our application inside an HTML iframe. When the hypercube will try to
+create a cookie in the browser from inside an iframe then it will detect this
+as third-party activity and refuse to create a cookie
+
+in the browser. As hypercube uses cookie procedure so we have to handle this
+with other alternative solutions. There was other browser storage like local
+storage, cookies, sessionStorage, indexDB which all go under the same third-
+party policy. Also, localStorage and indexDB do not follow the same mechanism
+as cookies that are required for the hypercube. For example, localStorage and
+sessionStorage are not always sent over each request, and can't access from
+the server-side.
+
+ **Scope**
+
+### In-Scope
+
+  1. Find out an alternative solution for the cookie procedure
+  2. Find out the current cookie procedure and usage in the hypercube
+  3. R&D the possible solution
+  4. Check all the necessary code change required 
+
+##  **Findings and Solutions**
+
+I have found a workaround to bypass this third-party issue with query param.
+We can store a signed query param in every route path instead of using a
+cookie.
+
+Since on hypercube we already use auth methods for creating a token during
+"ssoKeyGen", which returns the unique mongo object " _ **_id**_ "  of "
+**ssoKeyData "** collection so we can use this mongo object " ** __id_** " and
+always keep this as a URI query param. And we can also store those
+
+cookie's data in the " **ssoKeyData "** collection for that " _ **_id**_ " So
+that we can retrieve that data from the " **ssoKeyData** " collection by that
+signed query param as  ** _" _id_**". " **ssoKeyData** " collection is only
+published from the meteor server-side and we never subscribe to this
+collection
+
+on the client-side. That means this " **ssoKeyData** " is secured and not
+accessible from the client side.
+
+In the " **ssoKeyData** " collection we will also store some additional user
+data when the user login on hypercube for future validation. **_e.g. client
+IP, Browser name and version,  Engine, OS, CPU, last refresh time_**.  And we
+will validate users in every route based on these data.
+
+That means if any user copies URL with the sign from a specific IP, Browser,
+Operating System, and CPU then they can not access hypercube with that sign
+with different IP, Browser, Operating System, or CPU. So suppose anyone copies
+the URL with the sign parameter and tries to
+
+access it, on this situation if the validation is failed then it will cause an
+error for the user who copied that URL.
+
+Also, we will expire the user session by checking the last refresh time. That
+means if the user tries to access the hypercube with a previous sign parameter
+URL after a certain time then they can not access it, cause the routing
+middleware logic will check if
+
+the sign param exists or expired from " **ssoKeyData** " collection and
+prevent accessing hypercube with expired URL.
+
+  
+
+The URL will look like this -
+**[https://domain/?rd=1&sign=yThH9iBaRk7E4GQnr](http://10.1.0.142:5000/?rd=1&sign=yThH9iBaRk7E4GQnr)
+/
+[http://domain/?page=profile&sign=](http://10.1.0.142:4000/?page=profile&sign=eXDN62ru6pHW456M5)[yThH9iBaRk7E4GQnr](http://10.1.0.142:5000/?rd=1&sign=yThH9iBaRk7E4GQnr)**
+
+## This is a sample **ssoKeyData** collection Document -
+
+jsssoKeyData Collection
+
+  
+
+##  **Requirements**
+
+### Functional Requirements
+
+ID
+
+|
+
+Title
+
+|
+
+Functionality  
+  
+---|---|---  
+FR_01|  
+|
+
+  
+  
+  
+### QA/Test Requirements
+
+ID
+
+|
+
+Title
+
+|
+
+Details  
+  
+---|---|---  
+QR_01|
+
+  
+
+|
+
+  
+  
+  
+## Code changes
+
+  1. Code update
+
+Project file path
+
+|
+
+Method Scope
+
+|
+
+Changes  
+  
+---|---|---  
+  
+|  
+|
+
+  
+  
+  
+# Summarized Change Log
+
+Date
+
+|
+
+Who
+
+|
+
+Changes  
+  
+---|---|---  
+  
+
+
+| Sadman Anik| Creation  
+  
+  
+
+# Feedback / Question / Answers
+
+Question
+
+|
+
+Answer  
+  
+---|---  
+  
+  
+
+|
+
+  
+  
+  
+  
+
+

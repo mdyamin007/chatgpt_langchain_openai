@@ -1,0 +1,137 @@
+title: RWCU - [33005][pvt][in-house] RWCU_NOTICES_DLA_Archival_MMDDYYYY_1.zip.001 Not Received for 08172022
+description: None
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+
+
+There is a issue happened when we start working inIS-973 for rwcu archival. We tried to build a common scriptrwcu_notice_archival.sh to use it to handle archival for all rwcu daily.
+
+But after we release for rwcudla every week client sees issue like some file is missing in archival. This happens while there can be multiple files with same pattern sayrwcuballoon1022.txt.asc,rwcuballoon1023.txt.asc are in ftpbu folder at the same time.
+
+So what happened in previously for archival:
+
+the script rwcudl_process.pl it processes one file sayrwcuballoon1022.txt.asc, generates rwcudlO.afp and put it in /d/pdf_afp/rwcu/rwcudla/afp/ folder with new namerwcudlO1.afp ( adding 1) in the name.
+
+Then again if it processes another file with the same pattern sayrwcuballoon1023.txt.asc it generates same rwcudlO.afp ( so the previous rwcudlO.afp gets replaced) and put it in/d/pdf_afp/rwcu/rwcudla/afp/ folder with new namerwcudlO2.afp ( adding 2) in the name.
+
+Next it processed all the afp files in/d/pdf_afp/rwcu/rwcudla/afp/ directory. Simple enough.
+
+
+
+But we tried to made a global scriptrwcu_notice_archival.sh we didn't analyze thoroughly the above behaviour of rwcudla. What we did, after processing both
+
+rwcuballoon1022.txt.asc, and rwcuballoon1023.txt.asc files we are at the time of generating the archival pdf we copied therwcudlO.afp to/d/pdf_afp/rwcu/rwcudla/afp/ folder. But therwcudlO.afp is actually contains customers for one single data not for both ( because the previousrwcudlO.afp get replaced with newrwcudlO.afp whenrwcuballoon1023.txt.asc got processed ).
+
+
+
+Hence after our update when it got released client is having issues with archival missing some files. And this actually happens with Monday archival files bacause client also sends data in Saturday and Sunday but script doesn't get executed at those days . Script gets executed from Monday to Friday.
+
+And in Monday it actually processes 3 days files at once, and at that moment it happens that multiple files for same letter are present and causes the issue explained above.
+
+
+
+Hence we updated the script to not to take the afp from working directory rather take it from/ d/pdf_afp/rwcu/rwcudla/afp/ directory like it was previous.
+
+
+
+Parallel id:20221110155616
+
+I processed below files:
+ /z/download/rwcu/rwcuballoon0516.txt.asc - rwcudlO
+ /z/download/rwcu/rwcudl324_1147/rwcuatm1022.txt.asc - rwcudl8 doesn't have archival
+ /z/download/rwcu/rwcudl324_1147/rwcuballoon1022.txt.asc - rwcudlO empty file (only has header)
+ /z/download/rwcu/rwcudl324_1147/rwcubusb1022.txt.asc - *rwcudlt*
+ /t/ronyD/temp/rwcuatm1029.txt.asc - rwcudl8 doesn't have archival
+ /t/ronyD/temp/rwcuatm1030.txt.asc - rwcudl8 doesn't have archival
+ /t/ronyD/temp/rwcuballoon1029.txt.asc - rwcudlO empty file (only has header)
+ /t/ronyD/temp/rwcuballoon1030.txt.asc - rwcudlO empty file (only has header)
+ /t/ronyD/temp/rwcubusb1029.txt.asc - *rwcudlt*
+ /t/ronyD/temp/rwcubusb1030.txt.asc - *rwcudlt*
+ 
+ as you seeing those rwcudlt has 3 files and rwcudlO has one non empty file and if you see/z/pdf_afp/rwcu/rwcudla/afp/ files:
+!image-2022-11-12-02-43-49-477.png!
+ 
+ and the updated script takes those files ( not files from working directory ) and processed and generate archivals. So from now on no files should be missed from archival.
+ 
+ 
+ 
+ [~dyuen]
+ 
+ Thanks
+ 
+ 
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+author: igor.khosid
+comment:    Parallel ID: 20221110155616
+   Currently in parallel: Yes
+   User: ronyD
+   Description: https://app.na3.teamsupport.com/?TicketNumber=33005 rwcu archival issue
+   Date Submitted: 2022-11-10 15:56:43
+   Date Last Updated: 2022-11-11 11:45:41
+   Files:
+      1) rwcudl_process.pl
+      2) rwcudl_process.sh
+
+
+author: JIRAUSER11700
+comment: [~rony]thank you for the detailed explanation.
+
+
+
+
+author: rony
+comment: Hi [~TunA]
+
+Need help to release.[^IS_PROGRAM_TRANSFER_FORM_Rev 11012022.doc]
+
+
+
+[~dyuen]
+
+
+
+Thanks
+
+
+author: tuna
+comment: Hi [~rony],
+
+Following code has been released.
+
+Thanks,
+
+Tun
+
+
+
+20221116091748 11/16/2022 ronyD IS-1802 RWCU - [33005][pvt][in-house] RWCU_NOTICES_DLA_Archival_MMDDYYYY_1.zip.001 Not Received for 08172022
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/ronyD/
+total 192
+-rwxrwxrwx 1 ronyD DSI 35147 Nov 15 01:39 rwcudl_process.pl
+-rwxrwxrwx 1 ronyD DSI 2048 Nov 15 01:39 rwcudl_process.sh
+
+
+
+
+
+[~dyuen]

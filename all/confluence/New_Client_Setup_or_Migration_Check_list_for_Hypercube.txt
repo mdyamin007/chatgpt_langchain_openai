@@ -1,0 +1,238 @@
+title: New Client Setup or Migration Check list for Hypercube
+body: ## **Checklist for migrating a client from PRISM to Hypercube:**
+
+###  **Client analysis before migration (ROOT):**
+
+  1.  **Login Method:**  For migration figure out which login method is used by the client from prism's ROOT **web.xml**. Make sure that the login method is already available in hypercube. Otherwise, that login method needs to be implemented in hypercube. From **web.xml** note down init-param (method, password, createLogin, emailUpdate, updateMobileNumber, etc) of every login method servlet.
+  2.  **Enrollment Steps:  **Login into the prism client with the user having SSO null in the USR_SESSION table to go through the enrollment steps. Note down the steps.
+  3.  **Welcome email:  **Go through all the enrollment steps and check if it sends a welcome email after enrollment finished.
+  4.  **Menu:** After logged into prism customer site observe which menus are there such as eStatement, Profile, Disclosure, etc.
+  5.  **Account Types:** From the database find out which distinct account types are supported by that client.
+  6.  **Statement types:** From the **define.jsp** page of prism ROOT site of that client find out which statement types are there.
+  7.  **Archival Period:** Archival period for different statement types are also defined in the **define.jsp** page of prism ROOT.
+  8.  **Paperless Configuration:** Login into the prism customer site and find out if you can change the delivery preference for every statement type of a single account. If you can do that then the paperless configuration of that client is **bySelective**. If you only can change the delivery preference of all statement types for a single account at once then it is **nonSelective**.
+  9.  **Unenroll on delivery preference change:** Try to change delivery preference from electronic to paper and notice if it un-enrolls the user or not.
+  10.  **Delivery Preference:** Check the types of delivery preferences. (electoric, paper, both electronic and paper)
+  11.  **Notification Preference:** Check if the client supports SMS or Email or both.
+  12.  **NP link Type:** Check if the client is byUfa or byUsr. Check it from pilot or stage DB. If both usr_id and acct_id are in NOTIFICATION_PREFERENCE table then npLinkType is byUfa. If only usr_id is present in NP table then npLinkType is byUsr.
+  13.  **Batch Download:** Check if Batch Download functionality is available in prism customer site.
+
+###  **Client analysis before migration (MSM):**
+
+  1.  **Delivery preference:** Check if admin Users are allowed to update customer delivery preference and their email address.
+  2.  **Notification preference:** Check if admin Users are allowed to update notification preference.
+  3.  **User creation:** Find out if user creation is supported.
+  4.  **Account creation:** Find out if account creation is supported from msm site.
+  5.  **Batch download:** Check if batch download functionality is available.
+  6.  **Email proofing:** Check email proofing or template creating functionality is there.
+  7.  **Frontend reports:** Check which frontend reports are there in msm site. If there is any report in msm site but that is not available in infotrac then make sure if the client wants a custom report for that or not.
+
+###  **Checklist for the migration script:**
+
+  1. The client must use the USR_MAPPING table.
+  2. There must be data in NOTIFICATION_PREFERENCE table rather than CONTACT_INFO table.
+  3. SESS_LOGIN_ID must be like **!USR_ID** in USR_SESSION table.
+
+If these criteria are not fulfilled by the client then data migration is
+needed.
+
+##  **Checklist for setting up a new client to Hypercube:**
+
+###  **Obtaining information from SOW:**
+
+Read through the SOW (Statement of Work) and find out the following
+information.
+
+  *  **Login Method  **(Also ClientCodeID, Password, Hash method, etc)
+  *  **Enrollment Steps**
+  *  **Welcome email**
+  *  **Menu**
+  *  **Account Types and description**
+  *  **Statement types and description.** (Also find out the value for hypercube flags "paperlessOnEnroll", "following", "disablePaper")
+  *  **Archival Period**
+  *  **Paperless Configuration**
+  *  **Unenroll on delivery preference change**
+  *  **Delivery Preference**
+  *  **Notification Preference**
+  *  **NP link Type**
+  *  **Batch Download**
+
+### Setting up a new client in DB:
+
+Execute all the following queries sequentially in **ALL THREE schemas(first in
+default)**   and replace **XXXX** with cid of the new client and
+**schema_name** with DB schema **(default, dev_cu, dev_rabo etc)**
+
+sqlSQL for new client setup in DBtrue
+
+### Adding a new client in hypercube:
+
+  * Let's say we want to setup Hypercube for our new client having **cid =** **' xxxx'**.
+  * Create new folders under the path **private/assets/xxxx /properties** and create new file **properties.json** here. (or copy from other existing clients)
+  * Update the **properties.json** file as per the client requirements and desired features. To know about the flags, check out this page: . 
+  *  **Checklist for properties file:** Here are some configurations/flags that are needed for the initial setup of a client.
+    1.  **Login method:** The flag for login method is **" ssoMethod"**. It is a JSON that defines the behavior of the login method. Will this method create a new user while login, will it update user email, what is the password and hash method for this login method, etc. are defined in this JSON. A client can have multiple login methods but which is the default login method is defined by another flag named **" defaultSSOMethod"**.
+    2.  **Enrollment Steps:** The flag **" ssoEnrollmentFlow"** defines which steps the users will be gone through during enrollment to the eStatement site.
+    3.  **Menu:** Which menu will be available in the navbar is defined by the flag **" menu" **(eStatement, Profile, Disclosure etc.).
+    4.  **Account Type:**  The account type supported by the client is defined along with the account description in the properties file. ("NA": "","SV": "Saving" etc.)
+    5.  **Statement Types:** Statement types supported by the client is also defined.
+    6.  **Archival Period:** Archival period of different statement types are defined in the properties file.
+            For getting familiar with other hypercube flags follow the documentation  **[here](https://confluence.infoimageinc.com/x/iBN6B)**.
+  * Create a new folder under the path public/assets/xxxx. The purpose of this directory is to achieve the client desired UI. Hence, U.I specific files such as js, css, images and resource are put under the respective folders.
+  * Collect F.I **logo, banner and logo-min** files from client and put them under **public/assets/xxxx /image** s folder.
+  * Change the **settings_dev.jon** file found under the root directory, enter the following key-value pairs:
+
+ **" xxxx.authCipher": "Washington"**
+
+ ** "xxxx.authConst": "600"**
+
+  * Insert text **' xxxx'** in the **Meteor.App.CID_TO_LOAD_PROPERTIES** field value under the file path **lib/allConstants/constants.js**
+  * Check if the client required SSO method already exist under /server/auth.js . If it does not exist or require additional modifications, then develop SSO API handler as per the parameter request variables.   
+For example, digitalInsights, bottomline, Fiserv etc.
+
+  * Go to **/usr/local/tomcat/app-configs** in infoservice dev environment ( **pd-dev7** ) edit **config.properties** at the very end you will see list of cids enabled for sso enrollment, add 'xxxx' in the end and restart the infoservice.
+  * Now create a sso file and try to login to check if it is working fine or not.
+
+### Adding a new client in Infotrac:
+
+  * Login to Infotrac and click on **Client Management.**
+  * Click on the **Create New Client** link.
+  * Enter information for that client and click submit.
+  * In feature settings select which feature will be supported by the client.
+  * In the **Account Management Properties** text box provide the JSON of different flags. You can copy it from an existing client and can change it according to the client you are setting up.
+  * Make sure it fulfills everything in SOW requirements.
+  * Fill in E-Notification Template fields.
+  * Add client email addresses to whitelist if client is testing E-Notification samples  
+\- add client emails to /tomcat-api/conf/context.xml file
+
+##  **Checklist for setting up a client nginx proxy:**
+
+###  **Nginx Proxy Components and Network (proxy-pilot01 & proxy-pilot07,
+proxy-prod17 & proxy-prod18):**
+
+ **Working with directories:**
+
+  * /etc/nginx/sites-available
+  * /etc/nginx/sites-enabled
+
+ **Start with sites-available:**  
+Example: Creating necu proxy from other cid's proxy
+
+  * Copy jdcu-pilot over to renamed necu-pilot file (sudo cp jdcu-pilot necu-pilot)
+  * Change in necu-pilot all instances of jdcu to necu (:%s/jdcu/necu)
+  * Double check the change in url field from jdcu to necu is made
+
+ **Next in sites-enabled:**
+
+  * Create a symbolic link with necu-pilot file in sites-available into directory sites-enabled (sudo ln -sv /etc/nginx/sites-available/necu-pilot ./200-necu-pilot)
+  * Restart nginx (sudo service nginx restart)
+
+###  **N.B. Ask Network to create DNS for the client page on Pilot +
+Production environments**
+
+##  **Checklist for enabling SSO (ssoEnrollmentApi)  **
+
+  * Add the new CID to the  **sso.enabled.client=**  section, update commit message and save.
+  * Build  infoservice-ca-hypercube-{env}-01/02 , *** make sure only  **deployWar**  &  **copyAppConfigs**  are selected. The console should show your commit message. 
+
+ **DEV:  **
+
+<https://gitlab.infoimageinc.com/configuration-management/server-configs-
+dev/-/blob/master/ca-hypercube-dv-01/infoservice/app-
+configs/infoservice/config.properties>
+
+Jenkins: infoservice-ca-hypercube-dv-01
+
+ **PILOT:**
+
+<https://gitlab.infoimageinc.com/configuration-management/server-configs-
+pilot/-/blob/master/ca-hypercube-pi-01/infoservice/app-
+configs/infoservice/config.properties>
+
+<https://gitlab.infoimageinc.com/configuration-management/server-configs-
+pilot/-/blob/master/ca-hypercube-pi-02/infoservice/app-
+configs/infoservice/config.properties>
+
+Jenkins: infoservice-ca-hypercube-pi-01/02
+
+ **STAGE:**
+
+<https://gitlab.infoimageinc.com/configuration-management/server-configs-
+stage-brisbane/-/tree/master/ca-hypercube-st-01/infoservice/app-
+configs/infoservice>
+
+Jenkins: infoservice-ca-hypercube-st-01
+
+##  **Checklist for for email notification API testing:**
+
+  * Update Conf File to have:  
+a. doc.automatedEmailNotification=true (For Production Only)  
+b. notification.isSendEmailViaAPI=true  
+c. notification.isEmailManageByEstmt=false  
+d.
+email.allowedEmail=[ethan.yu](http://ethan.yu/)@[infoimageinc.com](http://infoimageinc.com/)
+(For Pilot Testing Only)
+
+  * Update PUI Code, EmailHandlerFactory.java to include Client CID + the EmailNotifyService it uses
+  * Make sure on InfoTRAC, Client has E-Notification Template Setup for the application
+  * Modify Index file to have one account record, sso into that account number to change to your email
+  * Run the job, Go to the Email Notification Tab on PUI, go to your CID (might need to add it into the list), then send an email
+
+##  **Checklist for other  Miscellaneous Components:**
+
+  * Insert CID Client Properties [File,Folder,Document] into MongoDB
+  * Insert client for sso.enabled.client (ssoExchange), passphrase (Production), check images (/usr/local/tomcat/app-configs/infoservice/config.properties)
+  * Add CID Login parameters to SSO Test Page (Follow this -> [SSO Test Page Setup](https://confluence.infoimageinc.com/x/vYLwBQ))
+
+##  **Checklist for remaining production ready steps:**
+
+###  N.B. In Order to Build New Hypercube Deployment onto Prod, Must create a
+new Hypercube Tag.
+
+  * ### Find latest Tag in Hypercube Folder. Make a new tag off of it.
+
+a. Go to SVN Repository Exploring and find the latest Hypercube Tag  
+b. Show History, right-click on latest commit.  
+c. Tag from ********  
+d. Name it accordingly, increment the version number, and update the release
+date
+
+  * ### From there add your specific code changes for the CID you've been working on to the tag.
+
+a. private properties.json  
+b. public folders + files  
+c. allConstants/constants.js  
+d. all five settings.json files  
+e. any other alterations on files made  
+\- Commit the Tag.  
+\- Go to Jenkins, change build url/link to the new tag you created.  
+\- Build/Deploy Tag. Monitor logs. Make sure that traffic comes in before you
+build the second server. After making sure both have traffic.
+
+###  **(Turn off Email Notification config) - Run Preenrollment & Preingestion
+Files**  
+  
+ **Proxy Servers for productuon: proxy-prod17 & proxy-prod18**
+
+  
+ **Conf Files:**
+
+  * Sites-Available, Sites-Enabled - (Make sure the site is changed as well to production site)
+
+ **Network:**
+
+  * Mention which Nginx Server it's on (NEW: proxy-prod17, proxy-prod18 OLD: proxy-prod09, proxy-prod10)
+  * Provide hostname/commonname ex: [estatements.jordan-cu.org](http://estatements.jordan-cu.org/)
+  * Provide Wildcard Certificate & Key (If they have)
+  * Ask them to make sure SSL Certificates is set up
+  * Ask them to make sure Internal and External Global Domain Name System is set up
+
+ **InfoTRAC:**
+
+  * Configure client properties files on Pd-Grid-03 (Infoservice) & Pd-Grid02 [MongoDB]
+  * [mongo-prod01.infoimage.com](http://mongo-prod01.infoimage.com/):27017, [pd-grid02.infoimage.com](http://pd-grid02.infoimage.com/):27010
+  * InfoDocs Acct Mgmt Properties
+
+ **Setup Scanner for Client**
+
+

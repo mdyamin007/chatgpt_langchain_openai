@@ -1,0 +1,242 @@
+title: SNFB - [26683][pvt] In-Line Inserts Update
+description: 
+
+Assessments
+
+1. create resources for each insert - can probably use S1SNFIN[1-6].300 for the 9 inserts
+
+-Excessive NSF insert is in production - S1SNFNSF.300, can reuse this for 9th insert
+
+2. read in each file list into array in SNFBMS11.dfa
+
+3. For Excessive NSF, check all accounts (. For all other inserts, check only Savings accounts
+
+-if account exists in array list, assign insert flag=1
+
+4. after the PRINT_CHK... format, check to see which insert flag is on then display that insert
+
+-there should be a max of 3 inserts
+
+-order of inserts should be as :
+
+ a. For Savings statements: Savings Change in Terms, Sign&Save Match and then if the savings has an Excessive OD notice add it last.
+
+  b. For savings accounts that are combined with a checking, and the checking is on the Excessive OD list: Excessive OD list, Savings Change in Terms and then Sign&Save Match
+
+
+
+Timeline:
+
+Turn over to IS 3/9/22
+
+Samples to QA 3/18/22 - also provide resources to ISD
+
+Samples to client 3/23/22
+
+Client approval 3/25/22
+
+Parallel 3/28/22
+
+LIVE 3/31/22 for 4/1/22 processing
+
+
+
+
+author: JIRAUSER10911
+comment: [~yameelee]
+
+They will be providing a new list for the Excessive OD insert. The insert will remain the same each quarter, but the account list will be new each time.
+
+
+
+What is the latest date the client can provide the finalized account lists prior to releasing this update?
+
+
+author: yameelee
+comment: [~Kbittmann] I can use the ones we have (old one for Excessive OD) for samples unless they want to send new lists for samples then I would need it by tomorrow. As for production, I am not sure on how many days you guys need to prep the dockets etc, so should be on your side.
+
+
+author: JIRAUSER10911
+comment: [~yameelee]
+
+Please note update is to run from 3/31 till 5/2.
+
+
+author: JIRAUSER10911
+comment: [~yameelee]
+
+Please see the below feedback from SNFB:
+
+We are working on getting the finalized lists for all inserts, but I dont know if we will have them all available tomorrow. For samples, we are fine with you using the lists you have, including the old one for Excessive OD.
+
+
+author: yameelee
+comment: PR_ID:20220321182158
+
+Estmt index:ms1_12312021_1_03242022_1717_snfb.txt (requested ISD Jira from Joye, will add to it and have ISD upload resources on it).
+
+Attached DPVS for test print - includes all scenarios I can find on qa list. Please have laser print all accounts (14) from qa file.
+
+
+
+
+author: yameelee
+comment: Here are the samples ([^snfbms1_selective_inserts.pdf]converted from .qa print file). I only include one account per scenario that I can find in the snfbms1_selective_inserts.pdf sample file - using the lists from ticket comment #40 and 1/1/2022 data file per client (all accounts are in the test data file - snfb_insert_test.dat - exported to qa folder).
+
+*accounts with 1 insert*
+
+1101000171 - ExtendedSavingsPT806.txt
+
+1102207790 - SuperbSavingsPT825.txt
+1900540021 - InvestmentSavingsPT820.txt
+1900573353 - Sign&SaveSavingsPT815.txt
+2100637858 - StatementSavingsPT801.txt
+4301063910 - FirstKidsSavingsPT803.txt
+8300047530 - EssentialSavings-PT802.txt
+9300017740 - Excessive_NSF_OD.txt
+
+*accounts with 2 inserts*
+
+8101010910 - Sign&SaveSavingsPT815.txt & Sign_and_Sign_Match.txt
+
+1100952344 - StatementSavingsPT801.txt & Sign_and_Sign_Match.txt
+9300014363 - EssentialSavings-PT802.txt & Excessive_NSF_OD.txt
+
+*accounts with 3 inserts*
+1101003151 - Sign&SaveSavingsPT815.txt, Sign_and_Sign_Match.txt & Excessive_NSF_OD.txt
+150125818 - StatementSavingsPT801.txt, Sign&SaveSavingsPT815.txt & Sign_and_Sign_Match.txt
+150134701 - StatementSavingsPT801.txt, Sign&SaveSavingsPT815.txt & Sign_and_Sign_Match.txt
+
+
+
+*FYI:*for [^snfbms1_combined_with_checking_inserts.pdf], I couldn't find a scenario with checking and savings combined that has all 3 flags so I include this account on the 3 inserts to show that if there is a combined account with checking, the Excessive NSF insert will go first, then the Change in Terms, and the Sign and Save ([^000162649098.txt]).
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220321182158
+   Currently in parallel: Yes
+   User: yamee
+   Description: selective inserts
+   Date Submitted: 2022-03-21 18:22:28
+   Date Last Updated: 2022-03-21 18:22:28
+   Files:
+      1) S1SNFNSF.300
+      2) SNFBMS11.dfa
+      3) S1SNF801.300
+      4) S1SNF825.300
+      5) S1SNF806.300
+      6) S1SNFSSM.300
+      7) S1SNF815.300
+      8) S1SNF802.300
+      9) S1SNF820.300
+      10) S1SNF803.300
+
+
+author: igor.khosid
+comment: [~berezinez] - please proceed w/testing. Sounds 0 the sample - already approved
+
+Not sure who from AC - assigned [~jharvey] or [~Kbittmann]
+Noticed that ISD-6742 - still unassigned 
+[~yameelee] - please provided the new resources to ISD ... (story) for upload
+
+
+
+author: berezinez
+comment: [~jharvey] [~Kbittmann]
+
+1, please request print samples.
+
+2. is this update has pdf archival? or print side and eside only?
+
+[~yameelee]
+
+please let me know once eside posting is ready for verification with all new resources.
+
+
+
+
+author: yameelee
+comment: This is for archival as well. I got the pdfs of the same accounts and zipped them up( [^12312021_1101003151_34416.pdf] &[^12312021_150125818_22856.pdf]). You can get the rest in/z/pdf_afp/snfb/snfbms1/pdf_ftp/ folder. I did copy them all to my folder and review them just did not want to post too many PDFs on here.
+
+NOTE: I did not finish the archival process because after more than 5hrs it still did not finish creating the PDFs so I killed the process to start something else. But all of the accounts in the sample list above are created so you can get them to show the inserts.(production takes over 1hr to create 10k PDFs).
+
+
+author: jharvey
+comment: [~yameelee] [~berezinez]
+
+Client approved samples.
+
+Please provide information for print samples.
+
+
+author: yameelee
+comment: [~berezinez]
+
+ISD uploaded the resources. and index posted.
+
+
+author: yameelee
+comment: [~jharvey]please request to print .qa file. only 14 accounts.
+
+
+author: berezinez
+comment: [~yameelee] [~jharvey]
+
+eside posting looks good now, still waiting for the print samples.
+
+
+author: jharvey
+comment: [~yameelee] [~berezinez] [~Igor.Khosid]
+
+Ops stated that print samples are in the IS box in Menlo.
+
+Igor, would you please scan the samples and add them to this ticket for Alis to review?
+
+
+author: yameelee
+comment: [~Igor.Khosid]& [~berezinez]did you get the samples yet?
+
+
+author: igor.khosid
+comment: [~yameelee] - yes we received the new set of the print samples today.
+
+[~Andrey.Kutsenko] - please scan it and attach to the story ASAP
+
+
+
+author: igor.khosid
+comment: Print samples - attached >>>  [^IS-934_SNFB_Print samples 03282022.pdf] 
+
+
+author: igor.khosid
+comment: [~berezinez] - please review the attached print samples and complete the testing ASAP 
+
+
+author: igor.khosid
+comment: [~yameelee]
+QA - completed
+Please attach IS checklist
+
+
+author: yameelee
+comment: attached is the checklist.[^IS934-QA Checklist.doc]
+
+
+
+
+author: igor.khosid
+comment: IS checklist - attached >>>  [^IS-934_SNFB_IS Checklist.pdf] 
+
+
+author: yameelee
+comment: Code has been released for tomorrow process.
+
+
+author: yameelee
+comment: There were some extra times used to
+
+-find data for the inserts
+
+-find which accounts has which insert(s)
+
+-compare the account numbers for each insert to the insert lists to make sure they are good

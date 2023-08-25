@@ -1,0 +1,41 @@
+title: 42940 - DFCU - E-Statment for member (In-house)
+description: None
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~mamunur.rashid],
+
+What is the progress on this project? Do you have any questions? Please let me know. Remember that this should be pilot ready by the 15th. 
+
+Thanks,
+Tai
+
+
+author: tai.trinh
+comment: @dsi 
+
+Hi [~rifat.mahmud] and [~mamunur.rashid],
+
+After further review, I think it is fine leaving the DefaultPaperlessRegistrar3 as is. The main issue is with AccountRegistrar not adding to the usr_mapping table. Is there a way to determine whether a client is using the new setup (sess_login_id with "!") or the old setup (sess_login_id == usr_id)? If not, we need to introduce a new flag, e.g. global.hypercube=true. If true, we will use "!"; otherwise we won't. Default (null) case is false. The same is true for attaching CIF to user. We will also check if global.hypercube=true. 
+
+Please research all current clients who have check_image processing (using ProcessingJob3), and provide a list of all Hypercube client that have autoRegister on. These clients will need to have the global.hypercube=true flag added to their conf file.
+
+
+author: tai.trinh
+comment: @dsi
+
+Additionally, can you also research all the clients who currently use check_image ProcesingJob3? I have a feeling this issue may be affecting multiple clients. If the code inserts into the usr_session without "!"; there may be other clients who are using this process, but their setup requires the "!" to work properly. If that is the case, we would want to look into fixing all of those clients also.
+
+
+author: tai.trinh
+comment: @dsi
+
+global.nullDsoTime is the flag that should be used for dso date. createNewUser is default, nullDsoTime = false. If nullDsoTime = true, createNewUserWithoutDate. This means DFCU should have nullDsoTime  = true.
+
+
+author: tai.trinh
+comment: @dsi
+
+The code for AccountRegistrar looks good. Please deploy and test on Pilot. 

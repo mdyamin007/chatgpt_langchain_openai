@@ -1,0 +1,91 @@
+title: 11096 - SEFC - SSO Integration with Alkami
+description: You can start working on this without a JEF. The client will for sure be doing this SSO integration, so we will need to do work for it regardless. It's better to start early to make sure deadline is met.
+
+Due Date is actually unknown. Discuss with AC/IMP to figure out what the real live date is.
+
+Pilot Date MUST be met. Alkami will start their testing 02/29, so our SSO connection must be available on Pilot then.
+
+
+ # Set up singleSignOn for Alkami.
+ # Should work similar to the current DI SSO.
+ # singleSignOn (SSO7) need to be enhanced to use the account lookup to filter out accounts just like the current SSO methods for SEFC
+ # We can support small business subuser, but this still has to be assessed to make sure that everything works as intended. Small business subuser should log in with the primary user Member Number.
+ ** So we filter out the account numbers for the subuser using the primary's mappings.
+
+See also attached spec documents.
+
+
+author: tai.trinh
+comment: Need to enhance SSO Enrollment with the ability to update the UserName
+
+
+author: anwarh
+comment: [Tai Trinh|https://gitlab.infoimageinc.com/ttrinh] mentioned this issue in [a commit|https://gitlab.infoimageinc.com/PD/infoservice/-/commit/a613af68fc813bc1b9c10c70b8984b44332c7ab4] of [Product Development / InfoService|https://gitlab.infoimageinc.com/PD/infoservice] on branch [infoservice_v2.08_20210728_staging|https://gitlab.infoimageinc.com/PD/infoservice/-/tree/infoservice_v2.08_20210728_staging]:{quote}ISD-3814/ISD-3828/ISD-4400 Update enrollment API to update user information and read in userFlag{quote}
+
+
+author: tai.trinh
+comment: *For QA*:
+
+Testing will be for Alkami SSO on Staging.
+
+Features:
+ # Alkami SSO should work for the Primary User and the Subuser.
+ # To use other values beside the default, use the query listed below. The external_id is the one to put in the CIF_NUM. The internal_id is what we put into the Account Numbers.
+ ** select * from ext_id_mapping where org_id = getorgid('sefc')
+ order by external_id;
+ # When we pass the user_name value, it should update the User Name of the user. You can go to InfoTRAC and search for one of the linked accounts. Switch between the user to find the user you are testing with and you should see the User Name get changed.
+ ** For Primary User, the CIF is just the CIF_NUM.
+ ** For Subuser, the CIF is CIF_NUM|SubUserID.
+ # When all of the accounts we pass into the SSO is not entitled to the user (none of the accounts match what we find in the ext_id_mapping table), the user should get an error page, displaying:
+ ** IMPORTANT: We are unable to identify any statement accounts that you are authorized to view. This can occur if your membership is less than one business day old or if you are business account sub user who has not been granted access to a statement account.
+ # DI and BB SSO should still work and remain unaffected.
+
+
+author: igor.khosid
+comment: [~tai.trinh]
+
+Please update due date
+
+
+author: tai.trinh
+comment: [~Igor.Khosid]
+Due date updated.
+
+
+author: nprimak
+comment: Hi Tai,
+
+So far i see following issues:
+ * no sample pdf file during verification process, it is black field
+ * message 'Unable to sent welcome email' on a home page after going though enrollment process
+
+Tai please confirm if it is correct:
+ * Alkami subuser can't change delivery preferences on Profile page, has grey out radio button options
+ * the UserName is not changing on InfoTrac for subuser sso
+
+diSSO Hypercube works but bbSSO Hypercube gives error on key submit
+
+Thank you,
+
+Natasha
+
+
+
+
+author: tai.trinh
+comment: Hi [~nprimak],
+
+(1) It is showing for me.
+(2) InfoTRAC didn't have the Welcome Email template. This should be resolved now.
+
+(3) Yes, subusers cannot change delivery preferences.
+(4) It is being updated for me. Make sure you are switching to the correct user. You may need to reload the page. 
+
+(5) The comp number need to be CIF\subUsrId. Then the account list is the same that we use for other SSO. Comp 100045/TEST and one of the account being 1694887391/Test worked for me.
+
+Thanks,
+Tai
+
+
+author: nprimak
+comment: Verified by QA, works as expected

@@ -1,0 +1,610 @@
+title: EQBK - Add Pre-Enroll
+description: Assessment Details: Setup e-notice for 22 notices (except notice-015)
+- update eqbkdl_process.sh/pl for e-notice (f-option)
+- Add app codes by letter type (in all format DFA). App codes are in attached "DL App Codes.xlsx"
+- use latest print_dfa in eqbkdla.control for new e-notice index file
+- Notice 023, Names are not showing correctly in TXT record, Need to capture name position in TXT
+- Notice 017, need to capture acct number to TXT rec and maked acct numbers. (Example, XXXXXX1498)
+- Notcie 016 need to masked acct numbers in DFA (Example, XXXXXX1498)
+- Make sure all notices have valid account numbers to post.
+- No enotice required: Address Change Notice- 015
+- Test with ISD for posting, this job has two segments
+Segment#1: you can use latest file to test
+Segment #2: you can use latest file to test
+
+-ISD Development & Support
+
+-QA
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: Please work with this timeline -
+
+Pilot: 6/10
+
+Pilot Approval: 6/21
+
+Live: 6/28
+
+
+author: JIRAUSER11002
+comment: Hi [~Tin.Chak],
+Deployed in the pilot.
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~kdishroon] FYI
+
+
+author: kdishroon
+comment: [~sahossain] [~Tin.Chak] 
+
+Is there a way for the client to test this in pilot?
+
+Thank you,
+
+Keri
+
+
+author: JIRAUSER11002
+comment: Hi [~kdishroon],
+
+Client can use this url to do sso: [https://eqbkpilot.infoimageinc.com:9780/]
+
+The client can do the SSO using the following two accounts:
+ # 100012475 : This account is not enrolled to the eStatement site. So the client will go through the 3 steps of the enrollment process. And on the 2nd step the client will view the disclosure page.
+ # 6605006895 : This account is already enrolled to the eStatement site. So the client will view the disclosure page on the statement page.
+
+
+
+Client can use this url to do DSO: [https://eqbkpilot.infoimageinc.com:9780/login.jsp]
+
+Username: dsotest
+
+Password: dsotest
+
+Zipcode:65360
+
+
+
+If the client could not access the url or could not perform the SSO please let us know.
+
+Thank You!!
+
+
+
+
+author: kdishroon
+comment: Hi [~sahossain],
+
+The client was unable to login to [https://eqbkpilot.infoimageinc.com:9780/]; he was able to login when we removed the 9780, but then he was not able to locate account 6605006895.
+
+Thank you,
+
+Keri
+
+
+author: JIRAUSER11002
+comment: Hi [~kdishroon],
+
+The client might need CIF number as well, here I am giving a sample request for another account number:*6600005928*. And the account type is *TD.*
+
+
+{code:java}
+    <form action="https://eqbkpilot.infoimageinc.com/q2sso" method="post">
+        <input type="hidden" name="cid" value="eqbk"><br>
+        <input name="data" value="9f56d4acf103b1764095eb99df9bbd540000000000049872832606172022"><br>
+        <input name="selected_acct1" value="6600005928"><br>
+        <input name="selected_acct_type1" value="TD"><br>
+        <input name="email" value="test@infoimageinc.com"><br>
+        <input type="submit" name="submit" value="Get Key!"><br>
+    </form>    
+    <form action="https://eqbkpilot.infoimageinc.com/q2_hblogin.jsp" method="post">
+        <input type="hidden" name="cid" value="eqbk"><br>
+        <input type="text" name="key" value=""><br>
+        <input type="submit" value="GO"><br>
+    </form>
+{code}
+The CIF number for this account is*498728326*. In the form: the"data" is created from the CIF number.
+
+[~Tin.Chak]let me know if I should add anything else.
+
+Thank You!!
+
+
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~sahossain] Can you look at the latest CIF/auth file from production and see which CIF that the account is tied to? Online Banking will only pass in those accounts from that file for a given CIF.
+
+
+author: JIRAUSER11002
+comment: Hi [~Tin.Chak], [~kdishroon],
+
+At first, I provided the account number:*6605006895*which exists in the latest CIF file. For this account number CIF number is*500171535* and ACCT_TYPE is *DD*.
+
+For the following request form, I think the client will be able to login:
+{code:java}
+    <form action="https://eqbkpilot.infoimageinc.com/q2sso" method="post">
+        <input type="hidden" name="cid" value="eqbk"><br>
+        <input name="data" value="e4153d5b602f94ffd47cf47bf3829e9b0000000000050017153506202022"><br>
+        <input name="selected_acct1" value="6605006895"><br>
+        <input name="selected_acct_type1" value="DD"><br>
+        <input name="email" value="test@infoimageinc.com"><br>
+        <input type="submit" name="submit" value="Get Key!"><br>
+    </form>
+    <form action="https://eqbkpilot.infoimageinc.com/q2_hblogin.jsp" method="post">
+        <input type="hidden" name="cid" value="eqbk"><br>
+        <input type="text" name="key" value=""><br>
+        <input type="submit" value="GO"><br>
+    </form>// code placeholder
+{code}
+
+
+I have provided another account number:*6600005928*but it does not exist in the latest CIF file. So try for the first one.
+
+
+author: kdishroon
+comment: [~Tin.Chak] [~sahossain] [~moshiur.rahman] 
+
+Please provide instructions on how the client can test this? Their OLB doesn't know what they are supposed to do:
+
+!image-2022-07-16-09-01-04-465.png|width=693,height=218!
+
+
+author: JIRAUSER11002
+comment: Hi [~kdishroon],
+
+Updated the database for all users with SESS_ACTIVE_STATUS 'active' to pre_enroll.
+
+*For SSO:* When a user login with 'pre_enroll' status and previously logged in, they will see the disclosure page, such as:
+
+!disclosure vebiage.png|thumbnail!
+If user agree to the disclosure page then SESS_ACTIVE_STATUS will set to 'active' and they will not see the disclosure page next time they log-in and will be redirected to the statement page. If the user disagree with the disclosure verbiage then the SESS_ACTIVE_STATUS will not update and they will see the disclosure page next time they log in.
+
+*For DSO:* When a user login with 'pre_enroll' status, Then after token recovery, they will see the disclosure verbiage, such as:
+
+!disclosure vebiage.png|thumbnail!
+If user agree to the disclosure then SESS_ACTIVE_STATUS will be set to 'active' and they will not see the disclosure page when they login again and redirect to the statement page. If the user disagree with the disclosure page SESS_ACTIVE_STATUS will not update and they will see the disclosure page again.
+
+*For SSO and DSO requests*, No changes were added to the process. So from the OLB side no changes would be needed.
+
+Please let me know if should add anything else.
+
+
+
+[~Tin.Chak]Can you please take a look all are right or Should i add anything else?
+
+
+author: kdishroon
+comment: [~sharmina.rahman] and [~Tin.Chak],
+
+The client is asking how can they test this?
+
+Thank you,
+
+Keri Y.
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~sahossain] I think it looks good. Can you provide the pilot URL for DSO and SSO with some test users that can demonstrate each scenario? Thanks.
+
+
+author: JIRAUSER11002
+comment: Hi [~kdishroon], [~Tin.Chak],
+
+Client can use the following URLs to do SSO:
+
+SSO Form URL: [https://eqbkpilot.infoimageinc.com/]
+SSO Key Gen: [https://eqbkpilot.infoimageinc.com/q2sso]
+SSO Exchange: [https://eqbkpilot.infoimageinc.com/q2_hblogin.jsp]
+
+Follow the accounts for SSO:
+ # When sess_active_status = 'pre_enroll';user will view the disclosure. if user agrees than sess_active_status will be "active".
+ ** *CIF_NUM*:031384301
+ ** *ACCT_NUM1*:6200279890
+ ** *ACCT_TYPE1*:LN
+ ** *ACCT_NUM2*:6701014755
+ ** *ACCT_TYPE2*: DD
+ # When sess_active_status = 'active';user will not view the disclosure.
+ ** *CIF_NUM*: 019403472
+ ** *ACCT_NUM1*: 201004054
+ ** *ACCT_TYPE1*: DD
+ ** *ACCT_NUM2*: 4101004919
+ ** *ACCT_TYPE2*: DD
+
+
+
+Client can use the following URL to do DSO: [https://eqbkpilot.infoimageinc.com/login.jsp|https://eqbkpilot.infoimageinc.com:9780/login.jsp]
+
+Follow the accounts for DSO:
+ # When sess_active_status = 'pre_enroll';user will view the disclosure. if user agrees than sess_active_status will be "active".
+ ** Username:dsotest
+ ** Password:dsotest
+ ** Zipcode:65360
+ # When sess_active_status = 'active';user will not view the disclosure.
+ ** Username: testdso
+ ** Password: testdso
+ ** Zipcode: 66612
+
+
+
+
+author: shun.kuwashima
+comment: Hi [~kdishroon], since this portion is still pending pilot approval, we probably need to push out the live date to Wed 8/10 so that we can avoid releasing during month-end and have enough time for QA to test. If that's ok, please update the due dates on our stories. Thanks!
+
+
+author: kdishroon
+comment: [~Tin.Chak] , [~Shun.Kuwashima] , [~sahossain] ,
+
+
+
+{color:#172b4d}Here is the client's response; please let me know who I can invite to be on a call with client to assist them in testing:{color}
+
+{color:#0747a6}"SSO Form URL is not displaying the correct Electronic Document Agreement. I'm trying to register in e-statement. See attachment.What do you mean by follow the accounts?I like to discuss testing this with you. I may be doing something wrong because I'm not getting correct form."{color}
+
+[^Doc2.docx]
+
+[^Electronic Documents Agreement 4.7.2022(1).docx]
+
+Thank you,
+
+Keri Y.
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~kdishroon]
+
+If there's going to be a call, please invite me only. For the SSO Form URL, please tell them don't use that. The bank need to give these two URL to the Online Banking vendor:
+
+SSO Key Gen: [https://eqbkpilot.infoimageinc.com/q2sso]
+ SSO Exchange: [https://eqbkpilot.infoimageinc.com/q2_hblogin.jsp]
+
+They need to setup a test site that will point to those URL. The bank can test DSO as Sarwar provided.
+
+
+author: kdishroon
+comment: [~Tin.Chak] *and* [~sahossain]*,* 
+
+*Here is the client's feedback:*
+
+_"Q2 our online service provider confirmed they are already linking to the two URLs listed below._
+_I'm attaching what I believe should be the pilot URL that should be updated. Currently, this link is displaying wrong disclosure."_
+
+*In looking at the url from the screenshot the client provided, this appears to be the InfoIMAGE Pilot site, not Q2's. Shouldn't they be looking at Q2's pilot site? Please confirm.*
+
+!image-2022-08-09-11-34-23-789.png|width=770,height=388!
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~kdishroon] They should be looking at both Q2 and InfoIMAGE pilot site, as this will help them understand what was changed. The screenshot is from DSO, so it's not through Q2.
+
+[~sahossain] Please look into disclosure issue and advise.
+
+
+
+author: JIRAUSER11002
+comment: Hi [~Tin.Chak], I have updated the disclosureVerbiage.
+
+[~kdishroon], Please let me know the client feedback on the updated disclosure verbiage.
+
+
+author: kdishroon
+comment: Hi [~sahossain],
+
+Here is the client's feedback:
+
+es, we can see updated agreement. I'm getting below error when I try accessing DSO;are usernames dsotest and testdso active?
+
+
+
+!image-2022-08-16-19-37-41-878.png|width=768,height=413!
+
+
+
+
+author: JIRAUSER11002
+comment: Hi [~kdishroon],
+
+I was able to access DSO for *dsotest* and *testdso*.
+
+Do you know, how the client tried to test?
+
+
+
+I tried by the following credentials which I already provided and I can access DSO.
+
+URL to do DSO:[https://eqbkpilot.infoimageinc.com/login.jsp|https://eqbkpilot.infoimageinc.com:9780/login.jsp]
+
+Follow the accounts for DSO:
+ # When sess_active_status = 'pre_enroll';user will view the disclosure. if user agrees than sess_active_status will be "active".
+ ** Username:dsotest
+ ** Password:dsotest
+ ** Zipcode:65360
+ # When sess_active_status = 'active';user will not view the disclosure.
+ ** Username: testdso
+ ** Password: testdso
+ ** Zipcode: 66612
+
+
+author: kdishroon
+comment: Hello [~sahossain],
+
+The client has finally approved; please let me know when code can be released.
+
+Thank you,
+
+Keri Y.
+
+
+author: JIRAUSER11002
+comment: Hi [~kdishroon]
+
+Code will be released on 31, Aug.
+
+Thank You
+
+
+author: JIRAUSER11002
+comment: To QA,
+
+I have deployed my changes on stage.
+
+
+
+This client has a new disclosure which they want all of their users to see, which means both new and old users have to see this disclosure. As you may already know, when a user enrolls, the SESS_ACTIVE_STATUS is set to active, and their sso/dso date is set so that the user doesn't have to enroll again when they log in next time. But for this task, we need the active users to see this disclosure without having to enroll them. So we updated usr_session table for all users with SESS_ACTIVE_STATUS 'active' to 'pre_enroll', and we set a logic that when a "pre-enroll" user logs in, he will see a disclosure before landing on the home page. If he agrees, then SESS_ACTIVE_STATUS will be set to active, and if he doesn't agree, then SESS_ACTIVE_STATUS will remain "pre_enroll", which means they will see the disclosure again when they log in next time. For new users, the logic remains the same as previous business.
+
+
+
+*For SSO:*When a user login with 'pre_enroll' status and previously logged in, they will see the disclosure page, such as:
+
+!Updated disclosureVerbiage.png|thumbnail!
+
+If user agree to the disclosure page then SESS_ACTIVE_STATUS will be set to 'active' and they will not see the disclosure page next time they log-in and will be redirected to the statement page. If the user disagree with the disclosure verbiage then the SESS_ACTIVE_STATUS will not update and they will see the disclosure page next time they log in.
+
+For SSO you can use the following credentials:
+ # When sess_active_status = 'pre_enroll';user will view the disclosure. if user agrees then sess_active_status will be "active".
+ ** *CIF_NUM*: 512821685
+ ** *ACCT_NUM1*: 202015011
+ ** *ACCT_TYPE1*: TD
+ ** *ACCT_NUM2*: 80000215
+ ** *ACCT_TYPE2*: DD
+ # When sess_active_status = 'active';user will not view the disclosure.
+ ** *CIF_NUM*: 001829672
+ ** *ACCT_NUM1*: 6000296842
+ ** *ACCT_TYPE1*: LN
+ ** *ACCT_NUM2*: 6000315322
+ ** *ACCT_TYPE2*: LN
+
+
+
+*For DSO:*When a user login with 'pre_enroll' status, Then after token recovery, they will see the disclosure verbiage, such as:
+
+!Updated disclosureVerbiage.png|thumbnail!
+
+If user agree to the disclosure page then SESS_ACTIVE_STATUS will be set to 'active' and they will not see the disclosure page next time they log-in and will be redirected to the statement page. If the user disagree with the disclosure verbiage then the SESS_ACTIVE_STATUS will not update and they will see the disclosure page again.
+
+For DSO you can use the following credentials:
+ # When sess_active_status = 'pre_enroll';user will view the disclosure. if user agrees then sess_active_status will be "active".
+ ** Username:dsotest
+ ** Password: dsotest
+ ** Zipcode: 65360
+ # When sess_active_status = 'active';user will not view the disclosure.
+ ** Username: testdso
+ ** Password: testdso
+ ** Zipcode: 64112
+
+
+
+[^Electronic Documents Agreement 4.7.2022(1).docx]disclosureVerbiage is also updated for a new user.
+ # When they go through the 3 steps of SSO enrollment they can see it in step 2.
+ # When a user does register in DSO they can see it in step 2 of enrollments.
+ # If users log-in with paperless status '*B*' then they can see a optout page for update paperless status to '*E*' that time they can see the updated disclosure verbiage.
+
+
+
+Thank You!!
+
+Sarwar Hossain
+
+
+author: JIRAUSER11104
+comment: [~kdishroon] [~Tin.Chak] [~sahossain]
+Please review the bugs (BT-241, BT-242) that block this story.
+[~Igor.Khosid], FYI
+
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+ *TEST RESULT REPORT:*
+----
+||N||Case||Expected behavior||Actual result||Test||
+|*TC1*|SSO date is null, whatever about sess_active_status|Go through 3 steps of enrollment, In step 2, if click on the 'Agree' button then redirect to the next page.|If click on the 'Agree' button then redirect to the next page (see screenshot for TC1).|{color:#00875a}*PASSED*{color}|
+
+#Checking database (i3prod_bank):
+{code:sql}
+select UM.CIF_NUM, FA.ACCT_NUMBER, FA.ACCT_OWNER_NAME,
+       FA.TYPE, US.SESS_LASTLOGIN, US.SESS_ACTIVE_STATUS, US.SSO, US.DSO
+from FIN_ACCOUNT FA
+inner join USR_FIN_ACCOUNT UFA on UFA.ACCT_ID = FA.ACCT_ID
+inner join USR_MAPPING UM on UM.USR_ID = UFA.USR_ID
+inner join USR_SESSION US on UFA.USR_ID = US.USR_ID
+where FA.ORG_ID = GETORGID('eqbk') and FA.ACCT_NUMBER in ('2501008421');{code}
+|CIF_NUM|ACCT_NUMBER|ACCT_OWNER_NAME|TYPE|SESS_LASTLOGIN|SESS_ACTIVE_STATUS|SSO|DSO|
+|770072450|2501008421|ANGELA CRUZ|DD|2022-08-31 10:56:45|pre_enroll|<null>|<null>|
+
+#Screenshot for TC1:
+ !scr_test1_step3.png|thumbnail!
+----
+||N||Case||Expected behavior||Actual result||Test||
+|*TC2*|SSO date is null, whatever about sess_active_status|Go through 3 steps of enrollment, In step 2, if click on the 'Cancel' button then closed the entire tab.|If click on the 'Cancel' button then closed the entire tab.|{color:#00875a}*PASSED*{color}|
+
+#Checking database (i3prod_bank):
+{code:sql}
+select UM.CIF_NUM, FA.ACCT_NUMBER, FA.ACCT_OWNER_NAME,
+       FA.TYPE, US.SESS_LASTLOGIN, US.SESS_ACTIVE_STATUS, US.SSO, US.DSO
+from FIN_ACCOUNT FA
+inner join USR_FIN_ACCOUNT UFA on UFA.ACCT_ID = FA.ACCT_ID
+inner join USR_MAPPING UM on UM.USR_ID = UFA.USR_ID
+inner join USR_SESSION US on UFA.USR_ID = US.USR_ID
+where FA.ORG_ID = GETORGID('eqbk') and FA.ACCT_NUMBER in ('500089574');{code}
+|CIF_NUM|ACCT_NUMBER|ACCT_OWNER_NAME|TYPE|SESS_LASTLOGIN|SESS_ACTIVE_STATUS|SSO|DSO|
+|509568597|500089574|PAMELA J BUSHEHRI|DD|2022-08-31 09:27:27|pre_enroll|<null>|<null>|
+----
+||N||Case||Expected behavior||Actual result||Test||
+|*TC3*|Have SSO date and sess_active_status='pre_enroll'|Shows the disclosure document page, if click on the 'Agree' button update sess_status_active='active' and redirect to the statement page. They will not see the disclosure again when they log in next time.|If click on the 'Agree' button update sess_status_active='active' (see section SQL_TC3) and redirect to the statement page (see screenshot for TC3).|{color:#00875a}*PASSED*{color}|
+
+#Checking database (i3prod_bank):
+{code:sql}
+select UM.CIF_NUM, FA.ACCT_NUMBER, FA.ACCT_OWNER_NAME,
+       FA.TYPE, US.SESS_LASTLOGIN, US.SESS_ACTIVE_STATUS, US.SSO, US.DSO
+from FIN_ACCOUNT FA
+inner join USR_FIN_ACCOUNT UFA on UFA.ACCT_ID = FA.ACCT_ID
+inner join USR_MAPPING UM on UM.USR_ID = UFA.USR_ID
+inner join USR_SESSION US on UFA.USR_ID = US.USR_ID
+where FA.ORG_ID = GETORGID('eqbk') and FA.ACCT_NUMBER in ('202015011') and UM.CIF_NUM = '512821684';{code}
+@SQL_TC3("+Before+ click on the 'Agree' button")
+|CIF_NUM|ACCT_NUMBER|ACCT_OWNER_NAME|TYPE|SESS_LASTLOGIN|SESS_ACTIVE_STATUS|SSO|DSO|
+|512821684|202015011|RENEE HANRAHAN|TD|2021-07-14 15:15:44|pre_enroll|2021-06-17 13:26:47|<null>|
+
+@SQL_TC3("+After+ click on the 'Agree' button")
+|CIF_NUM|ACCT_NUMBER|ACCT_OWNER_NAME|TYPE|SESS_LASTLOGIN|SESS_ACTIVE_STATUS|SSO|DSO|
+|512821684|202015011|RENEE HANRAHAN|TD|2022-08-31 11:31:46|active|2021-06-17 13:26:47|<null>|
+
+#Screenshot for TC3:
+ !scr_TC3.png|thumbnail!
+----
+||N||Case||Expected behavior||Actual result||Test||
+|*TC4*|Have SSO date and sess_active_status='pre_enroll'|Shows the disclosure document page, if click on the 'Cancel' button does not update sess_active_status and redirect to the statement page. They will see the disclosure again when they log in next time.|If click on the 'Cancel' button does not update sess_active_status (see section SQL_TC4) and redirect to the statement page (see screenshot for TC4). They will see the disclosure again when they log in next time.|{color:#00875a}*PASSED*{color}|
+
+#Checking database (i3prod_bank):
+{code:sql}
+select UM.CIF_NUM, FA.ACCT_NUMBER, FA.ACCT_OWNER_NAME,
+       FA.TYPE, US.SESS_LASTLOGIN, US.SESS_ACTIVE_STATUS, US.SSO, US.DSO
+from FIN_ACCOUNT FA
+inner join USR_FIN_ACCOUNT UFA on UFA.ACCT_ID = FA.ACCT_ID
+inner join USR_MAPPING UM on UM.USR_ID = UFA.USR_ID
+inner join USR_SESSION US on UFA.USR_ID = US.USR_ID
+where FA.ORG_ID = GETORGID('eqbk') and FA.ACCT_NUMBER in ('406280');{code}
+@SQL_TC4("+Before+ click on the 'Cancel' button")
+|CIF_NUM|ACCT_NUMBER|ACCT_OWNER_NAME|TYPE|SESS_LASTLOGIN|SESS_ACTIVE_STATUS|SSO|DSO|
+|430650034|406280|JESSICA GUTTING|DD|2022-08-31 12:19:42|pre_enroll|2018-11-26 11:08:12|<null>|
+
+@SQL_TC4("+After+ click on the 'Cancel' button")
+|CIF_NUM|ACCT_NUMBER|ACCT_OWNER_NAME|TYPE|SESS_LASTLOGIN|SESS_ACTIVE_STATUS|SSO|DSO|
+|430650034|406280|JESSICA GUTTING|DD|2022-08-31 12:19:42|pre_enroll|2018-11-26 11:08:12|<null>|
+
+#Screenshot for TC4:
+ !image-2022-08-31-12-29-05-967.png|thumbnail!
+----
+||N||Case||Expected behavior||Actual result||Test||
+|*TC5*|Have SSO date and sess_active_status='active'|Direct redirect to the statement page.|Direct redirect to the statement page (see screenshot for TC5)|{color:#00875a}*PASSED*{color}|
+
+#Checking database (i3prod_bank):
+{code:sql}
+select UM.CIF_NUM, FA.ACCT_NUMBER, FA.ACCT_OWNER_NAME,
+       FA.TYPE, US.SESS_LASTLOGIN, US.SESS_ACTIVE_STATUS, US.SSO, US.DSO
+from FIN_ACCOUNT FA
+inner join USR_FIN_ACCOUNT UFA on UFA.ACCT_ID = FA.ACCT_ID
+inner join USR_MAPPING UM on UM.USR_ID = UFA.USR_ID
+inner join USR_SESSION US on UFA.USR_ID = US.USR_ID
+where FA.ORG_ID = GETORGID('eqbk') and FA.ACCT_NUMBER in ('6000296842');{code}
+@SQL_TC5
+|CIF_NUM|ACCT_NUMBER|ACCT_OWNER_NAME|TYPE|SESS_LASTLOGIN|SESS_ACTIVE_STATUS|SSO|DSO|
+|001829672|6000296842|BRUCE BATTYE|LN|2022-08-31 12:31:28|active|2022-08-25 04:29:12|<null>|
+
+#Screenshot for TC5:
+ !scr_TC5.png|thumbnail!
+----
+||N||Case||Expected behavior||Actual result||Test||
+|*TC6*|Have DSO date and sess_active_status='pre_enroll'|Shows token recovery page, after enter the zip code redirect to the disclosure document page. If click on the 'Agree' button update sess_status_active='active' (see section SQL_TC6) and redirect to the statement page. They will not see the disclosure again when they log in next time.|If click on the 'Agree' button update sess_status_active='active' and redirect to the statement page (see screenshot for TC6). They will not see the disclosure again when they log in next time.|{color:#00875a}*PASSED*{color}|
+
+#Checking database (i3prod_bank):
+{code:sql}
+select UM.CIF_NUM, US.SESS_LOGIN_ID, FA.ACCT_NUMBER, FA.ACCT_OWNER_NAME,
+       FA.TYPE, US.SESS_LASTLOGIN, US.SESS_ACTIVE_STATUS, US.SSO, US.DSO
+from FIN_ACCOUNT FA
+inner join USR_FIN_ACCOUNT UFA on UFA.ACCT_ID = FA.ACCT_ID
+inner join USR_MAPPING UM on UM.USR_ID = UFA.USR_ID
+inner join USR_SESSION US on UFA.USR_ID = US.USR_ID
+where FA.ORG_ID = GETORGID('eqbk') and UFA.USR_ID = '18086134';{code}
+@SQL_TC6("+Before+ click on the 'Agree' button")
+|CIF_NUM|SESS_LOGIN_ID|ACCT_NUMBER|ACCT_OWNER_NAME|TYPE|SESS_LASTLOGIN|SESS_ACTIVE_STATUS|SSO|DSO|
+|494582076|dsotest|140929|DAVID M BEEMAN|DD|2022-08-31 09:25:21|pre_enroll|<null>|2015-09-10 10:53:41|
+|494582076|dsotest|6901013280|DAVID BEEMAN|DD|2022-08-31 09:25:21|pre_enroll|<null>|2015-09-10 10:53:41|
+|494582076|dsotest|6900200719|JO BEEMAN|SD|2022-08-31 09:25:21|pre_enroll|<null>|2015-09-10 10:53:41|
+|494582076|dsotest|6900163161|JO BEEMAN|LN|2022-08-31 09:25:21|pre_enroll|<null>|2015-09-10 10:53:41|
+
+@SQL_TC6("+After+ click on the 'Agree' button")
+|CIF_NUM|SESS_LOGIN_ID|ACCT_NUMBER|ACCT_OWNER_NAME|TYPE|SESS_LASTLOGIN|SESS_ACTIVE_STATUS|SSO|DSO|
+|494582076|dsotest|140929|DAVID M BEEMAN|DD|2022-08-31 12:55:31|active|<null>|2015-09-10 10:53:41|
+|494582076|dsotest|6901013280|DAVID BEEMAN|DD|2022-08-31 12:55:31|active|<null>|2015-09-10 10:53:41|
+|494582076|dsotest|6900200719|JO BEEMAN|SD|2022-08-31 12:55:31|active|<null>|2015-09-10 10:53:41|
+|494582076|dsotest|6900163161|JO BEEMAN|LN|2022-08-31 12:55:31|active|<null>|2015-09-10 10:53:41|
+
+#Screenshot for TC6:
+ !scr_TC6.png|thumbnail!
+----
+||N||Case||Expected behavior||Actual result||Test||
+|*TC7*|Have DSO date and sess_active_status='active'|Direct redirect to the statement page.|Direct redirect to the statement page (see screenshot for TC7)|{color:#00875a}*PASSED*{color}|
+
+#Checking database (i3prod_bank):
+{code:sql}
+select UM.CIF_NUM, US.SESS_LOGIN_ID, FA.ACCT_NUMBER, FA.ACCT_OWNER_NAME,
+       FA.TYPE, US.SESS_LASTLOGIN, US.SESS_ACTIVE_STATUS, US.SSO, US.DSO
+from FIN_ACCOUNT FA
+inner join USR_FIN_ACCOUNT UFA on UFA.ACCT_ID = FA.ACCT_ID
+inner join USR_MAPPING UM on UM.USR_ID = UFA.USR_ID
+inner join USR_SESSION US on UFA.USR_ID = US.USR_ID
+where FA.ORG_ID = GETORGID('eqbk') and US.SESS_LOGIN_ID = 'testdso';{code}
+@SQL_TC7
+|CIF_NUM|SESS_LOGIN_ID|ACCT_NUMBER|ACCT_OWNER_NAME|TYPE|SESS_LASTLOGIN|SESS_ACTIVE_STATUS|SSO|DSO|
+|742854676|testdso|5508742685|1 THIRTY-NINE INC|DD|2022-08-31 09:25:45|active|<null>|2016-09-30 14:32:34|
+|742854676|testdso|5032002246|1 THIRTY-NINE INC|DD|2022-08-31 09:25:45|active|<null>|2016-09-30 14:32:34|
+
+#Screenshot for TC7:
+ !scr_TC7.png|thumbnail!
+----
+||N||Case||Expected behavior||Actual result||Test||
+|*TC8*|Have DSO date and sess_active_status='pre_enroll'|Shows the disclosure document page, if click on the 'Cancel' button does not update sess_active_status and redirect to the statement page. They will see the disclosure again when they log in next time.|If click on the 'Cancel' button does not update sess_active_status (see section SQL_TC8) and redirect to the statement page (see screenshot for TC8). They will see the disclosure again when they log in next time.|{color:#00875a}*PASSED*{color}|
+
+#Checking database (i3prod_bank):
+{code:sql}
+update USR_SESSION set SESS_ACTIVE_STATUS = 'pre_enroll' where SESS_LOGIN_ID = 'dsotest';
+commit;
+select UM.CIF_NUM, US.SESS_LOGIN_ID, FA.ACCT_NUMBER, FA.ACCT_OWNER_NAME,
+       FA.TYPE, US.SESS_LASTLOGIN, US.SESS_ACTIVE_STATUS, US.SSO, US.DSO
+from FIN_ACCOUNT FA
+inner join USR_FIN_ACCOUNT UFA on UFA.ACCT_ID = FA.ACCT_ID
+inner join USR_MAPPING UM on UM.USR_ID = UFA.USR_ID
+inner join USR_SESSION US on UFA.USR_ID = US.USR_ID
+where FA.ORG_ID = GETORGID('eqbk') and US.SESS_LOGIN_ID = 'dsotest';{code}
+@SQL_TC8("+Before+ click on the 'Cancel' button")
+|CIF_NUM|SESS_LOGIN_ID|ACCT_NUMBER|ACCT_OWNER_NAME|TYPE|SESS_LASTLOGIN|SESS_ACTIVE_STATUS|SSO|DSO|
+|494582076|dsotest|140929|DAVID M BEEMAN|DD|2022-08-31 12:55:31|pre_enroll|<null>|2015-09-10 10:53:41|
+|494582076|dsotest|6901013280|DAVID BEEMAN|DD|2022-08-31 12:55:31|pre_enroll|<null>|2015-09-10 10:53:41|
+|494582076|dsotest|6900200719|JO BEEMAN|SD|2022-08-31 12:55:31|pre_enroll|<null>|2015-09-10 10:53:41|
+|494582076|dsotest|6900163161|JO BEEMAN|LN|2022-08-31 12:55:31|pre_enroll|<null>|2015-09-10 10:53:41|
+
+@SQL_TC8("+After+ click on the 'Cancel' button")
+|CIF_NUM|SESS_LOGIN_ID|ACCT_NUMBER|ACCT_OWNER_NAME|TYPE|SESS_LASTLOGIN|SESS_ACTIVE_STATUS|SSO|DSO|
+|494582076|dsotest|140929|DAVID M BEEMAN|DD|2022-08-31 13:14:06|pre_enroll|<null>|2015-09-10 10:53:41|
+|494582076|dsotest|6901013280|DAVID BEEMAN|DD|2022-08-31 13:14:06|pre_enroll|<null>|2015-09-10 10:53:41|
+|494582076|dsotest|6900200719|JO BEEMAN|SD|2022-08-31 13:14:06|pre_enroll|<null>|2015-09-10 10:53:41|
+|494582076|dsotest|6900163161|JO BEEMAN|LN|2022-08-31 13:14:06|pre_enroll|<null>|2015-09-10 10:53:41|
+
+#Screenshot for TC8:
+ !scr_TC8.png|thumbnail!
+
+
+author: JIRAUSER11002
+comment: Hi [~kdishroon], [~Tin.Chak],
+
+Deployed on production.
+
+
+
+Thanks,
+
+Sarwar Hossain

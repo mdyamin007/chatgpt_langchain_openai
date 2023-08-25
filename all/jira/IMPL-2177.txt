@@ -1,0 +1,20 @@
+title: SEFC DL (ARM Notices) - Setup Auto Email DPVS
+description: SEFC DL (ARM Notices) - Setup Auto Email DPVS
+
+- Parallel required: (no)
+- Application name: SEFCAR1
+
+- Create dpvs mail list and add[infoimage@sefcu.com|mailto:infoimage@sefcu.com]in /home/keep/maillist/sefcar1_mail.lis
+
+- Modify sefcar1_process.sh
+
+ Add the following block of code after calling isisdisk_daily for paper but before calling isisdisk_daily for estmts. Do not copy and paste.
+
+if [ -e ${fn}.print ]; then
+  subject="SEFC Arm Notices - cycle ${cyc_no}"
+
+  message="SEFC: Arm Notices DPVS for cycle $cycle is ready"
+  perl ${home_master}/master/daily_mail2.pl 3 "$message" "$subject" $cyc_no "$dpvs_maillist" ${fn}.print
+fi
+
+- Do a test run and check if dpvs is attached to email message in test e-mail inbox.

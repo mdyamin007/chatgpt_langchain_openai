@@ -1,0 +1,309 @@
+title: Swift Setup Procedures - Step by Step:
+body: Considering we are setting up a new swift setup on 10.10.20.105 machine,
+running on Ubuntu LTS  
+  
+
+### Install the necessary packages.
+
+    
+    
+    sudo su -
+    apt-get update
+    apt-get install swift openssh-server  rsync memcached python-netifaces python-xattr python-memcache
+    apt-get install swift-account swift-container swift-object xfsprogs
+    apt-get install swift-proxy memcached 
+    mkdir -p /etc/swift; sudo chown -R swift:swift /etc/swift/
+    cd /etc/swift/
+    
+
+  
+
+### Ensure rsync is started with proper settings
+
+  * Ensure rsyncd is started
+  * Ensure the RSYNC_ENABLE=true in the /etc/default/rsync (it's set to false by default)
+
+  
+
+### Modify memcached to listen on the default interfaces
+
+    
+    
+    $ sudo vim /etc/memcached.conf
+    -l 127.0.0.1
+    to
+    -l swift-proxy
+    
+
+  
+
+### add the hash to swift.conf
+
+    
+    
+    vi /etc/swift/swift.conf
+    
+
+  
+
+### and add the following
+
+    
+    
+    [swift-hash]
+    # random unique strings that can never change (DO NOT LOSE)
+    swift_hash_path_prefix =  dad2a940f032df77
+    swift_hash_path_suffix =  82350a103a894898
+    
+
+  
+
+### Please check with Networking team to create a device that mounts any
+folder created in /srv/node, preferably with xfs filesystem
+
+    
+    
+    sudo echo "/dev/vdb1 /srv/node/sdb1 xfs noatime,nodiratime,nobarrier,logbufs=8 0 0" >> /etc/fstab
+    mkdir -p /srv/node/sdb1
+    mount /srv/node/sdb1
+    chown -R swift:swift /srv/node
+    
+
+  
+
+### vi /etc/swift/object-server.conf and add the below lines
+
+    
+    
+    bind_port = 6000
+    workers = 1
+    mount_check = false
+    
+
+  
+
+### vi /etc/swift/container-server.conf and add the below lines
+
+    
+    
+    bind_port = 6001
+    workers = 1
+    mount_check = false
+    
+
+  
+
+### vi /etc/swift/account-server.conf and add the below lines
+
+    
+    
+    bind_port = 6002
+    workers = 1
+    mount_check = false
+    
+
+  
+
+### vi /etc/swift/proxy-server.conf
+
+    
+    
+    [DEFAULT]
+    bind_ip = 0.0.0.0
+    bind_port = 8080
+    user = swift
+    [pipeline:main]
+    pipeline = catch_errors healthcheck cache ratelimit tempauth proxy-server
+    
+    [app:proxy-server]
+    use = egg:swift#proxy
+    allow_account_management = true
+    account_autocreate = true
+    
+    [filter:tempauth]
+    use = egg:swift#tempauth
+    user_system_swift = info141 .admin http://10.10.20.105:8080/v1/AUTH_system
+    user_system_root = testpass .admin
+    user_admin_admin = admin .admin .reseller_admin
+    user_test_tester = testing .admin
+    user_test2_tester2 = testing2 .admin
+    user_test_tester3 = testing3
+    
+    [filter:healthcheck]
+    use = egg:swift#healthcheck
+    
+    [filter:cache]
+    use = egg:swift#memcache
+    memcache_servers = 127.0.0.1:11211
+    
+    [filter:ratelimit]
+    use = egg:swift#ratelimit
+    
+    [filter:domain_remap]
+    use = egg:swift#domain_remap
+    
+    [filter:catch_errors]
+    use = egg:swift#catch_errors
+    
+    [filter:cname_lookup]
+    use = egg:swift#cname_lookup
+    
+    [filter:staticweb]
+    use = egg:swift#staticweb
+    
+    [filter:tempurl]
+    use = egg:swift#tempurl
+    
+    [filter:formpost]
+    use = egg:swift#formpost
+    
+    # Note: Just needs to be placed before the proxy-server in the pipeline.
+    [filter:name_check]
+    use = egg:swift#name_check
+    # forbidden_chars = '"`<>
+    # maximum_length = 255
+    # forbidden_regexp = /\./|/\.\./|/\.$|/\.\.$
+    
+    [filter:proxy-logging]
+    use = egg:swift#proxy_logging
+    
+    
+    
+    cd /etc/swift
+    
+    export ZONE=1
+    export STORAGE_LOCAL_NET_IP=10.10.20.105
+    export WEIGHT=100
+    export DEVICE=vdb1
+    
+    swift-ring-builder account.builder create 8 1 12    
+    swift-ring-builder container.builder create 8 1 12
+    swift-ring-builder object.builder create 8 1 12
+    
+    swift-ring-builder account.builder add z$ZONE-$STORAGE_LOCAL_NET_IP:6002/$DEVICE $WEIGHT
+    swift-ring-builder container.builder add z$ZONE-$STORAGE_LOCAL_NET_IP:6001/$DEVICE $WEIGHT
+    swift-ring-builder object.builder add z$ZONE-$STORAGE_LOCAL_NET_IP:6000/$DEVICE $WEIGHT
+    
+    swift-ring-builder account.builder rebalance
+    swift-ring-builder container.builder rebalance
+    swift-ring-builder object.builder rebalance
+    
+
+  
+
+### ensure ownership
+
+    
+    
+    chown -R swift:swift /etc/swift
+    
+
+  
+
+### to start the proxy
+
+    
+    
+    swift-init proxy start
+    
+
+  
+
+### to start the account, container and object servers
+
+    
+    
+    swift-init main restart
+    
+
+  
+
+### to check logs:
+
+    
+    
+    tail -f /var/log/rsyncd.log /var/log/syslog /var/log/memcached.log
+    
+
+  
+  
+
+## Sample urls to ensure the setup is working fine.
+
+  
+
+### to get the auth token using CURL command
+
+    
+    
+    curl -v -H 'X-Auth-User: system:swift' -H 'X-Auth-Key: info141' http://10.10.20.105:8080/auth/v1.0/
+    
+
+  
+h3. to create a directory called, say, deleteme
+
+    
+    
+    curl -X PUT -i -H "X-Auth-Token: AUTH_tk177ab0950e8146f9ba40fab081573d0b" http://10.10.20.105:8080/v1/AUTH_system/deleteme
+    
+
+  
+h3. to upload a file
+
+    
+    
+    swift -U system:swift -K info141 -A http://10.10.20.105:8080/auth/v1.0/ upload deleteme /home/ubuntu/text.txt
+    
+
+  
+h3. get the stats of all the containers
+
+    
+    
+    swift -U system:swift -K info141 -A http://10.10.20.105:8080/auth/v1.0 stat
+    
+
+  
+
+### get the list of containers
+
+    
+    
+    swift -U system:swift -K info141 -A http://10.10.20.105:8080/auth/v1.0 list
+    
+
+  
+
+### get the list of files inside a container
+
+    
+    
+    swift -U system:swift -K info141 -A http://10.10.20.105:8080/auth/v1.0 list <container name>
+    
+
+  
+  
+
+# Troubleshoot Reference:
+
+  1. [JOSS error when tomcat-api starts](https://i3dev.easyredmine.com/projects/relmgmt/wiki/JOSS_error_when_tomcat-api_starts)
+
+  
+  
+
+# References
+
+  1. Ring Setup: <https://vivekraghuwanshi.wordpress.com/configure-swift-storage-in-ubuntu-12-04/>
+  2. Swift-All-In-One Setup: <http://docs.openstack.org/developer/swift/development_saio.html>
+  3. Swift API: <http://docs.openstack.org/api/openstack-object-storage/1.0/content/ch_object-storage-dev-api-storage.html>
+  4. Swift on disk level encryption (LUKS): <http://swiftstack.com/docs/addons/on-disk-encryption/>
+  5. LUKS in general: <http://www.cyberciti.biz/hardware/howto-linux-hard-disk-encryption-with-luks-cryptsetup-command>
+  6. OpenStack / Swift Encryption on object level: <https://wiki.openstack.org/wiki/ObjectEncryption>
+
+  
+
+### Attachments
+
+250250250
+
+

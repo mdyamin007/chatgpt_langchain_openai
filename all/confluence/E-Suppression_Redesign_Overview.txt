@@ -1,0 +1,374 @@
+title: E-Suppression Redesign Overview
+body:   
+
+# Introduction
+
+## Purpose/Objective Summary
+
+The E-Statement Suppression Redesign is aimed towards addressing multiple
+reoccurring issues with paperless suppression.
+
+  1.  **The Standardization of Suppression**  \- Creating a standardized set of programs to handle existing core and customized implementation across all print services applications (statements, daily notices, tax, etc.) will enable the team to centralize the focus of programming in an uniformed direction. This will also help enforce future customization to conform to the existing structure allowing for better scalability and ease of maintenance. This set of programs should be robust enough to accommodate most if not all the needs of the client.
+  2.  **Introduction of End User UI**  \- The implementation of an UI will allow departments outside of Information Systems to monitor the suppression settings for all applications. Specifically, this gives control to the Account Services department to configure the suppression logic without having to involve Information Systems or Data Processing. In addition, the UI will have a research tab that will allow the user to analyze the suppression logic of individual accounts.
+
+  
+  
+
+## Scope
+
+### In-Scope
+
+  1. Creating a web service application that interacts with the database to determine e-statement account suppression. This web application will be used by ALL existing and future applications for e-statement suppression.
+  2. Deploying a centralized database to store all existing paperless information used for processing. The web application will utilize existing database structures for historical information but keep processing separated into the centralized database. This will replace the need for ALL paperless files.
+  3. Creating command subsets for non-standard suppression logic (suppression through datafiles, enrollment lists, etc.) to insert data into the database allowing for seamless processing by the core programs in item #1.
+  4. Designing an user interface for all departments to use for e-suppression.
+
+  
+
+### Out-of-Scope
+
+  1. Enable setup for e-suppression through the use of the UI.
+  2. Eliminating the need for ISD involvement during setups for e-suppression.
+
+  
+
+## Assumptions
+
+  1. All departments must be willing to have a centralized UI to monitor and control e-suppression. This will ultimately result in more work for Account Services will alleviating work from Information Systems and Data Processing.
+  2. All existing programming setup must have the ability to conform to our standardization.
+  3. The E-Statement team must be willing to adapt to the changes in their core structure.
+
+  
+  
+
+## Dependencies
+
+  1. Python installment in all Red Hat servers. (version undeclared)
+  2. MongoDB access across all servers.
+  3. Django installment on the hosting server.
+  4. Web server installment (Tomcat/Apache) on the hosting server.
+
+# Requirements
+
+## Business Requirements & Use Cases
+
+  
+
+### Seamless Flow
+
+ID| Title| Details| ScreenMock| Importance  
+---|---|---|---|---  
+SBRQ-01| Seamless Processing|  **Requirement:**  Have all programs converge
+into a single e-suppression processing stream. Once the web service is
+involved, on the processing side there is only a single entry point to run
+e-suppression logic. This is the essence of the project.| See Diagram Below|
+P0  
+SBRQ-02| Customization Standardization|  **Requirement:**  Convert all
+existing customized e-suppression logic to conform to the entry point of the
+Seamless Processing.| See Diagram Below| P1  
+  
+  
+  
+
+### User Interface
+
+ID| Title| Details| ScreenMock| Importance  
+---|---|---|---|---  
+UIBRQ-01| Login Feature|  **Requirement:**  A self-sustaining login feature
+similar to Redmine. The user should be able to reset his/her login password or
+login name if necessary.| See Redmine Login| P2  
+UIBRQ-02| Home Page|  **Requirement:**  A categorized home page based on CID
+similar to InfoTRAC.| See InfoTRAC Home Page| P2  
+UIBRQ-03| Settings Tab|  **Requirement:**  A user modifiable job settings page
+that will replace many existing controls (ie. insert file). This will enable
+any department the ability to control processing settings.| <Pending
+Screenmock>| P0  
+UIBRQ-04| History Tab|  **Requirement:**  A display of all the activities for
+all users per a CID/application on the UI.| <Pending Screenmock>| P3  
+UIBRQ-05| Research Tab|  **Requirement:**  An interface that enables the user
+to search the current (or past [P3]) suppression status of an account.|
+<Pending Screenmock>| P2  
+  
+  
+
+## Functional Requirements & Use Cases
+
+  
+
+### Standardized Core Services
+
+ID| Title| Details| Bus. Req. Ref.| Importance  
+---|---|---|---|---  
+FRQ-01| Django Web Framework Based Web Service|  **Requirement:**  A
+collection of web application methods to handle an array of different web
+service calls.  
+POST and PUT call handles to insert e-statememt member statuses into the
+process accessible database.  
+PUT calls to update application settings from the UI.  
+GET calls to retrieve member status.  
+This is the core component in standardizing the processing stream.  
+ **Use Case:**  The ISD paperless program will make a PUT call through the
+framework to the process accessible database on an hourly basis. This will
+keep the database updated with on the hour information.| ALL| P0  
+FRQ-02| Process Accessible DB|  **Requirement:**  A NoSQL based database to
+house all of the paperless status information of all paperless accounts. This
+database will be synced with a client end-user run-time access database on a
+daily basis for record keeping. The purpose for this database is the keep the
+latest information as well as information needed for processing.  
+ **Use Case:**  A SELECT statement triggered by a IS process and handled
+through the web service will retrieve the corresponding data out of this
+database.| All model classes of FRQ-01| P0  
+FRQ-03| Restructured E-Statement Paperless Platform|  **Requirement:**
+Removal of the paperless list and paperless report programs. These will be
+replaced by component connectors that will enable E-Statement to interact with
+the Django platform.  
+ **Use Case:**  PUT method triggers to replace paperless file output.|
+<Pending Analysis>| P0  
+FRQ-04| Restructured Paper Paperless Platform|  **Requirement:**  Removal of
+the current paperless programs. These will be replaced by a program(s) that
+will utilize the newly created web service (see FRQ-01).  
+ **Use Case:**  isisdisk.sh calls a new program that interacts directly with
+the web service.| <Pending Analysis>| P0  
+  
+  
+  
+
+### Customized Services
+
+ID| Title| Details| Bus. Req. Ref.| Importance  
+---|---|---|---|---  
+CFRQ-01| Paper Mail Code Precedence|  **Requirement:**  Current core programs
+assume that the e-suppression mail code holds the highest precedence. A
+modification must be made to the structure such that high precedence CAN be
+given to other mail codes despite being flagged for suppression.  
+ **Use Case:**  BOZB has a mail code 'A' that takes higher precedence than the
+mail code 'e' flagged from e-suppression. Any accounts with mail code 'A' will
+not be flagged for e-suppression even if it is on the paperless report.  
+ **Clients Affected:**  BOZB| SBRQ-02| P2  
+CFRQ-02| Account Number Modification Using TXT Record|  **Requirement:**  A
+supporting feature must include the ability to modify the account number from
+the paper process to include additional values from any field range in the TXT
+record layout. The resulting account number combination will be used to
+compare to the value provided by ISD.  
+ **Use Case:**  FCSB DL appends the values 312-313 (ltr code) to the end of
+the account number before comparing with the paperless list from ISD. This
+functionality should remain possible in the customizing standard.  
+ **Clients Affected:**  FCSB, BBBB, NTSB, BOZB| SBRQ-02| P2  
+CFRQ-03| Suppression Status Through Client Provided List(s)|  **Requirement:**
+Customized handles to insert suppression data from the clients' lists into our
+database. The program that handles these lists must be able to automatically
+determine the client and application each list is associated with. The
+settings to determine this (whether by naming convention or by content data)
+must be available within the user interface.  
+ **Use Case:**  PRCU has an enrollment list structure. This list must be put
+through a program that handles inserting the list into the database.  
+ **Clients Affected:**  PRCU| SBRQ-02| P2  
+CFRQ-04| Suppression Flag From Client Data|  **Requirement:**  The removal of
+all current suppression logic in any non-standard programming so that a custom
+handle standardization can be used on the data to update the database with
+account suppression details.  
+ **Use Case:**  A character in the data file indicates if the DFA should
+output an 'e' character in the mail-code field.  
+ **Clients Affected:**  <undetermined>| SBRQ-02| P2  
+  
+  
+
+## Performance & Scalability Requirements (SLA)
+
+ID| Title| Details| Importance  
+---|---|---|---  
+PRQ-01| Most Up-To-Hour Information|  **Requirement:**  All research related
+request reflect updated information up to the last hour or otherwise
+specified.| P2  
+  
+  
+  
+
+## QA/Test Requirements
+
+ **TODO:**   **(Required)**  List out all needs/requirement from QA/Testing
+perspective. Associate them with an ID for easier reference
+
+  
+
+# Design
+
+## Architecture & Workflow Diagram
+
+This high level interaction diagram shows the centralization of all internal
+services around the new e-suppression/paperless structure. The goal of this
+design is to have the new structure accommodate all INFOIMAGE services as a
+single entity.  
+  
+
+## Data Model changes (ER diagram & ddl.sql)
+
+  
+
+### Old Data Access Process
+
+The old process involves multiple e-suppression lists in standard and
+customized formats. These lists are backed up and reused for testing and
+reprocessing contributing further to the mess.  
+  
+
+### New Data Access Process
+
+The new process has all the suppression information housed in a single
+centralized location. All research, testing, reprocessing will go through the
+same logic flow.  
+  
+
+### DP Involved Paperless Process
+
+Currently, Data Processing is involved heavily for paperless processing.  
+  
+
+### Seamless Paperless Process
+
+The new process eliminates involvement from Data Processing making the process
+stream seamless.  
+  
+
+# Application component functional details
+
+  
+
+## API Specifications
+
+### Process Trac Home Component
+
+Component| URI| Method| Description| Parameters  
+---|---|---|---|---  
+Process Trac Home| /v1/ptrac/| GET| Returns all CIDs available for Process
+Trac. This will trigger after log in and will allow the template to display
+only the CIDs with valid applications enabled for Process Trac.| N/A  
+Process Trac Home| /v1/ptrac/{CID}/| GET| Returns all applications for a
+particular CID. Every application must have a corresponding JID.|  
+  
+Process Trac Home| /v1/ptrac/{CID}/{JID}/| GET| Return all component services
+available for said CID and JID.|  
+  
+Process Trac Home| /v1/ptrac/mod_cid/| PUT| Add or update a CID.| CID, Client
+Name Full  
+Process Trac Home| /v1/ptrac/mod_app/| PUT| Add or update a JID. Add or update
+service.| JID, Application Name Full, Enabling Service [ array ], Disabling
+Service [ array ]  
+  
+  
+
+### E-Suppression (Paperless) Component
+
+Component| URI| Method| Description| Parameters  
+---|---|---|---|---  
+E-Suppression| /v1/esup/{CID}{JID}/| GET| Returns essential e-supppression
+settings for all environments for display. Essential details include but are
+not limited to: list date currently using, whether the suppression is standard
+or custom, partial or full membership, etc.|  
+  
+E-Suppression| /v1/esup/{CID}{JID}/{ENV}| GET| Returns all details for the
+specified prefix and environment including all customized settings and
+information.|  
+  
+E-Suppression| /v1/esup/{CID}{JID}/{ENV}/set/| PUT| Insert or update setting
+information for a particular environment.|  
+  
+E-Suppression| /v1/esup/{CID}{JID}/{ENV}/list/{MMDDYYYY}/{i}/| GET| Returns
+full list detailing account number, suppression status, app code (optional),
+and other information.|  
+  
+E-Suppression| /v1/esup/{CID}{JID}/{ENV}/list/{MMDDYYYY}/{i}/upsert/| PUT|
+Insert or update full lists or partial lists with account suppression
+information.| Account Number, Suppression Status, App Code (optional)  
+E-Suppression| /v1/esup/{CID}{JID}/{ENV}/list/{MMDDYYYY}/{i}/remove/| DELETE|
+Delete specified list from the database entirely.|  
+  
+E-Suppression| /v1/esup/custom/| GET| Get all available custom layouts for
+display when setting up an application for customized suppression. The layouts
+will be used as a reference for available structures when setting up
+applications such that no duplicate layouts will be created. An example for a
+layout involving a list would include: the link to the list in a file browsing
+box, a view window to show a sample of how the list will look like once
+updated (preview box), and a date field to associate the list to a particular
+date.|  
+  
+E-Suppression| /v1/esup/custom/create/| POST| Create a new custom layout that
+can be used for future selection. The logic in implementing this may be
+complicated. The user can select recognizable input formats such as text box,
+list browsing, display box, parse by delimiter, etc. TODO: Further analysis on
+this is needed.|  
+  
+E-Suppression| /v1/esup/{CID}{JID}/{ENV}/custom/{i}/| GET| Retrieve the custom
+values where the value identifier is equal to the number 'i'. (Reference
+Redmine's custom fields & custom values schema structure)|  
+  
+E-Suppression| /v1/esup/{CID}{JID}/{ENV}/history/| GET| Returns the history
+for a particular application and a particular environment.|  
+  
+E-Suppression| /v1/esup/{CID}{JID}/{ENV}/record/| POST| Create a history
+record for any setting related changes for the user currently logged in and
+link it to the history document.| Environment, User, Action, Timestamp  
+E-Suppression| /v1/esup/{CID}{JID}/{ENV}/search/| GET| Search if the account
+listed is present in the list/database.| Environment, Account Number, List to
+Search in  
+  
+  
+
+## Integration Points
+
+From Component| To Component| Details| Error Handling  
+---|---|---|---  
+ISD Paperless Report| Django Based Web Service| Change the paperless report
+process to make a PUT call into the process accessible DB by utilizing the new
+web service structure.| If the update fails, alert the team by mail.  
+IS E-Suppression Process| Django Based Web Service| All e-statement processes
+will utilize the new structure.| If processing fails, alert the team by mail.  
+  
+  
+
+# Summarized Change Log
+
+Date| Who| Changes to Design Doc  
+---|---|---  
+06/23/2013| Kevin Yang| Created First Draft Outline of E-Suppression Design  
+06/30/2013| Kevin Yang| Added Customized Functionality Requirements  
+07/10/2013| Kevin Yang| API specifications 1st Draft  
+  
+  
+
+# Sign-Off
+
+Group| Date| Who| Comment  
+---|---|---|---  
+Product Manager (Business)|  
+|  
+|  
+  
+Account Service (AS)|  
+|  
+|  
+  
+Dev./Impl. Manager (Technical)|  
+|  
+|  
+  
+Production Control (PC)|  
+|  
+|  
+  
+Data Processing (DP)|  
+|  
+|  
+  
+Accounting/Invoicing|  
+|  
+|  
+  
+  
+  
+
+### Attachments
+
+  
+
+

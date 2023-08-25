@@ -1,0 +1,58 @@
+title: Scanner Design
+body: # Responsibility
+
+  1. Move files from ftp locations to another specified locations.
+  2. Recognize files based on a set of regex (Regex A), and make updates to the database. 
+  3. Recognize files based on a set of regex (Regex B), and if matches, can trigger Print API, or perform some processing and trigger PUI.
+  4. Recognize files based on a set of regex (Regex C), and send emails to client/internal confirming receipt of files, unknown files, and late files.
+
+# Current Stack
+
+  1. Java code compiled into a jar and run by Windows Task Scheduler.
+
+# Pain Points
+
+  1. Not a persistent application, and therefore very difficult to monitor.
+  2. Single point of failure.
+  3. Lack of fail-safe/retry.
+  4. Monolithic. Certain responsibility might hog processing time and block the application from performing other duties, i.e. Responsibility 3 requires decrypting of files, some of which may be very large in size. 
+  5. The ftp locations can be unix machines that can recognize both upper case and lower case. Issues arise whenever there are files with the same name but different casing.
+  6. Code deployment is manual.
+  7. A lot of configurations are not version controlled.
+
+# Assumptions
+
+  1. The new application(s) will be persistent applications. This will resolve Pain Point 1.
+  2. The new application(s) will reside on Linux machines. This will resolve Pain Point 5.
+  3. The new application(s) will be version controlled into Gitlab and deployed via Jenkins. This will resolve Pain Points 6 and 7.
+
+Design choices will resolve Pain Points 2-4.
+
+* * *
+
+# Design Ideas
+
+## Technology
+
+### Scheduling
+
+  * Quartz
+  * Spring Boot Scheduling + ShedLock: Allow for scheduling to tasks. With ShedLock, only a single instance within a cluster will perform the locked task, allowing for clustering of tasks that should not be done concurrently/asynchronously.
+
+## Scanning and Moving Files
+
+ **Decision 1A**. Should scanning and moving be separate responsibilities?
+Should there be a cluster of Scanners that flag files to be moved and then a
+cluster of Movers that move these files? Or should there be a single
+ScannerMover that scans the files and move them accordingly? How can a single
+ScannerMover?
+
+ **Decision 1B.** Should scanning and/or moving files have concurrent
+applications running? Or should the cluster just be fail-over, i.e. only one
+instance will be performing the responsibility and if that instance fail, then
+another instance will become the working instance?
+
+ **Decision 1C**. We can load balance by FTP locations. A cluster per FTP
+location, or a cluster for a set of FTP locations.
+
+

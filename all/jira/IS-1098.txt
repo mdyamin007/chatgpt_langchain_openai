@@ -1,0 +1,178 @@
+title: MFCU - [28752][pvt][in-house] Invalid Address Question
+description: None
+
+
+author: anwarh
+comment: [~andreav], Letter affected by this is 
+140 143 144 145 152
+
+But this may affect:
+142 146 147  
+
+So I fixed it for most 'delimited' data files. 
+
+[~Igor.Khosid], 
+Parallel ID: 20220513075709
+Projects uploaded: 
+MFCUDL140.zip  MFCUDL143.zip  MFCUDL145.zip  MFCUDL147.zip MFCUDL142.zip  MFCUDL144.zip  MFCUDL146.zip  MFCUDL152.zip
+
+Let me know if need anything else. 
+
+Thanks,
+Anwar
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220513075709
+   Currently in parallel: Yes
+   User: anwarH
+   Description: IS-1098 TS 28752 Invalid Address fix
+   Date Submitted: 2022-05-13 07:57:23
+   Date Last Updated: 2022-05-13 07:57:23
+   Files:
+      1) MFCUDL152.dfa
+      2) MFCUDL143.dfa
+      3) MFCUDL146.dfa
+      4) MFCUDL147.dfa
+      5) MFCUDL140.dfa
+      6) MFCUDL142.dfa
+      7) MFCUDL144.dfa
+      8) MFCUDL145.dfa
+
+
+author: igor.khosid
+comment: QA - completed
+Please attach IS checklist
+
+1. Parallel report
+Parallel ID: 20220513075709
+Currently in parallel: Yes
+User: anwarH
+Description: IS-1098 TS 28752 Invalid Address fix
+Date Submitted: 2022-05-13 07:57:23
+Date Last Updated: 2022-05-13 07:57:23
+Files:
+1) MFCUDL152.dfa
+2) MFCUDL143.dfa
+3) MFCUDL146.dfa
+4) MFCUDL147.dfa
+5) MFCUDL140.dfa
+6) MFCUDL142.dfa
+7) MFCUDL144.dfa
+8) MFCUDL145.dfa
+
+2. Difference prod vs test
+IS-152, 143, 146, 147, 140, 142, 144, 145
+>                ADDRESS_ARRAY_PTR = ADDRESS_ARRAY_PTR+1 ;
+>                ADDRESS_ARRAY[ADDRESS_ARRAY_PTR] = ADDRESS ;
+292c295,296
+---
+>               ADDRESS_ARRAY_PTR = ADDRESS_ARRAY_PTR+1 ;
+>               ADDRESS_ARRAY[ADDRESS_ARRAY_PTR] = ADDR[~I] ;
+674c679,683
+---
+>   ADDRESS_ARRAY_PTR = 0 ;
+>   FOR I
+>     REPEAT 6 ;
+>     ADDRESS_ARRAY[I] =  '' ;
+>   ENDFOR ;
+789c799,812
+---
+>   GROUPINDEX MEMBERNUMBER = COL_2 ;
+>   GROUPINDEX FIRSTNAME =  '' ;
+>   GROUPINDEX LASTNAME =  '' ;
+>   GROUPINDEX LOANNUMBER =  '' ;
+>   GROUPINDEX SUBACCOUNT =  '' ;
+>   GROUPINDEX DOCUMENTNAME = 'Out-of-Band Notification' ;
+>   GROUPINDEX DOCUMENTDATE = NOTICE_DATE ;
+>   GROUPINDEX PDF_FILE_NAME = '.pdf' ;
+>   GROUPINDEX PDFFILE =  '' ;
+>   GROUPINDEX NOTICENAME = 'Out-of-Band Notification' ;
+>   IF &JOB_TYPE=='e' ;
+>   THEN ;
+>   ENDIF ;
+>   ENDGROUP ;
+792,793c815,816
+<     REPEAT MAXINDEX(ADDR) ;
+<     IF  NOT EMPTY(ADDR[6-I+1]) ;
+---
+>     REPEAT MAXINDEX(ADDRESS_ARRAY) ;
+>     IF  NOT EMPTY(ADDRESS_ARRAY[6-I+1]) ;
+795c818
+<       CITY_STATE_ZIP = NOSPACE(ADDR[6-I+1]) ;
+---
+>       CITY_STATE_ZIP = NOSPACE(ADDRESS_ARRAY[6-I+1]) ;
+804,805c827,828
+<     REPEAT MAXINDEX(ADDR) ;
+<     IF POS('DO NOT MAIL',UPPER(ADDR[I]),1)<>0 ;
+---
+>     REPEAT MAXINDEX(ADDRESS_ARRAY) ;
+>     IF POS('DO NOT MAIL',UPPER(ADDRESS_ARRAY[I]),1)<>0 ;
+810,823c832
+<   GROUPINDEX MEMBERNUMBER = COL_2 ;
+<   GROUPINDEX FIRSTNAME =  '' ;
+<   GROUPINDEX LASTNAME =  '' ;
+<   GROUPINDEX LOANNUMBER =  '' ;
+<   GROUPINDEX SUBACCOUNT =  '' ;
+<   GROUPINDEX DOCUMENTNAME = 'Out-of-Band Notification' ;
+<   GROUPINDEX DOCUMENTDATE = NOTICE_DATE ;
+<   GROUPINDEX PDF_FILE_NAME = '.pdf' ;
+<   GROUPINDEX PDFFILE =  '' ;
+<   GROUPINDEX NOTICENAME = 'Out-of-Band Notification' ;
+<   IF &JOB_TYPE=='e' ;
+<   THEN ;
+<   ENDIF ;
+<   ENDGROUP ;
+---
+845,850c854,859
+<     PUT UPPER(ADDR[1])  START 64 LENGTH 40;
+<     PUT UPPER(ADDR[2])  START 104 LENGTH 40;
+<     PUT UPPER(ADDR[3])  START 144 LENGTH 40;
+<     PUT UPPER(ADDR[4])  START 184 LENGTH 40;
+<     PUT UPPER(ADDR[5])  START 224 LENGTH 40;
+<     PUT UPPER(ADDR[6])  START 264 LENGTH 40;
+---
+>     PUT UPPER(ADDRESS_ARRAY[1])  START 64 LENGTH 40;
+>     PUT UPPER(ADDRESS_ARRAY[2])  START 104 LENGTH 40;
+>     PUT UPPER(ADDRESS_ARRAY[3])  START 144 LENGTH 40;
+>     PUT UPPER(ADDRESS_ARRAY[4])  START 184 LENGTH 40;
+>     PUT UPPER(ADDRESS_ARRAY[5])  START 224 LENGTH 40;
+>     PUT UPPER(ADDRESS_ARRAY[6])  START 264 LENGTH 40;
+
+
+
+author: andreav
+comment: [~anwarh] - QA passed. Please release the code.
+
+
+author: anwarh
+comment: Hi [~TunA], Please release this one  [^IS-1098 Transfer Form.docx] too. Thank you. 
+
+
+author: tuna
+comment: Hi [~anwarh],
+
+Following codes have been released.
+
+Thanks,
+
+Tun
+
+
+
+
+
+20220517102341 05/17/2022 anwarH IS-1098 MFCU - [28752][pvt][in-house] Invalid Address Question
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/anwarH/
+total 888
+-rwxrwxrwx 1 anwarH DSI 29874 May 17 09:58 MFCUDL140.dfa
+-rwxrwxrwx 1 anwarH DSI 25116 May 17 09:59 MFCUDL142.dfa
+-rwxrwxrwx 1 anwarH DSI 24240 May 17 09:58 MFCUDL143.dfa
+-rwxrwxrwx 1 anwarH DSI 24052 May 17 09:59 MFCUDL144.dfa
+-rwxrwxrwx 1 anwarH DSI 28469 May 17 09:59 MFCUDL145.dfa
+-rwxrwxrwx 1 anwarH DSI 28809 May 17 09:58 MFCUDL146.dfa
+-rwxrwxrwx 1 anwarH DSI 24167 May 17 09:58 MFCUDL147.dfa
+-rwxrwxrwx 1 anwarH DSI 27254 May 17 09:58 MFCUDL152.dfa
+
+

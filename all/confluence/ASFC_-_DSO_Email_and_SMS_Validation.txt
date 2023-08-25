@@ -1,0 +1,152 @@
+title: ASFC - DSO Email and SMS Validation
+body:   
+
+  
+
+Target release| Release name or number  
+---|---  
+Epic| Link to related Jira epic or feature  
+Document status|
+
+YellowDRAFT  
+  
+Document owner|  
+  
+Designer|  
+  
+Developers|  
+  
+QA| Lead tester  
+  
+  
+
+## Goals
+
+  * Enhance ECL process to update both email and sms.
+  * Update Enrollment Step 3 to validate user information using email and/or sms.
+  * Remove SMS input from MFA
+  * Remove SMS update from Profile
+
+## Background and strategic fit
+
+Client's request
+
+## Assumptions
+
+  * ASFC will provide both email and sms in the ECL file.
+  * User must have either an email or sms on file in order to sign up for sms. However, both is not required.
+  * If the user provides an email and the user does not have an email on file, it will be ignored. The same is true for sms.
+
+## Requirements
+
+  
+| Title| User Story| Importance| Notes|  **Pilot**|  Production  
+---|---|---|---|---|---|---  
+1| ECL Enhancement| As ASFC, I would like to be able to update both of the
+user's email and phone number. |  _Must Have_|  
+|  
+|  
+  
+1.1| ECL Processing Job| As InfoIMAGE, I would like to be able to always
+update the database with the data provided by ASFC.|  _Must Have_|
+
+  * Enhance ECL ( **only the notifyPref portion** ) to always update Email and/or SMS regardless of status.
+
+|
+
+232 incomplete
+
+|  233 incomplete  
+1.2| ECL Index File| As InfoIMAGE,  I would like to be able to parse the new
+index file from ASFC.|  _Must Have_|
+
+  * Update config file. 
+
+|
+
+234 incomplete
+
+|
+
+  
+  
+2| eStatement Site| As an ASFC end user, I would like to have my email/sms be
+updated by the credit union.|  _Must Have_|  
+|
+
+238 incomplete
+
+|  239 incomplete  
+2.1| DSO Enrollment Step 3| As ASFC, I would like to validate the user's email
+and/or address during DSO enrollment.|  _Must Have_|
+
+  * Two more validation fields: Email and Phone Number
+  * Validation logic:
+    1. If email exists in np, email must match. Before matching, trim the input to remove leading/trailing spaces. On mobile, the space prevention may not work.
+    2. If phone number exists in np, phone number must match.
+    3. If neither email nor phone number exists in np, after the user submit, return to login page with error message.
+  * Error messages:
+    1. When email and/or sms don't match: We were unable to validate your information. Ensure the information you have entered is accurate.
+    2. When email and sms don't exist in np: In order to sign up, you must have an email or phone number on file. Please contact us to update your contact information.
+
+|
+
+247 incomplete
+
+|  241 incomplete  
+2.2| Update MFA Step| As an ASFC end user, I would like to be able to choose
+which method to receive my MFA based on the notification data available on
+file.|  _Must Have_|
+
+  * Email and SMS option available dependent on what's available in the np record.
+  * User should no longer be able to provide sms number if it's missing.
+
+|
+
+242 incomplete
+
+|  243 incomplete  
+2.3| Update Profile Page| As ASFC, I would like to remove the ability for the
+end user to update their own SMS.|  _Must Have_|
+
+  * Remove update Phone Number feature from Profile tab
+
+|
+
+244 incomplete
+
+|  245 incomplete  
+  
+## User interaction and design
+
+Include any mockups, diagrams or visual designs relating to these
+requirements.
+
+## Questions
+
+Below is a list of questions to be addressed as a result of this requirements
+document:
+
+Question| Outcome  
+---|---  
+  
+1\. Are we planning to support updating both email and SMS for other clients
+as well? or is it just going to be ASFC specific? If we support this for other
+clients which np type will be the selected one?
+
+| Yes, let's have it be global. Keep the same np preference logic as before,
+which I believe to be default to email before sms. This should then be
+"backward compatible". The only difference now is that we are storing both
+email and sms.  
+2\. During SSO email is being updated. So after we process an ECL and user log
+in with SSO before registering with DSO, if there is a different email in the
+SSO file the email will be updated. Now if the user wants to register with DSO
+if he provides the email of the ECL file it won't find a match. What will be
+the expected behavior here? |  
+  
+  
+## Not Doing
+
+  * List the features discussed which are out of scope or might be revisited in a later release.
+
+

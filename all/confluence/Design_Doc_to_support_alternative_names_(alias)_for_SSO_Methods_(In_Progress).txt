@@ -1,0 +1,83 @@
+title: Design Doc to support alternative names (alias) for SSO Methods (In Progress)
+body: ### Introduction
+
+This design documentation is to represent the necessary information and
+changes required to support different names (alias) for existing SSO methods.
+
+### Purpose/Objective Summary
+
+Currently, clients can only sso via existing sso methods and the methods
+cannot be called with other names.
+
+The main objective of this feature is to accept client provided sso names and
+redirect them to existing sso methods like singleSignOn7, digitalInsightV2
+etc. The alias name might be on the sso-keygen url params or on the request
+body. This name will be extracted and matched with the predefined alias-method
+map and the client will do sso via an existing method.
+
+### Scope
+
+#### In-Scope
+
+  1. Get the client provided sso alias from the request url or request body. 
+  2. Map the alias name to existing sso method name.
+  3. Let the application go forward with existing sso business. 
+
+### Requirements
+
+#### Business Requirements & Use Case
+
+ID| Title| Details  
+---|---|---  
+BR_01| Use alias name to do sso| Client will sso into Hypercube with an
+appropriate method and they will call the method whatever they like. We will
+call it "alias".  
+  
+#### Functional Requirements & Use Case
+
+ID| Title| Details  
+---|---|---  
+FR_01| Define alias-method mapping| Define an map object in constants.js.
+key=alias, value=sso method name  
+FR_02| Grab the method name alias from request url| The alias name will be
+provided via request url and grab and match the name with alias-method keys.
+If exists then the method name will be the key's value. If not then it is not
+a valid alias.  
+FR_03| Grab the method name alias from request body| If the method name is not
+provided via request url then it will be grabbed from the request body.  
+FR_04| Preserve existing SSO key gen business| If the alias method is not
+provide or not registered, then the previous sso key gen business will be
+activated.  
+  
+#### QA/Test Requirements
+
+ID| Title| Details  
+---|---|---  
+TR_01| Test alias feature for different sso methods|  
+  
+  
+### Code Changes
+
+Project file path| Method Scope| Changes  
+---|---|---  
+lib/allConstants/constants.js|  
+| SSO_ALIAS_MAP object added on Meteor.App  
+routes/mainRoutes.js| Router.route('/ssoKeyGen/:_method')|  
+  
+  
+### Feedback / Question / Answers
+
+Question
+
+|
+
+Answer  
+  
+---|---  
+  
+|  
+  
+  
+  
+
+

@@ -1,0 +1,1631 @@
+title: Member Profile Service(eSafetyBox) - Implementation details
+body:   
+
+## 1\. Overview
+
+  
+
+### 1.1. Background
+
+InfoImage has taken up implementation for the eSafetyBox Enrollment - member
+profile management in order to support eStatement (paperless i.e. thru email
+delivery) feature. There are four (4) potential REST services to develop for
+the eSafetyBox application namely Enrollment service (create record in DB),
+get record with current state, get record with current state & next available
+state, change record for given state.  
+  
+
+  
+
+### 1.2. Implementation
+
+The eSafetyBox - Member Profile service is developed using Mule-ESB V3.3 using
+workflow-based implementation with REST/JSON based service. The Mule-ESB will
+publish REST API service to process the GET/POST request. It will be a sync
+(real-time) call by the end-client, which will process & return the response
+in real-time along with status-code & status description
+(Success/Failed/Warning/Error).
+
+Given below diagram describes high-level design diagram for the eSafetyBox -
+Member Profile Enrollment service.
+
+Figure-1: Member Profile Service - High Level Architecture Diagram
+
+ **Real-time API Call**
+
+  * Mule-ESB supports real-time call using REST/JSON, which will in-turn make a JDBC call to database to perform required CRUD operations.  
+It will return the status code & desc to the REST end-client application.
+
+  
+  
+
+## 2\. Mule ESB REST APIs
+
+  
+  
+
+### 2.1. To get access token - REST/JSON API
+
+ **Request:**  REST API client (e.g. eSafetyBox, eStatement) will make a REST
+call to get the access token for the Mule-ESB Service (REST/JSON API call):
+
+tip. Method=POST  
+URL: http://{server}:{port}/oauth2/token  
+Example: <https://10.8.11.21:8090/oauth2/token>  
+HTTP Header:  
+Content-Type= application/x-www-form-urlencoded  
+HTTP POST Body:  
+username=<user-
+name>&password=<pwd>&client_id=<id>&grant_type=password&scope=READ_PROFILE%20WRITE_PROFILE  
+  
+
+  
+
+#### a) Access Token Request
+
+The client makes a request to the token endpoint by adding the following
+parameter using the "application/x-www-form-urlencoded"  
+format in the HTTP request entity-body:
+
+    
+    
+    grant_type     (Required).  Value MUST be set to "password".  
+    username       (Required).  The resource owner username.  
+    password       (Required).  The resource owner password.  
+    scope          (Required).  The scope of the access request expressed as a list of space-delimited, case sensitive strings.    
+                  (Value= WRITE_PROFILE or READ_PROFILE WRITE_PROFILE)
+
+The request will generate the access-toke and return the response in JSON
+format (key-value pair).
+
+    
+    
+    Method=GET  
+    URL: http://{server}:{port}/oauth2/token  
+    <https://10.8.9.57:8090/oauth2/token>  
+                           ?username=YOUR_USER_ID  
+                           &password=YOUR_PASSWORD  
+                           &client_id=YOUR_CLIENT_ID  
+                           &grant_type=password  
+                           &scope=READ_PROFILE%20WRITE_PROFILE
+
+ **Response:**  Output from OAuth2 Token API call:
+
+tip. HTTP POST method response  
+header: Content-Type=application/json
+
+    
+    
+    HTTP/1.1 200 OK
+    Content-Length: 184
+    Content-Type: application/json;charset=UTF-8
+    Server: Mule EE Core Extensions/3.3.2
+    X-MULE_ENCODING: UTF-8
+    
+    {
+      "scope": "READ_PROFILE WRITE_PROFILE",
+      "expires_in": 120000,
+      "token_type": "bearer",
+      "access_token": "R1Yyyn6cgMluJHQLf0tOjKsmWK4J_Oea4TpJW_F-Gf_ICQClWoe4E5v1lsAj2eeT3N091mYTwY-e27Rb40fBSA" 
+    }
+    
+
+Where:
+
+>   * scope READ_PROFILE/WRITE_PROFILE or Both (READ_PROFILE WRITE_PROFILE)
+>   * token Validity period in mill-seconds.
+>   * token-type Always returns fixed value as "bearer"
+>   * access_token Token value which can be used to make read/write calls
+>
+
+As you can see in the above example, Response object wraps up the
+access_token.  
+The next calls should have "access_token" value in order to perform read/write
+operations. The URL will have ?access_token=<access_token-value>  
+  
+
+  
+
+#### b) HTP Response code and Description:
+
+Given below HTTP response code will be returned by the OAuth2 Token API to
+indicate the service status:
+
+HTP Code| Description  
+---|---  
+200| OK  
+400| BAD_REQUEST. When Username/password is wrong. JSON Output:  
+
+    
+    
+    { 
+     "error": "access_denied", 
+     "error_description": "" 
+    }  
+  
+400| BAD_REQUEST. When username is missing.  
+
+    
+    
+    { 
+     "error": "invalid_request", 
+     "error_description": "Missing mandatory parameter: username" 
+    }  
+  
+400| BAD_REQUEST. When scope value is missing. JSON Output:  
+
+    
+    
+    { 
+     "error": "invalid_request", 
+     "error_description": "Missing mandatory parameter: scope" 
+    }  
+  
+400| BAD_REQUEST. When client_id is missing.  
+
+    
+    
+    { 
+     "error": "invalid_request", 
+     "error_description": "No client identification nor authentication found" 
+    }  
+  
+400| BAD_REQUEST. When grant_type is missing.  
+
+    
+    
+    { 
+     "error": "invalid_request", 
+     "error_description": "Missing mandatory parameter: grant_type" 
+    }  
+  
+503| INTERNAL_SERVER_ERROR : Server busy and service unavailable.  
+  
+* * *
+
+  
+  
+
+### 2.2. Member Profile Account Management - REST/JSON API
+
+{UPDATE}
+
+As described in the integration landscape diagram, it will require a REST
+Interface API - to get/update the member profile.
+
+  * As s design guiding principle, Mule ESB will use REST/JSON (JAX-RS & Jersey standards) in order to fulfill business requirements for various clients.
+  * Mule ESB - REST/JSON APIs will use Secure Token method (similar to OAuth2) in order to identify the client for member profile service.
+  * eSafetyBox web-application may need some changes at their end in order to invoke/call the MuleESB REST Service for member profile update functionality.
+  * The Interface API - signature (input/output parameters) are described in next section.
+
+  
+
+Component| Class| Method| Params| Comments  
+---|---|---|---|---  
+REST Web-service API| REST+JSON| createMemberProfile()| JSON String| Request
+to create member profile with defult status as INACTIVE  
+REST Web-service API| REST+JSON| updateMemberProfile()| JSON String| Request
+to update member client's status (e.g. Inactive-->Active)  
+REST Web-service API| REST+JSON| getMemberProfileStatus()| JSON String|
+Request to retrieve member client's profile with status.  
+REST Web-service API| REST+JSON| getMemberProfileDetailStatus()| JSON String|
+Request to retrieve member client's profile status with next available status
+(Inactive-->Active).  
+  
+  
+  
+
+### 2.3. Mule ESB Server URL for REST APIs
+
+The REST API will be invoked with GET or POST method. GET is used to retrieve
+the Member Profile and POST for update/create operations. PUT and DELETE are
+not supported by the service. The URIs used are:
+
+Sl No.| Resource URI| HTTP Method| Operation  
+---|---|---|---  
+1.| <https://localhost:8090/oauth2/token>| POST| Request to get the session
+token value to invoke the member service REST API. This REST API call will be
+mapped to the OAuth2 module client token/authorize call.  
+2.| <https://localhost:8093/api/v1/members>| POST| Request to create/update
+member profile with the supplied status value. This REST URL call will be
+mapped with the updateMemberProfile() method. It will post the request data in
+JSON string format: {"key-1" : "value-1", "key-2" : "value-2" ...}  
+3.| <https://localhost:8093/api/v1/members/all>| GET| Request to get member
+profile list.  
+4.|
+[https://localhost:8093/api/v1/members/id/{id](https://localhost:8093/api/v1/members/id/%7Bid)}|
+GET| Request to get member profile for given ID.  
+5.|
+[https://localhost:8093/api/v1/members/status/{bStatusId](https://localhost:8093/api/v1/members/status/%7BbStatusId)}|
+GET| Request to get member status for given ID.  
+6.| [https://localhost:8093/api/v1/members/status-
+next/{bStatusId](https://localhost:8093/api/v1/members/status-
+next/%7BbStatusId)}| GET| Request to get next available member status for
+given ID.  
+  
+ **Note:**  localhost will be replaced by the fully-qualified domain name
+(FQDN) of the Server.
+
+    
+    
+    Server Name/URL will be like {host}:{port}
+    where 
+    {host}: host name or IP address of the repository and port is the port number of the shared HTTP server
+    {port}: port number that the MULE ESB Server is running on. For example Port: 80 or 8080.
+    {api}: context of the application. Typically this is the name of the WAR file.
+    {v1}: A fixed value in the URL for REST API version 1.0. For next enhancement release, it may be v2, v3.
+    {members}: Context name mapped to the REST resource, a fixed value in the URL.
+    
+    and input string to GET URL in the format of key/value pair: {key1}/{value1}/key2}/{value2}/ and so on.
+    
+
+The response content type for the Customer Profile API are application/json.  
+See below examples for a description of the request parameters.
+
+    
+    
+    HTTP POST 
+    <pre><code>
+    POST https://localhost:8090/api/v1/
+    members HTTP/1.1
+    Host: localhost:8093
+    Content-Type: application/json
+    Authorization: Bearer X2ZEU0doR2RmVVVwdjlxSWR4ODNIV2JZR25jaHVGQ25ybk9KTUh3Tk94aUZTc3ItTEtnZVJNRi1NYkszek5kWU03eHBDUXJtZjVWU3IxUGxhTXhBSVFIbXJiODRDOEE
+    
+    { "accountNumber" : "12345", 
+      "clientId" : "eSafetyBox", 
+      "customAttribs" :{ 
+         }, 
+      "enrollment" : "E",
+            "emailId" : "eaiadmin@infoimageinc.com",
+            "firstName" : "John",
+            "lastName" : "Doe",  
+            "ssn" : "1234" 
+    }
+    </code>
+
+  
+
+ **Response:**
+
+The enrollment object wraps-up member-client information items like
+accountNumber, email-id, set or clear status indicator etc.
+
+    
+    
+    HTTP/1.1 200 OK
+    X-Powered-By: Servlet/2.5
+    Server: localhost:8090
+    Content-Type: application/json
+    Content-Length: 1234
+    Date: Thu, 04 Jun 2009 02:51:59 GMT
+    
+    {
+      "message": "SUCCESSFUL",
+      "data": "{\"StatusCode\": \"00\", \"StatusDesc\": \"SUCCESSFUL\", \"transactionId\" : \"1C342C103F01F3EDE2E3F0C0\" }",
+      "httpStatus": 200
+    }
+    
+
+Response codes and exceptions: Refer Appendix-A
+
+* * *
+
+  
+  
+
+### 2.4. REST/JSON APIs
+
+a) API#1 - getMemberProfile() - To list/retrieve user account details for the
+member - accountId
+
+Request input to be supplied by eSafetyBox web-application to the Mule-ESB
+Service (REST/JSON API):  
+The Mule ESB will maintain the REST resources to manipulate database table
+using HTTP requests using method (GET, POST, PUT, DELETE).  
+RESTful API will handle CRUD actions using HTTP methods mapped as follows:
+
+Resource| POST (create)| GET (read)| PUT (update)| DEL (delete)| Options| HEAD  
+---|---|---|---|---|---|---  
+/members| Create a new record for the given account-number with INACTIVE
+Status.| List all records| NA| NA| NA| NA  
+/members/{id}| NA| Retrieves specific user member-profile for given Id# {123}|
+NA| NA| NA| NA  
+  
+ **NOTE:**  All URIs are followed by api/v1 context.  
+  
+
+  
+
+#### a) To list all the to get member profile
+records[](https://i3dev.easyredmine.com/projects/integration/wiki/Member_Profile_Service\(eSafetyBox\)-Implementation_document#a-To-
+list-all-the-to-get-member-profile-records)
+
+tip. <https://localhost:8093/api/v1/members>  
+Method= GET  
+Output JSON response (Content-Type=application/json):
+
+    
+    
+    [
+      {
+        "id": 1,
+        "usrId": "abc@test",
+        "cid": "test",
+        "status": "inactive",
+        "flag": "X",
+        "question": "What's your name",
+        "answer": "TEMP question answer value.",
+        "tier": 1,
+        "alert": "N",
+        "createdTime": "05-01-2013 10:08:55 PDT",
+        "modifiedBy": 1
+      },
+      {
+        "id": 2,
+        "usrId": "jkl@test",
+        "cid": "test",
+        "status": "inactive",
+        "flag": "Y",
+        "question": "What's your middle name",
+        "answer": "Type here answer value.",
+        "tier": 1,
+        "alert": "N",
+        "createdTime": "05-02-2013 10:08:55 PDT",
+        "modifiedBy": 7888871
+      },
+      {
+        "id": 3,
+        "usrId": "rst@test",
+        "cid": "test",
+        "status": "inactive",
+        "flag": "X",
+        "question": "What's your last-name",
+        "answer": "Enter answer here.",
+        "tier": 1,
+        "alert": "N",
+        "createdTime": "05-03-2013 10:08:55 PDT",
+        "modifiedBy": 7888871
+      }
+    ]
+    
+
+  
+  
+
+  
+
+#### b) To list particular member profile by Usr-
+Id[](https://i3dev.easyredmine.com/projects/integration/wiki/Member_Profile_Service\(eSafetyBox\)-Implementation_document#b-To-
+list-particular-member-profile-by-Usr-Id)
+
+tip. [https://localhost:8093/api/v1/members/{usr-
+id](https://localhost:8093/api/v1/members/%7Busr-id)}  
+Method= GET  
+<http://localhost:10303/api/v1/members/usr1> or usr2 and so on  
+Output JSON response (Content-Type=application/json):
+
+    
+    
+    {
+        "id": 3,
+        "usrId": "usr1",
+        "cid": "test",
+        "status": "inactive",
+        "flag": "X",
+        "question": "What's your last-name",
+        "answer": "Enter answer here.",
+        "tier": 1,
+        "alert": "N",
+        "createdTime": "05-03-2013 10:08:55 PDT",
+        "modifiedBy": 7888871
+    }
+    
+
+  
+  
+
+  
+
+#### c) To get particular member profile status by User-
+Id[](https://i3dev.easyredmine.com/projects/integration/wiki/Member_Profile_Service\(eSafetyBox\)-Implementation_document#c-To-
+get-particular-member-profile-status-by-User-Id)
+
+tip.
+[https://localhost:8093/api/v1/members/status/{UserId](https://localhost:8093/api/v1/members/status/%7BUserId)}  
+Method= GET  
+<https://localhost:8093/api/v1/members/status/abc> or xyz and so on.  
+Output JSON response Content-Type=application/json:
+
+    
+    
+    {
+        "usrId": "abc",
+        "status": "inactive",
+        "cid": "test" 
+    }
+    
+
+  
+  
+
+#### d) To get particular member profile status/next-status by User-
+Id[](https://i3dev.easyredmine.com/projects/integration/wiki/Member_Profile_Service\(eSafetyBox\)-Implementation_document#d-To-
+get-particular-member-profile-statusnext-status-by-User-Id)
+
+tip.
+[https://localhost:8093/api/v1/members/next/{UserId](https://localhost:8093/api/v1/members/next/%7BUserId)}  
+Method= GET  
+<https://localhost:8093/api/v1/members/next/abc> or xyz and so on.  
+Output JSON response Content-Type=application/json:
+
+    
+    
+    {
+        "usrId": "abc",
+        "status": "inactive",
+        "nextStatus": "active",
+        "cid": "test" 
+    }
+    
+
+**Phase-2**
+
+Resource| POST (create)| GET (read)| PUT (update)| DEL (delete)| Options| HEAD  
+---|---|---|---|---|---|---  
+/members/{id}| NA| NA| NA| To delete a record for given ID| NA| NA  
+/members/{id}| NA| NA| To update a record with supplied details| NA| NA| NA  
+/members/search/status/{status}| NA| Retrieves specific user member-profile
+for given Status - INACTIVE/ACTIVE/CLOSED| NA| NA| NA| NA  
+/members/search/account/{account}| NA| Retrieves specific user member-profile
+for given Account#| NA| NA| NA| NA  
+      
+    
+    Resource Class:
+    
+    @Path("/members")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
+    public class MemberProfileServiceResource { ... }
+    
+    Method:
+    public class MemberProfileServiceResource { 
+    ...
+        @GET
+        @Path("/")
+        public Response getAllMembers() { ... }
+    }
+    
+
+a) API#1 - updateMemberProfile() - To update member profile
+
+Request input to be supplied by eSafetyBox web-application to the Mule-ESB
+Service (REST/JSON API):
+
+ **i) Request Data**
+
+Name| Data Type| Data Length| Business Description| Required  
+---|---|---|---|---  
+accountNumber| Alphanumeric| 10| Member User's Account (unique identifier),
+which will be used for the identification & update purpose.| Y  
+firstName| char| 255| To set/clear flags at the Member Level| Y  
+surname| char| 255| User's Last Name/Surname (255-char)| Y  
+ssn| char| 4| User's SSN Number - Last 4-digits of SSN| Y  
+flagSetOrClear| char| 1| User's preference - FlagSetOrClear : Enter S to set
+the flag or C to clear the flag. It's corresponding to paper or paperless,
+'1'= enrolled into eSatement, '0' = no enrolled.| Y  
+emailId| char| 255| Email-id| Y  
+  
+ **Sample Request**
+
+    
+    
+    JSON Payload by the web-client
+    ----------------------------------------
+    METHOD= POST
+    Content-Type=application/json
+    ----------------------------------------
+    { 
+      "accountNumber" : "12345",
+      "clientId" : "eSafetyBox",
+      "customAttribs" : { "emailId" : "Niraj.Tripathi@infoimageinc.com",
+          "flagInd1" : "C",
+          "firstName" : "John",
+          "lastName" : "Doe",
+          "flagType1" : "C",
+          "surname" : "VI",
+          "ssn" : "1234" 
+        },
+      "enrollment" : "P" 
+    }
+    ----------------------------------------
+    
+
+**Processing Steps**
+
+  * The request will generate the 20-digit transaction-id and return the response back to the web-application.
+  * The request will ask for  _" client_id"_ and  _" client_secret"_ (similar to OAuth2) in order to validate the access for authorized client.
+  * Mule-ESB will perform the required CRUD operation by calling the JDBC query and capture response into the Mule DB Transaction table along with Transaction-id, which can be used for later reference/validation purpose. Finally, response will be returned to the calling application.
+  * Mule-ESB API call returns response back to the web-application along with the Transaction-id (web-application may ignore the trans-id or store it for future reference, if any required)
+
+ **ii) Response Data**
+
+Name| Data Type| Data Length| Business Description| Required  
+---|---|---|---|---  
+Status Code| Numeric| 3| Status code for the request accepted & processed.
+Refer next row for status description.| Y  
+Status Message| Alphanumeric| 20| Status message having detailed status. For
+example, 'Process successfully'. 'Status down', 'System not-reachable' etc. It
+will return error description, in case of error response or no response by the
+Spectrum WS request.| N  
+  
+Sample Response: Output from Mule-ESB REST/JSON API call:
+
+    
+    
+    {
+      "message": "SUCCESSFUL",
+      "data": "{\"StatusCode\": \"00\", \"StatusDesc\": \"SUCCESSFUL\", \"transactionId\" : \"1C342C103F01F3EDE2E3F0C0\" }",
+      "httpStatus": 200
+    }
+    
+
+tip. Examples:
+
+  * Unique-transaction-Id=  _aac46d12bb74a3f7f3_
+  * client_id=  _AqIEbLHT8_
+  * client-secret=  _FBGRNJru1FQd44AzqT3Zg_
+
+* * *
+
+* * *
+
+  
+  
+
+### 2.5. Validation Rules and Default Values
+
+ **Request:**  Given below validations are enforced for the input JSON request
+as a part of the REST/JSON API call:
+
+Sl No.| Title| Criteria| Validation Description  
+---|---|---|---  
+1.| Client-Id - Check on NULL or EMPTY| When Client-Id is null or empty.| The
+API will return the Bad Input error: BadRequestException("clientId found
+Null!"); BadRequestException("clientId found Empty!");  
+2.| Account-Number - Check on NULL| When Account-Number is Null| The API will
+return the Bad Input error: BadRequestException("accountNumber found Null!");  
+3.| Account-Number - Check on field length| When Account-Number length is > 10
+or <=0| The API will return the Bad Input error:
+BadRequestException("accountNumber value too long!");  
+4.| Enrollment - Check on NULL| When Enrollment is Null| The API will return
+the Bad Input error: BadRequestException("enrollment found Null!");  
+5.| Enrollment- Check on field length| When Enrollment length is > 1 or <=0|
+The API will return the Bad Input error: BadRequestException("enrollment value
+too long!");  
+6.| Surname- Check on field length| When Surname is not empty and length is <>
+2| The API will return the Bad Input error: BadRequestException("surname
+length <>2!");  
+7.| Suffix- Check on field length| When Suffix is not empty and length is > 2|
+The API will return the Bad Input error: BadRequestException("suffix value too
+long!");  
+8.| Email-Id - valiadation length| When Email-id is not empty and format is
+not correct (i.e. missing domain @comp.xxx)| The API will return the Bad Input
+error: BadRequestException("emailId invalid!");  
+9.| FlagLevel1 - Check on field length| When FlagLevel1 is not empty and
+length is > 1| The API will return the Bad Input error:
+BadRequestException("flagLevel1 field length>1!");  
+10.| FlagType1 - Check on field length| When FlagType1 is not empty and length
+is > 1| The API will return the Bad Input error:
+BadRequestException("flagType1 field length>1!");  
+11.| FlagSetClear - Check on NULL or EMPTY| When FlagSetClear is NULL or
+EMPTY| The API will return the Bad Input error:
+BadRequestException("flagSetorClearInd1 value Null!");
+BadRequestException("flagInd1 invalid!");  
+12.| FlagSetClear - Validation Check| When FlagSetClear is other than S or C|
+The API will return the Bad Input error: BadRequestException("flagInd1
+invalid!");  
+  
+* * *
+
+* * *
+
+  
+  
+
+## 3\. Mule ESB Service - Database DDL
+
+  
+  
+
+### 3.1. MySQL Transaction Table
+
+    
+    
+    REM -- SAFE/SSCU Transaction Table defined in MySQL (`instantenrollment_transaction`)
+    REM -- Same DB Table will be used by this service to store the transaction details.
+    
+
+* * *
+
+  
+  
+
+### 3.2. Oracle DB Tables
+
+    
+    
+    CREATE TABLE "BOX_CURRENT_STATUS" 
+    (
+      "USR_ID" NUMBER(19,0) NOT NULL, 
+      "FLAG" VARCHAR2(8 BYTE) NOT NULL, 
+      "QUESTION" VARCHAR2(256 BYTE) NOT NULL, 
+      "ANSWER" VARCHAR2(64 BYTE) NOT NULL, 
+      "PASSWORD" VARCHAR2(40 BYTE) NOT NULL, 
+      "STATUS" VARCHAR2(10 BYTE) NOT NULL, 
+      "TIER" NUMBER, 
+      "BSTATUS_ID" NUMBER NOT NULL, 
+      "CREATED_TIME" DATE DEFAULT sysdate, 
+      "ALERT" VARCHAR2(1 BYTE) DEFAULT 'N', 
+      "MODIFIED_BY" NUMBER(19,0), 
+      "CID" VARCHAR2(20 BYTE), 
+     CONSTRAINT "BOX_CURRENT_STATUS_PK" PRIMARY KEY ("BSTATUS_ID")
+    )
+    
+    CREATE TABLE "BOX_HISTORY_STATUS" 
+    (
+      "USR_ID" NUMBER(19,0) NOT NULL , 
+      "FLAG" VARCHAR2(8 BYTE) NOT NULL , 
+      "QUESTION" VARCHAR2(256 BYTE) NOT NULL , 
+      "ANSWER" VARCHAR2(64 BYTE) NOT NULL , 
+      "PASSWORD" VARCHAR2(40 BYTE) NOT NULL , 
+      "STATUS" VARCHAR2(10 BYTE) NOT NULL , 
+      "TIER" NUMBER, 
+      "TIME" TIMESTAMP (6), 
+      "BHISTORY_STATUS_ID" NUMBER NOT NULL , 
+      "MODIFIED_BY" NUMBER(19,0), 
+     PRIMARY KEY ("BHISTORY_STATUS_ID") 
+    )
+    
+
+**Java Entity Class**
+
+  * BoxCurrentStatus
+
+    
+    
+    package com.infoimageinc.eai.entity;
+    
+    import java.io.Serializable;
+    import java.math.BigDecimal;
+    import java.math.BigInteger;
+    import java.util.Date;
+    import javax.persistence.Basic;
+    import javax.persistence.Column;
+    import javax.persistence.Entity;
+    import javax.persistence.Id;
+    import javax.persistence.NamedQueries;
+    import javax.persistence.NamedQuery;
+    import javax.persistence.Table;
+    import javax.persistence.Temporal;
+    import javax.persistence.TemporalType;
+    import javax.xml.bind.annotation.XmlRootElement;
+    
+    /**
+     *
+     * @author NTripathi
+     */
+    @Entity
+    @Table(name = "BOX_CURRENT_STATUS")
+    @XmlRootElement
+    @NamedQueries({
+        @NamedQuery(name = "BoxCurrentStatus.findAll", query = "SELECT b FROM BoxCurrentStatus b"),
+        @NamedQuery(name = "BoxCurrentStatus.findByUsrId", query = "SELECT b FROM BoxCurrentStatus b WHERE b.usrId = :usrId"),
+        @NamedQuery(name = "BoxCurrentStatus.findByFlag", query = "SELECT b FROM BoxCurrentStatus b WHERE b.flag = :flag"),
+        @NamedQuery(name = "BoxCurrentStatus.findByQuestion", query = "SELECT b FROM BoxCurrentStatus b WHERE b.question = :question"),
+        @NamedQuery(name = "BoxCurrentStatus.findByAnswer", query = "SELECT b FROM BoxCurrentStatus b WHERE b.answer = :answer"),
+        @NamedQuery(name = "BoxCurrentStatus.findByPassword", query = "SELECT b FROM BoxCurrentStatus b WHERE b.password = :password"),
+        @NamedQuery(name = "BoxCurrentStatus.findByStatus", query = "SELECT b FROM BoxCurrentStatus b WHERE b.status = :status"),
+        @NamedQuery(name = "BoxCurrentStatus.findByTier", query = "SELECT b FROM BoxCurrentStatus b WHERE b.tier = :tier"),
+        @NamedQuery(name = "BoxCurrentStatus.findByBstatusId", query = "SELECT b FROM BoxCurrentStatus b WHERE b.bstatusId = :bstatusId"),
+        @NamedQuery(name = "BoxCurrentStatus.findByCreatedTime", query = "SELECT b FROM BoxCurrentStatus b WHERE b.createdTime = :createdTime"),
+        @NamedQuery(name = "BoxCurrentStatus.findByAlert", query = "SELECT b FROM BoxCurrentStatus b WHERE b.alert = :alert"),
+        @NamedQuery(name = "BoxCurrentStatus.findByModifiedBy", query = "SELECT b FROM BoxCurrentStatus b WHERE b.modifiedBy = :modifiedBy"),
+        @NamedQuery(name = "BoxCurrentStatus.findByCid", query = "SELECT b FROM BoxCurrentStatus b WHERE b.cid = :cid")})
+    public class BoxCurrentStatus implements Serializable {
+        private static final long serialVersionUID = 1L;
+        @Basic(optional = false)
+        @Column(name = "USR_ID")
+        private BigInteger usrId;
+        @Basic(optional = false)
+        @Column(name = "FLAG")
+        private String flag;
+        @Basic(optional = false)
+        @Column(name = "QUESTION")
+        private String question;
+        @Basic(optional = false)
+        @Column(name = "ANSWER")
+        private String answer;
+        @Basic(optional = false)
+        @Column(name = "PASSWORD")
+        private String password;
+        @Basic(optional = false)
+        @Column(name = "STATUS")
+        private String status;
+        @Column(name = "TIER")
+        private BigInteger tier;
+        // @Max(value=?)  @Min(value=?)//if you know range of your decimal fields consider using these annotations to enforce field validation
+        @Id
+        @Basic(optional = false)
+        @Column(name = "BSTATUS_ID")
+        private BigDecimal bstatusId;
+        @Column(name = "CREATED_TIME")
+        @Temporal(TemporalType.TIMESTAMP)
+        private Date createdTime;
+        @Column(name = "ALERT")
+        private String alert;
+        @Column(name = "MODIFIED_BY")
+        private BigInteger modifiedBy;
+        @Column(name = "CID")
+        private String cid;
+    
+        public BoxCurrentStatus() {
+        }
+    
+        public BoxCurrentStatus(BigDecimal bstatusId) {
+            this.bstatusId = bstatusId;
+        }
+    
+        public BoxCurrentStatus(BigDecimal bstatusId, BigInteger usrId, String flag, String question, String answer, String password, String status) {
+            this.bstatusId = bstatusId;
+            this.usrId = usrId;
+            this.flag = flag;
+            this.question = question;
+            this.answer = answer;
+            this.password = password;
+            this.status = status;
+        }
+    
+        public BigInteger getUsrId() {
+            return usrId;
+        }
+    
+        public void setUsrId(BigInteger usrId) {
+            this.usrId = usrId;
+        }
+    
+        public String getFlag() {
+            return flag;
+        }
+    
+        public void setFlag(String flag) {
+            this.flag = flag;
+        }
+    
+        public String getQuestion() {
+            return question;
+        }
+    
+        public void setQuestion(String question) {
+            this.question = question;
+        }
+    
+        public String getAnswer() {
+            return answer;
+        }
+    
+        public void setAnswer(String answer) {
+            this.answer = answer;
+        }
+    
+        public String getPassword() {
+            return password;
+        }
+    
+        public void setPassword(String password) {
+            this.password = password;
+        }
+    
+        public String getStatus() {
+            return status;
+        }
+    
+        public void setStatus(String status) {
+            this.status = status;
+        }
+    
+        public BigInteger getTier() {
+            return tier;
+        }
+    
+        public void setTier(BigInteger tier) {
+            this.tier = tier;
+        }
+    
+        public BigDecimal getBstatusId() {
+            return bstatusId;
+        }
+    
+        public void setBstatusId(BigDecimal bstatusId) {
+            this.bstatusId = bstatusId;
+        }
+    
+        public Date getCreatedTime() {
+            return createdTime;
+        }
+    
+        public void setCreatedTime(Date createdTime) {
+            this.createdTime = createdTime;
+        }
+    
+        public String getAlert() {
+            return alert;
+        }
+    
+        public void setAlert(String alert) {
+            this.alert = alert;
+        }
+    
+        public BigInteger getModifiedBy() {
+            return modifiedBy;
+        }
+    
+        public void setModifiedBy(BigInteger modifiedBy) {
+            this.modifiedBy = modifiedBy;
+        }
+    
+        public String getCid() {
+            return cid;
+        }
+    
+        public void setCid(String cid) {
+            this.cid = cid;
+        }
+    
+        @Override
+        public int hashCode() {
+            int hash = 0;
+            hash += (bstatusId != null ? bstatusId.hashCode() : 0);
+            return hash;
+        }
+    
+        @Override
+        public boolean equals(Object object) {
+            // TODO: Warning - this method won't work in the case the id fields are not set
+            if (!(object instanceof BoxCurrentStatus)) {
+                return false;
+            }
+            BoxCurrentStatus other = (BoxCurrentStatus) object;
+            if ((this.bstatusId == null && other.bstatusId != null) || (this.bstatusId != null && !this.bstatusId.equals(other.bstatusId))) {
+                return false;
+            }
+            return true;
+        }
+    
+        @Override
+        public String toString() {
+            return "com.infoimageinc.eai.entity.BoxCurrentStatus[ bstatusId=" + bstatusId + " ]";
+        }
+    
+    }
+    
+
+  * BoxHistoryStatus
+
+    
+    
+    package com.infoimageinc.eai.entity;
+    
+    import java.io.Serializable;
+    import java.math.BigDecimal;
+    import java.math.BigInteger;
+    import java.util.Date;
+    import javax.persistence.Basic;
+    import javax.persistence.Column;
+    import javax.persistence.Entity;
+    import javax.persistence.Id;
+    import javax.persistence.NamedQueries;
+    import javax.persistence.NamedQuery;
+    import javax.persistence.Table;
+    import javax.persistence.Temporal;
+    import javax.persistence.TemporalType;
+    import javax.xml.bind.annotation.XmlRootElement;
+    
+    /**
+     *
+     * @author NTripathi
+     */
+    @Entity
+    @Table(name = "BOX_HISTORY_STATUS")
+    @XmlRootElement
+    @NamedQueries({
+        @NamedQuery(name = "BoxHistoryStatus.findAll", query = "SELECT b FROM BoxHistoryStatus b"),
+        @NamedQuery(name = "BoxHistoryStatus.findByUsrId", query = "SELECT b FROM BoxHistoryStatus b WHERE b.usrId = :usrId"),
+        @NamedQuery(name = "BoxHistoryStatus.findByFlag", query = "SELECT b FROM BoxHistoryStatus b WHERE b.flag = :flag"),
+        @NamedQuery(name = "BoxHistoryStatus.findByQuestion", query = "SELECT b FROM BoxHistoryStatus b WHERE b.question = :question"),
+        @NamedQuery(name = "BoxHistoryStatus.findByAnswer", query = "SELECT b FROM BoxHistoryStatus b WHERE b.answer = :answer"),
+        @NamedQuery(name = "BoxHistoryStatus.findByPassword", query = "SELECT b FROM BoxHistoryStatus b WHERE b.password = :password"),
+        @NamedQuery(name = "BoxHistoryStatus.findByStatus", query = "SELECT b FROM BoxHistoryStatus b WHERE b.status = :status"),
+        @NamedQuery(name = "BoxHistoryStatus.findByTier", query = "SELECT b FROM BoxHistoryStatus b WHERE b.tier = :tier"),
+        @NamedQuery(name = "BoxHistoryStatus.findByTime", query = "SELECT b FROM BoxHistoryStatus b WHERE b.time = :time"),
+        @NamedQuery(name = "BoxHistoryStatus.findByBhistoryStatusId", query = "SELECT b FROM BoxHistoryStatus b WHERE b.bhistoryStatusId = :bhistoryStatusId"),
+        @NamedQuery(name = "BoxHistoryStatus.findByModifiedBy", query = "SELECT b FROM BoxHistoryStatus b WHERE b.modifiedBy = :modifiedBy")})
+    public class BoxHistoryStatus implements Serializable {
+        private static final long serialVersionUID = 1L;
+        @Basic(optional = false)
+        @Column(name = "USR_ID")
+        private BigInteger usrId;
+        @Basic(optional = false)
+        @Column(name = "FLAG")
+        private String flag;
+        @Basic(optional = false)
+        @Column(name = "QUESTION")
+        private String question;
+        @Basic(optional = false)
+        @Column(name = "ANSWER")
+        private String answer;
+        @Basic(optional = false)
+        @Column(name = "PASSWORD")
+        private String password;
+        @Basic(optional = false)
+        @Column(name = "STATUS")
+        private String status;
+        @Column(name = "TIER")
+        private BigInteger tier;
+        @Column(name = "TIME")
+        @Temporal(TemporalType.TIMESTAMP)
+        private Date time;
+        // @Max(value=?)  @Min(value=?)//if you know range of your decimal fields consider using these annotations to enforce field validation
+        @Id
+        @Basic(optional = false)
+        @Column(name = "BHISTORY_STATUS_ID")
+        private BigDecimal bhistoryStatusId;
+        @Column(name = "MODIFIED_BY")
+        private BigInteger modifiedBy;
+    
+        public BoxHistoryStatus() {
+        }
+    
+        public BoxHistoryStatus(BigDecimal bhistoryStatusId) {
+            this.bhistoryStatusId = bhistoryStatusId;
+        }
+    
+        public BoxHistoryStatus(BigDecimal bhistoryStatusId, BigInteger usrId, String flag, String question, String answer, String password, String status) {
+            this.bhistoryStatusId = bhistoryStatusId;
+            this.usrId = usrId;
+            this.flag = flag;
+            this.question = question;
+            this.answer = answer;
+            this.password = password;
+            this.status = status;
+        }
+    
+        public BigInteger getUsrId() {
+            return usrId;
+        }
+    
+        public void setUsrId(BigInteger usrId) {
+            this.usrId = usrId;
+        }
+    
+        public String getFlag() {
+            return flag;
+        }
+    
+        public void setFlag(String flag) {
+            this.flag = flag;
+        }
+    
+        public String getQuestion() {
+            return question;
+        }
+    
+        public void setQuestion(String question) {
+            this.question = question;
+        }
+    
+        public String getAnswer() {
+            return answer;
+        }
+    
+        public void setAnswer(String answer) {
+            this.answer = answer;
+        }
+    
+        public String getPassword() {
+            return password;
+        }
+    
+        public void setPassword(String password) {
+            this.password = password;
+        }
+    
+        public String getStatus() {
+            return status;
+        }
+    
+        public void setStatus(String status) {
+            this.status = status;
+        }
+    
+        public BigInteger getTier() {
+            return tier;
+        }
+    
+        public void setTier(BigInteger tier) {
+            this.tier = tier;
+        }
+    
+        public Date getTime() {
+            return time;
+        }
+    
+        public void setTime(Date time) {
+            this.time = time;
+        }
+    
+        public BigDecimal getBhistoryStatusId() {
+            return bhistoryStatusId;
+        }
+    
+        public void setBhistoryStatusId(BigDecimal bhistoryStatusId) {
+            this.bhistoryStatusId = bhistoryStatusId;
+        }
+    
+        public BigInteger getModifiedBy() {
+            return modifiedBy;
+        }
+    
+        public void setModifiedBy(BigInteger modifiedBy) {
+            this.modifiedBy = modifiedBy;
+        }
+    
+        @Override
+        public int hashCode() {
+            int hash = 0;
+            hash += (bhistoryStatusId != null ? bhistoryStatusId.hashCode() : 0);
+            return hash;
+        }
+    
+        @Override
+        public boolean equals(Object object) {
+            // TODO: Warning - this method won't work in the case the id fields are not set
+            if (!(object instanceof BoxHistoryStatus)) {
+                return false;
+            }
+            BoxHistoryStatus other = (BoxHistoryStatus) object;
+            if ((this.bhistoryStatusId == null && other.bhistoryStatusId != null) || (this.bhistoryStatusId != null && !this.bhistoryStatusId.equals(other.bhistoryStatusId))) {
+                return false;
+            }
+            return true;
+        }
+    
+        @Override
+        public String toString() {
+            return "com.infoimageinc.eai.entity.BoxHistoryStatus[ bhistoryStatusId=" + bhistoryStatusId + " ]";
+        }
+    
+    }
+    
+
+  
+  
+
+## 4\. Sequence Diagram
+
+Given below diagram describes sequence of steps involved during transaction.
+
+Figure-2: Sequence Diagram for Member Account Management
+
+Given below diagram describes Mule Workflow steps involved during the state
+change management from one state to another.
+
+Figure-3: mule Workflow Diagram for State Management Flow  
+  
+
+  
+
+## 5\. Testing
+
+  
+  
+
+### 5.1. Input Request Helper
+
+<https://localhost:8090/instant/v1/enrollment/help?access_token={token-id>}  
+Method= GET
+
+Output Response (JSON String):
+
+    
+    
+    Content-Type: application/json
+    HTTP/1.1 200 OK
+    Content-Length: 384
+    Content-Type: application/json;charset=UTF-8
+    Server: Mule EE Core Extensions/3.3.2
+    X-MULE_ENCODING: UTF-8
+    
+    {
+       "message": "Input request helper.",
+       "data": {
+          "clientId": "ClientId; mandatory",
+          "accountNumber": "AccountNumber; string10_Type mandatory",
+          "enrollment": "enrollment; string1_Type:E/P",
+          "customAttribs": {
+              "suffix": "Suffix; string2_Type",
+              "surname": "Surname; string2_Type.",
+              "flagInd1": "FlagIndicator; string1_Type:C/S",
+              "flagLevel1": "FlagLevel; M/S/L",
+              "flagType1": "FlagType; string1_Type:C/R",
+              "flagNum1": "FlagNum1; string2_Type:69",
+              "reasonNum1": "ReasonNum1; string2_Type:80/90/99",
+              "emailId": "Email-Id; string255_Type. Required for ANDERA/NAOP." 
+          }
+       },
+       "httpStatus": 200
+    }
+    
+
+  
+  
+
+### 5.2. Test Cases
+
+{TODO} {UPDATE}
+
+Sl. No.| Test ID| Title| Testcase Description| Expected Result| Sample Data-
+set  
+---|---|---|---|---|---  
+1.| 10| Submit complete Record| Post a JSON payload having required value for
+the mandatory fields.| The API must process the data successfully (HTTP
+Code=200) and return JSON with "httpStatus: 200" and  **" message":
+"SUCCESSFUL"**, "StatusCode" : 00 and "StatusDesc": "SUCCESSFUL". API
+Response:
+
+    
+    
+    {
+      "message": "SUCCESSFUL",
+      "data": "{
+           \"StatusCode\": \"00\", 
+           \"StatusDesc\": \"SUCCESSFUL\", 
+           \"transId\": \"0D8FCD203F01FF21FFE5659D\" 
+         }",
+      "httpStatus": 200
+    }
+    
+
+|
+
+    
+    
+    { 
+      "accountNumber" : "10966",
+      "clientId" : "InfoIMAGE",
+      "customAttribs" : 
+       { 
+         "emailId" : "Niraj.Tripathi@infoimageinc.com",
+         "flagInd1" : "C",
+         "flagLevel1" : "M",
+         "flagNum1" : "69",
+         "flagType1" : "C",
+         "reasonNum1" : "",
+         "suffix" : "00",
+         "surname" : "VI" 
+       },
+      "enrollment" : "P" 
+    }
+      
+  
+2.| 20| Submit record with missing  **Account-number**.| Post a JSON payload
+with missing or null Account Number.| Account number is a mandatory field,
+therefore API should return the Input validation error (HTTP Code=400, Bad
+Request). Return "httpStatus: 400" and  **" message": "accountNumber value too
+long!"**|
+
+    
+    
+    {
+      "accountNumber" : "",
+      "clientId" : "InfoIMAGE",
+      "customAttribs" : 
+       { 
+          "flagInd1" : "C",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "reasonNum1" : "",
+          "suffix" : "00",
+          "surname" : "VI" 
+       },
+      "enrollment" : "P" 
+    }  
+  
+3.| 30| Submit record with missing  **Client-Id**.| Post a JSON payload with
+missing or null Client-Id.| Client-Id is a mandatory field, therefore API
+should return the Input validation error (HTTP Code=400, Bad Request). Return
+"httpStatus: 400" and  **" message": "accountNumber/clientId found null!"**|
+
+    
+    
+    {
+      "accountNumber" : "10966",
+      "customAttribs" : 
+        { 
+          "flagInd1" : "C",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "reasonNum1" : "",
+          "suffix" : "00",
+          "surname" : "VI" 
+        },
+      "enrollment" : "P" 
+    }  
+  
+4.| 40| Submit record with missing  **enrollment**.| Post a JSON payload with
+missing or null enrollment.| Enrollment is a mandatory field, therefore API
+should return the Input validation error (HTTP Code=400, Bad Request). Return
+"httpStatus: 400" and  **" message": "enrollment value too long!"**|
+
+    
+    
+    {
+      "accountNumber" : "10966",
+      "clientId" : "InfoIMAGE",
+      "customAttribs" : 
+        { 
+          "flagInd1" : "C",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "reasonNum1" : "",
+          "suffix" : "00",
+          "surname" : "VI" 
+        }
+    }  
+  
+5.| 50| Submit record with missing  **flagInd1**.| Post a JSON payload with
+missing or null flagInd1.| Since,  _flagInd1_  is a mandatory field, therefore
+API should return the Input validation error (HTTP Code=400, Bad Request).
+Return "httpStatus: 400" and  **" message": "flagInd1 invalid!"**|
+
+    
+    
+    {
+      "accountNumber" : "10966",
+      "clientId" : "InfoIMAGE",
+      "customAttribs" : { 
+          "flagInd1" : "",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "reasonNum1" : "",
+          "suffix" : "00",
+          "surname" : "VI" 
+        },
+      "enrollment" : "P" 
+    }  
+  
+6.| 60| Submit record with  **Account-number**  value having more than
+10-digits.| Post a JSON payload having  **Account-number**  value higher than
+10-digits.| Account-No has max size 10-chars, therefore API should return the
+Input validation error (HTTP Code=400, Bad Request). Return "httpStatus: 400"
+and  **" message": "accountNumber value too long!"**|
+
+    
+    
+    {
+      "accountNumber" : "12345678901",
+      "clientId" : "InfoIMAGE",
+      "customAttribs" : { 
+          "flagInd1" : "C",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "reasonNum1" : "",
+          "suffix" : "00",
+          "surname" : "VI" 
+        },
+      "enrollment" : "P" 
+    }  
+  
+7.| 70| Submit record with  **enrollment**  value having more than 1-char.|
+Post a JSON payload having  **enrollment**  value longer than 1-char. Ideally,
+it should be P or E.| enrollment has max size 1-char, therefore API should
+return the Input validation error (HTTP Code=400, Bad Request). Return
+"httpStatus: 400" and  **" message": "enrollment value too long!"**|
+
+    
+    
+    {
+      "accountNumber" : "10966",
+      "clientId" : "InfoIMAGE",
+      "customAttribs" : {
+          "flagInd1" : "C",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "reasonNum1" : "",
+          "suffix" : "00",
+          "surname" : "VI" 
+        },
+      "enrollment" : "P2" 
+    }  
+  
+8.| 80| Submit record with  **surname**  value having more than 2-char.| Post
+a JSON payload having  **surname**  value longer than 2-char. Ideally, it
+should be first two-chars of the last-name OR null value.| suffix has max size
+2-char, therefore API should return the Input validation error (HTTP Code=400,
+Bad Request). Return "httpStatus: 400" and  **" message": "surname length
+<>2!"**|
+
+    
+    
+    {
+      "accountNumber" : "10966",
+      "clientId" : "InfoIMAGE",
+      "customAttribs" : {
+          "flagInd1" : "C",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "reasonNum1" : "",
+          "suffix" : "00",
+          "surname" : "NUL" 
+        },
+      "enrollment" : "P" 
+    }  
+  
+9.| 90| Submit record with  **suffix**  value having more than 2-char.| Post a
+JSON payload having  **suffix**  value longer than 2-char. Ideally, it should
+be "00" OR null value.| suffix has max size 2-char, therefore API should
+return the Input validation error (HTTP Code=400, Bad Request). Return
+"httpStatus: 400" and  **" message": "suffix value too long!"**|
+
+    
+    
+    {
+      "accountNumber" : "10966",
+      "clientId" : "InfoIMAGE",
+      "customAttribs" : {
+          "flagInd1" : "C",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "reasonNum1" : "",
+          "suffix" : "123",
+          "surname" : "VI" 
+        },
+      "enrollment" : "P" 
+    }  
+  
+10.| 100| Submit record with  **emailId**  value in wrong format.| Post a JSON
+payload having  **emailId**  invalid value like missing
+@[company.com](http://company.com). Ideally, it should be either null or in
+the format of [abc@company.xxx](mailto:abc@company.xxx).| Email validation
+failed, therefore API should return the Input validation error (HTTP Code=400,
+Bad Request). Return "httpStatus: 400" and  **" message": "emailId
+invalid!"**|
+
+    
+    
+    {
+      "accountNumber" : "10966",
+      "clientId" : "NAOP",
+      "customAttribs" : {
+          "emailId" : "dummy-test",
+          "flagInd1" : "S",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "reasonNum1" : "",
+          "suffix" : "00",
+          "surname" : "VI" 
+        },
+      "enrollment" : "P" 
+    }  
+  
+11.| 110| Submit record with  **flagIndicator**  value other than S/C or
+Null.| Post a JSON payload having  **flagIndicator**  invalid value like null
+or missing value or other than S/C: Set/Clear. Ideally, it should be either
+"S" or "C".| falgIndicator validation failed, therefore API should return the
+Input validation error (HTTP Code=400, Bad Request). Return "httpStatus: 400"
+and  **" message": "flagInd1 invalid!"**|
+
+    
+    
+    {
+      "accountNumber" : "10966",
+      "clientId" : "NAOP",
+      "customAttribs" : {
+          "flagInd1" : "Z",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "reasonNum1" : "",
+          "suffix" : "00",
+          "surname" : "VI" 
+        },
+      "enrollment" : "P" 
+    }  
+  
+12.| 120| Submit record with  **flagLevel1**  value longer than 1-char.| Post
+a JSON payload having  **flagLevel1**  longer than 1-char. Ideally, it should
+be "M" or "".| flagLevel1 validation failed, therefore API should return the
+Input validation error (HTTP Code=400, Bad Request). Return "httpStatus: 400"
+and  **" message": "flagLevel1 field length<>1!"**|
+
+    
+    
+    {
+      "accountNumber" : "10966",
+      "clientId" : "NAOP",
+      "customAttribs" : {
+          "flagInd1" : "S",
+          "flagLevel1" : "MM",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "reasonNum1" : "",
+          "suffix" : "",
+          "surname" : "VI" 
+        },
+      "enrollment" : "P" 
+    }  
+  
+13.| 130| Submit record with  **flagType1**  value longer than 1-char.| Post a
+JSON payload having  **flagType1**  longer than 1-char. Ideally, it should be
+"M" or "".| flagType1 validation failed, therefore API should return the Input
+validation error (HTTP Code=400, Bad Request). Return "httpStatus: 400" and
+**" message": "flagType1 field length<>1!"**|
+
+    
+    
+    {
+      "accountNumber" : "10966",
+      "clientId" : "NAOP",
+      "customAttribs" : {
+          "flagInd1" : "S",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "CD",
+          "reasonNum1" : "",
+          "suffix" : "",
+          "surname" : "VI" 
+        },
+      "enrollment" : "P" 
+    }  
+  
+14.| 200| Submit Record with wrong SURNAME.| Post a JSON payload having wrong
+value for the SURNAME field.| The API must post the data successfully (HTTP
+Code=200) to Pathways and return JSON response to client. It returns
+"httpStatus: 200" and  **" message": "SURNAME WRONG"**, "StatusCode" : 0009
+and "StatusDesc": "SURNAME WRONG". API Response:
+
+    
+    
+    {
+      "message": "SURNAME WRONG",
+      "data": "{
+           \"StatusCode\": \"0009\", 
+           \"StatusDesc\": \"SURNAME WRONG\", 
+           \"transId\": \"2B67E7203F013CA27247422C\" 
+         }",
+      "httpStatus": 200
+    }
+    
+
+|
+
+    
+    
+    { 
+      "accountNumber" : "10966",
+      "clientId" : "InfoIMAGE",
+      "customAttribs" : { 
+          "flagInd1" : "C",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "surname" : "ZI" 
+        },
+      "enrollment" : "P" 
+    }
+      
+  
+15.| 210| Submit Record for Get Access Token| Post a request with User-
+name/password to get the secure token from OAuth2 Service.|
+https://{Server}:{Port}/oauth2/token
+
+    
+    
+    HTTP Method: POST
+    HTTP Header: Content-Type= application/x-www-form-urlencoded
+    HTTP Payload:
+    username={user-id}&
+    password={password}&
+    client_id={client-id}&
+    grant_type=password&
+    scope=READ_PROFILE%20WRITE_PROFILE
+
+| Response
+
+    
+    
+    {
+     "scope": "READ_PROFILE WRITE_PROFILE",
+     "expires_in": 120000,
+     "token_type": "bearer",
+     "access_token": 
+     "R1Yyyn6cf0tsmWK4J_Oea4TpJW_F-Gf_ICQClWoe4Y-e27Rb40fBSA" 
+    }
+      
+  
+* * *
+
+  
+  
+
+## 6\. Appendix
+
+  
+  
+
+### 6.1. Appendix A: HTTP Response Codes
+
+This list shows the common HTTP response codes and some brief guidelines on
+how to use them.
+
+Code| Name| Description| Note  
+---|---|---|---  
+200| OK| Request was processed as expected.| Request returns a representation
+of the requested entity. Response to a successful GET, PUT, PATCH or DELETE.
+Can also be used for a POST that doesn't result in a creation.  
+201| Created| Request created an entity.| -This cannot happen on GET or DELETE
+requests. This will happen on POST and may happen on PUT requests.  
+The response should set the Location header to the URI for the created
+resource. - Response to a POST that results in a creation.  
+304| Not Modified| The requested resource has not been modified.| \- The
+client's cached representation is still valid. No body is allowed for these
+responses.  
+400| Bad request| Check the error message and correct the request syntax.| Bad
+Input payload. Check the JSON payload structure or mandatory fields value.  
+401| Unauthorized| \- Authentication failure, check your client_id,
+client_secret in order to meet authentication requirements.| This may happen
+when invalid or empty authentication details are provided.  
+403| Forbidden| \- When authentication succeeded but authenticated user
+doesn't have access to the resource.| Please provide authentication
+credentials like client_id, client_secret.  
+404| Not found| \- When a non-existent resource is requested. No resource was
+found at this location (URI).| Mistake in the host or path of the service URI.  
+405| Method not supported| \- When an HTTP method is being requested that
+isn't allowed for the authenticated user.| In eSatement Customer Profile only
+GET, POST is supported. No DEL, PUT operations support.  
+500| Any server-side error.| 500: Internal Server error.| These codes should
+not be set programmatically and are reserved for unexpected errors.  
+503| Server busy| Server busy and service unavailable. Please retry the
+request.|  
+  
+  
+  
+  
+
+### 6.2. Resources
+
+    
+    
+    << Any external/internal resource or references... >>
+
+ **References:**
+
+<http://develop.infoimage.com/projects/esafetybox/wiki/AIDrop>
+
+* * *
+
+  
+
+### Attachments
+
+  
+
+

@@ -1,0 +1,919 @@
+title: SSCU - Implementation details
+body:   
+
+## A. Overview
+
+  
+  
+
+### i) Background
+
+InfoImage has taken up implementation for SSCU PathWays Instant Enrollment -
+eStatements profile update for paperless (email) statement delivery feature.
+There are four (4) potential service entry-points to kick-off the instant
+enrollment process (InfoIMAGE, SSCU, NAOP & Andera). In turn, enrollment
+process will update the Fiserv Spectrum Core-DB to update the custom flag
+(Flag 69) for Member-level control flag. The eStatement application will use
+Flag-69 for eStatement delivery purpose.  
+  
+
+  
+
+### ii) Implementation
+
+The SSCU (Pathways) Instant Enrollment service is developed using Mule-ESB
+V3.3 having workflow-based implementation for SOAP/XML web-services
+integration with PathWays Site (real-time API call). The Mule-ESB published
+REST API service to accept & process the enrollment request (in JSON format)
+and transform it into the SOAP/XML payload request in order to invoke the
+PathWays web-service. In turn, Pathways web-service call will invoke XML-
+command against target CoreSpectrum (Core-DB) system to make the enrollment
+changes. It will be a complete end-to-end sync (real-time) call by the end-
+client, which will process & return the response with status-code & status
+description (Success/Failed/Warning/Error).
+
+Given below diagram describes high-level design diagram for the SSCU
+(Pathways) Instant Enrollment service.
+
+Figure-1: SSCU (Pathways) Service - High Level Architecture Diagram
+
+ **Real-time API Call**
+
+  * Mule-ESB supports real-time call using REST/JSON, which will in-turn call the PathWays web-service to post the request to the target system.  
+It will return the status code & desc in real-time to the REST end-client
+application.
+
+ **Nightly Batch Update**
+
+  * Nightly batch process will run at 30-min interval to update the flag for anyone who changes their status while Fiserv's core goes down for nightly maintenance at 7:30 PM-10:45 PM (daily), or end-of-month maintenance, or anytime the core is down in general.
+  * The service keeps record into the transaction DB table in order to store the return XML & status code for each transaction. In case Pathways Server not reachable or down for maintenance, it will store into the DB to schedule it for retry at regular intervals. It will make a SOAP/XML request to POST to the target PathWays Server at regular intervals until the set expiration period has passed (5 hours).
+  * Also, when a member enrolls through the Member Site, SSCU would like the mail field to be pre-populated with the email address stored in Fiserv's core. The backend DB service will update the InfoDB by making an UPSERT call.
+
+  
+  
+
+## B. Mule ESB REST APIs
+
+  
+  
+
+### i) To get access token - REST/JSON API
+
+ **Request:**  REST API client (e.g. InfoIMAGE, SSCU, Andera, NAOP) will make
+a REST call to get the access token for the Mule-ESB Instant Enrollment
+Service (REST/JSON API call):
+
+tip. Method=POST  
+URL: http://{server}:{port}/oauth2/token  
+Example: <https://10.8.11.21:8090/oauth2/token>  
+HTTP Header:  
+Content-Type= application/x-www-form-urlencoded  
+HTTP POST Body:  
+username=<user-
+name>&password=<pwd>&client_id=<id>&grant_type=password&scope=READ_PROFILE%20WRITE_PROFILE
+
+Access Token Request
+
+The client makes a request to the token endpoint by adding the following
+parameter using the "application/x-www-form-urlencoded"  
+format in the HTTP request entity-body:
+
+    
+    
+    grant_type     REQUIRED.  Value MUST be set to "password".  
+    username       REQUIRED.  The resource owner username.  
+    password       REQUIRED.  The resource owner password.  
+    scope          REQUIRED.  The scope of the access request expressed as a list of space-delimited, case sensitive strings.    
+                  (Value= WRITE_PROFILE or READ_PROFILE WRITE_PROFILE)
+
+The request will generate the access-toke and return the response in JSON
+format (key-value pair).
+
+    
+    
+    Method=GET  
+    URL: http://{server}:{port}/oauth2/token  
+    <https://10.8.11.21:8090/oauth2/token>  
+                           ?username=YOUR_USER_ID  
+                           &password=YOUR_PASSWORD  
+                           &client_id=YOUR_CLIENT_ID  
+                           &grant_type=password  
+                           &scope=READ_PROFILE%20WRITE_PROFILE
+
+ **Response:**  Output from OAuth2 Token API call:
+
+tip. HTTP POST method response  
+header: Content-Type=application/json
+
+    
+    
+    HTTP/1.1 200 OK
+    Content-Length: 184
+    Content-Type: application/json;charset=UTF-8
+    Server: Mule EE Core Extensions/3.3.2
+    X-MULE_ENCODING: UTF-8
+    
+    {
+      "scope": "READ_PROFILE WRITE_PROFILE",
+      "expires_in": 120000,
+      "token_type": "bearer",
+      "access_token": "R1Yyyn6cgMluJHQLf0tOjKsmWK4J_Oea4TpJW_F-Gf_ICQClWoe4E5v1lsAj2eeT3N091mYTwY-e27Rb40fBSA" 
+    }
+    
+
+Where:
+
+    
+    
+    scope  
+                  READ_PROFILE/WRITE_PROFILE or Both (READ_PROFILE WRITE_PROFILE)  
+    token   
+                  Validity period in mill-seconds.  
+    token-type    
+                  Always returns fixed value as "bearer"   
+    access_token    
+                  Token value which can be used to make read/write calls
+
+  * As you can see in the above example, Response object wraps up the access_token.
+  * The next calls should have "access_token" value in order to perform read/write operations. The URL will have ?access_token=<access_token-value>
+
+ **HTP Response code and Description:**
+
+Given below HTTP response code will be returned by the OAuth2 Token API to
+indicate the service status:
+
+HTP Code| Description  
+---|---  
+200| OK  
+400| BAD_REQUEST. When Username/password is wrong. JSON Output:  
+
+    
+    
+    { 
+     "error": "access_denied", 
+     "error_description": "" 
+    }  
+  
+400| BAD_REQUEST. When username is missing.  
+
+    
+    
+    { 
+     "error": "invalid_request", 
+     "error_description": "Missing mandatory parameter: username" 
+    }  
+  
+400| BAD_REQUEST. When scope value is missing. JSON Output:  
+
+    
+    
+    { 
+     "error": "invalid_request", 
+     "error_description": "Missing mandatory parameter: scope" 
+    }  
+  
+400| BAD_REQUEST. When client_id is missing.  
+
+    
+    
+    { 
+     "error": "invalid_request", 
+     "error_description": "No client identification nor authentication found" 
+    }  
+  
+400| BAD_REQUEST. When grant_type is missing.  
+
+    
+    
+    { 
+     "error": "invalid_request", 
+     "error_description": "Missing mandatory parameter: grant_type" 
+    }  
+  
+503| INTERNAL_SERVER_ERROR : Server busy and service unavailable.  
+  
+  
+  
+
+###  **ii) Get Token API - Request/Response Examples**
+
+Get Token Request using REST Client:
+
+* * *
+
+  
+  
+
+### iii) To update Member Profile for the Instant Enrollment - REST/JSON API
+
+ **Request:**  REST API client (e.g. InfoIMAGE, SSCU, Andera, NAOP) will make
+a REST call to update the member enrollment (set or clear eStatement delivery)
+using Mule-ESB Instant Enrollment Service (REST/JSON API call):
+
+tip. Method=POST  
+URL: https://{host}:{port}/api/v1/enrollment?access_token=&lt;token>  
+Example: <https://10.8.11.21:8090/api/v1/enrollment?access_token={token-value-
+received-by-prev-api-call>}  
+HTTP Header:  
+Content-Type= application/json  
+HTTP POST Body:  
+JSON Payload
+
+where:
+
+host= host name or IP address of the Server  
+port= The port number that the MULE ESB Server is running on.  
+api= The context of the application. Typically, this is the name of the
+application.  
+v1= A fixed value in the URL for REST version 1.0.  
+enrollment= A fixed value in the URL. Typically, it's mapped to the resource.
+
+The request will post the SOAP/XML command to the Pathways in order to make
+changes to the target system. It will return the response in JSON format.
+
+Note:
+
+The Instant Enrollment API can be accessed via a RESTful API with HTTP POST
+command in order to perform an operation on target system. The other HTTP
+method like GET, PUT, and DELETE are not supported. The API will return HTTP
+501 status code in case of unsupported method call.
+
+Sl No.| Resource URI| HTTP Method| Operation  
+---|---|---|---  
+1.|
+[https://localhost:8090/api/v1/enrollment?access_token=&lt;token](https://localhost:8090/api/v1/enrollment?access_token=&lt;token)>|
+POST| Request the member profile update for the eStatement enrollment. It will
+set/clear the entry for the Member control flag=69 into the Core-DB.  
+2.| <https://localhost:8090/api/v1/enrollment>| POST| Same as above. The token
+can be part of the HTTP Header parameter in the form of "Authorization: Bearer
+{token-id}"  
+  
+The request payload (content-type) for the REST API is application/json.  
+Sample JSON Output Response from REST API call is described below:
+
+tip. HTTP POST method response  
+header: Content-Type=application/json
+
+    
+    
+    HTTP/1.1 200 OK
+    Content-Length: 184
+    Content-Type: application/json;charset=UTF-8
+    X-MULE_ENCODING: UTF-8
+    
+    {
+       "message": "SUCCESSFUL",
+       "data": "{ 
+                 \"transactionId\" : \"7DE1BEF23E0119DCFAAE04F4\",
+                 \"StatusCode\": 00,
+                 \"StatusDesc\": \"SUCCESSFUL\" 
+               }",
+       "httpStatus": 200
+    }
+    
+
+Response codes and Description
+
+HTTP response codes are used to indicate:
+
+Code| Description  
+---|---  
+200| OK  
+401| Bad request; check the error message and correct the request syntax.  
+403| Forbidden; Authentication failure, please provide authentication
+credentials.  
+404| Not found: mistake in the host or path of the service URI.  
+501| Method not supported. Implementation not supported.  
+503| Server busy and service unavailable. Please retry the request.  
+  
+  
+  
+
+### iv) Validation Rules and Default Values
+
+ **Request:**  Given below validations are enforced for the input JSON request
+as a part of the REST/JSON API call:
+
+Sl No.| Title| Criteria| Validation Description  
+---|---|---|---  
+1.| Client-Id - Check on NULL or EMPTY| When Client-Id is null or empty.| The
+API will return the Bad Input error: BadRequestException("clientId found
+Null!"); BadRequestException("clientId found Empty!");  
+2.| Account-Number - Check on NULL| When Account-Number is Null| The API will
+return the Bad Input error: BadRequestException("accountNumber found Null!");  
+3.| Account-Number - Check on field length| When Account-Number length is > 10
+or <=0| The API will return the Bad Input error:
+BadRequestException("accountNumber value too long!");  
+4.| Enrollment - Check on NULL| When Enrollment is Null| The API will return
+the Bad Input error: BadRequestException("enrollment found Null!");  
+5.| Enrollment- Check on field length| When Enrollment length is > 1 or <=0|
+The API will return the Bad Input error: BadRequestException("enrollment value
+too long!");  
+6.| Surname- Check on field length| When Surname is not empty and length is <>
+2| The API will return the Bad Input error: BadRequestException("surname
+length <>2!");  
+7.| Suffix- Check on field length| When Suffix is not empty and length is > 2|
+The API will return the Bad Input error: BadRequestException("suffix value too
+long!");  
+8.| Email-Id - valiadation length| When Email-id is not empty and format is
+not correct (i.e. missing domain @comp.xxx)| The API will return the Bad Input
+error: BadRequestException("emailId invalid!");  
+9.| FlagLevel1 - Check on field length| When FlagLevel1 is not empty and
+length is > 1| The API will return the Bad Input error:
+BadRequestException("flagLevel1 field length>1!");  
+10.| FlagType1 - Check on field length| When FlagType1 is not empty and length
+is > 1| The API will return the Bad Input error:
+BadRequestException("flagType1 field length>1!");  
+11.| FlagSetClear - Check on NULL or EMPTY| When FlagSetClear is NULL or
+EMPTY| The API will return the Bad Input error:
+BadRequestException("flagSetorClearInd1 value Null!");
+BadRequestException("flagInd1 invalid!");  
+12.| FlagSetClear - Validation Check| When FlagSetClear is other than S or C|
+The API will return the Bad Input error: BadRequestException("flagInd1
+invalid!");  
+  
+* * *
+
+  
+  
+
+## C. Sequence Diagram
+
+Figure-2: Sequence Diagram for instant enrollment member registration flow  
+  
+
+  
+
+## D. Mule ESB Service - Database DDL
+
+  
+  
+
+### i) Instant Enrollment - instantenrollment_transaction Table
+
+    
+    
+    CREATE TABLE `instantenrollment_transaction` (
+      `id` bigint(30) NOT NULL AUTO_INCREMENT,
+      `transaction_id` varchar(37) NOT NULL COMMENT 'UUID',
+      `client_id` varchar(50) NOT NULL COMMENT 'Requesater-id, Andera/NAOP/InfoImage',
+      `account_number` varchar(10) NOT NULL COMMENT 'member-client account-no.',
+      `enrollment` varchar(1) DEFAULT NULL,
+      `suffix` varchar(2) DEFAULT NULL COMMENT 'Two-char member client suffix.',
+      `surname` varchar(2) DEFAULT NULL COMMENT 'First 2-char of Member''''s last name.',
+      `flagSetOrClear` varchar(1) DEFAULT 'S' COMMENT 'Set or Clear (S/C).',
+      `flagLevel1` varchar(1) DEFAULT 'M' COMMENT '"M" = Member level, ',
+      `flagType1` varchar(1) DEFAULT 'C' COMMENT '"C" = Control flag',
+      `flagNum1` varchar(2) DEFAULT '69' COMMENT 'CustomFlag-69',
+      `reasonNum1` varchar(2) DEFAULT NULL COMMENT 'Reason code',
+      `member_client_emailid` varchar(255) DEFAULT NULL COMMENT 'Email-id applicable for Andera, NAOP clients.',
+      `is_processed` tinyint(1) DEFAULT '0' COMMENT '1: True, processed. 0: False, not processed',
+      `status_code` varchar(7) DEFAULT NULL,
+      `transaction_status` varchar(60) DEFAULT NULL COMMENT 'Created, Processed, Error.',
+      `CREATED_ON` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+      `UPDATED_ON` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+      `payload_request` text CHARACTER SET latin1,
+      `pathway_response` text CHARACTER SET latin1,
+      PRIMARY KEY (`id`),
+      UNIQUE KEY `transaction_id_uniq_key` (`transaction_id`)
+    ) ENGINE=InnoDB;
+    
+
+Table-1: instantenrollment_transaction DDL
+
+* * *
+
+  
+  
+
+## E. PathWays API Reference Info
+
+  
+  
+
+### i) Overview
+
+PathWays is a "middleware" server that provides web-services for interaction
+with Spectrum (Core-DB).
+
+The PathWays is installed at SSCU site, which is accessible by InfoIMAGE
+Server to invoke Spectrum web-services in order to perform transaction
+processing against Core-DB.
+
+Client applications communicate with PathWays thru published web-services
+(SOAP/XML). PathWays, in turn, communicates with a Spectrum host via a
+controller. The controller manages the Spectrum transaction, and returns
+results to the web-service, which interprets and sends the results back to the
+client application.  
+  
+
+  
+
+### ii) PathWays - CmdSpectrum Web-Services
+
+PathWays provides WS-I compliant web-services, which provides standardized
+method of executing Spectrum commands (CmdSpectrum ) via XML Command.
+
+Given below table describes PathWays web services list related to the current
+implementation.
+
+Sl No.| XML Command Name| Command Description| Sample XML Command Payload  
+---|---|---|---  
+1.| FLAG| Set/Clear Flags. Use the FLAG command to set or clear control and
+restrictive flags. Refer Schema file: FLAG.xsd|
+
+    
+    
+     <FLAGRq>
+         <Account>xyz</Account>
+         <Suffix>00</Suffix>
+         <Surname>ZZ</Surname>
+         <FlagSetOrClear1>S</FlagSetOrClear1>
+         <FlagLevel1>M</FlagLevel1>
+         <FlagType1>C</FlagType1>
+         <FlagNum1>69</FlagNum1>
+         <ReasonNum1></ReasonNum1>
+     </FLAGRq>
+      
+  
+2.| FDIN| Retrieve the Flag status. Use the FDIN command to retrieve the
+control and restrictive flags. Refer Schema file: FDIN.xsd|
+
+    
+    
+      <FDINRq>
+         <Account>xyz</Account>
+         <Surname>ZZ</Surname>
+         <FlagLevel>M</FlagLevel>
+      </FDINRq>
+      
+  
+Latest version of Spectrum commands is Spectrum HP-UX 11.5, which is used for
+this project.  
+  
+
+  
+
+### iv) Related URLs
+
+  * Vendors can access the Spectrum HP-UX Reference Library for in-depth documentation on Spectrum HP-UX processes. Use your PathWays SDK credentials to log on at:
+
+<https://portal.spectrum.fiserv.com/sxrl>
+
+Username: CLEONG  
+Password: look through email with subject: InfoIMAGE - PathWays SDK
+
+  * For SSCU, PathWays web host is:  
+<http://pathtest01:8080/summit/TESTCU/pathways/services/CmdSpectrum?WSDL>
+
+* * *
+
+  
+  
+
+## F. Testing
+
+  
+  
+
+### i) Input Request Helper
+
+<https://localhost:8090/instant/v1/enrollment/help?access_token={token-id>}  
+Method= GET
+
+Output Response (JSON String):
+
+    
+    
+    Content-Type: application/json
+    HTTP/1.1 200 OK
+    Content-Length: 384
+    Content-Type: application/json;charset=UTF-8
+    Server: Mule EE Core Extensions/3.3.2
+    X-MULE_ENCODING: UTF-8
+    
+    {
+       "message": "Input request helper.",
+       "data": {
+          "clientId": "ClientId; mandatory",
+          "accountNumber": "AccountNumber; string10_Type mandatory",
+          "enrollment": "enrollment; string1_Type:E/P",
+          "customAttribs": {
+              "suffix": "Suffix; string2_Type",
+              "surname": "Surname; string2_Type.",
+              "flagInd1": "FlagIndicator; string1_Type:C/S",
+              "flagLevel1": "FlagLevel; M/S/L",
+              "flagType1": "FlagType; string1_Type:C/R",
+              "flagNum1": "FlagNum1; string2_Type:69",
+              "reasonNum1": "ReasonNum1; string2_Type:80/90/99",
+              "emailId": "Email-Id; string255_Type. Required for ANDERA/NAOP." 
+          }
+       },
+       "httpStatus": 200
+    }
+    
+
+  
+  
+
+### ii) Test Cases
+
+Sl. No.| Test ID| Title| Testcase Description| Expected Result| Sample Data-
+set  
+---|---|---|---|---|---  
+1.| 10| Submit complete Record| Post a JSON payload having required value for
+the mandatory fields.| The API must process the data successfully (HTTP
+Code=200) and return JSON with "httpStatus: 200" and  **" message":
+"SUCCESSFUL"**, "StatusCode" : 00 and "StatusDesc": "SUCCESSFUL". API
+Response:
+
+    
+    
+    {
+      "message": "SUCCESSFUL",
+      "data": "{
+           \"StatusCode\": \"00\", 
+           \"StatusDesc\": \"SUCCESSFUL\", 
+           \"transId\": \"0D8FCD203F01FF21FFE5659D\" 
+         }",
+      "httpStatus": 200
+    }
+    
+
+|
+
+    
+    
+    { 
+      "accountNumber" : "10966",
+      "clientId" : "InfoIMAGE",
+      "customAttribs" : 
+       { 
+         "emailId" : "Niraj.Tripathi@infoimageinc.com",
+         "flagInd1" : "C",
+         "flagLevel1" : "M",
+         "flagNum1" : "69",
+         "flagType1" : "C",
+         "reasonNum1" : "",
+         "suffix" : "00",
+         "surname" : "VI" 
+       },
+      "enrollment" : "P" 
+    }
+      
+  
+2.| 20| Submit record with missing  **Account-number**.| Post a JSON payload
+with missing or null Account Number.| Account number is a mandatory field,
+therefore API should return the Input validation error (HTTP Code=400, Bad
+Request). Return "httpStatus: 400" and  **" message": "accountNumber value too
+long!"**|
+
+    
+    
+    {
+      "accountNumber" : "",
+      "clientId" : "InfoIMAGE",
+      "customAttribs" : 
+       { 
+          "flagInd1" : "C",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "reasonNum1" : "",
+          "suffix" : "00",
+          "surname" : "VI" 
+       },
+      "enrollment" : "P" 
+    }  
+  
+3.| 30| Submit record with missing  **Client-Id**.| Post a JSON payload with
+missing or null Client-Id.| Client-Id is a mandatory field, therefore API
+should return the Input validation error (HTTP Code=400, Bad Request). Return
+"httpStatus: 400" and  **" message": "accountNumber/clientId found null!"**|
+
+    
+    
+    {
+      "accountNumber" : "10966",
+      "customAttribs" : 
+        { 
+          "flagInd1" : "C",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "reasonNum1" : "",
+          "suffix" : "00",
+          "surname" : "VI" 
+        },
+      "enrollment" : "P" 
+    }  
+  
+4.| 40| Submit record with missing  **enrollment**.| Post a JSON payload with
+missing or null enrollment.| Enrollment is a mandatory field, therefore API
+should return the Input validation error (HTTP Code=400, Bad Request). Return
+"httpStatus: 400" and  **" message": "enrollment value too long!"**|
+
+    
+    
+    {
+      "accountNumber" : "10966",
+      "clientId" : "InfoIMAGE",
+      "customAttribs" : 
+        { 
+          "flagInd1" : "C",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "reasonNum1" : "",
+          "suffix" : "00",
+          "surname" : "VI" 
+        }
+    }  
+  
+5.| 50| Submit record with missing  **flagInd1**.| Post a JSON payload with
+missing or null flagInd1.| Since,  _flagInd1_  is a mandatory field, therefore
+API should return the Input validation error (HTTP Code=400, Bad Request).
+Return "httpStatus: 400" and  **" message": "flagInd1 invalid!"**|
+
+    
+    
+    {
+      "accountNumber" : "10966",
+      "clientId" : "InfoIMAGE",
+      "customAttribs" : { 
+          "flagInd1" : "",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "reasonNum1" : "",
+          "suffix" : "00",
+          "surname" : "VI" 
+        },
+      "enrollment" : "P" 
+    }  
+  
+6.| 60| Submit record with  **Account-number**  value having more than
+10-digits.| Post a JSON payload having  **Account-number**  value higher than
+10-digits.| Account-No has max size 10-chars, therefore API should return the
+Input validation error (HTTP Code=400, Bad Request). Return "httpStatus: 400"
+and  **" message": "accountNumber value too long!"**|
+
+    
+    
+    {
+      "accountNumber" : "12345678901",
+      "clientId" : "InfoIMAGE",
+      "customAttribs" : { 
+          "flagInd1" : "C",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "reasonNum1" : "",
+          "suffix" : "00",
+          "surname" : "VI" 
+        },
+      "enrollment" : "P" 
+    }  
+  
+7.| 70| Submit record with  **enrollment**  value having more than 1-char.|
+Post a JSON payload having  **enrollment**  value longer than 1-char. Ideally,
+it should be P or E.| enrollment has max size 1-char, therefore API should
+return the Input validation error (HTTP Code=400, Bad Request). Return
+"httpStatus: 400" and  **" message": "enrollment value too long!"**|
+
+    
+    
+    {
+      "accountNumber" : "10966",
+      "clientId" : "InfoIMAGE",
+      "customAttribs" : {
+          "flagInd1" : "C",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "reasonNum1" : "",
+          "suffix" : "00",
+          "surname" : "VI" 
+        },
+      "enrollment" : "P2" 
+    }  
+  
+8.| 80| Submit record with  **surname**  value having more than 2-char.| Post
+a JSON payload having  **surname**  value longer than 2-char. Ideally, it
+should be first two-chars of the last-name OR null value.| suffix has max size
+2-char, therefore API should return the Input validation error (HTTP Code=400,
+Bad Request). Return "httpStatus: 400" and  **" message": "surname length
+<>2!"**|
+
+    
+    
+    {
+      "accountNumber" : "10966",
+      "clientId" : "InfoIMAGE",
+      "customAttribs" : {
+          "flagInd1" : "C",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "reasonNum1" : "",
+          "suffix" : "00",
+          "surname" : "NUL" 
+        },
+      "enrollment" : "P" 
+    }  
+  
+9.| 90| Submit record with  **suffix**  value having more than 2-char.| Post a
+JSON payload having  **suffix**  value longer than 2-char. Ideally, it should
+be "00" OR null value.| suffix has max size 2-char, therefore API should
+return the Input validation error (HTTP Code=400, Bad Request). Return
+"httpStatus: 400" and  **" message": "suffix value too long!"**|
+
+    
+    
+    {
+      "accountNumber" : "10966",
+      "clientId" : "InfoIMAGE",
+      "customAttribs" : {
+          "flagInd1" : "C",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "reasonNum1" : "",
+          "suffix" : "123",
+          "surname" : "VI" 
+        },
+      "enrollment" : "P" 
+    }  
+  
+10.| 100| Submit record with  **emailId**  value in wrong format.| Post a JSON
+payload having  **emailId**  invalid value like missing
+@[company.com](http://company.com). Ideally, it should be either null or in
+the format of [abc@company.xxx](mailto:abc@company.xxx).| Email validation
+failed, therefore API should return the Input validation error (HTTP Code=400,
+Bad Request). Return "httpStatus: 400" and  **" message": "emailId
+invalid!"**|
+
+    
+    
+    {
+      "accountNumber" : "10966",
+      "clientId" : "NAOP",
+      "customAttribs" : {
+          "emailId" : "dummy-test",
+          "flagInd1" : "S",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "reasonNum1" : "",
+          "suffix" : "00",
+          "surname" : "VI" 
+        },
+      "enrollment" : "P" 
+    }  
+  
+11.| 110| Submit record with  **flagIndicator**  value other than S/C or
+Null.| Post a JSON payload having  **flagIndicator**  invalid value like null
+or missing value or other than S/C: Set/Clear. Ideally, it should be either
+"S" or "C".| falgIndicator validation failed, therefore API should return the
+Input validation error (HTTP Code=400, Bad Request). Return "httpStatus: 400"
+and  **" message": "flagInd1 invalid!"**|
+
+    
+    
+    {
+      "accountNumber" : "10966",
+      "clientId" : "NAOP",
+      "customAttribs" : {
+          "flagInd1" : "Z",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "reasonNum1" : "",
+          "suffix" : "00",
+          "surname" : "VI" 
+        },
+      "enrollment" : "P" 
+    }  
+  
+12.| 120| Submit record with  **flagLevel1**  value longer than 1-char.| Post
+a JSON payload having  **flagLevel1**  longer than 1-char. Ideally, it should
+be "M" or "".| flagLevel1 validation failed, therefore API should return the
+Input validation error (HTTP Code=400, Bad Request). Return "httpStatus: 400"
+and  **" message": "flagLevel1 field length<>1!"**|
+
+    
+    
+    {
+      "accountNumber" : "10966",
+      "clientId" : "NAOP",
+      "customAttribs" : {
+          "flagInd1" : "S",
+          "flagLevel1" : "MM",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "reasonNum1" : "",
+          "suffix" : "",
+          "surname" : "VI" 
+        },
+      "enrollment" : "P" 
+    }  
+  
+13.| 130| Submit record with  **flagType1**  value longer than 1-char.| Post a
+JSON payload having  **flagType1**  longer than 1-char. Ideally, it should be
+"M" or "".| flagType1 validation failed, therefore API should return the Input
+validation error (HTTP Code=400, Bad Request). Return "httpStatus: 400" and
+**" message": "flagType1 field length<>1!"**|
+
+    
+    
+    {
+      "accountNumber" : "10966",
+      "clientId" : "NAOP",
+      "customAttribs" : {
+          "flagInd1" : "S",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "CD",
+          "reasonNum1" : "",
+          "suffix" : "",
+          "surname" : "VI" 
+        },
+      "enrollment" : "P" 
+    }  
+  
+14.| 200| Submit Record with wrong SURNAME.| Post a JSON payload having wrong
+value for the SURNAME field.| The API must post the data successfully (HTTP
+Code=200) to Pathways and return JSON response to client. It returns
+"httpStatus: 200" and  **" message": "SURNAME WRONG"**, "StatusCode" : 0009
+and "StatusDesc": "SURNAME WRONG". API Response:
+
+    
+    
+    {
+      "message": "SURNAME WRONG",
+      "data": "{
+           \"StatusCode\": \"0009\", 
+           \"StatusDesc\": \"SURNAME WRONG\", 
+           \"transId\": \"2B67E7203F013CA27247422C\" 
+         }",
+      "httpStatus": 200
+    }
+    
+
+|
+
+    
+    
+    { 
+      "accountNumber" : "10966",
+      "clientId" : "InfoIMAGE",
+      "customAttribs" : { 
+          "flagInd1" : "C",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "surname" : "ZI" 
+        },
+      "enrollment" : "P" 
+    }
+      
+  
+15.| 210| Submit Record for Get Access Token| Post a request with User-
+name/password to get the secure token from OAuth2 Service.|
+https://{Server}:{Port}/oauth2/token
+
+    
+    
+    HTTP Method: POST
+    HTTP Header: Content-Type= application/x-www-form-urlencoded
+    HTTP Payload:
+    username={user-id}&
+    password={password}&
+    client_id={client-id}&
+    grant_type=password&
+    scope=READ_PROFILE%20WRITE_PROFILE
+
+| Response
+
+    
+    
+    {
+     "scope": "READ_PROFILE WRITE_PROFILE",
+     "expires_in": 120000,
+     "token_type": "bearer",
+     "access_token": 
+     "R1Yyyn6cf0tsmWK4J_Oea4TpJW_F-Gf_ICQClWoe4Y-e27Rb40fBSA" 
+    }
+      
+  
+* * *
+
+  
+
+### Attachments
+
+250
+
+  
+
+

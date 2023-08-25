@@ -1,0 +1,307 @@
+title: Alkami Single Sign-On - SEFC Specific Doc
+body: * * *
+
+# SEFC Specifications
+
+## Endpoints
+
+### Pilot
+
+ssoKeyGen: <https://sefcpilot.infoimageinc.com/ssoKeyGen/singleSignOn7>
+
+ssoExchange: <https://sefcpilot.infoimageinc.com/ssoExchange>
+
+### Production
+
+ssoKeyGen: <https://estatement.sefcu.com/ssoKeyGen/singleSignOn7>
+
+ssoExchange: <https://estatement.sefcu.com/ssoExchange>
+
+## Authentication Data
+
+* * *
+
+ **Value**
+
+|
+
+ **Specification**
+
+|
+
+  
+  
+  
+---|---|---  
+  
+  
+
+|
+
+ **Pilot**
+
+|
+
+ **Production**  
+  
+Client Code ID
+
+|
+
+21345110
+
+|
+
+11231001  
+  
+User Identification Number
+
+|
+
+Member Number
+
+|
+
+Member Number  
+  
+SSO Password
+
+|
+
+Kt%])8f@!w
+
+|
+
+)4xP&M2<22  
+  
+SSO Request
+
+* * *
+
+For SEFC, selected_acct_type is always NA.
+
+## Unique Business Logic
+
+* * *
+
+ **External ID Mapping**
+
+SEFC has set up with InfoIMAGE a mapping process that maps the Member Number
+to accounts that the user who owns the Member Number should have access to.
+When the SSO Request is received, InfoIMAGE will filter the account list down
+to only the account numbers provided by the mapping file. If the entire
+account list is filtered out, the SSO handshake will fail at the ssoExchange
+step.
+
+For example, Member Number 23415 could have the below mapping scenario.
+
+ **External Value**
+
+|
+
+ **Internal Value**  
+  
+---|---  
+  
+23415
+
+|
+
+23415  
+  
+23415
+
+|
+
+452233111  
+  
+23415
+
+|
+
+984433311  
+  
+If the account list contains 452233111, 343389, and 123333, when the user
+signs in, they will only see account number 452233111, because that is the
+only account provided by the mapping file.
+
+### ETax
+
+InfoIMAGE posts SEFC ETax to the Member Number. To InfoIMAGE, the Member
+Number can be considered to be just another account number in the enumerated
+account list. The precedence has been to always pass the Member Number to the
+selected_acct0 field along with the corresponding type (always NA) and
+description; however, the Member Number being passed at index 0 is not a
+requirement. If the Member Number is passed at index 1, 2, 3, etc. the logic
+will work all the same.
+
+The description currently being passed is "Tax Documents".
+
+### Small Business Subuser
+
+The subuser field is supported. If and only if it is a subuser logging in, the
+vendor must pass over the login_id parameter in the ssoKeyGen step. The
+account filtering will occurs using the primary user Member Number.
+
+Aforementioned, the Member Number is considered to be just another account
+number. If the subuser should not have access to ETax, do not pass the Member
+Number into the account list.
+
+ _Specification_
+
+ **Value**
+
+|
+
+ **Comment**  
+  
+---|---  
+  
+User Identification Number
+
+|
+
+The primary user Member Number  
+  
+Email Address
+
+|
+
+The subuser email address  
+  
+login_id
+
+|
+
+An ASCII string determined by Alkami. InfoIMAGE will concatenate this string
+to create a new CIF: MemberNumber|login_id. Due to this, the Member Number
+length + the login_id length + 1 should not be more than 100.  
+  
+All other values are not different from the standard specification.
+
+### Sample Retail Handshake
+
+Given Member Number 12345 with access to account 1, 2, 3 and email
+john.doe@email.com.
+
+The user is signing in on 01/19/2021.
+
+We'll use Pilot values.
+
+#### Step 1
+
+The Input String  
+2134511000000000000000012345Kt%])8f@!w01192021
+
+Hashed with SHA-256  
+78d855c73e233470b8625dea30555dad0ff0b34764ede9468e4ae37aaef2707b
+
+Append Required Values to Hashed String to form Data String  
+78d855c73e233470b8625dea30555dad0ff0b34764ede9468e4ae37aaef2707b0000000000000001234501192021
+
+#### Step 2
+
+    
+    
+    <form action="https://sefcpilot.infoimageinc.com/ssoKeyGen/singleSignOn7" method="POST">  
+    <input type="hidden" name="data" value="78d855c73e233470b8625dea30555dad0ff0b34764ede9468e4ae37aaef2707b000000000000000123" />   
+    <input type="hidden" name="email" value="john.doe@email.com"/>  
+    <input type="hidden" name="selected_acct0" value="12345" />  
+    <input type="hidden" name="selected_acct_type0" value="NA" />  
+    <input type="hidden" name="selected_acct_desc0" value="Tax Documents" />  
+    <input type="hidden" name="selected_acct1" value="1" />  
+    <input type="hidden" name="selected_acct_type1" value="NA" />  
+    <input type="hidden" name="selected_acct_desc1" value="Account 1" />  
+    <input type="hidden" name="selected_acct2" value="2" />  
+    <input type="hidden" name="selected_acct_type2" value="NA" />  
+    <input type="hidden" name="selected_acct_desc2" value="Account 2" />  
+    <input type="hidden" name="selected_acct3" value="3" />  
+    <input type="hidden" name="selected_acct_type3" value="NA" />  
+    <input type="hidden" name="selected_acct_desc3" value="Account 3" />  
+    <input type="hidden" name="user_type" value="P" />  
+    <input type="hidden" name="user_name" value="John Doe" />   
+    </form>  
+  
+---  
+  
+Return value from request:
+
+key=vHQqt9FN3ovzdv6Kf
+
+#### Step 3
+
+    
+    
+    <form action="<https://sefcpilot.infoimageinc.com/ssoExchange>" method="POST">   
+    <input type="hidden" name="key" value="vHQqt9FN3ovzdv6Kf"/>  
+    </form>  
+  
+---  
+  
+In the ideal situation, the user will now be logged into InfoIMAGE
+eStatements.
+
+###  **Sample Business User Handshake**
+
+#### Primary
+
+The difference from a Retail user would be that the user_type is set to "N".
+
+    
+    
+    <form action="https://sefcpilot.infoimageinc.com/ssoKeyGen/singleSignOn7" method="POST">   
+    <input type="hidden" name="data" value="78d855c73e233470b8625dea30555dad0ff0b34764ede9468e4ae37aaef2707b000000000000000123" />  
+    <input type="hidden" name="email" value="john.doe@email.com"/>  
+    <input type="hidden" name="selected_acct0" value="12345" />  
+    <input type="hidden" name="selected_acct_type0" value="NA" />  
+    <input type="hidden" name="selected_acct_desc0" value="Tax Documents" />  
+    <input type="hidden" name="selected_acct1" value="1" />   
+    <input type="hidden" name="selected_acct_type1" value="NA" />  
+    <input type="hidden" name="selected_acct_desc1" value="Account 1" />  
+    <input type="hidden" name="selected_acct2" value="2" />  
+    <input type="hidden" name="selected_acct_type2" value="NA" />  
+    <input type="hidden" name="selected_acct_desc2" value="Account 2" />   
+    <input type="hidden" name="selected_acct3" value="3" />  
+    <input type="hidden" name="selected_acct_type3" value="NA" />  
+    <input type="hidden" name="selected_acct_desc3" value="Account 3" />  
+    <input type="hidden" name="user_type" value="N" />  
+    <input type="hidden" name="user_name" value="John Doe" />   
+    </form>  
+  
+---  
+  
+#### Subuser
+
+Subuser would have the same information as the primary, except for the
+inclusion of the login_id field. This will trigger the creation of a separate
+profile for the subuser with the unique ID of: 12345|janedoe. "janedoe" is
+just a placeholder value. What type of value to use for the login ID is still
+TBD.
+
+    
+    
+    <form action="https://sefcpilot.infoimageinc.com/ssoKeyGen/singleSignOn7" method="POST">   
+    <input type="hidden" name="data" value="78d855c73e233470b8625dea30555dad0ff0b34764ede9468e4ae37aaef2707b000000000000000123 />  
+    <input type="hidden" name="email" value="john.doe@email.com"/>  
+    <input type="hidden" name="selected_acct0" value="12345" />   
+    <input type="hidden" name="selected_acct_type0" value="NA" />  
+    <input type="hidden" name="selected_acct_desc0" value="Tax Documents" />  
+    <input type="hidden" name="selected_acct1" value="1" />  
+    <input type="hidden" name="selected_acct_type1" value="NA" />  
+    <input type="hidden" name="selected_acct_desc1" value="Account 1" />  
+    <input type="hidden" name="selected_acct2" value="2" />  
+    <input type="hidden" name="selected_acct_type2" value="NA" />  
+    <input type="hidden" name="selected_acct_desc2" value="Account 2" />  
+    <input type="hidden" name="selected_acct3" value="3" />  
+    <input type="hidden" name="selected_acct_type3" value="NA" />  
+    <input type="hidden" name="selected_acct_desc3" value="Account 3" />  
+    <input type="hidden" name="user_type" value="N" />  
+    <input type="hidden" name="login_id" value="janedoe" />  
+    <input type="hidden" name="user_name" value="Jane Doe" />  
+    </form>  
+  
+---  
+  
+  
+
+

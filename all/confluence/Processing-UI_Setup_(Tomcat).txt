@@ -1,0 +1,423 @@
+title: Processing-UI Setup (Tomcat)
+body: This is a guide to setup the Processing-UI on Linux (Ubuntu)/Tomcat.
+
+  * ##  _Checklist_
+
+ **System Requirement:**
+
+ _Hardware_
+
+Dev/Pilot/Stage:
+
+300 GB Storage, 16 GB Memory, 4 Cores CPU
+
+Production:
+
+1 TB Storage, 32 GB Memory, 8 Cores CPU
+
+ _Software_
+
+Dev/Pilot/Stage/Production:
+
+Ubuntu 20.04 LTS (or latest), JDK 8u202 (Later versions require a license
+subscription), Perl 5
+
+Ubuntu Package Required:
+
+autofs, cronolog, cifs-utils, iptables-persistent, unzip, zip
+
+ **SVN Repository Path:**
+
+Project Parent Path| Child Path| Description  
+---|---|---  
+svn+ssh://ca-utils-pr-01.infoimageinc.com/srv/svn/estmt2/processing|  
+|  
+  
+  
+| /conf-schedule| Script used to trigger jobs, mainly reports, on the PUI.
+CID specific conf files, processing.conf, infoimage.conf, system.prop, and
+api.prop.  
+  
+| /ui| Processing-UI front-end webapp code  
+  
+| /wrapper|
+
+Contains Java Service Wrapper application to install and start the PUI and PUI
+station service.  It has the conf file for both wrappers
+(processing_ui_wrapper.conf and processing_ui_station_wrapper.conf)  
+  
+svn+ssh://ca-utils-pr-01.infoimageinc.com/srv/svn/app-depend-libs|  
+|  
+  
+  
+| /estmt2-depend-libs| Jar files the application needs to run.  
+  
+Each environment will have its own branch with the same structure as the i3
+core code.
+
+  
+
+  * ##  _Instructions_
+
+ **Create and setup "builder" and "tomcat" user.  Refer to
+<https://confluence.infoimageinc.com/pages/viewpage.action?pageId=93454709> on
+how to create user and set up key on Jenkins server.**
+
+1\. Create "authorized_keys" files with the owner being the respective user in
+the following directory:
+
+/home/builder/.ssh
+
+/home/tomcat/.ssh
+
+2\. In the "authorized_keys" file, insert the line below.  This is for pd-
+tools to connect to this server without prompting the password.
+
+ **This is the key for user "builder"**
+
+ssh-rsa
+AAAAB3NzaC1yc2EAAAADAQABAAABgQC3xskUQU5xfyaHq04/oZUnX+gH1EiBLFFxTHjEu3/7ZqcahX8NWTe0z4GnAamqHENfEtXkXU/D+n6XecI2VpgvLfy6Yoc7Ni0Kcp3RigqrooRVYPpjxJ2FiY/rNwgtP50yIdfywfNLiPYzhkqs3ZH8aKM69suWOwK17JTWzARFkEWTLiHgSnyJcPNKqX2SFo9P9HuMwOF37by4hH+HfemTFdjq51Yqt2vVxG7YOeiGZPYA9puY1JxUhoNbwsV+TfdmxJysJmaNic8fYbwMONjxfTGtDUR1CCb/tWRKnnkBwHUebfqwo4plOjsjRO3J55mZfm1q5jJnWuStvOT4FdhqzH+9wYIMySAj8gqKlqmLOxGcOonBvKUU4Fes5akpw35nJriMelfRdgD37Y3ip1714oBZrkzhu+7lwopQbKZwy+nQjMP6TCQCQxgjsZIsPo+Plr6s8f8wQPfY4+K33do0q9KqmQdpiwOPt9acNvyN56lnse1Mc/yZq48Vm3hVZuc=
+root@gitlab-01
+
+ **This is the key for user "tomcat"**
+
+ssh-rsa
+AAAAB3NzaC1yc2EAAAADAQABAAABgQC3xskUQU5xfyaHq04/oZUnX+gH1EiBLFFxTHjEu3/7ZqcahX8NWTe0z4GnAamqHENfEtXkXU/D+n6XecI2VpgvLfy6Yoc7Ni0Kcp3RigqrooRVYPpjxJ2FiY/rNwgtP50yIdfywfNLiPYzhkqs3ZH8aKM69suWOwK17JTWzARFkEWTLiHgSnyJcPNKqX2SFo9P9HuMwOF37by4hH+HfemTFdjq51Yqt2vVxG7YOeiGZPYA9puY1JxUhoNbwsV+TfdmxJysJmaNic8fYbwMONjxfTGtDUR1CCb/tWRKnnkBwHUebfqwo4plOjsjRO3J55mZfm1q5jJnWuStvOT4FdhqzH+9wYIMySAj8gqKlqmLOxGcOonBvKUU4Fes5akpw35nJriMelfRdgD37Y3ip1714oBZrkzhu+7lwopQbKZwy+nQjMP6TCQCQxgjsZIsPo+Plr6s8f8wQPfY4+K33do0q9KqmQdpiwOPt9acNvyN56lnse1Mc/yZq48Vm3hVZuc=
+root@gitlab-01
+
+  
+
+Log into ca-utils-pr-01.infoimageinc.com and ssh to this server.  Add this
+server as the list of know hosts for Jenkins to be able to deploy.
+
+  
+
+ **Create the following folders set the owner as the user in parenthesis  
+**
+
+/usr/local/tomcat/tomcat-processing  (tomcat)
+
+/usr/local/processing-ui (builder)
+
+/var/lib/i3-lib/estmt2  (builder)
+
+  
+
+ **Install Java in folder /usr/lib/jvm/ and create a symlink in /usr/bin to
+the java executable in bin.**
+
+ **Check the Java version and see if it need to download and install "Java
+Cryptography Extension (JCE) Unlimited Strength".  Use the same JDK version as
+the other PUI servers.**
+
+ **Required Mount Points**
+
+ _Test Environment_
+
+Mount Path| Description  
+---|---  
+/d/INPUT-DEV/input| Input Server Dev  
+/d/PV-NAS-DEV/peb3| Check Image zip files on PV-NAS Dev  
+/d/PV-NAS-DEV/indiv_afp| AFP/PDF zip files on PV-NAS Dev for default storage  
+/d/PV-NAS-DEV/indiv_afp2| AFP/PDF zip files on PV-NAS Dev for storage b  
+  
+  
+
+ _Production Environment_
+
+Mount Path| Description  
+---|---  
+/d/INPUT/*| Input Server  
+/d/PV-NAS/peb3| Check Image zip files on PV-NAS  
+/d/PV-NAS/indiv_afp| AFP/PDF zip files on PV-NAS for default storage  
+/d/PV-NAS/indiv_afp_prod_b2| AFP/PDF zip files on PV-NAS for storage b  
+/d/PV-NAS2| Backup PV-NAS  
+/d/FTPBU| FTPBU Server  
+/d/INFOFTP/ftproot| InfoFtp FTP Server  
+/d/FTPD/ftproot|
+
+FTPD FTP Server  
+  
+/d/SECURE3| Secure3 FTP Server  
+/d/SECURE4| Secure4 FTP Server  
+/d/SECURE5| Secure5 FTP Server  
+  
+  
+
+The above list probably isn't exhaustive.  Mount points are configured in
+/etc/fstab and /etc/auto.* files.  Sync these files from source PUI to new
+PUI.  Then check whether you can access all mount points mentioned in those
+files.  You will likely have to configure/troubleshoot NFS server if you can't
+access the mount point.
+
+  
+
+ **Change permission to 777 for all files in folder /usr/local/processing-
+ui/wrapper/bin/**
+
+ **Create symlink /usr/bin/processing_ui.sh to /usr/local/processing-
+ui/wrapper/bin/processing_ui.sh**
+
+ **Import PGP secret and public keys, and trust DB for GPG**
+
+# save key listings on source  
+sudo gpg -k > public_key_list  
+sudo gpg -K > private_key_list
+
+#export keys on source  
+sudo gpg --export-secret-keys > private_keys_for_import  
+sudo gpg --export > public_keys_for_import
+
+#export ownertrust values on source  
+sudo gpg --export-ownertrust > ownertrust.txt
+
+# Copy private_keys_for_import, public_keys_for_import and ownertrust.txt to
+new PUI server in a secure manner.
+
+#import keys on new PUI  
+sudo gpg --import private_keys_for_import  
+sudo gpg --import public_keys_for_import
+
+#import ownertrust values on new PUI  
+sudo gpg --import-ownertrust ownertrust.txt
+
+# recreate list  
+sudo gpg -k > public_key_list  
+sudo gpg -K > private_key_list
+
+# delete private_keys_for_import, public_keys_for_import and ownertrust.txt
+from both source and new PUI.
+
+# Compare the source and new key lists.  all keys should be accounted for with
+correct trust level (eg. [ultimate]).
+
+ **Setup auto start on reboot by adding this command in crontab**
+
+@reboot /usr/local/processing-ui/wrapper/bin/processing_ui.sh start
+
+ **Setup hosts file entry for email servers.**
+
+ **Setup port rerouting rule to enable user to access PUI through standard
+HTTP port**
+
+Useful commands for port routing rules
+
+# Check for existing rules
+
+sudo iptables -L -n -t nat
+
+# Add rules for external and internal port redirect rules
+
+sudo iptables -t nat -I PREROUTING -p tcp --dport 80 -j REDIRECT --to-port
+8070
+
+sudo iptables -t nat -I OUTPUT -p tcp -o lo --dport 80 -j REDIRECT --to-ports
+8070
+
+# Save rules to ensure the rules are intact after restart.
+
+# Make sure iptables-persistent is installed.
+
+sudo iptables-save > /etc/iptables/rules.v4  
+  
+---  
+  
+  
+
+  * ##  _Usage_
+
+The PUI start/stop script can start and stop both PUI wrapper and Tomcat
+simultaneously or individually
+
+Usage: processing-ui.sh {start/stop/status} {optional:pui/wrapper/tomcat}
+
+ ** _Example Commands:_**
+
+ _Start All Services:_
+
+sudo processing-ui.sh start
+
+ _Stop Only PUI Tomcat:_
+
+sudo processing-ui.sh stop pui
+
+Environment| PUI URL  
+---|---  
+Dev| <http://pui-dev.infoimageinc.com>  
+Pilot| <http://pui-pilot.infoimageinc.com>  
+Stage| <http://pui-stage.infoimageinc.com>  
+Production| <http://pui-prod.infoimageinc.com>  
+  
+  
+
+  * ##  _Setup Scheduled Tasks  
+_
+
+Crontab is the Linux scheduler.
+
+ ** _Usage:_**
+
+ _List All Tasks:_
+
+sudo crontab -l
+
+ _Add/Remove Tasks:_
+
+sudo crontab -e
+
+ _Format:_
+
+One line per scheduled task.
+
+Each line have the following fields in the order list with space or tab as the
+delimiter.
+
+Minute| 0 to 59  
+---|---  
+Hour| 0 to 23. 1PM is 13.  
+Day of the month| 1 to 31. Last number depends on the month.  
+Month| 1 to 12. January is 1.  
+Day of the week| 1 to 7. Monday is 1 and Sunday is 7.  
+Command| Command to run.  
+  
+Use comma as separator to list multiple value.  Hyphen is for a range of
+values.  Slash is for step values.
+
+Example:
+
+45 02 * * * /usr/local/processing-ui/schedule/apcuClientReport.bat
+
+\- The above schedule will run daily at 2:45 AM
+
+00 10 12 * * /usr/local/processing-ui/schedule/tkcuUndeliverableReport.bat
+
+- The above schedule will run on the 12th of every month at 10:00 AM
+
+00 11,17 * * 1-5 /usr/local/processing-ui/schedule/nafs_alert.bat
+
+- The above schedule will run on every Monday through Friday at 11:00 AM and 5:00 PM
+
+00 02-14/2 * * * perl
+/usr/local/one_time_scripts/infotrac/alert_notification.pl
+
+\- The above schedule will run every 2 hours between 2 AM to 2 PM
+
+30 17 28-31 * * [ $(date -d +1day +\%d) -eq 1 ] && /usr/local/processing-
+ui/schedule/optOptReport.bat vwcu
+
+\- The above schedule will on the last day of the month at 5:30 PM.  This is
+not using standard crontab command.  It utilize the shell command "[ $(date -d
++1day +\%d) -eq 1 ]" to determine if it's last day of the month and only run
+the command if true.
+
+ **If there's an error in your edit, you will not be able to save and be
+prompted to fix the error upon exit.**
+
+Add the lines below in crontab.  This is for backing up the crontab once a day
+at 12 AM:
+
+00 00 * * * crontab -l | gzip > /usr/local/processing-
+ui/backup/'crontab-'$(date +"\%Y\%m\%d-\%H\%M\%S")'.gz'
+
+  
+
+  * ##  _Setup PUI from Clone of Another System_
+
+Stop the PUI services
+
+Remove all the logs and temp files
+
+/usr/local/processing-ui/logs
+
+/usr/local/processing-ui/station
+
+/usr/local/processing-ui/data
+
+/usr/local/tomcat/tomcat-processing/logs
+
+/usr/local/tomcat/tomcat-processing/temp
+
+/usr/local/tomcat/tomcat-processing/work
+
+Update Tomcat's server.xml with the database connection and host name that
+match the environment.
+
+Build all Jenkins projects for the server
+
+Update all files within the folder below with permission to execute
+
+/usr/local/processing-ui/schedule
+
+/usr/local/processing-ui/wrapper
+
+  
+
+  * ##  _Setup Perl to Run Scripts_
+
+Install Oracle Instant Client
+
+Download the zip files below from
+<https://www.oracle.com/database/technologies/instant-
+client/linux-x86-64-downloads.html#ic_x64_inst>
+
+instantclient-basic-linux.x64-11.2.0.4.0.zip
+
+instantclient-sqlplus-linux.x64-11.2.0.4.0.zip
+
+instantclient-sdk-linux.x64-11.2.0.4.0.zip
+
+Unzip all 3 files into /opt/oracle/
+
+sudo unzip instantclient-basic-linux.x64-11.2.0.4.0.zip -d /opt/oracle/
+
+sudo unzip instantclient-sdk-linux.x64-11.2.0.4.0.zip -d /opt/oracle/
+
+sudo unzip instantclient-sqlplus-linux.x64-11.2.0.4.0.zip -d /opt/oracle/
+
+Create links
+
+sudo ln -s /opt/oracle/instantclient_11_2 /opt/oracle/instantclient
+
+sudo ln -s /opt/oracle/instantclient/libclntsh.so.11.1
+/opt/oracle/instantclient/libclntsh.so
+
+sudo ln -s /opt/oracle/instantclient/libocci.so.11.1
+/opt/oracle/instantclient/libocci.so
+
+Add the lines below in /etc/environment
+
+LD_LIBRARY_PATH="/opt/oracle/instantclient"
+
+ORACLE_HOME="/opt/oracle/instantclient"
+
+  
+
+Install necessary packages for Linux and Perl
+
+sudo apt-get install -y make
+
+sudo apt-get install -y gcc
+
+sudo apt-get install -y libaio1
+
+  
+
+Install Perl packages to run the scripts
+
+sudo cpan -i DBI
+
+sudo cpan -i DBD::Oracle
+
+If it fails try again after doing these two things.
+
+sudo mkdir -p "/opt/oracle/instantclient/network/admin"
+
+sudo touch "/opt/oracle/instantclient/network/admin/tnsnames.ora"
+
+sudo cpan -i Date::Calc
+
+sudo cpan -i MIME::Lite
+
+  
+
+

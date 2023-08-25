@@ -1,0 +1,281 @@
+title: Design Doc of Hypercube Service Discovery Check
+body: ## **Introduction**
+
+This design documentation is to represent the necessary information and
+changes required for Hypercube Service Discovery Check.
+
+This feature will check if all the hypercube service is alive or dead.
+
+##  **Purpose/Objective Summary**
+
+The main objective of this feature is to check if all the hypercube service is
+aliveor dead by hitting hypercube end-point **.**  A hypercube end-point
+**/serviceDiscovery**  will be introduced that will return a JSON of all the
+service status.
+
+If any serviceURI returns true that means that service is alive.
+
+If any serviceURI returns false that means that service is dead.
+
+Example response:
+
+{  
+    "infoserviceURI": 200,  
+    "notificationServiceURI": 200,  
+    "contextualSearchURI": 200,  
+    "templateServiceURI": 200,  
+    "posterServiceURI": 200  
+}
+
+##  **Scope**
+
+### In-Scope
+
+  1. Check if all the hypercube services are alive or dead. 
+
+##  **All Service Heartbeat API Details  **
+
+ID
+
+|
+
+Title
+
+|
+
+URL
+
+|
+
+Method  
+  
+---|---|---|---  
+API_02| Info-service Heartbeat|
+
+/api/v1/account/demo/search?keywordType=acctNum&restrictedAccess=false&keyword=123457&searchType=exact
+
+| GET  
+API_02| notification-service Heartbeat|
+
+/api/v1/notification/heartbeat
+
+| GET  
+API_03| contextual-search Heartbeat|
+
+/api/v1/index/heartbeat
+
+| GET  
+API_04| template-service Heartbeat|
+
+/api/v1/notiftmplmgmt/heartbeat
+
+| GET  
+API_05| poster-service Heartbeat|
+
+/api/v1/heartbeat
+
+| GET  
+  
+# Requirements
+
+### Functional Requirements & Use Case
+
+ID
+
+|
+
+Function Name
+
+|
+
+Functionality  
+  
+---|---|---  
+FR_01|
+
+#### infoserviceDiscovery
+
+|
+
+Call Info-service heartbeat API and returns statusCode 200 if service is alive
+or return statusCode 404 if service is down.  
+  
+FR_02|
+
+#### notificationServiceDiscovery
+
+|
+
+Call notification-service heartbeat API and returns statusCode 200 if service
+is alive or return statusCode 404 if service is down.  
+  
+FR_03|
+
+#### contextualSearchServiceDiscovery
+
+| Call contextual-search heartbeat API and returns statusCode 200 if service
+is alive or return statusCode 404  if service is down.  
+FR_04|
+
+#### templateServiceDiscovery
+
+| Call template-service heartbeat API and returns statusCode 200 if service is
+alive or return statusCode 404 if service is down.  
+FR_05|
+
+#### posterServiceDiscovery
+
+| Call poster-service heartbeat API and returns statusCode 200 if service is
+alive or return statusCode 404 if service is down.  
+  
+### QA/Test Requirements
+
+ID|
+
+Title
+
+|
+
+Details
+
+|
+
+Response Example  
+  
+---|---|---|---  
+QR_01| Service Discovery|
+
+Call hypercube end-point **/serviceDiscovery  **and check response
+
+|
+
+{  
+"infoserviceURI": 200,  
+"notificationServiceURI": 200,  
+"contextualSearchURI": 404,  
+"templateServiceURI": 200,  
+"posterServiceURI": 404  
+}  
+  
+## Code changes
+
+Project file path
+
+|
+
+Method Scope
+
+|
+
+Changes  
+  
+---|---|---  
+server/methods.js|
+
+New methods:
+
+  * infoserviceDiscovery()
+
+  * notificationServiceDiscovery()
+
+  * contextualSearchServiceDiscovery()
+
+  * templateServiceDiscovery()
+
+  * posterServiceDiscovery()
+
+|
+
+Write new methods for each service heartbeat call.  
+  
+routes/mainRoutes.js|
+
+New Route:
+
+  * serviceDiscovery
+
+|
+
+Write new route to return all service status  
+  
+### Production URL For Checking Hypercube Service And Health
+
+Title
+
+|
+
+Details
+
+|
+
+Response - (200 - OK)  
+  
+---|---|---  
+Production service discovery URL|
+
+  * <http://ca-hypercube-pr-01.infoimageinc.com:3000/serviceDiscovery>
+  * <http://ca-hypercube-pr-02.infoimageinc.com:3000/serviceDiscovery>
+  * <http://ca-hypercube-pr-03.infoimageinc.com:3000/serviceDiscovery>
+  * <http://ca-hypercube-pr-04.infoimageinc.com:3000/serviceDiscovery>
+
+  
+
+|
+
+{  
+"infoserviceURI": 200,  
+"notificationServiceURI": 200,  
+"contextualSearchURI": 200,  
+"templateServiceURI": 200,  
+"posterServiceURI": 200  
+}  
+  
+Production Health Check URL|
+
+  * <http://ca-hypercube-pr-01.infoimageinc.com:3000/heartbeat>
+  * <http://ca-hypercube-pr-02.infoimageinc.com:3000/heartbeat>
+  * <http://ca-hypercube-pr-03.infoimageinc.com:3000/heartbeat>
+  * <http://ca-hypercube-pr-04.infoimageinc.com:3000/heartbeat>
+
+| {"service": "OK"}  
+  
+# Summarized Change Log
+
+Date
+
+|
+
+Who
+
+|
+
+Changes  
+  
+---|---|---  
+  
+
+
+| Sadman Anik| Creation  
+  
+
+
+| Sadman Anik| Added Production URL  
+  
+  
+
+# Feedback / Question / Answers
+
+Question
+
+|
+
+Answer  
+  
+---|---  
+  
+|  
+  
+  
+  
+
+

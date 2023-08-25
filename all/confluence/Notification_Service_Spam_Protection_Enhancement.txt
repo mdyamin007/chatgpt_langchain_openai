@@ -1,0 +1,178 @@
+title: Notification Service Spam Protection Enhancement
+body: > Hello Ben,
+>
+> Let me explain with a example:
+>
+> Suppose demo cid have same spam protection settings of 5 days
+>
+> 1\. On the 2nd day of this month, from estmt module an email has been sent
+> to USER1  
+> 2\. On the 3rd day if estmt module try to send another email to that same
+> user then notifyservice should skip that email.  
+> 3\. Again on the 3rd day 1 more email has been tried to be sent from
+> marketing module. Should I skip email also?
+>
+> Thanks
+
+  
+  
+
+### Ben:
+
+> No, estmt emails and marketing emails should be counted separately.  
+> the spam-protection should be CID & appid specific.  
+> As long as you implement it generically by CID & appid, that should be fine.
+>
+> That being said, in realistic terms, 'estmt' would very unlikely need to
+> adopt this spam-protection settings because the nature of the emails are
+> just being different.
+>
+> Besides, the 'number of days' is just one dimension, you need to consider a
+> second dimension of 'count of emails' also. Example: 'Skip if there are more
+> than 3 'marketing' emails sent in the past 5 days for RWCU'  
+> All the highlighted are factorings to be evaluated.
+>
+> Again, please accumulate these requirements into a single wiki for future
+> reference.
+>
+> Hope this helps.
+>
+> Thanks.
+
+  
+  
+
+### Ben:
+
+> Some feedbacks:
+>
+> Hello Ben,
+>
+> Commented inline.
+>
+> On Sat, Mar 18, 2017 at 12:51 AM, Ben Chan
+> <[Ben.Chan@infoimageinc.com](mailto:Ben.Chan@infoimageinc.com)> wrote:
+>
+> Some feedbacks:
+>
+> 01\. rename 'spam.protection.override' to 'spam.protection.enable'  
+> 02\. rename 'spam.protection.need.app.ids' to
+> 'spam.protection.enforced.appids'  
+> 03\. rename the property c & d to 'spam.protection.time.interval' and
+> 'spam.protection.interval.max' accordingly. The '.default' suffix could
+> potentially cause problem if by chance we are actually having a CID named as
+> 'default' for whatever reason.  
+> 04\. for the property c, maybe add '.inhours' to the property name to make
+> it more self-explanatory.  
+> 05\. for the property d, do you mean to have one property for email, and
+> then another one for sms, and so on for other types when getting added?
+>
+
+>> NI: I want to rename the spam.protection.interval.max.email to
+spam.protection.interval.max.notif. Do we need different max notification
+count for different notification.
+
+>>
+
+>>> [BC] I think one property should be good enough. I'm find with
+spam.protection.interval.max.notif
+
+>
+> 06\. for your question: I don't think we need the offerId/audienceId on the
+> notification service API level. I don't think we have such a need at this
+> time. Even if the need comes, it will be InfoREACH's job to decided whether
+> to populate the 'skipSpamProtection' flag accordingly for that one campaign.
+> I doubt we will ever do it on offer level.  
+> 07\. let's rename the 'skipSpamProtection' to 'enableSpamProtection' and
+> default value to 'true'. Just want to avoid double-negative when
+> interpreting these param meanings.  
+> 08\. for second question: I believe we should consider 'SKIP' to be success
+> to the one notification, and do include it into total count. Because we
+> should be counting how many notification we have processed. This skip should
+> be in similar nature comparing to user-unsubscribe. Do you have the reason
+> properly captured to differentiate "skip due to spam protection" vs "skip
+> due to unsubscribed"? Now, in terms of the 'Success' of the job, we may need
+> to think about what's the correct threshold to consider if the job is
+> success or not. e.g. if >20% of notifications within a job is SKIP or
+> FAILED, then mark the job status to be 'FAILED' or 'SENT w/ Issues' or
+> equivalent. This threshold should be an internal property for now. Will add
+> CID specific threshold when the need comes.
+>
+
+>> NI: There will be a reason why this notification has been skipped. Message
+: Skipped due to spam protection. Crossing failedThreshold of a job will
+depend on failed+skipped notification.
+
+>>
+
+>>> [BC] That make sense. Agreed.
+
+>
+> Thanks.
+
+  
+  
+
+### Ben:
+
+> Naim,
+>
+> The spam protection properties need to be CID specific. Not all CID wants to
+> have this enabled.  
+> The intervals & max.notif could vary from CID to CID.
+>
+> Thanks.
+
+  
+  
+
+## Draft proposal:
+
+1\. Add following properties to property file of notifyservice
+
+> a.  **spam.protection.enforced.cids**  = demo,fffc,mtro spam protection
+> functionality will be applicable for these CID only)  
+> b.  **spam.protection.enable**  = true/false (override spam protection
+> functionality)  
+> c.  **spam.protection.enforced.appids**  = marketing,offer (Comma separated
+> appId(s) will be count for spam protection)  
+> d.  **spam.protection.time.interval.inhours**  = 24  **(Default)**  
+>  e.  **spam.protection.interval.max.notif**  = 1  **(Default)**
+>
+
+>> For property d and e, if no client specific property set then service will
+allow to send maximum 1 notifications in last 24 hours/1 day as default.
+
+2\. Client specific properties can be added to notifyservice
+
+> f.  **spam.protection.time.interval.inhours.demo**  = 120  
+> g.  **spam.protection.interval.max.notif.demo**  = 3
+>
+
+>> For property f and g, for demo cid, service will allow to send maximum 3
+notifications in last 120 hours/5 days
+
+>
+> h.  **spam.protection.time.interval.inhours.ewbb**  = 48
+>
+
+>> For property h and e, for ewbb cid, service will allow to send maximum 1
+notification in last 48 hours/2 days (As no max notification in interval has
+set in property so that default settings will be considered)
+
+2\. Add a optional parameter to  **enableSpamProtection**  (Default : false,
+it will override the notifyservice.properties settings )  
+3\. While processing CSV, process will check appId and
+**enableSpamProtection**  param to set  **needSpamProtection**  flag.  
+4\. If needSpamProtection is true then, before sending notification, query to
+notification collection with appId, to address and spam protection time
+interval for that cid.  
+5\. If record(s) found and record(s) count is greater then or equals to
+**spam.protection.interval.max.notif/.${cid}**  (maximum notification allowed
+to be sent in spam protection internal time) then, skip that notification and
+set the Status as SKIP. Considering SKIP status as a success notification as
+like UNSUBSCRIBE. But at  **notification.reason**  property there will be a
+message  **Skipped due to spam protection.**. Crossing failed threshold of a
+job will depend on failed and skipped notification.
+
+

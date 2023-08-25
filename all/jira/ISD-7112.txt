@@ -1,0 +1,211 @@
+title: SSCU - [28800] [ptv] eStatement Enrollment File for Core Update via FTP
+description: Setup separate file to be sent back to CUs FTP client pickup folder daily with member delivery preference; CU will use to
+update their Fiserv DNA core based on existing Fiserv process. Here is the information for the report:
+Fiserv has recommended we use their e-Statement Maintenance Application to ingest your file and maintain the enrollment
+status on DNA. Below are the required specs for the file. I have also attached the documented specs for your review if there
+are any questions. We are utilizing the Delivery Method field on DNA to document the enrollment status.
+Update type (D), Account Number, User field value (WWW=enrolled PRNT=unenrolled)
+Enrolled in eStatements example:
+D,12345,,WWW
+Unenrolled from eStatements:
+D,12345,,PRNT
+
+File to be sent to SSCU client pickup folder 7 days a week between 5-6am PST.
+File name = estatement_enrollment.MMDDYY.txt
+
+
+
+author: phoebe.george
+comment: [~Tin.Chak] Please confirm new dates, since the turnover has passed (originally 5/19). We'll update the dates once confirmed. Thanks!
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~phoebe.george] No problem. I can still schedule in this job.
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: DSI Team,
+
+This is the spec when doing the assessment:
+
+This requires minor code change to com.infoimage.processing.application.file.upload2.accumulativeOptOutReport.getRecordData(). If var_name's value does not match any of the conditions, return the value of var_name instead of empty string.
+
+
+
+Note to Engineer:
+
+sscu.conf:
+
+accumulativeOptOutReport.classPath=com.infoimage.processing.application.file.upload2.accumulativeOptOutReport.AccumulativeOptOutReportGenerator
+
+
+
+API report configuration:
+
+Command: accumulativeOptOutReport
+
+File Header: Update Type,Account Number,User Field Code,User Field Value
+
+File Content: D,acctnum,,status
+
+Pickup Path: /d/SECURE3/Usr/sscu/client_pickup
+
+Parameters:
+stmt_type=default
+status=B,E
+statusMap=WWW:E;PRNT:B
+range=-2147483648
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~phoebe.george] The due date for this is not 5/23. This is the timeline on the ticket.
+
+Pilot: 5/27
+
+Live: 5/31
+
+
+
+Thanks.
+
+
+author: JIRAUSER11300
+comment: Recent update from the client:
+
+File to be sent to SSCU client pickup folder 7 days a week between 5-6am PST.
+File name = estatement_enrollment.MMDDYY.txt
+
+
+
+author: phoebe.george
+comment: [~Tin.Chak] [~rifat.mahmud] Please confirm if the sample test file is ready. SSCU is following up on the update.
+
+Thanks!
+
+
+author: mamunur.rashid
+comment: [~phoebe.george]
+
+Here is the sample file:[^estatement_enrollment.052422.txt]
+
+I couldn't upload the big file, So I truncated data inside the file. There are only 10 entries. The full file is available in/d/SECURE3/Usr/sscu/client_pickup of pui-pilot server.
+
+[~Tin.Chak], The code and the conf is in pui production branch. I couldn't deploy it because of scheduled job in pui prod server. Also I couldn't create the cron-job to sent the file to client's pickup folder 7 days a week. Could you please do that?
+
+I will create the report-schedule in prod PUI.
+
+Thanks.
+
+
+author: JIRAUSER11300
+comment: Hi [~mamunur.rashid], please note we are waiting for the customer to approve the test sample reports file and do not want to complete code release yet until approved.
+
+Thank you!
+
+[~phoebe.george] FYI
+
+
+author: JIRAUSER11300
+comment: Hi [~mamunur.rashid],
+
+Please note we have received the report approval from the customer and you can move forward with next steps. 
+Please let us know if any questions.
+
+Thank you,
+Juliana
+
+[~phoebe.george] FYI 
+
+
+
+
+author: mamunur.rashid
+comment: [~Juliana Vannik],
+
+We released the code to production. The report has started to be generated in the client pickup folder from today.
+
+[~phoebe.george]FYI.
+
+Thanks.
+
+
+author: phoebe.george
+comment: [~mamunur.rashid] Thank you for releasing so quickly, but the CU was still asking as to when we would complete release as they need to prepare for pickup on their end.
+
+Also, they separately asked for the first report to be a one time larger report from their initial date when their conversion went live - is this possible to produce for one time and then the normal incremental file moving forward? Here is their question below:
+
+_Additionally, are you able to provide a one time file that encompasses all status changes from 4/12/22 to the time we implement this in production? This will allow us to true up our core and ensure it is reflecting the proper enrollments._
+
+
+author: mamunur.rashid
+comment: [~phoebe.george],
+
+It is possible to generate a one-time report from 4/12/22 to today. I actually need the date range value.
+
+[~Tin.Chak],
+
+I need your help. How do you generate the range parameter for the report scheduler? In your previous comment (20/May/22) you said that the range should be-2147483648. It means13-Aug-69. So the report pulled all the previous data (516257 rows) (from 3-Aug-69 to present). What should be the range param value if I want to pull just todays data?
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~mamunur.rashid] Try -1
+
+
+author: mamunur.rashid
+comment: [~phoebe.george],
+
+Should I generate a one-time report in production from 4/12/22 to today?
+
+
+author: phoebe.george
+comment: [~mamunur.rashid] Sorry, not yet! I'm still pending a confirmation from SSCU on when they will be able to be ready to download the full first large file. I'll provide an update soon. Thanks!
+
+
+author: phoebe.george
+comment: [~mamunur.rashid] Customer would like to receive the first full file morning of 6/17. It will contain the date range from 4/12 - 6/17.
+
+All subsequent files will be incremental containing changes from that day forward.
+
+Let us know if that will work. Thank you!
+
+
+
+
+author: mamunur.rashid
+comment: [~phoebe.george],
+
+The one-time report from 4/12 to 6/17 is ready and named *estatement_enrollment_report_one_time.txt*. The file is in the client pickup path.
+
+Full path of the file is:/d/SECURE3/Usr/sscu/client_pickup/estatement_enrollment_report_one_time.txt
+
+
+author: phoebe.george
+comment: [~mamunur.rashid] SSCU provided the feedback on the production files so far - can you confirm below?
+
+_We successfully ran the files in production today without issue, however, we did notice there was not a file for the 19th. Can you confirm one should have been generated?_
+ 
+ _This also brings up another question, if there are no status changes on that date, will a file still be generated or will no file be sent?_
+
+
+author: mamunur.rashid
+comment: [~phoebe.george],
+
+The reason of the missing file for the 19th is somehow the job for the 19th is still in a running state. I think it happened because of the maintenance on the 19th.
+
+!sscu_accumulative_optout_0619.png!
+
+I have manually triggered the report job for the 19th. The report file is in the client_pickup folder.
+
+The report file will be generated every day and will be sent whether there are status changes or not. If there is no status change then the generated report file will not contain any data.
+
+
+author: phoebe.george
+comment: [~mamunur.rashid] Thank you, I have notified SSCU.
+
+[~Tin.Chak] Is there anything that we can do to ensure that the monthly maintenance does not interrupt the daily transmission?
+
+
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~phoebe.george] This maintenance was a special case. Network had to switch to a bigger drive over the weekend and it causes connection issue to the drive. It was tested at the time and it worked, but after a couple hours, it can't connect to the drive from the PUI server. It was resolved on Sunday, but it looks like this report was not re-ran. The report will not be interrupted on maintenance day given the time that this report is scheduled.

@@ -1,0 +1,140 @@
+title: ISIS Color Print Job Troubleshooting
+body:   
+
+**_ISIS DFA setup  notes for jobs printing on Inkjet Color Printer _**
+
+  * **For Color TIFF, ALWAYS start with RGB tiffs**
+  * For tiffs, should always start with RGB tiffs because Afp2web can only handle RGB tiffs. The printer software will automatically convert RGB color to CYMK at the time of printing
+
+  
+
+  *  **For Color PSEG, ALWAYS start with CYMK compression**
+  * For pseg, should always start with CYMK compression pseg, because Afp2web only handles CYMK pseg.
+
+  
+
+  *  **DO NOT USE inverted text for color header bars with white text**.
+  * The text will be reduced in size when printed on the Inkjet color printer. Should do the following:
+    * Use the 'BOX' command to create the shaded bar and the 'TEXT' command to print with white text
+    * For 'Application Output Format', select 'IOCA-FS45 JPEG comp' for 'Image Mode'
+
+  
+
+  *  **NEED Color Logo and Return Address to HVY cover sheet**
+  * If not using eform, need to add color logo and return address to hvy cover sheet
+
+  
+
+  
+
+  
+
+  *  **DO NOT create a production ticket by duplicating and modifying a test ticket**
+  * For eform resources from production and test locations, DO NOT create a production ticket by duplicating and modifying a test ticket.  A test ticket has the test resource paths attached, e.g. /home/isis/pseg, etc while a production ticket has the production resource paths.  You should duplicate an existing production ticket and make the respective changes such as eforms and ticket name, etc.
+
+  
+
+  
+
+  
+
+  *  **Stock Code assignment for Non-eform setup**
+  * For non-eform setup, OPS still wants to have a stock code assigned to each page. It will be provided on the SOW.  Since we are not using preprinted paper, the stock codes have to be printed on the page at the time of printing.  We are working on programs to allow the setup of printing stock codes    Until the programs are ready, please output the stock code on the format step.
+
+  
+
+  *  **Dealing with a perforated or 3-hole punched stock with a non-house stock code**
+  * you need to check ASSIGN_RECIPE_CODE.dfa to see if that stock code has been set up with the right recipe code already. If not, just add it to the CASE statement accordingly.
+
+  
+
+  *  **ERROR: PSEG covers the image underneath it**
+  * use the 'Transparency management' tool in 'Papyrus Image Editor' to select the color to be transparent (see image below).
+
+  
+
+  *  **ONLY CHECKS 2D barcode can print in middle**
+  * Only checks will have 2d barcode printed in middle.  All other application requiring a remittance form, will be in standard location of lower left corner
+
+  
+
+  *  **ERROR: the alternate grey bars in the printed samples looks small and does not cover the entire line**
+
+  
+
+  * check following two things (see image below). Sample program: WECUMS11.dfa.
+
+Issue screenshot:
+
+Two things to check:
+
+  
+
+  *  **ERROR: "exception - service error"**, when creating a ticket (see image below),
+
+Double check your e-form PDF. Your e-form PDF might have multiple pages.
+
+  
+
+  *  **ERROR: "FORMDEF required but not specified"** (see image below)
+
+If you set up **test ticket** , duplicate an existing tic beginning **with
+"test_"**.  (OR) When you set up **PROD ticket** , duplicate an existing tic
+beginning **without** **" test_"**.    Change the name and the eforms
+accordingly.  All the resource paths are set properly already.  The resource
+paths will be missing and pulling wrong  eforms.  Follow the procedure and
+redo the ticket.
+
+  
+
+  *  **If the associated eform (EPCUMS1_3526_P1) is missing in eform folder (/$EFORMS/Prod/), when creating the ticket epcums1.TIC,**
+
+\- Check /$EFORMS/[Prod|Test]/ folder. Most likely, all four PDF eforms are
+not created. Two uppercase files and Two lower case files
+
+ ** **
+
+  *  **The print afp file "Job Status" have "exception - Service error" for resource missing **
+  * right click on that line and "open Messages".
+  * See screen shot example below that shows the message manager pseg is missing.
+
+            
+
+** **
+
+ ** **
+
+  *  **The print afp file "Job Status" have "exception - Service error" for eform Ticket Typos**
+  * right click on that line and "open Messages".
+  * See screen shot example below that shows "Open of PDF file failed".
+
+ ** **
+
+ ** **
+
+ ** **
+
+  *  **If resources like pseg, overlay, tiff, etc are pointing to test for production eform**
+  * When you set up a prod job ticket after the test one has been approved, do not just duplicate the test one and change the name. You have to duplicate from a production ticket when setting up a new prod ticket so that the paths are correct.
+  * Open the ticket and Click on the pencil icon on the right and look at 'Resouce Libraries' and you will see all the prod/ (OR) test/ paths. 
+
+  
+
+ ** **
+
+ ** **
+
+ ** **
+
+  *  **PRISMA Print Files Locations and Rules:**
+
+  1. All print files names appearing in Prisma will have the Proc_id and an underscore added in front of the print file name, e.g. 2238149_hebcdla1274.2o1.afp instead of hebcdla1274.2o1.afp. This is done when the file is copied to Prisma and only the copy of the file in Prisma is affected.  The filename in the afp folder during processing remain the same
+  2. All the files in the regular afpprint folder remain the same without the proc_id added
+  3. All 'CS6900' jobs will show up in Prisma only.  The jobs that are printing on the b/w printers will be copied to both Prisma and the regular afpprint/ folders so that any such jobs can still be ran on a b/w printer if Laser run into any issues.  Please record all the issues so that they can be looked at after month end
+  4. Prisma_afpback folder is created to back up the prisma print files for 14 days.  If a print file needs to be restored to Prisma, please copy it from the prisma_afpback folder instead of the regular afp/cid folder.  There are no isd subfolders in the prisma_afpback folder.  All the files there will have the proc_id so you can search by the proc_id or search by wildcard with the filename or prefix.
+  5. For all test jobs, all the print files will be copied to Prisma for both TX and CA.  For production jobs, CA will get all the print files except .sam, .is, .car, .prf, .ppf, .qa with the exception of kycums1 which will get the .qa file also. For TX, all print files will be copied to Prisma.  I am still working on eliminating some of those files for internal uses.
+  6. If DP need to copy files to Prisma, please get them from the ${d_dir}/prisma_afpprint folder for both CA and TX.
+
+  
+
+

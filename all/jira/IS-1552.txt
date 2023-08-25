@@ -1,0 +1,98 @@
+title: SACU 22497 [pvt] Changes  to HELOC Suppression
+description: Changes to HELOC supression:
+Print Suppressions: 
+a)	If record 200, field 01 field exists within account data and value is either 1, 2, or 99 then suppress from print and mail. In this case, do not look for Record 200 Field 23. Include these statements in PDF Archival.
+b)	Record 200 field 01 does not exists and Record 200 field 23 value is 0 or 2 then print and mail. Include these statements in PDF Archival.
+*Important Note: Per confirmation received from the CU, If Record 200 field 23 do not exists within account data then consider the field having a value of 0 and proceed with print and mail.
+c)	If Record 200 field 01 does not exists and the Record 200 field 23 value is 1. It is an e-statement. Supress from print and mail. Include these statements in PDF Archival.
+
+SOW:
+http://sharepoint-svr/AS/Shared%20Documents/SOW%20Directory/SACU-%20Sacramento%20Credit%20Union/SOW/SACU_HELOC_SOW_NEW.docx
+
+
+
+
+author: nischala.manjunath
+comment: [~kericapote] [~Igor.Khosid] - Project is exported to the qa directory. 
+Parallel ID - 20220907093058.
+Thanks!
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220907093058
+   Currently in parallel: Yes
+   User: nischalaM
+   Description: IS-1552 Change heloc suppression
+   Date Submitted: 2022-09-07 09:31:10
+   Date Last Updated: 2022-09-07 09:31:10
+   Files:
+      1) SACUME21.dfa
+
+
+author: igor.khosid
+comment:   
+<     IF &MAIL_CODE_DECIDER<>'0' ;
+---
+>     IF &MAIL_CODE_DECIDER=='1' OR &MAIL_CODE_DECIDER=='2' OR 
+>      &MAIL_CODE_DECIDER=='99' ;
+
+<   ENDIF ;
+<   IF F_VAR[23]<> '' ;
+<   THEN ;
+<     &MAIL_CODE_DECIDER2 = F_VAR[23]*1 ;
+<     IF &MAIL_CODE_DECIDER2=='1' ;
+<     THEN ;
+<       &MAIL_CODE = 'z' ;
+<     ENDIF ;
+<   ENDIF ;
+---
+>   ELSE ;
+>     IF F_VAR[23]<> '' ;
+>     THEN ;
+>       &MAIL_CODE_DECIDER2 = F_VAR[23]*1 ;
+>       IF &MAIL_CODE_DECIDER2<>'0' OR &MAIL_CODE_DECIDER2<>'2' ;
+>       THEN ;
+>         &MAIL_CODE = 'z' ;
+>       ENDIF ;
+>     ENDIF ;
+>   ENDIF ;
+
+
+author: gthillaivel
+comment: QA in progress
+
+
+author: gthillaivel
+comment: [~kericapote] [~nischala.manjunath]
+
+
+
+Verified the mail code update in the descriptions.Looks good
+
+Test results are in the location : \\dell-2100\qa\2022\03_Change Request\Gnana T\IS-1552 SACU
+
+[~nischala.manjunath]--Can you attach IS checklist
+
+Can we request the test DPVS to check the total count
+
+
+
+
+author: nischala.manjunath
+comment: [~gthillaivel]  IS Checklist is attached  [^IS_CHECKLIST.pdf] 
+
+
+author: gthillaivel
+comment: [~nischala.manjunath] [~kericapote] 
+
+Attached is the IS checklist
+
+[^IS_1552_SACU_CHECKLIST.pdf]
+
+
+author: nischala.manjunath
+comment: Program Transfer form is attached  [^IS_PROGRAM_TRANSFER_FORM.doc] 
+
+
+author: rodriguez
+comment: code has been released, backup id =20220908134800

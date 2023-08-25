@@ -1,0 +1,168 @@
+title: Design Doc of Alternative to Cookie for Prism (In progress)
+body: ## **Introduction**
+
+This design doc is for the implementation of something that will be the
+alternative to Cookie. After the implementation of this feature, we can avoid
+using cookies and can save the necessary data somewhere else.
+
+ **Purpose/Objective Summary**
+
+Third-party cookies are blocked from some browsers like Safari, Chrome (from
+2023). And other browsers will do the same in the future. That's why we need
+to get rid of using cookies in Prism.
+
+If we want to stop using cookies then we need to save necessary data somewhere
+else like local storage or session storage. But these storages go under the
+same third-party cookie policy. Also, these storages are not accessible from
+both frontend (jsp) and backend (servlet) like cookies.
+
+### In-Scope
+
+  1. Finding out an alternative to cookie
+  2. R&D the possible solution
+  3. Check all the necessary code change required 
+
+##  **Findings and Solutions For SSO**
+
+Query param can be a solution in this case. Data can be encrypted and send as
+a query param in every request. For data persistence, we can use MongoDB
+document to store the encrypted data and can send it with every request as a
+query param. Data validation can be done by checking the consistency of query
+param and the persisted data from MongoDB.
+
+SSO
+
+  * After ssoExchange, we can save the encrypted user and account data and browser information to MongoDB. And the "_id" of the MongoDB document can be used as query param value for every request.
+  * In every request, the query param value will be used to pull data from MongoDB.
+  * After getting data from MongoDB, it can be decrypted and the user and account information can be obtained.
+  * Also, current browser information can be compared with the browser information that has been saved to MongoDB before to ensure that the URL hasn't been copied and pasted to another browser to access Estatement site.
+  * This validation and data decryption will be done inside Servlet Filter in every request.
+
+### DSO
+
+  * For DSO, after user login, an encrypted key is generated in sign-on page containing user and account information.
+  * This key can be saved to MongoDB and the rest of the process will be the same as SSO.
+
+  
+
+The URL will look like this -
+**[https://domain/?page=profile&sign=613af73706ddc4057b19a50e](http://10.1.0.142:4000/?page=profile&sign=eXDN62ru6pHW456M5)**
+
+### Validation
+
+  * In every request, browser information will be obtained from the "User-Agent" header and will be compared to previously saved browser information in MongoDB.
+  * Session time out will be handled from the last refresh time stored in encrypted key. This implementation is already there for Prism.
+
+  
+
+## This is a sample **ssoKeyData** collection Document -
+
+jsssoKeyData Collection
+
+  
+
+##  **Requirements**
+
+### Functional Requirements
+
+ID
+
+|
+
+Title
+
+|
+
+Functionality  
+  
+---|---|---  
+FR_01|  
+|
+
+  
+  
+  
+### QA/Test Requirements
+
+ID
+
+|
+
+Title
+
+|
+
+Details  
+  
+---|---|---  
+QR_01|
+
+  
+
+|
+
+  
+  
+  
+## Code changes
+
+  1. Code update
+
+Project file path
+
+|
+
+Method Scope
+
+|
+
+Changes  
+  
+---|---|---  
+  
+|  
+|
+
+  
+  
+  
+# Summarized Change Log
+
+Date
+
+|
+
+Who
+
+|
+
+Changes  
+  
+---|---|---  
+  
+
+
+| Mamunur Rashid| Creation  
+  
+  
+
+# Feedback / Question / Answers
+
+Question
+
+|
+
+Answer  
+  
+---|---  
+  
+  
+
+|
+
+  
+  
+  
+  
+
+

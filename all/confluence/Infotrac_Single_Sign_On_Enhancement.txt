@@ -1,0 +1,98 @@
+title: Infotrac Single Sign On Enhancement
+body:   
+
+  
+
+Target release|  
+  
+---|---  
+Epic|  
+  
+Document status|
+
+DRAFT  
+  
+Document owner|  
+  
+Designer|  
+  
+Developers|  
+  
+QA|  
+  
+  
+  
+
+## Goals
+
+  * The objective of this enhancement is to support clients with different identity provider services for Infotrac Single Sign On (SSO) facility through SAML and Microsoft Active Directory Federation Service.
+
+## Background and strategic fit
+
+Infotrac SSO is built based on Microsoft ADFS and SAML authorization standards
+with Infoauth Service. The current infrastructure is capable of serving the
+SSO facility for clients with Microsoft ADFS as the identity provider service.
+However, many clients can have different identity providers other than
+Microsoft ADFS, such as Keycloak, Okta, CASS etc. Therefore the functionality
+to support different identity providers is required to serve SSO functionality
+to those clients. To meet the objective some research and testing have been
+done. To fulfill the requirement Infoimage MS ADFS configuration needs some
+changes and Infoauth Service may require additional development. Also to
+replicate the whole workflow, proper testing through a SAML-based IDP must be
+done internally.
+
+## Current Workflow
+
+## New Workflow
+
+## Analysis
+
+## Assumptions
+
+  * Clients use any SAML based Identity Provider service like MS ADFS, Keycloak, Okta, etc
+  * Clients' IDP will provide metadata file for IDP configuration in XML format.
+  * Clients' IDP will support metadata files for SP configuration in XML format.
+  * Clients' IDP will be able to provide the claims required for Infotrac SSO
+  * Clients' have the ability to configure the SP as the relying party trust from their end.
+
+Development:
+
+ **Microsoft ADFS:  **
+
+  * Updating MS ADFS to enable SAML based IDP support
+  * Setting up claim provider trust configuration.
+  * Documenting ADFS configuration procedure for non-ADFS based IDP.
+  * Documenting technical guidelines for Service Provider / Relying Party Trust configuration for SAML-based IDP.
+
+ **Infoauth Service** :
+
+  * Feature inclusion to support generic SAML IDP.
+  * Updating Spring Security SAML for non - ADFS based SSO support.
+  * Updating service layer for handling claims sent by non - ADFS based IDP. 
+
+ **Test Plan:**
+
+  * Setting up Keycloak internally
+  * Configuring Keycloak settings as SAML based IDP
+  * Configuring internal keycloak as the relying party trust in MS ADFS services
+  * Configuring MS ADFS as the Claim Provider Trust in internal Keycloak
+  * Testing full cycle of Infotrac SSO through Keycloak as the Internal IDP.
+
+  
+
+## Requirements from Client or Vendor
+
+  * Metadata File: Metadata file for claim provider trust configuration in XML format from SAML standard IDP.
+  * Service Provider / Relying Party Trust Configuration: Full configuration of Infotrac SSO's MS ADFS as the relying party trust in the client-side IDP.
+  * Claims: Client-side IDP must provide required claims for Infotrac SSO in each authentication request.
+
+##  **Estimate:**
+
+Development Hours: 50 to 70 hours (May vary depending on the client-side IDP's
+configuration complexity)
+
+Testing Time: 24 to 32 hours
+
+  
+
+

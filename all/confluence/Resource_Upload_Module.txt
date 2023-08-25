@@ -1,0 +1,170 @@
+title: Resource Upload Module
+body:   
+
+  
+
+Target release| Release name or number  
+---|---  
+Epic|
+
+[ISD-5756](https://jira.infoimageinc.com/browse/ISD-5756)  
+  
+Document status|
+
+GreenDONE  
+  
+Document owner|  
+  
+Designer|
+
+  
+  
+Developers|
+
+  
+  
+QA| Lead tester  
+  
+  
+
+## Goals
+
+  * The Resource Upload Module will allow for efficient upload of resources to the relevant resource locations.
+
+## Background and strategic fit
+
+Simplify resource upload for all users. Potentially have the feature be
+available for Print to use.
+
+## Assumptions
+
+  * Users will access this feature through the PUI front-end.
+  * Upload actions will be logged for auditing purposes.
+  * The resource upload will only be available on Pilot PUI and Production PUI. This is because the audit log will need to use the Oracle DB, and it would be extra effort to establish the same database connection for Dev/Pilot/Stage. 
+  * We will use checksum to validate if the file is the same.
+  * The case where two people might be uploading the same resource at the same time is rare enough that it will not be considered at this time. Even if this does happen, the file is most likely the same file anyway, so it would not cause an issue.
+
+  
+
+  * For testing purposes, we can still use the Dev PUI. However, instead of mount points to the resource locations, the dev-pui should just have local directories that mirror the path(s). The same can be true for Staging. This way, we can maintain the same workflow. It should just be known that we cannot upload resources using Dev or Staging. Maybe on the UI. 
+
+## Requirements
+
+  
+| Title| User Story| Importance| Notes  
+---|---|---|---|---  
+1| Resource Upload Select Option| As a user who wishes to upload resources, I
+would like to be able to access the Resource Upload module via the EPJS tab on
+the PUI front-end, so that I can begin the process of uploading resources.|
+_Must Have_|  
+  
+2| Resource Upload First Page - Zip File Upload| As a user who wishes to
+upload resources, I would like to be able to upload a zip containing all the
+resources I want to upload so that I can provide a batch of files without
+having to upload each one individually.|  _Must Have_|
+
+This should only accept zip files.
+
+  
+
+on Dev and Staging, there should be optional verbiage informing that the
+Resource Upload is only for testing/validation and will not have any real
+effects  
+  
+3| Resource Upload Second Page - Validation| As a user who wishes to upload
+resources, I would like the Resource Upload module to double check and
+validate all files I am uploading, and inform me what actions would be taken
+for each file.|  _Must Have_|
+
+Validate files based on extensions:
+
+  * .300 -> pseg
+  * .OVL -> ovl
+  * .tif -> tiff
+  * .chs/.fon -> font300
+  * The rest will be ignored (display this on the front-end also to be confirmed)
+
+Check against extensions should be case-insensitive.
+
+Check against filename should be case-sensitive.
+
+For files that already exist, compare the checksum, and prompt the user,
+asking if the file should be replaced, presenting whether the file is the same
+on the server. Have to check every single server in case the servers are
+somehow out-of-sync.
+
+Additional information to be displayed are: Upload Date and Uploaded By. This
+will be stored in the SQL database going forward. For the initial set up and
+any files that we do not have the previous data for, these two can be
+displayed as "Unknown".  
+  
+4| Resource Upload FInal Page - Confirmation.| As a user who wishes to upload
+resources, I would like to have a final confirmation page after all actions
+have been completed.|  _Must Have_|  List out all the files again and all the
+completed actions. Pull the Upload Date and Uploaded By data from the database
+in case of a race situation (this should be rare).  
+5| Resource Servers Mount|  
+|  _Must Have_|
+
+Mount resource server locations onto PUI servers.  
+  
+On Dev and Staging, there will be no mount paths. Instead, it would just be
+local directories.
+
+Current servers:
+
+DEV  
+ca-afp2web-dv-01
+
+ca-afp2web-dv-02
+
+PROD
+
+ca-afp2web-pr-01
+
+ca-afp2web-pr-02
+
+ca-afp2web-pr-03
+
+ca-afp2web-pr-04  
+  
+6| Resource Servers Data Table| As a developer, I would like to be able to
+update the resource locations for the resource upload module using a database,
+so that whenever a server is changed/added/deleted, I will not have to change
+the code.|  _Must Have_|
+
+resource_upload table (similar to storage_servers) to keep track of all the
+resource server mount path  
+  
+
+Simple table is enough: ID, MOUNT_PATH (the mount path on the pui servers)  
+  
+7| Resource Upload History Data Table| As an auditor, I would like to know who
+made the last changes to the resource files.|  _Must Have_|
+
+Table to keep track of resource upload history.
+
+Name (this will be PK also, since we know filenames must be unique)  
+Upload_Date  
+Uploaded_By  
+  
+## User interaction and design
+
+Include any mockups, diagrams or visual designs relating to these
+requirements.
+
+## Questions
+
+Below is a list of questions to be addressed as a result of this requirements
+document:
+
+Question| Outcome  
+---|---  
+(e.g. How we make users more aware of this feature?)| Communicate the decision
+reached  
+  
+## Not Doing
+
+  * List the features discussed which are out of scope or might be revisited in a later release.
+
+

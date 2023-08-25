@@ -1,0 +1,109 @@
+title: BKPL - Hypercube Site Setup
+description: Attached is SOW and hexadecimal colors. Please use those to set up the Hypecube Site for BKPL. The SOW is vague, so part of the exercise/training is to be able to translate the vague details to what we are doing on Hypercube.
+
+Should also set up the nginx, and request Network to set up the external DNS.
+
+Pilot Live Date: 8/11. But we want to be done by 8/4 for internal review.
+
+Additional details:
+1. There will be an Auth file process. This will determines all the user-account relationships. Therefore, this will be similar to SUCU. We will only use the UFAs from the database. Unlike SUCU, there will never be an enrollment steps, and the user cannot change their delivery preferences or email addresses at all. Everything is controlled by the Auth file.
+---To test on dev, before the Auth file is ready, set it up so that you can pass in CIF and account list so that at least the UI can be tested. (Or insert data into the Dev database)
+
+For any text fields/logos that we don't have, please use DUMMY text and images. We do not want the client to see anything regarding other clients. 
+
+NCR SSO. Will be using SAML also.
+
+
+author: moshiur.rahman
+comment: Hi [~tai.trinh],
+ I have some confusion after going through the SOW. Can you please make me clear about these?
+ * There are 3 types of statements mentioned in Project Definition. Monthly, Promontory, and Wealth Management. I know about monthly statements but what is Promontory and Wealth Management?
+ * Wealth Management is mentioned in only one place in SOW (1.0 Project Definition). In all other places, only monthly and promontory statements are mentioned. There is no other information about wealth management like Account totals, Page totals, image totals, archival period in sow.
+ * What would be the statement types for monthly, promontory, and wealth management?
+ * What are the Online Banking Consumer and Online Banking Commercial? Are they users having a specific type?
+ * What backend processes will they use?
+ * As BKPL will use auth, how the statements are gonna be posted as they won't use doc process?
+ * How the emails will be handled as they will not use ECL? If emails are populated in the np table via SSO, then it's ok.
+ * In the case of email notification, for which statement types the notifications will be sent?
+ * On the Infotrac part, there is mention about Restricted and Non-Restricted statements. Are they Restricted/Non-Restricted account? Or, Restricted/Non-Restricted statement?
+ * According to 9.0 InfoTRAC Administration Interface (AI) section, does AI Email Address Update Page (7.d) means notification preference update feature and AI Paperless Update Page(7.e) means delivery preference update feature?
+ * What reports are we ganna consider as standard AI reports?
+
+Thanks,
+ Moshiur
+
+
+author: tai.trinh
+comment: Hi [~moshiur.rahman],
+
+# We'll only set up Monthly (default) and Promontory (promontory) for eStatement. These two will have emails, because they're eStatements; and unless stated otherwise, we should always assume that we will be sending emails.
+# OLB Consumer vs OLB Commercial are just the fact that they will have different SSO methods. Unfortuantely, I'm not too entirely sure on this. I think they are using normal DI for Consumer, and SAML for Commercial.
+# We should set up the default standard processes: Document Processing, Email, Paperless Report. The Auth process I will set up.
+# They are using Document Processing. If we are setting up eStatements, then the only logical thing to set up is Document Processing.
+# Emails are coming in through the Auth file. Emails from SSO should be ignored (in fact everything from SSO except CIF should be ignored).
+# Restricted/Non-restricted is restricted account access. I'll have this be handled by the Auth file also.
+# Yes, this simply means that we should enable Email Address update and Delivery Preference update for the admin user.
+# Standard Reports
+* Statements Posted
+* Paperless Enrollment
+* Email Collection
+* Login Summary
+* Notification Sent
+* Admin Login Activity
+* User Enrollment Report
+
+Thanks,
+Tai
+
+
+author: moshiur.rahman
+comment: Hi [~tai.trinh]
+ * I've updated the conf file on dev and added on pilot. please take a look.
+ * I've added BKPL in pilot infoimage-commons. I've also deployed it oninfoimage-commons-ca-pui-pi-01
+ * Hypercube testing is going on. Tomorrow It'll be deployed also on pilot.
+
+And, just to be confirmed, from your side,
+ * auth process will be updated. Instead of U, W is going to be used to store delivery preference "Both".
+ * And, you'll talk to the client about the Date of Birth(Dob) field, right?
+
+
+author: tai.trinh
+comment: Hi [~moshiur.rahman],
+Yes to W and DOB.
+
+For infoimage-commons deployment, pui restart is necessary, but of course, right now, it is being used. 
+
+Also, storage path should always be c now.
+
+Thanks,
+Tai
+
+
+author: nprimak
+comment: SSO verified, works as required.
+
+Reconciliation tab has wrong pdf, needs to change to pdf with reconciliation content.
+
+
+author: moshiur.rahman
+comment: Hi [~nprimak],
+ During this setup, as the client didn't provide any pdf or reconciliation, we used the sample pdf in Reconciliation. As this was a new client setup, we were waiting for the client's feedback. After pilot deployment, we didn't get any feedback from the client, that's why we didn't change the sample pdf in the Reconciliation tab. As Tai suggested, we deployed it on stage and requested QA.
+
+We'll have to discuss with Tai what should be the content in Reconciliation and will change the reconciliation as per the discussion.
+
+Thanks,
+Moshiur
+
+
+author: moshiur.rahman
+comment: Hi [~nprimak] 
+As per [~tai.trinh]'s confirmation, Reconciliation tab is removed. Code is deployed on stage.
+
+Thanks,
+Moshiur
+
+
+author: nprimak
+comment: Verified SSO hypercube on staging, works as expected.
+
+

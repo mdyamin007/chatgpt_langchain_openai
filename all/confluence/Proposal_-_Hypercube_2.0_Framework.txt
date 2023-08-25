@@ -1,0 +1,688 @@
+title: Proposal - Hypercube 2.0 Framework
+body: **Technology Stack**
+
+Server side : NodeJs (HapiJs Framework)  
+\- Real time functionality : [Socket.io](http://Socket.io) (to communicate
+from server to client)  
+\- REST Service  
+Client side : React  
+\- State Manager : Redux
+
+We are planning to develop a framework built on the mentioned technologies. In
+this framework our goal is to handle each component properties based on a
+provided UI graph. The UI graph will be populated based on the featurelist and
+settings provided in InfoTRAC UI during client creation. The flow will be
+similar to what we are doing in InfoReach. In the UI graph for each components
+the attributes will hold styles, properties, actions and logics as well.
+
+This json will be populated from a checklist UI in InfoTrac. So even if it
+looks a little complex the client setup wont be much complicated.
+
+ **Request Handling and Real Time Interaction**
+
+For each request submitted to node will be handled by it's rest api call. And
+every change in information from other applications will be handled in real
+time by [Socket.io](http://Socket.io) and this will be triggered by an api
+call made to our node service. Currently we do not have real time data update
+feature in Hypercube 1.0 as there is no way to get the updated data from other
+applications such as InfoTrac.
+
+ **Multiple client support**
+
+ **Public Files:**  
+Public elements such as disclosure, css will be provided from InfoTrac client
+creation module and no files will actually be stored. There are two reasons we
+are planning to come out from the current in-project file placement.  
+1\. The browser caches the public files so even if they are changed in
+project, there is no way to show the user the updated one until he refreshes
+the browser forcefully.  
+2\. For each client we had to modify the code base which is not conventional
+for any multi tenant application. If we can bind the clients to a limit on how
+far they can change the UI, we can easily make this as a form that needs to
+filled up and we wont need to add new files each time a client comes in. Of
+course we will make each component as customizable as possible.
+
+So fetching the configurations from InfoTrac will not only make the user
+experience better and more effective but also it will make a new client
+installation easier and comfortable.
+
+ **Implemetation of Customized Features through UI Graph:**  
+We are going for an UI graph during client creation from InfoTrac. In the UI,
+the infoimage user will provide client information along with a checklist for
+the client customized features. this way we can logically create a client
+config json. As this will be a tree containing each parent feature as an
+object we can easily design the components to be able to behave as per it is
+supposed to according to the provided checklist.
+
+We are currently working on the config json which will help us to visualize
+how the UI graph on InfoTrac will look like and then we can figure out the
+granular components along with their flow and life cycle for Hypercube 2.0. In
+the following graph json and flow diagram we have tried to represent the
+client info and enrollment flow. Following flow describes how a single request
+life cycle will be handled and how the components would be loaded and the
+actions would be triggered.
+
+To make it work with the provided json below we have divided the whole domain
+in two parts.  
+\- uiGraph  
+\- client  
+Inside uiGraph we have each pages/parts declared. And the "client" contains
+the basic information about the client and other steps configured from
+functionality standpoint.  
+For example under uiGraph we have "enrollment" object where we have attributes
+declared for each steps. under client->sso->ssoMethods we have the sso types
+declared under which we have declared the steps for each ssoType. So from the
+flow once the user puts in a request to access this enrollment page it will be
+first verified by router (using node auth service) and if successful, router
+will bring only the enrollment portion of uiGraph and components. Based on the
+ssoType by which the user logged in, under "enrollmentSteps" we have an array
+of enrollment step names. For each name is described in the uiGraph under
+"enrollment" object we have a renderer where we can declare different parts of
+the page. So from the flow diagram our renderer will populate the page with
+the first array element from "enrollmentSteps" and fetch the object from
+"enrollment" by the same name. This object is a combined page of three parts
+provided in "renderer" array in json. Such way we can make each part
+configurable with individual styles and verbiages. Only the renderers know
+what to put where and which component belongs to which part. In the first
+element's name of "enrollmentSteps" array we can fetch the first element json
+from "enrollment" where we can see the styles defined which will make the ui
+styles much more customizable and manageable. We have states for each
+component and through the config the Component Loader from the flow diagram
+will update the states using the properties (e.g. disabled, visible) and
+update the styles provided for this particular component. All
+styles/logicHandlers are mapped in the functions inside the component. From
+the json in the "buttons" object we can declare new buttons and declare their
+functions and map which logic needs to be triggered by the provided "actions-
+click". These actions will be executed in the action handler from the flow.
+The provided logic will be customizable for each component and can be
+different for different clients. The renderer knows the next action which is
+to take the enrollment to the next step so the renderer can queue the next
+requests.
+
+    
+    
+    {
+      "demo": {
+        "uiGraph": {
+          "menu": {
+            "renderer": [
+              {
+                "name": "topMenu",
+                "components": {
+                  "statement": {
+                    "text": {
+                      "en": "eStatement",
+                      "es": "eDeclaraciones" 
+                    },
+                    "actions": {
+                      "click": "routeToStatementPage" 
+                    },
+                    "style": {},
+                    "styleClass": "",
+                    "parentStyle": {
+                      "style": {},
+                      "styleClass": "" 
+                    }
+                  },
+                  "disclosure": {
+                    "text": {
+                      "en": "Terms and Conditions",
+                      "es": "Terminos y Condiciones" 
+                    },
+                    "actions": {
+                      "click": "routeToDisclosurePage" 
+                    },
+                    "style": {},
+                    "styleClass": "",
+                    "parentStyle": {
+                      "style": {},
+                      "styleClass": "" 
+                    }
+                  },
+                  "profile": {
+                    "text": {
+                      "en": "Profile",
+                      "es": "Perfil" 
+                    },
+                    "actions": {
+                      "click": "routeToProfilePage" 
+                    },
+                    "style": {},
+                    "styleClass": "",
+                    "parentStyle": {
+                      "style": {},
+                      "styleClass": "" 
+                    },
+                    "executorPath": "menu",
+                    "states_executable": {
+                      "visible": "isProfileTabVisible",
+                      "disabled": "isProfileTabDisabled" 
+                    }
+                  },
+                  "logout": {
+                    "text": {
+                      "en": "Logout",
+                      "es": "Cerrar sesion" 
+                    },
+                    "actions": {
+                      "click": "routeToLogoutPage" 
+                    },
+                    "style": {},
+                    "styleClass": "",
+                    "parentStyle": {
+                      "style": {},
+                      "styleClass": "" 
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "enrollment": {
+            "pdfVerify": {
+              "renderer": [
+                {
+                  "name": "header",
+                  "components": {
+                    "headerMain": {
+                      "languageSelector": {
+                        "style": {
+                          "color": "#000",
+                          "float": "right" 
+                        },
+                        "styleClass": "col-md-12",
+                        "parent": {
+                          "style": {},
+                          "styleClass": "col-md-2" 
+                        },
+                        "languages": [
+                          {
+                            "name": "English",
+                            "value": "en" 
+                          },
+                          {
+                            "name": "Spanish",
+                            "value": "es" 
+                          }
+                        ]
+                      },
+                      "style": {
+                        "backgroundImage": "url('https://firefightersfirstcu.org/Portals/_default/Skins/FFFCU-Skins/assets/img/hpPageBGV4.jpg')",
+                        "color": "#000",
+                        "height": "90px",
+                        "fontSize": "24px",
+                        "padding": "10px",
+                        "fontWeight": "bold" 
+                      },
+                      "tag": {
+                        "text": "Guidance Financial Institute",
+                        "style": {
+                          "color": "#0075cb" 
+                        },
+                        "styleClass": "",
+                        "parentStyle": {
+                          "style": {},
+                          "styleClass": "" 
+                        }
+                      },
+                      "logo": {
+                        "src": "http://inforeach-dev.s3.amazonaws.com/email_template_image/demo_email_img/email_07/logo.png",
+                        "style": {
+                          "height": "61px",
+                          "width": "180px" 
+                        },
+                        "styleClass": "",
+                        "parentStyle": {
+                          "style": {},
+                          "styleClass": "" 
+                        },
+                        "actions": {
+                          "mouseover": "acceptPdfViewableHover" 
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "name": "pdfVerifyContent",
+                  "components": {
+                    "topVerbiage": {
+                      "text": {
+                        "en": "Can you see the PDF?",
+                        "es": "Puedes ver el PDF?" 
+                      },
+                      "style": {
+                        "fontSize": "22px",
+                        "fontWeight": "bold",
+                        "textAlign": "center" 
+                      },
+                      "styleClass": "",
+                      "parentStyle": {
+                        "style": {},
+                        "styleClass": "" 
+                      }
+                    },
+                    "pdfViewer": {
+                      "iframe": {
+                        "path": "http://www.africau.edu/images/default/sample.pdf",
+                        "width": "60%",
+                        "height": "600px",
+                        "frameBorder": "0",
+                        "scrolling": "yes",
+                        "title": "Sample PDF" 
+                      },
+                      "actions": {
+                        "mouseover": "acceptPdfViewableHover" 
+                      },
+                      "style": {
+                        "fontSize": "16px",
+                        "fontWeight": "bold",
+                        "textAlign": "center",
+                        "width": "100%",
+                        "display": "inline-block" 
+                      },
+                      "styleClass": "",
+                      "parentStyle": {
+                        "style": {},
+                        "styleClass": "" 
+                      }
+                    },
+                    "positiveButton": {
+                      "text": {
+                        "en": "I Can see",
+                        "es": "Puedo ver" 
+                      },
+                      "actions": {
+                        "click": "acceptPdfViewable",
+                        "mouseover": "acceptPdfViewableHover" 
+                      },
+                      "executorPath": "enrollment",
+                      "states_executable": {
+                        "visible": "alwaysTrue",
+                        "disabled": "alwaysFalse" 
+                      },
+                      "style": {
+                        "backgroundColor": "#4CAF50",
+                        "border": "none",
+                        "color": "white",
+                        "padding": "15px 32px",
+                        "margin": "10px",
+                        "textAlign": "center",
+                        "textDecoration": "none",
+                        "display": "inline-block",
+                        "fontSize": "16px" 
+                      },
+                      "styleClass": "",
+                      "parentStyle": {
+                        "style": {},
+                        "styleClass": "" 
+                      }
+                    },
+                    "negativeButton": {
+                      "text": {
+                        "en": "I Cannot see",
+                        "es": "No Puedo ver" 
+                      },
+                      "actions": {
+                        "click": "rejectPdfViewable" 
+                      },
+                      "executorPath": "enrollment",
+                      "states_executable": {
+                        "visible": "alwaysTrue",
+                        "disabled": "alwaysFalse" 
+                      },
+                      "style": {
+                        "backgroundColor": "#f44336",
+                        "border": "none",
+                        "margin": "10px",
+                        "color": "white",
+                        "padding": "15px 32px",
+                        "textAlign": "center",
+                        "textDecoration": "none",
+                        "display": "inline-block",
+                        "fontSize": "16px" 
+                      },
+                      "styleClass": "",
+                      "parentStyle": {
+                        "style": {},
+                        "styleClass": "" 
+                      }
+                    }
+                  }
+                },
+                {
+                  "name": "footer",
+                  "components": {
+                    "footerMain": {
+                      "text": {
+                        "en": "All Rights reserved",
+                        "es": "Todos los derechos reservados" 
+                      },
+                      "style": {
+                        "backgroundColor": "#FFFF33",
+                        "color": "#ff0000",
+                        "padding": "20px",
+                        "fontSize": "15px" 
+                      },
+                      "styleClass": "",
+                      "parentStyle": {
+                        "style": {},
+                        "styleClass": "" 
+                      },
+                      "left_image_path": "path_to_image",
+                      "right_image_path": "path_to_image" 
+                    }
+                  }
+                }
+              ]
+            },
+            "disclosure": {
+              "renderer": [
+                {
+                  "name": "header",
+                  "components": {
+                    "headerMain": {
+                      "text": "Please view and accept disclosure",
+                      "style": {},
+                      "styleClass": "",
+                      "parentStyle": {
+                        "style": {},
+                        "styleClass": "" 
+                      }
+                    }
+                  }
+                },
+                {
+                  "name": "disclosureContent",
+                  "components": {
+                    "topVerbiage": {
+                      "text": "Please view all the available disclosures",
+                      "style": {},
+                      "styleClass": "",
+                      "parentStyle": {
+                        "style": {},
+                        "styleClass": "" 
+                      }
+                    },
+                    "disclosureContentMain": {
+                      "path": "path_to_sample_pdf",
+                      "style": {},
+                      "styleClass": "",
+                      "parentStyle": {
+                        "style": {},
+                        "styleClass": "" 
+                      },
+                      "disclosureTypes": [
+                        {
+                          "name": "default",
+                          "text": "Statements" 
+                        },
+                        {
+                          "name": "enotice",
+                          "text": "eNotices" 
+                        }
+                      ]
+                    },
+                    "positiveButton": {
+                      "text": "I Accept",
+                      "actions": {
+                        "click": "acceptDisclosure" 
+                      },
+                      "executorPath": "enrollment",
+                      "states_executable": {
+                        "visible": "isPositiveButtonVisible",
+                        "disabled": "isPositiveButtonDisabled" 
+                      },
+                      "style": {},
+                      "styleClass": "",
+                      "parentStyle": {
+                        "style": {},
+                        "styleClass": "" 
+                      }
+                    },
+                    "negativeButton": {
+                      "text": "I do not accept",
+                      "actions": {
+                        "click": "rejectDisclosure" 
+                      },
+                      "executorPath": "enrollment",
+                      "states_executable": {
+                        "visible": "isNegativeButtonVisible",
+                        "disabled": "isNegativeButtonDisabled" 
+                      },
+                      "style": {},
+                      "styleClass": "",
+                      "parentStyle": {
+                        "style": {},
+                        "styleClass": "" 
+                      }
+                    }
+                  }
+                },
+                {
+                  "name": "footer",
+                  "components": {
+                    "footerMain": {
+                      "text": {
+                        "en": "All Rights reserved",
+                        "es": "Todos los derechos reservados" 
+                      },
+                      "style": {
+                        "backgroundColor": "#FFFF33",
+                        "color": "#ff0000",
+                        "padding": "20px",
+                        "fontSize": "15px" 
+                      },
+                      "styleClass": "",
+                      "parentStyle": {
+                        "style": {},
+                        "styleClass": "" 
+                      },
+                      "left_image_path": "path_to_image",
+                      "right_image_path": "path_to_image" 
+                    }
+                  }
+                }
+              ]
+            },
+            "accountPreferences": {
+              "renderer": [
+                {
+                  "name": "header",
+                  "components": {
+                    "headerMain": {
+                      "text": "Please view and accept disclosure",
+                      "style": {},
+                      "styleClass": "",
+                      "parentStyle": {
+                        "style": {},
+                        "styleClass": "" 
+                      }
+                    }
+                  }
+                },
+                {
+                  "name": "accountPreferencesContent",
+                  "components": {
+                    "topVerbiage": {
+                      "text": "A very long verbiage",
+                      "style": {},
+                      "styleClass": "",
+                      "parentStyle": {
+                        "style": {},
+                        "styleClass": "" 
+                      }
+                    },
+                    "accountPreferencesContentMain": {
+                      "paperlessConfiguration": "bySelective",
+                      "statements": {
+                        "default": {
+                          "name": "default",
+                          "text": "Monthly Statement",
+                          "following": "default",
+                          "paperlessRestrictions": "",
+                          "paperDependents": [
+                            "enotice",
+                            "etax" 
+                          ],
+                          "disablePaper": true
+                        },
+                        "visa": {
+                          "name": "visa",
+                          "text": "Visa",
+                          "following": "default",
+                          "paperlessRestrictions": "",
+                          "paperDependents": [],
+                          "disablePaper": false
+                        },
+                        "loan": {
+                          "name": "loan",
+                          "text": "Loan",
+                          "following": "default",
+                          "paperlessRestrictions": "",
+                          "paperDependents": [],
+                          "disablePaper": false
+                        },
+                        "enotice": {
+                          "name": "enotice",
+                          "text": "eNotice",
+                          "following": "enotice",
+                          "paperlessRestrictions": "default",
+                          "paperDependents": [],
+                          "disablePaper": true
+                        },
+                        "etax": {
+                          "name": "etax",
+                          "text": "eTax",
+                          "following": "default",
+                          "paperlessRestrictions": "",
+                          "paperDependents": [],
+                          "disablePaper": false
+                        }
+                      },
+                      "style": {},
+                      "styleClass": "",
+                      "parentStyle": {
+                        "style": {},
+                        "styleClass": "" 
+                      }
+                    },
+                    "positiveButton": {
+                      "text": "Sumit",
+                      "actions": {
+                        "click": "submitClicked" 
+                      },
+                      "executorPath": "enrollment",
+                      "states_executable": {
+                        "visible": "isSubmitButtonVisible",
+                        "disabled": "isSubmitButtonDisabled" 
+                      },
+                      "style": {},
+                      "styleClass": "",
+                      "parentStyle": {
+                        "style": {},
+                        "styleClass": "" 
+                      }
+                    }
+                  }
+                },
+                {
+                  "name": "footer",
+                  "components": {
+                    "footerMain": {
+                      "text": {
+                        "en": "All Rights reserved",
+                        "es": "Todos los derechos reservados" 
+                      },
+                      "style": {
+                        "backgroundColor": "#FFFF33",
+                        "color": "#ff0000",
+                        "padding": "20px",
+                        "fontSize": "15px" 
+                      },
+                      "styleClass": "",
+                      "parentStyle": {
+                        "style": {},
+                        "styleClass": "" 
+                      },
+                      "left_image_path": "path_to_image",
+                      "right_image_path": "path_to_image" 
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "eStatement": {},
+          "disclosure": {},
+          "profile": {}
+        },
+        "client": {
+          "info": {
+            "id": "demo",
+            "cid": "demo",
+            "defaultPage": "eStatements",
+            "companyURL": "http://www.demo.com/" 
+          },
+          "steps": {
+            "enrollment": {
+              "digitalInsightV2": [
+                "pdfVerify",
+                "disclosure",
+                "accountPreferences" 
+              ],
+              "fiserv": [
+                "disclosure",
+                "pdfVerify",
+                "accountPreferences" 
+              ],
+              "fis": [
+                "disclosure",
+                "accountPreferences" 
+              ],
+              "dso": [
+                "pdfVerify",
+                "disclosure",
+                "accountPreferences" 
+              ]
+            }
+          },
+          "sso": {
+            "ssoMethods": {
+              "default": "digitalInsightV2",
+              "defaultTokenName": "key",
+              "fiserv": {
+                "password": "secretkeys",
+                "clientCode": "00001234",
+                "usrAutoCreate": "n",
+                "acctAutoCreate": "n",
+                "checkPrimaryUser": "n",
+                "removeUFA": "n" 
+              },
+              "digitalInsightV2": {
+                "password": "secretkeys",
+                "usrAutoCreate": "y",
+                "acctAutoCreate": "y",
+                "checkPrimaryUser": "n",
+                "removeUFA": "n",
+                "redirectTo": "redirectToPage" 
+              },
+              "fis": {
+                "password": "secretkeys" 
+              }
+            }
+          },
+          "dso": {
+            "dsoUserIdentification": {
+              "business": {
+                "ssn9": "Business Tax ID" 
+              }
+            },
+            "isCaptchaEnabled": true,
+            "isPasswordhintEnabled": false
+          }
+        }
+      }
+    }
+
+

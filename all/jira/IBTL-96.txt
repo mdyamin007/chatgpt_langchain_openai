@@ -1,0 +1,98 @@
+title: HCCU Daily Letter Failed to process
+description: [~William.Kong] HCCU Daily Letter failed to process... Please see tail end of logging printed to screen:
+
+
+
+looking for log file with error of wrong start page
+ /home/test/master/get_infotrac.pl hccu dla
+
+
+
+
+perl /home/test/master/chk_file_id.pl parallel hccu dla
+
+
+
+Error: /home/test/master/chk_file_id.pl missing file_size
+hccu dla : /home/test/master/get_infotrac.pl - Error in chk_file_id.pl program.
+/home/test/master/isisdisk_daily.sh: line 510: [: too many arguments
+/home/test/master/isisdisk_daily.sh: line 513: /: Is a directory
+cp: cannot stat `/z/daily/hccu/hccud*.???.afp': No such file or directory
+Error: Incorrect declaring new object. Missing database name
+USAGE: new Setdb(test|prod)
+cp: cannot create regular file `/z/share/alice/daily/hccu/09/hccud*.print.081328': No such file or directory
+cp: cannot stat `/z/daily/hccu/*.sepprint': No such file or directory
+mkdir: cannot create directory `/z/share/daily/hccu/092020': No such file or directory
+cp: cannot create regular file `/z/share/daily/hccu/092020/hccud*.print.081328': No such file or directory
+cp: cannot stat `/z/daily/hccu/*.sepprint': No such file or directory
+/z/daily/hccu/hccud*.print
+can't extract address at <\@infoimageinc.com,email_test@infoimageinc.com> in <Email_Test\@infoimageinc.com,email_test@infoimageinc.com>
+hccu process .... completed
+
+
+author: william.kong
+comment: [~glenn.grimes]: Thanks for reporting the issue. I believe this issue is due to file checksum not being scanning into InfoTRAC database. We will need to place the datafile into /z/infoftp_int/$cid/folder/....
+
+
+
+However, before I ask you to do so, I don't think the FTPScanner in stage is functioning b/c I still see file from yesterday.. I have a status meeting this morning to check in with ISD to confirm the status. Once i have my answers and confirmed that it works, i will re-assign ticket to you and ask you to place the file into the internal ftp scanner.
+
+
+
+
+
+
+author: william.kong
+comment: [~glenn.grimes]: Please re-try. I confirmed the ftpscanner on parallel is working from David. Please copy the data file to the infoftp_int so that it can be scanned and then rerun the job.
+
+Also, please re-assign ticket to let me know whether or not it worked. Thanks!
+
+
+author: glenn.grimes
+comment: [~William.Kong] I do not see an HCCU folder available:
+
+!image-2020-09-30-14-13-02-147.png!
+
+
+author: william.kong
+comment: [~glenn.grimes]: I just created it. Can you retry?
+
+
+author: glenn.grimes
+comment: [~William.Kong] File has transitioned through scanner successfully... I am now getting the following when trying to process:
+
+
+
+oper1@rhs hccu> /home/test/master/hccu_process.sh 1 bypass
+
+
+ Process started.....................
+ Removing old files from /z/daily/hccu
+ mv: cannot move `/z/daily/hccu/backup' to a subdirectory of itself, `/z/daily/hccu/backup/backup'
+ mv: cannot overwrite directory `/z/daily/hccu/backup/file'
+ rm: cannot remove `/z/daily/hccu/file/*': No such file or directory
+ inputFilePGP
+ HERE....hccu, dla,
+ hccu, /home, test/keep, hccu,
+ Error: one of the variable (filename, home_env, keep_dir, cid, jid) does not have value.
+ ERROR: /home/test/master/hccu_process.sh in get_md5_value.sh
+
+
+author: william.kong
+comment: [~glenn.grimes]: Can you try again? This is one of those weird situations where two ftpbu/hccu/dl or ftpbu/hccu/DL folders. The program is picking up the "DL" folder instead of the "dl" folder. I moved the file into /z/ftpbu/hccubu/DL folder.
+
+
+
+I believe it should work now.
+
+
+author: glenn.grimes
+comment: [~William.Kong] Finally able to get back to this... I was able to process successfully without issue.
+
+
+
+Thank you.
+
+
+author: william.kong
+comment: [~glenn.grimes]: Thanks for resuming the testing during this EOM busy period! I will close the ticket out. Thanks again!

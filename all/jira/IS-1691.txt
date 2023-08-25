@@ -1,0 +1,421 @@
+title: SLCU API and Hypercube Migration - DLA and DNA: Remove Leading Zeros From Index
+description: RUSH REQUEST: INTERNAL
+
+Remove leading zeros from all account numbers for Daily Notice index files for two prefixes: dla and dna
+
+
+
+
+
+
+author: phoebe.george
+comment: [~rony] As discussed, here is the Jira Story; let me know if you need any other information for the rush request.
+
+[~Igor.Khosid] I will be calling you shortly on this.
+
+[~kericapote] FYI
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+/z/isd_input_dev/I3/process-files/slcu/dla_20220728_1_20221007_1434_slcu.txt is the index file, you can check the index file to see there is no leading zeros.
+
+SLCUDL001.zip toSLCUDL0018.zip (application slcudla) is in qa folder.
+
+Parallel id:20221007142648
+
+There is also another dfa in parallel id: SLCLUDN401.dfa (application slcudna). Project is also in qa folder. Needed to make same update to this one too. But I couldn't run the script to generate index file for it , since this is a red titan job (pdf data file) and we don't have access to redtitan server. I will ask [~phoebe.george]to have dp to run this in parallel. Then you can check the index file. For now please check the DLA ones.
+
+[^IS_Checklist.docx]
+
+[~phoebe.george]
+
+
+
+Thanks
+
+
+
+
+
+
+
+
+author: igor.khosid
+comment:    Parallel ID: 20221007142648
+   Currently in parallel: Yes
+   User: ronyD
+   Description: IS-1691
+   Date Submitted: 2022-10-07 14:26:59
+   Date Last Updated: 2022-10-07 14:26:59
+   Files:
+      1) SLCUDL007.dfa
+      2) SLCUDL008.dfa
+      3) SLCUDN401.dfa
+      4) SLCUDL006.dfa
+      5) SLCUDL004.dfa
+      6) SLCUDL005.dfa
+      7) SLCUDL002.dfa
+      8) SLCUDL001.dfa
+      9) SLCUDL003.dfa
+>>>>
+SLCUDL001.dfa
+SLCUDL002.dfa
+SLCUDL003.dfa
+SLCUDL004.dfa
+SLCUDL005.dfa
+SLCUDL006.dfa
+SLCUDL007.dfa
+SLCUDL008.dfa
+SLCUDN401.dfa
+
+
+author: phoebe.george
+comment: [~Igor.Khosid] DP has processed the DNA test file in parallel, please use the generated index file to post to staging for QA testing when ready.
+
+[~rony] FYI
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+Below index file has 3 letters, 005,004,008.
+
+dla_20220728_1_20221007_1548_slcu.txt
+
+Index file for dna is:
+
+dna_20221006_1_20221007_1509_slcu.txt
+
+
+
+[~phoebe.george]
+
+Thanks
+
+
+
+
+author: igor.khosid
+comment: Thank you, [~rony] 
+
+
+author: igor.khosid
+comment: [~phoebe.george] [~rony]
+Leading Zeros removed From Index. However, please see below (#2 and #3)
+1. DFA files  validated
+Diff prod vs test
+{color:red}SLCUDL001.dfa
+SLCUDL002.dfa
+SLCUDL003.dfa
+SLCUDL004.dfa
+SLCUDL005.dfa
+SLCUDL006.dfa
+SLCUDL007.dfa
+SLCUDL008.dfa{color}
+<     MOD_ACCT_NUM = RIGHT(ACCT_NUM,20,' ') ;
+>     MOD_ACCT_NUM = RIGHT(ACCT_NUM*1,20,' ') ;
+{color:red}SLCUDN401.dfa{color}
+<
+  MOD_AC_NUM = RIGHT(ACCT_NUM,10,'0') ;
+>  
+  MOD_AC_NUM = RIGHT(ACCT_NUM,10, '') ;
+
+2. The index files were successfully processed, and the content was validated with the following randomly selected accounts 
+(noticed - *{color:red}missing letters description{color}*)  >>>  !Missing letters decriptions.bmp! . {color:red}*_I do not see any ISD story assigned for daily letters._*{color}
+dla_20220728_1_20221007_1434_slcu.txt (Letter 05 only)
+dla_20220728_1_20221007_1548_slcu.txt (Letters 04/05/08)
+dna_20221006_1_20221007_1509_slcu.txt (Letters 401 ...  406)
+DL 05 >>> 320680 
+DL 04 >>> 619273
+DL 08 >>> 648598
+
+3. Also [~rony] [~phoebe.george] >>noticed that DNA index file ... _1509 contains not only letter 401 but also *{color:red}402,  403, 404, 405, 408, 410, 411, 412, 413, 416, 418 and 419{color}*.
+Wondering where these letters came from?
+I'm unable to verify the exact number of the letters because ...
+SOW >>>   !Letters_SOW.bmp!  
+and the procs file  >>>    !Letters_procs.bmp! 
+has the different numbers
+
+[~phoebe.george] Can we have a brief conversation - Monday morning?
+
+ 
+
+
+author: phoebe.george
+comment: [~Igor.Khosid] It doesn't look like the SOW is up to date, as the IM team did not set up these notices recently, it's a much older setup.
+
+Please message me as soon as you are able to review, as we are holding production cycles from Friday and hoping we can clarify today. Thanks!
+
+
+author: igor.khosid
+comment: QA - completed
+Please see the previous comments - need to be fixed on Stage 
+[~rony] - please attach IS checklist
+
+
+author: phoebe.george
+comment: [~rony] Does this require parallel, or can we move forward with release?
+
+
+
+Thanks,
+
+Phoebe
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+Checklist already attached. For slcudna only single dfa is handling for all letters.
+
+!image-2022-10-11-18-50-02-682.png!
+
+
+
+Hi [~phoebe.george] No parallel will not be needed. I am asking [~TunA]to release it.
+
+
+
+Thanks
+
+Rony
+
+
+author: rony
+comment: Hi [~TunA]
+
+Need help to release.
+
+[^IS-922 SLCU Transfer Form.doc]
+
+
+
+[~phoebe.george]
+
+^Thanks^
+
+
+author: tuna
+comment: Hi [~rony],
+
+Following codes have been released.
+
+Thanks,
+
+Tun
+
+
+
+total 22 files
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/nourosY/
+total 2728
+-rwxrwxrwx 1 nourosY DSI 271869 Oct 10 13:50 isisdisk_daily.sh
+-rwxrwxrwx 1 nourosY DSI 1438 Oct 10 13:51 slcudla.control
+-rwxrwxrwx 1 nourosY DSI 61535 Oct 10 13:50 SLCUES11.dfa
+-rwxrwxrwx 1 nourosY DSI 0 Oct 10 13:51 SLCUES11.prj
+-rwxrwxrwx 1 nourosY DSI 1452 Oct 10 13:51 slcues1.control
+-rwxrwxrwx 1 nourosY DSI 6069 Oct 10 13:50 slcues1_process.sh
+-rwxrwxrwx 1 nourosY DSI 269418 Oct 10 13:51 SLCUMS11.dfa
+-rwxrwxrwx 1 nourosY DSI 0 Oct 10 13:50 SLCUMS11.prj
+-rwxrwxrwx 1 nourosY DSI 1383 Oct 10 13:51 slcums1.control
+-rwxrwxrwx 1 nourosY DSI 6969 Oct 10 13:50 slcums1_process.sh
+-rwxrwxrwx 1 nourosY DSI 88180 Oct 10 13:51 SLCUMS29.dfa
+-rwxrwxrwx 1 nourosY DSI 0 Oct 10 13:50 SLCUMS29.prj
+-rwxrwxrwx 1 nourosY DSI 1263 Oct 10 13:50 slcums4.control
+-rwxrwxrwx 1 nourosY DSI 3468 Oct 10 13:50 slcums4_process.sh
+-rwxrwxrwx 1 nourosY DSI 1158 Oct 10 13:50 slcums9.control
+-rwxrwxrwx 1 nourosY DSI 8270 Oct 10 13:51 slcums9_process.sh
+-rwxrwxrwx 1 nourosY DSI 115013 Oct 10 13:50 SLCUMV11.dfa
+-rwxrwxrwx 1 nourosY DSI 0 Oct 10 13:50 SLCUMV11.prj
+-rwxrwxrwx 1 nourosY DSI 1570 Oct 10 13:50 slcumv1.control
+-rwxrwxrwx 1 nourosY DSI 1200 Oct 10 13:51 slcumv2.control
+-rwxrwxrwx 1 nourosY DSI 1200 Oct 10 13:51 slcumv3.control
+-rwxrwxrwx 1 nourosY DSI 6653 Oct 10 13:50 slcu_visa_process.sh
+
+
+author: phoebe.george
+comment: [~rony] [~TunA] Based on the release, I had data center process for production and the leading zeros are still present. Can you confirm if all have been released?
+
+
+author: tuna
+comment: Hi [~rony], [~anwarh] We just have meeting for this project. [~phoebe.george]mentioned that this request is to remove leading zero for DLA and DNA. But the codes released this morning do not include format programs for DLA and DNA. When I check one DLA format program in parallel environment, I see the code for removing leading zero. But no one holding the DLA and DNA format programs with parallel ID. Can you please review this as soon as possible?
+
+Thanks
+
+Tun
+
+
+
+
+
+[oper1@rhs ~]$ diff /home/isis/docdef/SLCUDL001.dfa /home/test/isis/docdef/
+1,2c1,2
+< /* PAPYRUS DESIGNER V.7.14/W3 */
+< /* COMPILED : '2013-03-04 (build:7.14.0.13100)' */
+---
+> /* PAPYRUS DESIGNER V7.1 SP7/W3 */
+> /* COMPILED : '2015-07-23 (build:7.17.0.15301)' */
+270c270
+< MOD_ACCT_NUM = RIGHT(ACCT_NUM,20,' ') ;
+---
+> MOD_ACCT_NUM = RIGHT(*ACCT_NUM*1,*20,' ') ;
+371,372c371,372
+< IF ENVIRONMENT('AFPFILE')<> '' AND ENVIRONMENT('AFPFILE')<>
+< 'AFPFILE' ;
+---
+> IF ENVIRONMENT('AFPFILE')<> '' AND ENVIRONMENT('AFPFILE')<>'AFPFI'
+> 'LE' ;
+
+
+
+
+
+
+
+[oper1@rhs ~]$ diff /home/test/isis/docdef/SLCUDN401.dfa /home/isis/docdef/
+1,2c1,3
+< /* PAPYRUS DESIGNER V7.1 SP7/W3 */
+< /* COMPILED : '2015-07-23 (build:7.17.0.15301)' */
+---
+> /* PAPYRUS DESIGNER V7.1 SP9/W3 */
+> /* COMPILED : '2017-12-07 (build:7.19.0.17495)' */
+> /* CODESRC : 1252 */
+4c5
+< /* CODESRC : 1252 */
+---
+>
+100,101c101,102
+< IF LTRCODE<>'CPAY' AND LTRCODE<>'CERT' AND LTRCODE<>
+< 'DQLT' AND LTRCODE<>'SDBB' AND LTRCODE<>'SDBD' ;
+---
+> IF LTRCODE<>'CPAY' AND LTRCODE<>'CERT' AND LTRCODE<>'DQLT' AND
+> LTRCODE<>'SDBB' AND LTRCODE<>'SDBD' ;
+302c303
+< MOD_AC_NUM = *RIGHT(ACCT_NUM,10, '') ;*
+---
+> MOD_AC_NUM = RIGHT(ACCT_NUM,10,'0') ;
+349,350c350,351
+< IF ENVIRONMENT('ZIPFILE')<> '' AND ENVIRONMENT('ZIPFILE')<>
+< 'ZIPFILE' ;
+---
+> IF ENVIRONMENT('ZIPFILE')<> '' AND ENVIRONMENT('ZIPFILE')<>'ZIPFILE'
+> ;
+371,372c372,373
+< &INFILE = '/'!&D_DIR!'/daily/'!&CID!'dna/datafile/'!&PREFIX!
+< '.afp' ;
+---
+> &INFILE = '/'!&D_DIR!'/daily/'!&CID!'dna/datafile/'!&PREFIX!'.afp'
+> ;
+399d399
+<
+
+
+author: tuna
+comment: Hi [~phoebe.george], [~rony],
+
+Per our Zoom conversation, I released following codes.
+
+I found SLCU dla and dna format programs that Rony holding in his folder. Those are the one for removing leading zero. I think Rony attached wrong transfer form (IS-922 SLCU Transfer Form.doc) in IS-1691.
+
+
+
+Phoebe will request DP to reprocess cycle #7 ONLY. If all is good, we will process the rest, if still bad, we will wait for rony to reply
+
+
+
+Thanks
+
+Tun
+
+
+
+20221011144114 10/11/2022 ronyD IS-1691 SLCU API and Hypercube Migration - DLA and DNA: Remove Leading Zeros From Index
+
+total 9 files
+
+[oper1@rhs master]$ ll /d/is/cvs/xfer/ronyD/
+total 648
+-rwxrwxrwx 1 ronyD DSI 11128 Oct 11 06:45 SLCUDL001.dfa
+-rwxrwxrwx 1 ronyD DSI 10073 Oct 11 06:45 SLCUDL002.dfa
+-rwxrwxrwx 1 ronyD DSI 11176 Oct 11 06:45 SLCUDL003.dfa
+-rwxrwxrwx 1 ronyD DSI 10073 Oct 11 06:45 SLCUDL004.dfa
+-rwxrwxrwx 1 ronyD DSI 11954 Oct 11 06:45 SLCUDL005.dfa
+-rwxrwxrwx 1 ronyD DSI 10073 Oct 11 06:45 SLCUDL006.dfa
+-rwxrwxrwx 1 ronyD DSI 10149 Oct 11 06:45 SLCUDL007.dfa
+-rwxrwxrwx 1 ronyD DSI 10163 Oct 11 06:45 SLCUDL008.dfa
+-rwxrwxrwx 1 ronyD DSI 9656 Oct 11 06:45 SLCUDN401.dfa
+
+
+author: phoebe.george
+comment: [~rony] Can you confirm the update for 'DNA' application for Letter 410. I saw that it is part of the update, but showing that there are still some accounts posting with leading zeros for notice code 410 on some cycles. Please check recent production cycle #11 and cycle #12 that was processed today/yesterday.
+
+
+author: rony
+comment: Hi [~phoebe.george]
+
+Would you please do me a favor then? Please ask Dp to run in parallel and let me know. This is redtitan job ( slcudna where data file is pdf ) and we don't actually have permission to run this type of job.
+
+
+
+Thanks
+
+
+author: phoebe.george
+comment: [~rony] DP ran the file in staging, but i do still see leading zeros. I had them use cycle 10/12. Can you check? Thanks
+
+
+author: rony
+comment: Hi [~phoebe.george]
+
+one more time
+would you p lease ask Dp to reprocess in parallel
+I had to update another resource that I missed initially.
+
+
+
+Thanks
+
+
+author: phoebe.george
+comment: [~rony] DP reprocessed in staging and it looks good now, no leading zeros are present.
+
+Please proceed with update. Thanks!
+
+
+author: rony
+comment: Hi [~TunA]
+
+Would you please releaseSLCUDN410.dfa . I missded this one to update for slcudna app.
+
+
+
+[^IS_PROGRAM_TRANSFER_FORM_Rev 07132016.doc]
+
+
+
+[~phoebe.george]
+
+Thanks
+
+
+author: tuna
+comment: Hi [~rony],
+
+Following code has been released.
+
+Thanks,
+
+Tun
+
+
+
+
+
+20221014083226 10/14/2022 ronyD IS-1691 SLCU API and Hypercube Migration - DLA and DNA: Remove Leading Zeros From Index
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/ronyD/
+total 48
+-rwxrwxrwx 1 ronyD DSI 7609 Oct 14 07:28 SLCUDN410.dfa

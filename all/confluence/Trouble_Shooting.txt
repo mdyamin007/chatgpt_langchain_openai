@@ -1,0 +1,71 @@
+title: Trouble Shooting
+body:   
+
+## How to check if jquery js is loaded. In a javascript function put the
+below.[](https://i3dev.easyredmine.com/projects/reference/wiki/Trouble_Shooting#How-
+to-check-if-jquery-js-is-loaded-In-a-javascript-function-put-the-below)
+
+    
+    
+      
+    
+    
+    
+    if (typeof jQuery != 'undefined') {
+        alert("jQuery library is loaded!");
+        return false;
+    }else{
+        alert("jQuery library is not found!");
+        return false;
+    }
+    
+    
+      
+    
+
+  
+  
+
+## Using both href and onclick on a single anchor
+element[](https://i3dev.easyredmine.com/projects/reference/wiki/Trouble_Shooting#Using-
+both-href-and-onclick-on-a-single-anchor-element)
+
+When you rely on both href and onclick within a single anchor element to
+control your page-navigations, browser may not honor your intended behavior
+100% of time. Take a look at following sample code:
+
+    
+    
+    <form id="createMessageForm" action="onclick.php?refresh=<?php echo empty($_REQUEST['refresh'])?'1':++$_REQUEST['refresh'];?>" method="post" >
+        <input type="hidden" id="iteration" value="1"/>
+    </form>
+    <a href="page2.html" target="_blank" onclick="document.getElementById('createMessageForm').submit();return true;">Hello</a>
+
+  
+  
+
+### To try it out:
+
+You can place the above code in a php file and see how it behaves in your
+local environment. Or test against this page:
+<http://10.8.8.205/sandbox/onclick.php>  
+  
+
+### Problem:
+
+It may appears it works for Firefox, but not Safari. But the real problem
+being the "form-submit in onclick" will have a race condition with the "href".
+If the form-submit get processed first, href doesn't get honored because the
+page is already refreshed and the browser lost the context.  
+  
+
+### Then what to do?
+
+It's bad practice to rely on a combination of onclick and href to handle your
+page-refresh/new-page-open..etc. If you absolutely need to have such behavior
+(i.e. open new window & refresh current page), do both action inside the
+onclick. Especially remember to open new page in new window first, then
+refresh current page. That way, you have absolute control over the sequence
+and timing of the page navigation behaviors.
+
+

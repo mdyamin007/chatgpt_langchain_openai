@@ -1,0 +1,948 @@
+title: GECU Setup Analysis
+body:   
+
+Document Status|
+
+YellowDRAFT  
+  
+---|---  
+Document Owner|  
+  
+# GECU
+
+32
+
+##  **ROOT**
+
+  
+|  
+  
+---|---  
+ **Login Method**|  DI  
+ **Enrollment Step**|  2 (Verify PDF Viewing, Terms & Conditions Agreement)  
+ **Welcome Email**|  True. After successful enrollment, after agreeing to go
+paperless in optout page.  
+**Menu**|  Statements, Check, Disclosure, Delivery Preferences, Exit  
+ **Account Types**|
+
+10 types.
+
+Savings(00), Checking(10), Certificate of Deposit(02), Line of Credit(45),
+Mortgage Loan(50),
+
+Safety Deposit Box(46), Installment Loan(51), Other Loans(52), Commercial
+Loans(53), Unknown desc (99)  
+  
+ **Statement Types**|  5 types. default, mortgage, analysis, enotice, etax  
+ **Archival Period**|
+
+default, mortgage, analysis = 13
+
+enotice = 4
+
+etax = 24  
+  
+ **Paperless Configuration**|  Non-Selective  
+ **On DP Change**|
+
+Opt-out page  
+  
+ **Delivery Preference**|
+
+Paperless - E , Paper - B, New - N  
+  
+ **Notification Preference**|  Email only  
+ **NP Link Type**|  byUFA  
+ **Batch Download  **| N/A  
+ **Schema**|  DEFAULT  
+ **User-Account Relation**|
+
+Many to Many  
+  
+  
+
+### Database
+
+ **USR_SESSION** : CIF_NUM as SESS_LOGIN_ID. No DSO date.  
+ **USR_MAPPING** : Always gets data. No migration needed.  
+ **NOTIFICATION_PREFERENCE** : Uses NP table. No migration needed.
+
+  
+
+### Account Types and Description
+
+Type| Description| DB Insertions can be done by| Comment  
+---|---|---|---  
+00| Savings| SSO. Processes: Auth, Enotice, Etax|  
+  
+10| Checking| SSO. Processes: Auth, Enotice, Etax|  
+  
+02| Certificate of Deposit| SSO. Processes: Auth, Enotice, Etax|  
+  
+45| Line of Credit| SSO. Processes: Auth, Enotice, Etax|  
+  
+46| Safety Deposit Box| Processes: Auth, Enotice, Etax| Can't SSO with this
+type. Leading zero allowed.  
+50| Mortgage Loan| SSO. Processes: Auth, Enotice, Etax|  
+  
+51| Installment Loan| Processes: Auth, Enotice, Etax| Can't SSO with this
+type.  
+52| Other Loans| Processes: Auth, Enotice, Etax| Can't SSO with this type.  
+53| Commercial Loans| Processes: Auth, Enotice, Etax| Can't SSO with this
+type.  
+99|  
+| Processes: Enotice, Etax| Can't SSO with this type. Leading zero allowed.  
+  
+  
+
+### Login Method
+
+DI
+
+### SSO (DI)
+
+  * CIF number (user_fi_number), account number (account_number), type (atype) and email address should be passed for successful SSO.
+  * Trims leading zero.
+  * Only 5 account types are allowed to do SSO. (00, 10, 02, 45, 50) 
+  * To perform a successful SSO with other account types, at least one account has to be of an eligible type. i.e. the types listed in the previous point. 
+  * If cif not found, inserts into USR_MAPPING, USR, USR_SESSION.
+  * Sets sess_active_status as "new" or "pending" in USR_SESSION table, which will trigger enrollment. 
+  * If account number not found, inserts into FIN_ACCOUNT, USR_FIN_ACCOUNT, PAPERLESS2, NOTIFICATION_PREFERENCE. 
+  * Puts a record in the LOG_RECORD table with time, org_id, usr_id, event_type and cif_num. 
+  * Email will be updated via SSO.
+  * All accounts associated with the CIF will perform SSO. 
+  * Puts date in SSO column. 
+  * No date in DSO column. 
+
+### DSO
+
+N/A
+
+###  **Leading Zero Account**
+
+  * During SSO, leading zero is trimmed.
+  * Only accounts of type '46' and '99' are allowed to have leading zeros, to achieve a certain account number length. 
+
+### Welcome Email
+
+Yes.
+
+###  **Enrollment**
+
+Two steps:
+
+  1. Verify PDF Viewing:
+    1. Sample pdf is shown to check if the user can view it. 
+    2. If the "I can not view the statement" button is clicked, an exit notice is shown. This page has two buttons: "Go to Adobe's download page" and "Return to previous page". 
+    3. If the "I can view the statement" button is clicked, proceed to the 2nd step.
+  2. Terms & Conditions Agreement:
+    1. "eStatements Terms and Disclosures" pdf is shown. 
+    2. Clicking the "Agree" button will redirect to the home page. 
+
+### Enrollment Logic
+
+  * If sess_active_status is "pending" or "new", enrollment is triggered and the user will be redirected to /enroll/test.jsp page. 
+  * SSO date is not being checked to determine enrollment. 
+  * Successful enrollment sends a welcome message. 
+
+### Opt-out Logic
+
+  * If the account is in paper(B), the user can login and enrollment will not be triggered. 
+  * If the delivery preference is changed from Profile page, user is not forced to go through enrollment. Instead an optout page is shown in the home tab with the disclosure pdf and the user has to agree with going paperless to view his/her statements. 
+  * Agreeing to go paperless, sends an email. 
+
+>
+>     Image 1: Enrollment step 1 (PDF Verification), Image 2: Enrollment step
+> 2 (Disclosure/Agreement), Image 3: Opt-out page after going paper.
+
+### Statement Types & Archival Period
+
+Five types of statements are
+
+  * ESTMT_DOC: default, mortgage, analysis ==> 13
+  * ENOTICE: enotice ==> 4
+  * ETAX: etax ==> 24
+
+Has inserts. Show only for default. Viewed/Not-viewed status is shown.
+
+### Delivery Preference
+
+  * Paper = B, Paperless = E, New = N
+  * Going paper does not trigger enrollment automatically. 
+  * If ALL the accounts of the logged in user switched to paper, the sess_active_status will be set as "pending", so that when the user logs in for the next time, he/she will go through enrollment.
+
+### Notification Preference
+
+  * Only Email is supported. No SMS. 
+  * Uses NOTIFICATION_PREFERENCE table. 
+
+### Paperless Configuration
+
+Non-Selective. Can't assign different emails for different statement types.
+
+### NP Link Type
+
+byUFA. Both USR_ID and ACCT_ID are saved in the NP table.
+
+  
+
+>
+>     Image 4 : Profile Page
+
+### Menu Tabs
+
+  *  **Statements**
+    * eStatements, Mortgage, Analysis Statement, eNotice, eTax, Checks.
+    * Shows account number dropdown. (Account type - Last 4 digits)
+    * Shows view/not-view status. 
+    * eNotice shows a Description column. 
+    * Has inserts. Shows only in the eStatements tab. 
+    * Has checks. Viewing check image request is forwarded to external link, defined in web.xml. URL: [https://image.swcorp.org/cgi-bin/MbrImage.asp](https://image.swcorp.org/cgi-bin/MbrImage.asp). Params: 
+      * Account=ACI_CHECK_ACCT_NUM
+      * Amount=ACI_CHECK_AMT
+      * Serial=ACI_CHECK_NUM
+      * Date=ACI_CHECK_DATE
+      * RQSTRID=5us99rg12r [from web.xml]
+      * CUID=312081089 [from web.xml]
+      * Sequence=
+      * ImageFB=F/B
+      * MAC=A generated MAC value.
+  *  **Disclosure**
+    * Disclosure opens in a new tab and shows a pdf (Disclosure_Agreement.pdf).
+    * Title: Electronic Statement Disclosure. 
+  * **Delivery Preferences**
+    * Different name for Profile tab. 
+    * For each account, a box is shown with Delivery Preference, Notification Options and Email Address. 
+    * Delivery preference is changeable. Verbiage:
+      * Paperless: I want to receive statements and notices* online only
+      * Paper: I want to receive paper statements and notices via U.S. mail only**
+    * Can not change Notification Options.
+    * Can not change Email Address. 
+  * **Exit**
+    * A confirmation prompt is shown. 
+
+>
+>     Image 5: eStatements tab, Image 6: Mortagage tab, Image 7: Analysis tab,
+> Image 8: eNotice tab, Image 9: etax tab
+
+>
+>     Image 10: Checks tab, Image 11: Disclosure, Image 12: Profile tab
+
+>
+>     Image 11: Exit
+
+  
+
+* * *
+
+##  **MSM**
+
+### Account Management
+
+  * Can search for an account by account number and email address. 
+  * Account Information:
+    * Account Type (fin_account type)
+    * Member Name (usr first_name)
+    * Account Number (dropdown of all accounts)
+    * Account Holder Name (fin_account account_owner_name)
+    * Account Status (fin_account status)
+    * Member Register Status (Yes if SSO/DSO)
+    * Last Login Time 
+    * Last Statement View Time (from log_record table)
+    * Delivery Preference
+    * Notification Options
+    * Email Address
+  * Shows statements.
+  * Can change delivery preferences. 
+  * Can't change email address.(tested with superuser)
+
+>
+>     Image 12: Account Management
+
+  
+
+### Email Proofing
+
+  * Email Notifications Templates:
+    * Monthly Statements
+    * Mortgage
+    * Analysis Statements
+    * eNotices
+    * e-Tax
+    * Welcome
+    * Password Update
+    * AI User Removal
+  * Notification Type: Email
+  * Keywords:
+    * $sdv_txt_acctNum
+    * $sdv_txt_userName
+    * $sdv_txt_eNoticeList
+    * $sdv_txt_eTaxList
+    * ADMIN_FULLNAME (in Password Update template, AI User Removal)
+  * Can upload email content from a file stored in the machine. 
+
+>
+>     Image 13: Email Proofing
+
+  
+
+### Upload Inserts
+
+  * Inserts available for Monthly Statements, Mortgage, e-Tax and Analysis Statement. 
+  * PDF file only. File size limit 1.5 MB. 
+  * Closing date and Date range. 
+
+>
+>     Image 14: Upload Inserts
+
+### Reports
+
+  * Latest Stats
+  * User Login Activity
+  * Member Registration Report 
+  * AI Login Activity
+  * Email Address Collection
+  * Opt In/Opt Out Report
+  * Marketing Insert Report
+
+### Administration
+
+  * Shows user list with LoginID, Name, Role, Last Login, Status. 
+  * Can create, modify and delete users. 
+  * Roles: Super User, Admin Superuser, Admin Manager, Admin User. 
+
+>
+>     Image 15: Administration
+
+### Account Modification
+
+Search accounts by CIF number and can remove associated accounts.
+
+>
+>     Image 16: Account Modification
+
+### Exit
+
+  
+
+* * *
+
+##  **PUI**
+
+### BACKEND PROCESSES
+
+GECU has 5 processes,
+
+  1. AFP
+  2. AUTH
+  3. CHECK_INDEX
+  4. ENOTICE
+  5. ETAX
+  6. INSERT_RANGE
+
+### Settings
+
+  * global.multipleStmtType=true
+  * global.multipleDocType=false
+  * global.autoRegister=false
+  * global.ssoKey=template
+  * global.enableAccountType=true
+  * global.stmtType.list=default
+
+### Statement Types and Index file prefix
+
+  *  **global.ms1** =default
+  *  **global.ml1** =mortgage
+
+### AFP Process
+
+Flags:
+
+  * afp.compression=false
+  * afp.isZipped=true
+  * afp.copyZipBuffer=65536
+  * afp.storage.path=a
+  * afp.default.estmtselinsert=true
+  * afp.mortgage.estmtselinsert=true
+
+#### Data: AfpStatementData9
+
+  1. Each line in the process file must contain 12/13/14/15 fields. 
+  2. FIelds: **_fileName_** _|_ ** _acctNum_** _|_ ** _beginDate_** _|_ ** _closingDate_** _|_ ** _numOfPages_** _|_ ** _acctName_** _| SSN |_ ** _appType_** _| messageIds | hasCheckStr | insertId | regionCode | crippleFlag | zipFileName_  
+  3. appType has to be one of the following 9 types: 00, 02, 10, 45, 46, 50, 51, 52, 53.
+  4. If present, crippleFlag must have a value of either "C" or "R". 
+
+ ****Bold** indicates mandatory fields.
+
+#### Registrar: MessageEStmtRegistrar3
+
+  1. Fetch account from FIN_ACCOUNT by account number and type.
+  2. Always creates a new account if not found. 
+  3. As autoRegister is false, it will not create a new user profile. 
+  4. If account exists,
+    1. Check the **_acctName_** provided by the index file. If it does not match with the account name in the database, update it in the FIN_ACCOUNT table. 
+    2. Does not update account name if the name is either "MEMBER" or "CUSTOMER". 
+  5. Inserts Paperless record: 
+    1. If no record is found, create a new Paperless record: Old = N, New = B.
+    2. If the statement type is not default, create a new record for default statement type. 
+  6. Inserts statement data in ESTMT_DOC, ARCH_FILE and ESTMT_FILE. 
+  7. As imageMessage is true for default statement:
+    1. Insert record in MESSAGE_AREA, M_MESSAGE, ESTMT_MSG_DETAIL, ESTMT_MSG.
+  8. Inserts record in P_JOB_ESTMT. 
+  9. estmtselinsert is true for default and mortgage. So if the piece_codes have one of the following conditions true: 
+    1. Insert into the ESTMT_SEL_INSERT table with esd_id, piece_code(from index file: insertId) and environment(prod/stage/pilot/dev). 
+    2. Insert into the INVENTORY_PDFS table if the piece_codes are not present already. Other values like title, file name, file size, file type etc will be retrieved from InfoTRAC db.
+    1. piece_code can not be 0.
+    2. piece_code has to be in between 6000-6999 or greater than 9999, then
+
+Database table inserts:
+
+  * FIN_ACCOUNT: status -- "A"
+  * PAPERLESS: old -- "N", new -- "B"
+  * ESTMT_DOC, ARCH_FILE, ESTMT_FILE
+  * MESSAGE_AREA, M_MESSAGE, ESTMT_MSG_DETAIL, ESTMT_MSG
+  * ESTMT_SEL_INSERT, INVENTORY_PDFS.
+
+### AUTH Process
+
+Flags:
+
+  * auth.classPath=com.infoimage.processing.application.auth.handler.GecuAuthHandler
+  * auth.cifGenerationDirectory=/d/FTPBU/ftpbu/gecubu/CIF
+
+#### Handler: GecuAuthHandler
+
+  1. Fields: _**cifNum** | __**clientType** | **tinNum** | **tinType** | **firstName** | **lastName** | **dob** | **appType** | **acctNum** | **acctStatus** | **dateClosed** | **maintCode** | **displayName** | **custom1**_
+  2. Removes leading zeros from cifNum. 
+  3. Leading zero in account number is allowed only if appType is 46. 
+  4. Validations/Allowed values:
+    1. clientType: P, N  type in USR table
+    2. tinType: S, F, N, T  middle name in USR table 
+    3. acctStatus: A, C  status in FIN_ACCOUNT table
+    4. mainCode: A, U, D
+    5. appType: 00, 02, 10, 45, 46, 50, 51, 52, 53  type in FIN_ACCOUNT table
+
+ ****Bold** indicates mandatory fields.
+
+#### Registrar: GecuAuthRegistrar
+
+  1. If maintCode is A or U, 
+    1. Fetch user by cifNum (from data).
+      1. If no user is found, it creates a new user and attaches it with cif. (Insert in USR and USR_MAPPING table). 
+      2. If user exists, update firstName, lastName, middleName, ssn, type, dob.
+    2. Fetch account by acctNum and type (from data).
+      1. If no account is found, it creates a new account. (Insert in FIN_ACCOUNT table).
+      2. If account exists, update owner name, custom1, status, closing date (if status is C).
+      3. If no paperless record is found for the account, it creates a new record.  (Insert in PAPERLESS2 table with old = B and new = E).
+    1. Fetch ufa by usrId and accId from FIN_ACCOUNT, USR_FIN_ACCOUNT. 
+      1. If no ufa record exists, it creates a new ufa record with ufa_status = pre_reg. (Insert in USR_FIN_ACCOUNT table). 
+  2. If maintCode is D, after performing the update/insert from previous steps, the process disconnects the specified account from the user. 
+    1. Deletes the ufa record by acct_id. 
+    2. If other accounts associated with this account have ufa_status!="active" and viewable!=null, then the paperless status of this account will be rolled back (back to paper). 
+
+Database table inserts:
+
+  * USR, USR_MAPPING 
+  * FIN_ACCOUNT, USR_FIN_ACCOUNT
+  * PAPERLESS
+
+  
+
+  
+
+### CHECK_INDEX Process
+
+Flags:
+
+  * check_index.classPath=com.infoimage.processing.application.check.handler.SWCCheckImageHandler
+  * check_index.registeredUserOnly=false
+  * check_index.hasFinAcctType=true
+
+#### Handler: SWCCheckImageHandler
+
+Fields: _**acctNum** | **checkAcctNum** | **checkNumber** | **checkDate** |
+**amount** | **sequenceNumber** | **acctType** _
+
+****Bold** indicates mandatory fields.
+
+#### Registrar: CheckImageRegistrar
+
+  1. Fetch account id by account number and type from FIN_ACCOUNT. 
+  2. Insert into ACCOUNT_CHECK_IMAGE with the data parsed from the index file. 
+  3. Insert into the P_JOB_CHECK table. 
+
+Database table inserts:
+
+  * ACCOUNT_CHECK_IMAGE
+  * P_JOB_CHECK
+
+  
+
+### ENOTICE Process
+
+Flags:
+
+  * enotice.compression=true
+  * enotice.createAccount=false
+
+#### Handler: GecuENoticeData
+
+  1. Fields: _**acctNum** | **type** | **afpFileName** | **date** | **acctName** | **code**  _
+  2. If the acctName is not present in the index file, the account number will be set as the account name after masking the first 2 or 4 characters. 
+  3. Here, **code** is used as the account type while fetching the account. 
+  4. The **type** has to be one of 35 custom enotice types that GECU supports. If not, statements will not get registered.
+
+ ****Bold** indicates mandatory fields.
+
+#### Registrar: GecuENoticeRegistrar
+
+  1. Fetch account from FIN_ACCOUNT by account number and type. 
+  2. If no account found, 
+    1. Creates a new account with status as 'A' and type as the value of  **code**.
+    2. Fetches paperless status by account id, if not found creates a new with old status as 'N' and new status as 'B'.
+  3. Inserts into ARCH_FILE and ENOTICE table. 
+  4. Inserts into the P_JOB_ENOTICE and P_ESTMT_COUNT table. 
+  5. Inserts into the P_JOB_EMAIL table with auto send true. 
+
+Database table inserts:
+
+  * FIN_ACCOUNT
+  * ARCH_FILE, ENOTICE
+  * P_JOB_ENOTICE, P_ESTMT_COUNT
+  * P_JOB_EMAIL
+
+  
+
+### ETAX Process
+
+Flags:
+
+  * etax.compression=false
+  * etax.createAccount=true
+  * etax.isZipped=true
+  * etax.copyZipBuffer=32768
+  * etax.automatedEmailNotification=true
+
+#### Handler: ETaxData3
+
+  1. Fields: _**acctNum** | **type** | **afpFileName** | **date** | suffix | appType | ssn | **zipFileName**  _
+  2. As isZipped is true, the total field has to be 8.
+
+ ****Bold** indicates mandatory fields.
+
+#### Registrar: ETaxRegistrar3
+
+  1. Fetch account from FIN_ACCOUNT table by account number and type. 
+  2. If the account is not found, create a FIN_ACCOUNT record. 
+  3. Insert paperless record for both "default" and "etax". 
+  4. Inserts etax data in ETAX and ARCH_FILE.
+  5. Inserts into P_JOB_ETAX.
+  6. Insert into the P_JOB_EMAIL table with auto send true. 
+
+Database table inserts:
+
+  * FIN_ACCOUNT
+  * ARCH_FILE, ETAX
+  * P_JOB_ETAX, P_ESTMT_COUNT
+  * P_JOB_EMAIL
+
+  
+
+### Accounting Report
+
+Flags:
+
+  * accounting.classPath=com.infoimage.processing.application.accounting.handler.TemplateReport
+  * accounting.insert.cutoff=1
+
+#### Handler: TemplateReport
+
+Query to write AFP report:
+
+> SELECT pj.*, ec.img_count
+>
+> FROM p_job pj, p_estmt_count ec
+>
+> WHERE pj.p_job_id = ec.p_job_id
+>
+> AND pj.org_name=? [gecu]
+>
+> AND pj.name = ? [appName]
+>
+> AND pj.cycle = ? [currentCycle]
+>
+> AND pj.status = ? [1 (success)]
+>
+> ORDER BY pj.create_time  
+
+Query to write email notification:
+
+> SELECT * FROM p_job
+>
+> WHERE org_name=? [gecu]
+>
+> AND name=? [appName]
+>
+> AND cycle=? [currentCycle]
+>
+> AND status=? [1 (success)]
+>
+> ORDER BY create_time
+
+### GecuPaperlessReport
+
+Flags:
+
+  * gecuPaperlessReport.classPath=com.infoimage.processing.application.file.upload.handler.GecuPaperlessEnrolledReport
+  * gecuPaperlessReport.method=client_pickup
+  * gecuPaperlessReport.clientPickupPath=/d/SECURE4/FTPRoot/gecu/client_pickup
+  * gecuPaperlessReport.notifyClient=true
+  * gecuPaperlessReport.email.subject=GECU:  Custom Paperless Report Available
+  * gecuPaperlessReport.email.recipients=jim.collins@mygecu.org
+  * gecuPaperlessReport.email.bcc_recipients=isd-staff@infoimageinc.com
+  * gecuPaperlessReport.email.templatePath=/com/infoimage/processing/application/file/upload/email/client_pickup5.txt
+
+#### Handler: GecuPaperlessEnrolledReport
+
+Query:
+
+> SELECT
+>
+>     um.cif_num,  u.TYPE AS customer_type,
+>
+>     u.usr_ssn AS tin,  u.usr_middlename AS tin_type,
+>
+>     u.usr_firstname AS firstname,  u.usr_lastname AS lastname,
+>
+>     To_Char(u.usr_birthdate, 'MMDDYYYY') AS dob,
+>
+>     fa.TYPE AS application,  fa.acct_number,  fa.status,
+>
+>     To_Char(fa.last_modified, 'MMDDYYYY') AS last_modified,
+>
+>     acct_owner_name,  custom1
+>
+> FROM
+>
+>     USR u, USR_MAPPING um,
+>
+>     FIN_ACCOUNT fa, USR_FIN_ACCOUNT ufa, PAPERLESS2 p
+>
+> WHERE
+>
+>     ufa.acct_id=fa.acct_id
+>
+>     AND ufa.usr_id=u.usr_id
+>
+>     AND um.usr_id=u.usr_id
+>
+>     AND fa.org_id=getorgid('gecu')
+>
+>     AND p.acct_id=fa.acct_id
+>
+>     AND p.p_latest_status='E'
+
+  
+
+### PendingEnrollmentReport
+
+Flags:
+
+  * pendingEnrollment.classPath=com.infoimage.processing.application.file.upload.handler.gecu.pending.PendingEnrollmentReport
+  * pendingEnrollment.method=client_pickup
+  * pendingEnrollment.clientPickupPath=/d/SECURE4/FTPRoot/gecu/client_pickup
+  * pendingEnrollment.notifyClient=true
+  * pendingEnrollment.email.subject=GECU: Pending Enrollment Report Available
+  * pendingEnrollment.email.recipients=_FTPNotify@[mygecu.org](http://mygecu.org)
+  * pendingEnrollment.email.bcc_recipients=isd-staff@[infoimageinc.com](http://infoimageinc.com)
+  * pendingEnrollment.email.templatePath=/com/infoimage/processing/application/file/upload/email/client_pickup3.txt
+  * pendingEnrollment.pgpRecipient=GECU_PGP_INFOIMAGE_01
+
+#### Handler: PendingEnrollmentReport
+
+  1. Go over the ENROLLMENT_QUEUE table and see if any record exists for a cif. 
+  2. For each record, check if the user's expiration date is null or not. 
+    1. If null, then delete the record from the ENROLLMENT_QUEUE table. So that, whenever this user will go through the enrollment process next time, a new record with a new expiration date will be inserted in the table. 
+    2. If not null, then check if the user's expiration date is before today (the day the report is being pulled). 
+      1. If the user is expired, then 
+        1. Delete the record from the ENROLLMENT_QUEUE table.
+        2. Delete all ufa records associated with this user from the USR_FIN_ACCOUNT table. (by ufa_id)
+        3. Delete the cif record from the USR_MAPPING table. (by usr_id)
+        4. Also, make this user inactive by deleting the USR_SESSION record. (by usr_id)
+      2. If the user is not expired yet, then
+        1. If the user will expire in the next two days, add them in a list. 
+        2. If the user will expire in the next six days, add them in a separate list. 
+  3. Finally, prepare the report with 
+    1. The cif numbers that were removed from the system.
+    2. The cif numbers that will expire in the next two days.
+    3. The cif numbers that will expire in the next six days.
+
+  
+
+## Analysis Summary (ROOT)
+
+Scope| Feature| GECU Business| Hypercube| Note  
+---|---|---|---|---  
+SSO| User Enrollment Logic|
+
+Goes through enrollment based on the value of the _sess_active_status_ column
+in USR_SESSION table.
+
+If the value is "pending" or "new", enrollment is triggered.
+
+  *  **new** : This user is not created by the Auth process. Instead it is created during SSO. 
+  *  **pending** : This user is created by Auth process but did not go through the enrollment yet. Or, this user's paperless status is allPaper (all accounts of this user is in paper)
+
+After successfully completing enrollment  _sess_active_status_ holds the value
+"active". Also puts date in  _sso_ column.
+
+|  48 complete **Supported** 49 incomplete Not Supported
+
+  
+
+|
+
+In Hypercube, a user goes through enrollment if he/she never logged in via SSO
+(no date in sso column).
+
+Client will use default (sso date based) enrollment logic.
+
+  
+  
+  
+If the delivery preference of **all account(s)** changed to Paper(B),
+_sess_active_status_ is set to "pending". So, the user will go through
+enrollment next time he/she logins.|  50 complete **Can be supported** |
+
+In Hypercube, if _unenrollOnDeliveryPreferenceChange_   flag is true, then, if
+**any of the accounts** go paper, the user will be logged out and sso date
+will be updated to null. And he/she will go through enrollment next time
+he/she logins.
+
+ **Note:  **change  _unenrollOnDeliveryPreferenceChange_ functionality to
+support many-to-many as well, thus we can support GECU.(3-4 days)
+
+N.B. unroll the user when all accounts will go paper - this feature can be
+implemented by introducing new flag.  
+  
+During enrollment, ENROLLMENT_QUEUE table gets an entry with CIF and
+enrollment date. This table is used while pulling data for
+**PendingEnrollment** report. |  51 incomplete Supported 52 complete **Not
+Supported** | During enrollment, Hypercube does not put a record in this
+table. So, the PendingEnrollment report will be unusable.  
+Enrollment Step 1| Verify PDF Viewing|  53 complete **Supported** 54
+incomplete Not Supported |  
+  
+Enrollment Step 2| Terms & Conditions Agreement|  55 complete **Supported** 56
+incomplete Not Supported |  
+  
+Welcome Email| Sends welcome email after successful enrollment|  57 complete
+**Supported** 58 incomplete Not Supported |  
+  
+Account Types|
+
+GECU has 10 account types. By analyzing the prism code, we have found that 5
+of those types are not directly eligible to perform SSO.
+
+  1.      00, 10, 16, 32, 50 (Types are allowed to do SSO)
+  2.      46, 51, 52, 53, 99 (Can't do SSO directly - No mapping in GecuFinAcctDesc class)
+
+To perform a successful SSO with the accounts of those types( no. 2), at least
+one account has to be of an eligible type( no. 1). i.e.
+
+  * If all accounts of the SSO file are of those (46, 51, 52, 53, 99) types, SSO is not possible. 
+  * If any one of the accounts on the SSO file are of those (00, 10, 16, 32, 50) types, SSO is possible. 
+
+|  100 complete Not Supported |  
+  
+Misc|
+
+  * Email is updated via SSO. 
+  * If the user performs SSO with only one account, all accounts associated with this user will be logged in the site.
+
+|  59 complete **Supported** 60 incomplete Not Supported |
+
+  * Can be supported by  _ssoUserUpdate_ flag.
+  * Can be supported by  _ignoreAccountMatching_  flag. 
+
+  
+Menu| Tab (eStatements, Mortgage, Analysis Statement, eNotice, eTax)| Shows
+viewed/unviewed status for Mortgage and Analysis Statements. |  61 incomplete
+Supported 62 complete **Not Supported** | Hypercube currently does not show
+any viewed/unview status.(Low priority)  
+Tab (Checks)|
+
+Viewing check image request is forwarded to external link, defined in web.xml.
+
+URL: [https://image.swcorp.org/cgi-
+bin/MbrImage.asp](https://image.swcorp.org/cgi-bin/MbrImage.asp).
+
+Params:
+
+  * Account=ACI_CHECK_ACCT_NUM
+  * Amount=ACI_CHECK_AMT
+  * Serial=ACI_CHECK_NUM
+  * Date=ACI_CHECK_DATE
+  * RQSTRID=5us99rg12r [from web.xml]
+  * CUID=312081089 [from web.xml]
+  * Sequence=
+  * ImageFB=F/B
+  * MAC=A generated MAC value.
+
+|  63 complete **Can be supported** |
+
+Hypercube gets available check images for a cid by calling an InfoSERVICE API.
+
+After receiving the docId, it again calls another InfoSERVICE API to show both
+images.
+
+ **Note** : We need to incorporate this logic from GECU to infoservice.  
+  
+Tab (Disclosure)| Disclosure opens in a new tab and shows a pdf
+(Disclosure_Agreement.pdf).|  64 complete **Supported** 65 incomplete Not
+Supported |  
+  
+Tab (Delivery Preferences)|
+
+  * Can change Delivery Preference.
+  * Can not change Notification Options.
+  * Can not change Email Address. 
+  * Different verbiage for Paperless and Paper. 
+
+|  66 complete **Supported** 67 incomplete Not Supported |  
+  
+  
+If changed to paper, user is not logged out, instead goes to optout page
+(Disclosure/Agreement) which will force the user to go paperless to view
+eStatements.
+
+|  68 complete **Supported** 69 incomplete Not Supported | In Hypercube, user
+has to navigate to Profile page to change the Delivery Preference.  
+Exit|  
+|  
+|  
+|  
+  
+  
+  
+
+  
+
+## Analysis Summary (MSM)
+
+Scope| Features| GECU Business| Hypercube | Note  
+---|---|---|---|---  
+Account Management| Account Search| Search for an account by account number
+and email address. |  72 complete **Supported** 73 incomplete Not Supported |  
+  
+Data Display| Shows Acount Type, Member Name, Account Number, Account Holder
+Name, Account Status, Member Register Status, Last Login Time, Last Statement
+View Time, Delivery Preference, Notification Options, Email Address|  74
+complete **Supported** 75 incomplete Not Supported |  
+  
+Changing Delivery Preference| Can change delivery preferences|  76 complete
+**Supported** 77 incomplete Not Supported |  
+  
+Changing Email Address| Can't change email address|  78 complete **Supported**
+79 incomplete Not Supported |  
+  
+Email Proofing| Templates|
+
+  1. Monthly Statements
+  2. Mortgage
+  3. Analysis Statements
+  4. eNotices
+  5. e-Tax
+  6. Welcome
+  7. Password Update
+  8. AI User Removal
+
+|  80 complete **Supported** 81 incomplete Not Supported 82 complete
+**Supported** 83 incomplete Not Supported |  
+  
+Keywords|
+
+  1. $sdv_txt_acctNum
+  2. $sdv_txt_userName
+  3. $sdv_txt_eNoticeList
+  4. $sdv_txt_eTaxList
+
+|  84 complete **Supported** 85 incomplete Not Supported |  
+  
+Upload Template| Can upload email content from a file.|  86 incomplete
+Supported 87 complete **Not Supported** |
+
+InfoTRAC does not provide support to upload email content from file stored in
+storage.
+
+Minor issue.  
+  
+Upload Inserts| Statements with insert|
+
+  1. Monthly Statements 
+  2. Mortgage
+  3. e-Tax 
+  4. Analysis Statement
+
+|  88 complete **Supported** 89 incomplete Not Supported |  
+  
+Reports| Available Reports|
+
+  1. Latest Stats 
+  2. User Login Activity (Login Summary) 
+  3. Member Registration Report (Account Creation Report) 
+  4. AI Login Activity (Admin Login Activity)
+  5. Email Address Collection (Email Collection)
+  6. Opt In/Opt Out Report (Paperless Enrollment) 
+  7. Marketing Insert Report
+
+|  90 complete **Supported** 91 incomplete Not Supported | Latest Stats and
+Marketing Insert Report are not available in InfoTRAC  
+Administration|  
+|
+
+  1. Shows user list with LoginID, Name, Role, Last Login, Status. 
+  2. Can create, modify and delete users. 
+  3. Roles: Super User, Admin Superuser, Admin Manager, Admin User. 
+
+|  92 complete **Supported** 93 incomplete Not Supported |  
+  
+Account Modification|  
+| Search accounts by CIF number and can remove associated accounts. Only
+removes from the USR_FIN_ACCOUNT table.|  97 complete **Supported** 98
+incomplete Not Supported |
+
+  
+  
+  
+Exit|  
+|  
+|  
+|  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+

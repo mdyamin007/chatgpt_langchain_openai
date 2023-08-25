@@ -1,0 +1,83 @@
+title: 06/06/2013 meeting
+body:   1. General:
+    1. Lots of methods are having 'void' return type. If so, how do you determine whether the method/operation success or fail?  
+ **SM: 'void' return types are mainly insertOrUpdate() or delete() from DAO
+objects where an entity/domain object is passed as a parameter. For
+insertOrUpdate(), success/failure can be detected by inspecting the method
+parameter. For delete(), success/failure can be detected with additional
+logic. We will also use the exception handling mechanism to detect
+success/failure of such methods.**
+
+    2. Will the parameter to methods be the entity/domain object? In this case, the object will be updated after perform the DB actions.  
+ **SM: Method calls on DAO pass the corresponding Entity/Domain objects as
+params.**
+
+    3. Please include the class diagrams.  
+ **SM: ok**
+
+  2. FeatureAccessDao, how about any changes around the 'add' capability? If exist already, change to the params needed?  
+ **SM: For the 'add' capability, the existing method signature public void
+insertOrUpdate(List <FeatureAccess> access) needs no change.**
+
+  3. UserRoleDao:
+    1. findByUser: do we need findByRole()?  
+ **SM: We need public List <UserRole> findByRole(Role role) also in
+UserRoleDao. Design doc will be updated accordingly.**
+
+  4. ClientService:
+    1. Should there be a getChildClients(parentClient)?  
+ **SM: The existing system does not define this method. We can include this
+later if we find it necessary.**
+
+    2. getFeatureDefinitions: how exactly to handle/differentiate whether to "fetch all internal features also" vs "fetch features turned on for this client only"? Please clarify how this will work for different kind of users.  
+ **SM: getFeatureDefinitions() executes while creating a Basic client. This
+method should return non-internal features only and must exclude internal
+features. The user that create a Basic client is Root Admin or Root "PC"/"ISD"
+user.**  
+** ***LZ: After we introduce ROLE logic, only those users who have access to
+"Client Management" feature can create a client. While "Client Management" is
+a internal feature for Root users.**
+
+  5. RoleService:
+    1. findByRole: Please be explicit for the method names: findUsersByRole  
+ **SM: ok. Design doc will be updated accordingly.**
+
+    2. Similarly, findByFeature: findRolesByFeature  
+ **SM: ok. Design doc will be updated accordingly.**
+
+    3. And given above two, wouldn't you need findFeatureByRole, findFeatureByUser also?  
+ **SM: List <FeatureDefinition> findFeatureByRole(Role role) is needed in
+RoleService.  
+List<FeatureDefinition> findFeatureByUser(User user) would be a useful method
+in UserService.  
+Design doc will be updated accordingly.**
+
+    4. deleteAlertsByRole: are we doing this by Role or by User now?  
+ **SM: deleteAlertsByRole() and deleteAlertsByFeature() should be removed from
+RoleService. deleteAlert() will be added to UserService. Design doc will be
+updated accordingly.**
+
+  6. UserService:
+    1. getFeatureAccessByUserAndClient: from User, you should know Client already. Shouldn't need to pass in explicitly.  
+ **SM: ok**
+
+    2. getFeatureAccessByUserAndClient: in comments, you said this should not be used anymore. My suggestion is actually keep it but modify the logic inside it to get the featureAccess via Roles. Since I see this as a very commonly called method throughout the application for 'permission check' type of thing. Or introduce the method I propose below.  
+ **ok, we will implement the suggested method. Design doc will be updated
+accordingly.**
+
+    3. updateFeatureAccess: comments indicate this method shouldn't be used anymore, planning to scrub through code to remove usage of this method? Please indicate the action item for this method.  
+ **SM: updateFeatureAccess() will be replaced by public void updateRoles(User
+owner, List <UserRole> roles) in UserService.**
+
+    4. getManageableRoles & getManageableLevels: I'm not sure if you want to keep using these method. There shouldn't be differentiation between 'manageable' vs 'nonmanageable'. Also the 'levels' are not really applicable anymore. Code around these method should be cleaned up.  
+ **SM: ok**
+
+    5. Suggestion: add <Boolean> checkFeatureAccess(User, Feature). This would be call by functional modules quite commonly for ACL and show/hide certain things.
+  7. Controller components
+    1. I'm not quite clear why we need to use all these 'XXXXForm' objects around the controller classes?  
+ **SM: These methods exist in the controller components and are mainly used to
+display the forms through UI.**
+
+  8. Models and JSP: Seems like still need work around these sessions.
+
+

@@ -1,0 +1,65 @@
+title: Making a Client's Customer Site Stateless
+body:   
+
+For making a client's customer site (ROOT) stateless following files are
+needed. Here all the files and their functionality are described.
+
+ **1.   /ROOT/src/main/java/com/infoimage/web/filter/CIDFilter.java:** This
+class implements **javax.servlet.Filter** interface. Every request is
+intercepted by this class except requests to those endpoints that are defined
+as **excludeUrls** pipe delimiter separated string.
+
+        This class does several things on every request:
+
+  * It checks if the request contains cookies or not. If cookies are not present in the request then it redirects the request to error.jsp page.
+  * If cookie named "com.session.key.cid" is present in the request then it extracts user id, account number, account id, and the time when the cookie was set (originTS) from that cookie.
+  * From the time value (originTS) obtained from the cookie, it is determined if the cookie is timed out or not.
+  * If cookie is timed out then it shows SESS_TIME_OUT error, otherwise, the values obtained from cookie are set to request.
+  * If only user id is present in the cookie but account number and account id are not present then these values are obtained from the database using user id and set to cookie.
+  * At last, it forwards the request to the requested endpoint.  
+
+ **2.**   **/ROOT/src/main/webapp/box/decorators/base_layout.jsp:** Every jsp
+page except those are excluded in **decorators.xml** are served inside
+base_layout.jsp where  **< dec:body/>** tag is placed.
+
+ **3.**   **/ROOT/src/main/webapp/WEB-INF/conf/decorators.xml:** It defines
+the base layout for all JSP pages. It also excludes JSP pages that should not
+be placed inside base_layout.jsp.
+
+ **4.  ** **/ROOT/src/main/webapp/WEB-INF/sitemesh.xml:** This XML uses
+decorators.xml file and determines how the page will be rendered finally.
+
+     Taglib for sitemesh is: 
+
+ **     <%@ taglib uri="<http://www.opensymphony.com/sitemesh/decorator>"
+prefix="dec"%>**
+
+     It is declared inside base_layout.jsp.
+
+ **5.**  The following entries should be placed inside **web.xml** :  
+
+    <filter>
+
+        <filter-name>sitemesh</filter-name>
+
+        <filter-class>com.opensymphony.module.sitemesh.filter.PageFilter</filter-class>
+
+    </filter>
+
+    <filter-mapping>
+
+        <filter-name>sitemesh</filter-name>
+
+        <url-pattern>/*</url-pattern>
+
+        <dispatcher>REQUEST</dispatcher>
+
+        <dispatcher>FORWARD</dispatcher>
+
+    </filter-mapping>
+
+  
+
+  
+
+

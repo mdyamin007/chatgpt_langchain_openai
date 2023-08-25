@@ -1,0 +1,140 @@
+title: OmniSearch Design + Additional Updates
+body: # Design
+
+## How the User will Search
+
+As agreed on before, the user is able to initiate Omnisearch using the Search
+Box that will appear the top right section of the view. This Omnisearch will
+be for **both** Paper and eStatement jobs. Ultimately, the search should be a
+combination of Omnisearch and Advanced search. Some fields, such as account
+types, are just better applied as filters instead of a search query. However,
+at this point, we plan to only implement Omnisearch without any additional
+filter feature.
+
+  
+
+Here are the attributes that we determined are most likely to be used by the
+user. Any column that we omit, we omit because we think the column will either
+be rarely or never used.
+
+  * (Account) Name
+  * Account  (Number)
+  * SSN
+  * Full Addr
+  * Letter Type
+  * Email address
+  * Insert Number
+
+Minimizing scope was also part of the consideration. I think with the above
+supported search attributes, it should satisfy more than 95% of use cases. Of
+course, I have no real data to back up that claim.
+
+  
+
+## Displaying Search Results
+
+The Search Results will be displayed in a new view. This is because some
+fields are shared. When a user is searching for an Account Number, how do we
+know whether they want to search in Paper or eStatement? There might be some
+additional inputs that we can ask from the user. However, the goal of
+Omnisearch is to minimize the amount of inputs in most search cases, except
+for particularly advanced ones. An input of "Paper or eStatement" is something
+that is required 100% of the time, and thus would hamper the UX. The tradeoff
+here is that it will be a bit harder to go back the Paper/eStatement views. If
+the user is using Omnisearch, though, that means the quick search tables in
+the Paper/eStatement views are insufficient; i.e. the user is more likely to
+continue using Omnisearch during their work session.
+
+
+
+### Updates to the Account Statement Table
+
+#### Paper
+
+In order to display an aggregate search results, certain information must now
+be provided in columns. For example, when Geo Delivery Data is available, the
+Search Result should display the State and the Mail Type as a column in the
+Account Statement table.
+
+Below are the columns that will be added to the Paper Account Statement table:
+
+  1. Job Type | **Letter Type** | Grouped
+  2. Zip | Status -> **Delivery Status** | Days -> **Delivery Time** | **Delivery State**  
+
+Currently for Status ( **Delivery Status** ), we either show _delivered_ or
+_NA_. The values should be  _delivered, scannable,_ or _exception_ to match
+the columns in Geo Delivery Data.
+
+Days ( **Delivery Time** ) should have all the status also, so "pending", "in
+transit", or "exception" should be displayed if the delivery time in days are
+not available.
+
+#### eStatement
+
+For eStatement, there is an idea of combining the emails and Account Statement
+table together.
+
+We need to make sure the emails and time sent are displayed in a legible
+manner; maybe add some fixed spacing between email address and sent time.
+
+### Search Result View
+
+When a user submit a search, they will land on a Search Result view that will
+have multiple tabs, corresponding to the different result tables available:
+Paper, eStatement, and/or Email. If any of the option do not have results,
+then the selection tab would not be available. Email is necessary only if we
+do not combine the eStatement and Email together as suggested.
+
+
+
+Given that the user searches for Account 80598, the mockup below will detail
+the UI/UX.
+
+Landing onto the Search Result view
+
+eStatement selected
+
+  
+
+Breadcrumbs
+
+This will provide two things:
+
+  1. Letting the user know what job the search result is for.
+  2. Letting the user click on that DT-Job-ID can return back to the job view they were on before initiating the search.
+
+### Search Result Filtering
+
+ _Development for Search Result Filtering is deferred until clients voice a
+need for it._
+
+ ~~In the example above, it is a simple search by Account that returns
+relatively small amount of data. For things like Letter Type, there can be a
+large number of data returned. In that case, there is a need to filter down
+the results even further. My initial thought is to implement a simple data
+table search that will filter down the results based on the text input; the
+typical search that comes with most data table implementation. We can
+implement a more direct filtering system at a later time.~~
+
+  
+
+* * *
+
+# Other Updates
+
+  
+
+## DT-Job-ID in Breadcrumbs
+
+## Job Status Paper/eStatement Switch
+
+A switcher component to easily switch between Paper and eStatement jobs if the
+eStatement job is available.
+
+Tai: I personally don't like any of the views below. My suggestion is, we
+shift the "Job Details" down, and put the "Paper/eStatement" above that in the
+same gray area. The component should also just be the same size as the Job
+Details component. This should also be the same component we use in the Search
+Result. That way, the UI component would be similar and serve similar purpose.
+
+

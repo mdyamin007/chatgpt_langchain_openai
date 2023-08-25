@@ -1,0 +1,128 @@
+title: NCR Single Sign-On Integration Guide
+body: # SSO Integration
+
+There are four SSO connection to consider when setting up SSO connection with
+NCR:  **digitalInsightV1** ,  **digitalInsightV2** ,  **BB** , **ncr**.
+DigitalInsightV1 and DigitalInsightV2 are used for retail users, while BB, and
+ncr are used for business users.
+
+One important thing to note is that the  **user_fi_number** field is different
+between Retail and Business. For retail, user_fi_number will be the agreed
+upon Unique User Identifier (UUID). For business, it is the Subuser Unique
+Identifier (SUID) that is defined by NCR. A different field,  **comp_cif** ,
+will be read as the UUID.
+
+## Retail Connection
+
+Refer to the table below when choosing between which retail SSO connection to
+use.
+
+  
+| digitalInsightV1| digitalInsightV2  
+---|---|---  
+1| The client is one-to-many, or the client has account types. Therefore,
+InfoIMAGE need the account list, with type if applicable, to be passed in the
+ssoKeyGen step or via the Auth File.| The client is one-to-one. Therefore, the
+UUID is the account number, which is what the SSO connection will assume when
+parsing data from the request.  
+2| The member number is not used as the UUID.| This cannot be used when the
+UUID is not the member number. This takes precendence over rule (1) regarding
+one-to-one relationship.  
+  
+## Business Connection
+
+Refer to the table below when choosing between which business SSO connection
+to use.
+
+  
+| BB| ncr  
+---|---|---  
+1| The client has business customers, and NCR is setting up a separate
+connection from retail.| The client has business customers, and NCR is setting
+up a separate connection from retail.  
+2| NCR is setting up the BB connection for the business customers.| NCR is
+setting up the SAML connection for the business customers.  
+  
+## Account Type Mapping
+
+NCR use numeric account types that usually do not align with the account types
+that InfoIMAGE uses. There are two routes to go about this:
+
+  1. Determine the NCR account types, and program the indeces to match the account types that NCR use. For example, when posting to a Savings account, use account type 01, etc.
+  2. Obtain from NCR all possible account types, and work with the client to determine what those account types should map to on the InfoIMAGE side. For example, 01 -> SV. 
+    1. The mapping will then need to be inserted into the ext_type_mapping table.
+    2. Example for BKPL  
+
+## User-Account Relationship Determination
+
+##### digitalInsightV1
+
+For digitalInsightV1 setup, typically, the user-account relationships are
+determined by NCR. NCR will pass a list of accounts in the ssoKeyGen request
+that will be used to update the usr_fin_account table. However, some clients
+may opt to use an Auth File to determine the user-account relationship. There
+are implications that the client must agree to in order for such a setup to
+work.
+
+  1. All user-account relationships must be provided via the Auth File. If some user-account relationships cannot be provided via the Auth File, then those accounts will not be accessible to the user.
+  2. The Auth File must provide only the accounts that the user should have access to. If the Auth File link a user to accounts that the user should not have access to, then the user will see those accounts.
+    1. An example of this is a co-signer. It is a valid "relationship", but the client may determine that the co-signer should not see the account on the eStatement Site. If this is the case, then this relationship must not be in the Auth File.
+
+##### Business SSO
+
+For Business SSO, there are two options.
+
+  1. ( **checkPrimaryUser** option set to  **false** ) The business users are not bound by the Auth File, i.e. Auth File only applies to Retail Users. InfoIMAGE will grant access to whatever accounts NCR request access to in the SSO Request.
+  2. ( **checkPrimaryUser** option set to  **true** ) The user-account relationships are provided correctly according to all possible accounts that the business should have access to. These relationships will be used as a rubric for accessible accounts. InfoIMAGE will compare the list of accounts provided in the SSO Request. Only SSO accounts that are provided in the Auth File will be granted access to the user. All other accounts will be ignored.
+
+## SSO Configuration
+
+Below are general guidelines on typical SSO Setup. Note that some clients may
+require logic that is outside the norm. Such requests will need to be assessed
+individually.
+
+SSO Configuration| Value| Reason| Drawback  
+---|---|---|---  
+acctTypeRequired| true| Setup with account type|  
+  
+acctTypeRequired| false| Setup with no account type|  
+  
+createAcct| true| Client's choice| Due to the fact that InfoIMAGE have to map
+account types from NCR, when NCR uses a new account type that InfoIMAGE does
+not have a mapping for, a lot of accounts with wrong account types will be
+created.  
+createAcct| false| Client's choice| Users may not have access to all their
+accounts right away, since InfoIMAGE must process an Auth File, a statement
+index file, or some other files that create accounts. Some users may be denied
+access altogether if all of their accounts are not created yet. Users can
+still access as long as at least one account exists.  
+createUsr| true|
+
+For when there is no Auth File Processing to create the users.
+
+For business subusers.
+
+Client's choice even if InfoIMAGE is already processing Auth File.
+
+|  
+  
+createUsr| false| For when there is an Auth File Processing to create the
+users.| New users not processed via the Auth File yet will be denied access.  
+captureAcctDesc| true| When there's a need to capture account description
+(nickname) from the SSO Request to display on the eStatement site.|  
+  
+captureAcctDesc| false| When there's no need to capture account description.|  
+  
+removeUFA| true| This will update the user-account relationship based on the
+SSO request. So users will no longer have access to accounts that no longer
+come through the SSO request.|  
+  
+removeUFA| false| There may be business logic reason why we do not want to
+remove user-account relationships that do not come through the SSO request.
+Maybe some relationships can only be defined in the Auth File.| User-account
+relationships must be removed with some other means, such as manual DB update,
+or through the Auth File.  
+  
+  
+
+

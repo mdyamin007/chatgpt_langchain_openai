@@ -1,0 +1,464 @@
+title: PFCU - [27449][pvt] Suppressing statements for ACCOUNTS OPENED IN ERROR
+description: Programming hour:3hrs + 0 ISD hours
+
+Start date: 04/25/2022
+
+Sample date: 04/29/2022
+
+Live date: 05/10/2022
+
+Parallel: No Required
+
+
+
+
+
+Description of Work:
+
+Option #1: (Hard Code Account Number to Suppress):
+
+Hard code the program to readrec02 - pos 159-170 = "000000169807" to suppressprint, suppress PDF archival, and doe not create eStatement posting (i.e. nonEstmt). Use the very first occurrence of Record 2 post 159 - 170 since and account will have more than 1 occurrence of Record 2. Please note that each time you add/remove/update more accounts in the future will requires a programming request.
+
+
+
+Monthly Statements:
+
+Programming Hours: 1 IS Hour
+
+
+
+HELOC
+
+Programming Hours: 1 IS Hour
+
+
+
+Mortgage
+
+Programming Hours: 1 IS Hour
+
+
+author: william.kong
+comment: [~mahbubS]: Please review this project and begin according to the timeline above.
+
+
+author: mahbubs
+comment: Hi [~dawnl],
+
+The updates are done in parallel for all 3 apps (ms1, ml1 and ml2).
+
+Data files used:
+
+ms1:pfcu_stmt_03312022_1.zip.pgp
+
+ml1:pfcu_heloc_03152022_1.zip.pgp
+
+ml2:pfcu_mortgage_03202022_1.zip.pgp
+
+I couldn't find the member number169807 in ml2 data file.
+
+I ran the process of ms1, ml1 and ml2 in parallel.
+
+Attached are the paper txt index files of ms1 and ml1.[^pfcuml1115.txt][^pfcums1131.zip]
+
+Due to file size i had to zip the ms1 index file.
+
+The 169807 member number in these index file has the suppression flags enabled (field 53 and field 345 are 'z'). That means for paper and estatment that member would get suppressed.
+
+I will provide archival sample later.
+
+Thanks
+
+
+author: dawnl
+comment: Hi [~mahbubS],
+
+Are[^pfcuml1115.txt][^pfcums1131.zip] the samples forms1 and ml1? What about the sample formortgage?
+
+Thanks.
+
+
+author: dawnl
+comment: [~mahbubS]and [~rony]- please providesample formortgage. Thanks.
+
+
+author: dawnl
+comment: Hi [~mahbubS],
+
+Can you answer client's question below. Here is client's response.
+
+"It appears that the ACCOUNTS OPENED IN ERROR records are getting correctly flagged in the two sample files which is good. There is a good chance that the ml2 file did not have an ACCOUNTS OPENED IN ERROR record for that month which is ok. The next piece is to make sure that they do not get archived, is that a different flag that I can verify? Thanks, Dan"
+
+
+
+
+author: mahbubs
+comment: Hi [~dawnl],
+
+I ran the archival process using latest updates.
+
+Data files used:
+
+ms1:pfcu_stmt_03312022_1.zip.pgp
+
+ml1:pfcu_heloc_03152022_1.zip.pgp
+
+Sample is in /z/infoftps4/pfcu/client_pickup/ directory. Please check the cycle 0331 samples for ms1 and cycle 0315 samples for ml1.
+
+!image-2022-05-05-21-22-47-722.png!
+
+I couldn't find the member number169807 in ml2 data file.
+
+In the archival samples the169807 member data is suppressed by the program (even if that member exists in data).
+
+Thanks
+
+
+author: dawnl
+comment: Hi [~mahbubS],
+
+What is the file name for samplein /z/infoftps4/pfcu/client_pickup/?
+
+Thanks.
+
+
+author: dawnl
+comment: Hi [~mahbubS],
+
+Here is client's feedback:
+
+"the ml1(HELOC) file looks great, the Account Opened in Error is not in the index file nor does a PDF exist.
+
+However, the ms1 index file has 120+ records with an EMPCODE: U which is not correct, there should be none or close to it. "
+
+Can you check thethe ms1 index file issue?
+
+Thanks.
+
+
+author: mahbubs
+comment: Hi [~dawnl],
+
+In the last run 0228 cif was used. That's why some EMPCODE was having value 'U' in the index file.
+
+I ran the process using 0331 cif (pfcu_cif_stmt_03312022.txt.pgp) today. Data file used pfcu_stmt_03312022_1.zip.pgp.
+
+Now there is no EMPCODE U in the latest archival index.
+
+Sample is in/z/infoftps4/pfcu/client_pickup/
+
+!image-2022-05-06-20-49-56-644.png!
+
+Thanks
+
+
+author: dawnl
+comment: Hi [~mahbubS],
+
+Please provide samples forMortgages. See client's response below.
+
+"Makes sense, the index and file count all seem to look good for ms1 now. If the same logic is applied to the Mortgages, I think we are good to go live with these changes for all three applications. Thanks, Dan"
+
+Thanks.
+
+
+author: mahbubs
+comment: Hi [~dawnl],
+
+Ran the archival process using datapfcu_mortgage_03202022_1.zip.pgp.
+
+Archival sample is at /z/infoftps4/pfcu/client_pickup/pfcu_Mortgage_001_20220320.zip.pgp.
+
+Thanks
+
+
+author: billr
+comment: [~mahbubS]
+
+I let the customer know the sample is in their pickup folder.
+
+
+author: mahbubs
+comment: Hi[~dawnl] [~billr],
+
+According to reply of client in ts 27449, can we consider the sample is approved?
+
+If approved I will do QA request.
+
+Thanks
+
+
+author: billr
+comment: [~mahbubS]
+
+Yes, customer approved the sample.
+
+
+author: mahbubs
+comment: Hi [~Igor.Khosid],
+
+Please start QA on this.
+
+Below 3 projects are placed in QA folder:
+
+/d/iss/qa/PFCU/PFCUMS11.zip
+
+/d/iss/qa/PFCU/PFCUML11.zip
+
+/d/iss/qa/PFCU/PFCUML21.zip
+
+Parallel ID:20220323020607
+
+Check paper, estatement and archival suppression for member number169807. For more detail check description of this jira.
+
+For paper suppression check the paper index files and nop files.
+
+Paper index files:
+
+{{-rw-rw-rw-. 1 mahbubS DSI 9702454 May 11 01:09 /z/pfcu/pfcums1131.c1bmcok}}
+ {{-rw-rw-rw-. 1 mahbubS DSI 514835 May 11 01:54 /z/pfcu/pfcuml1115.c1bmcok}}
+ {{-rw-rw-rw-. 1 mahbubS DSI 817503 May 11 02:02 /z/pfcu/pfcuml2120.c1bmcok}}
+
+paper suppressed index files:
+
+{{-rw-rw-rw-. 1 543 300 1217169 May 11 01:09 /z/pfcu/pfcums11315.nop}}
+ {{-rw-rw-rw-. 1 ronyD DSI 4697 May 11 01:54 /z/pfcu/pfcuml11155.nop}}
+ {{-rw-rw-rw-. 1 543 300 7686 May 11 02:02 /z/pfcu/pfcuml21205.nop}}
+
+The customer having member number169807 should be in these nop file.
+
+For estatement suppression: check ISD index files:
+
+ms1_20220331_1_20220511_0118_pfcu.txt
+
+ml1_20220315_1_20220511_0157_pfcu.txt
+
+ml2_20220320_1_20220511_0204_pfcu.txt
+
+Thecustomer having member number169807 should not be in the ISD index file. And no afp should create for this member number.
+
+For archival:
+
+Sample are at/z/infoftps4/pfcu/client_pickup/
+
+monthly statement sample:
+
+pfcu_account_001_20220331.zip.pgp
+ pfcu_account_002_20220331.zip.pgp
+ pfcu_account_003_20220331.zip.pgp
+ pfcu_account_004_20220331.zip.pgp
+ pfcu_account_005_20220331.zip.pgp
+ pfcu_account_006_20220331.zip.pgp
+ pfcu_account_007_20220331.zip.pgp
+ pfcu_account_008_20220331.zip.pgp
+ pfcu_account_009_20220331.zip.pgp
+ pfcu_account_010_20220331.zip.pgp
+ pfcu_account_011_20220331.zip.pgp
+ pfcu_account_012_20220331.zip.pgp
+ pfcu_account_013_20220331.zip.pgp
+
+Heloc sample:
+
+pfcu_heloc_001_20220315.zip.pgp
+
+Mortgage sample:
+
+pfcu_Mortgage_001_20220320.zip.pgp
+
+Thecustomer having member number169807 should not be in the archival index and no individual pdf should generate for this member.
+
+Let me know if there is any confusion.
+
+Thanks
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220323020607
+   Currently in parallel: Yes
+   User: mahbubS
+   Description: IS-1027, IS-1032 and IS-1058 updates
+   Date Submitted: 2022-03-23 02:07:56
+   Date Last Updated: 2022-04-29 05:27:09
+   Files:
+      1) PFCUMS11.dfa
+      2) PFCUML11.dfa
+
+
+author: igor.khosid
+comment: [~mahbubS] - I do not see PFCUML2 ... in the parallel report. please confirm ...
+
+[~Andrey.Kutsenko] - FYI
+
+
+author: mahbubs
+comment: Hi [~Igor.Khosid],
+
+Oh Sorry. I had to put the ml2 in different id.
+
+Here it is:20220427051453
+
+Thanks
+
+
+author: igor.khosid
+comment: Thank you, [~mahbubS]
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220427051453
+   Currently in parallel: Yes
+   User: mahbubS
+   Description: IS-1058 PFCU - [27449][pvt] Suppressing statements for ACCOUNTS OPENED IN ERROR
+   Date Submitted: 2022-04-27 05:15:21
+   Date Last Updated: 2022-04-29 05:08:35
+   Files:
+      1) PFCUML21.dfa
+
+
+author: mahbubs
+comment: Hi [~Igor.Khosid],
+
+What is the status of QA on this?
+
+Thanks
+
+
+author: igor.khosid
+comment: [~Andrey.Kutsenko] - please provide the status ...
+
+[~mahbubS] - FYI
+
+
+author: JIRAUSER11104
+comment: [~mahbubS]please attach IS checklist.
+
+
+author: igor.khosid
+comment: [~dawnl] - Please update the due date
+
+
+author: dawnl
+comment: Due date updated.
+
+
+author: JIRAUSER11104
+comment: [~mahbubS] FYI
+ 1. For projects in QA folder, please provide original customer data files with accn:169807 or record 'ACCOUNTS OPENED IN ERROR'
+ -2. I try double check put new job with index file 'ml1_20220315_1_20220511_0157_pfcu.txt' on pui-stage and I get an error (see scr):-
+ !scr_pui_stage_ml1_0157_HELOC.png|thumbnail! 
+ 3. I can't decrypt Heloc sample 'pfcu_heloc_001_20220315.zip.pgp':
+ !scr_decrypt_HELOC.png|thumbnail!
+ 4. Papyrus for ml1 incorrectly:
+   4.1. shows the year in the Statement Period field;
+   4.2. There is text overlap
+ !scr_Papyrus_ml1.png|thumbnail!
+
+[~dawnl]please update Due date to 05/17
+
+
+author: mahbubs
+comment: Hi [~Andrey.Kutsenko],
+
+Attached the IS-checklist.[^IS Checklist#IS-1058.docx]
+
+Thanks
+
+
+author: mahbubs
+comment: Hi [~Andrey.Kutsenko],
+
+1. I uploaded updated projects of ms1 and ml1 in QA folder (/d/iss/qa/PFCU/) with the data that have169807 member number.
+
+For ml2 we didn't find that member 169807 in production data. So you can create a dummy data using member number169807 for testing.
+
+  For ms1 you will find that member169807 at7418th customer in data (in the project that i exported).
+
+  For ml1 you will find that member169807 at 1064th customer in data (in the project that i exported).
+
+
+
+3. The pgp file is encrypted using CU email. That's why you won't be able to decrypt.
+
+So instead, you can use/z/pdf_afp/pfcu/pfcuml1/zip/pfcu_HELOC_001_20220315.zip this file for testing archival sample.
+
+
+
+4. After using the latest project in qa folder this issue will be gone.
+
+And remember to use the portal file in the project file (imported folder of PFCUML11.zip).
+
+!image-2022-05-16-21-33-23-086.png!
+
+Thanks
+
+
+author: JIRAUSER11104
+comment: Thank you [~mahbubS]
+I'll check and let you know the result.
+
+
+author: JIRAUSER11104
+comment: [~mahbubS]please provide print file.
+
+Thanks.
+
+
+author: JIRAUSER11104
+comment: QA - Completed.
+
+[~mahbubS]FYI
+
+Account Numbers to Suppress have a suppression Flag in the .txt file (ZIPFILE) (see position 53('z' - non print ), 345(z for eStatement/eNotice suppression)).
+ *ms1:* - (ACCN #11196280)
+ DATAFILE >>> /d/iss/qa/PFCU/PFCUMS11.zip(data/pfcu_stmt_03312022_1.dat)
+ ZIPFILE >>>/z/pfcu/pfcums1131.txt
+ *ml1:* - (ACCN #2022000414)
+ DATAFILE >>>  [^pfcu_heloc_03152022_1.dat]
+ ZIPFILE >>> [^pfcuml1115.txt] 
+ *ml2:* - (ACCN #77708)
+ DATAFILE >>>  [^PFCUML21.DAT] 
+ ZIPFILE >>> [^pfcuml2.txt]
+
+
+
+^IS checklist >>>[^IS-1058_PFCU_CheckList.pdf]^
+
+
+author: mahbubs
+comment: Hi [~TunA],
+
+As this task don't require parallel, please release the code.
+
+Attached in the transfer form.[^IS_PROGRAM_TRANSFER_FORM-2.doc]
+
+I did cvs checkin of the dfa files.
+
+Thanks
+
+
+author: tuna
+comment: Hi [~mahbubS],
+
+Following codes have been released.
+
+Thanks,
+
+Tun
+
+
+
+
+
+20220517084133 05/17/2022 mahbubS IS-1058 PFCU - [27449][pvt] Suppressing statements for ACCOUNTS OPENED IN ERROR
+
+/d/is/cvs/xfer/mahbubS/PFCUML21.dfa
+
+/d/is/cvs/xfer/mahbubS/PFCUML11.dfa
+
+/d/is/cvs/xfer/mahbubS/PFCUMS11.dfa
+
+
+
+
+
+

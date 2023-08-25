@@ -1,0 +1,68 @@
+title: IDCU - [34754][pvt] No longer sending Adverse_Action_MMDDYYYY.csv
+description: IS Assessment
+=============
+Hours for development: 2 IS hours + (ISD hours not required)
+Turnover Date : 11/09/2022
+Sample to QA Date: 11/15/2022
+Sample date: 11/17/2022
+Approval Date: 11/18/2022 
+Go live date : 11/21/2022
+Engineering resource: JunM
+
+Assessment Details (IS):
+- Parallel required: (no)
+- Application name:idcudla
+
+- Deactivate/permanently remove following notices from our program
+
+Adverse_Action_mmddyyyy.csv - Adverse Action Notice (DL014)
+
+- Comments out on idcu_dl_process.sh
+
+- Update idcudla.procs
+
+- Can test only for other notice process run-ability with any production data file (Cannot test deactivate notices because no data files)
+
+
+author: jun
+comment: [~dyuen] [~Igor.Khosid]
+
+No PDF samples since update is to script to remove letter 014.
+
+I used the 09/25/2022 data file to test. Attached is dpvs.
+
+[^idcudla125.print]
+
+parallel id:20221111145832
+
+
+
+
+author: igor.khosid
+comment:    Parallel ID: 20221111145832
+   Currently in parallel: Yes
+   User: junM
+   Description: IS-1795 IDCU Deactivate letter 014
+   Date Submitted: 2022-11-11 14:58:52
+   Date Last Updated: 2022-11-11 14:58:52
+   Files:
+      1) idcudla.procs
+      2) idcu_dl_process.sh
+
+
+author: igor.khosid
+comment: QA - completed
+ idcudla.procs
+< Adverse_Action_mmddyyyy.csv                    Adverse Action Notice            014
+---
+> Adverse_Action_mmddyyyy.csv *DEACTIVATED*      Adverse Action Notice            014
+
+idcu_dl_process.sh
+<        elif [[ ${outfile} =~ Adverse_Action_[0-9]\{8\} ]]; then
+<           create_datFiles "${filename}" "${targetDir}/idcudl014.dat"
+---
+>        # elif [[ ${outfile} =~ Adverse_Action_[0-9]\{8\} ]]; then
+>        #    create_datFiles "${filename}" "${targetDir}/idcudl014.dat"
+<    list[13]="Adverse Action Notice                (014) ="
+---
+>    #list[13]="Adverse Action Notice                (014) ="

@@ -1,0 +1,80 @@
+title: TKCU - [31231][pvt] Adding Encryption Numbers on Tax Forms
+description: Dev Hour: 6 (4 hours to coding + 2 hours testing)
+
+Turnover Date: 09/20/2022
+
+Sample Date: 09/26/2022
+
+Approval Date: 09/30/2022
+
+Qa Date: 10/03/2022
+
+Live Date: 10/12/2022
+
+
+
+parallel required.
+
+Programmer: Rony
+
+
+
+Details:
+
+---------------------
+
+Need to display encrypted account no besides account no
+
+Client expected output is :
+
+*****8727795C2TC7RC(masked entireaccount no + <space>+encrypted account) . Per client in comment 16 both can be of max 10 length and since client wants an space between those while displaying total length we need is 21.
+
+Currently for 1098 :
+
+!https://app.na3.teamsupport.com/dc/1888578/images/5041e9ac-888c-4e33-bc18-6c825ef94e8d.png|width=1085,height=385!
+
+
+
+It is using 21,40 position for display and
+
+751-770 position for index file for segment 1, 21-40 for segment 2 and 3.
+
+We can put the account no and encrypted account no in column 751-771 (length 21) for display (since we need to put a space between account no and encrypted account no ), and the account no for index in 21-40.
+
+So we need to set a rule with field 751-771 for tax_acctnum_main table in tax_insert_table.sql file
+
+
+
+INSERT INTO tax_acctnum_main (ref_number,start_pos,end_pos,split_by,remove_zeros,acct_pos_loc,suf_pos_loc,suf_display, acct_n_suf_order) VALUES ('77','751','771','blank','1','blank','blank','as_is', 'a');
+
+which we will use for display.
+
+
+
+and for e_index we need to change for tkcu segment 1 which is using rule 50 currently. We can change to use rule 1 instead.
+
+So overall for tax_acctnum_ref table
+
+
+
+CID | FORM | SEGMENT | DISPLAY | E_INDEX |
+
+tkcu|1098|1|751|1|
+
+tkcu|1098|2|751|47|
+
+tkcu|1098|3|751|48|
+
+tkcu|rest|all|751|1|
+
+
+
+there is already a preprocessing script for 1098 tkcu_1098_spec_handle.pl where it puts member number from cross reference file to irs data file in position 751-770 position. And it is taking account no from 21-40 position and ssn from 12-20 position to match with cross reference file. We have to build another preprocessing script for all tkcu forms which will be called before tkcu_1098_spec_handle.pl per tax process, we will put account no, space , encrypted account no combination in field 751-771 for display. And,
+
+we need to make a slight change in tkcu_1098_spec_handle.pl, instead of putting member no in 751-770 put this in 21-40 , so basically we will replace the account no with member no for 1098.
+
+
+
+-----------------------per Bill----------------------------
+
+Test file,TKCU_ENCRPTACCT.pgp, has been uploaded to the Test folder.

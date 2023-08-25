@@ -1,0 +1,197 @@
+title: InfoREACH is developed with MeteorJS - Why is that?
+body: ## Preview
+
+(Spoiler alert!) The first requirement for us was to create a muti-tenant
+application with some kind of view engine. As it was a utility based
+application our choice was to use some javascript framework for fast
+development and faster request handling ability. We chose mongo as our db as
+we didn't want to have any strict relational stuff and also store vast data
+for which mongo is really popular.
+
+Keeping all these tech requirements in mind we found out about BackboneJS and
+MeteorJS. Between them we found MeteorJs more compelling (reasons are provided
+in the description) which uses blaze and template engine, comes with built in
+mongo and uses node as server side with all of it's benefits.
+
+## Description - The whole story
+
+ **The business case for Meteor**  
+Meteor is an open-source, production-ready, real-time, and cross-platform web
+application framework built on top of proven technology, that allows for very
+rapid prototyping and produces cross-platform (web, Android, iOS) code. A
+Tinder-like application has been built from scratch with Meteor in 6 weeks,
+several startups built with Meteor have already been acquired, and the number
+of companies using Meteor is growing.
+
+Meteor Development Group has received $11.2M in funding from the prestigious
+venture capital firm Andreessen Horowitz, who has also invested in Twitter,
+Airbnb, and Foursquare. Founded in 2011, Meteor was a startup incubated by
+YCombinator, the most successful startup incubator. Meteor founders and early
+employees include former Googlers, early employees at Asana, and the creator
+of Etherpad.
+
+ **The Engineering case for Meteor**  
+Meteor is a client-database-server framework, written entirely in JavaScript.
+It works with our existing front-end framework like [Famo.us](http://Famo.us),
+Ember, React or Backbone (or even AngularJS) (jQuery is included), and with
+our back-end via REST APIs or a DDP, a simple and powerful publish/subscribe
+protocol. The server side runs on Node.js and interfacing with MongoDB is
+seamless.
+
+ **What makes Meteor easy to learn**  
+Meteor was designed to be easy to learn, including by beginners. One of the
+seven principles of Meteor is "Simplicity equals productivity."  
+JavaScript everywhere - on the server (Node.js, Underscore) and on the client
+(jQuery). We only need to know one language.  
+Same MongoDB interface on the client as well as the server (no need to learn
+some new model code), via an in-memory MiniMongo instance  
+No esoteric concepts (unlike Angular), clear documentation, well-established
+coding conventions, and a shallow learning curve. A simple chat app can be
+built by someone familiar with JavaScript in about an hour.  
+Meteor gets us to our first live deployed web app right away. For beginners,
+having our own tangible project to hack on is hugely motivating, and that
+makes us much more likely to succeed in our goal of becoming a developer.  
+There is one book unanimously acknowledged as the best for learning Meteor:
+Discover Meteor, by the authors of many Meteor packages, including the package
+repository itself, Atmosphere.
+
+ **Database**  
+Meteor supports MongoDB natively and future database support is coming, with
+the acquisition of FathomDB. [Redis.io](http://Redis.io) support is already in
+beta.  
+The pub/sub architecture makes changes in one client propagate seamlessly to
+all subscribed clients, without having to write any special code.
+
+ **View**  
+Just like with Backbone, Meteor doesn't depend on stuffing application logic
+into our HTML. There's no embedded JavaScript, template logic, or binding
+hookup code in data- or ng- attributes, and no need to invent our own HTML
+tags.
+
+Better yet, Meteor's declarative templates, Handlebars-like templating system
+and one-way data binding free us from having to bind our view's render
+function to the model's "change" event, as we had to with Backbone.
+
+Jade is supported for templating as well.
+
+Thanks to its logic-less templates and automatic website reload on code and
+CSS changes, Meteor is very easy to use by web designers as well - they don't
+need any knowledge of the code or custom HTML directives.
+
+ **Security**  
+Meteor has built-in security against many common concerns, and lists
+framework-independent aspects to watch for.  
+Meteor security design principles include code vs. data and client vs. server
+separation, stateful connections that must be deliberately authenticated, and
+allow/deny rules for database access.  
+All user input is HTML-escaped when being displayed back to the client, thanks
+to the Handlebars-like {{...}} templates - a first defense against XSS.
+Furthermore, Content Security Policy support is provided by thebrowser-
+policy-* core packages. Browser-policy offers a very easy-to-use but powerful
+mechanism to prevent a large variety of attacks with only a few lines of code.
+Lastly, Meteor security guidelines advise on how to foil the remaining attack
+types (sanitize user-entered URLs and CSS).  
+MongoDB is by its nature more resistant against database injections than SQL
+because it doesn't parse inputs, but there are still things to watch out for.
+One example is passing expressions where strings were expected:
+
+    
+    
+      
+        // user_supplied_id is "{$ne: 'nonexistentstring'}" 
+        Users.find({   id: user_supplied_id });  
+    
+    
+
+This returns all users, when the programmer expected one particular id to be
+passed. Meteor defends against this in multiple ways:  
+Data must be explicitly published by the server in order for a query like the
+one above to return it in the browser console  
+Operations on client-side collections are restricted. For example, records can
+be updated only one by one. The client cannot run arbitrary selectors because
+that would allow sophisticated attacks such as binary searching for credential
+values.  
+The check package includes pattern checking functions useful for checking the
+types and structure of variables and an extensible library of patterns to
+specify which types we are expecting.  
+The audit-argument-checks package ensures that our app has complete check
+coverage for all arguments to methods and publish functions.  
+By using browser storage instead of hijackable session cookies, CSRF attacks
+are impossible.  
+Meteor uses the best crypto to store hashed passwords - bcrypt.  
+Meteor provides fine-grained control over method calls and database access --
+see Discover Meteor - Setting the Security Record Straight.  
+For the paranoid, a full-database encryption layer that runs on top of Meteor
+exists, called Mylar. It stores only encrypted data on the server, and
+decrypts data only in users' browsers.  
+There are still securities issues we should be aware of but those apply to any
+web framework. Meteor takes care automatically of the most common concerns.
+
+ **Tooling**  
+There's no need for Grunt or Bower. Meteor includes SASS/LESS compilation,
+CoffeeScript to JavaScript and concatenation and minification. All these
+happen automatically and transparently when we meteor run our application, and
+when we change our code.  
+Hot code push means users are seamlessly upgraded when the HTML, CSS or
+JavaScript changes, with full form field persistence. Our server app isn't
+restarted if all that changes is client code. If only CSS changes, only the
+CSS is reloaded in the client. Also, there is no need to submit updates via
+the app store.
+
+ **Mobile support**  
+Though we do not need this feature for now but it seemed really cool to have a
+choice in the future. Mobile apps can be generated from the same codebase,
+using PhoneGap/Cordova. An app built with Meteor + Cordova +
+[Famo.us](http://Famo.us) has real-time data capabilities, while being cross-
+platform and native-feeling.
+
+ **Ecosystem**  
+Atmosphere, Meteor's package repository, holds approximately 5,000 packages.
+Meteor can also use any of the more than 100,000 packaged modules in the
+Node.js ecosystem.
+
+This makes Meteor a much richer framework than Backbone, which expressly
+states that, "You can read and understand the source of in an afternoon."
+
+## What Meteor lacks
+
+  1. A native widget library. This is by design - unlike monolithic frameworks (Wakanda, Servoy etc.), Meteor offers all the plumbing and lets us use any UI components library works best for our project. Meteor "just works" with many client libraries (Bootstrap, [Famo.us](http://Famo.us) etc.) suitable for general web application design and UX. Meteor also works with Webix UI, a fast, nicely designed, mobile-friendly set of advanced UI components (tree, table, treetable, tab view etc.) that are great for developing admin and ERP applications, thanks to the meteor-webix integration which I put together with huge help from Maksim Kozhukh, the lead Webix developer.
+  2. Native support for developing Progressive Web Apps. The PWA architecture combines the best of web and mobile apps, but Meteor doesn't support Service Worker, or HTTP/2 + Server Push. Supporting these technologies would solve the slow first page load problem typical of Meteor apps, and would make lazy loading easy.
+  3. Native reactive "joins" for MongoDB (which doesn't have joins). There are, however, community packages for this.  
+#A native mechanism to load templates dynamically. The feature is on the
+roadmap as "incremental loading". In the meantime, have a look at
+numtel:publicsources and numtel:privatesources, which let us create bundles
+for lazy loading resources, with or without authentication.  
+#Blaze lacks two-way data binding as in Angular. This is by design. The Flux
+team at Facebook criticized how two-way data binding creates a major challenge
+for scaling applications because views can trigger changes in data, and data
+changes can trigger cascading changes in views, which makes it very difficult
+to predict the behavior of the app as a whole. The solution is to use an MVVM
+pattern, such as the viewmodel package. Of course, we can also use Angular
+with Meteor.  
+#Native server-side rendering (useful for SEO). There is however a server-side
+rendering package developed by Meteor guru Arunoda Susiripala, and native
+server-side rendering support is also on the roadmap.  
+#Full Windows support. Meteor for Windows has just received a shiny installer
+and its hot code build performance is as good as on Linux. The only major
+feature that doesn't work just yet is mobile development. Some packages (e.g.
+fourseven:scss) may also not install on Windows due to including architecture
+specific binaries, but that has been addressed with MDG making available
+Windows build machines. Now packages maintainers need to release new versions
+including Windows builds.  
+#Meteor Windows installer  
+#Easy explicit control over file load ordering. Currently, Meteor loads all
+.js and .css files essentially in alphabetic order (with some refinements),
+and if we don't want to rename files, we must add them into packages (which is
+actually a good way to organize our code). Packages create a load order via
+their dependency chain, and within the same package, we can also explicitly
+specify the load order via addFiles Package API calls. Still, an explicit load
+order mechanism is on the roadmap.  
+#One blessed or recommended package for a given 3rd party library we find in
+its package repository, Atmosphere. The Atmosphere is in need of cleanup,
+given that there are often several more-or-less-maintained wrappers for some
+third party libraries. The good news is that starting with version 1.3, Meteor
+supports npm packages natively, and Meteor wrappers for 3rd party packages
+will become obsolete.
+
+

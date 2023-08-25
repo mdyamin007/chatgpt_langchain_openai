@@ -1,0 +1,233 @@
+title: WHCU - StmtPDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133583-C30.01-V21623
+
+Processing Scripts to modify:
+ whcuds1_process.pl
+
+Data Files to use:
+ WHCU_STMT_06092022_1
+
+
+
+*NOTE*: This job runs on RH2. Since we are migrating from RHS to RH2, we should test all options so that we can do afpcompare and also ensure there is no errors in the processing logs.
+
+
+author: anwarh
+comment: Hi [~William.Kong], [~Igor.Khosid],
+
+Parallel ID: 20220821195504
+Data file used: /d/download/whcu/WHCU_STMT_08202022_1
+Production output backup: /z/dsi_pdfi_testing/whcuds1/old
+afp2pdf output: /z/dsi_pdfi_testing/whcuds1/new/
+
+Thanks,
+Anwar
+
+
+author: william.kong
+comment: [~anwarh]: Did you run all job_sel options? I don't see the big afp file in the /z/afpformat folder? I would like to run AFPCompare cycle 8/20? Please update QA Request status when you have ran all job_sel options in parallel in RHS server.
+
+
+author: anwarh
+comment: Hi [~William.Kong], re ran with all job sel, Please test now. Thanks
+
+
+author: william.kong
+comment: Sorry[~anwarh]! The AFP compare testing failed because of message mismatch. I also go other weird afp compare issues as well too:
+
+
+
+!image-2022-08-23-15-10-36-659.png|width=652,height=242!
+
+
+
+!image-2022-08-23-15-11-21-960.png|width=679,height=288!
+
+
+
+
+
+I've updated the parallel message manager to+match+ up the messages. Because of the other weird non-matching issues seen above, I need to find out if there are more odd ball issues. Because every page has mis-match message error messages, I need to make sure it message area is matching to identify what other mismatches that I may possibly excuse.
+
+
+
+Please re-run+all+ job_sel again on rhs server.
+
+Please use+latest+ production:
+
+[williamK@rhs2 whcuds1]$ perl /home/util/get_processed_filename.pl prod whcu 2418314
+ cid: whcu
+ jid: ds1
+ proc_id 2418314
+ file_name: {color:#ff0000}*WHCU_STMT_08222022_1*{color}
+ md5 2d98a7acebb16921e6fe468f160db95a
+
+
+
+I've copied the production file in red to/z/infoftp_int/whcu/Monthly/ so that it get scanned in parallel.
+
+
+
+Please also change status to "QA Request" when completed. Thanks!
+
+
+
+Thanks!
+
+
+
+ Will
+
+
+
+
+
+
+
+
+author: anwarh
+comment: [~William.Kong], just ran with the above data file, Please check now. Thanks
+
+
+author: JIRAUSER11104
+comment: Hi [~anwarh] please provide the paths to the new and old pdf files.
+Thanks.
+
+
+author: william.kong
+comment: *AFPCompare is good:*
+
+/home/master/afpcompare_range.sh /x/afpcompare/whcuds1/prod/2418314_whcuds1122.afp /x/afpcompare/whcuds1/parallel/709639_whcuds1122.afp 1 220 /x/iss/willK/tmp/afpcompare_base_proj64.icd /x/afpcompare/whcuds1/prod/../2418314_whcuds1122.afp.stdout_0.log
+Done sleeping thread #0
+
+Total Active Thread: 1 Waiting for next available thread to stop running...
+echo "Total Page Count: /x/afpcompare/whcuds1/prod/2418314_whcuds1122.afp (220)" >> /x/iss/afp_compare/Summary_Diff_2418314_whcuds1122.afp_result.log
+echo "Total Page Count: /x/afpcompare/whcuds1/parallel/709639_whcuds1122.afp (220)" >> /x/iss/afp_compare/Summary_Diff_2418314_whcuds1122.afp_result.log
+
+*****************************************************
+NO Difference found in 2418314_whcuds1122.afp_1_220_diff.xml
+
+*****************************************************
+/home/master/afpcompare_threads.pl program completed successfully. Summary report is located in: /x/iss/afp_compare/Summary_Diff_2418314_whcuds1122.afp_result.log
+
+
+
+[~anwarh]: Per [~Andrey.Kutsenko]can you re-generate the parallel 8/22/2022 pdf files. Unfortunately, [~rony] ran whcu in parallel and overwrote your PDF files in /z/pdf_afp/whcu/whcuds1/pdf folder the week of Sept 1 when you last ran the job on 8/24.
+
+
+
+I believe I've backed up 8/22 prod output so i still have it in ca-isis-pr-04:/d/pdf_compare/whcuds1_prod/ so that we can.
+
+
+
+Please update status back to "QA Request" when you have it done.
+
+
+
+
+
+
+
+
+
+
+author: anwarh
+comment: Hi [~William.Kong], [~Andrey.Kutsenko], 
+
+I just re-ran 08/22 cycle data file. You can test now. 
+
+Thanks,
+Anwar
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: I took the liberty to copy the parallel (new) files to
+
+
+
+ca-isis-pr-04:/d/pdf_compare/whcuds1_parallel/ directory.
+
+When time permits, please test this application.
+
+
+author: JIRAUSER11104
+comment: Thank you [~William.Kong]
+
+QA is completed.
+Test result - PASSED.
+{quote}[andreyK@ca-isis-pr-04 pdf_compare]$ cat ./result_whcuds1/pdf_compare_rpt.txt
+Total PDF Files Scanned: 220
+allowedDifferenceInPercentPerPage: 12:
+Thread Count: 32
+
+Total PDF Files with Differences: 0
+Start Time: Wed Sep 14 13:21:32 PDT 2022
+Finish Time: Wed Sep 14 13:23:06 PDT 2022{quote}
+
+
+author: william.kong
+comment: [~anwarh]: Please move forward with code release! Please don't forget to update the procedure file to reflect processing server to be on RHS. As usual, please cc me in the communication so that I can coordinate with DP as well too. I will mark live date to be 9/20 for now.
+
+
+author: anwarh
+comment: Hi [~TunA]/[~yameelee],
+
+Transfer form: [^IS-1215 Transfer Form.docx]  Transfer Form.docx]
+
+Code is in:
+*/d/is/cvs/xfer/anwarH_backup/is-1215*
+
+Can you please move them into /d/is/cvs/xfer/anwarH/ and then release?
+
+Thanks,
+Anwar
+
+[~William.Kong]
+
+
+author: tuna
+comment: Hi [~anwarh],
+
+Following codes have been released.
+
+
+
+FYI: I foundwhcu_pdfi_idx_split.pl in your actual xfer/ folder (/d/is/cvs/xfer/anwarH/). So I temporary remove for releasing following files and put back to your xfer folder. Please release accordingly.
+
+
+
+Thanks,
+
+Tun
+
+
+
+20220920093453 09/20/2022 anwarH IS-1215 WHCU - StmtPDFi Conversion to AFP2PDF Python [InHse]
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/anwarH_backup/is-1215/
+ total 624
+ -rwxrwxrwx 1 anwarH DSI 107888 Sep 19 18:43 WHCUDS11.dfa
+ -rwxrwxrwx 1 anwarH DSI 1553 Sep 19 18:43 whcuds1.control
+ -rwxrwxrwx 1 anwarH DSI 508 Sep 19 18:43 whcuds1_pdf.control
+ -rwxrwxrwx 1 anwarH DSI 7950 Sep 19 18:43 whcuds1_process.pl
+ -rwxrwxrwx 1 anwarH DSI 13158 Sep 19 18:43 whcuds1_process.sh
+ -rwxrwxrwx 1 anwarH DSI 3431 Sep 19 18:43 whcuds1.procs
+
+
+
+
+
+[~William.Kong], [~yameelee]

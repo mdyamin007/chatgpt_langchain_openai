@@ -1,0 +1,42 @@
+title: Update tfcudnb redtitan_csv_index.pl to pass in afp file directory
+description: Update letter collection tfcudnb
+
+update tfcudnb process.sh add afp file path
+
+${home_master}/master/redtitan_csv_index.pl ${fileDir}${filename}.sed.csv $datafile $totalPages $startPageCol ${fileDir}${prefix}${segment}.afp
+
+
+
+After test in parallel env. Verify the log in /z/daily/redtitan/redtitan_error.log
+
+
+author: JIRAUSER10906
+comment: Update completed to tfcudnb_process.sh in parallel environment.
+
+Will be bypassing parallel.
+
+diff tfcudnb_process.sh /home/test/master/tfcudnb_process.sh
+ 260,261c260,262
+ < echo_output "${home_master}/master/redtitan_csv_index.pl $csvData $datafile $totalPages"
+ < ${home_master}/master/redtitan_csv_index.pl $csvData $datafile $totalPages
+ 
+ > startPageCol=10
+ > echo_output "${home_master}/master/redtitan_csv_index.pl $csvData $datafile $totalPages $startPageCol ${fileDir}afp/${ltrPrefix}.afp"
+ > ${home_master}/master/redtitan_csv_index.pl $csvData $datafile $totalPages $startPageCol ${fileDir}/afp/${ltrPrefix}.afp
+
+****************************************************
+ Parallel ID: 20220222025153
+ Currently in parallel: Yes
+ User: samV
+ Description: IS-849 tfcudnb passing in afp path
+ Date Submitted: 2022-02-22 02:52:37
+ Date Last Updated: 2022-02-22 03:10:17
+ Files:
+ 1) tfcudnb_process.sh
+****************************************************
+
+
+author: JIRAUSER10906
+comment: Code has been released to production.
+
+Backup ID:20220222181516

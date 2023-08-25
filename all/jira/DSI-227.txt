@@ -1,0 +1,188 @@
+title: 9115 - FCBT - Setup ID Mapping through SSO
+description: None
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Tai Trinh made the following comment in ISD-1823
+
+@dsi
+
+Hi [~sadman anik],
+
+I think the logic for FCBT will be a bit different. We may need to have a secondary flag to determine which type of external ID mapping it is. As far as I know, for SEFC, we check the external ID mapping to get all the accounts tied to the CIF. We would use that to compare against the list of accounts provided in the SSO request, and only allow access to accounts that's in the ext id mapping table.
+
+For FCBT, it is a bit different. We will check all the accounts provided in the SSO request against the ext id mapping table. If the account exist as an external ID in the table, we will change it to the internal ID. If the account doesn't exist, then we will use that as the internal ID. For example,
+
+Table
+Ext | Int
+1234 | 4567
+7890 | 9012
+
+Request: 1234, 8552
+The returned list of accounts would be: 4567, 8552
+
+From what I see, we would have to make several calls to the API for each account number to see if there is an internal ID.  I will talk with Surekha to see whether she wants to enhance or add new functions to allow us to make only 1 call.
+
+
+
+author: sadman anik
+comment: @isd
+
+Hi [~tai.trinh],
+
+I have gone through theproduct requirement that you have added in this ticket. I have someinquiries before starting theHypercube requirement enhancement,
+ # *Enhance Lookup API,*As product requirement note,
+ ** API will take list of comma separatedexternal id but what will be for DI and BB? Because for DI and BB there is only one external Id (CIF number). Or there will be separated api based on theexternalType,*cif* and*acct_num.*
+ ** API will return the list of internal ids only for the matching external ids or it willreturn the list of internal ids along with matched externalID? (need details information about API functionality. parameter and result structure)
+ # *ExternalAccountLookup Standard Function,*
+ ** There is already a common function named as*extAccountLookUp*in method.js for both DI and BB that call lookup API. But the logic for filtering or reconstructing accountNumber list for *externalType=cif*is implemented separately in both DI and BB. Do you want me to enhance that*extAccountLookUp* method with the logic also? So it will return the final account list for bothexternalType *cif* and*acct_num* instead?**
+ ** Thefunctionality for sub-property of the"extAccountLookup" flag *returnNotFound,* is thisfunctionality will be for*externalType=acct_num* only or for bothexternalType*cif*and*acct_num*.**Because currently there is no implementation like this functionalityforexternalType cif.
+
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Tai Trinh made the following comment in ISD-1823
+
+@dsi
+
+
+
+Hi [~sadman anik]
+
+Upon further research, it seems like the only changes we need to do is on the configuration level. There is a flag called "accountLookup". We just need to set this flag to true. The enrollment API already has logic that will take in this flag, and map the list of accounts to internal accounts if they exist. For those that don't have an internal mapping, they will be used as is. This is the logic that we wanted.
+
+I have updated the design doc to reflect this finding.
+
+
+
+author: sadman anik
+comment: Hi [~tai.trinh],
+
+@isd
+
+If "accountLookup" flag do the job done then what will be the use of adding "externalAccountLookUp" with sub property "externalType" and "includeNotFound" ? Because there is no implementation for "externalAccountLookUp" in q2sso.
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Tai Trinh made the following comment in ISD-1823
+
+@dsi
+
+Hi [~sadman anik],
+
+You're right. There isn't.
+
+
+
+author: sadman anik
+comment: @isd
+
+Hi [~tai.trinh],
+
+I have changed the configuration for all the FCBT clients. Can we somehow start testing without waiting for Ext Id Map Processing confirmationupdate from IM / client?
+
+Thanks.
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Tai Trinh made the following comment in ISD-1823
+
+@dsi
+
+Hi[~sadman anik],
+
+You can do it locally or on dev. In the database, you just need to create entries in the ext_id_mapping table.
+
+
+
+app_id: estmt
+
+external_id: arbitrary number
+
+external_id_type: ext_acct_num
+
+internal_id: an account number from fin_account
+
+internal_id_type: acct_num
+
+Then when you SSO in, asking for access of the ext_acct_num, you should be granted access to the acct_num instead. Any number that you pass in that does not exist in the table should be read as is.
+
+Best,
+
+Tai
+
+
+
+
+
+
+
+author: sadman anik
+comment: Hi [~tai.trinh],
+
+@isd
+
+According to your comment, i have tested two clients with "accountLookup":true and it's following the business rules as expected. Do you want me to commit and deploy the code for all the fcbt clients? Or i should wait for ext Id map processing which is pending.
+
+Thanks,
+
+Sadman
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Tai Trinh made the following comment in ISD-1823
+
+@dsi
+
+Hi [~sadman anik],
+
+Yes, please commit and deploy.
+
+Thanks,
+
+Tai
+
+
+
+author: sadman anik
+comment: @isd
+
+Hi [~tai.trinh],
+
+I have committed and deployed the code in pilot.
+
+
+
+Thanks,
+
+Sadman
+
+
+author: sadman anik
+comment: @isd
+
+Hi [~tai.trinh],
+
+Is there any update forext Id map processing?
+
+Thanks,
+
+Sadman
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Tai Trinh made the following comment in ISD-1823
+
+@dsi
+
+Hi Sadman,
+
+I have already made the necessary enhancement for the extIdMap process on Pilot. You can review my changes if you want. The client wanted to provide only 1 file for all their sub-organizations, which is why the logic had to change in the way that it did.
+
+Sorry, there isn't much for you to do on this project. Originally, I had thought the scope would be much larger, but turned out a lot of the required features were already in place.
+
+Thanks,
+
+Tai
+

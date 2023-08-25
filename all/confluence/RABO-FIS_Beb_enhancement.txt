@@ -1,0 +1,51 @@
+title: RABO-FIS Beb enhancement
+body: RABO BebCeb enhancments  
+For CeB:  
+1\. Identify CeB by looking at the BankIdentifier in SSO payload. It'd be
+empty/field-absent  
+2\. XML payload come from FIS  
+3\. Prism simply passthrough to Hypercube FISSSO adaptor  
+4\. Hypercube FISSSO adaptor will do a dumb ssokeygen by encryption and
+returned key  
+5\. Upon ssoexchange, Hypercube FISSSO will validate against mongo record  
+6\. If valid, call infoservice with CIF Number (regular CIF number) to
+validate if this is a real user. DO NOT create user if not exist  
+7\. Account List is normally empty, but even if populated, since we don't
+update UFA, no effect.  
+8\. No UFA update expected.  
+9\. An 'Admin' flag is absent/empty in the SSO payload that need to be
+passthrough as part of response below.  
+10\. Return internal User ID upon all success prior steps.
+
+For BeB:  
+1\. Identify BeB by looking at the BankIdentifier in SSO payload. It'd be
+populated  
+2\. XML payload come from FIS  
+3\. Prism simply passthrough to Hypercube FISSSO adaptor  
+4\. Hypercube FISSSO adaptor will do a dumb ssokeygen by encryption and
+returned key  
+5\. Upon ssoexchange, Hypercube FISSSO will validate against mongo record  
+6\. If valid, call infoservice with CIF Number (arbitrary user identifier that
+FIS assign, expecting FIS to prefix it with BeB to avoid CIF Number conflict
+with CeB CIF Numbers) to validate if this is a real user. AUTO create user if
+not exist.  
+7\. Account List is expected to be populated. If Account List is empty, fail
+the SSO request  
+8\. UFA records need to be updated.  
+9\. An 'Admin' flag is present (with value = 'A' or 'R') in the SSO payload
+that need to be passthrough as part of response below.  
+10\. Return internal User ID and Admin Flag upon all success prior steps.  
+11\. Prism will update the USR.TYPE with value from 'Admin' flag (of
+successful ssoExchange response).
+
+Assumptions: Applicable to Both BeB and CeB  
+1\. If <BankIdentifier>ABC_Business( orBebxxx123)<BankIdentifier> field is
+missing or has no value, consider it as CeB user and process normally as
+before and return the internal userId for CIF ({"userId":18366196}).  
+2\. If <BankIdentifier>ABC_Business( orBebxxx123)<BankIdentifier> is present
+and the list of <Account> is empty, return it as an invalid request, else
+create mapping in UFA and create user/account if not present. On success,
+return the internal user id and the usertype from the sso request
+({"userId":18366197,"userType":"regular"}).
+
+

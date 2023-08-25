@@ -1,0 +1,27 @@
+title: 1455 - APCU - Undeliverable Report sent twice
+description: None
+
+
+author: shahadet.hossain
+comment: Can you please add some more details about the scheduler.
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Current issue is that the report is running twice on the same scheduled date. 
+It is schedules to run monthly on the 10th of each month.
+
+The scheduler creates an instance the day before its scheduled at 4 pm, and then creates the instance again on the scheduled date. Both are on wakeup.
+
+Then at 10 AM they both wakeup and are executed.
+
+
+
+This is the only client on report scheduler that does this.
+
+The code which should stop this from happening checks that create_time is not the same, as well as reportid, etc. But since one is created the day before it bypasses the logic.
+
+
+author: shahadet.hossain
+comment: Hi Ethan,
+
+Please take the latest code from file server with the following name: updateReportScheduler.pgp. I have removed the codes that causes issue. There was a pending item of the report scheduler where the occurrence is set to yearly. As one report was set to yearly this caused the issue.  I have removes some of the lines inside yearly check. I will develope the feature to work with yearly schedule as well. So far the updated code should not cause issue like scheduling multiple report for the same schedule.

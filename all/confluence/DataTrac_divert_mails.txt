@@ -1,0 +1,280 @@
+title: DataTrac divert mails
+body: This module is migrating divert mails feature from datatrac system on to
+Infotrac system.  
+
+  
+
+ _ **Proposed design:**_
+
+  
+
+ _ **Page 1 from old interface:**_
+
+ ** _User Interface specifications and design logic:_**
+
+  * Page 1 should have same fields on Infotrac as well except column 3. 
+  * Column one "Facility" should show a drop down menu. This drop down has 2 values "California" or "Texas".
+  * Column 2 is text box that will allow to enter 4 letter cid. Allow users to enter 4 characters only.  Indicate that CID is a mandatory field to enter.
+  * Column 3 named should be changed from "2D 3-Digit Prefix" to "DT_JOB_ID".  This is an optional field. Show verbiage after text input field as "(Optional. For faster search results, enter dt_job_id value)".
+
+ _ **User Interface validations on page 1:**_
+
+  * Cid should not be empty. Show message if nothing is entered.
+  * If api return invalid cid or invalid dt_job_id, stop navigating to next pages and show message accordingly.
+
+ ** _API sample requests and responses for page 1:_**
+
+url : /divertJobSearch
+
+ _Input 1:_
+
+{  
+       facility : California,  
+       cid : banb  
+}
+
+ _Response 1:  
+_ {  
+           cid       : banb,  
+            jobs    :   
+                         [  
+                             {  
+                                  date&time : 12-27-2019 06:50,  
+                                  2dcode : 60g,  
+                                  statementtype : DDA_Savings_Statements  
+                              },  
+                              {  
+                                  date&time : 11-13-2019 05:45,  
+                                  2dcode : ynv,  
+                                  statementtype : DAILY_LETTER  
+                               },  
+                              {  
+                                   date&time : 11-12-2019 12:55,  
+                                   2dcode : ymd,  
+                                   statementtype : DAILY_LETTER  
+                             }  
+                          ]  
+}
+
+ _Input 2:_
+
+{  
+       facility : California,  
+       cid : banb,
+
+      dt_job_id : 155517-C27.01-V21380  
+}
+
+ _Response 2:  
+_ {  
+           cid       : banb,  
+            jobs    :   
+                         [  
+                             {  
+                                  date&time : 12-27-2019 06:50,  
+                                  2dcode : 60g,  
+                                  statementtype : DDA_Savings_Statements  
+                              }  
+                          ]  
+}
+
+  
+
+ _Input 3:_
+
+{  
+       facility : California,  
+       cid : banb,
+
+      dt_job_id : 123456-C27.01-V21380  
+}
+
+ _Response 3:  
+_ {  
+           cid                :  banb,
+
+           message       :  Invalid dt_job_id  
+}
+
+ _Input 4:_
+
+{  
+       facility : California,  
+       cid : advc,
+
+      dt_job_id : 123456-C27.01-V21380  
+}
+
+ _Response 4:  
+_ {  
+           cid                :  banb,  
+           message       :  Invalid cid  
+}
+
+  
+
+ _ **Page 2 from old interface:**_
+
+ _ _ **single dt_job_id search result page:**__
+
+ _ ****_
+
+ _ _ **No dt_job_id search results page:**__
+
+  
+
+ ** _User Interface:_**
+
+  * There should be 2 tables that should be shown on page 2.
+  * Table 1 has 3 columns. Column 1 will show cid.
+  * Column 2 will show one dt_job_id if previously searched for one dt_job_id or column 2 will show drop down of jobs.
+  * Column 3 is for entering comment. Comment should support 60 characters length. Show number of characters left when typing comments. Don't allow entering extra comments more than 60 characters.
+  * Table 2 has 2 tabs. First one will show inputs to enter account number details as shown below. Validate account numbers input text fields. Should allow only digits. We have to enter at least one account number to hit api.
+
+
+
+  *  Second tab on table 2 will allow users to upload text file as shown below. Text file should have 1 account on each line. Should validate for spaces and special characters in text file. Should have limit on number of accounts we can support from text file (I need to confirm on this). Text fie should have at least one account number to hit api.
+
+  
+
+ ** _API sample requests and responses for page 2:_**
+
+ _url:   /_accountSearch
+
+ _Input 1_
+
+{  
+cid: banb,  
+dt_job_id: 155517-C27.01-V21380,  
+comment : Divert mentioned accounts,  
+accounts : 62029390,62029391,1,2,3,4  
+}
+
+ _Response 1:_
+
+{
+
+   cid                      : banb,
+
+  Job                      :
+
+                                {
+
+                                 date&time : 12-27-2019 06:50,  
+                                  2dcode : 60g,  
+                                  statementtype : DDA_Savings_Statements
+
+                               },
+
+accounts_found   : 2,
+
+accounts_found_list              :
+
+                              [
+
+                                  { 
+
+                                     account_number : 62029390,
+
+                                     name                 : Dennis F Moyles,
+
+                                      piece_id            : 60g5a00001
+
+                                  },
+
+                                  { 
+
+                                     account_number : 62029391,
+
+                                     name                 : Dennis F Moyles 1,
+
+                                      piece_id            : 60g5a00002
+
+                                  }
+
+                             ],
+
+accounts_not_found : 4,
+
+accounts_not_found_list :
+
+                                         [
+
+                                               {
+
+                                                 account_number : 1
+
+                                               },
+
+                                               {
+
+                                                 account_number : 2
+
+                                               },
+
+                                               {
+
+                                                 account_number : 3
+
+                                               },
+
+                                               {
+
+                                                 account_number : 4
+
+                                               }
+
+                                         ]                               
+
+}
+
+  
+
+ ** _Page 3 from old interface:_**
+
+ ** _User Interface specifications and design logic:_**
+
+  * We will show information regarding accounts found and accounts not found details as shown in old interface page.
+
+  
+
+ _ **Page 4 from old interface:**_
+
+ ** _User Interface specifications and design logic:_**
+
+  * Page 4 is the summary page showing list of accounts that are diverted and accounts that are not diverted.
+
+ _ **Clarification needed:**_
+
+1)
+
+  
+
+When I enter same account number on page 2, page 3 show results as 2 accounts
+found as shown in above screen shots. If we submit divert as is, not sure what
+happens in back end. Should we improve or correct this on new system?
+
+[Shail's clarification]: Even we submit same account number multiple times,
+back end code will divert only once.
+
+  
+
+2) Do we need to improve User interface on page 3 to show additional
+information of previously submitted divert jobs. Example we have banb job with
+dt_job_id 1234. Person A has submitted divert for accounts 1,2,3 and this was
+successful. Now Person B want to divert some accounts for same job, when
+Person B searches, should we show list of accounts that are previously
+diverted.
+
+  
+
+3)  On Page 3, we are listing account number, name and piece id. If an account
+number has multiple piece ids, there is no option to select mail pieces from
+list of options. Should we have check box for accounts found on page to select
+particular mail piece ids.
+
+  
+
+  
+
+

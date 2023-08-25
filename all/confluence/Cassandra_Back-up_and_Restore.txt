@@ -1,0 +1,139 @@
+title: Cassandra Back-up and Restore
+body: ## Taking Snapshot
+
+Snapshots are taken per node using the nodetool snapshot command. To take a
+global snapshot, run the nodetool snapshot command using a parallel ssh
+utility, such as pssh.
+
+ **Procedure**
+
+Run the nodetool snapshot command, specifying the hostname, JMX port, and
+keyspace. For example:  
+$ nodetool -h localhost -p 7199 snapshot mykeyspace
+
+ **Results**
+
+The snapshot is created in data_directory_location/keyspace_name/table_name-
+UUID/snapshots/snapshot_name directory. Each snapshot directory contains
+numerous .db files that contain the data at the time of the snapshot.
+
+For example:
+
+ **Packaged installs:**
+
+    
+    
+    /var/lib/cassandra/data/mykeyspace/users-081a1500136111e482d09318a3b15cc2/snapshots/1406227071618/mykeyspace-users-ka-1-Data.db
+    
+
+  
+Tarball installs:
+
+    
+    
+    install_location/data/data/mykeyspace/users-081a1500136111e482d09318a3b15cc2/snapshots/1406227071618/mykeyspace-users-ka-1-Data.db
+    
+
+  
+
+## Enabling incremental backups
+
+When incremental backups are enabled (disabled by default), Cassandra hard-
+links each flushed SSTable to a backups directory under the keyspace data
+directory. This allows storing backups offsite without transferring entire
+snapshots. Also, incremental backups combine with snapshots to provide a
+dependable, up-to-date backup mechanism.
+
+As with snapshots, Cassandra does not automatically clear incremental backup
+files. DataStax recommends setting up a process to clear incremental backup
+hard-links each time a new snapshot is created.
+
+ **Procedure**
+
+Edit the cassandra.yaml configuration file on each node in the cluster and
+change the value of incremental_backups to true.  
+  
+
+## Restoring from a Snapshot
+
+Restoring a keyspace from a snapshot requires all snapshot files for the
+table, and if using incremental backups, any incremental backup files created
+after the snapshot was taken.
+
+Generally, before restoring a snapshot, you should truncate the table. If the
+backup occurs before the delete and you restore the backup after the delete
+without first truncating, you do not get back the original data (row). Until
+compaction, the tombstone is in a different SSTable than the original row, so
+restoring the SSTable containing the original row does not remove the
+tombstone and the data still appears to be deleted.
+
+Cassandra can only restore data from a snapshot when the table schema exists.
+If you have not backed up the schema, you can do the either of the following:
+
+ **Method 1**  
+Restore the snapshot, as described below.  
+Recreate the schema.  
+ **Method 2**  
+Recreate the schema.
+
+Restore the snapshot, as described below.  
+Run nodetool refresh.
+
+ **Procedure**
+
+You can restore a snapshot in several ways:
+
+Use the sstableloader tool.  
+Copy the snapshot SSTable directory (see Taking a snapshot) to the
+data/keyspace/table_name-UUID directory and then call the JMX method
+loadNewSSTables() in the column family MBean for each column family through
+JConsole.
+
+You can use nodetool refresh instead of the loadNewSSTables() call.
+
+The location of the data directory depends on the type of installation:
+
+Packaged installs: /var/lib/cassandra/data  
+Tarball installs: install_location/data/data  
+Use the Node Restart Method described below.  
+  
+
+## Node restart method
+
+If restoring a single node, you must first shutdown the node. If restoring an
+entire cluster, you must shut down all nodes, restore the snapshot data, and
+then start all nodes again.
+
+Note: Restoring from snapshots and incremental backups temporarily causes
+intensive CPU and I/O activity on the node being restored.  
+Procedure
+
+Shut down the node.  
+Clear all files in the commitlog directory.  
+Packaged installs: /var/lib/cassandra/commitlog  
+Tarball installs: install_location/data/commitlog  
+Delete all *.db files in the directory:  
+data_directory_location/keyspace_name/table_name-UUID/snapshots/snapshot_name
+
+where data_directory_location is  
+Packaged installs: /var/lib/cassandra/data  
+Tarball installs: install_location/data/data  
+DO NOT delete the /snapshots and /backups subdirectories.
+
+Locate the most recent snapshot folder in this directory:  
+data_directory_location/keyspace_name/table_name-UUID/snapshots/snapshot_name
+
+Copy its contents into this directory:  
+data_directory_location/keyspace_name/table_name directory.
+
+If using incremental backups, copy all contents of this directory:  
+data_directory_location/keyspace_name/table_name/backups
+
+Paste it into this directory:  
+data_directory_location/keyspace_name/table_name
+
+Restart the node.  
+Restarting causes a temporary burst of I/O activity and consumes a large
+amount of CPU resources.
+
+

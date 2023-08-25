@@ -1,0 +1,69 @@
+title: Update sscudlc redtitan_csv_index.pl to pass in afp file directory
+description: update sscudlc_process.sh add afp file path
+
+${home_master}/master/redtitan_csv_index.pl ${fileDir}${filename}.sed.csv $datafile $totalPages $startPageCol ${fileDir}${prefix}${segment}.afp
+
+
+
+After test in parallel env. Verify the log in /z/daily/redtitan/redtitan_error.log
+
+
+author: jun
+comment: [~Igor.Khosid]
+
+Parallel id:20220217160724
+
+No project file.
+
+Update is to script to add Redtitan afp output to redtitan_csv_index.pl for verification.
+
+
+author: igor.khosid
+comment: Parallel ID: 20220217160724
+ Currently in parallel: Yes
+ User: junM
+ Description: IS-855 SSCU Add RedTitan AFP verification
+ Date Submitted: 2022-02-17 16:07:37
+ Date Last Updated: 2022-02-18 09:24:03
+ Files:
+ 1) sscudlc_process.sh
+
+
+author: igor.khosid
+comment: QA - completed
+
+Script ran successfully without any errors. No mismatch between expected and returned files count
+ # Parallel report
+
+Parallel ID: 20220217160724
+Currently in parallel: Yes
+User: junM
+Description:IS-855SSCU Add RedTitan AFP verification
+Date Submitted: 2022-02-17 16:07:37
+Date Last Updated: 2022-02-18 09:24:03
+Files:
+1) sscudlc_process.sh
+
+2. Difference prod vs test
+
+< echo_ouput "perl ${home_master}/master/sscudlc_csvfix.pl ${fileDir}data/${filename}.csv ${fileDir}data/${filename}.out.csv"
+---
+> echo_output "perl ${home_master}/master/sscudlc_csvfix.pl ${fileDir}data/${filename}.csv ${fileDir}data/${filename}.out.csv"
+---
+< echo_ouput "perl ${home_master}/master/redtitan_csv_index.pl ${fileDir}data/${filename}.csv ${fileDir}data/${filename}.fix.csv $totalPages $startPageCol"
+< perl ${home_master}/master/redtitan_csv_index.pl ${fileDir}data/${filename}.csv ${fileDir}data/${filename}.fix.csv $totalPages $startPageCol
+---
+> echo_output "perl ${home_master}/master/redtitan_csv_index.pl ${fileDir}data/${filename}.csv ${fileDir}data/${filename}.fix.csv $totalPages $startPageCol ${fileDir}afp/${filename}.afp"
+> perl ${home_master}/master/redtitan_csv_index.pl ${fileDir}data/${filename}.csv ${fileDir}data/${filename}.fix.csv $totalPages $startPageCol ${fileDir}afp/${filename}.afp
+
+
+author: william.kong
+comment: [~jun]: I spoke with Peter. Parallel is not required for testing with all departements. However, you need to run a test in Parallel to make sure it works. If so, please go ahead and work with Tun to release the code.
+
+
+author: william.kong
+comment: Let's release on Monday 2/28 instead of today.
+
+
+author: jun
+comment: Code released to production

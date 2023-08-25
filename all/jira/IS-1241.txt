@@ -1,0 +1,132 @@
+title: IDCU - Invoice - Visa PDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133614-C00.01-V21325
+
+Processing Scripts to modify:
+ idcu_visa_process.sh
+
+Data Files to use:
+ IDCU_VISA_052122.7z.gpg
+
+
+
+*NOTE*: This job runs on RH2. Since we are migrating from RHS to RH2, we should test all options so that we can do afpcompare and also ensure there is no errors in the processing logs.
+
+
+author: william.kong
+comment: Per[~anwarh]email on 9/13, the new revised live date is for 9/22. Please do not miss this live date to submit to QA.
+
+
+author: anwarh
+comment: Hi [~William.Kong],
+
+Parallel ID: 20221012235216
+production cycle: 09/21
+
+Data files:
+/z/dsi_pdfi_testing/idcumv1/data/IDCU_VISA_092122.7z.gpg
+
+old zips: /z/dsi_pdfi_testing/idcumv1/old/
+new zips: /z/dsi_pdfi_testing/idcumv1/new/
+
+Notes: 
+* Index file has the comma issue, where afp2pdf replaces it
+* It also had similar issues like tkcums1 dvd_burn script, made similar enhancement
+
+Thanks,
+Anwar
+
+
+author: william.kong
+comment: Thanks Anwar! i've confirmed with your assessment with the index.txt files.
+
+
+
+[~Andrey.Kutsenko]/[~Igor.Khosid]: Files are placed in:
+
+
+
+ca-unittest-pr-02:/d/pdf_compare/idcumv1_prod/
+
+ca-unittest-pr-02:/d/pdf_compare/idcumv1_parallel/
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: Just a courtesy reminder, please review this QA Request when time permits.
+
+
+author: JIRAUSER11104
+comment: QA is in progress.
+Ran script:
+{code:sh}[andreyK@ca-unittest-pr-02 pdf_compare]$ perl pdf_compare.pl idcumv1_prod/ idcumv1_parallel/ result_idcumv1 -pixels 12 -threads 16{code}
+
+
+author: JIRAUSER11104
+comment: QA is completed:
+PDF files in parallel look better and have a smaller size.
+{quote}Total PDF Files Scanned: 6000
+allowedDifferenceInPercentPerPage: 12:
+Thread Count: 16
+
+Total PDF Files with Differences: 138
+WARNING:  We did not compare ALL the pdfs!
+          pdf_compare.pl will only process the first 6000 pdf files out of the total 85970 pdfs
+Start Time: Wed Oct 26 17:06:51 PDT 2022
+Finish Time: Wed Oct 26 19:22:44 PDT 2022{quote}
+
+
+author: william.kong
+comment: Looks good. I spot check the 138 differences and it looks ok.
+
+
+
+[~anwarh]: Can you please prep the file transfer form so that Tun can help release by Nov 9, 2022.
+
+Thanks!
+
+
+
+
+author: anwarh
+comment: Hi [~yameelee]/[~rodriguez],
+
+Transfer form:  [^IS-1241 IDCU Transfer Form.doc] 
+
+Code is in:
+*/d/is/cvs/xfer/anwarH_backup/is-1241*
+
+Can you please move them into /d/is/cvs/xfer/anwarH/ and then release?
+
+Thanks,
+Anwar
+
+[~William.Kong]
+
+
+
+author: yameelee
+comment: [main@rhs ~]$ ll /d/is/cvs/xfer/anwarH_backup/is-1241
+ls: /d/is/cvs/xfer/anwarH_backup/is-1241: No such file or directory
+
+
+
+[~anwarh]: Please check.
+
+
+author: anwarh
+comment: Hi [~yameelee],
+Seems like I placed the files in "IS-1241" instead of 'is-1241'.
+Please check again in here:/d/is/cvs/xfer/anwarH_backup/is-1241
+Thanks

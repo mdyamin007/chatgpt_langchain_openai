@@ -1,0 +1,35 @@
+title: Print/E Job Posting Troubleshoot
+body: ## Email from David to Print team (2017-06-22) for reference:
+
+I hope we can have a general guideline for all the team member soon as I am
+seeing programmer/developer still report these issue every day and everyone is
+still not sure how job to troubleshoot or why it keep failing.  
+Here are my finding so far for the 2 issue related to Job Tracking and how to
+troubleshoot but I do not know what need to be configure on Print side in
+order to populate these data.  
+Need you guy to help review and update the info below.
+
+Issue 1: Estatement Posting Error  
+Error Message: java.lang.Exception: infoTrac_flag is on but dt_job_id is
+missing from dataTrac(IS) database  
+Troubleshoot:  
+* Make sure PC have assigned a valid DT_JOB_ID and programmer/operate used right DT_JOB_ID.  
+* Check Print database to make sure data are populated correctly by running the following queries.  
+select et.dt_job_id, pm.created_date  
+from estmt_dt et, process_main pm  
+where pm.dt_job_id = et.dt_job_id and pm.test = ? and pm.status >0 and et.cid
+= pm.cid  
+and et.cid =? and estmt_idx_file = ?
+
+select INFOTRAC_FLAG from estmt_proc where ESTMT_IDX_FILE=?
+
+* Check control file to make sure flag are turned on.  
+?????
+
+Issue 2: eStatement Posted with DT_JOB_ID but eJob Tracking is not showing up
+on InfoTRAC.  
+Troubleshoot:  
+* Make sure eJob Tracking is turned on from PC's database by checking with the 'vid',  
+select estmtjobtracking from tblAL where vid = ? and active =1
+
+

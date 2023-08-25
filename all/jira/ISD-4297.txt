@@ -1,0 +1,48 @@
+title: PUI jobDetails: Hide "Disable Email" button when email is not registered or sent or already disabled
+description: The disable email warning only shows when p_job_email exists and is either disabled or sent. When p_job_email DONE, the disable email button is still available without any context.
+
+
+author: tai.trinh
+comment: [~mamunur.rashid]
+
+I don't think the commit fix the issue.
+
+It looks to me like "emailSent" is defaulted to FALSE. And conditions are dependent on this. However, when we do not register the email job, i.e. when "select * from p_job_email where p_job_id = '[p_job_id]'" returns nothing, "emailSent" will still be FALSE (the EmailNotificationStatus.isEmailNotificationSent returns false if it cannot find a p_job_email). This is the "bug" that allows the Disable Email row to still appear.
+
+I would say we should update the EmailNotificationStatus.isEmailNotificationSent to return true when there's no Result returned from the query. The function actually represents "isEmailNotificationSentOrDisabled" anyway. Though, we do need to research where else is this function being used to confirm that this change is not going to adversely affect some other functionality.
+
+To be safe, we could create a new function similar to isEmailNotificationSent and have the logic that we want and update the PUI to use that function. That way, in case other areas use the other function, we have backward compatibility.
+
+
+author: mamunur.rashid
+comment: [~tai.trinh],
+
+I understood your point. I have introduced a new static method named
+
+*_isEmailNotificationRegistered()_* to determine if email notification is registered to a specific job.
+
+Both frontend and backend code has been committed to processing-ui dev. Please have a look.
+
+Thanks,
+
+Mamun
+
+
+author: tai.trinh
+comment: [~mamunur.rashid],
+
+Please make one additional update.
+
+This is an efficiency thing. We know that emailSent == false if emailNotificationRegistered = false. So, in the try block, we should check for emailNotificationRegistered first. Then, we should only check for emailSent if emailNotificationRegistered = true. This way, we can potentially save the cost of one database query.
+
+Thanks,
+Tai
+
+
+author: tai.trinh
+comment: [~mamunur.rashid]
+
+Code looks good. Please release to Pilot, and set up the different scenarios (No email registered, Email registered - sent/disabled, Email registered - not sent). I will have the DP department review since this is a feature that would affect their work flow.
+
+Thanks,
+Tai

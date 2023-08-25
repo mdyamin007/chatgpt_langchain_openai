@@ -1,0 +1,47 @@
+title: Black Knight API - Document Get
+body:   
+
+Endpoint|
+.../api/v1/loans/${porfolioIdentifier}/${loanIdentifier}/docs/${documentIdentifier}  
+---|---  
+Authentication| Required  
+  
+  
+
+The endpoint will either call the WrapperService to convert the AFP to a PDF,
+or, if the document is already stored as PDF, pull the PDF directly from
+storage.
+
+# Response
+
+The response is represented by the Document class, which contains three
+values:
+
+  1. DocumentContent: the Base64 representation of the PDF
+  2. DocumentMimeType: always application/pdf
+  3. DocumentName: the description that will be used by Black Knight to display on the UI
+
+# Design to Consider
+
+  
+| Design| Dependency| Detail| Challenge  
+---|---|---|---|---  
+1| Caching the Response|  
+|
+
+Remove the need to retrieve the document every single time the user clicks on
+the same Document URL. Simply return the Document Response.
+
+| When/how to invalidate the cache.  
+2| Recognizing Repeat Request| 1| If a User clicks on the same Document link
+multiple times, instead of running through the logic for every single request,
+have subsequent requests defer and wait for the first request to finish. Then
+subsequent requests can simply return from the cache.  |
+
+What if the first request fails?
+
+Maybe this is not feasible.  
+  
+  
+
+

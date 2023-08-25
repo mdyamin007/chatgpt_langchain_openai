@@ -1,0 +1,225 @@
+title: FRST - [21059][pvt] (L) Address Suppression for Change of address letters.
+description: Assessment Details (IS):
+- Parallel required: No
+- Add logic to use suppression list to suppress Daily A Letters K and L (Change of Address 2100LA02 and 2100LA03)
+- ** This is for select dates and not a permanent changes; Planning get two suppression period.
+- The first will tentatively be from Aug 2nd thru Aug 10th. The second set of dates is TBD.
+- Application: FRST Daily Notices (frstdla)
+"2100LA02" -> frstdlk
+"2100LA03" -> frstdll
+- Suppression list file naming convention: FRST_COA_Suppress.csv.pgp
+- Test suppression list is attached Ticket #21510 Comment #21 (FRST_COA_Suppress.csv.pgp).
+- Above list is for cycle 7/16/21 (frst_dl_07162021.zip.071612)
+- Note: I found only one matched account #605973243 in cycle 7/16/21 data file (2100LA02.59390.071621.pgp)
+
+
+
+Hours for development: 5 hours(IS) +ISD hours not required
+Turnover Date : 07/29/2021
+Sample Date: 08/05/2021
+Sample Approval Date: 08/09/2021
+Go live date : 08/11/2021
+
+
+author: eric.yan
+comment: project export to qa\FRST\FRSTDLL.zip
+qa\FRST\FRSTDLK.zip
+
+pr_id 20210806165621
+
+The suppression list is in /home/test/keep/frstdla/FRST_COA_Suppress.csv
+I tested with account number "90300008753" in both letters, and it suppresses generating the records.
+
+Check result by `grep 90300008753 /z/daily/frst/*.txt`
+
+[~jun]
+When releasing, copy the *original *suppress list to /home/keep/frstdla/ folder.
+
+
+
+
+
+
+author: igor.khosid
+comment: Parallel ID: 20210806165621
+ Currently in parallel: Yes
+ User: ericY
+ Description: IS-278 FRST TEMP Suppress DLL DLK Selectively Acct
+ Date Submitted: 2021-08-06 16:57:03
+ Date Last Updated: 2021-08-06 17:10:17
+ Files:
+ 1) FRSTDLK.dfa
+ 2) frst_process.sh
+ 3) FRSTDLL.dfa
+
+
+author: eric.yan
+comment: [~Igor.Khosid]
+
+Here the checklist in case we need to run parallel before I'm back.
+
+
+author: eric.yan
+comment: [~Igor.Khosid]
+
+Here the checklist in case we need to run parallel before I'm back.
+
+
+author: igor.khosid
+comment: [~kdishroon] [~eric.yan]
+
+
+QA test result: Pass and Status changed from QA In Progress to Request for Parallel
+
+IS Checklist - attached[^IS-278_FRST_IS Checklist.pdf]
+
+1. Parallel report
+Parallel ID: 20210806165621
+Currently in parallel: Yes
+User: ericY
+Description: IS-278 FRST TEMP Suppress DLL DLK Selectively Acct
+Date Submitted: 2021-08-06 16:57:03
+Date Last Updated: 2021-08-06 17:10:17
+Files:
+1) FRSTDLK.dfa
+2) frst_process.sh
+3) FRSTDLL.dfa
+
+2. Difference prod vs test
+FRSTDLK.dfa
+FRSTDLL.dfa
+<
+>
+ FORMAT READ_DATA ;
+ USE
+<
+ OUTLINE HEAD
+ POSITION LEFT TOP 
+ DIRECTION ACROSS;
+ NOT_DATE = SUBSTR(VAR[1],125,10, '') ;
+ ACCT_NUM = CHANGE(NOSPACE(SUBSTR(VAR[1],105,11,' ')),'-', '') ;
+ I = 5 ;
+ NAME = NOSPACE(SUBSTR(VAR[I],1,40, '')) ;
+ ADDR1 = NOSPACE(SUBSTR(VAR[I+1],1,40, '')) ;
+ ADDR2 = NOSPACE(SUBSTR(VAR[I+2],1,40, '')) ;
+ ADDR3 = NOSPACE(SUBSTR(VAR[I+3],1,40, '')) ;
+ ADDR4 = NOSPACE(SUBSTR(VAR[I+4],1,40, '')) ;
+ ADDR5 = NOSPACE(SUBSTR(VAR[I+5],1,40, '')) ;
+ ENDIO ;
+>
+<
+>
+ &SUPPRESSCOAFILE = ENVIRONMENT('LOOKUPFILE') ;
+ USE
+ FORMAT LOAD_SUPPRESS_COA ;
+
+
+DOCFORMAT LOAD_SUPPRESS_COA;
+ FOR I
+ REPEAT 10000 ;
+ SUP_ACCT = CONVERT('PDECON','READLINE',&SUPPRESSCOAFILE) ;
+ IF SUP_ACCT=='EOF' ;
+ THEN ;
+ I = 10000 ;
+ ELSE ;
+ &SUP_LIST[I] = SUP_ACCT * 1 ;
+ ENDIF ;
+ ENDFOR ;
+
+
+DOCFORMAT READ_DATA;
+ NOT_DATE = SUBSTR(VAR[1],125,10, '') ;
+ ACCT_NUM = CHANGE(NOSPACE(SUBSTR(VAR[1],105,11,' ')),'-', '') ;
+ I = 5 ;
+ NAME = NOSPACE(SUBSTR(VAR[I],1,40, '')) ;
+ ADDR1 = NOSPACE(SUBSTR(VAR[I+1],1,40, '')) ;
+ ADDR2 = NOSPACE(SUBSTR(VAR[I+2],1,40, '')) ;
+ ADDR3 = NOSPACE(SUBSTR(VAR[I+3],1,40, '')) ;
+ ADDR4 = NOSPACE(SUBSTR(VAR[I+4],1,40, '')) ;
+ ADDR5 = NOSPACE(SUBSTR(VAR[I+5],1,40, '')) ;
+ SUP_FINDER = SEARCHFIRST(&SUP_LIST,ACCT_NUM) ;
+ IF SUP_FINDER<>0 ;
+ THEN ;
+ MESSAGE -1,1,ACCT_NUM!' is on COA suppress list, suppressed from '
+ 'print and archival';
+ ENDDOCUMENT;
+ ENDIF ;rchival';
+ ENDDOCUMENT;
+ ENDIF ;
+
+frst_process.sh
+<
+>
+ # ticket 21059
+ # temporarily use coa suppress list to suppress print and archival selectively in DLK and DLL
+ export lookupfile="${home_master}/keep/frstdla/FRST_COA_Suppress.csv"
+3. Papyrus output - validated
+4. Suppress "FRST_COA_Suppress.csv", frstdll.txt, frstdlk.txt , frstd116.txt - validated
+
+
+author: kdishroon
+comment: Eric,
+
+Is there a way we can show the client the records will be suppressed or would it be best to show them a sample DPVS?
+
+Thank-you,
+
+Keri
+
+
+author: eric.yan
+comment: [~kdishroon]
+
+The suppressed record is not generated at all, so it won't be shown on DPVS.
+
+In order to confirm the record is suppressed, I could do a search for account number in both the data file and the output index, to highlight a specific account is not generated. 
+I could also generate a summary list of suppressed account, if that's helpful.
+
+
+author: kdishroon
+comment: Hi Eric,
+
+Yes, if you could provide both, that would be great.
+
+Thank-you!
+
+Keri
+
+
+author: eric.yan
+comment: This group of screenshot is to illustrate how a specific account is suppressed from being generated for print and archival.
+ The target account number is 90300008753 (this is not from the original suppress list, but I added it for testing and illustration purpose).
+ !screenshot-1.png|thumbnail!
+
+This account is in letter K
+ !screenshot-2.png|width=273,height=60,thumbnail!
+
+The same account number is also in letter L
+
+!image-2021-08-17-14-13-51-910.png|width=268,height=65!
+
+
+
+After processing with the updated program, the account number is not being generated in the output index file (index file is used for internal processing purpose and not usually disclosed for external users)
+
+!image-2021-08-17-14-16-08-421.png!
+
+As comparison, other accounts not being suppressed are generated as usual (80007153721 as a test case for normal account)
+
+!image-2021-08-17-14-17-37-870.png!
+
+
+author: kdishroon
+comment: Hi Eric,
+
+Please release code; please use the attached suppression list FRST_COA_Suppress.csv.pgp.
+
+Thank-you,
+
+Keri
+
+
+author: eric.yan
+comment: [~kdishroon]
+
+The code is released, please proceed.

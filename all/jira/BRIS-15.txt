@@ -1,0 +1,108 @@
+title: Feedback Round #1 [12/24/2019]
+description: Hi Anwar,
+
+
+
+I'm not able attempt to test the is-apps-dev.infoimage.com yet until I'm confortable with what I've observed during the code review.  I will create a subtask call Round #1 Feedback. 
+
+
+
+#1. FTPScannerService.py: Line 60: Please do not use hardcoded email address. Please create an email distribution name from configuration file OR we can change the email notification design to leverage NotifyServices API that you suggested above.
+
+
+
+
+{code:java}
+// code placeholder
+    def send_error_email(self, **kwargs):
+        email_sender = EmailSender()
+        email_sender.send_email_template(
+            'ftp_trigger_script',
+            ['anwar.hossain@dsinnovators.com'],
+            **kwargs
+        )
+{code}
+
+
+
+
+
+
+#2. FTPScannerService.py: Line 51: Please be more description in the email error message in the following code. Please include the "script name" and the "parameters" passed in the error output:
+
+
+
+
+{code:java}
+// code placeholder
+
+                             call_script, ssh_host)
+        except Exception:
+            logging.exception("Failed to execute script!")
+{code}
+
+
+
+
+e.g.:
+
+"Failed to execute script '%s %s %s %s' on host %s ", call_script, cid, filename, md5, ssh_host)
+
+
+
+
+
+Also, please consider adding email notification under the "General: Exception" clause so that we are notified of the issue. We don't monitor the is-apps.infoimage.com log files so our DP team needs to be aware of a general triggering issue.
+
+
+
+#3 FTPScannerService.py: Line 19: Please fix the spelling of the function name run_scirpt to run_script
+
+
+{code:java}
+// code placeholder
+
+    def process_request(self, cid, filename, md5):
+        logging.info(
+            "Processing new scanner request, cid: %s, jid: %s, md5: %s", cid, filename, md5)        thread = threading.Thread(
+            target=self.run_scirpt, args=(cid, filename, md5))
+        thread.daemon = True
+        thread.start()    def run_scirpt(self, cid, filename, md5):
+        try:
+            call_script = app.config['SCRIPT_PATH']
+            env = app.config['SCRIPT_ENV']
+            ssh_username = app.config['SSH_USERNAME']
+            ssh_host = app.config['SSH_HOST']
+            ssh_key = app.config.get('SSH_PRIVATE_KEY')
+            ssh_password = app.config.get('SSH_PASSWORD')
+{code}
+
+
+
+
+
+
+#4FTPScannerService.py: Does process_request function actually use the cid, filename and md5 variables when it invokes the ssh script? Based on the code review, I don't+think+ you are using this variables. If I'm right, please get them corrected.
+
+Line 19:
+{code:java}
+// code placeholder
+            _, stdout, _ = ssh_client.exec_command("sh "+call_script){code}
+
+
+
+
+
+
+
+
+
+
+
+author: anwarh
+comment: [~William.Kong],
+
+I ignored issue #2, as that information can be found from the previous log lines. type `docker-compose logs -f` to see what I mean. 
+
+The rest of the issues are taken care of. 
+Code diff: https://gitlab.infoimageinc.com/infoimage/infosync/commit/ac2c5b60f8fd2a88276ecb7338f8db024531a504

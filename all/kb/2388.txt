@@ -1,0 +1,133 @@
+Variables:
+===
+- ###jid :
+>Monthly Statement - ms1
+>Loan Statement - ln1/ml1
+>visa/credit card - mv1
+>Heloc - me1
+- ###dir :
+>with MM - {d_dir}/{cid}
+>without MM - {d_dir}/{cid} or {d_dir}/{prefix} or {d_dir}/{cid}/{jid}
+- ###job_name :
+>with householding - "GROUP_STATEMENT" or "GROUP_DAILY_LETTER"
+>without householding - According to SOW ( Ex: Visa_Statement,Loan_Coupons,Monthly_Statements,Daily_letter,TAX_LETTER)
+- ###group_type :
+>Daily addr ---------------------------------------------->d1
+>Daily AcctNo --------------------------------------------> d2
+>Daily Acct + exclude (group_exclue needed) -> d3
+>Daily ltr code + acct + addr ---------------------> d4
+>Stmt addr + acctNo ---------------------------------> s1
+>Daily acctNo ------------------------------------------> t1
+>Tax ssn --------------------------------------------------> t2
+>Custom {cid}_combine_acct.pl {fn}.c1bmcok --------->f1
+>Custom {cid}{jid}_combine_acct.pl {fn}.c1bmcok ------> f2
+>Custom combine_cust_shell.sh {prefix} {fn}.c1bmcok -> f3
+- ###prod_type :
+>isisdisk.sh - "STM"
+>isisdisk_daily.sh - "LTR"
+- ###ver_pos :
+>Address at top - "2.7"
+>Address at bottom - "10.1"
+- ###hor_pos :
+>"1.5"
+- ###format_dfa :
+>Statement/Letter Paper (s) option dfa
+- ###ind_pdf_format_dfa :
+>Statement ESTMT (f) option dfa
+- ###pdf_format_dfa :
+>Statement Archival (e) option dfa
+- ###estmt_format_dfa :
+>Daily Letter ESTMT (f) option dfa
+- ###print_dfa :
+>Daily 2DSDDAILYN
+>Simplex+Simplex+1tray 2DSS1IND
+>Simplex+Simplex+2tray 2DSS2IND
+>Simplex+Duplex+1tray 2DSD1IND
+>Simplex+Duplex+2tray 2DSD2IND
+>Duplex+Simplex+1tray 2DDS1IND
+>Duplex+Simplex+2tray 2DDS2IND
+>Duplex+Duplex+1tray 2DDD1IND
+>Duplex+Duplex+2tray 2DDD2IND
+>Grouped Statement 2DSTMTIND / 2DSTMTS_OMR35 / Custom
+>Grouped Statement all daily standard print dfa handles grouping itself
+- ###misc_type :
+> rtm=return to bank
+> nop=non print
+>spm=special handling
+>rpt=report file in rpt
+>pdf=report file in pdf
+- ###misc_delivery :
+>Only if misc_type=rpt/pdf
+>manual/pickup|{email}|{dir}
+- ###endorsement_type :
+>Return service requested - R
+>Address service requested - A
+- ###e_paperless :
+>"y" if exist
+>check SOW for estmt paperless
+- ###e_automate :
+> To auto post estmt index file
+> "e4" if new e-index
+> "s" if old e-index
+---
+Variable Category:
+===
+- ###Page Formation :
+>PP1={SOW  Paper tray assignment}
+>PP2={SOW  Paper tray assignment}
+>PP3={SOW  Paper tray assignment}
+>PP4={SOW  Paper tray assignment}
+- ###Envelop:
+>ENV1={SOW  Envelope Assignment}
+>ENV2={SOW  Envelope Assignment}
+>ENV3={SOW  Envelope Assignment}
+>ENV4={SOW  Envelope Assignment}
+- ###ESTMT:
+>new_move_afp="1"
+>afp_split_count="2000"
+- ###Heavy:
+>cover_ovl={OVL}
+>hvy_cnt={heavy count}
+>if envelope house10 then value 7
+>if envelope 6 by 9 then value 15
+- ###Infotrac:
+>infotrac="m"
+>estmt_trac="y"
+>track_by_rec="y"
+- ###Message Manager:
+>msg_mgr_t2="y"
+>total_msg_area={total message number}
+>img_msg_area={total image message number}
+- ###Online Proofing:
+>job_prf="y"
+>prf_p1_ovl={OVL}/"EMPTY"
+>prf_p2_ovl={OVL}/"EMPTY"
+- ###Advanced Online Proofing:
+>olp="y"
+>olp_prf_file="y"/"n" #turn on/off "Sample proof file"
+>olp_auto_rel="y"
+>olp_int_dlist=\`grep ^olp_maillist ${home_env}/${keep_dir}/maillist/${cid}_mail.lis | cut -d"=" -f2\`
+>olp_divert="n" #Turn off "Divert Mail Pieces"
+- ###Fixed:
+>prefix=${cid}${jid}
+-
+>jde="DUP1"
+>jdl="ISISLI"
+>split_num="10000"
+>profile="/home/isis/userisis/pdec.prf"
+>ppmf="/home/isis/userisis/default.lbp"
+>ppmf_form="F1STMT"
+>samp_flag="sam"
+-
+>two_d_bar="y"
+>newzipsep="y"
+-
+>isis_version="717"
+>format=duplex/simplex
+-
+>fn=${dir}${prefix}${segment}${cycle}
+>mail_full_serv="ASE3"
+ASE3 and ASE4 is the same for tracking purpose. additional ASE4 is used for client that have high volume account .ie EWBB. ESR1 is for returned mail and tracking.Any returned mail, USPS will provide us the information so client can get the report that their client have moved or invalid address
+>supprefix=${prefix}${segment}${cycle}
+---
+Tagged:control filegroup type

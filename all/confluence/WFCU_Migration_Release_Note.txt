@@ -1,0 +1,94 @@
+title: WFCU Migration Release Note
+body: ### _Backend:_
+
+Processing steps.
+
+  * Afp
+  * Permission
+  * Enotice
+  * Etax
+  * Ecl
+  * Paperless
+
+#### Notes on processes:
+
+#### Afp:
+
+  * Previously DefaultEStmtRegistrar was used for Afp. But, Now HypercubeEStmtRegistrar has been used. 
+
+ **N.B: For stmtType= "regE"  can not be processed by afp. There is no entry
+in ESTMT_DOC table for "regE" neither dev nor pilot database. **
+
+#### Enotice:
+
+  * Enotice is processed by Doc process.
+
+#### Ecl:
+
+  * Previously emails were inserted to CONTACT_INFO table. but now, emails are inserted in NOTIFICATION_PREFERENCE table. To enable this, two flags have been added in conf file. They are:
+    * global.email.storage=notifyPref
+    * global.emailUserAcctRef=byUFA  
+
+ ** _Backend Report:_**
+
+  *  **Customized Enrollment Report:** For customized enrollment report, in conf file, the value of "enrollment.queryName" flag has been changed to "SELECT_ENROLL_STATUS_ACCT_BASED". Previously, this value was "SELECT_ENROLL_STATUS_ACCT_BASED_CI" which was used to fetch record using contact_info table. As we are now using notification_preference instead of contact_info, this flag value has been changed.
+  *  **Reg E Paperless Report:** Fetches records of a single day whose stmt_type in paperless2 table is "regE". We couldn't find any process by which stmtType="regE" is inserted in paperless2 table.
+
+####  _Data Migration:_
+
+ **NP Migration:**   NOTIFICATION_PREFERENCE table will be used. If
+contact_info has a null value, NP is inserting null in the email column.  
+
+ **Gitlab link:**
+<https://gitlab.infoimageinc.com/mrahman/wfcu_data_migration_script_np_email>
+
+  
+
+ **USR_MAPPING Migration:**  USR_MAPPING table will be used. Account number
+will be used as CIF_NUMBER in USR_MAPPING table.
+
+ **Gitlab link:**
+<https://gitlab.infoimageinc.com/mrahman/wfcu_data_migration_script_usr_mapping>
+
+  
+
+ **USR_SESSION Migration:  **In USR_SESSION table, !usr_id will be used as
+sess_login_id. DSO will be set as null.
+
+ **Gitlab link:
+**<https://gitlab.infoimageinc.com/mrahman/wfcu_datamigrationscript_usr_sesssion>
+
+  
+
+####  _Hypercube:_
+
+  * Enrollment steps have been redesigned with three steps. 
+    * Step 1: eStatement PDF Verification. Clicking "I CANNOT see it", the page is redirected to another page from where the user can either return to the previous page or go to the [www.adobe.com](http://www.adobe.com) to download the adobe reader to be able to view e-Statements. Previously This option was not given. Users were directly redirected to the Adobe download page.
+    * Step 2: eStatement Disclosure and Agreement. Clicking "I agree", step 3 is visible. Otherwise, clicking "I do not agree", the user is logged out from the site.
+    * Step 3: Account Preferences. The user is forcefully enrolled with delivery preference as paperless. 
+  * For both q2SSO and SSO, the same color scheme is maintained.
+  * Business Statements are shown in a different tab. Previously i.e. In WFCU ROOT, Business Statements were under Default statements. 
+  * If a user changes his delivery preference from paperless to paper, he/she is unenrolled from the site.
+  *  **If login with created with a leading zero account, a new account will be created trimming the zeros. (We also tried with pilot data having leading zeroes but couldn't login )**
+
+####  _Infotrac:_
+
+  *  **InfoDocs AcctMgmt:  ** Business Statements are shown in a different tab.
+  *  **InfoDocs Reports:  **
+    * "Latest Stats" is not supported.
+    * "User Login Activity" report's name is changed to "Member login summary".
+    * "Email address collection" report's name is changed to "Email Collection".
+    * "Paperless" report's name is changed to "Paperless Enrollment".
+  *  **E-Notification:**
+    * "RTF" format is not supported.
+    * "MEMBER" keyword is changed to "USER NAME"
+    * "TAX_LIST" keyword is changed to "TAX LIST"
+  *  **InfoDocs Insert:**
+    * eStatements as DEFAULT
+    * Mortgage Statements as MORTGAGE
+    * Business Statements as BUSINESS
+    * VISA as VISA
+
+  
+
+

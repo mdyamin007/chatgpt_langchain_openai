@@ -1,0 +1,278 @@
+title: Data Scrambler
+body:   
+
+# Introduction
+
+  
+
+## Purpose/Objective Summary
+
+In agreement with data security and compliance contracts with our clients,
+InfoIMAGE will only be able to provide our offshore centers with data that do
+not contain sensitive information. To achieve this, InfoIMAGE will need a data
+scrambler to block said information without compromising the data structure.  
+  
+
+  
+
+## Scope
+
+### In-Scope
+
+1\. Create a data scrambler capable of scrambling delimited, fixed length or
+XML fields.  
+  
+
+  
+
+### Out-of-Scope
+
+1\. Features enabling the data scrambler to handle EBCDIC and PCL formats.  
+2\. Allow expandability in the design structure to accommodate future feature
+development such as a data extractor and a data validator.  
+3\. Allow room for an user interface to link new applications to existing core
+structures. In addition, rule input through UI is also an expandable
+direction.  
+  
+
+  
+
+## Assumptions
+
+1\. All delimited, fixed length and XML format record layouts will be able to
+fit into the data scrambler design.  
+  
+
+  
+
+## Dependencies
+
+1\. Python 2.6+ .  
+2\. MongoDB (datastore direction)
+
+# Requirements
+
+  
+  
+
+## Business Requirements & Use Cases
+
+ID| Title| Details| ScreenMock| Importance  
+---|---|---|---|---  
+BRQ-01| Data Scrambler|  **Requirement:**  The program(s) must be able to
+correctly identify all fields specified by the user and replace these fields
+in the data with a dummy value. All protected and identity sensitive
+information must be censored in accordance to InfoIMAGE's business
+regulation.| N/A (back-end function)| P0  
+  
+  
+
+## Functional Requirements & Use Cases
+
+ID| Title| Details| Bus. Req. Ref.| Importance  
+---|---|---|---|---  
+FRQ-01| Ini File Application Level Information Storage|  **Requirement:**  All
+applications which are ready for use must have a valid Ini File which contains
+application level information. No core settings are to be placed in this file.  
+ **Use Case:**  CID = 'wtcu' ; JID = 'ms1' ; Core = 'Symitar - DDA' ;
+SramblableFields = ('Account Number', 'Account Name', 'Address')| BRQ-01| P0  
+FRQ-02| Core Rules Datastore|  **Requirement:**  A valid datastore to contain
+individual core parsing information. This is not to be an index. A rule is a
+set of directions that will allow the rule processor to identify the fields
+that the user wants to scramble. If a datastore is unavailable or in the
+interest of time, these rule definitions may be hard coded into the program
+temporarily.  
+ **Use Case:**  MongoDB is the top candidate that is being considered thus all
+data related diagrams will be drawn in the assumption that we are using a
+MongoDB datastore.| BRQ-01| P2  
+  
+  
+  
+
+## Performance & Scalability Requirements (SLA)
+
+ID| Title| Details| Importance  
+---|---|---|---  
+PRQ-01| Ease of Extension for Other Purposes|  **Requirement:**  The program
+will be built with extendability in consideration. This is for the hopes that
+we can scale the program to handle multiple functions.  
+ **Use Case:**  Data Validator, Data Extractor, etc| P2  
+PRQ-02| Reuse of Core Rule Processors|  **Requirement:**  The core rule
+processors should be limited to three main categories: delimiter, fixed_width,
+and XML. Extended core rule processors should only support a combination of
+these (ie. delimiter first, fixed_width second).| P2  
+  
+  
+
+## QA/Test Requirements
+
+ID| Title| Details| Importance  
+---|---|---|---  
+TRQ-01| Data Integrity|  **Requirement:**  The integrity of the data must be
+preserved after the process.  
+ **Use Case:**  Rely on QA team to test the data output with various different
+programs to ensure that the data integrity is not compromised.| P1  
+TRQ-02| Data Completeness|  **Requirement:**  Data transformation must be
+complete. All specified transformations must occur for the entire file.  
+ **Use Case:**  Rely on QA team to ensure byte input and output match for all
+cases. Total account in should match total account out. All records should go
+through the data transformation.| P0  
+  
+* * *
+
+  
+  
+
+# Design
+
+There are 3 main components to this design.
+
+Parser: The role of the parser is to iterate through the data file. To obtain
+information about the data file, the parser will identify and read the
+corresponding ini file. The Ini file may be saved as a separate object or as a
+dictionary attribute in the parser class. The parser will create the scrambler
+and pass to this object individual record line(s) depending on the core. We
+will refer to this line(s) as the record.
+
+Scrambler: The role of the scramble is to pick the correct rule processor,
+coordinate the transfer of data from the parser to the rule processor, and
+identify the fields that the user wishes to transform. It will create the
+corresponding rule processor and relay the records from the parser over.
+
+Rule Processor: The role of the rule processor is to interpret the rules of
+transformation and apply the transformation to the data. Through the series of
+rules, the rule processor should be able to correctly identify if the field
+that requires transformation is present in the current record as well as how
+to isolate this field in that record.  
+  
+
+  
+
+## UML Class Diagram
+
+  
+  
+
+  
+
+## Data Model changes (ER diagram & ddl.sql)
+
+The data that we will need to store are the rules that will be used by the
+rule processor. For each rule, there will be one of the three data types:
+delimited, fixed_width, xml. For each type, there will be one or more fields
+that transformation may be applied to: account_number, account_name, address,
+balance, etc. Each of these fields, will have identifying values that the rule
+processor can use to navigate through the record (ie record_id = 200,
+rec_id_token = 1, delimited = '|', token = 5, etc).
+
+I have drafted the design of the rules in a nested hash structure ideal for
+MongoDB/JSON.
+
+  
+  
+
+  
+
+### Delimited Field Values:
+
+Value Name| Value Explanation  
+---|---  
+record_id| The identifier for the line or record that contains the field we
+wish to transform.  
+delimiter_character| The character or characters used to determine what each
+token is split by.  
+token_number| If the tokens are always at a fixed position, the token number
+represents the position of the field we wish to transform.  
+(cannot be used together with sub_record_id)  
+sub_record_id| If the extracted token has a record identifier, the sub record
+id represents the identifier for the field we wish to transform.  
+(cannot be used together with token_number)  
+record_id_token| If the record id is not the first token. (default = 1)  
+record_id_sub_id| If the record id has a sub record identifier (default is
+blank or [null])  
+  
+  
+  
+
+### Fixed Width Field Values:
+
+Value Name| Value Explanation  
+---|---  
+record_Id| The identifier for the line or record that contains the field we
+wish to transform.  
+record_id_substr| The substring value to obtain the record_id.  
+field_substr| The substring value to obtain the field to transform.  
+id_pattern| If there is no record identifier, the id pattern is used to match
+a string of characters when determining if the field is located in a record or
+line.  
+field_substr_relative| If id_pattern is used, the relative substring applies a
+fixed length relative to the pattern's last matching character.  
+record_number| If there is no record identifier, the record number is the
+count of the number of lines or records the program will need to iterate
+through to reach the line  
+containing the field to transform.  
+  
+  
+  
+
+## Application component functional details
+
+See diagrams for now. I will provide this when the overview design has been
+reviewed and accepted.
+
+ **Overview:**   **TODO:**  Provide an overview of what changes if not already
+illustrated in the Architecture diagram above
+
+Component| Class| Method| Params| Comments  
+---|---|---|---|---  
+...| ...| ...| ...| ...  
+  
+* * *
+
+  
+  
+
+# Summarized Change Log
+
+Date| Who| Changes to Design Doc  
+---|---|---  
+9/9/2014| Kevin Yang| First draft of data scrambler documentation.  
+  
+* * *
+
+  
+
+# Sign-Off
+
+Group| Date| Who| Comment  
+---|---|---|---  
+Product Manager (Business)|  
+|  
+|  
+  
+Account Service (AS)|  
+|  
+|  
+  
+Dev./Impl. Manager (Technical)|  
+|  
+|  
+  
+Production Control (PC)|  
+|  
+|  
+  
+Data Processing (DP)|  
+|  
+|  
+  
+Accounting/Invoicing|  
+|  
+|  
+  
+  
+  
+
+  
+
+

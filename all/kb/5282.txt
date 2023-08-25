@@ -1,0 +1,49 @@
+After client approval, qa done, parallel testing done, normally it's time to release to production. But make sure from Ac/Im before releasing. Don't release it early unless confirmed from Ac/Im.
+We don't have permission to release to production, we just submit the code for release to production. Below is the procedure:
+If for some reason the resources that you need to release are in several parallel ids , be careful that you don't miss any resources while committing merge request. It might happen that you forgot/miss to do merge reuqest for resources in other parallel ids but necessary to release for your update to go in production, which will cause problem in production. So before doing merge request be sure of not to miss any resources.
+Normally we don't do merge request for multiple jira/tasks at the same time. One jira at a time.
+First do a diff(compare) between your files and production files to see the difference. If you see production has some more changes that are not in your code then you need to merge the changes in your code. If the change is complex you can lead, onshore manager or the respcted developer who made the changes.
+Also be sure only the expected changes are going to production. Sometimes mutiple persons can work on same resources, or one can work for different jira issues in same resources but live date is different, so while releasing to production may be not all the changes you did so far should be released, so you might need to disable other changes that are not part of your current release .
+Double check which files you need to release( Don't release any extra or unnecessary files/changes to production )
+Select option 4 while check in to parallel, this will automatically copied files to /d/is/cvs/check_in/<user>/. Actually you can manually cp files to /d/is/cvs/check_in/<user>/ too instead of using parallel checkin option but the preffered way is to by parallel checkin option.
+After that run /home/dsi/master/dsi_cvs_ci.pl <user> directly in terminal on dsi(38). this will copy files to /d/is/cvs/xfer/<user>/ . Do not copy files to this directory directly.
+fill IS_PROGRAM_TRANSFER_FORM_Rev 11012022 with resources name to release and provide to jira.
+If code needs to be rollback , fill the date when to roll back the code.
+change status to release ready.
+provide email list if applicable ( mostly on new project releases) . Check sow if sow doesn't have it ask IM persons for external email list. Always include DP and IM persons. An example:
+sfcems5_mail.lis
+internal_maillist=dp@infoimageinc.com,stephen_yee@infoimageinc.com
+external_maillist=dp@infoimageinc.com,stephen_yee@infoimageinc.com,OpsDistribution@sffedcu.com
+message setup in production if applicable ( mostly on new project releases), move the sam dyn_sam file in production
+ask prefix to add in paperless.list if applicable ( mostly on new project releases)
+provide cron command ( for new application). For help to set cron you can check thishttps://kb.dsinnovators.com/?p=3362
+check the control file to see if you accidently turned off the infotrac flag
+change the status to release ready in jira
+After that ask onshore manager (for example Tun) in jira to move this code to production. The work so far you did is a merge request to production. Also knock in zoom too as this is crucial moment and can't have time to miss for a single day.
+After that onshore manager will run cp_file.pl program to move files from xfer folder to prod.
+Please check this vedio to see an example:
+Sometimes you might get some unexpected error while doing cvs check in. Something like below:
+Below are the things you need to know to solve these errors:
+You need to be last person who cvs checkout the resources. If any other persons did cvs checkout of the same resources you are going to cvs check in , your cvs check in will fail.
+You check with onshore manager (Peter) to add the user in xfer_user.txt ( if this is new user who never did cvs check in before) .
+You will need respected directory to do cvs check in for each specific type of file . For example:
+for pseg file -> you need /home/<username>/cvs/home/isis/pseg directory
+for dfa file -> you need /home/<username>/cvs/home/isis/docdef directory
+for script file -> you need /home/<username>/cvs/home/master directory
+for control file -> you need /home/<username>/cvs/home/control directory
+etc etc....
+And each of these folder you will need CVS directory with 4 files.
+Please check below vedio for these 4 files in CVS folder.
+IMPORTANT NOTE:
+Suppose there comes a situation when you have placed your code in the xfer folder for release by cvs checkin but for some reason the you decided not to release that resource now. But if you checkout now and diff your code with the production you will see there is no difference with your code and the production code.
+NOTE AGAIN : DON'T PANIC THIS IS NORMAL 
+ What actually happened here ? 
+Reason for this issue is whenever you keep your code in the xfer folder for release version control is done already (although no one moves your code to production directory say /home/isis/docdef/ ), so whenever you checkout again you will see the same code i.e your own code.
+ Solving the issue :
+1. First you need to download the original code from production manually( checkout will not work, since cvs checkout will download the version you cvs checked in last).
+Steps:
+Login to the production server first.
+Location of the production DFA is /home/isis/docdef/prefix.dfa
+2.Do the CVS checking again with the downloaded dfa from production.
+3.Now, remove the code from xfer folder which is located in /d/is/cvs/xfer/your_user_name/, since the code is already in production. 
+ Now if you checkout and diff your own code with the production code you will see your changes are not in the production dfa anymore what happened here is the version control is done with the last dfa that was placed in the xfer folder and we know it was the production code that we manually downloaded from the server and checked in.

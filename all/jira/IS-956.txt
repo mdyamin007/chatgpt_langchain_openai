@@ -1,0 +1,131 @@
+title: SLCU - [25112][pvt][in-house] DP - SLCU PDF Letter#24 Redtitan errors ( ca-rtitan-pr-01)  
+description: *Description of Work:*
+
+Current slcudna_process.sh program seems to be using the old /home/master/ucsf_client.pl program. Update this program /home/master/slcudna_process.sh be retrofitted to use the current processing script and use the current red titan server (ca-rtitan-pr-04) server instead? Hopefully this will address the memory issue that occurs frequently via TS #25112
+
+*Programming Hours*: 4 hrs
+Parallel Required: Yes.
+Turnover Date: 3/28/2022
+Live Date: 4/18/2022
+
+
+author: barnetts
+comment: [~William.Kong],
+
+Please assign a programmer to this ticket.
+
+Thanks, Barnett 
+
+
+author: jun
+comment: [~Igor.Khosid],
+
+Update is for script only to switch to .124 RedTitan server.
+
+parallel id:20220412135113
+
+working directory: /z/daily/slcudna/
+
+[^slcudna107.is.pdf]
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220412135113
+   Currently in parallel: Yes
+   User: junM
+   Description: IS-956 SLCU Switch to .124 RedTitan Server
+   Date Submitted: 2022-04-12 13:51:25
+   Date Last Updated: 2022-04-12 13:51:25
+   Files:
+      1) slcudna_csvfix.pl
+      2) slcudna_process.sh
+
+
+author: igor.khosid
+comment: QA completed
+1. Parallel report
+Parallel ID: 20220412135113
+Currently in parallel: Yes
+User: junM
+Description: IS-956 SLCU Switch to .124 RedTitan Server
+Date Submitted: 2022-04-12 13:51:25
+Date Last Updated: 2022-04-12 13:51:25
+Files:
+1) slcudna_csvfix.pl
+2) slcudna_process.sh
+
+2. Difference prod vs test
+209c209
+< 		#.78 Server
+---
+> 		#.123 Server
+212,214c212,217
+< 		#.67 Server
+< 		echo "${home_master}/master/ucsf_client.pl $prefix ${filename}.pdf $mode"
+< 		${home_master}/master/ucsf_client.pl $prefix ${filename}.pdf $mode
+---
+> 		#.122 Server
+> 		#echo "${home_master}/master/ucsf_client.pl $prefix ${filename}.pdf $mode"
+> 		#${home_master}/master/ucsf_client.pl $prefix ${filename}.pdf $mode
+>         #.124
+>         echo "${home_master}/master/iswk_client3.pl $prefix ${filename}.pdf $mode"
+>         ${home_master}/master/iswk_client3.pl $prefix ${filename}.pdf $mode
+240c243,251
+< 			
+---
+> 
+>         echo "perl ${home_master}/master/${prefix}_csvfix.pl ${fileDir}${filename}.csv ${fileDir}${filename}.out.csv"
+>         perl ${home_master}/master/${prefix}_csvfix.pl ${fileDir}/${filename}.csv ${fileDir}/${filename}.out.csv
+>         if [ $? -ne 0 ];then
+>             echo_output "ERROR: Unable to fix csv file."
+>             exit 1
+>         fi
+>         mv -f ${fileDir}${filename}.out.csv ${fileDir}${filename}.csv
+
+
+author: jun
+comment: [~barnetts] [~Igor.Khosid]
+
+Attached checklist.
+
+Please create parallel test
+
+[^QA_Check_List_v1.pdf]
+
+
+author: igor.khosid
+comment: IS checklist - attached >>>  [^IS-956_SLCU_IS_Check_List.pdf] 
+
+
+author: barnetts
+comment: [~Igor.Khosid] / [~jun]
+
+MPT # 28380 / 28387 created. [~jun], please fill out the MPT. Pending DP to process MPT.
+
+Thanks, Barnett 
+
+
+author: barnetts
+comment: [~jun],
+
+MPT passed. Please release code.
+
+Thanks, Barnett 
+
+
+author: barnetts
+comment: Hi [~jun],
+
+Please release code.
+
+Thanks, Barnett
+
+
+author: jun
+comment: [~barnetts]
+
+Code released to prod
+
+
+author: barnetts
+comment: Thank you [~jun]

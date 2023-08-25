@@ -1,0 +1,215 @@
+title: Jenkins Integration
+body: # Jenkins Docker Information
+
+## Directories & Files
+
+  * /infoservers/jenkins-server/docker-compose.yml - How to start the Jenkins Docker image as of 07.03
+  * /var/data/jenkins/ - Working directory for Jenkins. This is mapped as a Docker volume to /var/data/jenkins_home in the container space.
+    * /var/data/jenkins/workspace/ - Jenkins workspace
+    * /var/data/jenkins/workspace/{project-name} - Default Project Workspace
+
+## Starting Jenkins
+
+$ docker ps --all
+
+Will display the following information. To see only current running containers
+remove the '-all'. The ubuntu image is no longer active as you can see the
+'Exited' status.
+
+The current configuration is setup to use 'jenkins' as the name for the docker
+container and is using the jenkins/jenkins:lts image.
+
+> CONTAINER ID    IMAGE                      COMMAND                 CREATED
+> STATUS                              PORTS
+> NAMES
+>
+> bc7ed37eefbe     jenkins/jenkins:lts     "/sbin/tini - /usr/..."     7 weeks
+> ago      Up 12 days                         0.0.0.0:8001->8080/tcp,
+> 0.0.0.0:8500->5000/tcp     jenkins
+>
+> e3b5d46f9326     ubuntu                     "/bin/bash"                  25
+> hours ago     Exited (1) 25 hours ago
+> nostalgic_wing
+
+$ docker-compose up -d
+
+  
+
+Will run the docker-compose.yml file from the current directory. If you use
+the flag '-file' you can target a different file (see the sonarqube
+directory). The '-d' flag means to run dettached (in the background).
+
+## Java Version
+
+The server Jenkins is running off of has Java openjdk version "1.8.0_212". If
+you do not specify to use a different Java version in your build it will run
+1.8 as default.
+
+  
+
+JDK1.6 & JDK1.7 should be available for older projects.
+
+Under the General Section of a Freestyle Project you can select a configured
+Java Version (Created fro Manage Jenkins> Configure Settings> Java).
+
+    
+    
+      
+    
+
+Using Syntax Specify the named 'JDK1.6' or 'JDK1.7' when referencing a Java
+version.
+
+# Jenkins Projects
+
+Grab the Git Repository URI from your source.
+
+  
+
+## Freestyle Project
+
+### Configuring a new project
+
+#### General
+
+  1. Add a description for the Project.
+
+  2. Gitlab Connection should default to 'Gitlab'
+
+  3. Add a specific JDK if necessary
+
+#### Source Code Management
+
+  1. Add the Repository URI
+  2. We should not need credentials if using the ssh. The Jenkins docker has an ssh key setup in Gitlab.
+  3. Specify the branch to pull code from.
+
+#### Build Triggers
+
+  1. Select 'Build when a change is pushed to GitLab'.
+    1. Copy the Gitlab webhook URL. or note down the project name.
+  2. Select the Events we want to have automatically start the build process
+  3. Generate a 'Secret Token' for the trigger.
+    1. Copy or note down the token. Gitlab will need this information.
+  4. Configure the Gitlab project to use the webhook URL
+    1. https://jenkins.infoimageinc.com/project/{project-name}
+
+  
+
+#### Build Environment
+
+  1. Delete workspace before build starts ?
+  2. Add timestamps to the Console Output?
+  3. Does Ant need a specific Java Version? - Not sure if the main Java version will override
+
+#### Build
+
+  1. Add build step
+    1. Invoke Ant
+  2. Set Targets to 'main' or whatever ant target you wish
+
+#### Post-Build Actions
+
+  1. Add note with build status on Gitlab merge requests
+
+  
+
+  
+
+### Converting Current Jenkins Projects
+
+  1. Simply change the 'Source Control Management' section to point to the Git Repository
+  2. Add a 'Build Trigger' as described above if desired.
+  3. Add a 'Post-Build Action' if desired.
+
+  
+
+## Pipeline Project
+
+### Creating Pipeline Configuration
+
+Pipeline projects are the newer fancy to building a project. The premise is
+that we can codify the build process and put that code into our source control
+with the project.
+
+  
+
+#### General
+
+Same setup as a Freestyle Project
+
+#### Build Triggers
+
+Same setup as a Freestyle Project
+
+#### Advanced Project Options
+
+Not quite sure what this section is fore
+
+#### Pipeline
+
+You will enter the build code into the editor in this section. If there are
+any compilation errors a red 'X' will let you know.
+
+  * A 'Node' is required to let Jenkins know where to run.
+  * A stage is a group of actions related to one another. This will group the command and logs for the Stage Display.
+
+##### Pipeline Syntax Helper
+
+At the bottom of the pipeline editor is a link that will open up a Syntax
+Generator. You can choose options from the dropdown and fill in information
+similar to the Freestyle project. After you have filled in all the information
+'Generate Pipeline Script' will show you how to get that configuration into
+the correct syntax.
+
+### Project View
+
+The left-hand side is the same. The 'Stage View' will show your stages as the
+build progresses. Each stage has a time as well as an overall time for the
+project. Logs are aggregated into the stage the action was run. Failures are
+easier to find.
+
+The upper right hand corner 'Test Result Trend' displays the number of passing
+and failing tests.
+
+  
+
+## MultiBranch Pipeline Project
+
+  
+
+# Gitlab Integration
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+

@@ -1,0 +1,103 @@
+title: Unable to connect Redtitan servers
+description: Unable to connect to Redtitan servers from BB RH2 10.4.20.34
+
+I attached screen shot.
+
+
+
+!image-2020-08-26-16-57-50-899.png!
+
+
+author: william.kong
+comment: [~andyp]: 
+
+Here's what I did:
+
+
+
+#1) RDP into ca-rtitan-pr-01 (10.4.20.122); You should be able to RDP from your Menlo computer to this Brisbane ca-rtitan-pr-01 server.
+
+I used INFOIMAGE\neil account and I manually started the iswk_server.pl
+
+!image-2020-08-26-17-18-39-406.png!
+
+
+
+
+
+#2.) I copiedcp /home/master/iswk_client1.pl /home/oper1/iswk_client_will.pl
+
+I modified/home/oper1/iswk_client_will.pl and changed the following variable just to run your ping test:
+
+!image-2020-08-26-17-21-37-823.png!
+
+
+
+#3). Then I ran the command and it worked:
+
+!image-2020-08-26-17-17-19-369.png!
+
+
+
+
+
++*Question #1:*+
+
+I'm not familiar with the iswk_server1.pl script sitting on the windows server. Do I need to set this up to+automatically+ startup upon reboot? If so, where does it need to be configured.
+
+
+
++*Question #2:*+
+
+Is there other windows perl script that needs to startup as well? If so, which ones?
+
+
+
+
+
++*Question #3:*+
+
+Do the other ca-rtitan-pr-03 and ca-rtitan-pr-04 servers also have windows perl script to startup as well? If so, which ones?
+
+
+
+
+
+[https://app.smartsheet.com/sheets/V9xwHXJPFF9m375vQ6QcH4H953WMRvh7RJ3R6J31]
+
+!image-2020-08-26-17-24-43-204.png!
+
+
+
+
+
+
+author: andyp
+comment: Here are the answers for your questions:
+ # Redtitan server was not configured as a Windows service. It is started by user account "neil". Just double click the icon. We have technical discussion about this Windows service in the past, but if we switch legacy Redtitan jobs into the service, it may not work correctly. So the decision was we leave it as it is.
+ # No other Windows perl script that is needed to start Just click the icon to start.
+ # All other Redtitan PC also have this icon to start this Redtitan server. Namely
+
+ca-rtitan-pr-01
+
+ca-rtitan-pr-03
+
+ca-rtitan-pr-04
+
+
+
+Notes:
+
+I reviewed the server script and verified that it should work with the DNS names change.
+
+We will need to update the client scripts to use the new DNS names above. Also I checked Menlo production servers, they all that DNS mapping.
+
+So I will update client scripts and continue Redtitan testing.
+
+
+author: william.kong
+comment: [~andyp]: Thanks for the explanation. I triggered the windows perl script on ca-rtitan-pr-03 & ca-rtitan-pr-04. 
+
+
+
+Please keep us posted on the client script update status. In the meantime, i will close this ticket out since the 'connection issue' was resolved. 

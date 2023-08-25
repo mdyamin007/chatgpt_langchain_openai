@@ -1,0 +1,89 @@
+title: Hypercube 2 - Configuration Updates
+body:   
+
+Hypercube 1| Hypercube 2| Reason| New Config| Implemented on Dev| Backend
+Behavior  
+---|---|---|---|---|---  
+sso.ignoreAccountMatching| sso.methods[i].useDatabaseUfaOnly|
+useDatabaseUfaOnly is a method-level configuration while ignoreAccountMatching
+is global for all methods. It is possible that for a client with different SSO
+vendors, the behavior would be different method. Therefore, we should move
+towards using only the method-level configuration and do away with the global
+config.|  
+| Yes|  
+  
+account.externalAccountLookup| sso.methods[i].externalAccountLookup| Move
+global sso config to method-level. Again, this is to allow for different sso
+logic. Additionally, externalAccountLookup will now be supported for ALL sso
+methods, and as such, we need to define this at the method-level to prevent
+some clients inadvertently using this logic for a method that should not
+perform the lookup.|  
+| Yes|  
+  
+N/A (code-dependent)| sso.methods[i].alias|
+
+Each define ssoMethod will now have an alias field that can be defined. This
+field will be used to define the keyGen path, e.g. .../ssoKeyGen/[alias].
+
+  
+
+By default, if the alias is not defined, Hypercube 2 will use the type as the
+alias.
+
+| Yes| Yes|  
+  
+sso.methods[i].type=fiserv|
+
+sso.methods[i].type=singleSignOn7 or singlesignon  
+sso.methods[i].alias=fiserv
+
+| Fiserv is just using singleSignOn7. Therefore, we should use that method
+with an alias instead.|  
+|  
+|  
+  
+  
+| sso.methods[i].accountTypeRequired| This config need to be defined for all
+methods (or at least most of them, so we should define for all). This config
+is now used to determine whether the account type will be parsed from the sso
+parameters or the default account type (NA) will be used. This is a
+standardization of logic. In Hypercube 1, the logic is somewhat different
+between sso methods. |  
+|  
+|  
+  
+sso.method[i].prefix0s| remove| A cifLength requirement imply that shorter
+CIFs would need to be prepended with zeroes. No need to use prefix0s.
+Currently, no code logic that do not use both cifLength and prefix0s at the
+same time.|  
+|  
+|  
+  
+  
+sso.ignoreKeySsoKeygen
+
+sso.ssoKeyFormat
+
+| sso.methods[i].keyFormat|
+
+A simple keyFormat to determine how the key will be displayed:
+
+  * keyOnlyPlain: "12345"
+  * keyEqualPlain: "key=12345"
+  * json: "{"key":"12345"}
+
+| Yes| Yes| Default is keyEqualPlain even if this configuration is not
+defined.  
+N/A| hypercube.domain| Define the base domain for the hypercube site| Yes|
+Yes|  
+  
+sso.mapDDAccountTypeToAA| Use the account type mapping in the database
+instead| There's a global support for account type mapping. This single config
+use-case is a poor design choice.|  
+|  
+|  
+  
+  
+  
+
+

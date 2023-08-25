@@ -1,0 +1,63 @@
+title: Production Release Tomcat
+body: For releasing Prism (estmt2) code to the Production environment.
+
+## Step-by-step guide
+
+Commit/Review Code
+
+  1. Commit code.
+  2. Review the changes with team manager.
+
+Deploying Code
+
+  1. Verify that no one else is currently deploying to Production on the same schema
+  2. Alert the team that you are restarting "prod default", "prod bank", or "prod cu"
+  3. Proceed if no one says otherwise
+  4. Log into webapp-prod09 and webapp-prod10.
+  5. Go to the tomcat folder for the schema that the CID is on
+    1. cd /usr/local/tomcat/tomcat-* (default, bank, or cu)
+  6. Tail both the latest logs for webapp-prod09 and webapp-prod10
+    1. tail -f logs/catalina-yyyy-mm-dd.out
+  7. Verify that both instances are running normally, i.e. there are normal traffic outputted in the logs on both webapp-prod09 and webapp-prod10
+    1.   8. Take down webapp-prod09
+    1. Working directory: /usr/local/tomcat/tomcat-*
+    2. sudo -u tomcat bin/shutdown.sh
+  9. Webapp-prod10 tomcat instance should now be taking in all the traffic
+  10. Build i3-core if necessary on Jenkins
+    1. i3-core-prod09
+  11. Build the estmt2 code on Jenkins
+    1. e.g. ewbb-prod09
+  12. Verify that the Jenkins build(s) are successful
+    1.   13. Start webapp-prod09 back up
+    1. sudo -u tomcat bin/startup.sh
+  14. Monitor webapp-prod09 logs until the server is back up and you see traffic again
+  15. Repeat step 8-14 for webapp-prod10
+    1.  **DO NOT** restart webapp-prod10 until webapp-prod09 has fully started up and traffic is coming in through the logs
+
+  
+
+## Related articles
+
+Related articles appear here based on the labels you select. Click to edit the
+macro and add or change labels.
+
+false5INfalsemodifiedtruepagelabel = "kb-how-to-article" and type = "page" and
+space = "IN"kb-how-to-article
+
+  
+
+true
+
+  
+
+Related issues|  
+  
+---|---  
+  
+  
+
+  
+
+  
+
+

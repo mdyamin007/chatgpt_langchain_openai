@@ -1,0 +1,96 @@
+title: Design Doc for APCU default landing page
+body: ## **3**
+
+##  **Introduction**
+
+This design doc is for the implementation of the default landing page for
+APCU. After the implementation, the default landing page will be determined
+based on a parameter passed through the sso.
+
+##  **Objective Summary**
+
+Currently, APCU users always land on the " **Member Statements** " tab after
+login. The task is to make this landing page customizable. The "Member
+Statements" tab won't be always the default landing page for APCU users. From
+the sso, we'll be able to choose on which tab the user will be landed on.
+
+##  **In-Scope**
+
+  1. R&D the possible solution
+  2. Check all the necessary code change required 
+
+##  **Possible solution**
+
+  * This feature will be enabled based on the " **overrideStmtTypeLanding** " flag configured on web.xml
+  * If this feature is enabled, then we can pass an input parameter from the SSO file. This param value will be the statement type that will be shown after login. 
+  * On the servlet, we'll check if the " **overrideStmtTypeLanding " **flag is turned on or not, if on then it will look for the " **stmt_type " **parameter passed from sso exchange request then set that value to **request attribute** , then the servlet will dispatch the request to the homepage
+  * if the passed value " **stmt_type** " is a valid type it will land on that statement type page. If it's not a valid type it will land on " **Member Statements ".**
+
+ **N.B:** this solution will only work for those clients who use "
+**com.infoimage.security.sso7.Q2** " this servlet as their ssoExchange
+servlet.
+
+  
+
+##  **Potential changes on code**
+
+  * This implementation will be implemented on sso key exchange servlet. 
+  * We'll have to modify in the following places.
+    1.  _ **web.xml:**_  We'll introduce a new servlet param named " **overrideStmtTypeLanding** " in the sso exchange servlet. Value of this param can be true/false or nothing.
+
+web.xml
+
+<servlet>  
+      <servlet-name>orcchblogin</servlet-name>  
+      <servlet-class>com.infoimage.security.sso7.Q2</servlet-class>  
+      **< init-param>**  
+ **         <param-name>overrideStmtTypeLanding</param-name>**  
+ **         <param-value>true</param-value>**  
+ **      </init-param>**  
+   </servlet>
+
+  
+
+    2.  _ **SSO file:**_ A parameter will be passed during the key submission. The parameter name will be " **stmt_type** ". The value of this field will be the stmtType like "default" or, "mortgage" or, "enotice" or, "etax". Based on this value, landing page will be determined.
+
+sso file
+
+<form action = "<https://apcu.infoimageinc.com:9680/FISERV_hblogin.jsp>"
+method = "post">  
+   Key:<input type = "text" name = "key" value= "">  
+    **< input type = "text" name = "stmt_type" value= "etax"/>**  
+   <input type = "text" name = "cid" value= "apcu"/>  
+   <input type = "submit" value="Login">  
+</form>
+
+  
+
+    3.  _ **com.infoimage.security.sso7.Q2.java:**_ Q2 is the key exchange servlet for APCU. ** ** This servlet will be used to redirect to the homepage with the desired stmtType as an indication to land on that tab.
+    4.  ** _ROOT:_** On APCU root, we'll have to receive the value which is passed from Q2 servlet and based on that value, redirect the user to that corresponding tab if doesn't match with any valid type it will land on default.
+
+##  **Workflow:**
+
+  1. On Q2 servlet, we'll check if the value of **overrideStmtTypeLanding** is true or false. If the value is false/null, that means this feature is disabled. Code will behave as before.
+  2. If this flag is true, then we'll check if any **stmt_type** ** ** has been passed from the sso file or not. If the value is passed, then we'll receive this and during redirection to the homepage or enrollment page, the value of **stmt_type** ** ** will be added as an attribute with the request .
+  3. On APCU root, the attribute value will be received from Q2 servlet. Based on this value, the corresponding tab will be landed after login, if doesn't match with any valid type it will land on default
+
+##  **Feedback / Question / Answers**
+
+Question
+
+|
+
+Answer  
+  
+---|---  
+  
+  
+
+|
+
+  
+  
+  
+  
+
+

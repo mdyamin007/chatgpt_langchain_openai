@@ -1,0 +1,36 @@
+title: Design Review - 11/28/2012
+body:   
+
+### Author: Bhavani Sridharan, Reviewed by Lin Han, Ben Chan
+
+  
+
+  1. Strategy for Logic
+    * INIT (Pass 0) - parse index file, create message area hashmap of index file records
+    * TEST CASE GENERATION (Pass 1) - generate consolidated test cases per msg area
+    * MSG ID GENERATION (Pass 2) - evaluate msg id per msg area using priority, and default values. Output to JSON.
+  2. Discussion points for Design revision
+    * Memory and Performance
+      * The whole test case matrix must not be loaded in memory since the total size can end up to be very high.
+      * Output to JSON must be done immediately after one row of matrix is evaluated
+    * Class design
+      * Records must be accessed and evaluated per msg area. Suggestion - HashMap at IndexFile level using msg area as the key
+    * Test Case Generation
+      * Generate test cases per msg area after consolidation of all criteria within it.  
+During consolidation, consider anchor points, especially for criteria which
+are value-based, repeat within the msg area and have ranges.  
+No evaluation need be done till all criteria per msg area are consolidated  
+E.g. for ranges b-d, f-h, the test cases must be a,b,c,d,e,f,g,h,i  
+This will ensure test cases for all priorities.
+
+      * File level test cases must include - first value from file, last value from file, one random value from file, one non-match value
+    * Msg ID generation
+      * Per msg area only
+      * Evaluate test cases against record criteria, using Compound operator of the record
+      * Apply priority and default after this
+
+  
+
+### Attachments
+
+

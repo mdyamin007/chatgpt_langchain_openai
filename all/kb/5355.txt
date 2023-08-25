@@ -1,0 +1,48 @@
+reference: ffin
+Step to create direct mail job:
+Convert file to TAB or | (it's about data file, so not quite necessary that data needs to be tab or pipe delimited, you can handle it in your way in dfa)
+Create a new Papyrus Designer project base on RABO0001.zip template. You can import this template from /d/share/is/directmail/ folder.
+Save the DFA as CID0001.dfa. If one has already exist, then use a different 4 digits number.
+Create a new source file by copying a template from ${home_env}/dm/isis/source/rabo0001.source into your new source file
+Rename this source as CID0001.source.
+Update the attributes in the source file (very similar to control file).
+Ncid="rabo"  #CID
+Njid="0001" #JID
+jobName="RABO_FMV_Direct_Mail_Job" #Description of Job
+firmName="RABO" #Company Name
+prodType="DM_MAIL" #This is a key work and it is required
+startCmd="jde,jdl" #Start command
+splitNum="5000" #Split number of account per file id
+formatDfa="RABO0001" #Format Step
+printDfa="2DSS1IND" #Print Step
+prp1="4000" #Preprint stock code ( it should be pp1, need to check)
+ppmfForm="F1STMT" #
+miscType=""
+format="simplex" #Simplex/Duplex
+verPos="2.7"
+horPos="1.5"
+jobType="s1"
+texas=y  #Set texas to y if job print in Texas
+mailFullServ="ASE3"
+newEnvStruc=""
+envp1="4401"
+envp2=""
+envp3=""
+envp4=""
+Create working directory $d_dir/dmmail/$CID in both test and production environments.
+Also create the same directory in texas server if job print in Texas.
+Create insert file $home_ins/insert/CID0001.ins.
+Run ${home_master/master/main_dm.sh cid 0001
+The program will prompt for input file. (the file must be decrypted and unzip).
+Q.A step
+Release code to production (make sure to create working directory and insert file).
+DP process and provide A.C DPVS to print sample for approval
+Step to create direct mail job
+Note: While releasing
+Create working directory $d_dir/dmmail/$CID in production environment.
+Mention the server name to create the directory ( rhs vs rhs2). Rhs2 has a more updated papyrus version. Some syntax may not work in rhs unless you define isis_version in the control file to use the updated papyrus version.
+Also, create the same directory in the texas server if job print in Texas.
+Create insert file $home_ins/insert/CID0001.ins.
+Ask to copy source file to to /home/dm/isis/source/
+provide them data file. Normally client provides data file at the time of development, since this is one time job. If you need to modify data file for programming purpose provide the modified data file to Dp.
+please check https://infoimageinc.atlassian.net/browse/IS-1575 to see a release request for direct mail job.

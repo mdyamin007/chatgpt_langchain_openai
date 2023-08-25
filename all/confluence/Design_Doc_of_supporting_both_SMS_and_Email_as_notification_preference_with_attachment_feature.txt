@@ -1,0 +1,273 @@
+title: Design Doc of supporting both SMS and Email as notification preference with attachment feature
+body: ## **Introduction**
+
+Supporting user to set notification preference as both SMS and Email on the
+hypercube site. So that they will be allowed to opt for both email and SMS
+notifications.
+
+And user can also select attachment statements with or without a password
+requirement for email based on the client-specific flag on the hypercube.
+
+This doc will represent the changes in hypercube to support this.
+
+##  **Purpose/Objective Summary**
+
+Currently, members can only set notification preferences as SMS or Email. And
+If the user selects an attachment statement option then they must have put a
+password for the attachment option.
+
+The main objective of this update is to support both SMS and Email
+notification preferences on the hypercube and make attachment password
+optional based on the client-specific flag on the hypercube.
+
+##  **Scope**
+
+### In-Scope
+
+  1. Identify user notification preference related API.
+  2. Show both SMS and Email option as " **Email and SMS** " for notification preference.
+  3. Show attachment password field based on client hypercube flag.
+  4. Update user notification preference JSON data for both options.
+  5. Store both SMS and email in the database for both options.
+
+##  **Notification Preference Related API Details  **
+
+ID
+
+|
+
+Title
+
+|
+
+URL
+
+|
+
+Method
+
+|
+
+Affected Parameter
+
+|
+
+Description  
+  
+---|---|---|---|---|---  
+API_01|
+
+    
+    
+    updateUserAccountsApi
+
+| /infoservice/api/v1/user/{cid}| PUT| data| Update user information  
+API_02| userAccountsApi,  
+userAccountsApiServer| /infoservice/api/v1/user/{cid}| GET|
+
+    
+    
+    notifyType
+
+| Get a User data  
+  
+# Requirements
+
+### Business Requirements & Use Cases
+
+ID
+
+|
+
+Title
+
+|
+
+Details  
+  
+---|---|---  
+BR_01|
+
+Allow user opt for both SMS and EMAIL notification preferences
+
+|
+
+If the " **emailAndSmsNotification** " boolean flag is true then hypercube
+will show both SMS and Email option as " **Email and SMS** " for notification
+preference so that users can set notification preferences as both SMS and
+email.  
+  
+BR_02| Show attachment password field as required or not required based on the
+hypercube flag| If only the " **attachedStatement** " boolean flag is true
+then hypercube will show a select attachment checkbox with no password field.
+But if the " **attachedStatement** " flag is true and "
+**ignoreAttachmentPassword** " flag is false then a password field will be
+populated and it will be must require for all the users.  
+  
+### Functional Requirements & Use Case
+
+ID
+
+|
+
+Title
+
+|
+
+Details  
+  
+---|---|---  
+FR_01|
+
+Show radio button as " **Email and SMS** " for notification preference on the
+profile and enrollment page based on the " **emailAndSmsNotification** " flag.
+
+|
+
+By clicking the **" **Email and SMS** "** radio button user will be allowed to
+set both SMS and Email for notification preference.  
+  
+FR_02|
+
+Store both **SMS** and **Email** value in the notification_preference table.
+
+|
+
+For the " **Email and SMS** " ** ** radio button feature, SMS and Email will
+be stored in the notification_preference table with both SMS and Email status
+'Y'.  
+  
+FR_03| Show attachment statement option with or without password field based
+on " **ignoreAttachmentPassword** " flag| If the " **attachedStatement** "
+flag is true and the " **ignoreAttachmentPassword** " flag is false then a
+password field will be populated and it will be must require for all the
+users.  
+FR_04| Store  **email_attachment_status  **and  **email_attachment_password
+v** alue in the notification_preference table.| If "
+**ignoreAttachmentPassword** " is false and the attachment statement checkbox
+is checked then it will store " **email_attachment_status** " as **" Y" **and
+" **email_attachment_password** "  
+  
+## QA/Test Requirements
+
+ID
+
+|
+
+Title
+
+|
+
+Details  
+  
+---|---|---  
+TR_01| Test notification preference  **Email and SMS** ** ** radio button
+feature on enrollment and profile page for byUsr and byUFA clients. | Check if
+the feature is working perfectly.  
+TR_03| Test attachement statement feature with and without
+**ignoreAttachmentPassword  **flag|  
+  
+TR_03| Test cross-browser and device testing.|
+
+To ensure that everything is working as previously after the update on
+Windows, Android, and IOS
+
+(i.e. InternetExproler, Firefox, Chrome)  
+  
+## Code changes
+
+  1. Code update
+
+Project file path
+
+|
+
+Method Scope
+
+|
+
+Changes  
+  
+---|---|---  
+client/views/enrollment/eStatement/enrollPreferences.html|
+
+    
+        Notification Preference 
+
+| Show  **Both  **radio button for notification preference during enrollment.  
+client/views/enrollment/eStatement/enrollPreferences.js|
+
+New method:
+
+ **isNotifyTypeBoth()** ,
+
+Modified method:
+
+ **submitPreferences()**
+
+|
+
+ **isNotifyTypeBoth  **\- This method is for checking if **Both** option is
+selected.
+
+ **submitPreferences -  **Store both SMS and Email with status 'Y' for
+**Both** feature.  
+  
+client/views/profile/profile.html|
+
+    
+        Notification Preference
+
+| Show  **Both  **radio button for notification preference on profile page.  
+client/views/profile/profile.js|
+
+    
+         **New method:    
+    isNotifyTypeBoth()**,  
+    Modified method:   
+     **submitAll()**
+
+|
+
+ **isNotifyTypeBoth  **\- This method is for checking if **Both** option is
+selected.
+
+ **submitAll -  **Store both SMS and Email with status 'Y' for **Both**
+feature.  
+  
+# Summarized Change Log
+
+Date
+
+|
+
+Who
+
+|
+
+Changes  
+  
+---|---|---  
+  
+
+
+| Sadman Anik| Creation  
+  
+  
+
+# Feedback / Question / Answers
+
+Question
+
+|
+
+Answer  
+  
+---|---  
+  
+|  
+  
+  
+  
+
+

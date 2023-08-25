@@ -1,0 +1,95 @@
+title: Job Tracking- Down to Statement/Insert Level
+body: # Job Tracking with Statement/Insert level details
+
+  
+  
+
+## Where do Print-Process produce the data file for job tracking ingestion?
+
+  
+
+### Existing location for sampling
+
+ **Host**|  rhs (10.8.9.61)  
+---|---  
+ **path**|  /d/afp  
+User name| pdev1  
+  
+  
+  
+
+### New location that going to carry all job's file
+
+ **Host**|  rhstore (10.8.9.74)  
+---|---  
+ **path**|  /z/isd_share/  
+User name| pdev1  
+  
+  
+  
+
+## How to retrieve the Print Archived PDF?
+
+  
+  
+
+### where?
+
+ **Host**|  preprocessing02 (10.8.9.60)  
+---|---  
+User name| pdev1  
+  
+  
+  
+
+### how?
+
+run the afp2web system command like:
+
+    
+    
+    /home/afp2web/afp2web -pp:5-7 -op:/d/iss/peter/test_afp2web -if:/home/afp2web/afp2web.ini -q <afp file> 
+
+## How EOC Flag and grouping should be interpreted?
+
+Here are the rules that Print team (Peter & Terrence) have agreed upon around
+the interpretation of EOC flag.  
+QA need to rely on this rule set to validate any client/application that will
+have the Full-Detail Tracking turned on.
+
+  1. EOC flag (character 332-334 in data file) is either:
+    1. populated with "0" or "1" OR
+    2. carry blank value
+  2. The two scenario listed above would NEVER mixed with each other within any give entire set of data files within a single PROC_ID job.
+    1. Meaning we will NEVER get a file that have mixed values of "0", "1", " " (i.e. blank) within a full set of data files within a single PROC_ID.
+  3. When EOC flag is populated with "0" or "1", it means the job is utilizing grouping logic, we will be using the group_image_count (335-339) to fetch corresponding PDF
+  4. When EOC flag is populated with blank spaces, it means the job is NOT utilizing grouping logic, we will be using the ac_image (54-58) to fetch corresponding PDF.
+
+Putting in an example, following kind of file would  **NOT**  happen:
+
+file name| line number| account number| start page| stmt image count| group
+image count| eoc  
+---|---|---|---|---|---|---  
+4.2o1| 23| 11111| 923|  
+| 4| 0  
+4.2o1| 24| 11111| 925|  
+| 4| 1  
+4.2o1| 25| 11344| 927|  
+| 2| 1  
+| | | | | |   
+5.2oz| 26| 322222| 1037| 2|  
+|  
+  
+5.2oz| 27| 432562| 1039| 3|  
+|  
+  
+5.2oz| 28| 542312| 1042|  
+| 5| 0  
+5.2oz| 29| 542312| 1044|  
+| 5| 0  
+5.2oz| 30| 542312| 1045|  
+| 5| 1  
+  
+  
+
+

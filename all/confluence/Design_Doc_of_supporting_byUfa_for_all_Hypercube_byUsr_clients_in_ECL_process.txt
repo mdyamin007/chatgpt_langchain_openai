@@ -1,0 +1,50 @@
+title: Design Doc of supporting byUfa for all Hypercube byUsr clients in ECL process
+body: ### Introduction:
+
+ECL process will always store np as byUfa for all Hypercube clients whose
+nplinkType is "byUsr".  This doc will represent the changes in the ECL process
+to support this.
+
+### Objective Summary:
+
+Currently, ECL process stores data in the NOTIFICATION_PREFERENCE table
+differently to support nplinkType "byUsr" and "byUfa". For byUsr, only USR_ID
+is inserted in the notification_preference table. For byUfa, both USR_ID and
+ACCT_ID is inserted. The main objective of this update is to enable ECL
+process to always store both USR_ID and ACCT_ID for all the hypercube clients.
+
+### Goal:
+
+After implementing this feature, for all hypercube clients, the ECL process
+will always store records in the NOTIFICATION_PREFERENCE table in byUfa
+manner. Existing prism clients will not be affected by this additional
+feature.
+
+### Design:
+
+  * Fetch the user by CIF number. CIF number will be provided in the ECL index file
+  * Grab all the accounts (from USR_FIN_ACCOUNT table) associated with that user by usrId .
+  * Search in NP table using those ufa.usrId and ufa.acctId. If found, update those records according to ECL file data. Otherwise, create a new np and insert that in np table. Both usrId and acctId will be stored in NP table. 
+
+### Development:
+
+  * To enable this, we'll have to introduce a new flag in the conf file and overload the update() method in the ECL ProcessingJob.java file.
+    * flag: **ecl.application=Hypercube**
+    * overloaded method signature :   **update(ProcessingContext, Organization, EclData)**
+
+### Workflow:
+
+  * Check the client type by the flag **ecl.application=Hypercube**
+  * Check the npLink type by the flag **global.emailUserAcctRef=user**. 
+  * If client is **Hypercube** and **global.emailUserAcctRef = user** , execute the newly overloaded **update()** method.
+  *  **update(ProcessingContext pc, Organization org, EclData data)** :
+    1. Get user by CIF number.
+    2. If no user found, throw an exception "NO USER FOUND".
+    3. Fetch UFA list and NP list for that user by USR_ID.
+    4. Compare UFA list and NP list. If there is less entry in np table than ufa table, log the difference. Its only for the convenience so that we can keep track that how many entries were there in ufa and np for that user. 
+    5. Iterate over the UFA list. Fetch np for that user using the ufa.usrId and ufa.acctId. 
+      1. If multiple np records found, throw an exception. As, we are searching by both usrId and acctId, we're supposed to get one entry associated with that usrId and acctId in np table. 
+      2. If np record found, update the record in np table with the corresponding data from the ECL file.
+      3. If no np record found, create a new one with both ufa.usrId and ufa.acctId and insert it into the np table. By doing this, np is being inserted in a byUfa manner.
+
+

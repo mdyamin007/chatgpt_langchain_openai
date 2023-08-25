@@ -1,0 +1,151 @@
+title: ECL File Specification
+body: # Index Filename Specification
+
+* * *
+
+File Formats are **cid** ** __ecl_date.txt_** _or  _
+**ApplicationPrefix_cid_ecl_ _date.txt_**
+
+Field
+
+Number
+
+|
+
+Field Name
+
+|
+
+Description  
+  
+---|---|---  
+1| Application Prefix|
+
+msX = monthly statement where X ranges from 1 to 9
+
+meX = HELOC statement where X ranges from 1 to 9
+
+mvX = Visa where X ranges from 1 to 9
+
+mcX = Mastercard Statement where X ranges from 1 to 9
+
+This value will be needed if **ecl.hasPrefix  **is set to true in **cid.conf**  
+  
+2| Date|
+
+The Date: 2 digit month, 2 digit day, and 4 digit year (mmddyyyy) or 2 digit
+month, 2 digit day, and 2 digit year (mmddyy).
+
+  
+  
+  
+3| ECL|
+
+Constant field. This indicates that this is an ECL processing. not case
+sensitive.  
+  
+4| Cid| 4 letter internal customer ID used by InfoIMAGE.  
+  
+Index Filename Examples
+
+filename
+
+  * demo_ecl_122812.txt
+  * ms1_demo_ecl_021016.txt
+
+# Index File Content Specification
+
+* * *
+
+  * Each column can be pipe-delimited, comma-separated, semicolon-separated, tab-separated or can be parsed based on a string index position,  in **cid.conf  **file **ecl.delimeter  **can be specified default value of delimiter is ** "|"**.
+  * For fields that do not have a value or "Optional", please do not use blank space ASCII character, i.e. leave the field empty. 
+  * some fields ( **first name** , **last name** and **branch)** are only required for only a few clients, these need to be **passed** from the index file but don't do anything based on these values.
+
+Field Number| Field Name| Description  
+---|---|---  
+1| Account Number| The account number of the member of the client institution.  
+2| Application Type| The application code for the account type, e.g. DD for
+Checking, SV for Savings, etc.  
+3| Unique User Identifier (UUID)| The unique identifier to identify the user.  
+4| Email| The valid email address that the notification will be sent to.  
+5| SMS Number| The valid sms number that the notification will be sent to.  
+6| First Name| First Name of the user. This need to be passed as the valid
+name of  the user or empty otherwise will throw Data Exception  
+7| Last Name| Last Name of the user. This need to be passed as the valid name
+of  the user or empty, otherwise will throw Data Exception  
+8| Branch| this field is only required for **FCSB  **(FNBT, FHNB)  
+9|
+
+comb_stmt_id
+
+| this field is only required for PRCU  
+  
+  
+
+File Format Example  
+  
+ **acct_number|email**
+
+example
+
+112233|jon.doe@infoimageinc.com
+
+223355|jon_doe@infoimageinc.com
+
+  
+ **acct_number;first_name;last_name;email**
+
+example
+
+112233;jon;doe;jon.doe@infoimageinc.com
+
+223355;;;jon_doe@infoimageinc.com
+
+ **acct_number|first_name|last_name|email**
+
+example
+
+112233|jon|doe|jon.doe@infoimageinc.com
+
+223355|||jon_doe@infoimageinc.com
+
+  
+
+ **acct_number[0-15]first_name[16-38]last_name[39-81]email[82-end]**
+
+*[start index of the substring-end index of the substring] 
+
+*this is for AMCU
+
+exmaple
+
+000000011223355                    jon
+doejon.doe@infoimageinc.com
+
+  
+
+ **acct_number,comb_stmt_id,first_name,last_name,email**
+
+  * this is only for prcu
+
+  
+
+ **UUID|EMAIL|ACCT_NUMBER|APPLICATION_TYPE**
+
+Exmaple
+
+123456789|jon.doe@infoimageinc.com|11223355|SV
+
+112345678|jon_doe@infoimageinc.com|112233|DD
+
+  
+
+  
+
+  
+
+  
+
+  
+
+

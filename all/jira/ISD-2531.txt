@@ -1,0 +1,268 @@
+title: 8677 / 44291 - EQBK - Sub-CID Setup (BRIL)
+description: None
+
+
+author: tai.trinh
+comment: Hi [~abdullah.baki],
+
+When do you think you will be able to get the Hypercube site onto Pilot?
+
+I think let's prioritize BRIL Hypercube and BRIL PUI processing first. We can put those on Pilot so that Hypercube will be ready for Q2 to test on their end. We can roll out InfoTRAC, and other things later.
+
+For the auth file process, I may develop that portion, since I have another project to standardize auth process. This is probably a good opportunity to setup BRIL with the standard process instead of having its own handler/registrar.
+
+Thanks,
+Tai
+
+
+author: abdullah.baki
+comment: hi [~tai.trinh],
+
+Do you have a date when you want BRIL on the pilot? I think I can get hypercube set up to pilot by Thursday(13th August) but just to be safe and if we have enough time then Friday(14th August) with minimal testing and configuration.
+
+As for the PUI part, we can use handler and registrar which are currently used by EQBK if both have the same file format and maintain the logic of acct_access the same as EQBK. In the auth process, I have found two scenarios which I haven't seen in any other auth process before
+ # They use NP table for storing email but they also user Contact_info table to store onlyZipcode ( provided from the index file)
+ # The insert into acct_access table
+
+Also, Do we have a decision on which process they are going to use for statement posting, Doc, or AFP?
+
+Thanks,
+
+Abdullah
+
+
+
+
+author: tai.trinh
+comment: [~abdullah.baki],
+
+_Do you have a date when you want BRIL on the pilot?_
+
+{color:#de350b}Great. We don't have to rush it that fast. Please have it ready and tested by Wednesday 19.{color}
+
+_As for the PUI part, we can use handler and registrar which are currently used by EQBK if both have the same file format..._
+
+{color:#de350b}Yes, I forgot about that we can just use EQBK handler and registrar. Let's go with that. I haven't received the test auth file yet, so I will let you know about your questions when I do and have reviewed the file.{color}
+
+_Also, Do we have a decision on which process they are going to use for statement posting, Doc, or AFP?_
+
+{color:#de350b}We will set it up as Doc.{color}
+
+
+
+Thanks,
+
+Tai
+
+
+author: abdullah.baki
+comment: Hi[~tai.trinh],
+
+I have a few questions regarding BRIL:
+ # What should be the menu tabs for BRIL? currently, I have set up following tabs of EQBK, "Statements, Disclosure, Reconciliation, Profile, Exit".
+ # Do we have personalized Disclosure verbiage, sample statement pdf for enrollmet, or Reconciliation file for the 19th pilot? or should I just set it as your default files?
+
+Thanks,
+
+Abdullah
+
+
+author: tai.trinh
+comment: Hi [~abdullah.baki],
+ # My eStatements, The rest is fine as is.
+ # No, not yet. Use the ones from EQBK.
+
+Thanks,
+Tai
+
+
+
+
+author: tai.trinh
+comment: If possible, please turnover tomorrow, so that I can review everything tomorrow before Wednesday. Then, if there are any issues I would have time to resolve.
+
+
+
+We committed to the 19th for the client, which mean ideally, the morning of the 19th, everything should already be ready to deploy.
+
+
+author: abdullah.baki
+comment: Hi [~tai.trinh],
+
+I have committed the BRIL hypercube setup code in the trunk. Inserted the organization in organization table, and create AUDIT_LOG_BRIL table. Added the configuration on mongo and info service level.
+I have linked a draft release note to this tickets there you will find list of all the changes Ive done.
+Please deploy this to pilot and let me know if you find any issues.
+Thanks
+Abdullah
+
+
+author: tai.trinh
+comment: Hi [~abdullah.baki],
+
+Thank you. Please begin working on other portion also.
+
+For the release note, please include areas such as MongoDB also.
+
+Thanks,
+Tai
+
+
+author: abdullah.baki
+comment: Hi [~tai.trinh],
+
+I have a few confusions:
+ # BRIL hypercube site only supports paper and paperless, and the user can not be in the paper. But in the PR document, the Infotrac site is mentioned to be set with 3 options paper, paperless, and both. this is a miss-match.
+ # I was working on setting up EQBK on infotrac so I was checking MSM and their root site, From what I've seen in UI and after analyzing the codebase of EQBK it seems like they do not use selective paperless but in the PR document it is mentioned to set up as *selective paperless* for default,heloc, and analysis. Is there any reason why we will set up EQBK infotrac as selective paperless? Cause this will create a miss-match between their existing MSM and Root side behave.
+
+Thanks,
+
+Abdullah
+
+
+
+
+author: patric k
+comment: Hi [~abdullah.baki],
+
+I got a response from Tai regarding your two questions:
+
+_1) It should display all options on Hypercube, but the user will have no control over it. They are forced into paperless during enrollment. On InfoTRAC, the admin user will have the ability to make changes to the paperless status._
+
+_2) Yes, they should not have selective paperless._
+
+
+
+I will update the confluence page shortly.
+
+Thanks,
+Patric
+
+
+author: abdullah.baki
+comment: hi [~Patric K],
+
+Since EQBK is not selective paperless and BRIL has only one type of statement, Is there any specific reason why we are setting it as selective paperless? Does client ask for it in the SOW? i think we can proceed with non selective for this client since they have only one type of account and their sister bank {EQBK) do not have selective paperless as well. Let me know.
+
+Thanks,
+
+Abdullah
+
+
+author: patric k
+comment: Hi [~abdullah.baki],
+
+You're correct BRIL should not be setup with selective paperless.
+
+Also, here are the proxy's for pilot and stage.
+
+Brilpilot.infoimageinc.com
+
+Brilstage.infoimageinc.com
+
+Thanks,
+
+Patric
+
+
+author: abdullah.baki
+comment: hi [~Patric K],
+
+I have committed the code onto trunk for changing BRIL's paperless configuration.
+
+Thanks
+
+Abdullah
+
+
+author: patric k
+comment: Hi [~abdullah.baki],
+
+Please make sure this client is using the same ord_id for all schemas for each environment. Some changes needed to be made on the user's profile page in hypercube  the user should not have the ability to change delivery. Only the admin can change it via Infotrac.
+
+Thanks,
+
+Patric
+
+
+author: abdullah.baki
+comment: Hi [~Patric K],
+
+I was on leave for the last two days. Up to pilot the org_id of BRIl is the same for all three schemas. Hypercube currently doesn't support disabling the "Both" option. we will talk with Joe tomorrow during the meeting regarding this feature, I will let you know when I commit the code.
+
+Thanks,
+
+Abdullah
+
+
+
+
+author: abdullah.baki
+comment: Hi [~Patric K],
+
+following are the update for this project
+ # I have committed the code for auth process on /pilot/processing-ui.
+ # I have attached the bril.conf to this ticket, please double check the conf file before processing specially when you will start posting doc index files.
+ # I have set up EQTY as a wholesale client on pilot infotrac
+ # I have set up EQBK and BRIL as a child of parent CID (EQTY) on pilot
+ # Both EQBK and BRIL inforac side are ready for the primary testing
+ # I have updated the Release note with the current changes as well.
+
+Let me know if you have any confusion or find any issues.
+
+Thanks
+
+Abdullah
+
+
+
+
+author: abdullah.baki
+comment: Hi [~Patric K]
+
+another thing I need confirmation from the client, What is the purpose of the zip code passing from the index file. We do not have any use of CI in hypercube and Infotrac, anywhere in our codebase. Please do confirm it from Client if they have any special business of this zip code.
+
+
+
+
+author: patric k
+comment: Hi [~abdullah.baki],
+
+
+
+Built your code on pilot and processed the auth file. Added SOW to this thread. I couldn't sso into pilot. Can you take a look?
+
+
+author: abdullah.baki
+comment: hi [~Patric K],
+
+I just tried to SSO into the pilot site and I was able to log in. Can you tell me which error you are getting?
+
+Thanks
+
+Abdullah
+
+
+author: patric k
+comment: [~abdullah.baki] I was able to sso in once I updated my host file.
+
+Thanks
+
+
+author: patric k
+comment: Hi[~abdullah.baki],
+
+Questions/Items to Address
+
+{color:#172b4d}_1) Zipcode in auth file._{color}
+
+{color:#de350b}EQBK also has zipcode in auth file, but its not important so we can skip this item.{color}
+
+{color:#172b4d}2)Issue with Auth Handler.{color}
+ 
+ {color:#de350b}Use the Standard Processing, Tai will make some enhancements.{color}{color:#de350b}{color:#de350b}{color}{color}
+ 
+ Thanks,
+
+{color:#172b4d}Patric{color}
+
+

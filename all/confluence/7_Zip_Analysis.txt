@@ -1,0 +1,142 @@
+title: 7 Zip Analysis
+body: **WrapperService**
+
+  *  **Afp2WebServiceImpl**
+    * initiateAsyncApiCall()
+      * update this to support recognizing and unzipping of .7z files
+  *  **DocumentServiceImpl**
+    * callBIBOService()
+    * callFIFOService()
+
+      * update this to support recognizing and unzipping of .7z files
+  *  **FileSystemUtil**
+    * getPdfFile()
+      * update this to support recognizing and unzipping of .7z files
+
+  
+
+ **InfoTRAC**
+
+  *  **AbstractZipGenerator**
+  *  **AbstractZipFileGenerator**
+  *  **ZipGeneratorVer1**
+  *  **ZipGeneratorVer2**
+  *  **ZipFileGeneratorVer1**
+  *  **ZipFileGeneratorVer2**
+  *  **ZipFileGeneratorVer3**
+    * possibly update all of these classes to support zipping into .7z files
+
+  * Notes
+    * generateZip is utilizied by the ZipGenerator/ZipFileGenerator files which are located in the directory for Message Manager
+
+  
+
+ **InfoService**
+
+  *  **CheckImageService**
+    *  **getCheckImageFileBySMB()**
+
+      * update this to support recognizing of .7z files
+  *  **I3Afp2PdfService**
+    *  **getPDF** ()
+      * update this to support unzipping of .7z files
+  *  **BatchJobPdfMerger**
+  *  **BatchJobCompressZip**
+    *  **compressFiles()**
+
+      * update this to support unzipping of .7z files
+  *  **ZipUtil**
+    *  **zipFiles** ()
+
+      * update this to support unzipping of .7z files
+  *  **ScpUtil**
+    * This class needs to be updated to support unzipping of .7z files
+
+  
+
+ **Hypercube**
+
+  *  **Batch Download**
+    * Should we support the idea to have the batched download file be zipped into a .7z file?
+
+ **Scanner**
+
+  *  **AbstractIncomingFileHandler**
+    *  **unzipFile** ()
+      * update this to support unzipping of .7z files
+    *  **isZipFile**
+      * update this to support recognizing of .7z files
+  *  **Util**
+    *  **getZipEntries** ()
+      * update this support getting a list of files inside of a .7z file
+  * Notes
+    * Reference **Util**. **unzipAFileWithPass** () to create a function to compress/decompress .7z files through command line
+
+  
+
+ **PUI**
+
+  * application/document/afp
+    *  **ProcessingJob**
+      * We will need to modify **addAfpFileToZip** () to add .afp files to a .7z file.
+      * We will need to create **extractZipConvert** () but for .7z file.
+      * We will need to modify **getZipFileListing** () to retrieve all the file names inside the .7z files
+        * The function opens a .7z file
+    *  **Afp2PdfConverter**
+      * Will need to modify **generatePdf** () ** ** to recognize .7z files
+  * application/document/
+    *  **Afp2PdfConverter**
+      * Will need to modify **generatePdf** () ** ** to recognize .7z files
+  * application/email/ **EmailFileHandler**
+    *  **getFileFromZip** ()
+      * We will need to modify this to support extracting from .7z files
+  * application/enotice/
+    *  **ProcessingJob**
+    *  **ProcessingJob2**
+    *  **ProcessingJob3**
+    *  **ProcessingJob4**  
+      * We will need to modify **addAfpFileToZip** () to add .afp files to a .7z files
+  * application/etax/ **ProcessingJob**
+    * We will need to modify **getZipFileListing** () to retrieve all the file names inside the .7z files
+      * The function opens a .7z file
+    * We will need to modify **addAfpFileToZip** () to add .afp files to a .7z file.
+  *  application/file/upload/ **SafeZipGenerator**
+    * This class is used to encrypt zip files using a password through command line.
+    * We will most likely need to create something similar to this for .7z files
+  *  application/file/upload2/ **ProcessingJob**
+    *  **exec** ()
+      * Will need to update this to support .7z encrypted files as it currently recognizes .pgp and .zip as encryption types
+  *  common/ **Util**
+    *  **unzipFile** ()
+      * update this to support unzipping of .7z files
+  * common/ **Compressor**
+    * This class is used compress (StatementData) files into a zip. It is a heavily used class.
+    * We will most likely need to apply this same type of logic into a .7z file.
+    *  **This class is used heavily through the PUI**
+  * common/ **CopyZipUtil**
+    * We will need to test this to see if it we can copy .7z files to the Storage Servers
+    *  **generateZipFileName** ()
+      * generates a unique zip file name, most likely need to support generating a unique 7z file name (don't know how crucial this is)
+    *  **This class is used heavily through the PUI**
+
+#  **[** **Plan Of Attack]**
+
+  1. Scanner
+    1. I believe that the starting point for this would be to handle the Scanner so that it can recognize the .7z files and move them accordingly to the PUI Servers.
+    2. It is also the easiest as there isn't many changes to be made here, we are updating the scanner to just recognize and unzip .7z files.
+  2. WrapperService
+    1. Next, the WrapperService, I believe this should be the next as there also isn't many changes to be made here.
+    2. It will also help greatly when it's time to test retrieving documents and such.
+  3. InfoService
+    1. Next, InfoService, I think that having this done early will help when I actually perform tests to retrieve documents, etc.
+    2. I believe this also doesn't have too many changes required.
+  4. InfoTRAC
+    1. Next, InfoTRAC, InfoTRAC has a good amount of changes. I would like to have this finished before I actually work on the PUI.
+    2. I believe having this done beforehand will let me be ready to actually perform some tests such as pulling up documents, etc.
+    3. In addition, I can test from the Hypercube side as well so it can help me confirm on both applications.
+  5. PUI
+    1. Next, PUI, this is where most of the changes will be made as there are a lot of areas that needs to be addressed.
+    2. This would take majority of the time to complete as there will be many tests that will be needed to be made here to confirm that it works.
+    3. Thus, having the previous applications from 1/2/3/4 completed will help in aiding the tests as I will not have to go back and forth.
+
+

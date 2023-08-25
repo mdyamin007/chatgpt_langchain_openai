@@ -1,0 +1,214 @@
+title: Notification Restricted Window, delay before sending notification, future dated notification sent enhancement
+body: 01\. CSV uploaded to  **swift/s3**  via infoscanner for virus or any unwanted
+content.  
+02\. Post a job request to notifyservice with that CSV ID.
+
+> Changes -
+>
+
+>> 1\. Add a optional query param  **" overrideSkipHour"**. If this flag is
+true then notification will be sent right away.
+
+03\. After initial validation push the job to Kafka with  **QUEUED**  status.
+
+> Changes -
+>
+
+>> 1\. Change ActiveMQ with Kafka for job queue.
+
+04\. Pull the job from Kafka asynchronously depending on server load. At a
+time max 5 jobs can be picked up from MQ. Job status will be changed as
+**PROCESSING**.  
+05\. While job processing -
+
+> a. Iterate each row of the CSV.  
+> b. Take the template ID and try to fetch the template from template service.  
+> c. Planned to introduce a new cache collection at MongoDB to put the
+> template.
+>
+
+>> i. Successfully fetch template with carry status 200.  
+> ii. If template not found then put corresponding status code which will
+> return from server, template property will contain null in
+> **cache_job_template**  collection.
+>
+> f.  **cache_job_template**  collection structure as JSON is followed -
+    
+    
+        {
+            "xxxx-xxxx-xxxx-xxxx-1111" : {        <------ jobId as key
+                "1" : {                        <------ templateId as key
+                    "status" : "200",            <------ Status returned from server. ex: 200/400/500
+                    "template" : {            <------ Template body returned from server.
+                        "id" : "1",
+                        "content" : "Hello$nbsp;World" 
+                    }
+                },
+                "2" : {
+                    "status" : "500",
+                    "template" : null
+                }
+    
+            },
+            "xxxx-xxxx-xxxx-xxxx-2222" : {
+                "3" : {
+                    "status" : "200",
+                    "template" : {
+                        "id" : "3",
+                        "content" : "Hello$nbsp;World" 
+                    }
+                },
+                "4" : {
+                    "status" : "400",
+                    "template" : null
+                }
+            }
+        }
+    
+
+> i. In  **Kafka**  introduce a new queue to hold notification, named it as
+> **notification**. Push every notification to the kafka notification queue if
+> not delay is needed.  
+> j. In  **ActiveMQ**  introduce a new queue for notification with delay,
+> named as  **delayed_notification**. Push notifications to the
+> **delayed_notification**  queue if delay is needed.
+>
+
+>> ActiveMQ support delay feature, but not kafka. That's why we need to keep
+ActiveMQ for delayed message.  
+> Ref: <http://activemq.apache.org/delay-and-schedule-message-delivery.html>
+>
+> k. While pushing the notification to notification MQ as a message, the
+> target queue and delay time will be determined and added to the message
+> based on client specific settings fetched from cidProperty mongodb and job
+> creation request param  **" overrideSkipHour"**. Notification status will be
+> set as  **PUSHED**.
+
+> Client property JSON -
+    
+    
+        {
+            "_id" : "demo",
+            "serviceSettings" : {
+                "notifyservice" : {
+                    "defaultSettings" : {
+                        "notificationSkipHours" : {
+                            "sms" : [
+                                    {
+                                        "from" : {
+                                            "hour" : 0, <------------- 24 hour time formal
+                                            "minute" : 30
+                                        },
+                                        "to" : {
+                                            "hour" : 6,
+                                            "minute" : 30
+                                        }
+                                    }, {
+                                        "from" : {
+                                            "hour" : 12
+                                        },
+                                        "to" : {
+                                            "hour" : 16,
+                                            "minute" : 30
+                                        }
+                                    }
+                            ],
+                            "email: [{
+                                    "from" : {
+                                        "hour" : 1,
+                                        "minute" : 30
+                                    },
+                                    "to" : {
+                                        "hour" : 7,
+                                        "minute" : 30
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "appBasedSettings" : {
+                        "marketing" : {
+                            "s3Settings" : {
+                                "bucketName" : "********",
+                                "apiKey" : "*********",
+                                "secretKey" : "********" 
+                            }
+                        },
+                        "estmt" : {
+                            "s3Settings" : {
+                                "bucketName" : "********",
+                                "apiKey" : "*********",
+                                "secretKey" : "********" 
+                            }
+                        },
+                        "offer" : {
+                            "s3Settings" : {
+                                "bucketName" : "********",
+                                "apiKey" : "*********",
+                                "secretKey" : "********" 
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    
+
+  
+  
+06\. To process those notification, two new consumers (one for Kafka
+notification MQ another one is for ActiveMQ) and a processor (to process
+notification) will be introduced. Max notification consumption will not be
+more than 20. After consuming notification status will be  **PROCESSING**.  
+07\. While processing notification
+
+> i. Take template from cache_job_template collection with the jobId and
+> templateId value.  
+> i. Process job content and subject, replace variable
+
+08\. Submit the notification to mailserver or sms API. Marked the notification
+as  **QUEUED**.  
+09\. If all notification(s) of a job get sent out then EventTask will remove
+all template record from the cache_job_template collection with that job key.
+And mark the  **job**  as  **SENT**.  
+10\. EventTask will update all of the notification records. If all
+notifications get cleared from  **QUEUED**  then the  **job**  will be marked
+as  **COMPLETED/FAILED**  based on successfully sent notification count.
+
+> Changes -
+>
+
+>> 1\. In serverSettings collection add a property named "jobFailedThreshold"
+under settings of notifyservice entity.
+
+    
+    
+            {
+                "_id" : "notifyservice",
+                "settings" : {
+                        "jobFailedThreshold" : [{
+                            "0":50 <--------- default
+                        },{
+                            "200":70
+                        },{
+                            "1000":80
+                        },{
+                            "10000":90
+                        }
+                    ]
+                }
+            }
+    
+
+  
+2\. In  **" jobFailedThreshold"** key is the minimum notification count and
+value is the failed threshold parentage. If this property is missing then flat
+threshold rate 90% will be applied.
+
+  
+
+### Attachments
+
+  
+
+

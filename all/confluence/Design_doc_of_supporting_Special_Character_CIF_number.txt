@@ -1,0 +1,240 @@
+title: Design Doc of supporting Special Character CIF number
+body: ## **Introduction**
+
+Supporting CIF number which will have Special Characters such as (Space, &, #)
+along with alphabets and numbers.
+
+This doc will represent the changes in hypercube to support this.
+
+##  **Purpose/Objective Summary**
+
+Currently, the Special Character CIF number was not working due to not sending
+encoded CIF number during API calls.
+
+The main objective of this update is to support special Character CIF number
+on the hypercube side by sending encoded CIF number during API calls where
+needed.
+
+##  **Scope**
+
+### In-Scope
+
+  1. Identify CIF number and primary user related API 
+  2. Encode CIF number  during API call so that it will be ideally stored into database (ssoEnrollmentApi, userAccountsApiServer, userAccountsApi )
+  3. Store special characters CIF number in the database
+
+##  **CIF Related API Details  **
+
+ID
+
+|
+
+Title
+
+|
+
+URL
+
+|
+
+Method
+
+|
+
+Affected Parameter
+
+|
+
+Description  
+  
+---|---|---|---|---|---  
+API_01| ssoEnrollmentApi| /infoservice/api/v1/user/{cid}/account/enrollment|
+PUT|
+
+    
+    
+    cif,
+    
+    
+    primaryUser
+
+|
+
+UPDATES account numbers at SSO keygen time  
+  
+API_02| userAccountsApiServer/userAccountsApi| /infoservice/api/v1/user/{cid}|
+GET|
+
+    
+    
+    extUserId
+
+| Get a User data  
+  
+# Requirements
+
+### Business Requirements & Use Cases
+
+ID
+
+|
+
+Title
+
+|
+
+Details  
+  
+---|---|---  
+BR_01|
+
+Support Special Characters in CIF number
+
+(space, &, #, alphabets, numbers)
+
+|
+
+Support hypercube for special characters CIF number, to store  CIF_NUM in the
+USR_MAPPING database table.  
+  
+### Functional Requirements & Use Case
+
+ID
+
+|
+
+Title
+
+|
+
+Details  
+  
+---|---|---  
+FR_01|
+
+Encode CIF number and primaryUser in ssoEnrollmentApi
+
+PUT API
+
+|
+
+By default CIF number and primaryUser always will be encoded during this API
+call. So that the API can handle Special Characters.  
+  
+FR_02|
+
+Encode extUserId/cif in userAccountsApiServer/userAccountsApi
+
+GET API
+
+|
+
+By default extUserId/CIF number always will be encoded during this API call.
+So that the API can handle Special Characters.  
+  
+  
+
+## QA/Test Requirements
+
+ID
+
+|
+
+Title
+
+|
+
+Details  
+  
+---|---|---  
+TR_01| Test DACB with Special Characters in CIF number
+
+(space, &, #, alphabets, numbers)
+
+| Run hypercube for DACB to ensure that everything is working as previously
+after the Special Characters in CIF number support update.  
+TR_02| Cross Clients testing| Run hypercube automation scripts for every
+client to ensure that everything is working as previously after the update.  
+  
+## Code changes
+
+  1. Encode "CIF/extUserId" parameter when calling **  API**
+
+Project file path
+
+|
+
+Method Scope
+
+|
+
+Changes
+
+|
+
+Comments  
+  
+---|---|---|---  
+/server/methods.js|
+
+    
+        ssoEnrollmentApi
+
+| Send encode CIF and primaryUser as a parameter when calling
+ssoEnrollmentApi| To support CIF number containing special characters during
+API call.  
+/server/methods.js|
+
+    
+        userAccountsApi
+
+| Send encode extUserId as a parameter when calling userAccountsApi| To
+support CIF number containing special characters during API call.  
+/server/methods.js|
+
+    
+        userAccountsApiServer
+
+| Send encode extUserId as a parameter when calling userAccountsApiServer| To
+support CIF number containing special characters during API call.  
+  
+# Summarized Change Log
+
+Date
+
+|
+
+Who
+
+|
+
+Changes  
+  
+---|---|---  
+31/8/2020| Sadman Anik| Creation  
+7/9/2020|
+
+Sadman
+
+Anik
+
+| Special character  support with Sub-userId  
+  
+  
+
+# Feedback / Question / Answers
+
+Question
+
+|
+
+Answer  
+  
+---|---  
+  
+|  
+  
+  
+  
+
+

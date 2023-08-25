@@ -1,0 +1,91 @@
+title: Account Type validation
+body: [Debit and Credit Card Number For
+Testing](https://i3dev.easyredmine.com/projects/embedded_payments/wiki/Debit_and_Credit_Card_Number_For_Testing)
+
+We do validate is the card debit or credit? If the user chose the credit card
+option on the UI and trying to make a payment using his debit card, the
+validation will be failed and the actual payment would not be requested in
+that case.
+
+    
+    
+        private String getPaymentSrcType(String cardType, String authCardL, String authCardB) {
+    
+            logger.debug("--- getPaymentSrcType:: Get Account type from epx TRANSACTION_VIEW_RESPONSE: authCardType[{}],authCardL[{}],authCardB[{}]", cardType, authCardL, authCardB);
+            if(CardType.VISA.getCode().equals(cardType)) {
+    
+                if("C".equals(authCardB)) {
+                    return PaymentSourceType.CREDIT.getName();
+                }
+    
+                if("D".equals(authCardB)) {
+                    return PaymentSourceType.DEBIT.getName();
+                }
+    
+            } else if(CardType.MASTER_CARD.getCode().equals(cardType)) {
+    
+                if("DMC".equals(authCardB)) {
+                    return PaymentSourceType.DEBIT.getName();
+                }
+    
+                if("MCC".equals(authCardB)) {
+                    return PaymentSourceType.CREDIT.getName();
+                }
+            } else if(CardType.AMERICAN_EXPRESS.getCode().equals(cardType) || CardType.DISCOVER.getCode().equals(cardType)) {
+    
+                if("C".equals(authCardL)) {
+                    return PaymentSourceType.CREDIT.getName();
+                }
+    
+                if("D".equals(authCardL)) {
+                    return PaymentSourceType.DEBIT.getName();
+                }
+            }
+    
+            return null;
+        }
+    
+    
+    
+    *FW: Differentating Debit card from credit card*
+    *New merchant number information for testing*
+    From Alok: 
+    These 4 variables in EPX terminology are called 4 part key which is setup for a new merchant getting added in our case mostly it would be a new CID.
+    
+    Please go through the mail below and use this for testing going forward.
+    
+    Please use these credentials and card numbers below.  After further though, please only use AUTH_CARD_B to decipher if a credit card, Visa=C and MasterCard=MCC, all other returned values are fine for you to process.  AUTH_CARD_L is used for Visa based transactions.  The reason you were not receive the auth_card fields back in the response is because the generic paypage credentials you are using does not have enhance response enabled.
+    
+    4 part key 
+    CUST_NBR=7000
+    MERCH_NBR=700012
+    DBA_NBR=1
+    TERMINAL_NBR=1
+    
+    Visa Debit:             4001150020000000
+    Visa Credit:            4001150030000024
+    
+    MC Debit:              5000000000000009
+    MC Credit:             5111201111111117   (give this an hour for our database to publish the records prior to use)
+    
+    Thanks,
+    
+    *Here is how we will differntiate between debit and credit cards*
+    From Alok: 
+    
+    Enable enhanced response by sending VERBOSE_RESPONSE=Y in all your card transactions in EPX call and then utilize AUTH_CARD_B and ATUH_CARD_L. 
+    As of now EPX is not returning either AUTH_CARD_B or ATUH_CARD_L when I used the server html.  Assume you would receive and create your logic based on that.
+    Make this configurable as well per CID whether we are going to allow debit card or credit card or ACH transaction. I will elaborate more on this later.
+    
+    Thanks
+    
+
+  
+
+### Attachments
+
+  
+
+250250
+
+

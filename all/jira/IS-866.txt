@@ -1,0 +1,123 @@
+title: MSBK - Changes to PDF Notices Archival
+description: 1. capture date from the data filename and pass to format document to be displayed the banner page.
+2. remove password encrypted archival.
+
+
+
+
+author: nischala.manjunath
+comment: [~kericapote] - Sample is attached [^msbk_dn1_PDFNotices_archival_02222022.zip] 
+
+
+author: nischala.manjunath
+comment: Project is exported to QA directory.
+Parallel ID - 20220224180045
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220224180045
+   Currently in parallel: Yes
+   User: nischalaM
+   Description: MSBK IS-866
+   Date Submitted: 2022-02-24 18:00:53
+   Date Last Updated: 2022-02-24 18:42:20
+   Files:
+      1) MSBKDN001.dfa
+      2) msbkdn1_daily_process.sh
+
+
+author: igor.khosid
+comment: Ready for client review
+
+
+author: nischala.manjunath
+comment: [~kericapote] - Updated sample is attached [^msbk_dn1_PDFNotices_archival_02222022.zip] 
+
+
+author: kericapote
+comment: [~nischala.manjunath] archival approved. This has been QAed already so we will release code and have the customer review the first production archival as well.
+
+Please coordinate with [~phoebe.george] if this happens when I am ooo 3/4 and 3/7.
+
+
+
+Thanks!
+
+
+author: nischala.manjunath
+comment: [~kericapote] - are we running a parallel test for this? If not, I can release code today.
+
+
+author: kericapote
+comment: [~nischala.manjunath] I think Ops is s till in the middle of month end so you can release and we will verify production archive is good w the customer.
+
+
+author: nischala.manjunath
+comment: [~Igor.Khosid] - Please let me know if anything else is needed to pass QA. Thanks!
+
+
+author: igor.khosid
+comment: 1. Parallel report
+Parallel ID: 20220224180045
+Currently in parallel: Yes
+User: nischalaM
+Description: MSBK IS-866
+Date Submitted: 2022-02-24 18:00:53
+Date Last Updated: 2022-02-24 18:42:20
+Files:
+1) MSBKDN001.dfa
+2) msbkdn1_daily_process.sh
+
+2. Difference prod vs test
+
+550c551,555
+---
+>   &PROCDATE = ENVIRONMENT('PROCDATE') ;
+>   IF &PROCDATE=='PROCDATE' ;
+>   THEN ;
+>     &PROCDATE = ENVIRONMENT('PDF_CYCLE') ;
+>   ENDIF ;
+608c614,615
+---
+>   &PROC_DATE = SUBSTR(&PROCDATE,5,4, '')!'-'!SUBSTR(&PROCDATE,1,2,
+>     '')!'-'!SUBSTR(&PROCDATE,3,2, '') ;
+610,612c617,618
+<     PUT '**BP**'!&PROCESSING_DATE!'05360Midland States Bank          '
+<   '           MSBL0001 InfoImage Credit Score Disclosures' 
+<         DELIMITED ;
+---
+>     PUT '**BP**'!&PROC_DATE!'05360Midland States Bank                '
+>   '     MSBL0001 InfoImage Credit Score Disclosures'  DELIMITED ;
+
+
+276c277,280
+---
+> echoLog "Update insert file $cid$jid $file_cycle"
+> ${home_master}/master/update_daily_insert.sh $cid$jid $file_cycle $g_segment
+> #get_procdate_cycno_ltr_set5
+> 
+277c282,284
+---
+>         #export procdate=`grep ^PROC_DATE ${home_ins}/insert/msbkdn1.ins | tr -s " " | cut -d " " -f2 | xargs`
+>         #export pdf_cycle=$procdate
+>         #echo "PROCDATE=$procdate"
+284,285c290
+< echoLog "Update insert file $cid$jid $file_cycle"
+< ${home_master}/master/update_daily_insert.sh $cid$jid $file_cycle $g_segment
+---
+301c307,308
+---
+> 
+> 
+375c382
+<                find ${e_opt_pdf_dir} -maxdepth 1 -type f | xargs -r 7za a -tzip -pm58kdn1 "${zip_file_name}"
+---
+>                find ${e_opt_pdf_dir} -maxdepth 1 -type f | xargs -r 7za a -tzip "${zip_file_name}"
+
+
+author: igor.khosid
+comment: QA - completed
+
+
+author: nischala.manjunath
+comment: [~kericapote] - Code is released.

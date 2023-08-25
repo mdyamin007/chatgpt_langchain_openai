@@ -1,0 +1,198 @@
+title: Hypercube Client Setup Instructions
+body: ### New Hypercube Client Set up Steps:
+
+1\. Read through the SOW (Statement of Work)  
+2\. Create a check list of work to do.  
+3\. Provide DSI with necessary information to set up code.  
+a. Attach SOW  
+b. List of processes client wants to implement  
+c. Test files for processes  
+4\. Provide Vendor with SSO Request/URL information  
+a. ssoKeyGen, ssoExchange, ssoOneWayLogin, etc  
+\- <https://necupilot.infoimageinc.com/ssoKeyGen>  
+\- <https://necupilot.infoimageinc.com/ssoExchange>  
+\- <https://necupilot.infoimageinc.com/ssoOneWayLogin>  
+b. password - fh1A8*pPn  
+c. clientCodeID - necu  
+d. [Dependent] hashMethod - MD5 (If Q2SSO)  
+c. [Dependent] If there are multiple sso methods, then append
+/ssoMethodNameInPropertiesFile to the non-default methods  
+\- <https://necupilot.infoimageinc.com/ssoKeyGen/digitalInsightV1> (If
+digitalInsightV1 isn't the DefaultSSOMethod)  
+\- <https://necupilot.infoimageinc.com/ssoKeyGen/q2sso> (If q2sso isn't the
+DefaultSSOMethod)
+
+###  
+Example of check list of work to do for a Client Set up:
+
+ **1\. Create Organization & Audit_Log Tables in Database -**
+
+sqlMidnight
+
+  
+  
+ **Create Audit_Log_NECU Table (inserting into working Schemas for this
+example, CU schema):**
+
+sqlMidnight
+
+  
+  
+ **2\. Processing UI Components -**  
+a. Create conf file & setup correct processes  
+b. Insert CID into application/selectOrg.jsp & email/selectOrg.jsp in
+Server/PUI-Code-Folders  
+c. Implement configurations into Eclipse PUI Code for necessary processes  
+    \- add client to processing/application/email EmailHandlerFactory file  
+    \- add client to factory list, instantiate correct instance type  
+d. Make sure email notification handling is correct  
+e. Test on pilot & other environments  
+f. Run index files for statements to post  
+g. To add CID to DPJS's Paperless Report List, go to processing-
+ui/conf/infoimage.conf file. Add CID under paperless.cid variable/list
+
+ **3\. Create Hypercube Code Components (**Follow Hypercube Set-Up
+Directions**) -**  
+a. Hypercube:  
+    \- Setup private properties  
+    \- Setup public files: disclosure, sample.pdf  
+    \- Styles: css (based off of official website)  
+    \- Add CID into lib/allConstants/constants.js file inside Meteor.App properties - CID_TO_LOAD_PROPERTIES:  
+    \- Add CID into settings.json for each environment (Local, Dev, Pilot, Stage, Prod)  
+  
+ **4\. Set Up InfoTRAC Components -**  
+a. Feature Settings  
+b. InfoDocs Acct Management Configuration  
+c. Make sure it fulfills everything in SOW requirements  
+d. Fill in E-Notification Template fields  
+e. Add client email addresses to whitelist if client is testing E-Notification
+samples  
+    \- add client emails to /tomcat-api/conf/context.xml file   
+  
+**5\. Nginx Proxy Components + Network (proxy-pilot01 & proxy-pilot07, proxy-
+prod17 & proxy-prod18) -**  
+Working with directories:  
+/etc/nginx/sites-available  
+/etc/nginx/sites-enabled  
+  
+ **Start with sites-available:**  
+ **Example: Creating necu proxy from other cid's proxy**  
+a. Copy jdcu-pilot over to renamed necu-pilot file (sudo cp jdcu-pilot necu-
+pilot)  
+b. Change in necu-pilot all instances of jdcu to necu (:%s/jdcu/necu)  
+c. Double check the change in url field from jdcu to necu is made  
+  
+ **Next in sites-enabled:**  
+a. Create a symbolic link with necu-pilot file in sites-available into
+directory sites-enabled (sudo ln -sv /etc/nginx/sites-available/necu-pilot
+./200-necu-pilot)  
+b. Restart nginx (sudo service nginx restart)  
+  
+Ask Network to create DNS for the client page on Pilot + Production
+environments
+
+ **6\. Miscellaneous Components -**  
+a. Insert CID Client Properties [File,Folder,Document] into MongoDB  
+b. Insert client for sso.enabled.client (ssoExchange), passphrase
+(Production), check images (/usr/local/tomcat/app-
+configs/infoservice/config.properties)  
+c. Add CID Login parameters to SSO Test Page  
+  
+ **7\. For Email Notification API Testing -**  
+a. Update Conf File to have:  
+    ~ doc.automatedEmailNotification=true (For Production Only)  
+    ~ notification.isSendEmailViaAPI=true  
+    ~ notification.isEmailManageByEstmt=false  
+    ~ email.allowedEmail=[ethan.yu](http://ethan.yu)@[infoimageinc.com](http://infoimageinc.com) (For Pilot Testing Only)  
+b. Update PUI Code, EmailHandlerFactory.java to include Client CID + the
+EmailNotifyService it uses  
+c. Make sure on InfoTRAC, Client has E-Notification Template Setup for the
+application  
+d. Modify Index file to have one account record, sso into that account number
+to change to your email  
+e. Run the job, Go to Email Notification Tab on PUI, go to your CID (might
+need to add it into the list), then send email
+
+  
+
+ **7.5 Enable SSO (ssoEnrollmentApi)  **
+
+  * Add the new CID to the **sso.enabled.client=** section, update commit message, and save.
+  * Build  infoservice-ca-hypercube-{env}-01/02 , *** make sure only  **deployWar** & **copyAppConfigs** are selected. Console should show your commit message. 
+
+DEV:
+
+<https://gitlab.infoimageinc.com/configuration-management/server-configs-
+dev/-/blob/master/ca-hypercube-dv-01/infoservice/app-
+configs/infoservice/config.properties>
+
+Jenkins: infoservice-ca-hypercube-dv-01
+
+PILOT:
+
+<https://gitlab.infoimageinc.com/configuration-management/server-configs-
+pilot/-/blob/master/ca-hypercube-pi-01/infoservice/app-
+configs/infoservice/config.properties>
+
+<https://gitlab.infoimageinc.com/configuration-management/server-configs-
+pilot/-/blob/master/ca-hypercube-pi-02/infoservice/app-
+configs/infoservice/config.properties>
+
+Jenkins: infoservice-ca-hypercube-pi-01/02
+
+STAGE:
+
+<https://gitlab.infoimageinc.com/configuration-management/server-configs-
+stage-brisbane/-/tree/master/ca-hypercube-st-01/infoservice/app-
+configs/infoservice>
+
+Jenkins: infoservice-ca-hypercube-st-01
+
+  
+
+ **8\. Remaining Production Ready Steps:**  
+  
+**** In Order to Build New Hypercube Deployment onto Prod, Must create a new
+Hypercube Tag.****  
+\- Find latest Tag in Hypercube Folder. Make a new tag off of it.  
+a. Go to SVN Repository Exploring and find latest Hypercube Tag  
+b. Show History, right click on latest commit.  
+c. Tag from ********  
+d. Name it accordingly, increment the version number and update the release
+date  
+    \- From there add your specific code changes for the CID you've been working on to the tag.  
+a. private properties.json  
+b. public folders + files  
+c. allConstants/constants.js  
+d. all five settings.json files  
+e. any other alterations on files made  
+    \- Commit the Tag.  
+    \- Go to Jenkins, change build url/link to the new tag you created.  
+    \- Build/Deploy Tag. Monitor logs. Make sure that traffic comes in before you build the second server. After make sure both have traffic.
+
+(Turn off Email Notification config) - Run Preenrollment & Preingestion Files  
+  
+ **Proxy Servers:** proxy-prod17 & proxy-prod18  
+Conf Files - Sites-Available, Sites-Enabled - (Make sure the site is changed
+as well to production site)
+
+ **Network:**  
+\- Mention which Nginx Server it's on (NEW: proxy-prod17, proxy-prod18 OLD:
+proxy-prod09, proxy-prod10)  
+\- Provide hostname/commonname ex: [estatements.jordan-
+cu.org](http://estatements.jordan-cu.org)  
+\- Provide Wildcard Certificate & Key (If they have)  
+\- Ask them to make sure SSL Certificates is set up  
+\- Ask them to make sure Internal and External Global Domain Name System is
+set up
+
+ **InfoTRAC:**  
+\- Configure client properties files on Pd-Grid-03 (Infoservice) & Pd-Grid02
+[MongoDB]  
+\- [mongo-prod01.infoimage.com](http://mongo-prod01.infoimage.com):27017, [pd-
+grid02.infoimage.com](http://pd-grid02.infoimage.com):27010  
+\- InfoDocs Acct Mgmt Properties  
+  
+Setup Scanner for Client
+
+

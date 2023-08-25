@@ -1,0 +1,261 @@
+title: Email PDF Attachment Design Doc
+body: # **Email PDF Attachment Design Doc**
+
+  
+
+#  **Introduction**
+
+## Purpose/Objective Summary
+
+Convert, password encrypt, and attach PDF files to emails during email
+notification. Allow members to enroll and update password with a email
+attachment status module on the admin and member site.  
+  
+
+## Scope
+
+### In-Scope
+
+  1. Encrypt PDF statement and attach to email notification
+  2. eStatement site module to manage PDF passwords and enrollment status
+
+### Out-of-Scope
+
+  1. XML statement support
+
+  
+  
+
+## Assumptions
+
+  1. This feature is assuming converted PDFs will be below email server's attachment size limit.
+
+  
+
+## Dependencies
+
+  1. iText Library v5.0.2
+  2. Compatible bouncycastle API for iText v5.0.2(bcprov-jdk16-1.46.jar)
+  3. AFP2Web Server 4.3
+  4. Microsoft Zimbra
+
+  
+
+  
+
+#  **Requirements**
+
+## Business Requirements & Use Cases
+
+ID| Title| Details| ScreenMock| Importance  
+---|---|---|---|---  
+BRQ-01| Site Module - Password Management|  **Requirement:**  Create new
+module to recover and update password for PDF encryption.  
+ **Use Case:**  User enters enters new password, DB values should be updated
+to reflect new password.| ...| P0-Show Stopper  
+BRQ-02| Site Module - PDF Email Attachment Enrollment Status|
+**Requirement:**  Create new module to enroll or unenroll from PDF email
+attachment. Upon enrollment, a password will be prompted for the user to
+enter. This password is used to encrypt all email attachments until changed.
+Upon unenrollment, update DB flag to show unenrolled. Unenrolling from email
+attachments  **will not**  unenroll them from email notification.
+**Enrollment is by user, not account**  
+ **Use Case:**  User enrolls email attachment, module prompts users to enter
+password and value is stored into DB to be used| ...| P0-Show Stopper  
+BRQ-03| Update Email Proofing Module|  **Requirement:**  Update current email
+proofing module to create a separate email message for users with email
+attachments  
+ **Use Case:**  Users enrolled in email attachment will have the ability to
+receive a different message from their non-enrolled counterparts| ...| P0-Show
+Stopper  
+  
+  
+  
+
+## Functional Requirements & Use Cases
+
+ID| Title| Details| Bus. Req. Ref.| Importance  
+---|---|---|---|---  
+FRQ-01| AFP Conversion| Use AFP2WEB 4.3 to convert AFPs to PDFs during
+processing| ...| P0-Show Stopper  
+FRQ-02| PDF Encryption| Use IText5.0.2 to password encrypt the file with AES
+128 bit encryption| ...| P0-Show Stopper  
+FRQ-03| PDF Attachment| Attach encrypted PDF to email| ...| P0-Show Stopper  
+FRQ-04| Site Module - Password Management|  **Requirement:**  Create new
+module to update password for PDF encryption.  
+ **Use Case:**  User enters enters new password, DB values should be updated
+to reflect new password.| ...| P0-Show Stopper  
+FRQ-05| Site Module - PDF Email Attachment Enrollment Status|
+**Requirement:**  Create new module to enroll or unenroll from PDF email
+attachment. Upon enrollment, a password will be prompted for the user to
+enter. This password is used to encrypt all email attachments until changed.
+Upon unenrollment, update DB flag to show unenrolled. Unenrolling from email
+attachments  **will not**  unenroll them from email notification.
+**Enrollment is by user, not account**  
+ **Use Case:**  User enrolls email attachment, module prompts users to enter
+password and value is stored into DB to be used| ...| P0-Show Stopper  
+FRQ-06| Update Email Proofing Module|  **Requirement:**  Update current email
+proofing module to create a separate email message for users with email
+attachments  
+ **Use Case:**  Users enrolled in email attachment will have the ability to
+receive a different message from their non-enrolled counterparts| ...| P0-Show
+Stopper  
+  
+  
+  
+
+## Performance & Scalability Requirements (SLA)
+
+ID| Title| Details| Importance  
+---|---|---|---  
+PRQ-01| Fast AFP conversion times|  **Requirement:**  All AFP conversions
+results within 10s.  
+ **Use Case:**  <enter if applicable>| P2-Normal  
+PRQ-02| ...| ...| ...  
+  
+## QA/Test Requirements
+
+ID| Title| Details| Importance  
+---|---|---|---  
+TRQ-01| User List|  **Requirement:**  Query list of users who are enrolled in
+email attachments  
+ **Use Case:**  Validate user list from program with manual query generation|
+P0-Show Stopper  
+TRQ-02| Password Encryption|  **Requirement:**  Query DB to grab password to
+encrypt each email attachment  
+ **Use Case:**  Validate encryption is done and no data is being shown until
+correct password is entered| P0-Show Stopper  
+TRQ-03| Error Handling|  **Requirement:**  Catch errors during processing and
+at time of sending out email  
+ **Use Case:**  Email server rejects email because attachment size is too big.
+This will be catch and thrown during processing| P0-Show Stopper  
+  
+* * *
+
+  
+  
+
+#  **Design**
+
+## Architecture & Workflow Diagram
+
+250
+
+  
+  
+
+## Data Model changes (ER diagram & ddl.sql)
+
+1.  **EMAIL_NOTIFICATION_ATTACHMENT (new table)**
+
+Column Name| Data Type| Nullable| Comments  
+---|---|---|---  
+ENA_ID| NUMBER| NO| Primary Key  
+USR_ID| NUMBER| NO| Foreign Key constrained to USR table  
+ENA_PASSWORD| VARCHAR2| NO| Current attachment password  
+ENA_STATUS| VARCHAR2| NO| Current email attachment enrollment status  
+ENA_MODIFIED_DATE| DATE| YES| Last modified date  
+  
+Refer to  **ddl.sql**  for queries  
+  
+
+## Application component functional details
+
+Component| Class| Method| Params| Comments  
+---|---|---|---|---  
+...| ...| ...| ...| ...  
+  
+  
+
+  
+
+1.  **EmailHandler interface**
+
+Method| Status| Description  
+---|---|---  
+public EmailRecipient[] gethRecipients(String jobId, boolean emailAttach)|
+new| This method returns the list of enrolled email attachment users  
+  
+  
+
+  
+
+2.  **Email Class**
+
+Method| Status| Description  
+---|---|---  
+private byte[] fileContent| new| New value to store email file attachment
+content  
+public void setFileContent()| new| New method to set file attachment content  
+public byte[] fileContent()| new| New method to get file attachment content  
+  
+  
+  
+
+## Integration Points & Interface
+
+From Component| To Component| Details| Error Handling  
+---|---|---|---  
+...| ...| ...| ...  
+  
+  
+
+# Summarized Change Log
+
+Date| Who| Changes to Design Doc  
+---|---|---  
+12/06/2013| Joe C| Edits to documentation and attached flowcharts  
+  
+  
+
+  
+
+# Feedback / Question / Answers
+
+  1. Only see design around fetching the email and member info, but don't see info about actually sending the email out. #
+
+  
+  
+
+# Sign-Off
+
+Group| Date| Who| Comment  
+---|---|---|---  
+Product Manager (Business)|  
+|  
+|  
+  
+Account Service (AS)|  
+|  
+|  
+  
+Dev./Impl. Manager (Technical)|  
+|  
+|  
+  
+Production Control (PC)|  
+|  
+|  
+  
+Data Processing (DP)|  
+|  
+|  
+  
+Accounting/Invoicing|  
+|  
+|  
+  
+  
+  
+
+# Appendix
+
+<add as you need>
+
+###  Attachments
+
+  
+
+400
+
+

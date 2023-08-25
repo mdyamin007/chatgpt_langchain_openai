@@ -1,0 +1,199 @@
+title: ETax
+body:   1. Find the port of the client in i3-client-port.txt file in CVS
+  2. hit the client on system A - if it is an SSO client you won't be able to hit it directly. Read Single Sign On down below
+
+  
+
+# PUI
+
+## CID configuration
+
+Compare processing configuration files  **prov.conf**  with sfce.conf  
+Copy over etax step with and all other etax related properties
+
+  
+
+processing.step.4=etax  
+ global.tax=etax  
+ global.etax.desc=E-Tax  
+ email.etax.needApproval=true ( this is set to true diff from sfce)  
+ email.etax.needApproval=true ( used by email notification process)  
+ // eTax processing  
+ etax.compression=false  
+ etax.createAccount=false  
+ etax.isZipped=true  
+ etax.copyZipBuffer=32768
+
+    
+    
+      
+    
+
+  
+
+## Java Classes
+
+Etax uses the following classes ( don't need to modify them just for
+reference)  
+com.infoimage.financial.eTax.desc.  **ETaxDesc1**  ( this tells us what value
+type column can hold which depends of the form type it is)  
+com.infoimage.processing.application.eTax.registrars.  **ETaxRegistrar3**  
+com.infoimage.processing.application.eTax.data.  **ETaxData3**
+
+  * this file tells us the format of PUI file  
+Instead of taking 4 columns, this class takes 8 columns. Format as below. For
+some clients it is 6 columns and for some clients it is 8 columns  
+ **acctNum | type | afpFileName | date | suffix | appType | SSN/TAX_ID |
+INPUT_ZIP_FILENAME**  
+6 columns (old logic) case required fields are - acctNum,type,afpFileName,date  
+8 columns (new logic) case required fields are -
+acctNum,type,afpFileName,date, INPUT_ZIP_FILENAME  
+most clients are using 8 column format now
+
+  * Add your cid in the following classes  
+com.infoimage.processing.application.eTax.  **ETaxDataFactory**  
+com.infoimage.processing.application.eTax.  **ETaxRegistrarFactory**  mostly
+your cid will use ETaxRegistrar3 unless different  
+com.infoimage.processing.applicatin.email.  **EmailHandlerFactory**  <\- add
+ur cid figur out which email handler to use
+
+  * /Processing-UI-dev/processing-ui/com/infoimage/processing/application/accounting2/handler/  **ProvReport.java**  \-- add tax related section by comparing to a cidReport who has tax
+
+  
+
+## PUI file
+
+ **PUI file name format *ETAX_FORMNAME_DATE_SEGID_DATE_TIMESTAMP_CID.txt**  
+eg.etax_1098_04172013_111_04172013_123344_prov.txt  
+*File content example
+
+  
+
+*PROV etx 1098 sample- etax_1098_04172013_111_04172013_123344_prov.txt*  
+123344-timestamp
+
+    
+    
+      
+      
+    3439220|1|test.afp|04172013||||prov_1098_04172013_111_0.zip;  
+    89042360|1|test1.afp|04172013||||prov_1098_04172013_111_0.zip;  
+    3329060|1|test2.afp|04172013||||prov_1098_04172013_111_0.zip;  
+    3329060|1|test3.afp|04172013||||prov_1098_04172013_1_0.zip;  
+      
+      
+    *PROV etx 1099INT sample- etax_1099int_04172013_111_04172013_123344_prov.txt*  
+      
+    3439220|16|test.afp|04172013||||prov_1099INT_04172013_111_0.zip;  
+    89042360|16|test1.afp|04172013||||prov_1099INT_04172013_111_0.zip;  
+    3329060|16|test2.afp|04172013||||prov_1099INT_04172013_111_0.zip;  
+    3329060|16|test3.afp|04172013||||prov_1099INT_04172013_111_0.zip;  
+    Make sure the index form file for each form has the right type eg. 1,  
+    16,  
+    256 etc by comparing to the class etaxdesc1.java
+
+  
+
+## Zip File containing afp
+
+  * create a zip file with containing the sample test.afp, name of zip file should have format  **cid_formname_date_segmentid_0.zip**  eg.prov_1099INT_04152013_1_0.zip. Make sure the dates and segmentid match the one the index file name.
+  * zip file location * \\\10.8.8.216\input\indiv_afp\prov\etax\afp-archive\form_date_segid* folder (create the missing folders if they don't exist. Use nrbk as an example)  
+Above location will contain the zip file  
+  
+
+# Frontend
+
+## host
+
+  * copy over sfce/root/etax to prov/root/etax
+  * copy over sfce/msm/etax to prov/msm/etax
+
+  
+
+### MSM
+
+  * compare  ** _msm/include/define.jsp_**  of both clients based on the diff you would need to add the following for etax  
+
+{  
+    "etax",  
+    "Tax Forms",  
+    "O",  
+    "Y",  
+    "EMAIL_VERSION_2",  
+    "Y",  
+    "Y",  
+    "Y"  
+},  
+private static final int ETAX_ARCHIVAL_PERIOD=24;  
+private static final boolean ETAX_OPTION=true;  
+private boolean hasETax=true;
+
+    
+          
+    
+    
+
+  * **_msms/statements/acctdetails.jsp_**  \-- add the ETAX_OPTION option (compare with sfce file)
+  *  **msm\statements\menu_inc.jspf**
+  *  ** _web.xml_**  \- add etax servlet get it from sfce. This helps in rendering of etax form
+
+  
+
+### ROOT
+
+  * compare  ** _root/include/define.jsp_**  of both clients and you would notice you need to add the following  
+
+private static final int ETAX_ARCHIVAL_PERIOD = 24;  
+{  
+    "etax",  
+    "Tax Form",  
+    "Y"  
+}  
+    private boolean hasENotice =false;  
+    private static final boolean ETAX_OPTION = true;  
+    private boolean hasETax =true;
+    
+        
+
+  * Modify following jsps by comparing with sfce jsp files and looking for tax related items
+    *  **statements\menu_inc.jspf**
+    *  **home.jsp**
+    * \ROOT\include\security.jspf
+  * web.xml - add etax servlet get it from sfce. This helps in rendering of etax form
+  * Modify the jsp to match the style and color
+
+  
+
+### Report
+
+In the billing report add the appropriate tax related section for your cid  
+Eg. /Processing-UI-dev/processing-
+ui/com/infoimage/processing/application/accounting2/handler/ProvReport.java in
+this file add tax related section  
+  
+
+# Deployment
+
+  * copy over host jsp changes
+  * deploy processing-ui.jar to resin and pui
+
+  
+
+# Testing
+
+  1. [QA Checklist](https://i3dev.easyredmine.com/projects/hypercube_meteor-multi-tenant/wiki/QA_Checklist)
+  2. PUI one file of each type of form ( the acctnumber should be a valid estatement account number for this org. Query fin_account table  
+select * from fin_account where org_id=getorgid('prov') and status='A')
+
+  3. Go to AI site and query the account, should show all the forms as shown below  
+  
+Verify the links work
+
+  4. Go to member site and do the same  
+
+  5. It uses old way of single sign on root/hblogin.jsp <http://redmine.infoimage.com/projects/estatement/wiki/Single_Sign_On_member_site>
+
+  1. Generate the report in PUI for this client and see if the tax section is being populated
+  2. [Email Notification](https://i3dev.easyredmine.com/projects/hypercube_meteor-multi-tenant/wiki/Email_Notification)
+
+

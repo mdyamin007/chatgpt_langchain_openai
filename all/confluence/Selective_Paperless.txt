@@ -1,0 +1,68 @@
+title: Selective Paperless
+body: Following is the updated Json Property Sample that we are going to use for
+both Infotrac and Hypercube:
+
+{  
+    "paperlessConfiguration": "bySelective",  
+    "statements": {  
+        "default": {  
+            "name": "Monthly",  
+            "following": "default",  
+            "paperDependents": [  
+                "visa",  
+                "mortgage"  
+            ],  
+            "disablePaper": true  
+        },  
+        "visa": {  
+            "name": "Visa",  
+            "following": "default"  
+        },  
+        "loan": {  
+            "name": "Loan",  
+            "following": "loan"  
+        },  
+        "enotice": {  
+            "name": "eNotice",  
+            "following": "enotice",  
+            "paperlessRestrictions": "default",  
+            "disablePaper": true  
+        },  
+        "etax": {  
+            "name": "eTax",  
+            "following": "default",  
+            "paperlessRestrictions": "default"  
+        }  
+    }  
+}
+
+ **Description:**  
+ **paperlessConfiguration:**  this can have three different values.
+
+  1.  ~~byUser: user will have same delivery preference for each of the account. However we must add delivery preference of each of the account with same delivery preference.~~
+  2. byAccount: user can have different delivery preference for each of the account.
+  3. bySelective: user can have different delivery preference for each of the statement type of each account based on he statements configuration. By Group or dependent statements will also follow this configuration value.
+
+ **statements :**  this property will contain objects of each statement type.
+inside a statement type there will be following properties:
+
+  * name- (Mandatory field): This will contain statement type description or name of the statement type for the UI.
+  * following (Optional field)- This property will be checked if the paperless configuration is bySelective. This will indicate which statement type the current statement type is following regarding delivery preference.
+  * disablePaper (Optional field)-[true/false] This will indicate if the current statement can not go to paper.
+  * paperlessRestrictions (Optional field) [can have multiple statement type] This will indicate if the current statement can not go to paperless unless these statement types goes to paperless.
+  * paperDependents (Optional field)-[can have multiple statement type] This property will be checked if the paperless configuration is bySelective. This will indicate which statement type will go to paper if current statement changes paperless to paper. This will ensure the papreless restriction business.  
+Note:
+
+    1. It is obvious that the statements that have paperless restriction on a particular statement type, those application will be dependent on that statement type as well. For example if "enotice" has paperlessRestriction on "default" statement then "default" statement will have "enotice" as paperDependent.
+    2. If a satement has  **disablePaper**  as true that statement should not be in paperDependent for any other statement.
+
+ **Notes:**  
+1\. currently We are using this Json Property only for selective paperless. In
+Hypercube 2.0 this configuration will also define the statement types of a
+client. In hypercube 1.0 we are keeping "satementType" property so that we
+dont need to change a lot of codes.  
+2\. In Infotrac the Statement type will be no longer used. Need to update the
+configuration for all the previous clients and use the above configuration
+moving forward.
+
+

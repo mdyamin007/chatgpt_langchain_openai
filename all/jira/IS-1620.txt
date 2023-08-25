@@ -1,0 +1,83 @@
+title: SEFC DL (ARM Notices) - Setup Auto Email DPVS
+description: SEFC DL (ARM Notices) - Setup Auto Email DPVS
+
+- Parallel required: (no)
+- Application name: SEFCAR1
+
+- Create dpvs mail list and addinfoimage@sefcu.comin /home/keep/maillist/sefcar1_mail.lis
+
+- Modify sefcar1_process.sh
+
+ Add the following block of code after calling isisdisk_daily for paper but before calling isisdisk_daily for estmts. Do not copy and paste.
+
+if [ -e ${fn}.print ]; then
+  subject="SEFC Arm Notices - cycle ${cyc_no}"
+
+  message="SEFC: Arm Notices DPVS for cycle $cycle is ready"
+  perl ${home_master}/master/daily_mail2.pl 3 "$message" "$subject" $cyc_no "$dpvs_maillist" ${fn}.print
+fi
+
+- Do a test run and check if dpvs is attached to email message in test e-mail inbox.
+
+
+author: terrence.tong
+comment: [~Igor.Khosid] sefcar1_process.sh is available for QA.
+
+Prallel id: 20220921145028
+
+The following block of code is added to the script (line 469 - 476):
+
+dpvs_name="${d_dir}/daily/sefcar1/${cid}${jid}${g_segment}${cycle}.print"
+if [ -e ${dpvs_name} ]; then
+    echo "dpvs file: ${dpvs_name}"
+    subject="SEFC Arm Notices - cycle ${cyc_no}"
+    message="SEFC: Arm Notices DPVS for cycle ${cyc_no} is ready"
+    python ${home_master}/master/daily_mail.py 0 "$subject" "$message" ${dpvs_maillist} "${dpvs_name$
+fi
+
+Testing method:
+1. created /z/daily/sefcar1/sefcar1125.print
+2. ran the script with unnecessary code commented and ran the script.
+3. check if dpvs was sent to wilson.yu@infoimageinc.com
+
+ !sefcar1_dpvs_testing.PNG|thumbnail!  [^sefcar1_process.sh] 
+
+
+
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220921145028
+   Currently in parallel: Yes
+   User: wilsonY
+   Description: IS-1620 SEFC DL (ARM Notices) - Setup Auto Email DPVS
+   Date Submitted: 2022-09-21 14:50:48
+   Date Last Updated: 2022-09-21 14:50:48
+   Files:
+      1) sefcar1_process.sh
+
+
+author: igor.khosid
+comment: [~Andrey.Kutsenko]
+Please proceed with the testing scenarios - see above 
+
+
+author: terrence.tong
+comment: [~Andrey.Kutsenko] script command: sefcar1_process.sh 1 bypass
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+1) ran the script with unnecessary code commented;
+2) dpvs file was sent to email:
+ !scr_email_notification.png|thumbnail! 
+
+
+author: terrence.tong
+comment: [~TunA] transfer form is attached, can you please review and release the code? Thanks! [^SEFCAR1_IS_PROGRAM_TRANSFER_FORM_Rev 07132016.doc] 
+
+
+author: terrence.tong
+comment: [~stephen.yee@infoimageinc.com] sefcar1 script is released, thanks!
+
+[~Andrey.Kutsenko] FYI

@@ -1,0 +1,306 @@
+title: Apache ActiveMQ- Installation Guide
+body: ActiveMQ is a software message queue from the Apache Software Foundation. The
+latest stable release is the ActiveMQ 5.8.0 Release.
+
+## A. Installation instructions
+
+  
+  
+
+### a) On Windows
+
+ Download ActiveMQ using below URL link:
+
+> <http://www.apache.org/dyn/closer.cgi?path=%2Factivemq%2Fapache-
+> activemq%2F5.6.0%2Fapache-activemq-5.6.0-bin.zip>
+
+ Unzip to some folder, e.g. C:\opt
+
+>  **NOTE:**  Avoid path names that contain blanks as they can cause problems
+> when using ActiveMQ later on.
+
+ Go to the folder C:\opt\apache-activemq-5.6.0\bin\win64 and execute the file
+InstallService.bat.  
+ Active MQ is now registered as a windows service and will be started
+automatically when the Windows server is started.
+
+>  **NOTE:**  If you prefer to start ActiveMQ manually you can find start
+> script (activemq.bat) in the bin-folder.
+
+ Ensure that ActiveMQ is running after the installation and start its windows
+service if not already running.
+
+<Figure-1>
+
+  * Also use the event viewer to verify a successful start of the ActiveMQ service:
+
+  
+<Figure-2>
+
+Go to section `verify` the installation for further platform independent
+verification of that ActiveMQ is running as expected.  
+  
+
+  
+
+### b) On Linux - Ubuntu
+
+  * Download the distribution with the command:  
+
+    
+        $ wget http://apache.dataphone.se//activemq/apache-activemq/5.6.0/apache-activemq-5.6.0-bin.tar.gz
+    
+
+  * Unpack the distribution with the command:  
+
+    
+        Untar the file to any folder say inside /opt/activemq
+    $ sudo tar -xzvf apache-activemq-5.8.0-bin.tar.gz -C /opt/activemq
+    
+
+notice. Alternatively, untar locally and move it to the target folder
+(/opt/activemq):  
+tar xzf apache-activemq-5.5.0-bin.tar.gz  
+sudo mv apache-activemq-5.8.0 /opt/activemq
+
+  * Create soft-link for the activemq daemon to your daemon init script directory  
+
+    
+        Create a symlink of the "activemq" binary inside "/etc/init.d"
+    $ sudo ln -s /opt/activemq/apache-activemq-5.8.0/bin/activemq /etc/init.d/activemq
+    
+
+  * Make ActiveMQ startup at boot-time:  
+
+    
+        $ sudo update-rc.d activemq start 66 2 3 4 5 . stop 66 0 1 6 .
+    
+
+  * Add Non-Privileged Account  
+
+    
+        sudo adduser -system activemq
+    
+
+    * Make sure the account uses the bash shell: Edit /etc/passwd file in your favorite editor for example:  
+
+        
+                sudo vi /etc/passwd
+        
+
+    * Go to the end of the file and make the following changes (previously something like '/bin/false' to '/bin/bash'):  
+
+        
+                activemq:x:116:65534::/home/activemq:/bin/bash
+        
+
+    * Change ownership to the newly created user:  
+
+        
+                sudo chown -R activemq: /opt/activemq/apache-activemq-5.8.0
+        
+
+  
+  
+
+### c) Configuration
+
+tip. Refer below link for the Unix daemon configuration:  
+<http://activemq.apache.org/unix-service.html>
+
+  * Update the profile setup file to configure the ActiveMQ path:  
+
+    
+        $vi $HOME/.bash_profile
+    $sudo vi /etc/profile
+    ActiveMQ=/opt/activemq/apache-activemq-5.8.0
+    export ActiveMQ
+    
+
+  * Add symbolic link to the init script provided by Active MQ (64 bit linux example):  
+
+    
+        sudo ln -sf /opt/activemq/apache-activemq-5.8.0/bin/linux-x86-64/activemq /etc/init.d/
+    
+
+  * Create a default configuration file:  
+
+    
+        sudo /etc/init.d/activemq setup /etc/default/activemq
+    
+
+  * Change the owner and group of the config file:  
+
+    
+        sudo chown root:nogroup /etc/default/activemq
+    
+
+  * Change the file permissions so its read-write by root only:  
+
+    
+        sudo chmod 600 /etc/default/activemq
+    
+
+  * Uninstall: To uninstall the activemq service, you may do the following:
+
+    
+    
+    sudo update-rc.d -f activemq remove
+    sudo rm /etc/init.d/activemq
+    
+
+  
+  
+
+### d) Start/Stop
+
+  * Startup the ActiveMQ service manually:  
+
+    
+        $ sudo service activemq start
+    Or
+    $ sudo /etc/init.d/activemq start
+    
+
+  * Observe the log file:  
+
+    
+        tail -f /opt/activemq/apache-activemq-5.8.0/data/activemq.log
+    
+
+  * ActiveMQ's default port is 61616. Run netstat and search for port 61616.  
+
+    
+        netstat -an|grep 61616
+    
+
+  * Web Console:
+    * web console should be available [http://localhost:8161](http://localhost:8161/).
+
+  * Lastly, ensure that ActiveMQ starts automatically after rebooting the OS and logging back in  
+
+    
+        $ sudo reboot
+    $ tail /usr/local/apache-activemq-5.6.0/data/wrapper.log -n30
+    
+
+  * You should have a message in the tail output similar to the following: "INFO | ActiveMQ Message Broker ... Started"
+
+  * You should also browse to the a URL similar to the following in you browser to meet the ActiveMQ admin gui: <http://localhost:8161/admin/index.jsp>
+
+  * Verify in /var/log/boot.log that you got the expected start order, e.g. that ActiveMQ starts before Mule!
+
+* * *
+
+  
+  
+
+## B. Some other useful commands
+
+  * To verify if ActiveMQ is running use the command:  
+
+    
+        $ sudo service activemq status
+    
+
+  * To restart ActiveMQ use the command:  
+
+    
+        $ sudo service activemq restart
+    
+
+  * To stop ActiveMQ use the command:  
+
+    
+        $ sudo service activemq stop
+    
+
+  * To uninstall the ActiveMQ service, do the following:  
+
+    
+        $ sudo update-rc.d -f activemq remove
+    $ sudo rm /etc/init.d/activemq
+    
+
+  * To run ActiveMQ in the console:  
+ Go to the sub folder apache-activemq-5.6.0/bin and execute the command:
+activemq console.
+
+>  **Note:**  On Mac OS X go to the sub folder apache-
+> activemq-5.6.0/bin/macosx and execute the command: activemq console.
+
+* * *
+
+  
+  
+
+## C. Verify the installation
+
+  * Open the url <http://localhost:8161/admin/index.jsp> in a web browser.  
+<http://10.8.9.57:8161/admin/index.jsp>  
+<http://10.8.9.54:8161/admin/index.jsp>
+
+notice. From ActiveMQ 5.8 onwards the web apps is secured out of the box.  
+The default username and password is admin/admin. You can configure this in
+the conf/jetty-real.properties file.
+
+> A page like the following should now be displayed:
+
+  
+<Figurre-3>  
+  
+
+  
+
+### a) Add-on Config
+
+  * An ActiveMQ message broker has a configuration file typically named ${ACTIVEMQ_HOME}/conf/activemq.xml.
+
+> Note that the XML elements under the root <broker>-element in this file
+> shall be declared in alphabetic order
+
+tip.  **Commands:**  
+sudo /etc/init.d/activemq start  
+sudo /etc/init.d/activemq stop  
+sudo /etc/init.d/activemq status  
+sudo tail -f /opt/activemq/data/activemq.log
+
+ **Some other useful commands**
+
+  * To verify if ActiveMQ is running use the command:  
+`$ sudo service activemq status`
+
+  * To restart ActiveMQ use the command:  
+`$ sudo service activemq restart`
+
+  * To stop ActiveMQ use the command:  
+`$ sudo service activemq stop`
+
+  * To uninstall the ActiveMQ service, do the following:  
+`$ sudo update-rc.d -f activemq remove`  
+`$ sudo rm /etc/init.d/activemq`
+
+Server URLs:
+
+<http://10.8.9.57:8161/admin/index.jsp>  
+<http://10.8.9.54:8161/admin/index.jsp>
+
+ **References:**
+
+<http://activemq.apache.org/getting-started.html>  
+<http://activemq.apache.org/activemq-580-release.html>  
+<http://www.jmkg.co.uk/2010/08/31/installing-activemq-on-ubuntu/>
+
+<http://activemq.apache.org/how-can-i-monitor-activemq.html>
+
+* * *
+
+  
+
+### Attachments
+
+  
+
+  
+
+

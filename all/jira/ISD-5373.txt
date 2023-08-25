@@ -1,0 +1,214 @@
+title: OFCU - [21150][pvt] Daily eStatements enrollments Setup
+description: OFCU - Daily eStatements enrollments Setup
+* Description:Update the customer's enrollment status on a daily basis instead of having it updated monthly through the statement file.
+
+*Specs: Unique User ID | Account Number | Account Name | Status | Email | Modified Date*
+* Unique User ID: This will just be the Member Number.
+* Account Number: This is the Member Number.
+* Account Name: The Member Name.
+* Status: The delivery preference:P(aper) orE(lectronic)
+* Email: Email address required to enroll into Electronic preference. Can be left empty if the status isP.
+* Modified Date: The enrollment time in Unix Epoch Time.
+
+*Example:*
+* 12345|12345|John Doe|E|john.doe@email.com|1625846715
+* 44444|44444|Jane Doe|P||1625846715
+
+The Modified Date is used to determine whether the process should update the Delivery Preference. For example, if the Modified Date represent July 9 at 7:00 a.m. and the file is processed on July 9 at 8 a.m. the process will check to see if there were any user choices after 7:00 a.m. Maybe the user has logged on and already changed the delivery preference at 7:45 a.m. Because of this, the delivery preference from the file will be skipped, since we do not want to override the user-choice at 7:45 a.m.
+
+Alternatively, we can opt to not have Modified Date, and use the Processing Time as the benchmark, i.e. if the file is processed at 8 a.m. then we would only skip if we discover any user's choice that occurs after 8 a.m.
+
+Setup will be 5 hours.
+
+*Timeline*
+*Turnover: 9/16
+*Pilot: 9/29
+*Live: 11/12
+
+
+author: tai.trinh
+comment: Instead of unix time, the date format is
+MMddyyHHmm.
+
+
+author: JIRAUSER10913
+comment: @ac
+
+
+
+I noticed that the status and email header is swapped. The specs has it as*Status | Email.*
+
+But in the file, the format is in*Email* *|**Status.*
+
+
+author: barnetts
+comment: [~mac],
+
+I am following up with OFCU.
+
+Thanks, Barnett 
+
+
+author: barnetts
+comment: Hi [~mac],
+
+Per OFCU, they had the order swapped on accident. The corrected test file (Sample-data-file2.txt) is attached [^Sample-data-file2.txt.txt] .
+
+Thanks, Barnett 
+
+
+author: JIRAUSER10913
+comment: [~barnetts]
+
+I have processed the file. Have the client validate for approval. Make sure for Production, the file is properly named. ex: ofcu_enrollment_20210921_1315.txt orofcu_enrollment_20210921_1315.txt.gpg if encrypted.
+
+
+author: barnetts
+comment: Hi [~mac],
+
+Please see OFCU response below:
+
+I reviewed the accounts from the sample. All the accounts listed were showing active - but for those that had the "E" status - they were not showed as enrolled, and the delivery preference was still set to paper. 
+
+Here are example accounts that should be enrolled in eStatements:
+0000117534
+0000117536
+0000117538
+
+Thanks, Barnett 
+
+
+author: barnetts
+comment: Hi [~mac],
+
+Can you please truncate the leading zeros?
+
+Thanks, Barnett 
+
+
+author: JIRAUSER10913
+comment: [~barnetts]
+
+Hello Barnett, I have truncated the zeros.
+
+
+author: barnetts
+comment: Thank you [~mac],
+
+I have let OFCU know.
+
+Thanks, Barnett 
+
+
+author: barnetts
+comment: Hi [~mac],
+
+OFCU confirms that the account number is working correctly with the suppressed zeros. Can you please advise on OFCU comment? 
+
+Per OFCU, 
+* The next piece that we done - is we need the API call from Alkami's Online banking - to InfoImage - to indicate that the member has subscribed. 
+* For example - for account 117543 - in online banking in beta - the eStmt status is showing not enrolled in eStmt. In InfoTrac Pilot - this account is enrolled in eStatements. We need to the API setting to reflect that the member has enrolled. 
+
+Thanks, Barnett 
+
+
+author: JIRAUSER10913
+comment: [~barnetts]
+
+Tai has responded to the comment on Team Support.
+
+
+author: JIRAUSER10913
+comment: [~barnetts]Is there a new live date for this?
+
+
+author: JIRAUSER10913
+comment: [~Igor.Khosid]This is moved to staging, ready for QA.
+
+
+
+QA Instructions:
+ # The file we will be testing is/d/INPUT-DEV/I3/process-files/ofcu/ofcu_enrollment_10282021.txt
+ # Check the account numbers without the leading zeros, they should not exist. Running the file will create those accounts without the leading zeros.
+ # Run the file (ask me to run it if issues arises )
+ # Check the accounts without leading zeros if the delivery preference matches
+
+
+author: igor.khosid
+comment: [~mac] [~nprimak]
+
+Natasha - please proceed with testing
+
+
+author: igor.khosid
+comment: [~barnetts]
+
+What is the actual due date. Please update
+
+
+author: nprimak
+comment: Verified on staging InfoTrac, non-existing accounts are created after run index file
+
+
+author: JIRAUSER10913
+comment: [~barnetts]
+
+Any update on a live date? Thanks.
+
+
+author: barnetts
+comment: [~mac], 
+
+Per OFCU,
+"So - we can move this production.
+The name of the extract will be: ZB.INFOIMAGE.TR91mmddyy.txt
+
+ Ill get this setup w/ JHA. Ill need to know the file path where InfoImage would like this file uploaded to?
+This will be a weekly file and we will send this file every Sunday.
+
+Thanks, Barnett 
+
+
+author: barnetts
+comment: HI [~mac],
+
+Can you please advise where OFCU should place the file when it goes to production? NEw due date 11/12
+
+Thanks, Barnett 
+
+
+author: barnetts
+comment: [~mac],
+
+Thank you, I will let OFCU the file path to upload /d/SECURE4/FTPRoot/jha/ofcu/dl/ 
+
+Thanks, Barnett 
+
+
+author: barnetts
+comment: Hi [~mac],
+
+Per OFCU, "JHA just sent the file. Please process and let me know when it has been processed? JHA is in the process of automating this. Ill let you know when that is completed." 
+
+Can you please let me know when this is live? The live file has been sent. 
+* ofcu/dl/ofcu_enrollment.txt / 14.45 kb (11/10/2021 14:00 PST) 
+
+Thanks, Barnett 
+
+
+author: JIRAUSER10913
+comment: [~barnetts]
+
+The update has been released and the enrollment file sent was processed on production.
+
+*NOTE*: Please make sure that when the client sends the next file it follows the specs I provided which is: *ofcu_enrollment_YYYYMMDD_HHMM.txt*
+
+
+
+
+author: barnetts
+comment: Thank you so much [~mac],
+
+I will let OFCU know to follow the provided specs.
+
+Thanks, Barnett 

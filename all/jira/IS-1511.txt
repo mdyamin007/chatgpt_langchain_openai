@@ -1,0 +1,826 @@
+title: DACB - [27195][pvt] 2022 Tax Forms paper and E
+description: -------------------per Shun------------------------------
+
+5 hours to perform the following:
+ - Setup etax tab on both the member site and InfoTRAC via InfoConfig
+
+ - Enable etax email template on InfoTRAC Client Management settings.
+
+ - Add DACB to the Etax Processing-UI code
+
+ - Configure etax processing on the PUI and test emails.
+
+ - Setup the AOLP flag and test
+
+ - Setup etax paperless report (aka paperless file for IS). At the moment this will not change anything, but would be good to setup in advance in case they want to have selective paperless sometime in the future.
+
+
+
+This requires code release and server restart on our end, so by our new SOP we aim to have everything ready on stage for QA to test at least a week before releasing to production on a Wednesday. We can follow most of the IS timeline, however I noticed IS provided a live date of 9/16 which is a Friday. I think Wednesday, 9/21 would be a more suitable live date for us.
+
+----------------------------per Rony------------------------------------
+
+Per sow, it says data file account willl be used for posting. So don't need any xfer file to account -> member conversion . Also don't need invalid address report but only archival.
+
+Masking is needed for ssn, per sow.
+
+Details:
+
+--------------------
+
+Follow any tax archival set up script mfcu_customized_archival.pl or ufcu_customized_archival.pl. Refer to sow for archival requirement.
+
+And need to make a soft link of that script to $dir/tax/prep/dacb/ like below.Make sure while releasing production you give this instructions to make soft link.
+
+ask for dt job id for each form5498sa, 1099sa1042s as early as possible.
+
+Etax is applicable but doesn't need to any extra work for etax.
+
+Need to put an entry in tax_ssn_tin_table for ssn masking for dacb.
+
+Total forms:
+
+------------------
+1042sgen
+1098gen
+1099cgen
+1099igen
+1099qgen
+1099rgen
+1099sagen
+1099sgen
+5498esagen
+5498gen
+5498sagen
+
+Data files:
+-----------
+F1099.zip.pgp
+F5498.zip.pgp
+F1042S01.zip.pgp
+
+
+Dev Hour: 10 hour (archival + testing)
+
+Timeline:
+
+
+
+Start: 8/29
+
+Samples: 9/6
+
+Sample approval: 9/9
+
+Pilot: 9/12
+
+Pilot approval: 9/15
+
+Live: 9/21
+
+
+author: rony
+comment: Hi [~kdishroon] [~Igor.Khosid]
+
+Samples are in/d/ac-secure-share/ac/keriY/is-1511_dacb_tax folder.
+
+no xref file is used and account nos are extracted from standard position 72-91 for 1042s and 21-40 for other forms.
+
+
+
+Thanks
+
+
+
+
+author: igor.khosid
+comment: [~kdishroon]
+Ready for the client review
+
+
+author: kdishroon
+comment: Hi [~rony],
+
+Please see the test xref file attached; please test and and confirm it will work correctly.
+
+[^InfoImage_Customer_xRef_Extract(1).csv]
+
+^Also, the client had some questions I hope you can answer:^
+ * ^Can we pull out the corrections from a full file if they can't send just the corrections?^
+ * ^Do corrections post over the original or is it posted as a separate document.^ - Let me know if this is a question for ISD.
+
+ * ^If possible, they might want the corrections to post over the originals.^
+ * ^How do they know what customers have enrolled to receive eTax?^
+
+Thank you,
+
+Keri
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+I am analyzing the Xref file, will let you know tomorrow.
+
+I am not sure about the questions, would it be possible to get help from Terrence/Tun about this.
+
+
+
+Thanks
+
+
+
+
+author: kdishroon
+comment: 
+
+[~terrencet] [~TunA], -Can either of you assist with these questions from the client regarding correction files?
+ * *^Can we pull out the corrections from a full file if they can't send just the corrections?^* 
+
+^[~Tin.Chak] - Can you answer these questions?^
+ * *^How will they know what customers have enrolled to receive eTax?^*
+ * *^Do corrections post over the original or is it posted as a separate document?^*
+ ** *^If possible, they might want the corrections to post over the originals^***
+
+
+
+
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~kdishroon] See my response:
+
+- How will they know what customers have enrolled to receive eTax?
+Currently, they will be following the delivery preference of the account. If the account is already on paper/paperless, all documents (including eTax) within the account will follow the same delivery preference. If the bank wants eTax to have it's own delivery preference, we can set that up on the eStatement side. The user will see a separate delivery preference option for eTax on the site. Please also confirm with IS to see what they need to do on their side.
+
+- Do corrections post over the original or is it posted as a separate document?
+There's a replacement logic to overwrite the original document if there's a correction.
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+After some analysis, I need to confirm the Xref file is for the below forms only:
+
+1099q
+ 1099rgen
+ 1099sagen
+ 5498esagen
+ 5498gen
+ 5498sagen
+
+Among that 1099q file that I have which has only 2 accounts but I couldn't find any match with the Xref file. For the rest of the above, I found both a match and a mismatch.
+
+I am attaching the result for each of the above-mentioned forms. Each report is tab-delimited.
+
+1st column is either yes or no which indicates if the 2nd column( CIF/customer no) is found in theXref file.
+
+[^dacb.1099sagen.for1.account.name.list.match.res][^dacb.1099rgen.for1.account.name.list.match.res][^dacb.5498sagen.for1.account.name.list.match.res][^dacb.5498gen.for1.account.name.list.match.res][^dacb.5498esagen.for1.account.name.list.match.res]
+
+
+
+Now I need confirmation of several things:
+ # The xref file is only applicable for the above-mentioned forms ( 1099q 1099rgen 1099sagen 5498esagen 5498gen 5498sagen ) ?
+ # What should I do if I can't find a match with the Xref file?
+ # In the Xref file, the Customer_Number column is always 10 in length. But in the IRS file account, no mapping is of length 20 ( 21-40). So should I match the first 10 characters from columns 21-40 ignoring the leading spaces with the 1st column of the Xref file?
+ # Some Custome_Number values appear multiple times. For example, SHOGREPV00 appears 6 times in the Customer_Number column with different account nos in the 3rd column. In that case, what should I do, if I found a match with the IRS file which has multiple entries in the Xref file?
+ # For the rest of the forms, I will use columns 21-40 as account no to both display and index.
+
+[~TunA]
+
+
+
+Thanks
+
+
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+Any feedback?
+
+
+
+Thanks
+
+
+author: kdishroon
+comment: Hi [~rony],
+
+Here are the initial feedback/questions regarding the samples provided:
+ # Is it possible to get everything on one page vs two? All of our previous tax forms were all printed on one page. - {color:#FF0000}Can you confirm these will be duplex?{color}
+ # In the 1099-INT file I noticed there were multiple customers listed. I believe we only want the primary owner on the tax form.
+ # Do they need to send the corrections separate or can they resend the whole file to override the previous one?
+
+Here are their responses regarding the xref file:
+
+1. The xref file is only applicable for the above-mentioned forms ( 1099q 1099rgen 1099sagen 5498esagen 5498gen 5498sagen )? - {color:#FF0000}We need to use the xref file for ALL tax forms not just the ones you listed here.{color}
+2. What should I do if I can't find a match with the Xref file? - {color:#FF0000}Can we send an exception report so they can research? - They will confirm and get back to me if they just want to print those.{color}
+3. In the Xref file, the Customer_Number column is always 10 in length. But in the IRS file account, no mapping is of length 20 ( 21-40). So should I match the first 10 characters from columns 21-40 ignoring the leading spaces with the 1st column of the Xref file? - {color:#FF0000}The account number should always be 10 characters; ignore the leading spaces{color}
+4. Some Customer_Number values appear multiple times. For example, SHOGREPV00 appears 6 times in the Customer_Number column with different account numbers in the 3rd column. In that case, what should I do, if I found a match with the IRS file which has multiple entries in the Xref file? -{color:#FF0000} Post to all all of the account numbers{color}
+5. For the rest of the forms, I will use columns 21-40 as account number to both display and index. - {color:#FF0000}No, We need to use the xref file for ALL tax forms.
+{color}
+
+
+
+Thank you,
+
+Keri
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+Is it possible to get everything on one page vs two? All of our previous tax forms were all printed on one page. {color:#de350b}-Can you confirm these will be duplex?{color} -{color:#4c9aff} yes duplex{color}
+
+In the 1099-INT file I noticed there were multiple customers listed. I believe we only want the primary owner on the tax form. - {color:#4c9aff}is it about the below scenerio?{color}!image-2022-09-22-19-26-03-019.png|width=585,height=216!
+
+{color:#4c9aff}sow doesn't say anything about this?{color}!image-2022-09-22-19-27-30-642.png|width=947,height=57!
+
+{color:#4c9aff}so the client doesn't want this aggregation for 1099int? Or does the client still want it but wants only one row in the box so for example only the top row?{color}
+
+!image-2022-09-22-19-29-59-340.png|width=768,height=165!
+
+
+
+Do they need to send the corrections separately or can they resend the whole file to override the previous one? - {color:#4c9aff}sorry I don't have knowledge here, would you please ask Terrence/Tun about this?{color}
+
+
+
+Please see my comment in green regarding client feedback on my questions:
+
+The Xref file is only applicable for the above-mentioned forms ( 1099q 1099rgen 1099sagen 5498esagen 5498gen 5498sagen )? -{color:#de350b}We need to use the Xref file for ALL tax forms, not just the ones you listed here.{color} - {color:#00875a}But the Xref file has alphanumeric characters and not all the forms have alphanumeric values in position (21-40) for example 1042s, 1099s, and 1099i all have only numeric values. So those will not match with the Xref files *customer_number*.{color}
+
+
+
+What should I do if I can't find a match with the Xref file? -{color:#de350b}Can we send an exception report so they can research?{color} - They will confirm and get back to me if they just want to print those. -{color:#00875a}I already provide some reports in my previous comments. For example[^dacb.1099sagen.for1.account.name.list.match.res]1st column is either yes or no which indicates if the 2nd column( CIF/customer no) which is from the IRS data file is found or not in theXref file. Please check the attachments.{color}
+
+
+
+At this point, I am assuming there will be more back and forth with this Xref file.
+
+
+
+Thanks
+
+
+
+
+author: kdishroon
+comment: Hi [~rony] ,
+
+Here are the DT Job IDs
+
+!https://app.na3.teamsupport.com/Wiki/WikiDocs/1888578/images/dacb_dtjobid_request.png!
+
+
+author: kdishroon
+comment: [~terrencet] [~TunA] ,
+
+
+
+Do they need to send the corrections separately or can they resend the whole file to override the previous one?
+
+Thank you,
+
+Keri
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+Please also send the client the question of my previous comment.
+
+
+
+Thanks
+
+
+author: kdishroon
+comment: Hi [~rony] Rony,
+
+Re: "In the 1099-INT file I noticed there were multiple customers listed. I believe we only want the primary owner on the tax form. - {color:#4c9aff}is it about the below scenerio?" *No, it is regarding the highlighted below*{color}
+
+!image-2022-10-04-19-53-59-886.png|width=619,height=428!
+
+
+
+*How they want it to look:*
+
+!image-2022-10-04-19-55-36-444.png|width=600,height=438!
+
+
+
+
+
+
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+So this is coming from the data file.
+
+!image-2022-10-05-23-58-35-996.png!
+
+
+
+Now how do we know we need to remove the 2nd address? How do we know the 2nd address actually is another name which we need to remove?
+
+
+
+Thanks
+
+
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+
+
+I am yet to provide isd index file. Due to current work load and being out sick I will not be able to do this in this week. I can provide this in the middle of next week.
+
+
+
+Thanks
+
+
+author: kdishroon
+comment: Hi [~rony],
+
+Ok, thank you for the update.
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+in/d/ac-secure-share/ac/keriY/is-1511_dacb_tax there are 2 pdfs for 1098 and 1042s with name ( And Or name removal )update.
+
+
+
+Thanks
+
+
+
+
+author: kdishroon
+comment: Hi [~rony],
+
+The client has provide a new xref file to include the names and addresses of their customers:
+
+[^InfoImage_Customer_xRef_Extract(1).csv]
+
+
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+Ok please give me some time to add this in the coding. Based on our current work load I am not confident enough to make it this week, although the work is not tough. I will provide this by mid next week.
+
+
+
+Thanks
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+For some reason, I can't download the CSV file. Would it be possible to place this file in ac-secure-share?
+
+
+
+Thanks
+
+
+author: kdishroon
+comment: Hi [~rony],
+
+I have placed InfoImage_Customer_xRef_Extract(1).CSV in your ronyD folder
+
+\\ca-isshare-01.infoimageinc.com\ac-secure-share\dsi_print
+
+Please note that the client mentioned
+
+"There were a few instances in the cross reference file that had duplicates due to multiple addresses being selected for an account. We are working to resolve this issue and should have an updated cross reference shortly. I wanted to let your team know that there will be no structural changes and to not worry about any duplicate addresses as those will not exist after the update."
+
+
+
+Thank you!
+
+Keri
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+
+
+This is the address mapping for this year for all forms except 1042s.
+
+!image-2022-10-21-12-09-12-240.png|width=704,height=264!
+
+
+
+
+
+And this is the address mapping for 1042s.
+
+
+
+!image-2022-10-21-12-10-00-306.png|width=874,height=542!
+
+As you see for all other forms except 1042s we have:
+
+*First Payee Name Line => 288-327*
+*Second Payee Name Line => 328-367*
+*Payee Mailing Address => 368-407* 
+*Blank => 408-447* 
+*Payee City => 448-487*
+*Payee State => 488-489*
+*Payee Zip Code => 490-498*
+
+
+
+As you see city(*448-487*) state(*488-489*) zip(*490-498*) have their own mapping and besides that, it only supports 3 address lines *288-327,**328-367,* *368-407***.
+
+So for this one:
+
+"LATOURP 00"|"55523729"|"71014241"|"*PETER L LATOURETTE"|"GEORGE BOOM FUNERAL HOME TRUSTEE"|"C/O JIMMY REISING"|"1528 HARRIS ST*"|"SIOUX CITY IA"|""|"51103"|"2620"|""
+
+It has 4 address lines (marked bold ) which will cause an issue for us.
+
+
+
+And for 1042 we have:
+
+*Recipients Name Line-1 => 94-133* 
+*Recipients Name Line-2 =>134-173*
+*Recipients Name Line-3 => 174-213*
+*Recipients Street Line-1 =>214-253*
+*Recipients Street Line-2 => 254-293*
+*Recipients City => 294-333*
+*Recipients State => 334-335*
+*Recipients Province Code => 336-337*
+*Recipients Country Code => 338-339*
+*Postal or ZIP Code => 340-348*
+*Recipients U.S. TIN => 349-357*
+
+
+
+It also has a different mapping for city state zip code.
+
+
+
+If the client can provide city-state zip in separate columns would be helpful for us. Currently, there is a Zip_code column but no city and state column.
+
+And in some case there are AND or OR at the end first address line.
+
+!image-2022-10-21-12-34-18-193.png!
+
+I am assuming in this case the 2nd address line should be removed from display. If so, can the client add this AND at the beginning of 2nd address line instead of the end of 1st address line? Otherwise, we need to remove AND word from the 1st address line as well as the 2nd address. But if the client can add AND at the beginning of the 2nd address line we will just remove the 2nd address line.
+
+
+
+
+
+
+
+Thanks
+
+
+
+
+author: kdishroon
+comment: Hi [~rony] ,
+
+Here is the recent update from the client:
+
+"At this point we have decided to drop the idea of using the xref file to update the customers name and address. It became a bigger issue than it was worth. We will work with the standard data in the file. "
+
+
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+/d/ac-secure-share/ac/keriY/is-1511_dacb_tax/11012022 has a sample with the 2022 year and the latest Xref file.
+
+dacbyt1098.pdf
+
+dacbyt142s.pdf
+
+
+
+Thanks
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+At this point, I belive I am yet to provide the archival sample. What is the date before which it must go live?
+
+
+
+Thanks
+
+
+author: kdishroon
+comment: Hi [~rony],
+
+I will confirm with the client, but I believe before end of December.
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+Samples are in/d/ac-secure-share/ac/keriY/is-1511_dacb_tax/11022022.
+
+
+
+Would you please do a quick look at the sample before providing it to the client? Possibly just to check the year.
+
+
+
+Thanks
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+I am yet to provide the archival sample. I will provide it by 11/14. Assuming the client will approve it by the same week.
+
+
+
+Turnover to Qa: 11/21/2022
+
+Parallel:11/30/2022
+
+Live:12/12/2022
+
+
+
+Thanks
+
+
+author: kdishroon
+comment: Hi [~rony],
+
+Here is the client's feedback on the samples provided:
+ * When reviewing the 1098s we found "field 10 other" is missing information.
+ * 1099-R - In prior years we were sending 2 "Copy 2" portions and on the samples there is only 1. Is this the standard?
+
+ * 1099-R - In section "2a Taxable Amount" the amounts differ. In previous years the Gross Distribution and Taxable Amount matched but on the samples provided it's always $0.00 on 2a. 
+
+ * 1099-R/1099-SA/5498-ESA/5498-SA - All 4 of these documents have an issue with the Account Number not being complete when it's using the CIF Number. In the first set of examples they were correct. Why are they wrong with the second set of examples?
+
+Thank you,
+
+Keri
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+
+
+*When reviewing the 1098s we found "field 10 other" is missing information* - This is a customized request normally, so client need to let us know the mapping and verbiage they want to see here. For example for apcu they used "Property Taxes:" and record B columns 103-114.
+
+!image-2022-11-06-19-53-34-920.png!
+
+*1099-R - In prior years we were sending 2 "Copy 2" portions and on the samples there is only 1. Is this the standard?* - I believe we always sent copy B,C,2 one of each always.
+
+*1099-R - In section "2a Taxable Amount" the amounts differ. In previous years the Gross Distribution and Taxable Amount matched but on the samples provided it's always $0.00 on 2a.* - It comes from 67-78, if and in the data file most of the case it's 0, but if the client check more later pages in the sample, for example, page 438, 440 they will see the value.
+
+*1099-R/1099-SA/5498-ESA/5498-SA - All 4 of these documents have an issue with the Account Number not being complete when it's using the CIF Number. In the first set of examples, they were correct. Why are they wrong with the second set of examples?* - That's a mistake from me, while converting the year to 2022 I forgot to change one internal configuration which causes this error. I will provide an updated sample shortly.
+
+
+
+Thanks
+
+Rony
+
+
+
+
+
+
+
+
+author: rony
+comment: Hi [~TunA]
+
+For dacb if you remember we are usingInfoImage_Customer_xRef_Extract.csv file which maps the ssn to account, but single ssn can have multiple accounts no in this xref file. For which we are adding multiple entries for each account no in e-index. But I forgot to ask what about for paper index? Which value we will display in paper index? Would it be possible to suggest here.
+
+
+
+[~kdishroon]
+
+
+
+Thanks
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+The updated sample with account no issues are in/d/ac-secure-share/ac/keriY/is-1511_dacb_tax/11072022 folder.
+
+
+
+Thanks
+
+
+author: tuna
+comment: Hi [~rony],
+
+For etax posting: yes, we can add multiple entries in etax index files from SSN to Account numbers in xref file
+
+For paper TXT record, we can have one entry. Normally, we pick either the first one and the last one in xref file. If we need paperless feature, all possible account numbers must be in paperless list. We need those agreements with client and documented in SOW. But the problem is we do not have BA for this setup. So I send email to [~terrencet]and [~Peter.Dang]to assign a BA as follow. Hopefully, they take seriously.
+
+
+
+======
+
+Terrence/Peter,
+
+Please assign BA for this DACB tax new setup.
+
+The job start as easy standard tax setup. But Client needs customization for cross-referencing account numbers, etax posting, 1099INT aggregate, and masking. Now we need meeting with clients, twice a week.
+
+[~kdishroon] may take IM part. But she cannot take BA part. I will keep attending those meetings, but I cannot answer all questions.
+
+
+
+Thanks,
+
+Tun
+
+
+
+
+
+
+
+
+
+
+author: diegof
+comment: per our last call with the client we want to change how these documents will be posted. [~rony] when setting up the e-stmt index use the SSN as the account number to post to and set "TX" to the account type. No need to look at the cross reference.
+
+
+author: kdishroon
+comment: Hi [~rony] - Please see Diego's note above; we need samples posted to pilot as soon as possible; do you know how soon you can get those ready for ISD?
+
+
+author: rony
+comment: Hi [~diegof]
+
+Can you help me with another piece of info, should we use the same ssn for Infotrac ( meaning paper index )?
+
+
+[~kdishroon] 
+
+Thanks
+
+
+author: rony
+comment: Hi [~diegof]
+
+This is the index file structure:
+
+!image-2022-11-11-17-20-39-650.png!
+
+
+
+Do you know where should I use the account type(TX)? I think I didn't see the account type before for tax.
+
+
+
+[~kdishroon]I will provide the Index on Tuesday.
+
+
+
+Thanks
+
+
+
+
+author: diegof
+comment: [~TunA] [~rony] Tun, do tax forms have their own e-stmt index? i see DACB uses a newer version for their statements. can you point rony in the right direction as to where the account type goes.
+
+
+author: tuna
+comment: Hi [~rony], [~diegof]
+
+Yes, etax index are per tax forms. I explained how IS pass index to ISD. Please let me know if we need to discuss more.
+
+Thanks,
+
+Tun
+
+
+
+The pre-processing script needs to add account types in field 781-785 in IRS data file. So format DFA can get account type to pass to etax index.
+
+ACCT_TYPE=NOSPACE(SUBSTR(INPUT_REC,781,5, ''))
+
+
+
+The e-index file are generated from tax format DFAs. Account type is in field 6in e-index.
+
+&ACCTNUM_NOSUFFIX!'|'!&FORM_NUM!'|'!AFPFILENAME!'|'!&STMT_ENDING_DATE!'|'!&SUFFIX!'|'!ACCT_TYPE!'|'!&TAX_SSN_TIN_DATA!'|'
+
+
+author: kdishroon
+comment: Hi [~rony],
+
+The client is stating that 2a on the 1099r form should be completed; is it not filled out because the 2021 data is different than the 2022?
+
+Thank you,
+
+Keri
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+It is coming from 67-78. But in irs data file for 1099r all are 0. Below is a partial snapshot from data file.
+
+!image-2022-11-14-22-59-55-791.png!
+
+
+
+Thanks
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+Actually, I see a few where the 2a has values.
+
+/d/ac-secure-share/ac/keriY/is-1511_dacb_tax/11072022/dacbyt199r.pdf if you look at pages: 434-440 you will the box 2a has values.
+
+!image-2022-11-15-01-43-32-610.png|width=862,height=582!
+
+
+
+Thanks
+
+
+author: kdishroon
+comment: Hi [~rony],
+
+Please see attached examples of what the client is looking for on the 1098's - 10 other field.
+
+Per the client on our call today, the rest of the form samples, other than 1098 and 1099r, are approved.
+
+[^DOC110722-11072022162145.pdf]
+
+Thank you,
+
+Keri
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+I need the mapping for this field from the customer for record B.
+
+
+
+[~diegof]
+
+
+
+Thanks
+
+
+author: rony
+comment: Hi [~kdishroon]
+
+/d/ac-secure-share/ac/keriY/is-1511_dacb_tax/11182022 has an archival sample.
+
+Some points I want to mention:
+ # For each form, separate archival files will be created
+ # Splitting logic is by size 500MB
+ # encrypted the archival file
+ # archival file name: dacb_<form>_<date>_segment.zip
+ # the index file name in the archival zip isdacb_tax_index_<form>_<date>.txt
+ # pdf name account-year-sequence.pdf
+
+Please let me know if there is any issue with the namings.
+
+For now, you will see the date is like1231*2018* or1231*2017* please ignore that variety of years for now. In production, the year will be current tax year.
+
+
+
+[~diegof]
+
+Thanks
+
+
+
+

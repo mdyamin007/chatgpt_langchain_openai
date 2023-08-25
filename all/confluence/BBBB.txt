@@ -1,0 +1,401 @@
+title: BBBB
+body:   
+
+Document details
+
+  
+
+Document status|
+
+YellowIn PROGRESS  
+  
+---|---  
+Document editor|  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+##  **CID** :BBBB
+
+ **Client Name** :
+
+ **Schema** : Bank  
+---  
+  
+  
+
+  
+  
+  
+  
+  
+
+ **.**
+
+  
+  
+  
+  
+  
+  
+  
+
+ **General Information:**
+
+ **Feature name**
+
+|
+
+ **Feature details**  
+  
+---|---  
+  
+Archival Period
+
+|
+
+  * Default :84 months
+  * E-Notice:84 months
+
+  
+  
+Selective paperless
+
+|  
+  
+  
+NP link Type
+
+|  
+  
+  
+User types
+
+|  
+  
+  
+Account Types
+
+|  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+ **Hypercube :**
+
+ **Feature name**
+
+|
+
+ **Feature details**  
+  
+---|---  
+  
+SSO
+
+|
+
+singleSignOn
+
+SSO will update the Email address.  
+  
+Enrollment
+
+|
+
+3 steps enrollment:
+
+  1.  Terms/Conditions Acceptance Page(Confirmation with Email address)
+  2. Associated Accounts Page(All accounts will be updated to electronic)
+
+       3.Enrollment successful page  
+  
+E-statement landing page
+
+|
+
+Tabs:
+
+1\. View Statements -- Shows dropdown menu for all accounts
+
+2\. View Disclosure
+
+3.Profile
+
+4\. Exit
+
+\--In profile page all accounts number can be viewed with account status  
+  
+E-statement types
+
+|
+
+  1. Estatements
+  2. eNotice
+
+  
+  
+  
+  
+Batch Download
+
+|  
+  
+  
+Account reconciliation
+
+|  
+  
+  
+Contextual Search
+
+|
+
+No  
+  
+  
+  
+  
+
+      **Notification Preference**
+
+Customers will not be allowed to change notification preference through
+Statement options.
+
+SMS
+
+|
+
+No  
+  
+---|---  
+  
+  
+  
+  
+Email
+
+|
+
+yes  
+  
+If Email is chosen customers will be notified through email. Users will be
+able to edit Email Address.  
+  
+  
+  
+
+ **       Delivery  Preference**
+
+Customers will have the ability to update the delivery preferences through the
+Statement options per application.
+
+Electronic
+
+|
+
+yes  
+  
+---|---  
+  
+Receive statements online  
+  
+Paper
+
+|
+
+yes  
+  
+Receive statements via mailing address  
+  
+  
+  
+
+ **Infotrac:**
+
+ **Feature name**
+
+|
+
+ **Feature details**  
+  
+---|---  
+  
+Delivery preference
+
+|
+
+Admin will not be able update delivery preference or e-mail address of the
+customers  
+  
+Notification preference
+
+|
+
+Admin will not be able to update notification preference of the customers  
+  
+Email address collection
+
+|
+
+  
+  
+  
+Marketing Inserts
+
+|
+
+Through the InfoTrac site, Admin will be able to upload and manage t inserts
+through the 'Insert Management' tab.They will have to assign the Application
+Type, Date Range, and Insert Name.
+
+-Marketing insert file size cannot exceed 1.5 MB  
+  
+User creation
+
+| Yes  
+  
+Account creation
+
+| Yes  
+  
+Batch download
+
+|  
+  
+  
+Transfer statement
+
+|  
+  
+  
+  
+
+ **UI requirements:**
+
+ **Elements**
+
+|
+
+ **Requirement**  
+  
+---|---  
+  
+Disclosure Section on Estatement page
+
+|
+
+Opens in new tab and shows PDF file  
+  
+Menu bar
+
+|
+
+  * Header bar under menu tabs
+
+View Statements: Account number ,Statement Datye,Status,Inserts  
+  
+Tabs
+
+|
+
+  * View Statements
+  * View Disclosure
+  * Profile
+  * Exit
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+ **Set up:   **
+
+ **AUTH process** :
+
+Index file : netteller cashManagement ssn firstName lastName accountNumber
+appType AcctFullName acctStatus pseudoName
+
+Tables include : usr, usr_mapping, usr_session, fin_account, paperless,
+usr_acct_type_mapping, usr_fin_account, audit_log
+
+Logic for deciding active and closed users:
+
+  * A for Active users
+  * C for Closed users
+  * If appType is D/S and acctStatus is 2/8, it's Closed account
+  * If appType is L/O/T and acctStatus is 2, it's Closed account
+
+For any other combination, it's Active account
+
+Other functionalities
+
+  * If new user, checks for active user. If it is active user then it creates new user. If closed, does nothing.
+  * If old user, searches ssn, if new ssn found in index file, it updates the usr table.
+  * Creates login for new users as cif + "|" \+ cashManagementId.
+  * If active user,and pseudoName is present, inserts in usr_acct_type_mapping table.
+  * Inserts sess_login_id as !usrId in usr_session table
+
+Logics for inserting stmt types
+
+For apptype A,B,L,T,D,O,S -> enotice
+
+For appType D,S -> default (and enotice)
+
+For appType O -> heloc (and enotice)
+
+  
+
+  
+
+ **Doc process** :  
+
+9If new account, insert in fin_account as an Active user.
+
+  * If old, then updates name.
+  * Inserts data in estmt_doc, arch_file, estmt_file, p_job_estmt, p_job_email, paperless table.
+
+  
+
+                                                         
+
+ **Frontend Reports:**
+
+    * Latest Stats
+    * User Login Activity 
+    * AI Login Activity 
+    * E-mail Address Collection
+    * Paperless 
+    * Registered User
+    * Non Registered User
+    * Email Reminder
+    * Account Creation Report
+    * Customer Enrollment Report
+
+

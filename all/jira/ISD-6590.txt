@@ -1,0 +1,685 @@
+title:  APCU [23816] [pvt] Participating Member Statement with DSO Integration
+description: Set-up Participating Member Statement with DSO Integration.
+
+IS:
+
+Participating Member Statement will be a separate application cloned from APCU's existing Monthly Statements.
+
+No print, only electronic statements for setup.
+
+*PDF archival to be confirmed (if ok to include with regular monthly statement PDF archival) - TBD
+
+Use same template as existing monthly statements for ALL formatting; setup for posting electronically only.
+
+Data for these statements will need to be extracted from the existing Monthly Statement Symitar file and generated into a separate file based on identification of the following - if this criteria is met, extract to a separate file to be processed as the Participating Member Statement:
+
+Check Record 200, field 18 - this will hold the 'Account Type' number.
+
+Anything between 8000 - 8999 will be considered the Loan Participant member.
+
+Test file provided - see attached.
+
+IS test processed this file; attached output in PDF; customer has approved this version.
+
+ISD:
+
+This new application will be accessed through a new/separate DSO channel (separate and in addition to existing SSO channel).
+
+Posting tab name = Loan Partnerships
+
+Use updated 'CIF' test file - attached.
+
+SOW link:
+
+PRINT - IS SETUP:
+
+[http://sharepoint-svr/AS/Shared%20Documents/SOW%20Directory/APCU%20-%20Affinity%20Plus%20Federal%20Credit%20Union/CURRENT%20SOWs_PRINT_Based%20on%20Symitar%20Core%20Conversion/APCU_ParticipationMemberStmt_IS_Setup_SOW_Symitar.docx]
+
+Electronic - ISD SETUP:
+
+[http://sharepoint-svr/AS/Shared%20Documents/SOW%20Directory/APCU%20-%20Affinity%20Plus%20Federal%20Credit%20Union/APCU_eStmt_SOW_AllApps.docx]
+
+Timeline: To be added upon confirmation of sample dates.
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: This is the spec so you can start. This might be incomplete. Phoebe will put down the full spec in the description later.
+
+Setup DSO.
+
+Prism:
+ * For enrollment and forget password, use full SSN and DOB as validation. No account number needed.
+ * When enrolling through DSO only, hide the delivery preference option and only allow editing email. In the backend, set the delivery preference as E.
+ * In the "Settings" page for DSO, hide the delivery preference options and add the DSO only options (change password, etc.)
+ * Add new statement type "loan", add a placeholder for the tab name, the tab name will be confirmed later.
+ * Add a placeholder for a message under the statement type tab, same area as the one in Hypercube. Message content will be updated later.
+
+Auth File:
+ * New auth file fields:
+ ** Member/Participation code|CIF/Member Number||SSN|||First Name|Last Name|DOB|||||||
+ * SSN and DOB is not a required field. If empty, update the DB to be empty also.
+ * Currently, "Member/Participation code" only have value 01. If the record for a CIF has other value, update it in "usr" table "source" column. If the same CIF came in later and has the "Member/Participation code" as 01 update the usr_session sess_login_id column to value "!usr_id" and set DSO column to null. Basically unenroll them from DSO.
+
+
+author: JIRAUSER11002
+comment: *Sign Up*
+
+1. Login Page:
+
+!1. Login page.png|thumbnail! 
+
+2. Visibility Verification:
+
+!2. Visibility Verification.png|thumbnail!
+
+3. About Adobe.com:
+
+!3. About Adobe.com.png|thumbnail! 
+
+4. Terms & Conditions:
+
+!4. Terms & Conditions.png|thumbnail!
+
+5. Account Verification:
+
+!5. Account Verification.png|thumbnail!
+
+6. Login Information:
+
+!6. Login Information.png|thumbnail!
+
+7. Preferences:
+
+!7. Preferences.png|thumbnail!
+
+
+
+8. Enroll success
+
+!8. Enroll success.png|thumbnail!
+
+
+
+*Forgot Password?*
+
+1. Forgot Password:
+
+!9. Forgot Password.png|thumbnail!
+
+2. Password Reset:
+
+!10. Password Reset.png|thumbnail!
+
+3.Password Updated success:
+
+!11. Password Updated success.png|thumbnail!
+
+
+
+*After login*
+
+1. Home page:
+ !12. Home page.png|thumbnail!
+
+2. Settings:
+
+!13. Settings.png|thumbnail!
+
+
+
+[~phoebe.george], [~Tin.Chak] 
+Can you please verify the screenshots?
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~phoebe.george]For the CIF file, it has 4 digits instead of 2 in the current production. Can we assume that "0001" is the full member and any other values will be treated as participation members?
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~phoebe.george] Also, are we doing SMS and email for MFA? If we need to do that, then DSI can't do the 3/15 pilot date.
+
+
+author: phoebe.george
+comment: [~Tin.Chak] Can you clarify the CIF file - in production, it is currently 2, but the CIF they provided this value as 4 characters? 
+
+Also, if they choose to move forward with Email address only for MFA, can they add SMS at a later/post-launch date? I think it will be more critical to have the earlier pilot site date for them, but wanted to check.
+
+
+
+Thanks!
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~phoebe.george] I mean the member/participation code in the first column. Production file have "01", while the test file have "0001".
+
+The MFA with email and SMS are setup together. The early pilot date can be achieved if we do MFA by inputting information like last 4 SSN.
+
+
+author: kericapote
+comment: [~Tin.Chak] APCU is asking:
+
+Im working on copy now, and Im wondering how much of the Login screen we can customize. Can we give you something short for the space on the left, and also change all 3 of other spots with arrows?
+
+ !image-2022-03-10-10-22-45-809.png!
+
+Or are we only able to customize the 1 box on the right?
+
+!image-2022-03-10-10-23-06-738.png!
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~kericapote] We can add the message on the left, but it's customized so we need an enhancement request.
+
+
+author: kericapote
+comment: [~sahossain] [~Tin.Chak]
+
+See APCU's responses below:
+
+
+ # All our membership codes are four digits (thats how Episys works), we just never used that first column in the CIF before. We placed 01 there because you had asked us to when we set it up. With this change you will no longer see a 2-digit code again in the CIF. Our most common and default code is actually 0000 for the Personal membership, but for the purposes of THIS project, you can consider ALL codes outside of the 8000-8999 range to be Traditional.
+
+
+
+This is a copy of what I placed in the InfoCare ticket a few weeks ago in case you needed to see all our codes (in non 4-digit format) for Traditional members. All of these can and should be treated as we have always treated memberships (both for new and statement purposes). *Only membership types between 8000-8999 are the Loan Partnership members.*
+
+!image-2022-03-10-10-18-43-253.png!
+
+ 2. When you say MFA notifications are you referring to the alert that goes out? If so, that should be fine. We can default alerts to be email and the Loan Partnership members can change in settings in they want.
+
+
+author: kericapote
+comment: [~sahossain] [~Tin.Chak]
+
+We just had our meeting with Compliance to review these pieces. Here is the feedback for the screen shots, the welcome email will soon follow once approved, by EOD.
+
+
+
+See above attached for copy changes for these things:
+
+(APCU_Tab_Empty-State_LoginScreen_030822
+ * Nav tab name & placement
+ * Universal Empty-State message (w/ a hyperlink)
+ * Login screen
+
+
+
+
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~kericapote] For item 2, "When you say MFA notifications are you referring to the alert that goes out? If so, that should be fine. We can default alerts to be email and the Loan Partnership members can change in settings in they want."
+
+There's a confusion about this, we have 2 kinds of MFA, option one is using email/SMS, and option two is verify an extra piece of information (Example: last 4 digits of SSN). In order to be ready for the early pilot date, we have to do option two. The email/SMS option will take more time to implement, even if we only need to set it up for email.
+
+
+author: kericapote
+comment: Thanks Sean. I will let the client know.
+
+
+
+Also following up on pilot due tomorrow. Are we on schedule? [~sahossain] [~Tin.Chak]
+
+
+author: kericapote
+comment: [~Tin.Chak] [~Samiha_Seraj] Here is APCU's feedback:
+
+things are not going well so far as I cannot get through the enrollment portion.
+
+
+
+The reason for this is that the site never accepts the Security Code in the Account Verification. Ive tried 15 times and its never worked. Ive refreshed the page. Ive closed out completely and entered again, and nothing works. I will also say that sometimes it is difficult to know if the letter an uppcase I or a lowercase l, and things like that. However, beyond that, even when its obvious, I keep getting the You provide the wrong security code which should also be You *provided* the wrong security code.
+
+ !image-2022-03-17-09-02-16-988.png!
+
+Just so you know, I tried in Chrome, Firefox, and Edge browsers. Same thing in all.
+
+
+
+
+
+Also, can we please allow people to enter the DOB? Right now you can only choose it from a calendar that starts on the current day. Which means I had to go clicking through the calendar all the way back to 1982. We wont have any minors as Loan Partnership members, so everyone will have to work pretty hard to find their correct date of birth. Thats not going to work.
+
+ !image-2022-03-17-09-02-24-130.png!
+
+
+
+Otherwise, the links to Adobe, buttons to navigate, and the PDFs displaying the mock statement and the Terms and Conditions all seem work as expected.
+
+
+
+Please let us know when the Security Code and Date of Birth fields have been fixed and we can test further.
+
+
+author: samiha_seraj
+comment: [~kericapote]could you try the security code by putting spaces in between each letter. I believe it's been designed that way. I got this error too while testing ,then [~sahossain]confirmed I have to put spaces in between each letter. Let me know if you are able to do so.
+
+And about that small spelling mistake I'll inform [~sahossain]. As for the DOB requirement [~Tin.Chak]will be able to give a proper feedback.
+
+
+
+
+
+Thank you!
+
+
+author: kericapote
+comment: [~Samiha_Seraj] Per Sean -please remove the spaces in the log in. It should not be like this. Let me know asap when it is ready so I can have APCU test..Thanks!
+
+
+author: samiha_seraj
+comment: [~sahossain]please check [~kericapote]'s comment.
+
+
+
+Thank you!
+
+
+author: kericapote
+comment: [~Tin.Chak] [~sahossain] [~Samiha_Seraj] please confirm when this is fixed so I can have APCU log in. Please also confirm the incorrect verbiage had been fixed and if we can do anything about the DOB.
+
+Thanks!
+
+
+author: JIRAUSER11002
+comment: Hi [~kericapote],
+
+Fixed both are DOB and Security Code.
+
+Please take a look.
+
+Thank You!
+
+
+author: kericapote
+comment: [~Samiha_Seraj] [~sahossain] [~Tin.Chak] APCU still can't get in to the pilot. Please see emailed details.
+
+
+author: kericapote
+comment: [~rumanb] please send ISD info to post the sample to pilot. Thanks!
+
+
+author: JIRAUSER11002
+comment: Hi[~kericapote],
+
+Fixed the login issue.
+
+Please take a look.
+
+
+
+Thank You!
+
+
+author: rony
+comment: Hi [~kericapote]
+
+index filems3_20220122_1_20220321_0540_apcu.txt.
+
+
+author: kericapote
+comment: [~Samiha_Seraj] [~sahossain] please post these to the Statement tab on pilot for customer approval.
+
+Thanks!
+
+
+author: eric.yan
+comment: [~rony], [~kericapote]
+
+The index file is posted to pilot.
+
+
+author: eric.yan
+comment: [~kericapote]
+
+Here is a screenshot showing where to find the statements under "Loan Partnership"
+
+!image-2022-03-21-15-18-36-050.png!
+
+
+author: kericapote
+comment: [~Samiha_Seraj] [~eric.yan] Per the SOW these should be under a new tab called "Loan Partnerships". I do not see this tab. Please let me know when these are posted under the new tab.
+
+
+author: kericapote
+comment: [~Samiha_Seraj] APCU has provided feedback:
+
+This time I was able to get all of the way through enrollment and reach the site landing page with the OTHER member (RANDY RON). However, I still cannot get in with the original member I attempted with (RICHARD SMISTER) as it still says the username or password is incorrect. I also can still not reset my password as it still states my information is invalid. And I can still not try to enroll again with this user as the session times out as soon as I click Continue.
+
+
+
+Using the Randy Ron user I came across several issues.
+
+
+ # On the last page of enrollment I see missing information (see below). It looks like the T&Cs are missing. Can this please be addressed please?
+
+
+
+!image-2022-03-21-16-10-49-710.png!
+
+2. Once I reached the landing page it looks like Member Statements is the default tab/application. Can this be changed to Loan Partnership for these members? Im guessing not, but wanted to check
+
+3. Also the tab/application title should be in bold and there should be a think orange line to signify which tab youre on, however the Loan Partnership tab does not have either of these. Please add this.
+
+!image-2022-03-21-16-10-32-136.png!
+
+
+
+!image-2022-03-21-16-12-13-934.png!
+
+4. If I click on any other tab/application besides Loan Partnership (and Member Statement because it is the default) I get the pop up saying there set to paper currently and are offered to choose either paper or digital. These member do NOT have an option for paper, so we need to ensure that this pop up doesnt come up. I hope this can be done.
+
+!image-2022-03-21-16-13-59-116.png!
+
+5. Finally, when I click on the Exit Statements option I get sent to this screen below). This again, is not relevant to the Loan Partnership members and will need to be changed. Perhaps we can use something similar to the time out message? Rachel, can you please provide that message? (it looks like the time out message can be unique so this one probably can too.)
+
+
+
+!image-2022-03-21-16-15-21-185.png!
+
+
+author: samiha_seraj
+comment: [~kericapote],
+
+
+
+[~sahossain]is taking a look at these points. He'll give an update soon.
+
+
+
+
+
+Thanks!
+
+
+author: kericapote
+comment: [~Samiha_Seraj] [~sahossain] [~Tin.Chak] APCU still can't get i to the pilot site. Can we resolve today? 
+
+Unfortunately, I am not able to review because I once again cannot access the DSO site or the InfoTrac Pilot site now.
+
+
+
+Trying to login to the DSO site now (As Randy Ron) I am told that my username or password is invalid. That isnt true, but I was able to reset the password successfully (or so the site told me). When I went back to login again using the updated password, I am still told my username or password is invalid. So, I am no unable to access the site with either account user. Ive tried to reset multiple times.
+
+
+
+I then tried to login to the InfoTrac Pilot site (as apcu_jmartin), but apparently my password there has expired. Ive attempted to reset it twice now, but each time I receive the email with a reset link and click on it immediately, I am brought to a page that says the link has expired (see below).
+
+So, I am officially unable to access anything in pilot under any username or password.
+
+!image-2022-03-22-08-56-04-624.png!
+
+
+
+
+
+
+author: JIRAUSER11002
+comment: Hi [~kericapote],
+
+As per your above comment. In DB I saw it had both SSO and DSO dates, So when set the SSO date is null then I was able to log In for (Randy Ron) user.So, does APCU has any logic that SSO user will be able to DSO and vice versa? Please confirm this.
+
+
+
+As for the InfoTrac pilot issue, the link works alright, but it expires after 5 minutes, so please try to reset it within 5 minutes of receiving the link. I guess the link was accessed after 5 minutes so it showed the expiry message.
+
+
+
+For your APCU feedback:
+1. For "the last page of enrollment" issue Electronic document agreement page appears if DSO user ufa status is 'pre_reg' and if it's 'active' this page doesn't appear. So will DSO user ufa status be 'pre_reg' or 'active' or both?
+
+2. After DSO login, the landing page as 'Loan Partnerships' is possible to support. I asked Sean about that he said to confirm this later.
+
+3. The loan tab title should be in bold and there should be a think orange line to signify which tab youre on - This is fixed.
+
+4. The pop-up has been disabled for the DSO user.
+
+5. Please let me know what message should show.
+
+
+
+Note: The updates are deployed on dev for testing. And as for the other points, after confirmation, I'll work on them and deploy to pilot.
+
+
+author: kericapote
+comment: [~Samiha_Seraj] [~sahossain] please use t his for #5
+
+*Youre logged out.*
+
+Want back in? If you have Affinity Plus online banking: You can return to Statements from there, after closing this browser tab.
+
+
+
+If youre a Loan Partnership member: You can *+log in to Statements Access again.+*
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~sahossain]For item 1, what is it currently doing right now for other statement type? It looks like that page shouldn't be shown at all since it was not updated with the disclousure.
+
+
+author: JIRAUSER11002
+comment: Hi [~kericapote],
+
+Sean confirmed that the default landing page can be made to 'Loan Partnerships'.
+
+For SSO I will remove the opt-out page because sean confirmed that it was a bug. So I am fixing that.
+
+And the other issues I solved them and deployed on dev. After I'm done with implementing the landing page and opt-out page issue I will deploy them on pilot.
+
+
+author: kericapote
+comment: [~Samiha_Seraj] [~sahossain] [~Tin.Chak] [~Ethan.Yu] Here is APCU's reply:
+
+WE REALLY NEED TO GET THEM TO BE ABLE TO LOG IN- SEAN/ETHAN PLEASE ASSIST. THANKS!
+
+Thanks for the update, especially on the feedback. I do have some responses for the two bullet point below.
+
+
+ # I think I might know whats happened as for as the DSO/SSO situation. The Loan Partnership members will not have access to our online banking so they wont even have the option for the SSO. So yes, I can confirm to not allow Loan Partnership members to login through the SSO. I myself did not attempt to login through the SSO with their information. With that said, the data that was provided to you all (in the CIF file) was from a test environment and is not real data. However, the member numbers do exist in the live environment for different actual members. Those members do not use online banking, but they might be in your system already so perhaps that is causing the issue?
+
+
+
+So, with that said, I still cannot access the site through the DSO with those two accounts. Do we need to send/try new accounts? If so, *DeVonna* can you provide me with other member numbers? Preferably ones that do not share the member number with live memberships?
+
+
+ # The response for the InfoTrac pilot site is not accurate. As explained in my previous email I clicked on the Password Reset Link right away and still received the Your password reset link has expired.Please try again message. Ive had to rest my password many times in the pilot InfoTrac site as I dont use it often so I am aware of the expiration. In the case form yesterday as well as today when I tried it seems to have expired immediately
+
+
+
+Below you can see that I tried twice around 9:32am CST. I clicked on the link as soon as the email came through and both times it opened to the expired link page. Please have your IS team review the database for the InfoTrac pilot site to confirm. Or, if youd like to schedule a call I can show you all there as well.
+
+
+
+!image-2022-03-23-09-35-03-985.png!
+
+
+author: JIRAUSER11002
+comment: Hi [~kericapote],
+
+I have deployed updates in pilot.
+As your feedback and Sean confirmation I have updated/fixed about:
+1. For "the last page of enrollment" issue, the Electronic document agreement page appears that was a bug Sean confirmed that. I fixed that issue.
+2. For DSO login default landing page 'Loan Partnerships'.
+3. The tab/application title marks in bold and line signify to orange color for 'Loan Partnerships'.
+4. Removed pop up for 'I want paper' or 'I want digital' for DSO if the statement is set to paper(B). Basically for DSO paperless status always will be set to digital(E).
+5. When click on the "Exit Statements" option show a timeout message which you are given.
+
+As for login issue could you process a new user in pilot then try for 'Set Up Access'. I think after that you can login in to DSO.
+
+About your password reset issue in InfoTrac Sean help you.
+
+Thank You!
+
+
+author: kericapote
+comment: [~Samiha_Seraj] [~sahossain] client has approved the pilot site. Please prepare for QA.
+
+When can you release the drop down menu for email notifications so that APCU can fill it out in production before month end? Thx!
+
+
+author: abdullah.baki
+comment: [~kericapote],
+
+Do you have any sample CIF file(other than the one linked in this ticket) which we can post on stage before proceeding with DSO testing?
+
+
+
+Thanks,
+
+Abdullah
+
+
+author: kericapote
+comment: [~abdullah.baki]no, the sample is the only one I have. Per [~Tin.Chak] the client can't send the new CIF until code is released so I will need to reach out to them to let them know when to start sending the new CIF.. Is something wrong with the test CIF?
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~kericapote] Can the CU send one based on production data for testing? We will process that in our test environment to confirm that there are no unforeseen issues with the file. Please have them name the file differently than the usual CIF file pattern to prevent the scanner from automatically process the file on production. If they can't generate the file beforehand, we are fine with that too.
+
+
+author: kericapote
+comment: [~Tin.Chak] I have requested the CIF.
+
+
+
+[~sahossain] [~Samiha_Seraj] please let me know when we can release the drop down for email notifications so APCU can do that.
+
+Also, please provide the location of the extracted file for DP as we want to get this fully automated like the monthly statement.
+
+
+
+I am finding out if APCU wants permanent approval on these and I will let you know. How do you want to do the production approvals? Through Online Proofing?
+
+
+
+
+author: abdullah.baki
+comment: hi [~kericapote],
+
+Are you planning to release the "*Laon Partnership*" Tab on the statement page for InfoTrac as well at this month's end? or is that's gonna be released along with the prism DSO feature?
+
+The dropdown for email notification will be released tomorrow, I will let you know when it's released.
+
+
+
+Thanks,
+
+Abdullah
+
+
+
+
+
+
+author: kericapote
+comment: [~abdullah.baki] yes we will release e on our side this eom as we need to post these no later than 4/7. DSO is releasing for end of month, too.
+
+
+
+Please turn over to QA.
+
+
+
+Can you tell me when you can release the email notification?
+
+
+author: abdullah.baki
+comment: Hi [~kericapote],
+
+We are waiting for the CIF file as QA needs data to test DSO, but if that's in a rush we can proceed with the previous CIF file.
+
+
+author: abdullah.baki
+comment: [~kericapote], Email notification template has been released to production infotrac. They can go ahead and create the template for Loan partnerships.
+
+
+author: JIRAUSER11002
+comment: Hi [~nprimak],
+
+This feature is ready to be tested on stage. You can use the following information for signing up:
+ # SSN: 666827897, DOB:07251988, (ACCOUNT NUMBER: 1329796)
+ # SSN:666463921, DOB:07261988, (ACCOUNT NUMBER:1329797)
+
+Let me know if you have any questions.
+
+
+author: igor.khosid
+comment: [~sahossain] - [~rony] - [~rumanb]
+please see Natasha's last comments in IS-896
+Please confirm
+[~nprimak] - [~kericapote] --FYI
+
+
+author: phoebe.george
+comment: [~sahossain] Can you provide the DSO link for Staging for QA to access?
+
+We only have the pilot DSO link that was shared with the customer, is that the same link that QA should use?
+
+
+
+Thanks!
+
+
+author: igor.khosid
+comment: [~nprimak] - the link to pilot --- https://apcupilot.infoimageinc.com/login.jsp
+
+
+
+author: JIRAUSER11002
+comment: [~nprimak], [~phoebe.george]
+
+The DSO link to stage:https://apcustage.infoimageinc.com:9880/login.jsp
+
+
+author: igor.khosid
+comment: 10.5.16.191     apcustage.infoimageinc.com
+
+
+author: kericapote
+comment: [~sahossain] [~nprimak] The file has been sent over this morning with the following name TestAPCU_CIF_033022
+
+
+author: igor.khosid
+comment: [~sahossain] [~nprimak]
+Thank you, Sanwar - host file update and link is working now
+
+
+author: nprimak
+comment: [~sahossain] [~kericapote] [~Igor.Khosid] 
+
+Verified DSO on staging site, no issues
+
+
+author: eric.yan
+comment: [~nprimak], [~sahossain]
+
+Please verify if parallel on pilot is working properly. I checked the proofing file and it looks good.
+
+
+author: JIRAUSER11002
+comment: Hi [~Tin.Chak], [~kericapote], [~Igor.Khosid],
+
+DSO QA test is done in the stage.
+So tomorrow will I release DSO on production?
+
+Thank You!
+
+
+author: kericapote
+comment: [~sahossain]yes, please release code in production.
+
+[~Tin.Chak]
+
+Thx!
+
+
+author: JIRAUSER11002
+comment: Hi [~Tin.Chak], [~kericapote].
+
+Deployed all in production about APCU.
+
+
+
+Sarwar Hossain
+
+Thank You!

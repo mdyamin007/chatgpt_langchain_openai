@@ -1,0 +1,174 @@
+title: DACB - [25100][pvt] Duplicate Images
+description: IS Assessment:
+
+
+
+Implement logic to avoid duplicate Images.
+
+We do not have the following logic in place, but it sounds like we need to add it:
+
+Due to an account can have the same deposit slip with the same amount on the same day. The image is overwritten each other if it cannot be reference using sequence number.
+
+dacb_820010804_11052020_50.00_928070070_F.tif 
+
+dacb_820010804_11052020_50.00_0_F.tif
+
+
+
+dacb_820010804_11052020_50.00_928070071_F.tif 
+
+dacb_820010804_11052020_50.00_0_F.tif
+
+
+
+Example above, two deposit slips but the image have the same name (see highlighted red).
+
+The missing deposit slip showed up in the statement was due to having an identical account number, date, amount, and check serial number which is 0. This caused the program to pull the duplicate image.
+
+To avoid this scenario when extracting the image for repository, program to check if any image with check 0 has the same account, date, and amount. If yes, the program will increment the check serial number from 0 to 1 and so on and up to 9 max.
+
+At time of formatting document, the program will continue to search base on account, date, amount, sequence number. If no image found, and if the check serial number is 0, then check if this image has been referenced before with this account. If yes, reference the next incremental check serial number.
+
+This update will require time for testing. We will compare cripple report to ensure the check image is referenced correctly.
+
+
+
+development hour: 8
+sample date: 03/07/2022
+approval date: 03/10/2022
+qa date: 03/11/2022
+live date: 03/15/2022
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+parallel id:20220210225222
+
+project DACBMS11.zip is in qa folder.
+
+Issue was same check image was pulled multiple times due to having check no 0.
+
+In [https://app.na3.teamsupport.com/?TicketNumber=25100]comment 70 client attached a pdf with issue where page 9 same check image was pulled twice.
+
+!image-2022-03-12-00-33-43-293.png!
+
+
+
+
+
+And in comment 87 I provided updated sample/d/infoftps3/Vend_DSI/client_pickup/print_process/dacb/ts-25100/dacb_dda_021722_5.pdf ( it's still in client pickup) where in page2363 this issue looks resolved and in comment 93 client confirmed this is resolved.
+
+
+
+No need for dpvs or isd index cause visual wise nothing changed.
+
+[^IS Checklist#927.docx]
+
+
+
+
+
+
+
+
+
+
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220210225222
+   Currently in parallel: Yes
+   User: ronyD
+   Description: ts 25100 dacb duplicate images
+   Date Submitted: 2022-02-10 22:52:34
+   Date Last Updated: 2022-03-10 03:20:39
+   Files:
+      1) DACBMS11.dfa
+      2) DACBMS11.prj
+      3) dacbms1.control
+      4) dacb_chkimg_process.pl
+
+
+
+author: berezinez
+comment: [~dawnl] [~rony]
+
+QA pass, please send for the client approval.
+
+
+
+***after approval, please request print samples and attach approved samples.
+
+
+
+
+
+
+author: dawnl
+comment: Hi Rony,
+
+Please provide print file, DPVS and ranges for print sample requested by QA.
+
+Thanks.
+
+
+author: igor.khosid
+comment: [~dawnl] - Alis asked for the approved sample. Please attach or provide location ...
+[~berezinez] - FYI
+
+
+author: dawnl
+comment: The approved sampledacb_dda_021722_5.pdf is in client pick up folder. It is too big to attach to ticket.
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+I don't think a print sample will be needed here. Cause visually we didn't change anything.
+
+
+author: rony
+comment: Btw, [~dawnl]and [~berezinez]
+
+
+
+[https://app.na3.teamsupport.com/?TicketNumber=25100]client's comment was
+
+_Looks like the change corrected both issues. Thanks_
+
+
+
+so that means client already approved right?
+
+If qa pass then we can move to release. Let me know.
+
+
+
+Thanks
+
+
+
+
+author: berezinez
+comment: [~dawnl] [~rony]
+
+IS checklist attached. QA is completed.
+
+[^DACB_IS_Checklist_IS_927.docx]
+
+
+author: dawnl
+comment: Hi Rony - can you release today as scheduled, Thanks.
+
+
+author: rony
+comment: [~dawnl]
+
+I asked [~yameelee]to release. I will let you know.
+
+
+author: rony
+comment: [~dawnl]
+
+This is released .20220315103953.

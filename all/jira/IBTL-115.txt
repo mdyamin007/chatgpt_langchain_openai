@@ -1,0 +1,117 @@
+title: RHS - Prod: FCSB - FHNB/FNBT Savings - Job Tracking Error / eStmts did'nt post
+description: [~William.Kong]- Please see errors below with fhnbms2 & fnbtms2. Also eStmts did not post. 
+
+/d/fcsb/fhnbms231.log:Error: /home/master/trigger_tracking_by_rec.pl /d/isd_share/fhnb/print_fileid/fhnbms220201013101546.txt
+/d/fcsb/fhnbms231.log:apy call is curl -X PUT http://is-apps-prod.infoimage.com/infosync/v1/infotrac/online_proofing/extended_mail_tracking/proc_id/2268742/cid/fhnb/user_id/oper1 -H accept: application/json -H Content-Type: application/json -d \{ state: warning, message: Communication error between print process & IndexFileProcessor, warning_code: 102, warning_desc: Unable to submit the job to indexfileprocessor}
+
+/d/fcsb/fnbtms231.log:Error: /home/master/trigger_tracking_by_rec.pl /d/isd_share/fnbt/print_fileid/fnbtms220201013103512.txt
+/d/fcsb/fnbtms231.log:apy call is curl -X PUT http://is-apps-prod.infoimage.com/infosync/v1/infotrac/online_proofing/extended_mail_tracking/proc_id/2268743/cid/fnbt/user_id/oper1 -H accept: application/json -H Content-Type: application/json -d \{ state: warning, message: Communication error between print process & IndexFileProcessor, warning_code: 102, warning_desc: Unable to submit the job to indexfileprocessor}
+
+
+
+
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~shailendrar]: Can you review this issue on ca-isapps-pr-01.infoimageinc.com?
+
+
+author: shailendrar
+comment: [~William.Kong] - olp_handler.sh has following logic for InfoSync URL which needs to be updated:
+
+
+
+set_online_proofing_base_url(){
+
+# online_proofing_url="http://is-apps-dev.infoimage.com/infosync/v1"
+
+if [ "${HOSTNAME}" = "rht" -o "${HOSTNAME}" = "rht.infoimage" -o "${database}" = "test" ]
+ then
+ online_proofing_url="http://is-apps-dev.infoimage.com/infosync/v1"
+
+elif [ "${testmode}" = "y" -a "${HOSTNAME}" != "rht" ]
+ then
+ online_proofing_url="http://is-apps-stage.infoimage.com/infosync/v1"
+ else
+ online_proofing_url="http://is-apps-prod.infoimage.com/infosync/v1"
+ fi
+
+echo "new online proofing url is $online_proofing_url"
+
+}
+
+
+author: william.kong
+comment: [~shailendrar]: Per ticket IBTL-111, the Brisbane RHS has the URLs pointing to the Brisbane IP addresses.
+
+
+author: shailendrar
+comment: [~William.Kong] - This IndexFileProcessor service was down/not available hence the job did not get submitted.
+
+
+author: william.kong
+comment: [~shailendrar]: Thanks, I will demote this ticket now until we can re-active RHS for re-testing.
+
+
+author: william.kong
+comment: [~jasramos]: Can you please re-test this in production? We have re-activated the RHS production license.
+
+
+author: jasramos
+comment: [~William.Kong] reprocess failed. No NCOA report. 
+
+
+
+Getting ncoa reports
+ncoa prefix is fnbtms231
+ncoa report is /d/zip/fnbtms231_ncoa.coa.txt
+file /d/zip/fnbtms231_ncoa.coa.txt not found
+ncoa count file is /d/fcsb/fnbtms231.ncoa.cnt
+Found 0 records for /d/fcsb/fnbtms231.ncoa.cnt
+ncoa prefix is fhnbms231
+ncoa report is /d/zip/fhnbms231_ncoa.coa.txt
+file /d/zip/fhnbms231_ncoa.coa.txt not found
+ncoa count file is /d/fcsb/fhnbms231.ncoa.cnt
+Found 0 records for /d/fcsb/fhnbms231.ncoa.cnt
+There is no ncoa report for this cycle
+ncoa maillist is dp@infoimageinc.com
+subject is FCSB sav ncoa report - cycle 31 ; cycle is 31 ; insert file is /home/insert/fnbtms2.ins
+mesg is There is no NCOA report for this application today.
+
+*fhnbms231.log & fnbtms231.log*
+
+ERROR: Line counts for .txt and .c1bmcok mismatch.
+
+No DPVS created.
+
+Thanks!
+
+Jason
+
+
+
+
+author: william.kong
+comment: [~ernestw]: Can you help me review this issue and re-assign back to me with the findings.
+
+
+author: william.kong
+comment: [~ernestw]: Thanks for the assistance! The bb-rhs2:/d/ncoa_dirs was not pointing to ca-rhstore-pr-01:/d/ncoa_dirs/. So the last few reported issues a few weeks ago was related to it.
+
+
+
+[~jasramos]: Please re-test.
+
+
+author: jasramos
+comment: [~William.Kong] reprocess complete. No error's, count match from log, dpvs & posted eStmts. Reports uploaded to client pickup and internal emails sent.
+
+
+author: william.kong
+comment: [~jasramos]: Thanks for the update! i will close this ticket out.

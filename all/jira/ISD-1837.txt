@@ -1,0 +1,1187 @@
+title: 43800 / 2203 - ASFC - DSO/Auth/SMS setup
+description: None
+
+
+author: tai.trinh
+comment: Need to research and pass over to DSI
+
+
+author: tai.trinh
+comment: @dsi
+
+Please review the initial analysis. Let me know if there are any discrepancies or additional information you need.
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Sharmina Rahman Jhumu made the following comment in DSI-226
+
+@isd
+
+Hi,
+
+I have some confusion regarding ASFC business. As mentioned in confluence, AUTH will insert DSO date and set status as pending, the migration script will set DSO date null for exiting SSO user, moreover SSO user cant login through DSO and vice-versa.
+Now analyzing the AFP processed, we have some confusions:
+
+1. If we set DSO date via AUTH file, and those user login through SSO, there will be date for both DSO and SSO in DB again. 
+2. If we implement as mentioned (cannot login through sso if dso have date and status is active), user created by AFP, Cannot login through SSO. 
+3. User created via AfP, cannot also login through DSO as status= active.
+
+We came up with some solution:
+1. If we set dso=null, status=active, user can login through both SSO and DSO for first time. if DSO have date, cannot login through SSO and vice-versa.
+2. We can update afp process and set dso=null, status active, user can login through both SSO and DSO for first time. if SSO have date, cannot login through DSO and vice-versa.
+
+Please let us know your comments on these.
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~sharmina.rahman]
+
+Yes, I agree with all the proposed solutions.
+
+
+author: tai.trinh
+comment: @dsi
+
+For most of the other processing, we can simply add global.nullDsoTime=true to the conf file to achieve the desired behavior. ETaxRegistrar3 doesn't read that flag yet. That is the only class we need to enhance. (see the other processing DefaultEnoticeRegistrar4 or MessageEstmtRegistrar3 as example)
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Sharmina Rahman Jhumu made the following comment in DSI-226
+
+@isd
+
+Yes, we can simply add 'global.nullDsoTime=true' in 'asfc.conf' to achieve the desired behavior (as of now they do not have it). Moreover, since we are going to set dso to null as a part of CIF Migration for the existing SSO users, it would be ideal to create users with null DSO and SSO from now on to keep the Database values consistent.
+
+
+
+
+
+author: rifat.mahmud
+comment: @isd
+
+Hi [~tai.trinh]
+
+Would it be ideal to change EtaxRegistrar3 to read*global.nullDsoTime=true*? Because many of the clients use it and if we change it, and some of those clients have this flag, then wouldn't their business be affected? I just want to make sure that this update won't affect any other clients.
+
+
+author: tai.trinh
+comment: @dsi
+
+
+
+Hi [~rifat.mahmud],
+
+Yes, that was my intention for the enhancement. And yes, the clients who do have the flag on and uses ETaxRegistar3 should have the accounts created without DSO anyway (so we would be fixing a bug for the other clients). There is no other reason why the flag would be on other than the desired effect of having null DSO for newly created usr_session.
+
+Can you gather all the clients who are using *ETaxRegistrar3* and have *createAccount on* for eTax and have *nullDsoTime=true*? I will review them. I doubt there will be an issue though.
+
+
+
+Hi [~sharmina.rahman],
+
+Sorry, I don't quite follow. Are you suggesting we turn on the nullDsoTime flag now? I'd rather just do it when we do the migration.
+
+
+author: tai.trinh
+comment: @dsi
+
+Pilot date is the 14th. I would like to have everything be pilot-ready a few days before then so I can review. When do you think everything can be done?
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Rifat Mahmud Niloy made the following comment in DSI-226
+
+@isd
+
+Hi [~tai.trinh],
+
+Some of the clients I've found are APCU, VWCU, UTCU, ALCU.
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki Forhad made the following comment in DSI-226
+
+@isd
+
+[~tai.trinh],
+
+We have given the deadline at 10th April for this ticket after talking with Joe. So far we are on track to meet the deadline.currently, the auth process is in testing I think I will provide it by tomorrow along with CIF migration scripts.
+
+thanks
+
+
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki Forhad made the following comment in DSI-226
+
+@isd
+
+Hi [~tai.trinh],
+As we discussed with joe in today's meeting we are going to add the SMS notification feature *globally* for ASFC.
+The following are the ways how the SMS number can be stored in the notification preference table, so I need confirmation from the client which will be turned on for ASFC to start working on SMS setup:
+
+ # *Through SSO Enrollment:* at the last step of enrollment we show a page to select their np type SMS/Email and insert the SMS number or email address, email address most often is pre-populated from SSO request and option to choose electronic or paper. But *ASFC does not have this step on their* *enrollment* they only show "*Termsand Agreement*" and "*PDF verify*" these two steps. They don't show email anywhere during the enrollment process.
+ # *Through DSO Register:* During Dso register user will be able to choose notification type SME/email and provide. since we are creating dso as a new feature this can be done easily
+ # *From Profile:* Clients who have SMS or email as np have an option to update from the profile page. But ASFC users didn't have the flexibility to update any of the information from the profile page. Will the userbeable to update np from the profile page? Ifyes then, will SMS be editable?
+ # *From MSM:* Admin user can update email from MSM site, will admin user has the option to update SMS number and change np type?
+ # *From SSO:* While the user login through SSO, it updates the email address. so the user can provide SMS from SSO as well toupdate email. They have two SSO login methods now, DISSO and FiservSSO.
+ # *From ECL Process:* ECL process, If SMS number is provided from the ECL process it inserts into notification preference table for a new entry, for existing entries it updates SMS number only if the sms_status='Y' in np table.
+
+
+so, I need confirmation on which optionswill they have for SMS notification.
+
++*If we enable SMS globally, we need to work on the following:*+
+
+ # update profile page on root site for NP type option [currently they do not have an option to update anything]
+ # update dso enrollment for enabling SMS.
+ # update account management on MSM for np change [currently admin can update email]
+ # update email proofing for SMS template for all type of notification
+ # update backend code to support SMS notification sending for Testament, etax, enotices
+ # two SSO logins and/or enrollment flow based on how they want to proceed with this SMS setup.
+ # check the effect on backend reports for np type SMS.
+
+
+Considering all these I think it's not possible to meet the 14th April pilot date since the development & testing scope has been increased significantly. so the additional work we need an*additional 4 working days* *including testing*.**
+
+*N.B.* we havea governmentholiday on 10th April and14th April.
+
+Thanks
+Abdullah
+
+--
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi Abdullah,
+
+I talked to Joe, and we might change the decision.
+
+I think Joe had already asked Rifat to research the effort required to separate the MFA preference and notification preference.
+
+If upper management is willing to have the preferences be separate, we won't have to implement SMS notification.
+
+Thanks,
+Tai
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki],
+
+After the MFA decision, you stated that it will require 4 working days to complete the remaining tasks.
+
+Is it possible to turn over to me with everything by 4/17?
+
+Also, any independent parts you have finished such as the migration script or Auth file process, please turn over to me as early as possible, so I can review them without having to wait for the full suite of code.
+
+Thanks,
+
+Tai
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki],
+ # Remove Security Questions altogether. Since we have the token-based MFA, this will replace the Security Questions.
+ # We will create a device token with the Token Manager. I have inserted into the server_key table for ASFC on dev and pilot.
+ ** The first time the user logs in, we will enforce MFA. If MFA passes, we will create the token. We won't need to ask for SSN or any other identification like other CID. MFA validation will be the requirement to generate the token.
+ ** Subsequent logins with a correct username and password will check for the token first. If the token exists and has not expired, we won't require MFA. Otherwise, the user has to go through MFA again.
+ ** The token is used ONLY for logins. Password reset, Password change, and MFA preference change always need to be validated by MFA.
+
+Thanks,
+
+Tai
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki Forhad made the following comment in DSI-226
+
+@isd
+
+hi [~tai.trinh],
+
++*I have some confusion regarding the login flow & enrollment & DSO:*+
+ # We have security questions during enrollment and that is also used in the forget password flow. By removing the Security question do mean from all the places or just from the profile page, which was suggested by joe in the last meeting.
+ # The generic process of server key flow is that you will be askedwhether you are On *a private PC* or *public P*C.(attached pic is the reference) will we support both? two flows are:
+ ** if you choose *public* it won't store the key in the*usr_token*table, it will create a cookie and let the user login for one time.
+ ** If you choose to Private it will insert into the *usr_token* and store the key for 1 year.
+ # If we support both, will the user has to go through MFA for the option?
+ # what will be the exact flow of the login process? first, the user will enter username and password, after that, will the user go through MFA first then the window to choose public or private PC? or they will choose the option first and then go to verify MFA.
+ # By MFA preference do you mean to change the phone number? cause the user won't have the flexibility to change the *Email* (as SSO users can't change the email, I considered it as their business rule). also, we are not storing any preference for MFA like always to email or to SMS.
+
+*+Confusion Regarding Migration Script:+*
+we need to know if the client has any problem if we set DSO and SSO null for the existing user(*if we set SSO & DSO to null all the users will have to go through enrollment after migration)*. because there are few mismatches in their previous business. such as:
+ # afp was inserting dso date ( which we are setting null now)
+ # users created with afp/ auth process are not inserting SSO date in usr_sesion while enrolling through SSO.
+ # users created with SSO file are inserting dso date in *usr_session* table (From DI servlet) but no SSO date.
+
+if we can't set null in SSO. Then we have to check their paperless status while migrating and based on that decide whether the user is enrolled or not as previous if the status is not 'E" user had to go through enrollment. Let me know if we should follow this approach.
+
+
+
+
+
++*Need Confirmation:*+
+ # ASFC uses DI login servlet for their SSO login, not their stand-alone JSP page, but DI SSO Servlet does not support restricting the DSO user doing SSO, should we change this in the servlet of i3-core?
+
+
+
+!Screenshot from 2020-04-20 20-19-13.png|width=773,height=362!
+
+
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki],
+ # We're removing Security Questions altogether.
+ # We'll do both
+ # Yes, the user will go through MFA. It replaces the usual question about SSN, account #, etc.
+ # Choose public or private PC before going through MFA.
+ # Nevermind, I see. So the user chooses how they want to receive in real time.
+
+
+
+We are not setting SSO & DSO to null for all users during the migration. We're only removing all DSO date.
+ # I'll take care of SSO / DSO interaction logic
+
+
+
+We're now a week late, please let me know when you can be done. The four items I need are:
+ * Auth file process
+ * DSO and all related features
+ * MFA
+ * Migration script (I can also take care of this)
+
+For DSO, just let everyone signs up / logs in. Interactions with SSO and other processing changes, I will take care of, once you turnover.
+
+
+author: tai.trinh
+comment: @dsi
+
+Correction: Code DSO to deny enrollment to users with SSO date not null. I will take care of any logic conflict outside DSO.
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki Forhad made the following comment in DSI-226
+
+@isd
+
+hi [~tai.trinh],
+
+If I don't have to code to resolve the logics conflicts outside of DSO features, my work is done and I have passed it to QA. As soon as this passes QA. I will commit the code and let you know.
+One additional change I will pass along DSO features is, Change in their menu logic, previous they used to show *ira* and *escrow* in the menu based on the entry in *acct_stmt_type* table, I have changed that based on Joe's decision and I will turn this over along with the 4 items you asked for.
+
+
+
+Thanks,
+
+Abdullah
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki Forhad made the following comment in DSI-226
+
+@isd
+
+hi [~tai.trinh]
+
++*List of Deliverables:*+
+ # Auth process: new set up
+ # Modified AFP process: changed to hypercubeEstmRegistrar to support usr_mapping and new user creation logic
+ # DSO features:
+ # DSO enroll with MFA
+ # Forget password feature to reset password with MFA
+ # DSO login with MFA(if hardware key doesnt exist), direct login with user name and password is token exists
+ # Profile view DSO information, user name, email address, phone number
+ # Option to change phone number from profile page with MFA verification
+ # Option to change the password from profile page with current password and MFA validation
+ # Template create and edit features from the MSM site for both SMS and email via email proofing.
+ # supported MFA medium: SMS and Email. SMS will only be available after user-provided one.
+
+
+ # New logic for menu, if *ira* and *escrow* statements within archival are available it will show in the menu, previously it was checking for entities in acct_stmt_type
+ # Migration Script: generic script for CIF and Usr_session
+ # Updated asfc.conf file
+
+
+
++*Where to find these changes:*+
+ # Auth process, AFP process: (svn) branches/pilot/processing-ui
+ # DSO related changes: (svn) /branches/dsi/
+ # Migration Scripts: (git) project names are: *DataMigrationScript_usr_session, DataMigrationScript_usr_mapping*
+ # Updated asfc.conf file in jira linked to DSI-226 ticket
+
+
+
++*Deployment dependencies:*+
+ # I have added *default_from_sms_number* and *default_to_sms_number* in */msm/include/define.jsp* these two should be changed to clients number.
+ # targeted tomcat/i3webaapp/api.prop) must have the following entries for api calls.
+ # *com.infoimage.apiurl.template* : this will contain the targeted template service api url to fetch the template id to send mfa
+ # *com.infoimage.apiurl.infoservice*: this will contain the target infoservice api URLto send and validate the token.
+
++*N.B:*+
+ # No additional changes in MSM, Account management in part for DSO users [confirmed by tai]
+ # Any logic which is not conflicting with DSO sign up or log in such as restricting DSO users from the login through SSO is not provided, but restricting SSO users to enroll in DSO is restricted in DSO enrollment.
+
+
+
+
+
+
+
+Thanks
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki],
+
+Did you sync the branch with trunk? I can't validate the branch code if it's not fully synced with trunk.
+
+Thanks,
+
+Tai
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki],
+
+I can't receive the token via SMS. It does send via email.
+
+After one attempt to login, I can no longer access login.jsp. I am redirected to the error page with SESS_TIME_OUT code. I'm not too sure why this is happening. I tried clearing cache and restarting the server. Still getting SESS_TIME_OUT.
+
+All of this is on dev environment currently.
+
+Please have the SESS_TIME_OUT issue resolve by tomorrow. For the SMS, it may not be an error, but I would like to know how to get it to work.
+
+If you have time, see if you can have two boxes for the phone number field. Usually, the user isn't expecting that they have to put the country code (1) when they provide the phone number. I'm thinking we should have at least two fields [#]-[#######] for the phone number, and prepopulate the first field. Like so, [1]-[#######]. Then, the user won't have to input the 1 if they are in the US. I have also seen input forms where it's [#] - [###] - [####], but this is not as important. There will probably be most confusion surrounding the country code.
+
+Thanks,
+
+Tai
+
+
+author: tai.trinh
+comment: @dsi
+I used some formatting keyword in my original comment.
+
+(#) (#######)
+(1) (#######)
+(#) (###) (####)
+were what I was trying to display.
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki],
+
+I finished my update for now.
+
+I still can't figure out why I'm not receiving SMS. I might have others try to see if they have any success tomorrow.
+ # For DSO Enrollment, I notice that for enroll4, if the user picks a username that's already picked, they get sent all the way back to enroll2. If possible, please have it stays on the same page and displays the error message instead. I don't think it's necessary for the user to redo all the steps if they happen to pick the wrong username.
+ # For MFA SMS update, please include in the same update_profile_sms_submit file, a section for the user to input their password. We will use password as a layer of security.
+ # For the MFA SMS update, it actually should only be using the new SMS number. We are trying to verify that the new SMS number works. See if you can get it to work like that. If not, I can take of this logic later.
+ # Once you have done all (or some) of the above, please move all code to trunk.
+
+Of the above, (1) and (4) need to be done by tomorrow. Do (2) first if you have time. Then do (3).
+
+Thank you for the work so far. Besides a few minor errors, everything's good.
+
+Best,
+
+Tai
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki Forhad made the following comment in DSI-226
+
+@isd
+
+hi [~tai.trinh],
+
+
+
++*SMS issue:*+
+
+For not receiving SMS issue, I have seen that in tomcat-cu dev the info service is pointing to devapi.infoimageinc.com. The current code for supporting SMS is not in devapi. but the template service is pointed at pd-dev7. From now on please use the following:
+ # template service:[http://pd-dev7.infoimageinc.com:8680/templateservice/]
+ # info service :[http://pd-dev7.infoimageinc.com:8580/infoservice/]
+
+I have tested SMS today. It seems to be working fine. If you still find issues let me know.
+
+
+
++*requested fixes:*+
+
+**I have fixed a few issues and updates some of the UI:
+ # I have fixed the issues with the existing user name on enroll step4.
+ # I have changed the phone number format to"*[country code] (###) ### - ####"*so from now on user just have to type the 10 digit, no country code. formating will happen on the fly when the user is typing.
+ # I *haven't* changed the password change flow as, the reason behind using the previous email/SMS for MFA verify was to make sure this is the real user and that the user has access to that email or phone previously registered as a level of security.
+ # I have previously added some hidden fields in the form and validated that in the backend while enrolling, cause the disabled button can be enabled by inspecting the element from the browser. I have seen those codes were missing so I added that back. This is named as "*mfa*" , a hidden field in*enroll5.jsp* file. based on this field's value it will check mfa is verified or not while user clicks on the enroll. This is verified on the dsoRegister.jsp page as well, to check if the mfa is passed or bypassed by enabling the enroll button or all together by disabling js or something. Back end validation of MFA. You can review the code but do not remove it otherwise MFA verification won't have any security.
+ # Another issue I have found that, while refactoring you may be missed a js method, which resulted in the submission of the enrollment final step even if the token validation is failed. cause it's a form and preventDefault didn't get a call on the verify button press. so it submitted the form. I have fixed that too and committed the code.
+ # All the changes are in the pilot now.
+
+Thanks,
+
+_Abdullah_
+
+
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki],
+
+There's one last thing I need. For DSO, please add a logout button to the menu bar.
+
+Thanks,
+
+Tai
+
+
+author: tai.trinh
+comment: @dsi
+
+O, and changes from now on can be committed directly to trunk
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki Forhad made the following comment in DSI-226
+
+@isd
+
+hi [~tai.trinh],
+
+Logout feature has been committed into the trunk.
+
+details of the feature:
+ # it will show "exit" on the menu for the DSO users only.
+ # once a user click it will prompt a confirmation window and let the user know, "This will end your eStatements session. Are you sure you want to exit now?"
+ # if the users click yes, it will clear the session and redirect the user to login.jsp page.
+
+
+
+Thanks
+
+Abdullah.
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki]
+
+A few feedback with the clients:
+ # Enrollment Step 1 is not mobile responsive.
+ # "Account Number" will need to be "Member Number".
+ # Update colors. "change out blue and red to our blue and red" is the client's verbatim feedback. Very vague, I know; but try your best to see if there are any colors we introduced that aren't the client's colors.
+ # Email inputs should be trimmed. "email@domain.net" should be the same as "email@domain.net ". We probably should just also prevent spaces from being a valid input for emails.
+
+A few things to research:
+ # For Login Name, are there any character that cannot be used?
+ # For password, same question.
+
+Also, for Javascript alerts, can we use the green/red notifications instead?
+
+
+author: tai.trinh
+comment: @dsi
+
+For Enrollment Step 1, I changed the two buttons to maintain that affirmative should be on the right and negative should be on the left. But it seems I may have removed some html element that made it so that the two buttons stack on top of each other if the width of the page cannot support having them side-by-side.
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki Forhad made the following comment in DSI-226
+
+@isd
+
+Hi [~tai.trinh],
+
+I have started working on it, I'm almost done. I will commit and let you know.
+
+
+
+for enrollment step one: just to make it clear. affirmative one is on the right and negative is on the left of the screen. this is the view you want right?
+
+A few things to research:
+ # There is only a length constraint in DB level for Login Name(256), I believe user can use any ASCII characters.
+ # same as Login Name
+
+
+thanks
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki],
+
+Yes, affirmative on the right and negative on the left; and they would stack affirmative on top and negative on bottom if the screen width is too small.
+
+Thanks,
+
+Tai
+
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki Forhad made the following comment in DSI-226
+
+@isd
+
+[~tai.trinh],
+
+I don't think for the smaller screen I can do that since the negative one appears first in the DOM it will be on the top when buttons are stacked. being said that, I will try to find a way if I can achieve that. Most likely it's not possible.
+
+Thanks
+
+
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki Forhad made the following comment in DSI-226
+
+@isd
+
+hi [~tai.trinh],
+
+I have committed the code in the trunk.
+
+Thanks
+
+Abdullah
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki],
+
+A few more things from the client:
+ # During Enrollment Step 3, if SSN is entered wrong, display this error instead "*We are unable to validate your information. Ensure the information you have entered is accurate."*
+ # All Blue should be#000A6E.
+ # All Red should be#E1261C.
+ # On Enrollment Step 2, change the two buttons to "Accept" and "Do Not Accept".
+ # For DSO, we need to display the Logo at the top, since it wouldn't be in an iframe. Let me know if we don't have a copy of the logo. I will get one. Write the code for a dummy logo, and I can upload the image file with the same filename.
+
+Thanks,
+
+Tai
+
+
+author: tai.trinh
+comment: @dsi
+
+I just checked and it should be the logo.png.
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki Forhad made the following comment in DSI-226
+
+@isd
+
+hi [~tai.trinh],
+
+Regarding last feedback:
+ # Done. I will commit all the items together.
+ # Do they have any hover effect color preference?
+ # Same as #2
+ # Done. I will commit all the items together.
+ # Will this logo be visible all the time? I mean even after a user is logged in? or it's just during enroll, log in, and reset password flow during these?
+
+Thanks
+
+Abdullah
+
+
+
+
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki],
+ # -
+ # I have asked the client for their preferences.
+ # -
+ # -
+ # Yes, the logo should be visible all the time. For DSO, the user would be accessing our site directly from a web browser; and not from an iframe in another website that would host the logo like SSO.
+
+Thanks,
+
+Tai
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki Forhad made the following comment in DSI-226
+
+@isd
+
+Hi [~tai.trinh],
+
+The blue color they provided doesn't match with their SSO blue color, SSO and DSO header shares the same header also statements year-wise tab panel color has this (#00#F70) blue. also if you look at the line below the header there you can see their actual color used throughout the site. I have this concern from my side let me know your thoughts on this.
+
+Thanks
+
+Abdullah
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki Forhad made the following comment in DSI-226
+
+@isd
+
+I have committed the code in trunk.
+
+Thanks
+
+Abdullah
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki],
+
+A few changes for convenience and consistency:
+ # In Enrollment Step 3, when the user enters an incorrect Security Code, the Security Code input field should be emptied.
+ # The error messages during the Enrollment Step and anywhere else, such as the Profile page, should be uniform. During Enrollment Step 3, when I enter the wrong TIN, I get a red centered text. During Enrollment Step 4, when I enter the wrong password, I get the red notification bar. All such errors should just be the red notification bar. It has a much cleaner look.
+
+Thanks,
+Tai
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki Forhad made the following comment in DSI-226
+
+@isd
+
+Hi [~tai.trinh],
+
+code has been committed to the trunk:
+ # security code will be empty
+ # The backend error message will be the same as the front end validation error message. But since backend error message didn't fade out in the previous view I have made them behave the same. but there will be an icon to remove the error message.
+
+N.B: we will be on 'Eid vacation' till the 27th of May. we will resume work from Thursday.
+
+Thanks,
+
+Abdullah
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki],
+
+I noticed that the red bars are now inconsistent in where they are displayed. Some of them are displayed inside the form's border, and some of them are displayed above. I think it's better to have all of them be displayed inside the form's border.
+
+Thanks,
+
+Tai
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki Forhad made the following comment in DSI-226
+
+@isd
+
+hi [~tai.trinh],
+
+Showing the backend validation error and front end validation error in the same position might create confusion, also backend validation error message will be displayed all the, unlike front end validation error which fades after a few seconds. an error message will be visible inside the form border while the user is filling up the form. Let me know your thought on this. Please see the attached image for reference.
+
+!Screenshot from 2020-06-03 17-10-13.png|width=732,height=478!
+
+Thanks
+
+Abdullah
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki]
+
+To the end user, front-end or back-end errors are just errors. I understand why we may want to display back-end error indefinitely, but I think it is okay to have the back-end errors also have the same fadeout time as the front-end errors.
+
+Thanks,
+
+Tai
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki],
+
+There are a few more requests by the client. They are all in the attached word doc. If the code seem to reflect that some of these requests have been fulfilled, it may be that the client needs to clear cache. Otherwise, please make the requested changes.
+
+
+
+For the Security questions stuff, just remove any mention of it.
+
+
+
+For the buttons color, just change to the blue they requested. If it's different than what's been used across the site, then the client will have to accept that the difference is there. (The purpose of this ticket is not to change the entire site's UI, so we'll enforce that the client have to turn in a separate change request).
+
+
+
+We*won't* do the*Error notices within the system on the different pages* item, because that has nothing to do with DSO or MFA.
+
+
+
+For the timeout page, is it shared with SSO? If it is shared with SSO, let's introduce a logic to display a different verbiage, and introduce that login button the client is requesting.
+
+
+
+Let me know if you have any questions.
+
+
+
+Thanks,
+
+Tai
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki made the following comment in DSI-226
+
+@isd
+
+hi [~tai.trinh]
+
+I need some clarification about some requirement:
+ # on page #3,*"Anywhere where multi-factor authentication is referenced should be changed to Multi-factor authentication or multi-factor authentication depending on whether capitalization is needed."* I don't think we have used multi-factor authentication this term directly in any of our DSO pages, do they want "*MFA*" (which we used all across the dso) to be changed to "*Multi-factor Authentication*"?
+ # on page #5, they want to have only the verbiage they provided and nothing else. Correct me if I'm wrong.
+ # on page #9, correcting their etax and enotice error message is out of this ticket's scope so we are not going to do this. Am I correct?
+ # on page #10,For the *timeout page*, is is shared by both SSO and DSO user and once a session is expired we do not have the information whether last logged in user was a dso user or sso user. I'm looking for a workaround. we might have to show a generic message for both sso and dso user.
+
+*update*: Other change requests are done implementing once all the request is done I will pass it to QA.
+
+Thanks
+
+Abdullah
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki],
+ # Yes, MFA -> "Multi-factor authentication"
+ # Yes, only the verbiage they provided. I think there's a grammar error. It should be "We did not..."
+ # Yes, we won't do this.
+ # I'll tell the client they have to use generic verbiage.
+
+Thanks,
+
+Tai
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki],
+
+Sorry, I totally forgot. For SSO and DSO, the client no longer wants them to be mutually exclusive. Please remove code that deny access. Let me know if you see any conflict of logic.
+
+Thanks,
+
+Tai
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki made the following comment in DSI-226
+
+@isd
+
+Hi [~tai.trinh],
+
+I will start working on it, so far I don't think there will be any complication from DSO to allow SSO users to register. Did you make any changes on SSO to restrict DSO users from SSO? This change request will be committed along with the other request from the client.
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki made the following comment in DSI-226
+
+@isd
+
+Hi [~tai.trinh],
+
+I will start working on it, so far I don't think there will be any complication from DSO to allow SSO users to register. Did you make any changes on SSO to restrict DSO users from SSO?
+
+This change request will be committed along with the other requests from the client.
+
+Thanks
+
+Abdullah
+
+
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi[~abdullah.baki],
+
+Is it possible to commit everything else first before the SSO/DSO?
+
+And yes, SSO should also allow DSO to log in. We won't have any such restrictions anymore.
+
+Thanks,
+
+Tai
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki],
+
+Nvm, I see your commit.
+
+Thanks,
+
+Tai
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki],
+
+Nvm, again, the commit was an older update.
+
+Thanks,
+
+Tai
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki made the following comment in DSI-226
+
+@isd
+
+hi [~tai.trinh],
+
+FYI, I didn't commit last day's requests changes as I'm still waiting for sess_time_out page error decision and it's not tested. Also enabling SSO users to register as DSO. I have already passed it to QA along with the other changes, hopefully, I will commit all the changes tomorrow.
+
+
+Thanks
+Abdullah
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Okay, thank you. Just commit the changes tomorrow if possible. I'll take care of the sess_time_out page error once the client provides the verbiage they want to use.
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki made the following comment in DSI-226
+
+@isd
+
+Hi [~tai.trinh]
+
+I've committed the code in trunk.
+
++*Which changes are there:*+
+ # Removing the logic to make so & so mutually exclusive
+ # Change Requests on "Infoimage Direct Sign on Review -4.docs"
+
++*Which changes are not there:*+
+ # **Request to change "checks" & "etax" verbiage as out of DSO feature scope
+ # session time out error message change for DSO user, as this one is shared by sso as well. Didn't find a proper solution.
+
+there was a question the client asked about MFA token "*After registering on a device and attempting to log in for the first time (on the same device as registration), why does it require a second token?"*
+
+*_Reason:_* How we recognize a device is we stored a *fingerprint* (which is created during loginonly) value on *usr_token*table in thedatabase and match if the same fingerprint exists on the browser from where the request is coming. While registering we use MFA just to validate the Email or SMS number, we do not create that fingerprint during enrollment. So, even after enrolling from the same device user must go through the MFA token for the first login only.
+
+
+
+Thanks
+
+
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi[~abdullah.baki],
+
+The update is good.
+
+The client is thinking about having a 5 minutes expiration time for the MFA token. Please let me know how this can be accomplished. Ideally, we would want it to be done the same way it would be for InfoTRAC.
+
+Thanks,
+
+Tai
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki made the following comment in DSI-226
+
+@isd
+
+Hi [~tai.trinh],
+
+Okay sure. I will talk about the implementation of MFA token expiration time with Mehedi. I will keep you in the loop.
+
+Thanks
+
+Abdullah
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki],
+
+How far along is the update for infoservice to support MFA expiration?
+
+Also, please let me know if my update for mfa expiration on prism code is correct.
+
+Thanks,
+
+Tai
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki made the following comment in DSI-226
+
+@isd
+
+Hi [~tai.trinh],
+
+I think sending 'ttl' is not correct we should send it as a query param (just like templateid) not inside the payload. I think we need to change the i3core code as well for that. I'm working on it.
+
+For the MFA token expiration, Do we have a deadline on it? I've talked with Nazmul's team they started working on it today.
+
+Thanks
+
+Abdullah
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki],
+ # What's the ETA on the update for infoservice to support MFA expiration time?
+ # On IE, during login (and possibly other areas that use MFA), something is interrupting the MFA process. Enrollment does go through. The "token sent successfully" message is displayed, but the jsonResponse does not appear in the log (and in turn the MFA email does not go out). I suspect it may have something to do with IE security settings.Please research and resolve.
+ # The client is requesting the Forgot Username? feature. I checked and this is supported on Hypercube. Can you help me check and verify how the username is provided to the user? Is it through an email for which we have to define an email template? Is there even a handler in processing-ui code that handles forgotten username?
+
+Thanks,
+
+Tai
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki made the following comment in DSI-226
+
+@isd
+
+Hi [~tai.trinh],
+ # I have talked with Golam From Naim's team coding is done they are having some issues with deploying the code. As soon as deployment is done I will test and commit the code.
+ # IE is Caching the Ajax call for some reason. I have fixed it. It is on testing now, I Will commit the code and let you know.
+ # It is not on processing UI code, we have to code for this just like the support of MFA template. The following is the flow for Forget User name.
+ ## Step1: The user will be asked to provide SSN and Account number and submit. [in the backend we will validate all the information is correct or not and also is the user registered through DSO or not based on the DSO value on usr_session table]
+ ## step2:
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki made the following comment in DSI-226
+
+@isd
+
+Hi[~tai.trinh],
+ # I have talked with Golam From Naim's team coding is done but they are having some issues with deploying the code. As soon as deployment is done I will test and commit the code.
+ # IE is Caching the Ajax call for some reason I have to explicitly code for not to cache the ajax call. I have fixed it. It is on testing now, I Will commit the code and let you know.
+ # It is not on processing UI code, we have to code for this just like the support of MFA template. The following is the flow for Forget User name.
+ ## *Step1*: The user will be asked to provide SSN and Account number and submit.[in the backend we will validate all the information is correct or not and also is the user registered through DSO or not based on the DSO value on usr_session table]
+ ## *Step 2*: Based on the Client's requirement there might be an MFA validation Step.
+ ## *Step 3*: We will fetch the template from template service and send the email to the registered mail by notify service as we do not have the support to forget Username feature in processing UI.
+
+hypercube has only *step #1*, then validates and sends the email to the user with the user name through API. For implementing forget username feature we need to work on both ROOT and MSM site. let me know.
+
+Thanks,
+
+Abdullah
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki made the following comment in DSI-226
+
+@isd
+
+Hi [~tai.trinh],
+
+I have committed the code for MFA expiration time support. For this, I needed to change on prism and i3-core codebase. I have committed the i3-core changes on the pilot as well. The changes are all inside *com.infoiminage.api.secureTokenSerivice*of i3-core.
+
+I have tested the code on pd-dev5 instance of infoserivice, When client or you start the testing make sure the latest infoserive codes are deployed on pilot infoserive. So far it't not deployed in pilot yet. If I have any about that I will let you know.
+
+Thanks,
+
+Abdullah
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki],
+
+Okay, thank you. Whenever you have code ready and committed to pilot, feel free deploy them all to Pilot also. You are allowed to and should be able to deploy to Dev/Pilot/Stage.
+
+Thanks,
+
+Tai
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki],
+
+Can you help me compile a list of all error messages related to this project, and the reason why they would get displayed?
+
+The client needs a comprehensive list so they can review all the verbiages. I will review first and resolve any typos.
+
+Thanks,
+Tai
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki made the following comment in DSI-226
+
+@isd
+
+Hi [~tai.trinh],
+
+I start working on it.
+
+Thanks.
+
+Abdullah
+
+
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki made the following comment in DSI-226
+
+@isd
+
+Hi [~tai.trinh],
+
+okay sure. I'll provide you one.
+
+Thanks
+
+Abdullah
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki made the following comment in DSI-226
+
+@isd
+
+Hi [~tai.trinh],
+
+you will find the list of error messages [*here.*|https://confluence.infoimageinc.com/x/TYAuBQ]
+
+I will also link this to this ticket.
+
+one more thing, if you update any message could you please update the document at the same time as well. If any modification comes in the future (such as updating DSO enrollment logic with pre-existing NP records) there will be changes required in the error messages as during the testing of that update QA already reported some miss-match in the error messages. so if we maintain this for error message update/modification that would be really helpful and changes will be less time-consuming.
+
+Thanks,
+
+Abdullah
+
+
+
+
+
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki],
+
+Thank you.
+
+Okay, I will keep this document updated.
+
+Thanks,
+
+Tai
+
+
+author: tai.trinh
+comment: @dsi
+
+Hi [~abdullah.baki],
+
+In the document, can you add another section (table) that details what error messages would no longer be relevant if we roll out the ECL/DSO update (such as during MFA token, the user can't provide an SMS anymore, so any related error messages would be removed)? And what would be the new error messages introduced?
+
+Thanks,
+
+Tai
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Abdullah Al Baki made the following comment in DSI-226
+
+@isd
+
+Hi [~tai.trinh],
+
+I have added the section and possible edit to the error messages.
+
+Thanks
+
+Abdullah
+

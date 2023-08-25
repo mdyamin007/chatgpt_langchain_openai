@@ -1,0 +1,276 @@
+title: RHS - Parallel:  FLCU Adverse Action failed to process
+description: [~William.Kong] FLCU Adverse Action failed to process... Please see tail end of logging printed to screen:
+
+/home/test/master/update_insert.sh flcudlb 092520
+in /home/test/master/update_insert.sh ck sup
+cat /home/test/insert/flcudlb.ins | sed 16s/09-25/09-25/g | sed s/09252020/09252020/
+`/z/daily/flcudlb/files/flcudl401.pdf' -> `/d/Iswk_new/test/flcudlb/flcudl401.pdf'
+
+
+Starting Red Titan Process for flcudl401.pdf at 10052020 0824
+/home/test/master/iswk_client3.pl flcudlb flcudl401.pdf test
+Socket connecting Iswk4 ...
+Socket error: Invalid argument IO::Socket::INET: Bad hostname 'Iswk4'
+Error processing RedTitan iswk_client3.pl flcudl401.pdf test
+
+
+author: william.kong
+comment: [~glenn.grimes]: Can you share the script you used to process this program? My team was supposed to update the script to no longer use the name 'Iswk4'.
+
+
+author: william.kong
+comment: [~glenn.grimes]: Nevermind. The script name is/home/test/master/iswk_client3.pl
+
+
+
+[~Peter.Dang]: Can you get this fixed? Please update script to use
+
+
+
+*/home/test/master/iswk_client3.pl:*
+
+ca-rtitan-pr-04 instead of Iswk4.
+
+
+
+*/home/test/master/iswk_client2.pl:*
+
+ca-rtitan-pr-03 instead of Iswk3.
+
+
+
+*/home/test/master/ucsf_client.pl:*
+
+ca-ritan-pr-01 instead of Iswk_new
+
+
+author: peter.dang
+comment: Need to update $host=iswk3 to ca-rtitan-pr-03 iswk_client2.pl
+
+and $host=iswk4 to ca-rtitan-pr-04 iswk_client3.pl
+
+add $host=ISWK_new to ca-rtitan-pr-01 iswk_client.pl
+
+
+author: peter.dang
+comment: iswk_client1.pl
+
+Iswk_new to ca-rtitan-pr-01
+
+iswk_client2.pl
+
+$host=iswk3 to ca-rtitan-pr-03
+
+iswk_client3.pl
+
+$host=Iswk4 to ca-rtitan-pr-04
+
+
+
+
+author: ID10405
+comment: Code is released. Closing this out.
+
+
+author: william.kong
+comment: This is still pending Peter to release the code to Brisbane tomorrow morning.
+
+
+
+[~Peter.Dang]: can you also assign this ticket to Glen after you manually release code to brisbane so that he can retest to confirm that it works.
+
+
+
+
+
+
+author: william.kong
+comment: [~glenn.grimes]: Peter forgot to update this ticket. He's released the code. Please retest.
+
+
+
+[~Peter.Dang]: FYI.
+
+
+author: william.kong
+comment: [~glenn.grimes]: Hi Glen, do you have any update on this ticket?
+
+
+
+
+author: glenn.grimes
+comment: [~William.Kong] [~Peter.Dang] Sorry, I tried this a couple of days back and was getting the same error... I could have sworn I added a comment and assigned back to Peter? Anyway, I just tried to process again and I am still getting the following error:
+
+
+
+/home/test/master/update_insert.sh flcudlb 092520
+in /home/test/master/update_insert.sh ck sup
+cat /home/test/insert/flcudlb.ins | sed 16s/09-25/09-25/g | sed s/09252020/09252020/
+`/z/daily/flcudlb/files/flcudl401.pdf' -> `/d/Iswk_new/test/flcudlb/flcudl401.pdf'
+
+
+Starting Red Titan Process for flcudl401.pdf at 10142020 0503
+/home/test/master/iswk_client3.pl flcudlb flcudl401.pdf test
+Socket connecting Iswk4 ...
+Socket error: Invalid argument IO::Socket::INET: Bad hostname 'Iswk4'
+Error processing RedTitan iswk_client3.pl flcudl401.pdf test
+
+
+author: william.kong
+comment: [~glenn.grimes]: Thanks for the update. For some reason the parallel code does was not updated. I thought my team got this updated along with production last week.  Production code is updated, but not in parallel.  I+temporarily+ modify the brisbane code. Can you retest quickly before which switch license from RHS to RHS2 today. Thanks!
+
+
+
+
+
+[~Peter.Dang]: Why is parallel code not updated, please advise. I+temporarily+ modified the Brisbane Parallel code.
+
+
+
+!image-2020-10-14-08-26-22-923.png!
+
+
+author: glenn.grimes
+comment: [~William.Kong] [~Peter.Dang] William I reprocessed, it looks like it accessed RedTitan this time, but failed after. Please see below from processing log:
+
+**********************************************************************
+Daily Process for flcudlb starting...
+
+
+Starting Red Titan Process for flcudl401.pdf at 10142020 0837
+/home/test/master/iswk_client3.pl flcudlb flcudl401.pdf test
+Copying afp and csv output from red titan to processing directory
+
+
+Processing cycle 25 at 0837
+**********************************************************************
+Formatting...
+**********************************************************************
+
+
+Total Page Count for flcudl401.pdf: 208
+Merging lines for each account...
+/home/test/master/redtitan_csv_index.pl /z/daily/flcudlb/files/data/flcudl401.csv /z/daily/flcudlb/format_data/flcudl401.dat 208 10
+Failed in dn_format.pl. Exiting.
+
+
+author: william.kong
+comment: [~Peter.Dang]: There are two issues. Please review the comment above from Glen and the prior comment from me for the 2nd issue that needs to be fixed.
+
+
+author: william.kong
+comment: [~Peter.Dang]: Per our conversation, you are addressing the iswk_clien3.pl code issue.
+
+
+
+[~thomasY]: Per Terrence, can you help research the from Glenn's comment above.
+
+
+author: thomasy
+comment: [~glenn.grimes] [~William.Kong]I was able to run the process to completion with the only error being the lack of a papyrus key.
+
+
+author: william.kong
+comment: [~thomasY]: Thanks for assisting so quickly. Then i'm not sure why Glenn ran into the issue earlier. Since RHS key is not active, I'm going to put this into the backlog and assign it to me for now.
+
+
+
+-- Will
+
+
+author: william.kong
+comment: [~glenn.grimes]:
+
+
+
+Please re-test this in*parallel.* Once completed please update Parallel smartsheet:
+
+[https://app.smartsheet.com/sheets/Gxwc79WFwW3wxqc2QJPvrp22CQrgf3Qgjv4R7pF1]
+
+
+
+
+
+
+author: glenn.grimes
+comment: [~William.Kong] [~thomasY] I have reprocessed and it did not process to completion... tail end of screen print logging:
+
+
+
+Archive: /z/daily/flcudlb/files/FLCU_Adverse_Action_XA09252020.zip
+ inflating: /z/daily/flcudlb/files/402/XA-86865-0-Adverse Action Mailer for Applicant 1.PDF
+/home/test/master/update_insert.sh flcudlb 092520
+in /home/test/master/update_insert.sh ck sup
+cat /home/test/insert/flcudlb.ins | sed 16s/09-25/09-25/g | sed s/09252020/09252020/
+`/z/daily/flcudlb/files/flcudl401.pdf' -> `/d/Iswk_new/test/flcudlb/flcudl401.pdf'
+`/z/daily/flcudlb/files/flcudl402.pdf' -> `/d/Iswk_new/test/flcudlb/flcudl402.pdf'
+
+
+Starting Red Titan Process for flcudl401.pdf at 11132020 0548
+/home/test/master/iswk_client3.pl flcudlb flcudl401.pdf test
+Socket connecting ca-rtitan-pr-04 ...
+Client rhs connected to host 10.4.20.124 ...
+Waiting for server ca-rtitan-pr-04 response ...
+Client get response 'done' from server ca-rtitan-pr-04
+Exitting client ...
+
+
+Starting Red Titan Process for flcudl402.pdf at 11132020 0548
+/home/test/master/iswk_client3.pl flcudlb flcudl402.pdf test
+Socket connecting ca-rtitan-pr-04 ...
+Client rhs connected to host 10.4.20.124 ...
+Waiting for server ca-rtitan-pr-04 response ...
+Client get response 'done' from server ca-rtitan-pr-04
+Exitting client ...
+Copying afp and csv output from red titan to processing directory
+
+
+Processing cycle 25 at 0548
+**********************************************************************
+Formatting...
+**********************************************************************
+
+
+Total Page Count for flcudl401.pdf: 208
+Merging lines for each account...
+/home/test/master/redtitan_csv_index.pl /z/daily/flcudlb/files/data/flcudl401.csv /z/daily/flcudlb/format_data/flcudl401.dat 208 10
+Adding page count for 208 page from 10 position ...
+Done page count for 104 accounts with 208 pages.
+Total Page Count for flcudl402.pdf: 2
+Merging lines for each account...
+/home/test/master/redtitan_csv_index.pl /z/daily/flcudlb/files/data/flcudl402.csv /z/daily/flcudlb/format_data/flcudl402.dat 2 10
+Adding page count for 2 page from 10 position ...
+CSV file /z/daily/flcudlb/files/data/flcudl402.csv is bad. Aborted ...Error within program: Error RedTitan indexing csv file /z/daily/flcudlb/format_data/flcudl402.dat
+
+
+author: william.kong
+comment: [~thomasY]:  Can you please review this?
+
+
+author: thomasy
+comment: [~glenn.grimes] Please try again. Some files were not synced up.
+
+
+author: glenn.grimes
+comment: [~thomasY] I have reprocessed, everything looks good; however, there were a couple of DPVS errors. I believe I might have added actual job numbers into the insert, so that explains the first error and it is likely ignoreable; however, before I pass I just wanted to make sure the second error is ignoreable as well.
+
+Error function get_app_no data is missing: app_no = 99999, app_version = 9999999, app_desc = no desc, Bad file descriptor
+ in /home/test/master/dpvs_rpt.pl
+Fri Nov 13 12:12:16 PST 2020
+Error: Missing incoming data files. Please ensure to call get_md5_sum.sh to popluate incoming file in /home/test/master/dpvs_rpt.pl
+
+
+author: thomasy
+comment: [~glenn.grimes] DPVS error is fine. This happens currently as well.
+
+
+author: glenn.grimes
+comment: [~William.Kong] Since both errors appear to be ignorable, I will go ahead and pass this on the smartsheet.
+
+
+
+Thank you.
+
+
+author: william.kong
+comment: [~glenn.grimes]: Thanks! I will close this ticket out then.

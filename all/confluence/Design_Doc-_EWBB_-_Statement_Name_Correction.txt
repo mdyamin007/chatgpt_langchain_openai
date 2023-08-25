@@ -1,0 +1,92 @@
+title: Design Doc- EWBB - Statement Name Correction
+body:   
+
+Target release|  
+  
+---|---  
+Epic|  
+  
+Document status|
+
+DRAFT  
+  
+Document owner|  
+  
+Designer|  
+  
+Developers|  
+  
+QA|  
+  
+  
+## Goal:
+
+  * Remove all instances of User/Customer Name from both Admin site and eStatement site.
+  * Update email templates to use AcctName instead of UserName so that the email is sent out with the Account Holder Name instead of the User Name.
+
+## Requirements:
+
+  
+| Title| User Story| Importance| Notes| Pilot| Production  
+---|---|---|---|---|---|---  
+1.| msm| As an EWBB admin, I would like to able to search for an account
+information by account number and able to view the account owner name along
+with other informations.| Must Have|
+
+  * If that account is associated with multiple account, a list appears where "Account Number", "Application" and "Customer Name" is shown. According to current implementation of EWBB, "user_firstname" appended with "user_lastname" [from USR table] is shown as "Customer Name" . Now, after this update, "account_owner_name" [from FIN_ACCOUNT table] will be shown as "Customer Name". 
+  * If a specific account is needed to be viewed, by clicking the particular "Customer Name", a page appeares where, Under Account Information section, both "Customer Name"(from USR table) and "Account Holder Name"(from FIN_ACCOUNT table) is shown. After this update, only "Account Holder Name" will be visible. 
+
+|  181 incomplete   |  182 incomplete  
+2.| ROOT| As an EWBB root user, i would like to see the account owner name on
+profile page | Must Have|
+
+  * According to current implementation, "user_firstname" appended with "user_lastname" is shown as "Name" under "User Information" section. And under "Delivery Preference" section, "acct_owner_name" is shown as "Account Holder Name". After this update, "Name" will be removed.  
+
+|  183 incomplete   |  184 incomplete  
+3.| PUI| The email templates will use acctName instead of userName. | Must
+Have|
+
+  * For EWBB email templates, it uses the "sdv_txt_userName" as system variable which gets replaced by "usr_firstname". After this update, it'll use "sdv_txt_acctName" so that, email templates get created where this "sdv_txt_acctName" variable gets replaced by "acct_owner_name" from "FIN_ACCOUNT" table. 
+
+|  185 incomplete   |  186 incomplete  
+  
+  
+
+## Changes in files:
+
+Project File Path| Changes| Comments  
+---|---|---  
+/msm/statements/acctsearch_action.jsp| Take acctName from FinanceAccountBean
+and set it to Result object| Previously, userName was passed for showing on
+listResult.jsp as Customer Name. Now, passing acct_owner_name for showing as
+Customer name on lilstResult.jsp page.  
+/msm/profile/profile_inc.jspf| Hide Customer Name| Profile_inc.jspf page shows
+both "Customer Name"(from USR table) and "Account Holder Name"(acct_owner_name
+from FIN_ACCOUNT table). Now, only Account Holder Name will be visible.  
+/msm/include/define.jsp| Add "$sdv_txt_acctName" variable to the
+KeyWordsOfEmailV2 array| This variable will be used as System Variable in
+Email Proofing  
+/msm/proofing/preview.jsp| Replace "$sdv_txt_userName" to "$sdv_txt_acctName"|
+Wll use "$sdv_txt_acctName" on email template preview.  
+/ROOT/profile/profile2.jsp| Hide "Name" from "User Information" section. |
+Under "User Information" section, user firstName and lastName from USR table
+is shown as "Name" . Under "Delivery Preference" section, acct_owner_name is
+shown as "Account Holder Name" under each accounts. So, Hiding the "Name" from
+"User Information" section.  
+  
+  
+
+## Questions:
+
+Below is a list of questions to be addressed as a result of this requirement
+document:
+
+Question| Answer  
+---|---  
+  
+|  
+  
+  
+  
+
+

@@ -1,0 +1,216 @@
+title: SVN User Guide
+body: <http://svnbook.red-bean.com/en/1.2/index.html>  
+  
+
+## SVN plugin setup on eclipse:
+
+  1. Install Subversive plugin
+    * Main Menu -> Help -> Install New Software
+    * Type the below URL in the Work with field
+      * <http://download.eclipse.org/technology/subversive/0.7/update-site/>  
+
+      * Complete the remaining steps of installation
+      * At one point you will be asked to restart eclipse please do that.
+      * When eclipse starts up again it will ask you to install SVN connectors. Make sure you pick a non windows 32 version option  
+  
+
+  1. Import an existing SVN project
+    1. File -> Import -> SVN -> Project from SVN  
+
+  2. Checkout project from SVN Repository  
+
+  3. Enter Repository Location Information  
+
+  4. You would see a directory as below.  
+
+  5. All set
+
+  
+
+## SVN Command line operations cheatsheet:
+
+svn status codes - <http://svnbook.red-
+bean.com/en/1.7/svn.ref.svn.c.status.html>
+
+Command| Description| Example  
+---|---|---  
+info| Display information about a local or remote item.|
+
+    
+    
+     svn info 
+    Path: .
+    URL: svn+ssh://joveen@pd-tools.infoimage.com/srv/svn/tmp/afp2pdf/branches/current
+    Repository Root: svn+ssh://joveen@pd-tools.infoimage.com/srv/svn
+    Repository UUID: f280780f-b69a-4f9d-9bc4-c8a8cf7c6f48
+    Revision: 12
+    Node Kind: directory
+    Schedule: normal
+    Last Changed Author: builder
+    Last Changed Rev: 12
+    Last Changed Date: 2013-04-16 12:03:02 -0700 (Tue, 16 Apr 2013)   
+  
+Creating a new project in the repository  
+svn import| create initial project in repositroy| <http://svnbook.red-
+bean.com/en/1.2/svn.intro.quickstart.html>  
+In the repository create your project eg. afp2pdf.  
+Your project's tree structure should contain three top-level directories named
+branches, tags, and trunk. Have your code only in the trunk folder  
+
+    
+    
+                                                    builder@pd-tools:~/src/tmp/afp2pdf$ dir
+                                                    branches  tags  trunk
+                                                   
+
+  
+Import it  
+
+    
+    
+                                                    builder@pd-tools:~/src/tmp$ svn import afp2pdf svn+ssh://builder@pd-tools.infoimage.com/srv/svn/tmp/afp2pdf -m "Importing initial project directory" 
+                                                    Adding         afp2pdf/tags
+                                                    Adding         afp2pdf/trunk
+                                                    Adding         afp2pdf/branches
+                                                    Committed revision 24.
+                                                   
+
+  
+might need to add and commit operations after this  
+add ( needs svn commit)| to add a new file/dir to svn|
+
+    
+    
+    $ svn add foo.c 
+                                        A         foo.c   
+  
+commit| to commit a change|
+
+    
+    
+    $ svn commit - m "new file added" 
+                                                                 Adding         test2.java
+                                                                 Transmitting file data .
+                                                                 Committed revision 16. 
+
+  
+commit all files in a dir use .  
+
+    
+    
+                                           svn commit -m "committing files" .
+                                           
+  
+delete (needs svn commit after)| delete a file or dir|
+
+    
+    
+     svn delete test2.java
+                                      D         test2.java 
+                                     
+
+  
+delete directory  
+
+    
+    
+     builder@pd-tools:~/src/tmp$ svn delete  afp2pdf
+                                      D         afp2pdf/tags
+                                      D         afp2pdf/trunk/test.java
+                                      D         afp2pdf/trunk
+                                      D         afp2pdf/branches/current/test.java
+                                      D         afp2pdf/branches/current
+                                      D         afp2pdf/branches
+                                      D         afp2pdf
+                                      
+
+  
+commit delete operation  
+
+    
+    
+    builder@pd-tools:~/src/tmp$ svn commit -m "Deleting afp2pdf" afp2pdf
+                                      Deleting       afp2pdf
+    
+                                      Committed revision 20.
+                                        
+  
+svn copy  
+(branch creation)| to copy| after copy you might have to add and commit again  
+
+    
+    
+                              builder@pd-tools:~/src/tmp/afp2pdf$ svn cp trunk/ branches/current
+                              A         branches/current
+                              builder@pd-tools:~/src/tmp/afp2pdf$ svn commit -m "creating current branch from trunk" 
+                              Adding         afp2pdf/branches/current
+                              Committed revision 27.
+                                
+  
+svn revert filename  
+svn revert --depth=infinity .| undo local edits|
+
+    
+    
+    svn revert  afp2pdf
+
+  
+
+    
+    
+    builder@pd-tools:~/src/tmp$ svn revert  afp2pdf
+    Reverted 'afp2pdf'
+      
+  
+status| shows current status of svn operations  
+<http://svnbook.red-bean.com/en/1.7/svn.ref.svn.c.status.html>|
+
+    
+    
+    builder@pd-tools:~/src/tmp$ svn status
+    D     C afp2pdf
+          >   local delete, incoming edit upon update
+    D       afp2pdf/tags
+    D       afp2pdf/tags/rel_20130401
+    D       afp2pdf/tags/rel_20130401/test.java
+    D       afp2pdf/tags/rel_20130410
+    D       afp2pdf/tags/rel_20130410/test.java
+    D       afp2pdf/trunk
+    D       afp2pdf/trunk/test.java
+    D       afp2pdf/branches
+    D       afp2pdf/branches/current
+    D       afp2pdf/branches/current/test.java
+    D       afp2pdf/branches/current/test3.java
+      
+  
+  
+
+svn+ssh:[//joveen@pd-tools.infoimage.com](mailto://joveen@pd-
+tools.infoimage.com)/home/joveen/src/afp2pdf-full| checking out from your home  
+---|---  
+unix command to delete a folder under a given directory and subdirectories|  
+|
+
+    
+    
+    find . -name CVS -exec rm -rf {} \;
+      
+      
+    
+    svn co svn+ssh://bchan@pd-tools/srv/svn/tmp/afp2pdf/branches/current .
+    
+    svn up filename.java
+    svn up .
+    svn add new_folder
+    svn commit -m "commit comments" file_or_folder_name.java
+    svn status
+    svn info
+    svn merge svn+ssh://bchan@pd-tools/srv/svn/tmp/afp2pdf/trunk/test.java ./test.java
+    svn revert
+    
+
+  
+
+### Attachments
+
+

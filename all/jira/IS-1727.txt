@@ -1,0 +1,576 @@
+title: OFCU [34467] [pvt] Update Visa Statement - Account Summary Section
+description: OFCU - Update Visa Statement - Account Summary Section
+
+App: Stmt
+
+Description: In the Account Summary Box, add the Bal Trans section.
+
+IS Assessment =============
+
+Hours for development: 4 IS hours + (1 ISD )
+Turnover Date : 10/19/2022
+Sample to QA Date: 11/02/2022
+Sample date: 11/04/2022
+Approval Date: 11/08/2022
+Go live date : 11/16/2022
+Engineering resource: Zhuoxin
+
+Assessment Details (IS):
+
+    Parallel required: (Yes) ONLY Paper output to make sure the updates are not effect for account separate in paper.
+    Application name: ofcumv1
+
+    Updates:
+
+In the Account Summary Box, add the Bal Trans section. 3 hours
+
+1. Move the Purchase and Cash Adv section to the left, and create a Bal Trans column.
+2. Starting from the Credit Limit section - Move the entire section down and extend the Account Summary box  with enough space to add the new verbiage.
+3. Remove the existing verbiage (Pur+Cash Adv).
+4. Under Total New Balance add (Purchases+Cash Adv+Balance Transfers)
+5. Move the Amount for the Total New Balance  down to the next line  so that it lined up w/ the new line added in #4.
+
+Field Mapping for the new column Bal Transfers: 1 hour
+
+Previous Balance = 582-02
+Payments = 582-03
+Credits=582-04
+Transactions=582-05
+Fee Charged=582-10
+Interest Charged=582-07
+New Balance=582-08
+**Note  if the field does not exist in the data file  then default to printing .00 in that section.
+
+MPT # 35807
+
+
+author: JIRAUSER11101
+comment: Hi [~barnetts] 
+Can we get a test data file from client? The one attached on TS#34467 comment #5 is not able to parse.
+Please request fixed file and drop to the ftp test folder.
+
+Or can we use the latest file from production?
+Thanks
+
+
+author: barnetts
+comment: Hi [~zhuoxinT],
+
+Please use the latest file from production.
+
+Thanks, Barnett 
+
+
+author: barnetts
+comment: Hi [~zhuoxinT],
+
+Can you please advise if the latest production file will work?
+
+Thanks, Barnett
+
+
+author: JIRAUSER11101
+comment: Hi [~barnetts] 
+
+That works, but it has 4000+ accounts, only a few accounts have data 582.
+It will be hard to look for those accounts for sample.
+It is better to get a test file from client.
+
+Thanks
+
+
+author: barnetts
+comment: HI [~zhuoxinT],
+
+Can you please advise if this will work? 490987_Statement_Batch_0_Final.txt 
+
+Thanks, Barnett  [^490987_Statement_Batch_0_Final.txt.txt] 
+
+
+author: JIRAUSER11101
+comment: [~barnetts] 
+Can you please place it to AC secure share folder?
+Not sure why its not able to download
+Thanks
+
+
+
+author: barnetts
+comment: Hi [~zhuoxinT],
+
+The file has been placed in the AC Secure folder.
+* 32138_490987_Statement_Batch_0_Final.txt
+AC Secure Share / AC / Barnett 
+
+Thanks, Barnett 
+
+
+author: JIRAUSER11101
+comment: [~barnetts] 
+I checked the content, it is the same file from client on 10/15
+OFCUVIS.1022.TXT.pgp
+
+but this file has more than 4000+ accounts.
+
+
+author: barnetts
+comment: Hi [~zhuoxinT],
+
+Can you please review ticket T#34727 and advise if we can add the following updates?
+
+
+Add 'Balance Transfer' line to end to Interest Charge Calculation section.
+This is the mapping for the column values provided in comment 1:
+=======================
+582 - Balance Transfers
+=======================
+Annual Percentage Rate
+*  ID
+*  20        Rate    Balance Transfer interest rate 1           8
+* Monthly Periodic Rate
+*  56        Rate    Balance Transfer periodic interest rate 1  8
+* Days in Billing Cycle
+*  74        Number  Balance Transfer days in billing cycle    11
+* Average Daily Balance
+*  47        Money   Balance Transfer average daily balance 1  17
+*  Periodic Interest Charge
+*  11        Money   Balance Transfer finance charge 1         17
+* Cash Advance fee
+* None
+
+Thanks, Barnett 
+
+
+author: barnetts
+comment: Hi [~zhuoxinT],
+
+I will follow up with OFCU about the test data.
+
+Thanks, Barnett 
+
+
+author: JIRAUSER11101
+comment: [~barnetts] 
+what is the mapping logic above? Can you request a better mapping on this?
+like: value name: fields/position
+
+for example: ID= 582-20? 
+What is the 1 8 at the end of the line?
+
+Annual Percentage Rate
+ * ID
+ * 20 Rate Balance Transfer interest rate 1 8
+ * Monthly Periodic Rate
+ * 56 Rate Balance Transfer periodic interest rate 1 8
+
+
+author: barnetts
+comment: HI [~zhuoxinT],
+
+New test data
+test/For_Case_34727.txt	5.59 Mb / 10/25/2022 09:00 PST
+
+Thanks, Barnett
+
+
+author: barnetts
+comment: [~zhuoxinT]
+
+Annual Percentage Rate
+20 (Rate-Balance Transfer interest rate 1)- 8
+
+Monthly Periodic Rate 
+56 (Rate-Balance Transfer periodic interest rate 1)- 8
+
+Days in Cycle
+74 (Number- Balance Transfer days in billing cycle)- 11
+
+Average Daily Balance- 
+47 (Money Balance-Transfer average daily balance 1)- 17
+
+Periodic Finance Charge
+11  (Money-Balance Transfer finance charge 1) 17
+
+Cash Advance fee- None
+
+
+author: JIRAUSER11101
+comment: [~barnetts] 
+ i checked the new data fileFor_Case_34727.txt.
+ It's smaller, but many accounts don't have the 582 field.
+!image-2022-10-26-13-29-32-502.png!
+
+
+ !image-2022-10-26-13-27-26-204.png!
+
+And can you please create another Jira for #34727. this Jira only for the update from #34467
+ Thanks
+
+
+author: barnetts
+comment: Will do [~zhuoxinT],
+
+Please proceed with the changes for T#34467. I will open a separate ticket for 34727.
+
+Thanks, Barnett 
+
+
+author: barnetts
+comment: Hi [~zhuoxinT],
+
+Please see OFCU response below.
+Per OFCU,
+If there is no data for the Balance Transfer section (582)  - then just fill in all .00 in the Balance Transfer column  in the account summary section.
+
+Thanks, Barnett 
+
+
+author: JIRAUSER11101
+comment: [~Igor.Khosid] 
+ Parallel ID: 20221031102254
+ Currently in parallel: Yes
+ User: zhuoxinT
+ Description: IS-1727 and IS-1761 update. add balance transfer column and summary section
+ Date Submitted: 2022-10-31 10:23:00
+ Date Last Updated: 2022-10-31 10:23:00
+ Files:
+ 1) OFCUMV11.dfa
+
+This is an update for IS-1727 and IS-1761
+
+IS1727: add the "Bal Trans" column.
+!image-2022-10-31-11-07-49-343.png!
+IS1761: add the "Balance Transfer" row in "Interest Charge Calculation" section. NOTE: not every account has this section.
+!image-2022-10-31-11-08-00-553.png!
+
+DPVS:[^ofcumv1131.print]
+4.2o1 sample:[^ofcumv11314.2o1.pdf]
+smaller size sample:[^ofcumv1131.sam.pdf]
+index file:[^mv1_10152022_10312022_1124_ofcu.txt]
+archival:[^ofcumv1_10312022.zip]oversized, placed to iss/qa/ofcu/IS1727
+
+FYI: [~barnetts]
+
+
+author: igor.khosid
+comment:    Parallel ID: 20221031102254
+   Currently in parallel: Yes
+   User: zhuoxinT
+   Description:  IS-1727 and IS-1761 update. add balance transfer column and summary section
+   Date Submitted: 2022-10-31 10:23:00
+   Date Last Updated: 2022-10-31 10:23:00
+   Files:
+      1) OFCUMV11.dfa
+
+
+author: igor.khosid
+comment: [~gthillaivel] - Please review and confirm if it is ready for the client review
+For additional info, please see TS #34467
+
+
+author: gthillaivel
+comment: QA in progress
+
+
+author: gthillaivel
+comment: [~barnetts] [~zhuoxinT]
+Verified the sample PDF "Bal Trans" column is available now in the "Account Summary section" .Mapping will be verified after the Client approval. Ready for Client review
+ !screenshot-1.png|thumbnail! 
+
+
+author: JIRAUSER11101
+comment: [~barnetts] 
+Please make sure both update approved.
+IS-1727 and IS-1761
+Thanks
+
+
+author: barnetts
+comment: Hi [~zhuoxinT] / [~gthillaivel]
+
+Please requested corrections below. Screenshots attached for reference.  [^Screenshot 2022-11-02_.pdf]  [^Corrrections_11.3.22_.pdf] 
+
+Per OFCU, 
+1. Move the verbiage (Purchases+Cash Adv+Balance Transfers) to the next line - underneath "Total New Balances" 
+
+2. Starting form Total New Balance - move the ALL of the amounts over to the far RIGHT of the box. It's currently in the center. 
+
+3. I would like to use a data file that has promotions as well. I'll upload a test data file for this case to use for the samples - once this has been fixed.  Data_File_For_Case_34467.txt"
+ * test/Data_File_For_Case_34467.txt / 5.22 Mb (11/02/2022 16:15 PST)
+
+
+Thanks. Barnett 
+
+
+
+author: JIRAUSER11101
+comment: [~gthillaivel] [~barnetts] 
+new sample:[^ofcumv11314.2o1.pdf]run with data from client: Data_File_For_Case_34467.txt
+new DPVS:[^ofcumv1131.print]
+new index file:[^mv1_10152022_11032022_1006_ofcu.txt]
+new archival : Placed to qa/ofcu/IS1727
+
+
+author: gthillaivel
+comment: [~barnetts]
+[~zhuoxinT]
+1. Move the verbiage (Purchases+Cash Adv+Balance Transfers) to the next line - underneath "Total New Balances"-Requirement
+QA comments: "Purchases+Cash" verbiages is displayed next to "Total New Balance" instead of displaying underneath the "Total New Balance" ---Failed
+ !screenshot-2.png|thumbnail! 
+
+ 2. Starting form Total New Balance - move the ALL of the amounts over to the far RIGHT of the box. It's currently in the center.
+QA comments: Amounts are not moved right of the box -Failed
+ !screenshot-3.png|thumbnail! 
+
+[~barnetts]-Can you confirm when the data is not available for under the "Payment information" box. Do you still want to display empty box in the notice?
+ !screenshot-4.png|thumbnail! 
+
+Blocker BT-504, BT-505
+
+
+author: JIRAUSER11101
+comment: [~gthillaivel] [~barnetts] 
+ Sorry, i attached the wrong files.
+ update sample :[^ofcumv1_update_1103.pdf]
+ dpvs:[^ofcumv1131_1103.print]
+ index file:[^mv1_10152022_11032022_1006_ofcu.txt]
+ archival: place to qa/OFCU/IS1727
+
+Also the empty box [~gthillaivel]mentioned above is not part of the update and it is displaying when there is no data.
+
+
+author: gthillaivel
+comment: [~zhuoxinT]
+[~barnetts]
+Verified the latest sample " ofcumv1_update_1103.pdf". Looks good. Ready for Client review
+1. Move the verbiage (Purchases+Cash Adv+Balance Transfers) to the next line - underneath "Total New Balances"--QA comments: Fixed
+2. Starting form Total New Balance - move the ALL of the amounts over to the far RIGHT of the box. It's currently in the center.
+QA comments: Fixed
+ !screenshot-5.png|thumbnail! 
+
+
+author: barnetts
+comment: Thank you [~zhuoxinT]
+
+Thanks, Barnett
+
+[~gthillaivel]
+
+
+author: barnetts
+comment: Hi [~zhuoxinT] / [~gthillaivel]
+
+Please see below.
+Per OFCU, for account 14870 and compare it to 17812. 14870 is completely missing the Interest Charge Calculation section. 
+
+Thanks, Barnett 
+
+
+author: JIRAUSER11101
+comment: [~barnetts] 
+There is a condition that control display or not.
+ NOT EMPTY(V580_F43) OR NOT EMPTY(V580_F45) OR NOT EMPTY(V582_F47)
+ifV580_F43 orV580_F45 orV582_F47 has value, then the "Interest Charge Calculation section" will be displayed.
+
+For the account 14870, those 3 fields are not found:
+580~0130~035900~045900~0511122022~06670800~07299784~08371016~2813.034%~2918.000%~3013.034%~3218.000%~501.08616%~510.00000%~521.50000%~530.00000%~5830~790.00000%~800.00000%~810.00000%~820.00000%~901~941`
+582~0313416~05313200~08299784~48123938~560.00000%~570.00000%~580.00000%~590.00000%~600.00000%~610.00000%~620.00000%~630.00000%~640.00000%~7430~751`
+
+For account 17812, 582_47 found:
+580~0130~0320000~0420000~0511122022~061000000~071000000~2813.034%~2918.000%~3013.034%~3218.000%~501.08616%~510.00000%~521.50000%~530.00000%~5830~790.00000%~800.00000%~810.00000%~820.00000%~901~941`
+582~051000000~081000000~{color:#de350b}*47*{color}166667~560.00000%~570.00000%~580.00000%~590.00000%~600.00000%~610.00000%~620.00000%~630.00000%~640.00000%~7430~751`
+
+Please advise if we need to add more condition to display this section.
+Thanks
+
+
+author: barnetts
+comment: HI [~zhuoxinT],
+
+Please see below.
+Correction  - Clarification on the Account Summary section
+582 - 10        Money   Balance Transfer transaction finance charge
+If 582_10 is found  then that value should be placed be placed in two places. Please refer to screenshot (Screenshot_11.7.22 !Screenshot_11.7.22.jpg|thumbnail! )
+
+
+Thanks, Barnett
+
+
+author: JIRAUSER11101
+comment: [~barnetts] 
+According to client's #37 comment, we also need to add logic to display the interest charge calculation section.
+
+If582_47 or 582_48 is found  then display the Interest Calculation section.
+
+582 - 47 Money Balance Transfer average daily balance 1
+
+582 - 48 Money Balance Transfer average daily balance 2
+
+Also  (sorry) I noticed one more mapping that I missed.
+
+582 - 10 Money Balance Transfer transaction finance charge
+
+If 582_10 is found  then that value should be placed be placed in two places.
+
+Thanks,
+
+
+author: JIRAUSER11101
+comment: [~barnetts] 
+updated sample:[^ofcumv1_1107.pdf]
+
+DPVS:[^ofcumv1122_1107.print]
+archival:[^ofcumv1_11072022.zip]placed to QA/OFCU/IS1727
+
+index file:[^mv1_10152022_11072022_1233_ofcu.txt]
+
+fyi: [~gthillaivel]
+
+
+author: barnetts
+comment: Thank you [~gthillaivel]
+
+
+author: igor.khosid
+comment: [~gthillaivel]
+Please review and confirm if the last sample - ready for the client review
+
+
+author: gthillaivel
+comment: [~zhuoxinT]
+[~barnetts]--Verified the mapping and the latest sample ,looks good and ready for the Client Review
+
+
+author: barnetts
+comment: Thank you [~gthillaivel] / [~zhuoxinT]
+
+OFCU has sent new test data. Can you please provide new samples?
+* test/For_Case_34467_FINAL.txt / 10.06 kb (11/07/2022 15:15 PST)
+
+Thanks, Barnett
+
+
+author: JIRAUSER11101
+comment: [~gthillaivel] [~barnetts] 
+sample:[^ofcumv1_1108.pdf]
+DPVS:[^ofcumv1122_1108.print]
+index:[^mv1_09152022_11082022_0901_ofcu.txt]
+archival:[^ofcumv1_11082022.zip]
+
+
+author: barnetts
+comment: Hi [~zhuoxinT] / [~gthillaivel],
+
+The archival and samples are approved by OFCU.
+
+Thanks, Barnett 
+
+
+author: JIRAUSER11101
+comment: [~gthillaivel] 
+[^IS-1727-QA Checklist.doc]
+
+
+author: JIRAUSER11101
+comment: [~barnetts] 
+we need master parallel for this update. please have the ticket ready.
+thanks
+
+
+author: igor.khosid
+comment: [~gthillaivel]
+Please proceed with the final testing
+
+
+author: gthillaivel
+comment: [~zhuoxinT] [~barnetts]
+Can you request Print samples
+
+
+author: barnetts
+comment: Hi [~zhuoxinT] / [~gthillaivel]
+
+MPT # 35807 has been created. Please fill out. 
+
+Thanks, Barnett 
+
+
+author: barnetts
+comment: HI [~zhuoxinT] / [~gthillaivel],
+
+I will request print samples.
+
+Thanks, Barnett 
+
+
+author: barnetts
+comment: Hi [~zhuoxinT] / [~gthillaivel]
+
+Print samples are requested. 
+
+Thanks, Barnett
+
+
+author: barnetts
+comment: HI [~zhuoxinT] / [~gthillaivel]
+
+Samples are in the IS Box.
+
+Thanks, Barnett 
+
+
+author: JIRAUSER11700
+comment: Print samples attached >>>[^IS-1727_OFCU_PrntSmpls_11092022.pdf]
+
+
+author: gthillaivel
+comment: [~barnetts] [~zhuoxinT]
+Paper-Pass
+Esite-Posted index file below and verified the acct 100883,17812,120145 -Pass
+mv1_09152022_11082022_0901_ofcu.txt
+Print samples-Pass
+Attached is the IS checklist
+ [^IS-1727_OFCU-QA Checklist.pdf] 
+
+
+author: barnetts
+comment: MPT # 35807 updated with samples and checklist 
+
+
+author: barnetts
+comment: Hi [~zhuoxinT] / [~gthillaivel]
+
+FYI, Status: MPT # 35807 - Pending OPS to print
+
+Thanks, Barnett 
+
+
+author: JIRAUSER11101
+comment: [~barnetts] 
+Per Ops, parallel completed.
+When is good to release this?
+Note: IS-1761 will be released with this together.
+Thanks
+
+
+author: barnetts
+comment: HI [~zhuoxinT],
+
+Please release both IS-1761 / IS-1727 as soon as you are able to.
+
+Thanks, Barnett 
+
+
+author: JIRAUSER11101
+comment: [~TunA] 
+[^IS-1727&1761_PROGRAM_TRANSFER_FORM.doc]
+
+
+author: JIRAUSER11101
+comment: [~barnetts]
+ code released
+back up id: 20221115110757
+
+
+author: barnetts
+comment: Thank you [~zhuoxinT]

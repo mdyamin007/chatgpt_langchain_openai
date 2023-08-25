@@ -1,0 +1,118 @@
+title: Building Block - Credit Card Statements
+body:   
+
+## What does this block hold?
+
+Mainly Transactions & details of corresponding Credit Card expenses and
+Payments. Will build based on Loan Statement structure as foundation.  
+  
+
+## Cores evaluated
+
+  1. Symitar, Ultradata.
+
+  
+  
+
+## Attribute Structure
+
+Using the Loan Statements structure as foundation. Many fields are stripped
+out from Loan as they are not applicable to Credit Card statements
+
+  1.  **Section Header Label**  (e.g. "Visa", "MasterCard")
+  2.  **Accounts**
+    1. Array of  **Account**
+      1.  **Name**  (e.g. Chase Freedom MasterCard, Ink Enterprise MasterCard)
+      2.  **Major Code**  (Code values to indicate type of account: credit card)
+      3.  **Minor Code**  (Symitar use minor code with the actual values populated into this 'Minor Code'. OSI use combination of major and minor code)
+      4.  **Account Number**  (called as Member Number in CU)
+      5.  **Share Description**
+      6. Array of  **Account Owner Names**  (most likely single name in credit cards, but keep same structure as loan statement)
+        1.  **Full Name**  (!) Data are coming in as full name string only, if possible, should break this down into First/Middle/Last Names
+      7.  **Summary**
+        1.  **Start Date**
+        2.  **Start Balance**
+        3.  **End Date**
+        4.  **End Balance**
+        5. Array of  **Item**
+          1.  **Item Name**  ( Credit Limit / Available Credit / Purchases / Payments(credit) / Cash Advances / Balance Transfer / Other Debits / Fees / Finance Charges )
+          2.  **Due Amount**
+          3.  **Minimum Due Amount**
+          4.  **Current Period Amount**
+          5.  **Due Date**
+      8.  **Transactions**
+        1. Array of  **Transaction**
+          1.  **Transaction Date**
+          2.  **Effective Date**
+          3.  **Description**
+          4.  **Deposit/Credit**
+          5.  **Withdrawal/Debit**  {FIXME} Tien: change this
+      9.  **Finance Charges**
+        1.  **Sub-Total**
+        2.  **Days in Billing Period**
+        3. Array of  **Finance Charge**
+          1.  **Description**
+          2.  **Average Daily Balance**
+          3.  **APR**
+          4.  **DPR**
+          5.  **Amount**
+
+  
+  
+
+## Suggested Sample XML
+
+    
+    
+      
+    
+    
+    
+      <section label="Credit Cards" />
+      <accounts>
+        <account name="Chase Freedom MasterCard" major_code="500" minor_code="123">
+          <account_num>4373-7481-8291-8734</account_num>
+          <share_desc>Freedom Cashback Credit Card</share_desc>
+          <account_owners>
+            <name fullname="John Smith" />
+            <name fullname="Jame Smith" />
+          </account_owners>
+          <summary start_date="2013-07-01" start_bal="5143.43" end_date="2013-07-31" end_bal="6342.64" >
+            <item name="credit_limit"        curr_period_amt="5000.00" />
+            <item name="ava_credit"          curr_period_amt="3857.53" />
+            <item name="purchases"           curr_period_amt="1042.47" />
+            <item name="payments"            curr_period_amt="2000.00"    due_amt="1042.47"   min_due_amt="85.00"   due_date="2013-08-20"/>
+            <item name="cash_adv"            curr_period_amt="300.00" />
+            <item name="bal_trsf"            curr_period_amt="1000.00" />
+            <item name="other_debits"        curr_period_amt="5348.42" />
+            <item name="fees"                curr_period_amt="48.42" />
+            <item name="fins_charge"         curr_period_amt="58.42" />
+          </summary>
+          <transactions>
+            <transaction trn_date="2013-07-05" post_date="2013-07-08" desc="Payment"      credit="2000.00" />
+            <transaction trn_date="2013-08-04" post_date="2013-08-04" desc="Starbucks"    debit="50.00" />
+            <transaction ... />
+            ...
+          </transactions>
+          <fins_charges subtotal="54.00" days_in_period="30" >
+            <fins_charge date="2013-08-04" desc="Financial Charge" avg_daily_bal="1927.42"  apr="23.53"  dpr="1.4343" amt="382.47" />
+            <fins_charge date="2013-08-05" desc="Cash Advance"     avg_daily_bal="782.42"   apr="25.43"  dpr="1.8473" amt="492.49" />
+          </fins_charges>
+        </account>
+        <account name="Auto Loan" major_code="500" minor_code="523" >
+        ...
+        <account name="Certificate/IRA" major_code="601" minor_code="632" >
+      </accounts>
+    
+      
+    
+    
+      
+    
+
+  
+  
+
+## Statement Variations
+
+

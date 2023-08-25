@@ -1,0 +1,101 @@
+title: JWT Implementation on Hypercube
+description: None
+
+
+author: sadman anik
+comment: Hi [~Tin.Chak],
+
+I have some findings regarding this ticket.
+
+I think implementing JWT will not solve the third-party issue for the hypercube. Also, its not feasible to properly implement JWT for the hypercube side only without using JWT token as API authentication bearer. Even if we use a JWT token for hypercube to store encrypted user information then again we will have to store it on browser storage like local storage, cookies, sessionStorage which all goes under third party policy. Also, localStorage and indexDB do not follow the same mechanism as cookies that are required for the hypercube. For example, localStorage and sessionStorage are not always sent over each request, and can't access from the server-side.
+
+
+
+I have got a workaround to bypass this third-party issue. Since on hypercube we already use auth methods for creating a token in ssoKeyGen, so we can use this token and always keep this as a URI query param.
+
+
+
+Currently what hypercube does is, it generates a token with user information based on the client auth method during ssoKeyGen. Then stores that token in ssoKeyData miniMongo collection against a mongoId and returns that mongoId as alias sso key. That alias key then passed through ssoExchange and stored that token and alias key in cookies along with some escaped user data like cid, userId, loginType.
+
+
+
+*Unescaped cookie data -*
+
+
+{code:java}
+{"cid":"oscu"
+,"userId":"249119",
+"loginType":"sso",
+"timeStamp":1627460024197,"
+admin":"",
+"token":"6zwgM6/FUpbc/01F++WFK5xdQkKGB6IYKLONZPojXvsljr6MyZ/syV8qXtkiQ3f0AZOI8YPBkHphg5DB5wTQOXGqPbiPZYMS7PyO1F+fen0ioWqZdvFDhTWcH7+oC+pzaG4vcEjpS07vK2AwpIr7VZ6LcLefOK9G+1Yd8hSofBv181bWXA29gNSEEN7x3/6/RU5Co4L1rPp3SpRHr0xo5xXRskyqGjrP+yJ8dyIjmWM3UcV61hyjJESsA6VEwqBX",
+"searchByVendorUsrId":"",
+"uniqueId":"",
+"ssoId":"jRYeukTXDsDxYzYo4"}
+{code}
+
+
+
+
+Instead of storing that generated token in browser cookies, we will add that generated token as a URI query param. So that we can retrieve that token from the URL query param. After that, we can decrypt that token to get user data instead of getting it from the cookie. For security reasons we already validate and refresh that token in every request.
+
+Let me know your thinking regarding this.
+
+
+
+Thanks,
+
+Sadman
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: Hi Sadman,
+
+
+
+JWT is not the important part of the solution. It is not used to solve the third-party cookie issue as you mentioned. It is only for encrypting the authentication information (token, user ID, etc.) JWT can be passed through your solution of using URI query param. The most important part that I want you to look at is if the information currently stored in the cookies can be passed through the authorization header. From what I understand, it can be retrieved in the next page just like any other headers. I know the authorization header doesn't behave the same as a cookie because it's not a persistent storage. This solution should be more secure than the query param solution since it won't be saved in the browser history and logs.
+
+
+
+Thanks,
+
+Sean
+
+
+author: sadman anik
+comment: Hi [~Tin.Chak],
+
+I tried to set token in the authorization header in response but seems like it's not possible to set the header globally and retrieve the header in all the necessary places. And if you store the authorization header from the hypercube site it will also show the token if you explore the network by inspecting the browser.I would say that this is kind of a bad idea to storeauthorization tokens in-network header because of notpersistence.
+
+And about JWT,
+
+In hypercube, we already encrypt user data by using the client's auth method and store that token in mongo so maybe we should not use another JWT mechanism to encrypt that user data.
+
+
+
+Thanks,
+
+Sadman
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: Hi Sadman,
+
+
+
+I think the query param will do if the header solution can't be implemented. The value in the query param can't contain any sensitive information, even if the values are encrypted. That means the user data information needs to be stored and pull from mongo as you say. The token also needs an expiration so it can't be reused. Please let me know what you think.
+
+Thanks,
+Sean
+
+
+author: sadman anik
+comment: Hi [~Tin.Chak],
+
+Yes, the query param solution will work as you say. But first I have to do some analysis on hypercube to find out how and where it is using cookies currently and if we have access query param and mongo collection from those places. Also, I have to find astrategy for securing the query param token and validate/limit that token to individual users. After that, I will write a design doc and share it with you and the team.
+
+Right now, I think I should close this ticket and create a new analysis ticket for the query param solution. As this ticket was about JWT. Let me know.
+
+Thanks,
+
+Sadman

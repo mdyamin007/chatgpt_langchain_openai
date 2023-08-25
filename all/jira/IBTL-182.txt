@@ -1,0 +1,161 @@
+title: Dsi sever: check out error  from prod
+description: Hi,[~William.Kong] having checkout error
+
+!image-2020-11-13-14-55-54-697.png!
+
+The command :
+
+/home/dsi/master/dsi_cvs_co_test.pl ronyD
+
+
+
+
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~rony]: Can you confirm if the following steps are taking? I see that it is still pointing to 10.8.9.40 instead of the following:
+
+
+
+Hi Team,
+
+
+
+Peter, Le and YaMee reported issue this morning. So, Im going to consolidate the steps to do on the rhs server:
+
+
+
+*Step #1:* 
+
+
+
+Youre your ~/.bash_profile, go ahead and delete the following two lines:
+
+export CVSROOT="10.8.9.40:/extra/is_cvs"
+
+export CVS_RSH=ssh
+
+
+
+*Step #2:*
+
+Rename & backup your current cvs folder and create a new cvs folder:
+
+
+
+mv ~/cvs ~/cvs_backup
+
+mkdir ~/cvs
+
+
+
+*Step #3:*
+
+Logout of your ssh session and relogin
+
+
+
+*Step #4:*
+
+Run the following command:
+
+echo $CVSROOT; echo $CVS_RSH
+
+
+
+You should see the following response. If not, please inform me:
+
+
+
+
+
+*Step #5:*
+
+Do you normal check in/out process. If it does not work, please inform me.
+
+
+
+
+author: tohiduli
+comment: Hi [~William.Kong]
+
+Looks like we don't have permission for port 22 on ca-rcs-pr-01.infoimageinc.com server from our dsi server. Can you please open this port?
+
+!image-2020-11-16-17-28-57-463.png!
+
+
+author: william.kong
+comment: [~premraj.patil]: Can you open up SSH port 22?
+
+
+
+*Source IP:*
+
+ca-isis-ds-01
+
+
+
+*Destination IP:*
+
+ca-rcs-pr-01:22
+
+
+author: premraj.patil
+comment: Done
+
+
+author: william.kong
+comment: [~premraj.patil]: Thanks Prem!
+
+I ran:
+
+[root@dsi ~]# echo > /dev/tcp/10.4.20.24/22 && echo "Port is Open"
+Port is Open
+
+
+
+and it looks to be opened.
+
+
+
+[~tohidulI]: Can you please re-test and let me know if it works?
+
+
+author: tohiduli
+comment: [~William.Kong]: The cvs checkout is asking for password.
+
+!image-2020-11-19-23-31-13-584.png!
+
+
+author: william.kong
+comment: 
+
+[~tohidulI]: Can you give me another example? the WECUMS31.dfa file does not exist. I did add your key to ca-rcs-pr-01 server to hopefully correct the issue mentioned above. Please re-assign back to me with your feedback.
+
+!image-2020-11-19-10-00-18-663.png!
+
+
+author: tohiduli
+comment: [~William.Kong] : Getting some errors. see the image.
+
+
+
+!image-2020-11-20-11-43-58-692.png!
+
+
+author: rony
+comment: [~William.Kong] I am getting password prompt
+
+
+
+!image-2020-11-20-21-32-44-977.png!
+
+
+author: william.kong
+comment: [~rony]: I got yours fixed and the rest to team (hopefully I did not miss anyone). If some is missing, please let me know.

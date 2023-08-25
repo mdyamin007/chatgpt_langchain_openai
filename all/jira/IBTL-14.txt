@@ -1,0 +1,380 @@
+title: ca-preproc-pr-02: Unit Testing - Check Image Parsing
+description: *Server IP:*
+
+ca-preproc-pr-02.infoimageinc.com
+
+
+
+*Description:*
+
+Generally,+most+ of our check image processing program uses the standard check image perl program /home/master/get_chk_image.pl written by Joe Arcoraci. However, there are some that+may+ still be using a custom program:
+
+
+
+*Objectives (Parallel Environment):*
+ # Identify which clients are using a+custom+ check image parsing program outside. Please document into this ticket and also test each client for runnability and to confirm there is not missing perl modules.
+ # Identify ALL clients using the standard check image module and identify all the 'unque' modules that are currently being used: (e.g.:COFF,FSRV,FSRV_BMS,Image
+ ISR,JHA,JHA_EXT1,X937, X937_EXT1,X937_EXT2,X937_EXT3,X937_IRD,X937_WABC, etc etc.) Test each module to ensure there are no missing perl libraries or no error messages. Please document which clients you've tested.
+
+
+
+*NOTE*: I did not create the CIDs in /z/ftpu /z/download/ /z/CID/ /z/daily/ /z/prep/CID /z/pdf_afp
+
+In addition, if you are using the global check image parsing program, it will check for HOSTNAME=preprocessing02. Since the Brisbane preprocessing02 hostname does not match, you can run the following:
+{noformat}
+export HOSTNAME=preprocessing02{noformat}
+Not all program will work using this hack. We are pending IBTL-10 to be completed in order to solve this hostname issue for any processing scripts in general.
+
+
+
+
+
+
+author: william.kong
+comment: [~hkhosravani]: Peter would like you to test the check image processing. Please speak with him this week.
+
+
+
+[~Peter.Dang]: Per our meeting today, this is your plan.
+
+
+author: william.kong
+comment: [~hkhosravani] and [~Peter.Dang]: When do you guys think you can start testing this?
+
+
+author: yameelee
+comment: I tested for htbk and it did not do anything after the following: no error logs and no tiff generated. I think it failed after unable to create download directory.
+
+===== Start: 08/19/2020 03:55:17 PM =====
+
+
+
+Loading config params from file: /home/test/control/htbk_image.control
+
+
+
+Validating config params...
+
+Config params:
+
+ chksum_log_file = /home/test/keep/cksum_log/htbk_cksum.log
+
+ data_file_create = 0
+
+ data_file_format = X937
+
+ data_output_name = htbk_chk_process_data_output
+
+ dir_backup = /z/download/osiw/htbk/image_files/
+
+ dir_data_output = /z/htbk/
+
+ dir_ftpbu = /z/ftpbu/osiwbu/HTBK/
+
+ dir_image = /z/prep/htbk/tiff
+
+ dir_infoftp = /z/infoftps2/htbk
+
+ dir_log = /z/prep/htbk/log
+
+ dir_process = /z/htbk/processing
+
+ err_flag_file = /home/test/keep/htbk_chk_img_err.flag
+
+ ftp_host =
+
+ ftp_path =
+
+ ftp_pwd =
+
+ ftp_usr =
+
+ img_file_cnt = 1
+
+ img_fname_format = acct_num:chk_date:chk_amt:chk_num:postfixF=_F:postfixB=_B
+
+ img_validation = 1
+
+ lock_file = /home/test/keep/htbk_chk_img.lck
+
+ maillist_file = /home/test/keep/maillist/htbk_mail.lis
+
+ maillist_tag_ext = maillist2
+
+ maillist_tag_int = maillist1
+
+ parsing_log_file = /z/prep/htbk/log/tiff_parsing.log
+
+ pwd_unzip =
+
+ reg_ex_encrypt_ext = (.pgp|.gpg)
+
+ reg_ex_file_prefix =
+
+ reg_ex_idx_ext = (.txt|.xml|.TXT|.XML)
+
+ reg_ex_img_ext = (.tif|.tiff|.img|.TIF|.TIFF|.IMG)
+
+ reg_ex_img_fname = ItemsHERITAGEFINCORP_(\d)\{4}_(\d)\{2}_(\d)\{2}.dat
+
+ reg_ex_xfer_fname = ItemsHERITAGEFINCORP_(\d)\{4}_(\d)\{2}_(\d)\{2}.dat.pgp
+
+ reg_ex_zip_ext = (.zip|.7z)
+
+ request_chksum = 0
+
+ request_decrypt = 1
+
+ request_download = 0
+
+ request_download_only = 0
+
+ request_img_subdir = 1
+
+ request_parse_log = 1
+
+ request_unzip = 0
+
+ request_xfer_chk = 0
+
+ use_threads = 0
+
+ use_threads_cnt = 20
+
+ xfer_file_cnt = 1
+
+ xfer_time_interval = 120
+
+
+
+Checking directory structure...
+
+mkdir /z/download/osiw
+
+Unable to create backup directory: /z/download/osiw/htbk/image_files/
+
+Error: mkdir /z/download/osiw: No such file or directory at /home/test/master/get_chk_image.pl line 390.
+
+
+
+
+
+send mail error: Can't call method "mail" on an undefined value at /home/test/master/daily_mail.pl line 92.
+
+
+author: william.kong
+comment: [~yameelee]: I re-assigned the ticket back to me to review this issue. Once I correct the problem, i will re-assign back to you.
+
+
+author: william.kong
+comment: [~yameelee]: Pleaser re-test to see if the directory and email issue is resolved.
+
+
+author: yameelee
+comment: Failed again due to the following:
+
+Decrypting customer file(s)...
+Decrypting from: /z/htbk/processing/ItemsHERITAGEFINCORP_2020_08_26.dat.pgp -> to: /z/htbk/processing/ItemsHERITAGEFINCORP_2020_08_26.dat
+Unable to decrypt ItemsHERITAGEFINCORP_2020_08_26.dat.pgp. Please verify!
+
+-e gpg: encrypted with 1024-bit ELG key, ID 10C1004B54F3E3E5, created 2001-10-25
+ "data_center (Infoimage) <data_center@infoimageinc.com>"
+{color:#FF0000}gpg: public key decryption failed: Inappropriate ioctl for device{color}
+{color:#FF0000}gpg: decryption failed: No secret key{color}
+
+
+author: william.kong
+comment: [~yameelee]: I fixed the gpg issue and you can retest.
+
+
+
+Here's what I did to permanently fix the issue:
+
+On the new ca-preproc-pr-03 and ca-preproc-pr-02 Ubuntu server, it is using the newer version of gpg.
+
+The /home/oper1/.gnupg needs to have a gpg.conf
+
+
+
+Inside the gpg.conf:
+
+pinentry-mode loopback
+
+
+
+ONLY the new Ubuntu fresh install requires this step.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~hkhosravani]: Cool! Looks like you are making good progress!
+
+
+
+[~yameelee]: Can you confirm that the HTBK check image pgp issue is resolved and HTBK is processing ok?
+
+
+author: yameelee
+comment: I processed multiple times, it did not create any check images.
+
+log file has error below for all images.
+
+!image-2020-09-01-18-51-38-102.png|width=591,height=198!
+
+
+author: william.kong
+comment: [~yameelee] and [~Peter.Dang]: Can you guys review this issue together? I looked at the same log file:
+
+/z/prep/htbk/log/error_log_20200901_182155_59.txt
+
+and
+
+/z/prep/htbk/tiff_parsing.log
+
+But it's not giving me enough information as to what the issue is. Is it missing a mapping file/xref file? If it is a OS permission, missing directory, missing library issue, then I can assist.
+
+
+
+Please advise.
+
+
+
+-- Will
+
+
+author: hkhosravani
+comment: Hi Will, please disregard my previews comment. i used the server address that is provided in this ticket [ca-preproc-pr-02.infoimageinc.com]but that was the old preprocessing.
+
+I processed MSBK again using the IP address provided in smartsheet [10.4.20.22]and now it encountered *+Image::Magick blob to image conversion error+*and none of the images were parsed.
+
+see snapshot below:
+
+!image-2020-09-02-09-33-07-562.png!
+
+
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~hkhosravani]: I've assigned this back to me for now. Will review after my internal calls.  Thanks!
+
+
+author: william.kong
+comment: [~hkhosravani] and [~yameelee]: I believe the issue is that i did not install the Tiff library and hence ImageMagic did not have the tiff "delegates". I had to install apt-get install libtiff-dev and re-compliled ImageMagick source code to get it installed.
+
+
+
+Here's the before:
+
+!image-2020-09-02-17-29-45-837.png!
+
+Here's the results after I installed the tiff library and re-install ImageMagick:
+
+!image-2020-09-02-17-28-58-128.png!
+
+
+author: hkhosravani
+comment: command i used for msbk:
+
+/home/test/master/get_chk_image.pl -c msbk
+
+
+author: hkhosravani
+comment: msbk check image was processed successfully. image files created in/z/prep/msbk/tiff/ folder on server 10.4.20.22
+
+
+author: hkhosravani
+comment: Hi [~yameelee], Per Will please go ahead and reprocess HTBK to confirm if this has fix the issue for your process also.
+
+Thanks!
+
+
+author: william.kong
+comment: [~yameelee]: Any updates on this check processing w/ HTBK? Please advise.
+
+
+author: yameelee
+comment: HTBK processed successfully. Error report matches production.
+
+!image-2020-09-08-16-58-24-463.png|width=696,height=514!
+
+CAMB got "Write failed: Broken pipe" error message, does not have summary and email at the end of process like HTBK. However, I checked the log directory and all the files matches production for the cycle.
+
+!image-2020-09-08-16-55-52-570.png|width=558,height=97!
+
+
+
+
+author: yameelee
+comment: Will,
+
+Per your request, I processed the same CAMB check image file on regular parallel environment.
+
+No error. Processing time was less than 10mins
+
+Whereas on Brisbane parallel, the first time was almost one hour before Kent rebooted - there were only 4k+ out of the 15k+ check images created at that time
+
+The second time with the "Write failed: Broken pipe", process time was almost 2hours. All 15k+ check images were created.
+
+
+author: william.kong
+comment: [~yameelee] & [~hkhosravani]: Hi Guys, can you re-test the clients all over again. I had to downgrade ImageMagick version 7 to 6.9.  Version 7 is a lot slower than version 6. So I download the last version 6 (ImageMagick-6.9.11-29.zip)
+
+
+
+I tested CAMB and it is a lot faster now which is close to 8min
+
+Wed Sep 9 16:52:04 PDT 2020
+Wed Sep 9 16:59:51 PDT 2020
+
+
+
+Please check logs and also help me spot check "visually" a few of the tiff images between Menlo & Brisbane that they look the same.
+
+
+
+
+
+
+
+
+author: yameelee
+comment: I have reprocessed HTBK check images on brisbane parallel. Processing time is the same as previous process.
+
+Spot checked a few images from HTBK and CAMB from menlo production and brisbane parallel, all images matched.
+
+
+author: william.kong
+comment: [~yameelee]: Thanks YaMee!
+
+
+
+[~hkhosravani]: Please share your results as well, spot check and provide some benchmarking.
+
+
+author: hkhosravani
+comment: [~William.Kong]: MSBK on BB took 1 hour and 42 minutes where Menlo finished in 5 minutes. This was about 12.5K of images.
+
+
+author: hkhosravani
+comment: [~William.Kong] Ireprocessed on BB and this time only took less than 5 minutes.
+
+
+author: william.kong
+comment: [~yameelee] and [~hkhosravani]: I'm going to conclude and close this ticket out. Thanks for getting this system tested.

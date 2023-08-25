@@ -1,0 +1,312 @@
+title: Hardware Assignments (MOVED to:Dev Env Project Wikias of 2015/02/02)
+body: ## General Network Sub-Net breakdown:
+
+ **IP Range**|  **Purpose**  
+---|---  
+10.8.9.*| Production Apps (CA)  
+10.8.11.*| Production DMZ (CA)  
+10.9.2.*| Production Apps (TX)  
+10.9.4.*| Production DMZ (TX)  
+  
+  
+  
+
+## Customer Domains
+
+ **URI**|  **External IP**  
+---|---  
+[esignatures.bfcu.org](http://esignatures.bfcu.org)| 12.189.22.81  
+  
+  
+
+## Application-to-Environment Hardware deployment mapping
+
+ **Application**|  **Dev**|  **Pilot**|  **Staging**|  **Production (CA)**|
+**Production (TX)**  
+---|---|---|---|---|---  
+InfoTRAC (IIS)| N/A| 10.8.11.208:8091| N/A|
+[https://10.8.11.13:8092](https://10.8.11.13:8092/)| N/A  
+InfoTRAC (resin4/win)| 10.8.8.221:8091| 10.8.8.222:8091| 10.8.8.138:8091|
+[http://10.8.9.42:8092](http://10.8.9.42:8092/)| N/A  
+eStmt (resin4/win)| 10.8.8.221:XXXX| 10.8.8.222:XXXX| 10.8.8.138:XXXX|
+10.8.9.28 & 10.8.9.29| N/A  
+Cassandra (eSafetBox, Job Track)| pd-grid03:9061|  
+| N/A| infocloud01:9061| infocloud51:????  
+Job Track Data Ingestion Servlet| pd-dev2:8880/indexFileProcess|  
+| N/A| infocloud01:8880/indexFileProcess| infocloud51:????  
+MongoDB (JobTrack, ClickTrack)| pd-grid03:27017|  
+| pd-grid03:27017| infocloud01:27017| N/A  
+MongoDB Cluster| pd-dev5, pd-dev6 (CA)  
+10.9.2.50 (TX)|  
+| N/A| dbs-prod01, dbs-prod02, dbs-prod03| N/A  
+Elastic Search Engine| pd-grid03:????|  
+| N/A|  ~~infocloud01:????~~|  ~~infocloud51:????~~  
+InfoService  
+(eSafetyBox, Connectware, Elastic Search)| pd-dev2:9880| pd-
+pilot1:9880/infoservice| N/A| infocloud01:9036| infocloud51:????  
+InfoScanner| pd-dev2:9880| pd-pilot2/infoscanner| N/A| 10.8.9.79  
+Proxy (apache/linux)|  
+|  
+|  
+| Keepalived Virtual IP: 10.8.11.39  
+proxy-prod01, proxy-prod02|  
+  
+WebApp (tomcat/linux)| pd-dev3 (sandbox)| pd-pilot1| N/A| webapp-prod01,
+webapp-prod02|  
+  
+MySQL (eSign)| pd-grid03 (db: ???)| pd-grid03 (db: pilot_??)| N/A| dbs-prod01,
+dbs-prod02| NEED to ask Kim  
+Swift (eSafe & eSign)| infocloud02 (container: CID)| infocloud02 (container:
+pilot_CID)| TBD| object-prod01, object-prod02| NEEDED from Kent  
+Zimbra Server| mx-pd|  
+|  
+|  
+|  
+  
+Oracle -> MySQL & XtraDB test| pd-dev4, pd-dev5, pd-dev6|  
+| N/A| N/A| N/A  
+  
+  
+  
+
+## Database connection info:
+
+ **App.**|  **Environment**|  **DB Server**|  **Service ID**|  **Shard**|
+**Login**  
+---|---|---|---|---|---  
+eStmt| System A| 10.8.8.215:1521| wodb.EDATA| default| ora_admin  
+RABO?| dev_rabo  
+CU| dev_cu  
+InfoTRAC| System A| 10.8.8.215:1521| wodb.EDATA| \- - -| infotrak  
+eStmt| System B| 10.8.8.215:1521| wodb.EDATA| default| pilot  
+Bank| pilot_bank  
+CU| pilot_cu  
+InfoTRAC| System B| 10.8.8.215:1521| wodb.EDATA| \- - -| infotrac_pilot  
+eStmt| System C| 10.8.8.215:1521| wodb.EDATA| default| staging  
+Bank| staging_bank  
+CU| staging_cu  
+InfoTRAC| System C| 10.8.8.215:1521| wodb.EDATA| \- - -| infotrac_staging  
+eStmt| Prod-CLONE for jMeter| 10.8.14.17:1521| wodb.EDATA| CU| i3_cu / mytest  
+  
+  
+  
+
+## Host allocation
+
+ **Host**|  **IP**|  **Type**|  **Env.**|  **for App**|  **OS**|  **CPU**|
+**RAM**|  **HD**|  **App/Svc hosted**  
+---|---|---|---|---|---|---|---|---|---  
+pd-grid01| 10.8.9.51| Phys.| Dev| DataNorm Hadoop Proc (Dev)| Ubuntu 12.04
+LTS|  
+| 32GB| 500GB| datanorm-dev (hadoop)  
+pd-grid02| 10.8.9.52| Physical| Dev| ??| Ubuntu 12.04 LTS|  
+| 32GB| 500GB| Data Mining Tests  
+pd-grid03| 10.8.9.53| Physical| ??| ??| Ubuntu 12.04 LTS|  
+| 32GB| 500GB| [analytics-dev.infoimage.com](http://analytics-
+dev.infoimage.com) (mongo)  
+[appdata-dev.infoimage.com](http://appdata-dev.infoimage.com) (cassandra)  
+pd-dev1| 10.8.9.57| VM| Dev| Apache Proxy Setup (Dev)  
+Mule ESB (Dev)| Ubuntu 12.04 LTS|  
+| 8GB| 256GB| [testapi.infoimageinc.com](http://testapi.infoimageinc.com):8080
+(mule)  
+pd-dev2| 10.8.9.58| VM| Dev| App. Dev. Instances| Ubuntu 12.04 LTS|  
+| 8GB| 128GB| [infoservice-dev.infoimage.com](http://infoservice-
+dev.infoimage.com) (tomcat)  
+[via <https://pd-dev2.infoimage.com:8943/infoservice> OR  
+<http://pd-dev2.infoimage.com:8880/infoservice>]  
+[infoscanner-dev.infoimage.com](http://infoscanner-dev.infoimage.com) (tomcat
++ eset) [via <https://pd-dev2.infoimage.com:8943/infoscanner>]  
+[objstore-dev.infoimage.com](http://objstore-dev.infoimage.com) (openstack +
+swift)  
+[infotrac-dev.infoimage.com](http://infotrac-dev.infoimage.com) (tomcat)  
+[click-dev.infoimage.com](http://click-dev.infoimage.com) (node.js)  
+[hypercube-dev.infoimage.com](http://hypercube-dev.infoimage.com) (tomcat +
+cassandra)  
+pd-dev3| 10.8.9.76| VM| Dev| Unix-based eStmt 2.0| Ubuntu 12.04 LTS|  
+| 8GB| 100GB| [estmt2-dev.infoimage.com](http://estmt2-dev.infoimage.com)
+(apache + resin-pro)  
+pd-dev4| 10.8.9.135| VM| Dev| Oracle -> MySQL XtraDB Test| Ubuntu 12.04 LTS|  
+| 4GB| 140GB|  
+  
+pd-dev5| 10.8.9.136| VM| Dev| Oracle -> MySQL XtraDB Test  
+Mongo Cluster Test| Ubuntu 12.04 LTS| 4cores| 8GB| 140GB + 500GB|  
+  
+pd-dev6| 10.8.9.137| VM| Dev| Oracle -> MySQL XtraDB Test  
+Mongo Cluster Test| Ubuntu 12.04 LTS| 4cores| 8GB| 140GB + 500GB|  
+  
+MongoDBTX1| 10.9.2.50| VM| Dev| Mongo Cluster Test| Ubuntu 12.04 LTS| 4cores|
+8GB| 500GB|  
+  
+mx-pd| 10.8.8.56| VM| Dev| Test Zimbra Server| Ubuntu 12.04 LTS|  
+|  
+|  
+| Zimbra Admin: pdadmin / p@ssw0rd  
+pd-pilot1| 10.8.9.141| VM| Pilot| Tomcat/Resin for Pilot WebApps| Ubuntu 12.04
+LTS|  
+|  
+|  
+|  
+  
+pd-pilot2| 10.8.9.142| VM| Pilot| Virus Scanner for Pilot Environment| Ubuntu
+12.04 LTS|  
+|  
+|  
+| (tomcat)  
+proxy-prod01| 10.8.11.37| VM| Prod| Unix/Apache/Proxy to webapp| Ubuntu 12.04
+LTS|  
+| 2GB| 60GB| (apache)  
+proxy-prod02| 10.8.11.38| VM| Prod| Unix/Apache/Proxy to webapp| Ubuntu 12.04
+LTS|  
+| 2GB| 60GB| (apache)  
+webapp-prod01| 10.8.9.139| VM| Prod| Unix/Tomcat/Loadbalanced eStmt 2.0|
+Ubuntu 12.04 LTS|  
+| 16GB| 200GB| (tomcat)  
+webapp-prod02| 10.8.9.140| VM| Prod| Unix/Tomcat/Loadbalanced eStmt 2.0|
+Ubuntu 12.04 LTS|  
+| 16GB| 200GB| (tomcat)  
+dbs-prod01| 10.8.14.37| Physical| Prod| Unix/Mongo+MySQL cluster| Ubuntu 12.04
+LTS|  
+| ?GB| ?GB| Mongo Cluster on Docker containers, MySQL cluster  
+dbs-prod02| 10.8.14.38| Physical| Prod| Unix/Mongo+MySQL cluster| Ubuntu 12.04
+LTS|  
+| ?GB| ?GB| Mongo Cluster on Docker containers, MySQL cluster  
+dbs-prod03| 10.8.14.39| Physical| Prod| Unix/Mongo+MySQL cluster| Ubuntu 12.04
+LTS|  
+| ?GB| ?GB| Mongo Cluster on Docker containers, MySQL cluster  
+object-prod01| 10.8.14.40| Physical| Prod| Unix/Swift cluster| Ubuntu 12.04
+LTS|  
+| ?GB| ?GB| Swift Cluster for Object Store  
+object-prod02| 10.8.14.41| Physical| Prod| Unix/Swift cluster| Ubuntu 12.04
+LTS|  
+| ?GB| ?GB| Swift Cluster for Object Store  
+pd-tools| 10.8.9.56| VM| Prod| Utility apps (Internal Prod)| Ubuntu 12.04 LTS|  
+| 4GB| 256GB| SVN (/srv/svn + /srv/is_svn)  
+[builds.infoimage.com](http://builds.infoimage.com) (jenkins)  
+etaboard| 10.8.9.82| VM| Prod| ETA board (Prod)| Ubuntu 12.04 LTS|  
+| 2GB| 55GB| [etaboard.infoimage.com](http://etaboard.infoimage.com)
+([details](https://i3dev.easyredmine.com/projects/etaboard/wiki/Server_Migration))  
+mule| 10.8.9.54| Phys.| Prod| Mule ESB (Prod)| Ubuntu 12.04 LTS|  
+| 32GB| 900GB| [api.infoimageinc.com](http://api.infoimageinc.com) (mule)  
+infocloud01| 10.8.9.55  
+ ~~10.8.14.35~~|  Phys.| Prod (CA)| Cloud based services (Prod)| Ubuntu 12.04
+LTS|  
+| 32GB| 900GB|
+[infoservice.infoimage.com](http://infoservice.infoimage.com):9036 (tomcat)  
+[objstore.infoimage.com](http://objstore.infoimage.com) (openstack + swift)  
+[analytics.infoimage.com](http://analytics.infoimage.com) (mongo)  
+[appdata.infoimage.com](http://appdata.infoimage.com) (cassandra)  
+infocloud02|  ~~10.8.9.117~~  
+10.8.14.36| Phys.| Prod (CA)| Cloud based services (Prod)| Ubuntu 12.04 LTS|
+32-bit old server| 4GB| ??GB, mount to 16T SAN| production swift installation  
+ApacheMule| 10.8.11.22 (12.189.22.102)| Phys.| Prod| Apache-proxy (Prod)|
+Ubuntu 12.04 LTS|  
+| 8GB| 146GB| [click.infoimageinc.com](http://click.infoimageinc.com)
+(node.js) [DMZ]  
+Proxy for: [DMZ]  
+[api.infoimageinc.com](http://api.infoimageinc.com):443  
+[testapi.infoimageinc.com](http://testapi.infoimageinc.com):8443  
+12.189.22.102:9880 -> pd-dev2:8880 (http:// infoservice-dev & infoscanner-dev)  
+12.189.22.102:9943 -> pd-dev2:8943 (https:// infoservice-dev & infoscanner-
+dev)  
+[scm.infoimageinc.com](http://scm.infoimageinc.com):422  
+esftyav| 10.8.9.79| Phys.| Prod| File Upload Gateway (Prod)| Ubuntu 12.04 LTS|  
+| 512MB| 108GB| [vscan.infoimageinc.com](http://vscan.infoimageinc.com):9033
+(tomcat + eset) [DMZ]  
+redmine-tx| 10.9.2.23| VM| Prod Slave| Redmine machine TX BCP| Ubuntu 12.04
+LTS|  
+|  
+|  
+| ???  
+etaboard-tx| 10.9.2.28| VM| Prod Slave| ETA Board TX BCP| Ubuntu 12.04 LTS|  
+|  
+|  
+| [etaboard-tx.infoimage.com](http://etaboard-tx.infoimage.com)  
+pd-tools-tx| 10.9.2.27| VM| Prod Slave| Utility apps (Internal Prod)| Ubuntu
+12.04 LTS|  
+| 4GB| 256GB| SVN (TBD)  
+[builds-tx.infoimage.com](http://builds-tx.infoimage.com) (jenkins)  
+mule-tx| 10.9.2.24| VM| Prod Slave| Mule TX ESB| Ubuntu 12.04 LTS|  
+|  
+|  
+| ???  
+infocloud51| 10.9.2.30| VM| Prod| Cloud Based Service (Prod TX)| Ubuntu 12.04
+LTS|  
+|  
+|  
+| (Yet to be setup)  
+[infoservice.infoimage.com](http://infoservice.infoimage.com):9036 (tomcat)  
+[objstore.infoimage.com](http://objstore.infoimage.com) (openstack + swift)  
+[analytics.infoimage.com](http://analytics.infoimage.com) (mongo)  
+[appdata.infoimage.com](http://appdata.infoimage.com) (cassandra)  
+  
+  
+  
+
+## Environment setup
+
+  
+  
+
+  
+
+### Sharded Mongo Setup
+
+  
+| VM 1| VM 2| VM 3  
+---|---|---|---  
+cores| 2-4| 2-4| 2-4  
+RAM| 16GB| 16GB| 16GB  
+disk| 3TB| 3TB| 3TB  
+  
+|  
+|  
+|  
+  
+Docker Nodes|  
+|  
+|  
+  
+mongos1| Y|  
+|  
+  
+mongos2|  
+| Y|  
+  
+mongos3|  
+|  
+| Y  
+mongod1| Y|  
+|  
+  
+mongod2|  
+| Y|  
+  
+mongod3|  
+|  
+| Y  
+rs1 primary| Y|  
+|  
+  
+rs1 secondary1|  
+| Y|  
+  
+rs1 secondary2|  
+|  
+| Y  
+rs2 primary|  
+| Y|  
+  
+rs2 secondary1| Y|  
+|  
+  
+rs2 secondary2|  
+|  
+| Y  
+  
+  
+
+### Attachments
+
+  
+
+

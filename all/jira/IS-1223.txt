@@ -1,0 +1,262 @@
+title: VWCU - Stmt - Combined Monthly & VISA PDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133592-C00.01-V21885
+
+Processing Scripts to modify:
+ vwcu_stmt_combine_process.sh
+
+prefix:*vwcums1*
+
+Data Files to use:
+ vwcu_combined_053122.zip
+
+
+
+*ADDITIONAL NOTE*: This job combines with Visa Statements, so testing of ms1 & mv1 will be required.
+
+
+
+*{color:#de350b}ADDITIONAL REQUIREMENT (9/23/2022){color}:*Add the following to vwcums1.control file:
+
+afp2web_version="v4"
+
+
+
+*NOTE*: This job runs on RH2. Since we are migrating from RHS to RH2, we should test all options so that we can do afpcompare and also ensure there is no errors in the processing logs.
+
+
+author: anwarh
+comment: Hi [~William.Kong]/[~Igor.Khosid],
+
+Parallel ID: 20220921063212
+production cycle: 07/31
+
+Data files:
+/z/dsi_pdfi_testing/vwcumsb/vwcu_combined_073122.zip
+
+old zips: /z/dsi_pdfi_testing/vwcumsb/old/
+new zips: /z/dsi_pdfi_testing/vwcumsb/new/
+zip password: 6s1Xe9
+
+Note: It's a combined process with apps containing
+ms1
+mv1
+ma1
+
+[~William.Kong], I had to modify the core module 'isisdisk.sh' because it doesn't pass a 2nd parameter 'LOOKUPFILE2' with our normal archival call (). Previously it did pass it for the 'pdfi' job sel.
+Don't think it's going to affect any other apps, still discuss it with Peter. 
+
+Thanks,
+Anwar
+
+
+author: william.kong
+comment: [~anwarh]: I took a quick look at vwcums1 (Monthly Statement) and noticed there are an issue with the graphics. The AFP2PDF shows a border but PDFi does not. Can you see why there is an extra border line? I'm assuming this graphics is permanent and not part of Message Manager, so if it is a permanent resource, we do need to address this issue:
+
+
+
+!image-2022-09-22-18-02-56-806.png!
+
+
+author: william.kong
+comment: [~anwarh]: I'm going to let this border issue slide since this is message area 2 and will change month by month. However, I would ask that you add the following to /home/control/vwcums1.control so it will force Message Manager to use the current AFP2WEB server of PP03; This will allow client to see new behavior in future Message Manager approval process:
+
+{{afp2web_version="v4"}}
+
+
+
+I will ask Andrey/Igor to proceed with the QA process.
+
+
+
+[~Igor.Khosid]/[~Andrey.Kutsenko]: There are 3 application to review. They are all in the following folder:
+
+
+
+*ca-isis-pr-04:*
+
+/d/pdf_compare/vwcumv1_prod
+
+/d/pdf_compare/vwcumv1_parallel
+
+/d/pdf_compare/vwcuma1_prod
+
+/d/pdf_compare/vwcuma1_parallel
+
+/d/pdf_compare/vwcums1_prod
+
+/d/pdf_compare/vwcums1_parallel
+
+
+
+I attempted to start initial testing so you can review the vwcum*_compare.sh; I completed vwcuma1_compare.sh last night but did not finish QA.
+
+
+
+
+
+
+
+
+
+
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+1) vwcumv1
+{code:sh}perl /home/util/pdf_compare.pl vwcumv1_prod/ vwcumv1_parallel/ result_vwcumv1 -pixels 15 -threads 32 -exclusion vwcumv1.json{code}
+{quote}Total PDF Files Scanned: 6000
+allowedDifferenceInPercentPerPage: 15:
+Thread Count: 32
+
+Total PDF Files with Differences: 0
+WARNING:  We did not compare ALL the pdfs!
+          /home/util/pdf_compare.pl will only process the first 6000 pdf files out of the total 48613 pdfs
+Start Time: Mon Sep 26 14:04:04 PDT 2022
+Finish Time: Mon Sep 26 15:21:07 PDT 2022{quote}
+2) vwcuma1
+{code:sh}perl /home/util/pdf_compare.pl vwcuma1_prod/ vwcuma1_parallel/ result_vwcuma1 -pixels 5 -threads 8{code}
+{quote}Total PDF Files Scanned: 5325
+allowedDifferenceInPercentPerPage: 5:
+Thread Count: 8
+
+Total PDF Files with Differences: 0
+Start Time: Tue Sep 27 07:51:49 PDT 2022
+Finish Time: Tue Sep 27 09:08:04 PDT 2022{quote}
+3) vwcums1
+{code:sh}export parallelProcessing=false; perl /home/util/pdf_compare.pl vwcums1_prod/ vwcums1_parallel/ result_vwcums1 -pixels 18 -threads 16 -exclusion vwcums1.json{code}
+{quote}Total PDF Files Scanned: 6000
+allowedDifferenceInPercentPerPage: 18:
+Thread Count: 16
+
+Total PDF Files with Differences: 1
+WARNING:  We did not compare ALL the pdfs!
+          /home/util/pdf_compare.pl will only process the first 6000 pdf files out of the total 118929 pdfs
+Start Time: Wed Sep 28 12:23:27 PDT 2022
+Finish Time: Wed Sep 28 13:40:08 PDT 2022{quote}
+
+
+author: william.kong
+comment: Thanks [~Andrey.Kutsenko]!
+
+
+
+
+
+[~anwarh]: QA passed, please prepare File Transfer form so that we can get code released as early as today and no later than tomorrow.
+
+
+author: anwarh
+comment: Hi [~TunA],
+
+Transfer form:  [^IS-1223 VWCU Transfer Form.doc] 
+
+Code is in:
+*/d/is/cvs/xfer/anwarH_backup/is-1223*
+
+Can you please move them into /d/is/cvs/xfer/anwarH/ and then release?
+
+Thanks,
+Anwar
+
+[~William.Kong]
+
+
+author: tuna
+comment: [~anwarh]
+
+following codes have been released.
+
+
+
+20220930140828 09/30/2022 anwarH IS-1223 VWCU - Stmt - Combined Monthly & VISA PDFi Conversion to AFP2PDF Python [InHse]
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/anwarH_backup/is-1223/
+total 2080
+-rwxrwxrwx 1 anwarH DSI 254589 Sep 30 07:59 isisdisk.sh
+-rwxrwxrwx 1 anwarH DSI 14293 Sep 30 07:59 VWCUMA11.dfa
+-rwxrwxrwx 1 anwarH DSI 0 Sep 30 07:59 VWCUMA11.prj
+-rwxrwxrwx 1 anwarH DSI 1364 Sep 30 07:59 vwcuma1.control
+-rwxrwxrwx 1 anwarH DSI 413 Sep 30 07:59 vwcuma1_pdf.control
+-rwxrwxrwx 1 anwarH DSI 267391 Sep 30 07:59 VWCUMS11.dfa
+-rwxrwxrwx 1 anwarH DSI 413 Sep 30 07:59 vwcums1_pdf.control
+-rwxrwxrwx 1 anwarH DSI 3968 Sep 30 07:59 vwcums1.procs
+-rwxrwxrwx 1 anwarH DSI 146846 Sep 30 07:59 VWCUMV11.dfa
+-rwxrwxrwx 1 anwarH DSI 413 Sep 30 07:59 vwcumv1_pdf.control
+-rwxrwxrwx 1 anwarH DSI 3155 Sep 30 07:59 vwcumv1.procs
+-rwxrwxrwx 1 anwarH DSI 55252 Sep 30 07:59 vwcu_stmt_combine_process.sh
+
+
+
+[~William.Kong]
+
+
+author: anwarh
+comment: Forgot to update the three procs file. I'll request to release them again. 
+
+
+author: anwarh
+comment: Hi [~TunA],
+
+Can you please also release these procs files? 
+Transfer form:  [^IS-1223 VWCU Transfer Form2.doc] 
+
+Code is in:
+*/d/is/cvs/xfer/anwarH_backup/is-1223*
+
+Can you please move them into /d/is/cvs/xfer/anwarH/ and then release?
+
+Thanks,
+Anwar
+
+[~William.Kong]
+
+
+author: william.kong
+comment: Hi [~TunA],
+
+
+
+Can you help release this project out to production?
+
+
+
+Thanks!
+
+
+
+-- Will
+
+
+author: tuna
+comment: Hi [~anwarh], [~William.Kong],
+
+Following procs files have been released.
+
+Thanks
+
+Tun
+
+
+
+20221020114457 10/20/2022 anwarH release procs files for IS-1223 VWCU - Stmt - Combined Monthly & VISA PDFi Conversion to AFP2PDF Python [InHse]
+
+[main@rhs ~]$ ll /d/is/cvs/xfer/anwarH/
+total 96
+-rwxrwxrwx 1 main isgroup 3579 Oct 20 11:43 vwcums1.procs
+-rwxrwxrwx 1 main isgroup 2989 Oct 20 11:43 vwcumv1.procs
+
+

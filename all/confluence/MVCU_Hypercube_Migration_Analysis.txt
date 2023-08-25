@@ -1,0 +1,259 @@
+title: MVCU Hypercube Migration Analysis
+body: # _Frontend:_
+
+##  **Schema** : CU
+
+##  **User** - **Account**   **Relation** : Many to Many
+
+  
+|  
+  
+---|---  
+ **Login Method**|  DI (SSO), No DSO  
+ **Enrollment**|  3 Steps  
+ **Welcome Email**|  True  
+ **Menu**|  e-Statements, Disclosure, Profile, Exit  
+ **Account Types**|  N/A  
+ **Statement Types**|  Default, mortgage, escrow, heloc, etax  
+ **Archival Period**|
+
+  1. e-Statement (default): 24 months
+  2. Mortgage: 24 months
+  3. Escrow Analysis(escrow): 24 months
+  4. Home Equity (heloc): 24 months
+  5. e-Tax (etax): 24 months
+
+  
+ **Paperless Configuration**|  Non-Selective  
+ **Unenrollment of DP change**|  True  
+ **Delivery Preference**|  Paper = B, Paperless = E  
+ **Notification Preference**|  Email  
+ **NP Link Type**|  byUFA  
+ **Batch Download**|  N/A  
+  
+#  _ **ROOT:**_  
+
+### Statement Types & Archival Period:
+
+  1. e-Statement (default): 24 months
+  2. Mortgage: 24 months
+  3. Escrow Analysis(escrow): 24 months
+  4. Home Equity (heloc): 24 months
+  5. e-Tax (etax): 24 months
+
+### SSO Method:
+
+  *  **DI SSO:**
+    *  **Mandatory fields:** user_fi_number, email, password, account_number
+    *  **Flags:**
+      * Email update: true
+      * Has multiple account: true i.e. BANK
+      * Account Type: false
+      * Second Email: false
+      * Create Account: True
+    * No Leading zero account
+    * Search user by cif.
+      * If not found, **create a new User and attach cif** **.** firstName="Customer", userType="P".  **Insert into Usr and USR_MAPPING table.**
+    * Search user by user_id from usr, usr_session.
+      * If not found, **create a new SSO User.** loginName= !user_id, permission= 1, status= new, SSO=null, DSO=null
+    *  **UpdateUFALinks():**
+      *  **getAcctBean():** Searches for with the account number provided in sso file **.** if not found, **Create a FA with the account** **.** Type: atyp(NA), name=New Customer, status=A, lastModified=current date.
+      *  **getPaperless():** Searches for paperless status of that account. If not found, **Create and Insert into paperless.** newStatus: B, OldStatus: N, stmtType: default, modifiedDate: current date, Modified by: 1
+      * If an existing account, update UFA. Or, if a new account is provided in sso file, create a new ufa, setting current date as expiration date and insert into the UFA table. Insert into audit log [ event: "add", location: "sso" ] 
+      * Search npList by usrId and acctId. If found, update otherwise, insert np with acctId and userId. Second email is false, so only one np is allowed.
+      * Remove all other ufa links of that user i.e. If any user logs in with one account, the rest of the accounts which were associated with this user, will be unlinked and thoser account's paperless status will be "B". Insert into audit log as event="delete", location=""sso", createdBy="0"
+    * User lands on homepage only if sso is not null and status is "active".
+
+### DSO Methods: N/A
+
+### Enrollment:
+
+  * Go through 3 steps enrollment if SSO is null.
+  *   * Go through 1 step enrollment via optout page if paperless status is "B". 
+  * 
+
+ **Welcome Email:  **True
+
+  * Sends welcome email after successful enrollment and delivery preference change to paperless.
+
+### Homepage:
+
+  * If account status is "C", shows a message.
+  *  
+  * View Account: The account number is visible. No masking.
+  * Account Reconciliation in "Important Disclosure" section opens a pdf in a new tab.
+  * Footer: Adobe Reader icon and Copyright
+
+### Menu and Tabs:
+
+  1.  **e-Statements:  **  
+
+    1.  **e-Statements:  **Shows default type statements. 
+    2.  **Mortgatge:  **Shows mortgage statements. 
+    3.  **Escrow Analysis:  **Shows escrow statements. 
+    4.  **Home Equity:  **Shows heloc type documents. 
+    5.  **Etax:  **Shows etax type documents. "Important Disclosures" for e-Tax is different from other statements.
+
+
+
+ **2\. Disclosure:  **Shows disclosure HTML page in new tab.
+
+ **3\. Profile:**
+
+  * Shows account number.
+  * Delivery preference:  
+    * Paperless
+    * Paper
+  * Notification Options: Email
+  * Email Address: Not editable.
+
+  
+
+4\. **Exit:** Ask the user for confirmation. If the user confirms, Logs out
+user.
+
+  
+
+  
+
+##  _MSM:_
+
+###  _Features:_
+
+  *  **Account Management** :
+    * Can change Delivery Preference, Can not edit the email address 
+    * Search By Account Number and Email Address
+    * Statement types: 
+      * default [e-Statements]
+      * mortgage [Mortgage]
+      * escrow [Escrow Analysis]
+      * heloc [Home Equity]
+      * etax [e-Tax]
+      * welcome [Welcome]
+      * passUpdate [Password Update]
+      * acctRemoved [AI User Removal]
+      * reminder1 [Email Reminder]
+      * Archival period: 24 months [default, mortgage, escrow,heloc,etax]
+  *  **Reports:**  
+    *  **Latest Stats:** This report shows the current month's statistics for the Number of Statements Viewed/Unviewed , Number of Notifications Sent/Failed , and Number of Email Reminders Sent.
+    *     *  **User Login Activity:** This report shows how many users have logged into e-Statements during a specified time range, as well as showing peak periods of user activity.
+    *  **AI login Activity :** This report shows how many authorized administrator users (such as Account Service) have logged into the AI (Administrative Interface) site.
+    *  **AI User Activity:**
+      * Downloadable as a .TXT file. This report shows the last time an administrator user logged into the AI (Administrative Interface) site along with their last password change date.
+      * Search Criteria: 
+        * All Users
+        * By Login Id
+        * By Last Login Time
+      *       * Pulls sess_login_id, sess_active_status, sess_last_login, sess_pw_changed_date from usr_session table.
+    *  **AI User Modification Activity Report:**
+      * Downloadable as a .TXT file. This report shows the audit trail of changes by administrator users.
+      *       * Pulls sess_login_id as Creator, sess_login_id as Target, event (create user/modify password/modify email/ remove user/unlock user /enable user) from usr_session and audit_log_mvcu table
+    *  **Email Address Collection** **:** Downloadable as a .TXT file, this report lists all registered e-Statement users, as well as their account numbers and email addresses.
+    *  **Paperless** : This report shows which users (and how many) have elected to opt out of receiving paper statements. The report includes opt-in and opt-out users by month, and can be downloaded in .TXT or Excel file format, including account numbers.
+    *  **Update Email Address Report** : Downloadable as a .TXT file. This report lists the Email Address Updates.Pulls email address, usr_firstName, modified_time from notification_history, usr_session, usr_mapping, fin_account, usr_fin_account
+
+  
+
+  *  **Email Proofing:**
+    * Notification type: email
+    * Email Notification templates: e-Statements, Mortgage, Escrow Analysis, Home Equity, e-Tax, Welcome, Password Update, AI User Removal
+    * Keywords for e-Statements, Mortgage, Escrow Analysis, Home Equity, Welcome : $sdv_txt_userName
+    * Keywords for e-Taxes: $sdv_txt_userName, $sdv_txt_eTaxList
+  *  **Upload Inserts**
+    * Marketing Insert Management: stmtType: e-Statements, Mortgage, Escrow Analysis, Home Equity, e-Tax
+
+  *  **Administration:  **
+    * This page will allows to change the admin's password.
+    * Can also create/view/modify/remove/enable other users that have lower privileges.
+    * Only superuser and Admin Managers can reset other users who are locked out.
+
+  * Exit
+
+  
+
+#  _Backend:_
+
+#  _ **Processes**_
+
+MVCU has 2 backend process:
+
+  1. Afp
+  2. Etax
+
+##  _ **Statement types and index file name**_
+
+  * global.ms1=default
+  * global.ml1=mortgage
+  * global.ml2=heloc
+  * global.ea1=escrow
+  * global.tax=etax
+
+###  ** _Afp Process:  _**
+
+  * Statements processed by Afp:  **Default, mortgage, heloc,escrow**
+  *  **Flags:**
+    * global.autoRegister=false
+    * global.multipleStmtType=true
+    * global.multipleDocType=false
+    * global.autoRegister=false
+    * global.enableAccountType=false
+    * global.default.imageMessage=true
+    * afp.heloc.automatedEmailNotification=true
+    * afp.mortgage.automatedEmailNotification=true
+  *  **Data: AfpStatementData9**  
+    * format:  **fileName** | **accountNumber** | **beginDate** | **closingDate** | **numberOfPages** | **accountName** |SSN|appType|messageIDs|hasCheckStr|insertId|regionCode|crippleFlag|zipFileName|outputFormat [bold fields are mandatory]
+  *  **Registrar: MessageEstmtRegistrar3**
+    *  Always creates a new account if not found. 
+    * As global.autoRegister is false, no user creation.
+    *  If a record is found in the  ** _FIN_ACCOUNT_**  table, update  _acct_owner_name,_  unless the name is neither "MEMBER" nor "CUSTOMER". 
+    * As multipleDocType is false, data will be blindly inserted while registering statements. 
+    * Image_Message is true for " **default** ". Therefore registerMessage method will be called for those statement types. 
+    *  **getFinAccount():**  
+
+      * If acct is not found, create and insert to fin_account. orgId, account number, account name, last modified, status="A". **Autoregister = false.**  
+      * If acct found, update acct_owner_name, acct_owner_contact_id(null) in **fin_account**.
+      *  **insertPaperless():**
+        * Search from paperless2 by acctId and stmtType.If not found, create a new one and insert into the **paperless** table. newStatus=B, oldStatus=N, modifiedDate=current date, stmtType
+        * If stmtType is not "default", search from **paperless2** by acctId and stmtType="default". If not found, create a new one and insert into paperless table. newStatus="B", oldStatus="N", stmtType="default"
+    *  **registerStatement():**
+      * multipleDocType=false, so Blindly inserts into estmt_doc, estmt_file and arch_file.
+      *  **registerMessage()**
+        * If messageIds are not passed in the index file, return. Do nothing
+        * Search for stmtMessage by messageId from messageMap. If found, insert into the **estmt_message** table. If not found, 
+          * Search from message_area, m_message by that message_ids [ provided in index file ].  If not found, increment the bad count. If found, insert into estmt_message.
+        *  **insertJobEstmt(): insert** into p_job_id and esd_id into **p_job_estmt** table.
+
+  
+
+###  _Etax process:_
+
+  *  _Flags:_
+    * etax.compression=false
+    * etax.createAccount=false
+    * etax.isZipped=true
+    * etax.copyZipBuffer=32768
+    * etax.automatedEmailNotification=true
+
+  *  ** _Handler: EtaxData3_**
+    * etax.isZipped=true. 8 columns required
+    * Fields: **AcctNum** | **type** | **afpFileName|** Date|Suffix|appType|SSN|zipFileName [Bold fields are mandatory]
+  *  _ **Registrar: ETaxRegistrar3**_
+    * getFinAccount():
+      * Searches fa with acctNum. If not found, return.  **etax.createAccount=false, so no account creation.**
+      *  **insertPaperless():** Searches paperless status from paperless2 by acct_id and stmtType. **If not found** , create a new one and **insert into paperless**. newStatus=B, oldStatus=N
+    * registerEtax():
+      * Insert / update into **arch_file** table. 
+      * insert /update **etax** table
+      *  **insertJobETax():** Insert into **p_job_etax** table
+
+ _ **Reports:**_
+
+  *  **optInOptOutReport** :
+    *  **OPT_OUT report:** Fetches account numbers whose new_status in the paperless table is "B" within the provided date range.
+    *  **OPT_IN report:** Fetches account numbers whose new_status in the paperless table is "E" within the provided date range.
+  *  **MonthlyOptInOptOutReport:** Fetches account numbers whose latest_status is in "E" and "U" and stmtType="default"
+  *  **Bounceback report**
+
+  
+
+

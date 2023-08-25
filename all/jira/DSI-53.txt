@@ -1,0 +1,497 @@
+title: NECU Hypercube Setup
+description: Need basic hypercube Setup for NECU for pilot 5/9
+
+Primary CTA
+- Background color: #284B63
+- Border: none
+- Color: #FFFFFF
+
+Secondary CTA
+- Background color: #FFFFFF
+- Border: 1px solid #D9D9D9
+- Color: #666666
+
+
+author: shahadet.hossain
+comment: [~dipak.mondal]  Please add the initial config for the Hypercube site. As Rifat and Nafis are on leave for the day, you can add the initial config for now so that samira can go through and match with the SOW.
+
+[~samira.iffat]  Please go through the SOW. If you have any confusion let us discuss in the meeting today.
+
+
+author: admin
+comment: [~shahadet.hossain] [~Ethan.Yu] Ethan will be the onshore developer for this, not Michael
+
+
+author: rifat.mahmud
+comment: Hi [~Ethan.Yu],
+
+As far as we have analyzed the SOW, we have some questions. 
+
+1. Which statement types will be supported for this client?
+2. Will there be user types supported? If so, then what are the types?
+3. What backend processes will be supported?
+4. Can users see the statements while they are on paper?
+5. Will email be captured while enrollment? or from sso?
+6. Will ECL be supported?
+7. Will Email Reminder be supported for this client?
+
+It would be great help if we get feedback on these.
+
+Thanks,
+Rifat 
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi Rifat,
+
+
+
+Heres what we have so far:
+
+1. Which statement types will be supported for this client? Consumer Statements, Business Statements, IRA
+
+2. Will there be user types supported? If so, then what are the types? Consumer and Business
+
+3. What backend processes will be supported? Not sure what this means. If you are talking modules, then Viewcheck module
+
+4. Can users see the statements while they are on paper? No
+
+5. Will email be captured while enrollment? or from sso? No. From SSO or ECL
+
+6. Will ECL be supported? Yes
+
+7. Will Email Reminder be supported for this client? Its that the same as email notification? They want email notification.
+
+
+author: rifat.mahmud
+comment: Hi Ethan,
+
+1. Will these statement types be under *default*? If so, then there will be only one tab in infotrac and hypercube. It is not clear from SOW that if enotice or etax will be available for this client? Can you confirm?
+
+2. Backend process as in afp processing(ms1,ms2),auth processing,enotice/etax processing and so on. Which of these will be supported? We will also need what class they will be using in processing-ui in these different processes. 
+
+Let me know when you have update on these.
+
+Thanks,
+Rifat    
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi Rifat, Sorry for the late response.
+
+The client will have Daily Notices and Taxes but they will be set up later in phase 2.
+
+For the second question, I still need to hear back. 
+
+
+author: rifat.mahmud
+comment: Hi Ethan,
+
+NECU is committed in hypercube_main_dev. Can you please add the following lines in settings.json while testing? I couldn't commit it because of some out of date issue. Let me know your feedback on the hypercube site.
+
+"necu.authCipher": "Washington",
+"necu.authConst": "600",
+
+Thanks
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi Rifat, for the rest of the questions asked a while back:
+
+
+
+1. Default.
+
+2. Were using ms1 , and ms2 I believe. Theres no Auth file. Enotice and etax are 2^nd^ phase of project.
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi Rifat, just a heads up that 
+
+Undeliverable Reports and Paperless Enrollment Reports will be present. 
+
+ECL Processing. 
+
+Email Reminders.
+
+
+
+Let me know if you have any questions.
+
+
+author: rifat.mahmud
+comment: Hi Ethan,
+
+Im adding the conf file Ive created. Please review it and let me know if this seems alright. I need some feedback on the following items - 
+
+# What will be the global.ssoKey?
+# Ill need the global.default.desc (stmt_type description).
+# Ive seen check_images in the SOW. Will check_image be available for this client?
+# Ive  set the value of global.autoRegister=true as theres no auth file processing. Let me know whether afp will be able to create new users.
+
+Thanks,
+
+Rifat
+
+[^necu.conf]
+
+
+
+
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi Rifat.
+
+# global.ssoKey=necu@2019
+# global.default.desc=Monthly Statements
+# Yes, check images will be available for both business and consumer statements. Not for IRA statements.
+# I think having autoRegister set as true should be right.
+
+Edit: 
+
+I have a question Rifat.
+
+Do we know if the client is using afp processing or document process?
+
+Thanks\!
+
+
+
+
+author: shahadet.hossain
+comment: Hi Ethan,
+
+I have talked with Rony. According to him this client will be using document processing.
+
+Thanks,
+
+Shahadet.
+
+
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi Shahadet,
+
+Thanks for the quick response\!
+
+Well have to change it from afp to document processing for the conf file Rifat.
+
+Also well need a stmt_type for ira, and add check images for ms1, ms2.
+
+Everything else looks good. 
+
+Thanks\!\!
+
+
+author: rifat.mahmud
+comment: Hi Ethan,
+
+Ive kept stmt_type *ira* for IRA Statements.  Let me know if this is correct. 
+
+Thanks,
+
+Rifat
+
+
+
+
+author: rifat.mahmud
+comment: Hi Ethan,
+
+I have uploaded the backend file in your test folder including the conf file. Please find it under the name DSI53NECU_HYPERCUBE_SETUP_19062019.zip.pgp. I have committed PUI-dev code in svn(branch). Please review it and let me know if you find any issue.
+
+Thanks,
+
+Rifat 
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi, Can we also have the auth file process set up for NECU as well?
+
+Attached is the sample cif file.
+
+
+
+
+
+For Business members, we take in the member number.
+
+For Consumer members, we take in the ssn.
+
+The field CustomerType differentiates between business or consumers:
+
+P = Consumer
+
+N = Business
+
+The member numbers are the Customer_Number fields.
+
+The ssn are in the texttin field.
+
+So for Consumers (P), wed read in texttin.
+
+For Business (N), wed read in the Customer_Number.
+
+
+
+Let me know if there are any more questions you have.
+
+
+
+Thanks\!
+
+
+
+
+author: rifat.mahmud
+comment: Hi Ethan, 
+
+I think you forgot to attach the auth file. Can you please send that again? And the businesses you mentioned above, those are for auth logic, right?
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi Rifat,
+
+
+
+Sorry, auth file is now attached. 
+
+Correct, there will be Consumer and Business users. And due to the type, the auth logic will have to read from the different fields mentioned above. 
+
+
+
+[^CIF_080119.txt]
+
+
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi all,
+
+The client came back with some changes theyd like to pursue if possible.
+
+Attached is the pdf with the changes theyre hoping to make.
+
+Can you let me know which ones will be possible and which ones arent? 
+
+The mobile UI seen on the left can be ignored, but try to see if the familiar pages similar to our browser website UI can be changed.
+
+From my first impression:
+
+Slide 4: The eDisclosure & eConsent is displayed, scroll down for eConsent
+
+Slide 5: We could make this change, but its global/shared. So we could add a element unique identifier to the You are logged out. Thank you. and in the necu css, make it invisible or something.
+
+Slide 6: Removing them can be done. Ill change the configurations for that
+
+Slide 8: This is true
+
+Slide 10: ***IF*** we remove the submit button, then no change is needed, since this only occurs if submit is hit.
+
+
+
+[^eStatement_Mobile_Mockup.pptx]
+
+
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Theres another change for the SSO Request:
+
+Well be reading in the account list from the cif_file/database table instead of the account list being passed in during sso request.
+
+This is similar to what SEFC is doing.
+
+Can you set up the changes so that this will be true?
+
+Is it a flag in the properties file?
+
+
+
+Let me know if there are any questions, and any chance we can get a target date for these changes? Unfortunately were on a rushed timeline and these changes are last minute.
+
+
+
+Thanks\!
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: NECU is also curious what the error page will look like if a user who isnt in the cif file tries to log in. What happens. 
+
+
+
+Are we creating the account for them? 
+
+Will they hit an error page, or still hit the website, but with no statements, no drop down?
+
+
+
+Can you provide the error message that users get if they are not able to login because they are not in CIF file? And can client customize it?
+
+
+
+Let me know.
+
+Thanks\!
+
+
+author: rifat.mahmud
+comment: Hi Ethan,
+
+Can you provide me details on the following column names (i.e - which tables column will be inserted/updated for which column) :
+
+* Nd_Acct_Nbr
+* Textbox4
+* Textbox6
+* Cfmr_Emp_Cd
+* Application
+
+And will Primary_usr_flag of usr_mapping table be inserted/updated for user type P and N?
+
+
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi Rifat,
+
+* Nd_Acct_Nbr = Account Number
+* Textbox4 = Account Status
+* Textbox6 = Date Closed
+* Cfmr_Emp_Cd = Employee Code (Can be ignored)
+* Application = Account_Type
+
+Ive attached the documentation specs we asked them to follow.
+
+
+
+And correct, the primary_usr_flag of usr_mapping will have P or n inserted for the field.
+
+[^CIF File Layout BANK.pdf]
+
+
+
+Thanks\!
+
+
+author: rifat.mahmud
+comment: Hi Ethan, 
+
+1. Auth File Processing - Will be provided tomorrow.
+
+2/ NECU Change Requests to Site
+- Remove You have logged out. Thank you from log out page & I do not agree page - Will be provided tomorrow.
+
+- Everything else requested, see if it's possible, but verbiage and color changes we should be able to provide at least. - verbiage and color changes will be provided tomorrow, and for other changes, we can provide the possible updates on 20/08 as we will be on holiday from 12-16.
+
+3. SSO Logic to read in from database instead of account list - Code can be provided tomorrow, but QA might require more time.
+
+4. Question for error page if a user who isn't in the cif file tries to log in. (But we're going for the route where we'll instead create the account into our database? I forget) - If a user who isnt in the cif file tries to log in, they should hit the error page with a verbiage saying "Unauthorized login" or something like that. But if the client requires that we will create accounts for those users, we can do that. But my question is, if we don't show any dropdown and statements, what is the purpose of creating that account? If the business is like if we process a doc for that account, and then it will show the dropdown and statement, in that case I think it is okay. Let me know your thoughts on that. 
+
+I have a couple of questions for auth process - 
+
+1. You mentioned that Application is account_type, and there is another column in auth file saying account_type, which table will be manipulated for the column account_type? 
+2. Which tables will be manipulated for Cfmr_Tax_id_type and Textbox6/Date closed?
+
+I have set Customer Number as the ssn for Business (N), and texttin as ssn for Consumers(P). Let me know if this is correct.
+
+Thanks
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi Rifat,
+
+4. Response: Can you provide me with the path to the file displaying the Unauthorized login page?
+
+Thatll do for now. 
+
+
+
+#  You can ignore the account_type field. (Its supposed to be product_type, but we dont use that). 
+
+Use Application for account_type field though for fin_account.
+
+2. You can ignore cfmr_tax_id_type, for date closed, it looks like they filled it out randomly. But i guess we could use it for accounts that arent active, for dates closed? If usr_session needs the information. If not feel free to ignore the field as well.
+
+
+
+Thanks\!
+
+
+
+
+author: rifat.mahmud
+comment: Hi Ethan, 
+
+The auth file along with the conf file has been uploaded to your file server. Please find it under the name DSI53NECU_HYPERCUBE_SETUP_10082019.zip.pgp. I have done some testing. As Im not sure what will be the minimum number of data to be expected, I have commented out that portion which throws exception for insufficient data. Please let me know if you find any issues.
+
+Thanks
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi Rifat,
+
+
+
+Can you help work on the rebranding changes for necu?
+
+Heres the personalization document they sent over for specifications.
+
+
+
+And also theres a eConsent verbiage changes. Ill attach it below as well.
+
+[^Jovia eConsent Reformatted _CorrectionsRequired.docx]
+
+Thanks\!
+
+[^eStatements_PersonalizationOptions_NEFCU_NewBrand (2).pdf]
+
+
+
+
+author: rifat.mahmud
+comment: Hi Ethan,
+
+remove logo, profile email/sms edit disable, disclosure verbiage change has been committed in trunk. I havent committed the *business users will not see eConsent part in disclosure* as David said in the meeting today that we will not support it as it is too much customization. Please let me know if you face any issue.
+
+Thanks
+
+
+author: rifat.mahmud
+comment: Hi Ethan,
+
+Ive committed the code in trunk. There are some items which needed too much customization , thats why I didnt update those (I.E - 1) Minimize/expand button, couldnt make it purple as these are global images; 2) supporting P1,P2,P3 as mentioned in the rebranding pdf and so on). Please have a look and let me know if you find any issue.
+
+Thanks. 
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi Feedback from NECU,
+
+The font is currently a serif font, but our brand requires sans-serif.  In this scenario, Arial is what we would use. (So can we change the font to Arial)
+
+On the I agree / I disagree call to actions for a disclosure, is there an opportunity to provide styling for those as well, or are we required to use green and red? (If this isnt a global thing, let me know if the color for the agree buttons can be changed.)
+
+
+author: rifat.mahmud
+comment: Hi Ethan,
+
+I included the registrar and the handler file in the zip. But I guess I provided the wrong file name. Sorry!
+
+Anyway, I have uploaded the tested files again in your file server. Please find  it under the name DSI53NECU_HYPERCUBE_SETUP_17092019.zip.pgp. Please let me know if you find any issues.
+
+Thanks.
+
+
+author: sharmina.rahman
+comment: Hi Ethan,
+
+I found two minor issues in auth. Rifat updated the code. Please find the updated code under "DSI53NECU_HYPERCUBE_SETUP_18092019.zip.pgp". Please find the updated code in your file server. I am also uploading the test case here so that you can check the database changes.
+
+Thanks
+
+Sharmina
+
+

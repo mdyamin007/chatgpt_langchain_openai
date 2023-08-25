@@ -1,0 +1,263 @@
+title: Black Knight Integration Analysis
+body: truenone
+
+## Goals
+
+  * The goal of this Integration is for Black Knight to connect to InfoIMAGE's System to retrieve documents
+
+## Background and strategic fit
+
+  
+
+## Requirements
+
+  
+|
+
+Requirement
+
+|
+
+Important
+
+|
+
+Notes  
+  
+---|---|---|---  
+1|
+
+Develop 3 API endpoint to allow BKI to retrieve documents
+
+  * Health Check 
+  * Document Listing 
+  * Document Read
+
+| Must Have|  
+  
+2| API will be based on Loan Number|  
+| See attached specification from Onbase.  
+3| Document will be in PDF format|  
+|  
+  
+4| API must respond in 20 seconds|  
+|  
+  
+5| API must support basic authentication|  
+|  
+  
+  
+# Base Requirements
+
+ID| Name| Description  
+---|---|---  
+R-001| Portfolio Mapping|
+
+There will be some way to map a portfolioIdentifier to a CID.
+
+ **TDB**
+
+  1. Spring config?
+  2. New DB table? Oracle? Mongo?
+
+  
+R-002| Statement Type Mapping|
+
+"Hardcoded" mapping from:
+
+  * loan -> LoanStatement
+  * escrow -> EscrowStatement
+  * etax -> TaxStatement
+  * enotices and other applicable statements -> Other
+
+  
+R-003| PDF Presentment Only| Skip documents that do not have PDF presentment
+type.  
+R-004| Return All Documents Within Archival| Archival period defined in
+properties will define the range of documents to return. The API will not
+accept a date range.  
+R-005| Document Description| Document Description/Name can be pulled from the
+doc_desc table.  
+R-006| BASIC Authentication| Allow for BASIC Authentication that will only use
+a username and password. No encryption logic like currently is being used.  
+  
+Notes:
+
+  1. Account Numbers won't be encrypted
+
+## Things to think about
+
+ID| Name| Description  
+---|---|---  
+O-001| Enforce Account Type and Statements|
+
+Require that for Black Knight integration, the statements have to be posted to
+a specific account type (BK or something).
+
+Require that the only statements posted to the account is loan, escrow, etax,
+and loan-relevant accounts.
+
+This means that for existing setup, there might need to be a document
+migration necessary for existing accounts. And the client also have to start
+using Account Types if they haven't already.  
+  
+O-002| Account Number Mapping|
+
+If we do not do O-001, we have to be able to support mapping from the numbers
+that Black Knight send to a values that we are using for the client on our
+side.
+
+For example: Loan Number -> Member Number
+
+This reverse mapping has one downside is that if a Member Number owns multiple
+loans, then for any Loan Number, ALL loan statements must be returned. **There
+is no way to distinguish which statements below to which loan numbe** **r**.  
+  
+O-003| Loan Number in LOAN_ID| Print team will provide the Loan Number in the
+LOAN_ID, so that they can be inserted in the estmt_doc table for querying the
+Loan Numbers.  
+  
+# Integration/Requirement with Other Services
+
+## Document Processing
+
+ID| Name| Description  
+---|---|---  
+D-001| Document Preconversion|
+
+Pre-Convert all documents to PDF to avoid conversion time during API call.  
+  
+## Email Notification
+
+ID| Name| Description  
+---|---|---  
+E-001| Enrollment File|
+
+Client will need to provide InfoIMAGE with an Enrollment File to update the
+account's delivery preference and notification values.  
+  
+E-002| Sending Emails| Emails will be sent out with the normal Email Service
+based on the delivery preference provided by the Enrollment File.  
+E-003| Email Sent Time| The email jobs can be automated at 5pm, and then 10pm
+for jobs processed after 5pm. 11:30am is a time that can be supported, but
+have to be opted in.  
+  
+* * *
+
+# Document API Design
+
+Doc List API
+
+  1. .../v1/loans/[portfolioIdentifier]/[Account Number]/docs
+  2. Query will order by esd_closingdate/etax_stamp DESC; or the object has to be sorted after query.
+  3. Combine both statements and taxes (and enotices as Other for Black Knight?)
+  4.   
+
+{
+
+  "Documents": [
+
+    {
+
+      "DocumentCreationDate": "2018-06-01",
+
+      "DocumentIdentifier": "string",
+
+      "DocumentMimeType": "application/pdf",
+
+      "DocumentName": "string",
+
+      "DocumentCategoryType": "LoanStatement",
+
+      "DocumentType": "1098"
+
+    }
+
+  ]
+
+}  
+  
+---  
+  
+  
+
+## Doc Read API
+
+  1. .../v1/loans/[portfolioIdentifier]/[Account Number]/docs/[esd_id] call WrapperService to return PDF stream.
+  2.   
+
+{
+
+  "DocumentContent": "base64-encoded string",
+
+  "DocumentMimeType": "application/pdf",
+
+  "DocumentName": "string"
+
+}  
+  
+---  
+  
+  
+
+## Health Check API
+
+  1. New healthcheck Endpoint using the same code as existing heartbeat.
+
+## Doc Upload API
+
+  1. Do not need to implement at this time.
+
+  
+
+  
+
+  
+
+# Effort and Timeline
+
+Task| Effort (Hours)| Start Date| Target Date| Description  
+---|---|---|---|---  
+BASIC Authentication| 5| 2/14| 2/21| Authenticate only with username and
+password  
+Health Check API Pilot| 1| 2/14| 2/21| Healthcheck should be available on
+Pilot for Black Knight to test along with the BASIC Authentication.  
+Mapping Configuration| 1| 2/21| 2/28|  
+  
+Doc List API Pilot| 18| 2/21| 2/28| To get some ready, the Account Mapping
+won't be developed during this task.  
+Doc Read API Pilot| 18| 2/28| 3/7|  
+  
+Doc List API - Account Mapping support|  
+|  
+|  
+| May not be needed if LOAN_ID can be used in the Document index file.  
+Setting up the dedicated Production APIPUI/Wrapper clusters| 5| TBD| TBD|  
+  
+Release|  
+| 6/13| 6/20| Release early, so that maybe Black Knight can do manual testing
+to make sure everything's good on Production.  
+Live Date| N/A|  
+| 6/25| This is when Black Knight release their code to Production.  
+  
+  
+
+Total Dev Hours: 48
+
+Hours Allotted for Research, Analysis, Testing, QA: 32
+
+Total Hours: 80
+
+# Questions
+
+  1. Does BKI support account type or has overlapping account number for each applications that may belong to different customer?
+  2. Since the API specification does not provide the authentication and respond format, please see the InfoIMAGE's documentation for the [API respond specification](https://confluence.infoimageinc.com/download/attachments/86934270/Black%20Knight%20Integration.docx?version=1&modificationDate=1643395666207&api=v2) and [Authentication](https://confluence.infoimageinc.com/download/attachments/114001719/InfoIMAGE%20Service%20API%20-%20Auth%20Info%20-%20SNFB.docx?version=1&modificationDate=1643391231387&api=v2).
+  3. The document (page 2) said that BKI has the ability for customer to enroll into electronic delivery preference, can BKI provide InfoIMAGE a daily report indicating which customer enrolled and which account are on electronic delivery preference?
+  4. If InfoIMAGE has additional document type beside Loan, Escrow, and eTax, does InfoIMAGE need to group them into the 'other' application in the respond?
+  5. What is the frequency will Black Knight send a request to the Health Check API?
+  6. Are the account number be transferred in plain text?  Does BKI support any encryption algorithm?
+  7. It was mentioned that the document list API is called for each statement type. How is the statement type differentiated? Is it through the .../loans/...? So for escrow it would be .../escrows/... ? What are all the values?
+
+  
+
+

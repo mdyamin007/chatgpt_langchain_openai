@@ -1,0 +1,205 @@
+title: 47348 / 10786 - LCCU - Hypercube Migration
+description: *DSI*: Finish development for pilot by Feb 3. ISD will need the one week lead-time to review and resolve any issue before the Client Pilot date.
+
+For the Hypercube migration, besides the standard features:
+
+LCCU has Marketing Emails. This can be replaced by the Marketing module on InfoTRAC.
+Inserts Processing on the PUI. This is sunset. All inserts management can be done with the Inserts Management module on InfoTRAC.
+Reminder emails. These are typically sunset for Hypercube migration.
+Undeliverable report. We will move them to the newer Bounceback Report.
+
+
+
+
+author: mamunur.rashid
+comment: Hi [~tai.trinh],
+
+The below information is on LCCU's profile page.
+
+!lccu profile page info.png|width=582,height=321!
+
+In hypercube profile page where this information should be put? Is it okay if this information is put in the tooltip?
+
+
+
+In LCCU MSM there is an Account Creation functionality.
+
+!lccu msm account creation.png!
+
+This feature is not available in Infotrac. Will this feature be introduced in Infotrac?
+
+Thanks.
+
+
+author: tai.trinh
+comment: [~mamunur.rashid]
+
+Can you let me know what this is actually doing? Is it just creating the account numbers? Is it also creating a User Profile and then enrolling them into Electronic delivery?
+
+Thanks,
+Tai
+
+
+author: mamunur.rashid
+comment: Hi [~tai.trinh],
+
+It creates account, user profile, contact info, enrolls them into electronic delivery, and then sends welcome email if the provided account doesn't exist.
+
+If account already exists then it just enroll them into electronic delivery and sends welcome email.
+
+Thanks
+
+
+author: mamunur.rashid
+comment: Hi [~tai.trinh],
+
+On the product requirement page ([https://confluence.infoimageinc.com/x/BgCSBQ]) I found this:
+
+!image-2021-01-22-15-21-34-557.png!
+
+But currently, LCCU has no DOC process. It uses the AFP process and its index file is not in pipe-delimited format. So will LCCU use DOC process after migration? Or their AFP process will use pipe-delimited index file?
+
+Thanks.
+
+
+author: mamunur.rashid
+comment: If LCCU uses DOC process for statement and enotice then I'll add configuration in lccu.conf. If you can provide me their index file format for DOC process then I can test.
+
+Thanks.
+
+
+author: tai.trinh
+comment: Hi [~mamunur.rashid],
+ # For the account creation module, I will check with the client. They would have to use the Enrollment Process instead.
+ # Update them to use Document Processing anyway. We will have to wait until IS make the update and provide us with sample index files. But the expectation is that they should be using Document Processing going forward.
+
+Also, please ping me directly on Slack every time you make a comment. This ticket is not directly worked on by me (unlike OSCU), so sometimes, I may forget to check it.
+
+Thanks,
+Tai
+
+
+author: tai.trinh
+comment: This is the Enrollment Process specs:CIF|AcctNumber|AcctName|EmailAddress
+
+We should be able to use the Standard handler and registrar. LCCU doesn't have SMS, so we do not need deliveryPref (default is email). The account creation also always enroll into E. The Standard Handler can be set up to always enroll accounts into E, so that's why paperless status is also not needed.
+
+Hold on this, though. We'll wait for the client's response.
+
+
+author: tai.trinh
+comment: Attached is also various documents that the client has just provided.
+[^La Capitol eStatement Personalization 012121.xlsx] [^eStatement Disclosure.pdf]
+
+
+author: tai.trinh
+comment: O, and here's the client code and password to use:
+
+Client Code: 21345141
+Password: x*h0mi%9AD
+
+
+author: mamunur.rashid
+comment: Hi [~tai.trinh],
+
+Email updating information on profile page is now being shown in tooltip. Here I am attaching a screenshot. Let me know if it's okay.
+
+!image-2021-01-28-23-01-45-265.png|width=589,height=193!
+
+
+
+Another thing, LCCU has1-to-1 user-account relationship. Should I use
+
+"npLinkType": "byUfa" for LCCU in hypercube? As far as I know, there is a future plan to use npLinkType=byUfa for every hypercube client. If this flag is not used in LCCU then a new implementation is needed to show the email updating information in profile page.
+
+Thanks.
+
+
+author: tai.trinh
+comment: [~mamunur.rashid],
+
+Yes, everything should be by UFA. In fact, I believe the NP record migration query I provided assume that link type is byUfa.
+
+---
+
+Is this tooltip a global update? I thought we had a way to display verbiage already before. Sometimes we have verbiage saying Paperless status can only be changed with OLB. UI-wise, I guess this does look nicer.
+
+Thanks,
+
+Tai
+
+
+author: mamunur.rashid
+comment: Hi [~tai.trinh],
+
+I have committed the code for LCCU hypercube migration to trunk. I have also set up LCCU Infotrac on pilot.
+
+I haven't run the migration script yet. Should I do that for pilot?
+
+Also, we are waiting for the Doc and Paperless index file format. Has IS change the file format. Can you please provide me the latest index file format for LCCU?
+
+Thanks.
+
+Mamun
+
+
+author: tai.trinh
+comment: Hi [~mamunur.rashid],
+
+I don't think we need to run any migration script right? All that we need to do is run the few queries I provided, and that should migrate all the data correctly (except for maybe the contact_info deletion; we may want to wait on that in case we need that data). We should migrate the data; otherwise hypercube and infotrac wouldn't really work.
+
+Document processing index files will probably come a lot later whenever the Print team is ready.
+
+For the enrollment process, that file is pending from the client. These updates can be committed to Pilot. Onshore will do the testing when the files are available.
+
+Did you also insert the document into MongoDB and update infoservice configs to enable SSO for LCCU? If not, please do that also. The infoservice configs is managed by Gitlab and deployable through Jenkins now.
+
+Is there also a release notes to keep track of what is done? I remembered seeing one, but I can't find the link. Please add the release note as an issue link like the PR for easy access to the page.
+
+I'll review everything once I have the release notes.
+
+Thanks,
+Tai
+
+
+author: tai.trinh
+comment: Hi [~mamunur.rashid],
+
+As an update, the client does not need the Enrollment Process to replace the Account Creation module. They didn't use it so they are going to let it sunset too.
+
+
+Thanks,
+Tai
+
+
+author: tai.trinh
+comment: Hi [~mamunur.rashid],
+
+Client has approved, and we're to prepare for Release.
+
+Please move LCCU Hypercube code into the Hypercube_v8.0.9.0 tag.
+
+I'll handle the other areas.
+
+Thanks,
+Tai
+
+
+author: anwarh
+comment: [Mamunur Rashid|https://gitlab.infoimageinc.com/mrashid] mentioned this issue in [a commit|https://gitlab.infoimageinc.com/mrashid/hypercube/-/commit/3e23b1a28a6858740c263488ea6f917a6d42488d] of [Mamunur Rashid / Hypercube|https://gitlab.infoimageinc.com/mrashid/hypercube]:{quote}[ISD-3704] LCCU - do not return "key=" in response from ssoKeyGen{quote}
+
+
+author: anwarh
+comment: [Mamunur Rashid|https://gitlab.infoimageinc.com/mrashid] mentioned this issue in [a commit|https://gitlab.infoimageinc.com/mrashid/hypercube/-/commit/10e1cdd0c4fc6a4e20cabd90841555183bf9511c] of [Mamunur Rashid / Hypercube|https://gitlab.infoimageinc.com/mrashid/hypercube]:{quote}[ISD-3704] LCCU - Hypercube Migration{quote}
+
+
+author: anwarh
+comment: [Mamunur Rashid|https://gitlab.infoimageinc.com/mrashid] mentioned this issue in [a commit|https://gitlab.infoimageinc.com/mrashid/hypercube/-/commit/bf5305b3a8dd5e2c82302d77df8c2eea1b564949] of [Mamunur Rashid / Hypercube|https://gitlab.infoimageinc.com/mrashid/hypercube]:{quote}[ISD-3704] LCCU - Hypercube Migration (changed sso method){quote}
+
+
+author: anwarh
+comment: [Mamunur Rashid|https://gitlab.infoimageinc.com/mrashid] mentioned this issue in [a commit|https://gitlab.infoimageinc.com/mrashid/hypercube/-/commit/e8a1f51c8e440a3c9e1e4260183489bac3fc0cc7] of [Mamunur Rashid / Hypercube|https://gitlab.infoimageinc.com/mrashid/hypercube]:{quote}[ISD-3704] LCCU - Hypercube Migration {quote}
+
+
+author: anwarh
+comment: [Abdullah Al Baki|https://gitlab.infoimageinc.com/abaki] mentioned this issue in [a commit|https://gitlab.infoimageinc.com/estatement/hypercube/-/commit/e8a1f51c8e440a3c9e1e4260183489bac3fc0cc7] of [Estatement / hypercube|https://gitlab.infoimageinc.com/estatement/hypercube]:{quote}[ISD-3704] LCCU - Hypercube Migration {quote}

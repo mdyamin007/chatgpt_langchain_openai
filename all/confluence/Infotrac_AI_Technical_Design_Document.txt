@@ -1,0 +1,1165 @@
+title: Infotrac AI Technical Design Document
+body: # Introduction
+
+  
+
+## Purpose/Objective Summary
+
+Brief description of what this project/feature/enhancement is about  
+  
+
+## Scope
+
+List of the itemized features of what's inside/outside of the scope of current
+project/phase:  
+  
+
+## Assumptions
+
+List of assumptions made during this design:  
+ **IMPORTANT:**  All assumptions need to be confirmed with corresponding
+stake-holder during design review. Assumptions would likely become
+Dependencies upon confirmation/design-review  
+  
+
+## Dependencies
+
+List of all dependency component/service/library needed for this design:
+
+* * *
+
+  
+  
+
+# Requirements
+
+## Business Requirements & Use Cases
+
+ **(Required)**  List of all needs/requirement from business/end-user
+perspective.
+
+ID| Title| Details| ScreenMock| Importance  
+---|---|---|---|---  
+BRQ-01| Client Management|  **Requirement:**  Allow InfoIMAGE administrator(s)
+to Create/Update/Deactivate client(s) and control what functional component
+(aka feature) does corresponding client(s) have access to. Only InfoIMAGE
+employee should be allowed access to this capability.  
+ **Use Case 1:**  A new client (ABCD, a basic client under infoImage) signed
+contract with InfoIMAGE to use statement processing only. InfoIMAGE Account
+Manager login to InfoTRAC and create a brand-new client ID (ABCD). Assign only
+the 'ActivityTrac', but none other features.  
+Going to Dashboard view should see the newly created ABCD show up.  
+Clicking on the ABCD should allow InfoIMAGE admin to create initial user(s) &
+role(s) under the ABCD client. (see BRQs below)  
+ **Use case 2:**  InfoImage user creates a new wholesale client.  
+ **Use case 3:**  InfoImage user creates a basic client under a new created
+wholesale client.  
+ **Use case 4:**  InfoImage user assigns features to a basic client.  
+ **Use case 5:**  InfoImage user adds a new feature to a basic client.  
+ **Use case 6:**  InfoImage User deletes/disable a feature for a basic client.  
+ **Use case 7:**  InfoImage User upgrade a feature from A to B.  
+For the above creating a client (case 1-3), please double check updating that
+kind of client (includes delete/disable).  
+ **Remarks:**  Ability of turning on/off features for client(s) should be
+control via 'permission' as well. So that only the InfoIMAGE user(s) that have
+certain role can perform such operation.  
+Example:  
+1) Two roles exists under InfoIMAGE: 'Account Manager', 'Production Control'  
+2) Introduce feature/permission 'Client Mgmt' that control access to this view  
+3) Only grant 'Client Mgmt' to 'Account Manager', NOT 'Production Control'|  
+| P0 - Show Stopper  
+BRQ-02| User/Role Management|  **Requirement:**  Allow any (InfoIMAGE/Client)
+administrator(s) to Create/Update/Remove user accounts and roles under the
+corresponding CID. Users/Roles created under a CID should be
+accessible/utilized within that single CID only, no role/user sharing across
+organization/CID should be allowed. Users created under a wholesaler/parent
+CID should have access to child CID based on the role/permission specified
+correspondingly. The ACL should be same as how BRQ-01 describes.  
+A new view should be introduced to manager the many-to-many mapping between
+users and roles created under a certain CID.  
+ **Use Case 1:**  Create users within same organization  
+1) User accounts '[john.doe@abcd.com](mailto:john.doe@abcd.com)',
+'[jane.smith@abcd.com](mailto:jane.smith@abcd.com)',
+'[big.boss@abcd.com](mailto:big.boss@abcd.com)' are created under ABCD.  
+2) Roles 'manager', 'teller' created under ABCD.  
+3) Assign '[john.doe@abcd.com](mailto:john.doe@abcd.com)' to have 'manager'
+role, '[jane.smith@abcd.com](mailto:jane.smith@abcd.com)' to have 'teller'
+role, '[big.boss@abcd.com](mailto:big.boss@abcd.com)' to have both 'manager'
+and 'teller' roles.  
+ **Use Case 2:**  InfoImage user create basic client's (under infoImage) user.  
+ **Use case 3:**  InfoImage user create wholesale client's user. Please double
+check the sub client access for wholesale user.  
+ **Use case 4:**  Wholesale client's user create his basic client's user.  
+ **Use case 5:**  InfoImage user create basic client's (under a wholesale)'
+user  
+In each of the above case, please consider assigning user with single and
+multiple roles, and also roles with overlapping features and without. For each
+kind of user (InfoImage, basic and wholesale), please verify updating a user
+(includes delete/disable), include the current login user.  
+ **Remarks:**  
+1). In the existing system, the wholesale user can access the all features of
+of a child client subscribed if this user has access to this child client.  
+2). Current user login id is formated as "${cid}_${someUniqueName}".|  
+| P0 - Show Stopper  
+BRQ-03| Role/Permission Management|  **Requirement:**  1). Consolidate
+InfoTrac code base's hard-coded Roles to database. 2). Create/Remove/Update
+role(s) for a given client and assign zero, one or many features/permissions
+to the role. Only the granted ones to the client should be shown in this GUI
+view.  
+ **Use Case: 1**  Grand access based on permissions  
+1) Roles 'branch manager', 'marketing manager', 'teller' created under ABCD.  
+2) Features 'ActivityTrac' and 'Message Manager' are granted for ABCD  
+3) Permission of 'View Jobs', 'Approve Jobs' exists under 'ActivityTrac'  
+4) Permission of 'View MM campaign', 'Create/Edit MM campaign', 'Approve MM
+campaign' exists under 'Message Manager'  
+5) Grant access of all permissions to 'branch manager'  
+6) Grant access of only 'Create/Edit MM campaign' to 'marketing manager'  
+7) Grant access of only 'View Jobs', 'View MM campaign' to 'teller'  
+8) Results: 'teller' can only view job and MM campaigns, but cannot
+create/edit anything. 'market manager' can only create MM campaign, but
+require 'branch manager' to approve them.  
+ **Use case 2:**  Add/enable a feature to a role.  
+ **Use case 3:**  Delete/disable a feature from a role.|  
+| P0 - Show Stopper|  
+ **Use case 4:**  verify all the touched features such as MM, ActivityTrac and
+etc.| BRQ-04| Migration|  **Requirement:**  Migrate Current InfoTrac user to
+new model. Please prepare the procedure and programs to migrate current
+InfoTrac user to new model.|  
+| P0 - Show Stopper  
+  
+  
+  
+
+## Functional Requirements & Use Cases
+
+ **(Required)**  List of all needs/requirement from engineering/functional
+perspective.
+
+ID| Title| Details| Bus. Req. Ref.| Importance  
+---|---|---|---|---  
+FRQ-01| Easy Feature/Permission Maintenance|  **Requirement:**  Allow
+InfoIMAGE developers to easily add/update/remove Features/Permissions within
+InfoTRAC application. No GUI is required for this. However, need to put
+structure in place so that InfoIMAGE developers can easily administrate this
+via either a ENUM class and/or database records. (e.g. database records with
+corresponding ENUM values. So that java-code could just use the ENUM values
+for implementation easily.  
+ **Use Case:**  
+1) Existing Feature 'Message Manager', Existing Permission 'Create/Edit MM
+campaign'  
+2) Enhancement request come and need to break the single permission down into
+two separate permission of 'Create MM campaign' and 'Edit MM campaign'  
+3) Developer should able to just following and be done with the change  
+3a) add/update minimal database record(s)  
+3b) add/update corresponding ENUM class value(s)  
+3c) update corresponding MM code to check against new/updated ENUM values|  
+| P0 - Show Stopper  
+  
+  
+  
+
+## Performance & Scalability Requirements (SLA)
+
+ **(Required)**  List of all needs/requirement from Performance perspective.
+
+ID| Title| Details| Importance  
+---|---|---|---  
+PRQ-01| Operation Efficiency| Since the user/role/permission check will be
+happening on every single page request. Need to ensure such check is extremely
+efficient. It shouldn't rely on the check to query DB every single request.
+Probably cache the ACL information within memory (session or application
+context) to ensure efficiency. Need to keep in mind any change of
+role/permission settings need to be reflected correctly. It's okay to require
+user to re-login in order to get most up-to-date ACL settings, but no further
+than that.| P0 - Show Stopper  
+  
+  
+  
+
+## [QA/Test
+Requirements](https://i3dev.easyredmine.com/projects/urf_mgmt/wiki/QATest_Requirements)
+
+ **Test Specification Design ( _Outline only_ ):**  
+
+List of all needs/requirement from QA/Testing perspective:
+
+The test case document is attached with this document. All tests will be done
+manually.  
+\---  
+  
+
+# Design
+
+## Architecture & Workflow
+
+ **Workflow:**
+
+1\. Create new client  
+2\. Update client feature setting  
+3\. Create new role  
+4\. Update role  
+5\. List roles  
+6\. Create new user  
+7\. Update user  
+8\. View login user's profile  
+  
+
+## Data Model changes (ER diagram & ddl.sql)
+
+The data model is in the attachment.  
+  
+
+## Application component functional details
+
+### Workflow 1: Create New Client
+
+ **Requirement:**
+
+The following changes are required during creating a new 'Basic' client by the
+Root Admin-  
+1\. Currently the system displays 'Feature Setting' screen after clicking on
+'Save' button on 'Create Client' screen. The system should not move on to
+"Feature Setting' duruing creating a new Basic client and should save client
+data in the database after clicking 'Save' button on 'Create Client' screen.
+
+ **Current data model:**
+
+The system saves client data in CLIENT table and clients' feature setting in
+the FEATURE table.
+
+ **Changes required in the data model:**
+
+No changes are required in the CLIENT or FEATURE table. Since 'Feature
+Setting' is no longer a part of create client process, no feature setting
+record will be created during creating a client.
+
+ **Current workflow:**
+
+The main steps in displaying the "Create Client" screen are the following-  
+1\. Browser sends request for 'Create new client' page  
+2\. WebFlow component calls getCreateClientForm() on CreateClientController  
+3\. CreateClientController calls getFeatureDefinitions() on ClientService that
+returns List<FeatureDefinition>  
+4\. CreateClientController creates an instance of CreateClientForm using the
+List<FeatureDefinition>  
+5\. CreateClientController returns CreateClientForm to WebFlow component  
+6\. WebFlow component provides CreateClientForm to createClientForm.jsp  
+7\. WebFlow component returns content to browser
+
+The main steps in moving on to 'Feature Setting' screen from 'Create Client'
+screen are the following-  
+8\. Browser sends request to save client data  
+9\. WebFlow component executes isBasicClient decision state that returns TRUE  
+10.WebFlow component invokes updateFeatureSetting.jsp  
+11.WebFlow component returns content to browser
+
+The main steps in saving new client data are the following-  
+12\. Browser sends request to save client data  
+13\. WebFlow component calls create() on CreateClientController  
+14\. CreateClientController calls insert() on ClientService  
+15\. ClientService calls insert() on ClientManager to save client data  
+16\. ClientService calls insertOrUpdate() on FeatureManager to save feature
+setting data  
+17\. WebFlow component invokes clientCreateConfirm.jsp  
+18\. WebFlow component returns content to browser
+
+ **Changes proposed to current workflow:**
+
+The following steps from the current workflow needs to be changed-  
+3\. ClientController call to getFeatureDefinitions() on ClientService should
+be removed  
+4\. ClientController creates an instance of CreateClientForm without
+List<FeatureDefinition>  
+9\. Framework calls create() on ClientController  
+16\. ClientService call to insertOrUpdate() on FeatureManager should be
+removed
+
+ **Sequence Diagram of Workflow 1**  
+  
+  
+
+### Workflow 2: Update Client Feature Setting
+
+ **Requirement:**
+
+The following changes are required in the "Feature Setting" screen during
+updating a Basic client by the Root Admin-  
+1\. The system should allow the user to select features as shown in "Feature
+Setting" mockup screen.  
+2\. The system should not display features marked as 'internal'.
+
+ **Current data model:**
+
+The system displays features in "Feature Setting" screen based on data from
+FEATURE_DEFINITION and FEATURE table.
+
+FEATURE_DEFINITION table has the following limitations-  
+1\. There is no column to indicate whether an entry is a feature or a sub-
+feature.  
+2\. There is no column to indicate whether an entry is an 'internal' feature
+or not.
+
+ **Changes required in the data model:**
+
+The following changes are required in the FEATURE_DEFINITION table-  
+1\. 'parent_code' column will be added to indicate whether an entry is a
+feature or a sub-feature. A null value in the column indictaes a feature and a
+not null value a sub-feature.  
+2\. 'type' column will be added to indicate whether an entry is an 'internal'
+feature or not. A value of 'R' in the column will indicate that its an
+internal feature and a null value indicates its a non 'internal' feature.
+
+ **Current workflow:**
+
+The main steps in displaying the "Feature Setting" screen are the following-  
+1\. Browser sends request for 'Feature Setting' page  
+2\. WebFlow component calls getClientProfileForm() on ClientProfileController  
+3\. ClientProfileController calls getFeaturesByClient() on ClientService  
+4\. ClientService calls findByClient() on FeatureManager  
+5\. FeatureManager calls findByClient() on FeatureDaoImpl  
+6\. FeatureDaoImpl executes named query "getFeaturesByClient" on FEATURE table
+and returns the result as List<Feature>  
+7\. FeatureManager calls getAll() on FeatureDaoImpl  
+8\. FeatureDaoImpl executes named query "getAll" on FEATURE_DEFINITION table
+and returns the result as List<FeatureDefinition>  
+9\. Consolidated List<Feature> becomes available in getClientProfileForm() on
+ClientProfileController  
+10.ClientProfileController creates an instance of ClientProfileForm using the
+List<Feature>  
+11.ClientProfileController returns ClientProfileForm to WebFlow component  
+12.WebFlow component provides ClientProfileForm to clientProfileForm.jsp  
+13.ClientProfileForm.jsp returns content to WebFlow component  
+14.WebFlow component returns content to browser
+
+The main steps in saving feature setting data are the following-  
+15\. Browser sends request for saving 'Feature Setting'  
+16\. WebFlow component calls updateFeatures() on ClientProfileController  
+17\. ClientProfileController calls updateFeatures() on ClientService  
+18\. ClientSrevice calls insertOrUpdate() on FeatureManager  
+19\. FeatureManager calls insertIrUpdate() on FeatureDaoImpl  
+20\. FeatureDaoImpl saves all features in FEATURE table and return  
+21\. WebFlow component invokes updateFeaturesConfirm.jsp  
+22\. The content from JSP is returned to browser
+
+ **Changes proposed to current workflow:**
+
+The named query "getAll" in step 8 of 'Current Workflow' acts according to
+existing data model and therefore is unable to serve the enhancement
+requirement.  
+A new named query 'getAllNonInternalType' is required that returns features
+marked as non-internal where each feature comes with its child features. The
+following changes are proposed to the the current workflow for the new named
+query -
+
+7\. FeatureManager calls getAllNonInternalType() on FeatureDefinitionDaoImpl  
+8\. FeatureDefinitionDaoImpl executes named query "getAllNonInternalType" on
+FEATURE_DEFINITION table and returns the result as List<FeatureDefinition>
+
+If features are removed from client, the following steps will be executed
+after step 20-  
+21\. ClientService calls deactivateByClientAndFeature() on FeatureDaoImpl to
+deactivate features from client  
+22\. ClientService calls deleteAlerts() on AlertService  
+23\. AlertService calls deleteByClientAndFeature() on AlertDaoImpl to remove
+alerts from user  
+24\. Framework invokes updateFeaturesConfirm.jsp  
+24\. The content from JSP is returned to browser
+
+ **Sequence Diagram of Workflow 2**  
+  
+  
+  
+  
+
+### Workflow 3: Create New Role
+
+ **Requirement:**
+
+Role is a new entity introduced in Infotrac AI. Following are the requirements
+during creating a new Role-  
+1\. Each client will define multiple roles for itself.  
+2\. A role has a unique name within a client and maps to multiple features
+available to the client.
+
+ **Current data model:**
+
+The system does not have a table corresponding to a role.
+
+ **Changes required in the data model:**
+
+The system saves Role data in ROLE table and the corresponding feature data in
+FEATURE_ACCESS table.
+
+ **Current workflow:**
+
+Currently role is a hardcoded property within a user object. There is no
+workflow avaialble for managing roles.
+
+ **Proposed workflow:**
+
+The main steps to display "Create new Role' screen are the following-  
+1\. Browser sends request for 'Create new Role' page  
+2\. Framework calls getCreateRoleForm() on RoleController  
+3\. RoleController calls getFeatures() on ClientService that returns
+List<Feature>  
+4\. RoleController creates an instance of CreateRoleForm using the
+List<Feature>  
+5\. RoleController returns CreateRoleForm to Framework  
+6\. Framework provides CreateRoleForm to createRoleForm.jsp  
+7\. Framework returns content to browser
+
+The main steps in saving new role data are the following-  
+8\. Browser sends request to save role data  
+9\. Framework calls create() on RoleController  
+10.RoleController calls createOrUpdate() on RoleService  
+11.RoleService calls insertOrUpdate() on RoleDaoImpl to save role data  
+12.RoleDaoImpl executes insertOrUpdate() to save role data in ROLE table  
+13.RoleService calls insertOrUpdate() on FeatureAccessDao to save feature
+access data in FEATURE_ACCESS table  
+14.Framework invokes roleCreateConfirm.jsp  
+15.Framework returns content to browser
+
+ **Sequence Diagram of Workflow 3**  
+  
+  
+  
+
+### Workflow 4: Update Role
+
+ **Requirement:**
+
+Role is a new entity introduced in Infotrac AI. Following are the requirements
+during updating a Role-  
+1\. A role has a unique name within a client and maps to multiple features
+available to the client.
+
+ **Current data model:**
+
+The system does not have a table corresponding to a role.
+
+ **Changes required in the data model:**
+
+The system saves Role data in ROLE table and the corresponding feature data in
+FEATURE_ACCESS table.
+
+ **Current workflow:**
+
+There is no workflow available for updating roles.
+
+ **Proposed workflow:**
+
+The main steps to display "Update Role' screen are the following-  
+1\. Browser sends request for 'Update Role' page  
+2\. Framework calls getRoleProfileForm() on RoleController  
+3\. RoleController calls getRole() on RoleService that returns the role  
+4\. RoleController calls getFeatureAccess() on RoleService that returns the
+List<FeatureAccess>  
+5\. RoleController creates an instance of RoleProfileForm using the role  
+6\. RoleController returns RoleProfileForm to Framework  
+7\. Framework provides RoleProfileForm to roleProfileForm.jsp  
+8\. Framework returns content to browser
+
+The main steps in saving role data are the following-  
+9\. Browser sends request to save role data  
+10\. Framework calls update() on RoleController  
+11.RoleController calls createOrUpdate() on RoleService  
+12.RoleService calls insertOrUpdate() on RoleDaoImpl to save role data  
+13.RoleDaoImpl executes insertOrUpdate() to save role data in ROLE table  
+14.RoleService calls insertOrUpdate() on FeatureAccessDao to save feature
+access data in FEATURE_ACCESS table  
+15.Framework invokes roleUpdateConfirm.jsp  
+16.Framework returns content to browser
+
+If features are removed from role, the following steps will be executed after
+step 13-  
+14\. RoleService calls deactivateByRoleAndFeature() on FeatureAccessDao to
+remove feature access data in FEATURE_ACCESS table  
+15\. RoleService calls deleteAlerts() on AlertService  
+16\. AlertService calls deleteByUserAndFeature() on AlertDaoImpl to remove
+alerts from user  
+17\. Framework invokes roleUpdateConfirm.jsp  
+18\. Framework returns content to browser
+
+ **Sequence Diagram of Workflow 4**  
+  
+  
+
+### Workflow 5: List Roles
+
+ **Requirement:**
+
+Role is a new entity introduced in Infotrac AI. Following are the requirements
+for listing Roles-  
+1\. Each role in the list displays its corresponding features.  
+2\. A role can be deleted or updated from the list.
+
+ **Current data model:**
+
+The system does not have a table corresponding to a role.
+
+ **Changes required in the data model:**
+
+The system saves Role data in ROLE table and the corresponding feature data in
+FEATURE_ACCESS table.
+
+ **Current workflow:**
+
+There is no workflow available for listing roles.
+
+ **Proposed workflow:**
+
+The main steps to display "Role List' screen are the following-  
+1\. Browser sends request for 'Role List' page  
+2\. Framework calls getRoleListForm() on RoleController  
+3\. RoleController calls getRoles() on RoleService  
+4\. RoleService calls findByClient() on RoleDaoImpl  
+5\. RoleDaoImpl executes namedQuery 'byClient' on ROLE table and returns
+List<Role>  
+6\. RoleController creates an instance of RoleListForm using the List<Role>  
+7\. RoleController returns RoleListForm to Framework  
+8\. Framework provides RoleListForm to roleListForm.jsp  
+9\. Framework returns content to browser
+
+ **Sequence Diagram of Workflow 5**  
+  
+  
+
+### Workflow 6: Create New User
+
+ **Requirement:**
+
+The following changes are required during creating a new 'Basic' customer
+user-  
+1\. Currently the system displays 'Feature Access' screen after clicking on
+'Save' button on 'Create User' screen. The system should not move on to
+"Feature Access' duruing creating a new Basic customer user and should save
+user data in the database after clicking 'Save' button on 'Create User'
+screen.
+
+ **Current data model:**
+
+The system saves user data in USR table and clients' feature access setting in
+the FEATURE_ACCESS table.
+
+ **Changes required in the data model:**
+
+No changes are required in the USR or FEATURE_ACCESS table. Since 'Feature
+Access' is no longer a part of create user process, no feature access record
+will be created during creating a user.
+
+ **Current workflow:**
+
+The main steps in displaying 'Create User' form are the following-  
+1\. Browser sends request to display 'Create User' page  
+2\. WebFlow component calls getCreateUserForm() on CreateUserController  
+3\. CreateUserController calls getManageableRoles() on UserService that
+returns List<Role>  
+4\. CreateUserController calls getManageableLevels() on UserService that
+returns List<AdminLevel>  
+5\. CreateUserController calls CreateUserForm() with List<Role> and
+List<AdminLevel> on CreateUserForm that returns CreateUserForm
+
+The main steps in moving on to 'Feature Access' screen from 'Create User'
+screen are the following-  
+6\. Browser sends request to save user data  
+7\. WebFlow component executes isWholesaleBasicUser action state that returns
+NO  
+8\. WebFlow component calls isCustomerBasicUser() on CreateUserController  
+9\. CreateUserController calls getFeaturesByClient() on ClientService that
+returns List<Feature>  
+10.CreateUserController sets List<Feature> to CreateUserForm  
+11.WebFlow component invokes configFeatureAccess.jsp  
+12.WebFlow component returns content to browser
+
+The main steps in saving new user data are the following-  
+13\. Browser sends request to save user data  
+14\. WebFlow component calls create() on CreateUserController  
+15\. CreateUserController calls createOrUpdate() on UserService  
+16\. UserService calls insertOrUpdate() on FeatureAccessManager to save
+feature access data  
+17\. WebFlow component invokes createUserConfirm.jsp  
+18\. WebFlow component returns content to browser
+
+ **Changes proposed to current workflow:**
+
+The following steps from the current workflow needs to be changed-  
+3\. UserController call to getManageableRoles() on UserService should be
+removed by call to getRolesByClient() on RoleService  
+4\. UserController call to getManageableLevels() on UserService should be
+removed as AdminLevel is no longer used  
+5\. CreateUserForm() is called without List<AdminLevel> on CreateUserForm  
+6-12. These steps no longer applies during create user, since features are not
+displayed during creating a user.  
+16\. UserService call to insertOrUpdate() on FeatureAccessManager should be
+removed
+
+ **Sequence Diagram of Workflow 6**  
+  
+  
+  
+
+### Workflow 7: Update User Role Setting
+
+ **Requirement:**
+
+The following changes are required during updating a 'Basic' customer user
+role setting-  
+1\. The system should display roles available for the client  
+2\. The system should allow multiple roles to be selected for the client
+
+ **Current data model:**
+
+The system does not allow many-to-many relationship between users and roles.
+
+ **Changes required in the data model:**
+
+1\. The system saves user role mapping info in USER-ROLE table. Thi is an
+intersection table between USR and ROLE table.
+
+ **Current workflow:**
+
+No workflow is vaialable to map roles to a user.
+
+ **Proposed Workflow:**
+
+The main steps in displaying 'Update User Role Setting' screen are the
+following-  
+1\. Browser sends request to display 'Update User' page  
+2\. Framework calls getUserProfileForm() on UserController  
+3\. UserController calls getById() on UserService that returns the user  
+4\. UserController creates an instance of UserProfileForm with the user  
+5\. Framework invokes userProfileForm.jsp using UserProfileForm  
+6\. Framework returns content to browser
+
+The main steps to update user role mapping info are the following-  
+7\. Browser sends request to save user data  
+8\. Framework calls update() on UserController  
+9\. UserController calls createOrUpdate() on UserService  
+10.UserService calls createOrUpdateUserRoles()  
+11.UserService calls insertOrUpdate() on UserRoleDaoImpl to save role setting
+data  
+12.Framework returns content to browser
+
+If roles are removed from user, the following steps will be executed after
+step 11-  
+12\. UserService calls deleteAlerts() on AlertService  
+13\. AlertService calls deleteByUserAndFeature() on AlertDaoImpl to remove
+alerts from user  
+14\. Framework returns confirmation content to browser
+
+ **Sequence Diagram of Workflow 7**  
+  
+  
+  
+  
+
+### Workflow 8: View current login user's profile
+
+ **Requirement:**
+
+1\. In logged in usres' profile on top right box on home page, the system
+should display all roles that belongs to the user
+
+ **Current workflow:**
+
+The main steps in displaying 'User Profile' box are the following-  
+1\. Browser sends request to display the home page  
+2\. The framework calls handleRequestInternal() on HomeController  
+3\. HomeController calls getById() on UserService that returns the user  
+4\. The framework invokes home.jsp using User with other form-backing objects  
+5\. The framework returns content to browser
+
+ **Proposed Workflow:**
+
+After step 3 the following should be executed-  
+4\. HomeController calls getRolesByUser() on UserService that returns roles
+mapped to the user  
+5\. The framework invokes home.jsp using User with other form-backing objects  
+6\. The framework returns content to browser
+
+ **Sequence Diagram of Workflow 8**  
+  
+  
+
+## Application components
+
+  
+  
+
+### Class Diagram
+
+  
+
+### Domain components
+
+1.  **FeatureAccess**  
+This component corresponds to "FEATURE_ACCESS" table in the existing data
+model and will have the following changes:
+
+Property| Status| Description  
+---|---|---  
+User user| Existing| This property will be removed as there will be no FK to
+"USR" table.  
+Feature feature| Existing| This property will be removed as there will be no
+FK to "FEATURE" table.  
+FeatureDefinition featureDefinition| New| This property will be added to
+represent FK to "FEATURE_DEFINITION" table.  
+Role role| New| This will be added to represent FK to "ROLE" table.  
+  
+2.  **FeatureDefinition**
+
+This component corresponds to "FEATURE_DEFINITION" table in the existing data
+model and will have the following changes:
+
+Property| Status| Description  
+---|---|---  
+String parentCode| New| This will be added as "FEATURE_DEFINITION" will have
+FK to itself.  
+List<FeatureDefinition> children| New| This will be added to return the list
+of sub-feature-definitions that belongs to a feature definition.  
+FeatureDefinitionType type| New| This will be added to represent the type of
+FeatureDefinition e.g. whether this is an internal feature or not.  
+  
+3.  **Role**  
+This component exists in non-persistent form. This will be annotated
+accordingly to correspond to the new "ROLE" table to be introduced in the
+existing data model and will have the following properties:
+
+Property| Status| Description  
+---|---|---  
+int Id| New| This property represents the PK to ROLE table.  
+String code| New| This property represents the short description of the role.  
+String name| New| This property represents the name of the role.  
+Client client| New| This property represents the FK to "CLIENT" table.  
+boolean active| New| This property represents whether the Role is active or
+not.  
+Calendar createdTime| New| This represents the instance the role was created.  
+User createdBy| New| This represents the user who created the role.  
+Calendar lastModified| New| This represents the instance the role was last
+modified.  
+User updatedBy| New| This represents the user who modified the role.  
+  
+4.  **UserRole**  
+This will be a new component. It will correspond to the new "USER_ROLE" table
+to be introduced in the existing data model and will have the following
+properties:
+
+Property| Status| Description  
+---|---|---  
+int Id| New| This property represents the PK to "USER_ROLE" table.  
+User user| New| This property represents the FK to "USR" table.  
+Role role| New| This property represents the FK to "ROLE" table.  
+boolean active| New| This property represents whether the record is active or
+not.  
+Calendar createdTime| New| This represents the instance the user role setting
+was created.  
+User createdBy| New| This represents the user who created the user role
+setting.  
+Calendar lastModified| New| This represents the instance the user role setting
+was last modified.  
+User updatedBy| New| This represents the user who modified the user role
+setting.  
+  
+5\. Alert  
+This component corresponds to "ALERT" table in the existing data model and
+will have the following changes:
+
+Property| Status| Description  
+---|---|---  
+Feature feature| Existing| This will be removed as an alert is identified by
+the user and feature definition.  
+FeatureDefinition featureDefinition| New| This will be added as an alert is
+identified by the user and feature definition.  
+  
+  
+  
+
+### DAO components
+
+1.  **FeatureDefinitionDao interface**  
+This is a new component. It serves as an interface to FeatureDefinitionDaoImpl
+which maps to "FEATURE_DEFINITION" table and have the following methods:
+
+Method| Status| Description  
+---|---|---  
+public List<FeatureDefinition> getAll()| New| This method returns all internal
+and non-internal feature definitions  
+public List<FeatureDefinition> getAllNonInternalType()| New| This method
+returns all non-internal feature definitions  
+  
+2.  **FeatureDao interface**  
+This component serves as an interface to FeatureDaoImpl mapped to "FEATURE"
+table and have the following changes:
+
+Method| Status| Description  
+---|---|---  
+public List<FeatureDefinition> getAll()| Existing| This method needs to be
+removed as it is appropriate to have this method in FeatureDefinitionDao  
+  
+3.  **FeatureAccessDao interface**  
+This component serves as an interface to FeatureAccessDaoImpl mapped to
+"FEATURE_ACCESS" table and have the following changes:
+
+Method| Status| Description  
+---|---|---  
+public List<FeatureAccess> findByUser(User user)| Existing| This method will
+be removed as in "FEATURE_ACCESS" there will be no FK to "USR" table  
+public void deleteAllByUser(User user)| Existing| This method will be removed
+as in "FEATURE_ACCESS" there will be no FK to "USR" table  
+public List<FeatureAccess> findByRole(Role role)| New| This method will be
+added as "FEATURE_ACCESS" will have FK to "ROLE" table. This returns a list of
+feature access mapped to the given role.  
+public List<Role> findByClientAndFeature(Client client, Feature feature)| New|
+This method returns a list of roles mapped to the given client and feature.  
+public void deactivateByRoleAndFeature(Role role, Feature feature)| New| This
+removes the list of feature access mapped to the given role and feature.  
+public void deleteByRole(Role role)| New| This method will be added as
+"FEATURE_ACCESS" will have FK to "ROLE" table. This removes the list of
+feature access mapped to the given role.  
+public void deleteByClientAndFeature(Client client, Feature feature)| New|
+This removes the list of feature access mapped to the given client and
+feature.  
+  
+4.  **RoleDao interface**  
+This is a new component. It serves as an interface to RoleDaoImpl which maps
+to "ROLE" table and have the following methods:
+
+Method| Status| Description  
+---|---|---  
+public Role getById(int id)| New| This method returns the role by the given id  
+public void insertOrUpdate(Role role)| New| This method adds a new role or
+updates an existing role  
+public void delete(Role role)| New| This method deletes the given role  
+public List<Role> findByClient(Client client)| New| This method returns a list
+of roles mapped to the given client  
+  
+5.  **UserRoleDao interface**  
+This is a new component. It serves as an interface to UserRoleDaoImpl which
+maps to "USER_ROLE" table and have the following methods:
+
+Method| Status| Description  
+---|---|---  
+public void insertOrUpdate(UserRole userRole)| New| This method adds a new
+userRole or updates an existing list of userRroles  
+public void delete(UserRole userRole)| New| This method deletes the given
+userRole  
+public void deleteAllByRole(Role role)| New| This method deletes the list of
+userRoles mapped to the given role  
+public List<UserRole> findByUser(User user)| New| This method returns a list
+of userRoles mapped to the given user  
+public List<UserRole> findByRole(Role role)| New| This method returns a list
+of userRoles mapped to the given role  
+  
+6.  **AlertDao interface**  
+This component serves as an interface to AlertDaoImpl mapped to "ALERT" table
+and have the following changes:
+
+Method| Status| Description  
+---|---|---  
+public void deleteByClientAndFeature(Client client, FeatureDefinition
+featureDefinition)| New| This method deletes alerts for the given client and
+feature definition  
+public void deleteByClient(Client client)| New| This method deletes alerts for
+the given client  
+public void deleteByUserAndFeature(User user, FeatureDefinition
+featureDefinition)| New| This method deletes alerts given by the user and
+feature definition  
+public void deleteByUser(User user)| New| This method deletes alerts for the
+given user  
+  
+  
+  
+
+### DAOImpl components
+
+1.  **FeatureDefinitionDaoImpl**
+
+  * This component handles "FEATURE_DEFINITION" table entries and have methods modified or implemented according to FeatureDefinitionDao interface.
+
+2.  **FeatureDaoImpl**
+
+  * This component handles "FEATURE" table entries and have methods modified according to FeatureDao interface.
+
+3.  **FeatureAccessDaoImpl**
+
+  * This component handles "FEATURE_ACCESS" table entries and have methods modified or implemented according to FeatureDefinitionDao interface.
+
+4.  **RoleDaoImpl**
+
+  * This new component handles "ROLE" table entries and have methods modified or implemented according to RoleDao interface.
+
+5.  **UserRoleDaoImpl**
+
+  * This new component handles "USER_ROLE" table entries and have methods modified or implemented according to UserRoleDao interface.
+
+6.  **AlertDaoImpl**
+
+  * This new component handles "ALERT" table entries and have methods modified or implemented according to AlertDao interface.
+
+  
+  
+
+### Service components
+
+1.  **ClientService**
+
+Method| Status| Description  
+---|---|---  
+public void insert(Client client, List<Feature> features)| Existing| As per
+the new requirement, client has to be created in a single step without
+associating feature setting. Therefore feature handling logic should be
+removed from this method.  
+public List<Feature> getFeatures(Client client, boolean activeOnly)| New| This
+method returns the list of active features to be displayed on "Create New
+Role" page for the given client.  
+  
+2.  **RoleService**
+
+Method| Status| Description  
+---|---|---  
+public void createOrUpdate(Role role)| New| This method creates a new role or
+updates an existing role for the client and maps the corresponding features to
+role.  
+public Role getRole(int id)| New| This method returns the role for the given
+ID.  
+public List<Role> getRoles(Client client)| New| This method returns all roles
+mapped to the given client.  
+public List<FeatureAccess> getFeatureAccess(Role role, boolean activeOnly)|
+New| This method returns active and inactive feature access list for the given
+client and role.  
+public void delete(int id)| New| This method deletes the role of given id.  
+public List<Role> getRoles(Feature feature)| New| This method returns the list
+of roles mapped to the given feature.  
+public List<User> getUsers(Role role)| New| This method returns the list of
+users mapped to this role.  
+  
+3.  **UserService**
+
+Method| Status| Description  
+---|---|---  
+public void insert(User user, List<ClientAccess> clientAccess,
+List<FeatureAccess> featureAccess, User creator)| Existing| As per the new
+requirement, user has to be created in a single step without associating role
+setting. Therefore role handling logic should be removed from this method.  
+public List<FeatureAccess> getFeatureAccessByUserAndClient(User user, Client
+client, boolean activeOnly)| Existing| This method returns list of feature
+access based on user and client according to existing data model. In the new
+data model feature access will be according to roles.  
+public void updateFeatureAccess(User owner, List<FeatureAccess>
+featureAccess)| Existing| This method maps list of feature access to user
+according to existing data model. In the new data model feature access will be
+according to roles.  
+public List<UserRole> getRolesByUser(User user)| New| This new method returns
+list of roles mapped to the user according to new data model. These roles are
+displayed as checked roles on "Role Setting" page for the user.  
+List<FeatureDefinition> findFeatureByUser(User user)| New| This new method
+returns the list of feature definitions accessible to the user.  
+public List<Role> getManageableRoles(Client client, User user)| Existing| This
+method shall no longer be used.  
+public List<AdminLevel> getManageableLevels(Client client, User user)|
+Existing| This method shall no longer be used.  
+public void createOrUpdateUserRoles(List<UserRole> userRoles)| New| This new
+method creates or updates user role settings.  
+  
+4.  **FeatureAccessManager**
+
+Method| Status| Description  
+---|---|---  
+public List<FeatureAccess> findByUserAndClient(User user, Client client,
+boolean activeOnly)| Existing| This method should be modified to return the
+list of feature access to user taking the client and its roles into
+consideration.  
+  
+5.  **FeatureManager**
+
+Method| Status| Description  
+---|---|---  
+public List<Feature> getFeatures(Client client, boolean activeOnly)| New| This
+method returns the list of active features to be displayed on "Create New
+Role" page for the given client.  
+  
+6\. AlertService
+
+Method| Status| Description  
+---|---|---  
+public void deleteAlerts(Client client, List<Feature> features)| New| This
+method deletes alerts for the given client and features  
+public void deleteAlerts(Client client)| New| This method deletes alerts for
+the given client  
+public void deleteAlerts(Role role, List<FeatureAccess> featureAccess)| New|
+This method deletes alerts for the given role and feature access  
+public void deleteAlerts(Role role)| New| This method deletes alerts by the
+given role  
+public void deleteAlerts(User user, List<UserRole>)| New| This method deletes
+alerts by the given user and user roles  
+public void deleteAlerts(User user)| New| This method deletes alerts for the
+given user  
+  
+  
+  
+
+### Controller components
+
+1.  **ClientController**
+
+Method| Status| Description  
+---|---|---  
+public CreateClientForm getCreateClientForm()| Existing| As per the new
+requirement, client has to be created in a single step without associating
+feature setting. Therefore feature handling logic from this method will be
+moved to ClientController.  
+public void create(CreateClientForm form)| Existing| As per the new
+requirement, client has to be created in a single step without associating
+feature setting. Therefore feature handling logic from this method will be
+moved to ClientController.  
+public ClientProfileForm getClientProfileForm(String cid, List<Client>
+clientsUnderRoot)| Existing| This method will be modified to enable it to
+handle features for feature setting with client.  
+  
+2.  **UserController**
+
+Method| Status| Description  
+---|---|---  
+public CreateUserForm getCreateUserForm(User currentUser, Client client)|
+Existing| As per the new requirement, user has to be created in a single step
+without associating role setting. Therefore role handling logic from this
+method will be moved to UserController.  
+public void create(CreateUserForm form, User currentUser)| Existing| As per
+the new requirement, user has to be created in a single step without
+associating role setting. Therefore role handling logic from this method will
+be moved to UserController. This method maps features to user according to
+existing data model. This has to be modified / removed as per new data model.  
+public UserProfileForm getUserProfileForm(int userId, User currentUser,
+List<User> users)| Existing| This method will be modified to enable it to
+handle roles for roles setting with user.  
+public void loadFeatureAccess(UserProfileForm form)| Existing| This method
+maps features to user according to existing data model. This has to be
+modified / removed as per new data model.  
+public void updateFeatureAccess(UserProfileForm form)| Existing| This method
+maps features to user according to existing data model. This has to be
+modified / removed as per new data model.  
+  
+3.  **RoleController**
+
+Method| Status| Description  
+---|---|---  
+public CreateRoleForm getCreateRoleForm(Client client)| New| This method
+returns the role form bean to be used for "Create Role" page.  
+public void create(CreateRoleForm form)| New| This method creates a new role
+for the client and maps the corresponding features to role.  
+public RoleProfileForm getRoleProfileForm(Client client)| New| This method
+returns the role form bean to be used for "Update Role" page.  
+public void update(RoleProfileForm form)| New| This method updates an existing
+role for the client and maps the corresponding features to role.  
+public void delete(int id)| New| This method deletes the role of given id.  
+public RoleListForm getRoleListForm(Client client)| New| This method returns
+the role form bean to be used for "Role List" page.  
+  
+  
+  
+
+### Model components
+
+1.  **CreateRoleForm**  
+This new component is the bean corresponding to "Create Role" form and has the
+following private properties:
+
+Property| Status| Description  
+---|---|---  
+int id| New| This represents the ID of the Role.  
+Client client| New| This represents the Client property of the Role.  
+String code| New| This represents the short description of the Role.  
+String name| New| This represents the name of the Role.  
+List<FeatureAccess> featureAccessList| New| This represents the feature access
+list of the role.  
+  
+2.  **RoleProfileForm**  
+This new component is the bean corresponding to "Update Role" form and has the
+same properties as CreateRoleForm.
+
+3.  **UserProfileForm**  
+This component is the bean corresponding to "Create User" form and has the
+following changes:
+
+Property| Status| Description  
+---|---|---  
+List<UserRole> userRoles| New| This property maps the roles to user.  
+  
+  
+  
+
+### JSP components
+
+Component| Status| Description  
+---|---|---  
+createRoleForm.jsp| New| This component is for creating a new role.  
+roleProfileForm.jsp| New| This component is for updating a role.  
+roleList.jsp| New| This new component is for displaying existing roles of the
+client.  
+  
+  
+  
+
+## Integration Points & Interface
+
+ **TODO: (If Applicable)**  List out Integration Points and corresponding
+interface
+
+From Component| To Component| Details| Error Handling  
+---|---|---|---  
+InfoTRAC| PUI| DT_JOB_ID need to be synchronized by...| If DT_JOB_ID during
+PUI processing is not found in ...  
+  
+* * *
+
+  
+  
+
+# Summarized Change Log
+
+Date| Who| Changes to Design Doc  
+---|---|---  
+3/11/2013| Ben C| Added some TODO notes and examples  
+3/08/2013| Ben C| Initial Draft  
+  
+* * *
+
+  
+  
+
+# Sign-Off
+
+Group| Date| Who| Comment  
+---|---|---|---  
+Product Manager (Business)|  
+|  
+|  
+  
+Account Service (AS)|  
+|  
+|  
+  
+Dev./Impl. Manager (Technical)|  
+|  
+|  
+  
+Production Control (PC)|  
+|  
+|  
+  
+Data Processing (DP)|  
+|  
+|  
+  
+Accounting/Invoicing|  
+|  
+|  
+  
+  
+  
+
+### Attachments
+
+  
+
+

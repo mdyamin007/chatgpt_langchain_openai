@@ -1,0 +1,177 @@
+title: DataTRAC Database Connector Code Refactor - InHouse
+description: 
+
+*Update /home/master/SetDB2.pm to create an overloaded constructor to take 2 parameters:*
+
+$database, $db_server
+
+$database parameter supports dev, parallel and prod values
+
+$db_server: server name that needs to be connected. It will check two parameters
+
+mssql_datatrac
+
+oracle_datatrac
+
+The constructor will define db name, user, password, server_url
+
+
+
+*Update the following scripts to use the new SetDB2.pm constructor for mssql_datatrac related constructor:*
+
+/home/master/dpvs_rpt.pl
+/home/master/estmt_selective_ins.pl
+/home/master/full_imb_recon.pl
+/home/master/insert_bins_check.pl
+/home/master/lkup_dtjobid.pl
+/home/master/verify_dt_job_id.pl
+
+
+
+
+author: william.kong
+comment: Per our discussion, let target 7/22 for the production release date. If things go super smooth we can change our mind to release it earlier.
+
+
+author: tuna
+comment: Hi [~jun], [~William.Kong],
+
+Do we have estimated new release date for this project? So I can adjust dates in IS upcoming list.
+
+Thanks,
+
+Tum
+
+
+
+
+author: william.kong
+comment: 
+
+[~TunA]: Let's target August 16, Tuesday 'noon' time to release the code. We will need to alert DP and team before we do a global code release QA testing passes.
+
+
+
+[~jun]: Sorry for the delayed responses! I'm doing the code review now starting with Setdb2.pm. Can you please update this code to refactor SetPW() function to also detect the database connection type (i.e. If the object is associated to Microsoft SQL, then the use the corresponding correct syntax to update the db password. I think this will be a bug if someone decides to update the database password for Microsoft SQL. Please review and see if you concur with my assessment.
+
+I'm still reviewing the code you've modified and will update you more if I find anymore potential issues. Great work on this project so far!
+
+
+
+Thanks!
+
+
+author: william.kong
+comment: [~jun]: Oops! Can you change the string name "mysqlDB" to "mssqlDB"? This may mislead folks that this a MySQL database when in fact it is Microsoft (MS) SQL database. Sorry for being picky on this one.
+
+
+
+Also maybe change the name of function sqlDBSettings to mssqlDBSettings to matchup as well. In the future we may use mysqldb or postgres db as well but we can worry about that in the future.
+
+
+author: jun
+comment: [~William.Kong],
+
+Variables and comments are cleaned up in the scripts.
+
+
+author: william.kong
+comment: [~jun]: Thanks for getting this done! Let's keep the due date as planned so that code remains in parallell environment. In the meantime, please submit this to QA to see if they can review. Since this is global code update, please send global email to DSi, IS, and DP on the day of the code release.
+
+
+
+[~OIR] (Terrence) /[~Peter.Dang]: I've completed the code review for this global database connection code enhancements to support MSSQL. We will target 8/16/2022 to go live.
+
+/home/test/master/Setdb2.pm (Good)
+
+/home/test/master/dpvs_rpt.pl (Good)
+
+/home/test/master/estmt_selective_ins.pl (OK; the perl variable still uses 'mySqlDB", but at least the Setdb2 param is using msssqlDB)
+
+/home/test/master/insert_bins_check.pl (OK; the perl variable still uses 'mySqlDB", but at least the Setdb2 param is using msssqlDB)
+
+/home/test/master/lkup_dtjobid.pl (Good)
+
+/home/test/master/verify_dt_job_id.pl(OK; the perl variable still uses 'mySqlDB", but at least the Setdb2 param is using msssqlDB)
+
+
+
+
+
+
+author: jun
+comment: [~William.Kong]
+
+estmt_selective_ins.pl ,insert_bins_check.pl,verify_dt_job_id.pl is using variable msssqlDB now.
+
+[~Igor.Khosid]
+
+parallel id:20220714090837
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220714090837
+   Currently in parallel: Yes
+   User: junM
+   Description: IS-1181 Database code refactor
+   Date Submitted: 2022-07-14 09:08:53
+   Date Last Updated: 2022-08-02 09:55:13
+   Files:
+      1) insert_bins_check.pl
+      2) estmt_selective_ins.pl
+      3) verify_dt_job_id.pl
+      4) full_imb_recon.pl
+      5) lkup_dtjobid.pl
+      6) Setdb2.pm
+
+
+author: igor.khosid
+comment: [~Andrey.Kutsenko] - prior start testing - we need to discuss the priority
+Please see me.
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+ #Code changed according to Description
+
+
+
+
+author: jun
+comment: Attached code transfer form.
+
+[^IS_PROGRAM_TRANSFER_FORM_Rev 07132016.doc]
+
+
+author: tuna
+comment: Hi [~jun],
+
+Following codes have been released. Jun hold these core codes in parallel environment for testing purpose.[~William.Kong]bypass parallel test.
+
+Thanks
+
+Tun
+
+
+
+
+
+20220816144539 08/16/2022 junM IS-1182 DataTRAC Database Connector Code Refactor - InHouse
+
+[oper1@rhs docdef]$ ls -ltr /d/is/cvs/xfer/junM/
+total 816
+-rwxrwxrwx 1 junM isgroup 10180 Aug 16 14:34 insert_bins_check.pl
+-rwxrwxrwx 1 junM isgroup 11153 Aug 16 14:35 estmt_selective_ins.pl
+-rwxrwxrwx 1 junM isgroup 4004 Aug 16 14:35 verify_dt_job_id.pl
+-rwxrwxrwx 1 junM isgroup 45272 Aug 16 14:35 full_imb_recon.pl
+-rwxrwxrwx 1 junM isgroup 949 Aug 16 14:35 lkup_dtjobid.pl
+-rwxrwxrwx 1 junM isgroup 111432 Aug 16 14:35 dpvs_rpt.pl
+-rwxrwxrwx 1 junM isgroup 4437 Aug 16 14:35 Setdb2.pm
+
+
+
+
+author: jun
+comment: [~William.Kong]
+
+Code released to prod

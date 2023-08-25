@@ -1,0 +1,168 @@
+title: SNFB - Guardian Mortgage Statement Core Conversion
+description: None
+
+
+author: rodriguez
+comment: [~enricob] [~Peter.Dang]
+
+Hi Enrico,
+
+When following the mapping for S Record (Transactions), I'm not getting the expected output. Not many accounts have S records. The first 2 I have encountered don't make sense, especially the description. This what I get when I follow the mapping.
+
+ACCOUNT 289520
+
+EFFECTIVE DATE = 0
+
+DESCRIPTION = 45000012017
+
+ESCROW ACTIVITY = 0
+
+ADVANCED FEES = 0
+
+PAYMENTS = 7500
+
+
+
+ACCOUNT 298752
+
+EFFECTIVE DATE = 211130
+
+DESCRIPTION = 43102111301
+
+ESCROW ACTIVITY = 0
+
+ADVANCED FEES = 0
+
+PAYMENTS = 0
+
+
+author: rodriguez
+comment: [~enricob] [~Peter.Dang]
+
+The way CHFA app gets the description is like this:
+
+For RECORD S, 32-37 COMP - 3 returns a string of digits, and then they append the first two digits to the last digit. For example, account # 289520 description45000012017 will have a code of 745. Then they use that 3 digit code to find the description in a table. There are 52 entries in the table. If there is no match, the description defaults to "Payment". In this case, code 745 does not yield a match so it defaults to "Payment".
+
+For account # 298752, description 43102111301 has a code of 143. Code 143 returns a description of "Adjustment".
+
+Hope this helps.
+
+
+author: andreav
+comment: Client confirmed the OCR scanned successfully through the remit processor.
+
+
+author: enricob
+comment: Attached approved sample
+
+
+author: rodriguez
+comment: [~Igor.Khosid] [~andreav]
+
+DPVS and IRF ATTACHED:
+
+DPVS =DPVS_SNFBML3.pdf
+
+IRF =IRF_SNFBML3.pdf
+
+PRJ FILE:W:\qa\SNFB\SNFBML31_IS-740.zip
+
+ARCHIVAL FILE TOO LARGE TO ATTACH HERE
+
+ARCHIVAL FILE LOACATION: /z/pdf_afp/snfb/snfbml3/zip/Guardian_Monthly Statement_20220317.zip
+
+PARALLEL:
+
+Parallel ID: 20220316113215
+ Currently in parallel: Yes
+ User: leoR
+ Description: IS - 740 SNFB Guardian Mortgage Core Conversion
+ Date Submitted: 2022-03-16 11:32:39
+ Date Last Updated: 2022-03-18 17:37:14
+ Files:
+ 1) snfbml3.control
+ 2) SNFBML31.prj
+ 3) snfbml3_process.sh
+ 4) SNFBML31.dfa
+ 5) snfbml3_pdf.control
+ 6) snfbml3.procs
+
+
+author: rodriguez
+comment: [~andreav]I attached a new DPVS for samples, please useCORRECT_DPVS_SNFBML3.pdf. I just realized I needed to modify PRISMA to pull the eform using the new snfbml3 prefix. This is done.
+
+
+author: igor.khosid
+comment: [~Andrey.Kutsenko] - please proceed with the testing ASAP. We have only two day to complete it
+[~andreav] - please request print samples and attach approved samples
+
+
+
+
+author: igor.khosid
+comment: [~enricob] - I'm kind of confused  "snfbml31_NEW_MAPPING_v4.pdf" - mapping or approved sample?
+
+
+author: igor.khosid
+comment: [~andreav] - could you please check the APP and Version numbers. Sounds like the numbers provided in the SOW - already exist in the DataTrac
+Please see below - attached
+ !APP_Version numbers____SOW.png|thumbnail! 
+
+[~rodriguez] [~Andrey.Kutsenko]  - FYI
+
+
+
+author: igor.khosid
+comment: Print samples - attached >>>  [^IS-740_SNFB_Print samples 03212022.pdf] 
+
+Tap test - passed
+
+
+author: igor.khosid
+comment: [~andreav] - please update the SOW
+Paper Type - should be 3676 instead of 3489
+See below
+ !Paper type to update from 3489 to 3676.png|thumbnail! 
+
+
+author: igor.khosid
+comment: [~andreav] - please add custom CRE number >>> 5128
+
+ !Custom #9 CRE envelope.png|thumbnail! 
+
+
+author: andreav
+comment: [~Igor.Khosid] SOW is updated:
+ !screenshot-1.png|thumbnail! 
+
+
+author: rodriguez
+comment: [~Igor.Khosid] [~Andrey.Kutsenko] [~andreav]
+
+New PRJ file :W:\qa\SNFB\SNFBML31_UPDATE.zip
+
+This file includes changes to suppression logic by removing M flag suppression. Also W transactions and Year 2000 transaction suppression
+
+
+author: igor.khosid
+comment: [~rodriguez]
+Thank you, Leo, will check it and let you know
+
+
+author: rodriguez
+comment: [~Igor.Khosid]QA form attached
+
+
+author: igor.khosid
+comment: IS checklist - attached >>>  [^IS-740_SNFB_IS checklist.pdf] 
+
+
+author: andreav
+comment: Parallel tickets created:
+27727 - MPT
+27728 - eStmt N/A
+27729 - Archival
+
+
+author: rodriguez
+comment: Code has been released

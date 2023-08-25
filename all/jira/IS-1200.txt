@@ -1,0 +1,261 @@
+title: HCCU - Invoice - VisaPDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133568-C00.01-V20985
+
+Processing Scripts to modify:
+ hccumv1_process.sh
+
+Data Files to use:
+ HCCU_RSTATVSA_042621.pgp
+
+
+
+*NOTE*: This job runs on RH2 server. Since we are migrating from RH2 server to RHS, please test ALL job_sel options to ensure RHS can run with error messages in the processing log files.
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+Parallel id:20210506014524
+
+project is in qa folder HCCUMV11.zip.
+
+/z/dsi_pdfi_testing/hccumv1/new has sample with updated code
+
+/z/dsi_pdfi_testing/hccumv1/old has sample with production code
+
+/z/dsi_pdfi_testing/hccumv1/data has the data.
+
+
+
+Thanks
+
+Rony
+
+
+
+
+author: william.kong
+comment: [~rony]: Job looks good!
+
+
+
+[~Igor.Khosid]: I ran pdf_compare.pl yesterday and there were no issues. I did have to increase the tolerance level from 5 to 14 which is rather high. This is primarily because of the message graphics. If want me to lower pixel lower to see the difference, please let me know.
+
+
+
+Results are in:
+
+ca-isis-pr-04:/d/pdf_compare/result_hccumv1/pdf_compare_rpt.txt
+
+
+
+Total PDF Files Scanned: 2812
+allowedDifferenceInPercentPerPage: 14:
+Thread Count: 32
+
+Total PDF Files with Differences: 0
+Start Time: Tue Jul 19 19:54:34 PDT 2022
+Finish Time: Tue Jul 19 20:32:05 PDT 2022
+
+
+
+
+author: william.kong
+comment: [~rony]: Please also run this on RHS server with 's' option so that we can run afpcompare to test. Once done, we will compare your recent parallel run proc_id from /z/afpformat folder with the /d/afpformat folder version. Please let me know so I can analyze. If there are any error messages with logs, please report them.
+
+
+author: rony
+comment: Hi [~William.Kong] [~Igor.Khosid]
+
+This ran ok in rhs for s option.
+
+
+
+Thanks
+
+
+author: JIRAUSER11104
+comment: ==TEST-RESULT==
+
+
+ Ran script:
+{code:sh}
+[andreyK@ca-isis-pr-04 pdf_compare]$ sh /d/pdf_compare/hccumv1.sh
+{code}
+{quote}perl pdf_compare.pl hccumv1_prod/ hccumv1_parallel/ result_hccumv1 -pixels 14 -threads 32 -regex '[0-9]+_[0-9]_+<CUSTOM=[0-9]+_[0-9]+>.pdf'
+{quote}
+Report:
+{code:sh}
+[andreyK@ca-isis-pr-04 pdf_compare]$ cat /d/pdf_compare/result_hccumv1/pdf_compare_rpt.txt{code}
+{quote}Total PDF Files Scanned: 2812
+ allowedDifferenceInPercentPerPage: 14:
+ Thread Count: 32
+
+Total PDF Files with Differences: 6
+ Start Time: Wed Aug 10 16:30:19 PDT 2022
+ Finish Time: Wed Aug 10 17:08:14 PDT 2022
+{quote}
+[~William.Kong] please take a look PDF Files with Differences:
+{code:sh}[andreyK@ca-isis-pr-04 pdf_compare]$ ls -ltr /d/pdf_compare/result_hccumv1/*.pdf
+ -rw-rw-rw-. 1 andreyK isgroup 749958 Aug 10 16:36 /d/pdf_compare/result_hccumv1/diff_624164_062622_1248_02620.pdf_VS_624164_062622_0400_02619.pdf.pdf
+ -rw-rw-rw-. 1 andreyK isgroup 1260559 Aug 10 16:38 /d/pdf_compare/result_hccumv1/diff_610428_062622_1219_02158.pdf_VS_610428_062622_0459_02157.pdf.pdf
+ -rw-rw-rw-. 1 andreyK isgroup 1556487 Aug 10 16:50 /d/pdf_compare/result_hccumv1/diff_610428_062622_1219_02157.pdf_VS_610428_062622_0459_02158.pdf.pdf
+ -rw-rw-rw-. 1 andreyK isgroup 853752 Aug 10 17:00 /d/pdf_compare/result_hccumv1/diff_624164_062622_1248_02619.pdf_VS_624164_062622_0400_02620.pdf.pdf
+ -rw-rw-rw-. 1 andreyK isgroup 981373 Aug 10 17:04 /d/pdf_compare/result_hccumv1/diff_596640_062622_1248_01662.pdf_VS_596640_062622_0457_01661.pdf.pdf
+ -rw-rw-rw-. 1 andreyK isgroup 1058575 Aug 10 17:06 /d/pdf_compare/result_hccumv1/diff_596640_062622_1248_01661.pdf_VS_596640_062622_0457_01662.pdf.pdf
+{code}
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: Thanks for reporting this issue. This is a *FAIL*. The content is definitely different. We will need [~rony]to review:
+
+
+
+[~rony]: Please see attachment 'hccumv1_pdfcompare_failed_result.zip':
+
+
+author: william.kong
+comment: [~rony]: Any status update on the issue reported in previous comment? Please advise.
+
+
+author: rony
+comment: Hi [~Andrey.Kutsenko]
+
+Not sure what happened but /z/pdf_afp/hccu/hccumv1/zip/ has the updated sample please compare this with/d/pdf_afp/hccu/hccumv1/zip/ from rh2.
+
+
+
+[~William.Kong]
+
+Thanks
+
+
+
+
+
+
+author: JIRAUSER11104
+comment: Thank you, [~rony]
+I ran the script now:
+{code:sh}[andreyK@ca-isis-pr-04 pdf_compare]$ perl pdf_compare.pl hccumv1_prod/ hccumv1_parallel/ result_hccumv1 -pixels 14 -threads 32 -regex '[0-9]+_[0-9]+_<CUSTOM=[0-9]+_[0-9]+>.pdf'{code}
+
+
+author: JIRAUSER11104
+comment: [~rony] [~William.Kong]
+Test result:
+{quote}**********************************
+
+Total PDF Files Scanned: 2813
+allowedDifferenceInPercentPerPage: 14:
+Thread Count: 32
+
+Total PDF Files with Differences: 16
+Please review the directory in /d/pdf_compare/result_hccumv1 directory & /d/pdf_compare/result_hccumv1/pdf_compare_rpt.txt report to see all the PDF differences
+Start Time: Wed Aug 24 11:08:28 PDT 2022
+Finish Time: Wed Aug 24 11:46:41 PDT 2022{quote}
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: I reviewed the results_hccumv1 folder and noticed a pattern where there is duplicate account numbers. I've revised the regex to match the pdf file names better.
+
+
+{quote}{{perl pdf_compare.pl hccumv1_prod/ hccumv1_parallel/ result_hccumv1 -pixels 14 -threads 32 {color:#FF0000}-regex '[0-9]+_[0-9]+_<SEQ>_[0-9]+.pdf'{color}}}{quote}
+
+
+
+
+{{[williamK@ca-isis-pr-04 result_hccumv1]$ cat pdf_compare_rpt.txt}}
+{{Total PDF Files Scanned: 2813}}
+{{allowedDifferenceInPercentPerPage: 14:}}
+{{Thread Count: 32}}{{Total PDF Files with Differences: 0}}
+{{Start Time: Wed Aug 24 18:00:19 PDT 2022}}
+{{Finish Time: Wed Aug 24 18:37:57 PDT 2022}}
+
+
+
+
+
+Can you revisit the results once more?
+
+
+author: JIRAUSER11104
+comment: Thank you, [~William.Kong]
+
+
+
+Test result - *PASSED*.
+[andreyK@ca-isis-pr-04 pdf_compare]$ cat /d/pdf_compare/result_hccumv1/pdf_compare_rpt.txt
+{quote}Total PDF Files Scanned: 2813
+ allowedDifferenceInPercentPerPage: 14:
+ Thread Count: 32
+
+Total PDF Files with Differences: 0
+ Start Time: Thu Aug 25 10:12:08 PDT 2022
+ Finish Time: Thu Aug 25 11:07:29 PDT 2022
+{quote}
+Ran script:
+{code:sh}
+[andreyK@ca-isis-pr-04 pdf_compare]$ perl pdf_compare.pl hccumv1_prod/ hccumv1_parallel/ result_hccumv1 -pixels 14 -threads 32 -regex '[0-9]+_[0-9]+_<SEQ>_[0-9]+.pdf'{code}
+
+
+author: william.kong
+comment: [~rony]: Please prep File Transfer form so that it can be released tomorrow. Thanks!
+
+
+author: william.kong
+comment: [~rony]: Just a reminder as well to get prep the File Transfer form today. If not, by Monday the latest. Thanks!
+
+
+author: rony
+comment: Hi [~TunA] 
+
+Need help to release.
+
+[^IS_PROGRAM_TRANSFER_FORM.doc]
+
+
+
+[~William.Kong] [~Andrey.Kutsenko]
+
+
+
+Thanks
+
+
+author: tuna
+comment: Hi [~rony],
+
+Following codes have been releaed.
+
+Thanks
+
+Tun
+
+
+
+20220826155137 08/26/2022 ronyD IS-1200 HCCU - Invoice - VisaPDFi Conversion to AFP2PDF Python [InHse]
+
+[main@rhs ~]$ ll /d/is/cvs/xfer/ronyD/
+total 360
+-rwxrwxrwx 1 ronyD DSI 29388 Aug 26 15:47 HCCUMV11.dfa
+-rwxrwxrwx 1 ronyD DSI 1465 Aug 26 15:46 hccumv1.control
+-rwxrwxrwx 1 ronyD DSI 386 Aug 26 15:47 hccumv1_pdf.control
+-rwxrwxrwx 1 ronyD DSI 17710 Aug 26 15:47 hccumv1_process.sh
+-rwxrwxrwx 1 ronyD DSI 1545 Aug 26 15:47 hccumv1.procs
+
+
+
+[~William.Kong]

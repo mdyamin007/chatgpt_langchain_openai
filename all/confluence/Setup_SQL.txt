@@ -1,0 +1,137 @@
+title: Setup SQL
+body: Run the following scripts before hitting the url. Until "i3-payebill" schema
+is set up please use "default" as schema_name.  
+Replace the bold items with appropriate values based on your client.
+
+  1. INSERT INTO ORGANIZATION (ORG_ID ,ORG_UNIQUENAME ,ORG_DISPLAYNAME ,ORG_SERVERNAME, SCHEMA_NAME )  
+VALUES (org_id_seq.nextval ,  **'cid' , 'org_displayname', 'org_servername',
+'schema_name'** );
+
+  1. INSERT INTO AUTHENTICATOR (ORG_ID ,AUTH_CLASSNAME ,AUTH_LOGIN_URL ,AUTH_ARGS )  
+VALUES ( **getOrgId('cid')**
+,'com.infoimage.util.security.auth.impl.simple.SimpleWebAuthContext'
+,'/login.jsp' ,'' );
+
+  1. INSERT INTO ORG_DOC_TYPE(ORG_ID,DOC_TYPE) VALUES ( **getOrgId('cid')** ,1);
+
+  1. INSERT INTO USR_SESSION (ORG_ID ,USR_ID ,SESS_LASTLOGIN ,SESS_PERMISSIONS ,SESS_LOGIN_ID ,SESS_PASSWORD, dso, sso )  
+VALUES ( **getOrgId('cid')**  ,0 ,'' ,1 ,'infoSystem' ,'whatever','','' );
+
+  1. INSERT INTO ORGANIZATION (ORG_ID ,ORG_UNIQUENAME ,ORG_DISPLAYNAME ,ORG_SERVERNAME, SCHEMA_NAME )  
+VALUES (org_id_seq.nextval ,  **'cid.msm', ' org_displayname',
+'org_servername', 'schema_name'**  );
+
+  1. INSERT INTO AUTHENTICATOR (ORG_ID ,AUTH_CLASSNAME ,AUTH_LOGIN_URL ,AUTH_ARGS )  
+VALUES ( **getOrgId('cid.msm')**
+,'com.infoimage.util.security.auth.impl.simple.SimpleWebAuthContext'
+,'/msm/login.jsp' ,'' );
+
+  1. INSERT INTO USR_SESSION (ORG_ID ,USR_ID ,SESS_LASTLOGIN ,SESS_PERMISSIONS ,SESS_LOGIN_ID ,SESS_PASSWORD ,SESS_PW_EXPIRATION, DSO )  
+VALUES ( **getOrgId('cid.msm')**  ,1 ,TO_DATE('', 'dd-Mon-yyyy HH:MI:SS AM')
+,7 ,'superuser' ,'superuser' ,90, sysdate );
+
+  1. INSERT INTO USR_SESSION (ORG_ID ,USR_ID ,SESS_LASTLOGIN ,SESS_PERMISSIONS ,SESS_LOGIN_ID ,SESS_PASSWORD ,SESS_PW_EXPIRATION, DSO )  
+VALUES ( **getOrgId('cid.msm')**  ,3 ,TO_DATE('', 'dd-Mon-yyyy HH:MI:SS AM')
+,255 ,'sitescope' ,'!nt3rNal' ,90, sysdate );
+
+  1. INSERT INTO AGE_OUT (AO_ID, AO_TYPE, AO_APPROVED, AO_APPROVED_BY, AO_PERIOD, AO_EFFECTIVE, AO_EXPIRATION, AO_CREATE_USER, AO_CREATED, ORG_ID)  
+VALUES ( **134** , 'user', 'yes', 'script',  **12, TO_DATE('10-OCT-2012', 'dd-
+Mon-yyyy'), TO_DATE('01-JAN-2030', 'dd-Mon-yyyy')** , 15,
+**TO_DATE('06-AUG-2012', 'dd-Mon-yyyy'), getOrgId('cid')** );
+
+AO_ID does not have a sequence, so you will have to query for the next max
+AO_ID currently used and add 1.  
+AO_TYPEs:  
+1\. user: mandatory  
+2\. estatement: mandatory  
+3\. enotice: optional. Add if client has enotices.  
+4\. checkimage: optional. Add if client has check images.  
+AO_PERIOD refers to the archival period of each client's statements.  
+AO_EFFECTIVE should be the planned Production live date of the client.  
+AO_EXPIRATION can be a date in the distant future.
+
+  1. INSERT INTO AGE_OUT (AO_ID, AO_TYPE, AO_APPROVED, AO_APPROVED_BY, AO_PERIOD, AO_EFFECTIVE, AO_EXPIRATION, AO_CREATE_USER, AO_CREATED, ORG_ID)  
+VALUES ( **135** , 'estatement', 'yes', 'script',  **12,
+TO_DATE('10-OCT-2012', 'dd-Mon-yyyy'), TO_DATE('01-JAN-2030', 'dd-Mon-yyyy')**
+, 15,  **TO_DATE('06-AUG-2012', 'dd-Mon-yyyy'), getOrgId('cid')** );
+
+Run the db set up scripts replace things in red with your values  
+Database Set-up: Execute the following database statements for your new
+PayeBill client. Remember that both AI and Member Site will use
+SimpleWebAuthContext for login tracking since both sites are DSO. After the I3
+Schema Redesign (where the databases would be split according to industry),
+please use the i3_payebill database schema for PayeBill clients.
+
+  1. Select the insert statement for the appropriate payment vendor:
+    1. EPX  
+INSERT INTO FUNDS (FUND_ID, ORG_ID, USR_ID, IDENTIFIER, TYPE, DATA, ISACTIVE)  
+VALUES (funds_fund_id_seq.nextval,  **getOrgId('cid')** , 0, 'EPX',
+'com.infoimage.financial.payment.impl.EpxBankAccount', 'dummy', 'Y');
+
+    2. Authorize.Net  
+INSERT INTO FUNDS (FUND_ID, ORG_ID, USR_ID, IDENTIFIER, TYPE, DATA, ISACTIVE)  
+VALUES (funds_fund_id_seq.nextval,  **getOrgId('cid')** , 0, 'AUTHORIZE',
+'com.infoimage.financial.payment.vendor.authorize.entity.AuthorizeBankAccount',
+'dummy', 'Y');
+
+  2. Select the insert statement for the appropriate payment vendor:
+    1. EPX  
+INSERT INTO ACHPAYMENTPROFILE  
+VALUES ( **getOrgId('cid')** , 'EPX', '1234567890', FUNDS_FUND_ID_SEQ.CURVAL,
+**'cid'** , 'dummy');
+
+    2. Authorize.Net  
+INSERT INTO ACHPAYMENTPROFILE  
+VALUES ( **getOrgId('cid')** , 'AUTHORIZE', '1234567890',
+FUNDS_FUND_ID_SEQ.CURVAL,  **'cid'** , 'dummy');
+
+  3. Select the insert statement for the appropriate payment vendor:  
+\- PAYMENTVENDORURL table can have multiple entries but only one can be active  
+PAYMENTVENDORURL.ACTIVE='Y' or PAYMENTVENDORURL.ACTIVE='N'
+
+    1. EPX  
+INSERT INTO PAYMENTVENDORURL (PVU_ID, ORG_ID, VENDOR_NAME, CON_TYPE, CON_URL)  
+VALUES (pvu_id_seq.nextval,  **getOrgId('cid')** , 'EPX',
+'com.infoimage.exp.url',
+'[https://secure.epxuap.com?CUST_NBR=7000'||'&'||'MERCH_NBR=700010'||'&'||'DBA_NBR=1'||'&'||'TERMINAL_NBR=1](https://secure.epxuap.com?CUST_NBR=7000)');
+
+    2. Authorize.Net  
+INSERT INTO PAYMENTVENDORURL  
+VALUES (pvu_id_seq.nextval,  **getOrgId('cid')** , 'AUTHORIZE',
+'com.infoimage.authorize.api',  **'mode=test_mode|ennvir=sandbox'** ,
+**'7bR9tRD3baw6'** ,  **'4cs5WyG976y25Xkd'** );
+
+Above key and value can be used for all convergent hospitals in our
+development environment.  
+Above values for LOGINID and PASSWD should be replaced for the ones specific
+for your client on production only LOGINID = API Login ID that you get from
+the client's Authorize.Net profile (request from Veronica Karnes at CRCM if we
+do not have the client's Authorize.Net username and password)  
+PASSWD = Transaction Key that you get from the client's Authorize.Net profile
+(request from Veronica Karnes at CRCM if we do not have the client's
+Authorize.Net username and password)  
+Con_url also needs to be updated to live and production mode when on
+production
+
+  1. Create an entry in "server_key" table for MFO. Use any random string for "current_key" and "old_key" columns. This is needed for storing a token to recognize secure computer.  
+INSERT INTO SERVER_KEY(CURRENT_KEY,OLD_KEY,ORG_ID,RENEW_DAYS,FP_MAX_AGE)  
+VALUES('xxx','xxx',  **getOrgId('cid')** ,90,90);
+
+  1. CREATE TABLE  **AUDIT_LOG_CID**  
+(  
+"CREATED_BY" VARCHAR2,  
+"EVENT_TIME" DATE,  
+"TARGET_USER" VARCHAR2,  
+"ACCT_ID" NUMBER,  
+"LOCATION" VARCHAR2,  
+"EVENT" VARCHAR2,  
+"OLD_VALUE" VARCHAR2,  
+"NEW_VALUE" VARCHAR2  
+);
+
+  1. CREATE INDEX  **I1_AUDIT_LOG_CID ON AUDIT_LOG_CID**  
+(  
+EVENT_TIME  
+);
+
+

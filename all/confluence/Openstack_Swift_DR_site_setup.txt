@@ -1,0 +1,83 @@
+title: Openstack Swift DR site setup
+body: # Objective
+
+Our objective is to set up a openstack swift disaster recovery(DR) site. The
+default setup is our primary server will on CA and TX be on standby. If some
+disaster occurs at the CA site, the TX server will act as primary. When CA is
+alive again, It will be primary and TX will act as secondary again.
+
+# Approach
+
+We can achieve this mechanism in the following **two** ways:
+
+  *  ** _Cluster Setup:_  **We can set up a swift cluster with two nodes. One is from CA and other one is from TX sites. CA node will always act as primary and Tx nodes will act as secondary. In case of disaster, TX node will act as primary.
+  *  ** _Data Directory Sync:_**  We will sync the data of running CA swift data directory to a TX server directory. We'll use a script that will  watch and if any files is modified then sync the data directory. If CA fails, we'll up and run swift server at TX site with the synced data directory.
+
+# Cluster Setup:
+
+###  **Number of nodes in cluster:**
+
+  * Our initial cluster will consist of 2 nodes . 1 node will reside on CA side, other node will reside on TX side.
+
+ **How it works:**
+
+  * We will have one cluster with two nodes. The nodes are connected by a ring.
+  * The rings determine where data should reside in the cluster. There is a separate ring for account databases, container databases, and individual object storage policies but each ring works in the same way. 
+  * In the rings we will configure value of the replica count to two, which indicates how many devices to assign for each partition in the ring.
+
+  
+
+  * When new account/container/object is created or modified on CA Node then the rings will replicate them into TX Node as well. 
+
+  * If our CA Node goes down, then the TX node will be active and serve.
+
+  
+
+  * When the CA Node comes back again, it will sync with the TX node and become active again.
+
+  
+
+  
+
+#  _Data Directory Sync:_
+
+  * In this approach, we'll use a script to sync the data directory of our CA and DR server (TX). 
+  * Initially, we'll keep TX online. Data will be copied/synced from CA site to a directory of TX. 
+  * To sync the directory, we'll use a script that will run watch the CA swift data directory. If anything is modified i.e. new data added to this directory, It will copy/ sync those changed data to our TX server data directory. We used **rsync** in this script.
+  * In the case of a disaster i.e. CA is down, TX site can serve data which is copied and synced with our CA site. 
+  * When CA will be alive again, we'll run the script at TX site so that data can be synced from TX directory to CA directory. After syncing, we'll run swift server at CA site as usual. 
+
+##  **How it works?**
+
+The script watches the source directory by a package called  **inotify-tools.
+**The script uses  **inotifywait**  feature of this package,  **inotifywait**
+efficiently waits for changes to files using Linux's  _
+**[inotify](https://linux.die.net/man/7/inotify)(7)**_ interface. It is
+suitable for waiting for changes to files from shell scripts.
+
+So when  **inotifywait  **detects any modification (as this script uses
+**modify**  event ) on source directory, it calls backup method which is
+nothing but a function which takes backup and transfer those data to the
+destination server via  **rsync.  **
+
+##  **The Backup Script:**
+
+bashBackup Script
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+

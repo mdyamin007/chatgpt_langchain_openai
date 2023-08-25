@@ -1,0 +1,213 @@
+title: Infoimage E2E common developer guide
+body: # **Overview**
+
+This is the documentation of end to end testing for several application and
+backend services. This documentation is focused on how to run the e2e (end to
+end)  test and integrate a new service/application in this e2e test plan.
+Throughout this documentation we'll reference end to end as e2e.
+
+#  **true**
+
+  
+
+#  **Goals**
+
+Run all the test scripts from a single place with a single command. These are
+the applications/services are on this test plan
+
+  1. infotrac
+  2. Hypercube
+  3. Info Service
+  4. Notify Service
+  5. Template Service
+  6. Info Scanner
+  7. Infos Sync
+
+#  **Dependencies**
+
+If we picturize the whole dependency tree for infotrac, we'll get something
+like this tree
+
+This looks a little complicated at first. But once you get to know it. It's
+not that complicated. Let's break down this dependency tree into smaller trees
+
+  *  **Infotrac** depends on infoservice, infoscanner, template service and notify service. Also it directly communicate with three databases. Oracle, mssql and mongodb
+
+  
+  
+  
+
+  *  **Infoservice** depends on infoscanner, templateservice, notifyservice and infosync. Also it directly communicate with three databases: oracle, mysql and mongodb
+
+  
+
+  
+
+  *  **Notifyservice** depends on templateservice and infoscanner. Also, it depends on other services like apache server, scp server and ActiveMQ. It communicates with only one database which is MongoDB.
+
+  
+
+  
+
+  *  **Template service is relatively easier to understand. It doesn't depend on any other services. It only communicates with one database which is MongoDB.**
+
+  
+
+  
+  
+  
+
+  
+
+  *  **Infoscanner depends on templateservice and communicates only with mongodb**
+
+  
+
+  
+
+  *  **Infosync depends on Oracle DB, MSSQLDB and DDSDB**
+
+  
+  
+
+#  **Docker**
+
+Before reading this section, you need a solid understanding on Docker.
+Importantly, docker images, containers, volumes, Dockerfile, registry and
+docker compose will be good for this section. If you want to learn on those
+you can visit these sites.
+
+  1. [https://thenewstack.io/docker-station-part-one-essential-docker-concepts-tools-terminology/](https://thenewstack.io/docker-station-part-one-essential-docker-concepts-tools-terminology/)
+  2. [https://medium.com/@wkrzywiec/how-to-put-your-java-application-into-docker-container-5e0a02acdd6b](https://medium.com/@wkrzywiec/how-to-put-your-java-application-into-docker-container-5e0a02acdd6b)
+
+  
+
+## Harbor
+
+Harbor is an open source cloud native registry that stores, signs, and scans
+container images for vulnerabilities.
+
+## Why harbor is in here?
+
+For docker registry we used harbor to store all the service/application and
+database images.
+
+## Harbor DSi
+
+For DSi the harbor is located in
+[http://harbor.dsinnovators.com](http://harbor.dsinnovators.com/)
+
+If you visit this site you can see all the service/application images stored
+in there. Under e2e Project you'll find all the application images used for
+the e2e testing.
+
+Let's open oracle11g image. Like below picture you'll see there are two tabs:
+Info and Images. If you click on Info, you'll find the necessary information
+for the image. Like, in this case if you want to use the oracle image, you'll
+need these schema and password to connect with the database.
+
+In Images tab, you'll find all the images for oracle11g. For our e2e testing
+we always use the latest tag image. But you may find more images tagged with
+different names. For creating these many images may have other purpose. But
+make sure that for e2e testing it's always latest tag.
+
+  
+
+## Summary
+
+So, now you are familiar with Docker and all the necessary things for creating
+a docker container for a service like notifyservice or an application like
+infotrac. You know about harbor (an open source cloud based docker registry).
+You know where all the docker images for e2e are located and which tag to use.
+
+#  **Git/Gitlab**
+
+Before reading this section you need a solid understanding of Git/Gitlab. You
+can visit these links for getting an overview of git/gitlab
+
+  1. [https://www.liquidlight.co.uk/blog/git-for-beginners-an-overview-and-basic-workflow/](https://www.liquidlight.co.uk/blog/git-for-beginners-an-overview-and-basic-workflow/)
+  2. [https://docs.gitlab.com/ee/gitlab-basics/](https://docs.gitlab.com/ee/gitlab-basics/)
+
+  
+  
+
+## GitLab DSi
+
+DSi has a running instance of Gitlab on
+[http://gitlab.dsinnovators.com](http://gitlab.dsinnovators.com/). You may
+need a username/password to login. Once you're a logged in user, you'll find
+all the repositories.
+
+## E2E Apps
+
+For our e2e testing, we've several repositories. All of the repositories are
+located in one group Id named **E2E Apps** :
+[https://gitlab.dsinnovators.com/e2e-apps](https://gitlab.dsinnovators.com/e2e-apps)
+
+## Get familiar with one e2e Apps/Infoservice
+
+  
+
+Let's get familiar with infoservice first. Go to this link:
+[https://gitlab.dsinnovators.com/e2e-apps/infoservice](https://gitlab.dsinnovators.com/e2e-apps/infoservice)
+
+I'm expecting you already know about docker compose and volumes. You'll find
+this directory structure like the diagram below.
+
+app-configs  
+    infoservice  
+        config.properties  
+certs  
+    ...  
+conf  
+    infoservice  
+        ....  
+  
+logs  
+    infoservice.log  
+docker-compose.yml  
+tester.yml  
+  
+---  
+  
+  
+  
+
+app-configs, certs, conf and logs directories are mounted with the docker
+container with host machine by the help of volumes feature by docker. If
+you've worked on any service for infoimage you'll find more or less all the
+services has the same pattern.
+
+In app-configs directory we'll have the config properties. In certs folder
+we'll have some certifications and in conf folder we'll be needing web.xml and
+catalina.xml for the tomcat container.
+
+In logs folder, infoservice log will be generated.
+
+Now come to the important file to understand, docker-compose.yml
+
+version: '2.1'  
+services:  
+  infoservice:  
+    container_name: infoservice  
+    environment:  
+      TOMCAT_NAME: infoservice  
+    image: "[harbor.dsinnovators.com/e2e/infoservice:latest](http://harbor.dsinnovators.com/e2e/infoservice:latest)"  
+    ports:  
+      \- "8085:8080"  
+    volumes:  
+      \- "./conf/infoservice/context.[xml:/usr/local/tomcat/conf/context.xml](http://xml/usr/local/tomcat/conf/context.xml)"  
+      \- "./conf/infoservice/tomcat-users.[xml:/usr/local/tomcat/conf/tomcat-users.xml](http://xml/usr/local/tomcat/conf/tomcat-users.xml)"  
+      \- "./conf/infoservice/server.[xml:/usr/local/tomcat/conf/server.xml](http://xml/usr/local/tomcat/conf/server.xml)"  
+      \- "./conf/infoservice/catalina.[properties:/usr/local/tomcat/conf/catalina.properties](http://properties/usr/local/tomcat/conf/catalina.properties)"  
+      \- "./[certs:/usr/local/tomcat/certs](http://certs/usr/local/tomcat/certs)"  
+      \- "./app-configs/infoservice/:/usr/local/tomcat/app-configs/infoservice/"  
+  
+  
+  
+---  
+  
+  
+  
+
+

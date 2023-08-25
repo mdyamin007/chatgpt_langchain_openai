@@ -1,0 +1,189 @@
+title: 43706 / 6594 - IVBK - New CID for CAMB
+description: Per Heather:
+
+Also, just as a side note, thenew Digital Bank's name will be *Ivy Bank*will be set up as another branch (they don't know the branch code yet) on DNA. This is not public knowledge yet so please keep the name quiet for now.
+
+
+
+Please proceed with what we discussed yesterday that I have outlined below as a recap and please correct anything I misstate. I have sent the client the addendum to sign (we are doing this project direct with the bank and NOT through Fiserv)
+
+
+ * Set up a new Sub CID on the Hypercube platform
+ * Update the CAMB CID to move from the Admin Site to InfoTrac so the bank only has one login (timing as part of the overall Digital Bank project TBD but should be close to go live)
+ * This will then look like a Parent/child CID setup using one login and separate permissions
+ * Leave Cambridge (CAMB) on Prism platform for now but discuss moving them to Hypercube once new Digital Bank is live, etc...
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Mamunur Rashid made the following comment in DSI-208
+
+@isd
+
+CAMB msm has been moved to infotrac dev. It will be tested tomorrow. Will the hypercube setup of Ivy Bank be done by using the same configuration of CAMB?
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Mamunur Rashid made the following comment in DSI-208
+
+@isd
+
+While migrating CAMB msm to infotrac i have found that In camb msm there is a report called update email address report. It uses the following query to show data in a text file.
+{code:java}
+select um.CIF_NUM, fn.ACCT_NUMBER,fn.TYPE, DECODE(nh.EMAIL_ADDRESS,null,' ',nh.EMAIL_ADDRESS) as EMAIL_ADDRESS, (select USR_FIRSTNAME FROM usr where USR_ID=nh.MODIFIED_BY) as USR_FIRSTNAME, nh.MODIFIED_TIME FROM NOTIFICATION_HISTORY nh, usr us, USR_MAPPING um, FIN_ACCOUNT fn, USR_FIN_ACCOUNT ufa where fn.ORG_ID=GETORGID('camb') and ufa.USR_ID=us.USR_ID and us.USR_ID=nh.USR_ID and um.USR_ID=nh.USR_ID and ufa.ACCT_ID=nh.ACCT_ID and ufa.ACCT_ID=fn.ACCT_ID ORDER BY nh.MODIFIED_TIME DESC;{code}
+In infotrac there is no update email address report. Will camb use custom report for this in infotrac?
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Mamunur Rashid made the following comment in DSI-208
+
+@isd
+
+We need details of *Ivy Bank* for hypercube setup.
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Mamunur Rashid made the following comment in DSI-208
+
+@isd
+
+In camb msm the side box-menu of statement types are generated from STMT_TYPES array defined in define.jspf. But it follows a condition. If STMT_TYPES[i][2].equals("O") then that statement type will be added to the box menu if that statement type is present in the ACCOUNT_STMT_TYPE table mapped with the ACCT_ID of searched account.
+But in infotrac statement type tab is generated without such condition. It shows all the statement types we provide in Account Management Properties JSON.
+
+Here I am providing statement type menu for same account.
+
+*MSM:*
+
+!camb msm statement type menu.png!
+
+
+
+*infotrac:*
+
+*!infotrac stmt type menu.png!*
+
+
+
+Should this feature of camb msm be implemented in infotrac? Or it is okay with the default feature of infotrac? Let me know your feedback.
+
+
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Mamunur Rashid made the following comment in DSI-208
+
+@isd
+
+Hi [~Bryant.Tran],
+
+Isthe SOW of new CID for CAMB ready?
+
+Thanks.
+
+Mamunur Rashid
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Mamunur Rashid made the following comment in DSI-234
+
+@isd
+
+Hi[~Bryant.Tran],
+
+Is there any update about IVBK Auth and ECL process? We need file format for IVBK Auth and ECL process.
+
+Thanks
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Mamunur Rashid made the following comment in DSI-234
+
+@isd
+
+Hi [~Bryant.Tran],
+
+As IVBK will use NCR, we need certificate.crt and private.pem file related to NCR. Can you tell us how to generate SAML Response?
+
+We also need logo and verbiage for disclosure section of ivbk.
+
+Thanks.
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Mamunur Rashid made the following comment in DSI-234
+
+@isd
+
+Hi[~Bryant.Tran],
+
+What we have done so far:
+ # Set up IVBK on hypercube and committed the code to trunk.
+ # Used NCR as default sso method.
+ # Set up schema for IVBK on pilot_bank. (ORGANIZATION, ORG_DOC_TYPE, AUTHENTICATOR, USR_SESSION, AUDIT_LOG_IVBK)
+
+
+
+What we couldnt do:
+ # As we couldnt generate SAML Response so we couldnt test NCR.
+ # As of now, we couldnt find a way to generate SAMLResponse from our end, this NCR SSO was tested using the SAMLResponse we got from the vendor request for NECU. We can have that from the log file after the vendor test SSO. Once we have that SAMLResponse we can do further tests using that.
+ # Enabling SSO for ivbk in pilot-infoservice.
+
+
+
+I think you might need to provide the vendor the following link as destination url after setting up the hypercube in pilot -
+
+[https://ivbkpilot.infoimageinc.com/ssoOneWayLogin/ncr]
+
+After that can you please take that SAML Response from the log and send it to us so that we can do further testing?
+
+N.B: As we were not provided client specific files like logo.gif, disclosure.pdf, verbiage for disclosure section so I set it up using generic files (from demo client).
+
+Thanks.
+
+
+
+author: addon_com.codebarrel.addons.automation
+comment: Mamunur Rashid made the following comment in DSI-234
+
+@isd
+
+Hi [~Bryant.Tran],
+
+I figured out how to generate SAMLResponse to test NCR for IVBK.
+
+In hypercube, the following method is used for NCR:
+ # A 16-bit secret key is used to encode the user and account information (xml) usingAES-CBC method. To do that a 16-bit initialization vector is used.
+ # After AES-CBC encryption the encrypted text and initialization vector is again encoded using base64 encoding method.
+ # The secret key is encoded using RSA-OAEP algorithm. And the encoded secret key is again encoded using base64 encoding method.
+ # At the final step, an xml is created using RSA-OAEP public key, encrypted user and account information and encrypted secret key. This xml is encoded using base64 encoding to generate SAMLResponse.
+
+Will IVBK follow the same procedure to generate SAML Response? Please let me know.
+
+Thanks.
+
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Hi [~mamunur.rashid],
+
+IVBK has new color updates they'd like. The specifications are attached in theCAMB_IVBK_Pilot_Color Changes_12.20.docx,
+
+
+
+Thanks!
+
+
+author: azad
+comment: Hi [~Ethan.Yu],
+
+New color updates for IVBK has been implemented and tested. Also, deployed into pilot environment.
+
+
+author: anwarh
+comment: [Mamunur Rashid|https://gitlab.infoimageinc.com/mrashid] mentioned this issue in [a commit|https://gitlab.infoimageinc.com/mrashid/hypercube/-/commit/36545a5701db1c3814f8560917d94508a2c25351] of [Mamunur Rashid / Hypercube|https://gitlab.infoimageinc.com/mrashid/hypercube]:{quote}ISD-1390: Color schema changed for IVBK. {quote}

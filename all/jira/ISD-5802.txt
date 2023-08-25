@@ -1,0 +1,98 @@
+title: PUI - Multi-Threading for Email Processing Job
+description: None
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: Timeline
+
+Finish Coding 11/24
+QA Testing 11/24-11/29
+Code Release 11/29
+
+
+author: JIRAUSER10914
+comment: Hi [~Igor.Khosid],
+
+This is ready for QA in staging.
+
+We are currently sending out email either directly or via API.  This enhancement allows us to to converts AFP to PDF concurrently for attachment if email is sent via API.
+
+There are three test scenarios.
+1. Directly (Concurrency has no effect)
+2. Via API (with concurrency)
+2. Via API (without concurrency)
+
+I have setup the environment with the assumption that Natasha Primak will be doing the testing.  If that is not the case, reach out to me to update the email.
+
+To test "DIRECTLY" method:
+ca-pui-st-01:/usr/local/processing-ui/conf/hebc.conf:  (check these settings)
+  email.featureType=attach|sms  (must have attach as one of the feature)
+  notification.isSendEmailViaAPI=false  (this setting must be either false or commented out)
+CID: HEBC
+AFP Processing:
+  Parallel Run [CHECKED]
+  Suppress Email [UN-CHECKED]
+  By Pass Dt_jobId search [CHECKED]
+  File #1: ms1_10032021_1_10042021_0718_hebc.txt
+  acct e.Sup: 1
+Then trigger Email Notification.
+You should receive a single email.  Check in the "eStatement Email Notification ( Monthly Statements )" log and verify that it does not have "isSendEmailViaAPI is enabled".
+
+
+To Test "VIA API WITH CONCURRENCY" Method:
+ca-pui-st-01:/usr/local/processing-ui/conf/suru.conf:  (check these settings)
+  email.default.featureType=attach  (must have attach as one of the feature)
+  email.invoice.featureType=attach  (must have attach as one of the feature)
+  notification.isSendEmailViaAPI=true  (this setting must be true)
+  email.mt.disable=false  (this setting must be either false, commented out or absent)
+  global.invoice.needApproval=false  (this setting must be false)
+CID: SURU
+Document Processing:
+  Parallel Run [CHECKED]
+  Suppress Email [UN-CHECKED]
+  By Pass Dt_jobId search [CHECKED]
+  File #1: ml2_20211005_1_20211005_1200_suru.txt
+Then trigger Email Notification.
+You should receive 68 emails.  You may not receive them all at the same time.  Check in the "eStatement Email Notification ( Invoices )" log and verify that it has "isSendEmailViaAPI is enabled", "enableMT: true" and "PDF Task Submitted".
+
+
+To Test "VIA API WITHOUT CONCURRENCY" Method:
+UNDO the previous posting.  We will be re-using the same index file.
+ca-pui-st-01:/usr/local/processing-ui/conf/suru.conf:  (check these settings)
+  email.default.featureType=attach  (must have attach as one of the feature) (same as the previous test)
+  email.invoice.featureType=attach  (must have attach as one of the feature) (same as the previous test)
+  notification.isSendEmailViaAPI=true  (this setting must be true) (same as the previous test)
+  email.mt.disable=true  (this setting must be true) (***DIFFERENT*** from the previous test)
+  global.invoice.needApproval=false  (this setting must be false) (same as the previous test)
+CID: SURU
+Document Processing:
+  Parallel Run [CHECKED]
+  Suppress Email [UN-CHECKED]
+  By Pass Dt_jobId search [CHECKED]
+  File #1: ml2_20211005_1_20211005_1200_suru.txt
+Then trigger Email Notification.
+You should receive 68 emails.  You may not receive them all at the same time.  Check in the "eStatement Email Notification ( Invoices )" log and verify that it has "isSendEmailViaAPI is enabled" and "enableMT: false".
+
+
+Please feel free to reach out to me for assistance.
+
+Thanks.
+Lin
+
+
+author: igor.khosid
+comment: [~lina] [~nprimak] [~Andrey.Kutsenko]
+
+
+
+Lin -
+ # Project assigned to Natasha.
+ # I will set up the meeting for today to get more detailed information.
+
+
+author: nprimak
+comment: [~lina] [~Igor.Khosid] 
+
+Verified on staging PUI all tree scenarios, received confirmation email notifications, no issues.
+
+Thank you Lin for help with this project!

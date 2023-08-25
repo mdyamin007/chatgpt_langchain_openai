@@ -1,0 +1,94 @@
+title: /home/control/daily.control:  Add Logic to handle both IPAS Server in Menlo & Brisbane
+description: 
+
+Based on the issue https://jira.infoimageinc.com/browse/IBTL-32
+
+Ernest's resolution to make it work was to update the /home/control/daily.control file to update the IPAS numeric IP address to use10.4.20.27 instead of Menlo IPAS10.8.9.72.
+
+
+
+Unfortunately, we can not use hostname and must use a hardcoded numeric IP address. IPAS Papyrus requires IP address.
+
+
+
+Because we need to sync /home/control between Menlo and Brisbane, we need to add logic to support both facility:
+
+
+
+!image-2020-08-21-11-27-04-951.png!
+
+
+
+I would like us to modify the control file to add another if condition to check if the $HOST_IP begins with '10.8.9', if so assign ip='10.8.9.72' ; else use 10.4.20.27.
+
+
+
+Would like this to be deployed no later than Tuesday, Aug 25 and inform DP and IS when code is released to production.
+
+
+
+
+
+
+author: william.kong
+comment: [~rodriguez] and [~Peter.Dang]:  Spoke with Peter today and he would like Leo to work on this. Please update the logic and release as early as Monday.
+
+
+
+[~Peter.Dang]: As discussed, please ensure we test this properly on Monday via Menlo Server in parallel environment on RH2. We can use the same program reported by Leo in ticket IBTL-32 to verify it is working and does NOT have Watermark Output. Once released, please email IS & DP that we made a change to /home/control/daily.control.
+
+
+
+
+author: rodriguez
+comment: [~William.Kong]: I see that $HOST_IP is assigned only the first 2 fields of the delimiter cut. Is it ok to switch the logic to: "check if the $HOST_IP begins with '10.8', if so assign ip='10.8.9.72' ; else use 10.4.20.27."
+
+!image-2020-08-21-17-10-10-113.png!
+
+
+author: william.kong
+comment: [~rodriguez]
+
+Please look toward line 180 in /home/control/daily.control area. In your comment above, you are look at the top of the daily.control file. It's actual near the bottom near line 180 is.
+
+!image-2020-08-21-18-30-25-976.png!
+
+
+author: rodriguez
+comment: [~William.Kong]: Ok, I see what we are doing now. Sorry about that. Got myself confused.
+
+
+author: william.kong
+comment: [~rodriguez]: No worries. It's good that you ask. I prefer that. Good luck on the code edits later this week.
+
+
+
+[~Peter.Dang]: i will have to hold off on my plans with code sync from Menlo to Brisbane until this is updated.
+
+
+author: rodriguez
+comment: [~William.Kong] code has been released. Same job from IBTL-32 was tested on Menlo RH2 parallel. Everything looks good. No watermarks on afp files. DPVS counts matched production.
+
+
+author: william.kong
+comment: [~rodriguez]: The IP address is not correct for Brisbane IP server. Please use 10.4.20.27 instead of 10.4.20.7. Please also update comment to state Brisbane instead of "Brisbane IPAS Server"
+
+
+
+!image-2020-08-26-22-08-58-223.png!
+
+
+
+Please work with Peter on this first thing Thursday morning.  Please re-assign back to me when it is done. I will move it to the "Done" status if I verified that it was done so that I can double-check.
+
+
+
+
+
+
+author: rodriguez
+comment: [~William.Kong] typo has been fixed and re-tested. Test results look good. DPVS counts match and no watermark on output. Code has been released.
+
+
+author: william.kong
+comment: [~rodriguez]: I've confirmed it is good. Thanks!

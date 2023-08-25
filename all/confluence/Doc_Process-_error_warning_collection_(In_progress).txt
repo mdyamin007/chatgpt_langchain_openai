@@ -1,0 +1,208 @@
+title: Doc Process- error/warning collection (In progress)
+body:   
+
+Effect of Exception| Job Status| Exception Type| Scope| Occurrence of
+exception| Logs  
+---|---|---|---|---|---  
+Completely stops the process| FAILED  
+  
+  
+  
+  
+  
+  
+  
+|
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+DataException
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+| Data Handler| The header is missing in the index file| Header is missing  
+Processing Job| Updating p_job table (setting good, bad, warning status etc)|
+fail to update the job status  
+  
+Processing Job:
+
+Advanced Online Proofing(Estmt Approval)
+
+| needApproval is true but missing DT_JOB_ID|
+
+[ERROR] Online Proofing Approval: Job requires Approval but missing DT_JOB_ID
+
+Job requires Approval but missing DT_JOB_ID  
+  
+Processing Job:
+
+Advanced Online Proofing(Estmt Approval)
+
+| needApproval is true but estmtJobTracking is not "Y"|
+
+[ERROR] Online Proofing Approval: Job requires Approval but ESTMTJOBTRACKING
+is not Y
+
+Job requires Approval but ESTMTJOBTRACKING is not Y  
+  
+Processing Job:  Get organization name
+
+| Org not found in ORGANIZATION table|
+
+Unknown organization <orgName>  
+  
+Processing Job:  Get DT_JOB_ID
+
+| Getting dt_job_id from linkpaperandestmt table.| idxFileID is missing in IS
+DB!  
+Processing Job| Any kind of IOExceptions| printstackTrace  
+Processing Job| SQLException from any of the methods during db interaction|
+printstackTrace  
+  
+Processing Job ->
+
+EstmtSelInsertReport: storePieceCodeCnt()
+
+| IOException: Retrieving unique piece codes with counts from estmt database|
+exception when query <query> due to <exception>  
+IOException| Processing Job| For any kind of IOExceptions except "Failed:
+Tried more than 5 times to convert to PDF."| print stackTrace  
+Exception| ProcessingJob: updateJobStatusHistory()|
+
+  * In JobStatus, If jobStatusId not found
+  * Approval status is not "pending" or "released"
+
+|
+
+  * Unable to get Job_Status_Id_Seq.nextval
+
+  * Unable to get jobStatusId seq
+  * Invalid Approval Status
+  * ERROR SQL, Insert into Job_Status failed: <errorMessage>
+
+  
+Skips current line of the index file + Increment bad count| No effect on Job
+Status
+
+  
+
+  
+
+  
+
+  
+
+  
+
+| DataException| Data Handler| Insufficient data column| Insufficient data on
+line <lineNum>. Currently has <darray.length> elements.  
+Parsing failed of Begin Date format| Unable to parse DocumentBeginDate on line
+<lineNum>.  
+Parsing failed of End Date format| Unable to parse DocumentEndDate on line
+<lineNum>.  
+Failed to parse ImageCount. Need to provide an Integer value| Unable to parse
+Image Count on line <lineNum>.  
+Failed to parse PostCardFlag. Need to provide 0 or 1| Unable to parse
+PostcardFlag on line <lineNum>. Value Must be 0 or 1  
+Failed to parse ADA. Value must be 0 0r 1| Unable to parse ADA on line
+<lineNum>. Value must be 0 0r 1  
+  
+Missing mandatory fields. Following fields are mandatory:
+
+jobType, presentmentType, documentCode, fileName, zipFileName,
+documentBeginDate, documentEndDate, imageCount, accountNumber, accountName
+
+| Mandatory field data on line <lineNum> missing.  
+If acctType is enabled in conf file but not provided in index file.| Missing
+Application Type on line <lineNum>.  
+Exception| AfpRegistrar: getFinAccount()| If acctType is enabled  but missing
+in index file.| Parse error on line: <lineNumber>  
+DataException| AfpRegistrar: registerStatement()| If multipleDocType is true
+and statement exists in estmt_doc table and the archive also exists in
+arch_file table. | archive is already exist <arch_file_id>  
+DataException| Processing Job| If doc file doesn't exist in zip file|
+Statement file <data.getFileName()> does not exist in src zip file  
+Exception| Processing Job: updateStorageInfo()| Updating arch_file| Parse
+error on line <ilneNumber>  
+FAILED|
+
+  * IOException
+  * Exception
+
+| Afp2PdfConverter: convert()|
+
+  * During folder creation on storage server
+  * If pdf couldn't generate for some reason i.e. error in Afp2PdfClient or wrapper service.
+  * Page count of Afp and Pdf doesn't matched. 
+  * 5 failed attempts to convert afp to pdf
+
+|
+
+  * Can't create folder of <pdfPath>
+  * There was an error reading the contents of <src_zip_file>
+  * Converted count= <noPages> count from index file <pageCount>
+  * Couldn't generated PDF file
+  * IO Got exception when converting.
+  * Failed to convert PDF, skipping acct and moving to the next one....lineNum
+
+  
+Skips current line of the index file + Increment warning count| FAILED| No
+Exception. Just skips the line (For Enotice)| Processing Job| Account number
+passed through index file but not found in db. Account creation is false in
+ENoticeRegistrar. So, as the account is not found in db,  for Enotice,
+increment warning count and skip the line.| WARNING: Account
+<#data.getAccountNumber()> not found on line <lineNum>  
+Skips current line of the index file + Increment bad count + increment
+imageFailedCount by 1| DataException| Processing Job| Account number passed
+through index file but not found in db and account is not created in
+registrar, for other stmtTypes except Enotice, throws a DataException|
+FinAccount (acctNum=<data.getAccountNumber>) not found  
+Pdf doesn't generate| No effect on Job Status| Exception| WrapperService:
+send()|
+
+  * wrapperService Url not found
+  * rootPath is empty
+  * Zip file not found
+  * Potential exception while fetching response from wrapper service and writing pdf butter
+
+| print statckTrace  
+  
+  
+
+

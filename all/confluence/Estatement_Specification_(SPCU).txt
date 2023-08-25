@@ -1,0 +1,858 @@
+title: Estatement Specification (SPCU)
+body: 
+
+##  **Primary Information**
+
+Client Information  
+---  
+Client Full Name| The Police Credit Union  
+Client Display Name|  
+  
+CID| spcu  
+Client Email|  
+  
+Client Phone No.|  
+  
+Client Address|  
+  
+Client URL| <http://www.infoimageinc.com/>  
+  
+  
+
+##  **Application Information**
+
+Application Name -> statements.type = archivalPeriod.statements.type
+
+Tab/Display Name -> statements.name
+
+Archival Period -> archivalPeriod.statements.month
+
+archivalPeriod.allStatementPeriod == 24
+
+archivalPeriod.initialStartDuration == 24
+
+App Prefix == PUI
+
+Application Name| Tab/Display Name| App Prefix| Archival Period  
+---|---|---|---  
+default| E-statements| ms1,ms3| 35  
+heloc| Home Equity| mc1,mc2| 35  
+enotice| E-notices| dla,dlb,dna,dnb| 4  
+etax| E-taxes| tax| 36  
+  
+  
+
+##  **SSO(Single Sign-On)**
+
+Who is the online banking vendor?
+
+sso.methods.type
+
+Some of the login methods are not present on HYPERCUBE. What should we do?
+
+12795 incomplete ACC (not implemented) singleSignOn7 12796 incomplete ACI (not
+implemented) 12797 incomplete Alkami (singleSignOn7) 12798 incomplete BB
+Bottomline BFS (bottomline_v1) 12799 incomplete BFS (bottomline ??) 12800
+incomplete Bottomline (bottomline) 12801 incomplete Cavion (?) singleSignOn7
+12802 incomplete CUBUS (?) 12803 complete DI
+(digitalInsightV1/digitalInsightV2 -- if(DI isChecked) ->  **Account
+preference** , **Q-8** . if option 1 selected, **digitalInsightV2** will be
+selected. if option 2 and/or 3 selected, then **digitalInsightV1** will be
+selected.) 12804 incomplete Finastra (Business) (not implemented) 12805
+incomplete Fiserv (fiserv) 12806 incomplete Fiserv BB (fiserv) 12807
+incomplete Fiserv CFS (fiserv) 12808 incomplete Fiserv Commercial Center
+(fiserv) 12809 incomplete JW (singleSignOn7 ??) 12810 incomplete NCR (ncr)
+12811 incomplete Net-teller (nt_hblogin) 12812 incomplete ORCC (singleSignOn7
+??) not exist 12813 incomplete OSI (singleSignOn7 ??) 12814 incomplete Q2
+(q2sso) 12815 incomplete SSO7 (singleSignOn7) 12816 incomplete WESCOM
+(singleSignOn7 ??) not exist
+
+**If your vendor is API vendor, please select from the following** -
+
+Need to discuss with PD team
+
+12817 incomplete API (Agile Fusion) (not implemented ??) 12818 incomplete API
+(Alkami) 12819 incomplete API (Banno) 12820 incomplete API (Kony) 12821
+incomplete API (Lumin Digital) 12822 incomplete API (pathway) (not implemented
+??) can remove 12823 incomplete Mobile API (BankingOn) 12824 incomplete
+Terafina (API) 12825 incomplete Tyfone (API) 13200 incomplete sandbox 13201
+incomplete demovendor
+
+  
+
+**Others? Please specify**
+
+Should input manually on InfoConfig
+
+Vendor Name| Vendor Details (Password)| Vendor's Requirements| Hash Method
+(dropdown/radio)  
+---|---|---|---  
+digitalInsightV2|
+
+$pC4BhWp!1)t
+
+|  
+|  13133 incomplete MD5 13134 incomplete SHA-1 13135 incomplete SHA-256 (Most
+secured)
+
+  
+  
+  
+  
+|  
+|  
+|  
+  
+  
+  
+
+Got additional info? Please fill out below
+
+  
+  
+---  
+  
+##  **  
+Requirements of SSO signing in**
+
+User Creation == sso.methods.userAutoCreate
+
+Account Creation == sso.methods.accountAutoCreate
+
+Update Email Address == sso.methods.updateEmail
+
+User Creation| Account Creation| Update Email Address| Update SMS number|
+Other Options (multiple)  
+---|---|---|---|---  
+12826 complete Yes 12827 incomplete No
+
+  
+
+|  12828 complete Yes 12829 incomplete No |  12830 incomplete Yes 12831
+incomplete No
+
+  
+
+|  12832 incomplete Yes 12833 incomplete No
+
+  
+
+|  13136 incomplete SSO inframe 13137 complete Display logo uiFeatures =
+{logo: "TPCU_ColorLogo.jpg", miniLogo: "TPCU_ColorLogo.jpg"} 13138 incomplete
+Include logout option Add item on "menu" = {name": "Exit", "link": "logout",
+"id": "logout"}
+
+  
+  
+  
+  
+
+## **Default Method (dropdown) sso.defaultMethod**
+
+  
+
+##  **DDSO(Direct Sign-On) - radio _dso_**
+
+12913 incomplete Yes 13147 incomplete No If Yes, Please check out this section
+
+  1. Will you use Multi-Factor Authentication _? \- (radio) dso.mfa_ 91 incomplete Yes 92 incomplete
+
+No
+
+Multi factor authentication
+
+ **Multifactor authentication**  (MFA) is a security system that requires more
+than one method of  **authentication**  from independent categories of
+credentials to verify the user's identity for a login.
+
+
+
+  2. User will need to input below information while signing up _? \- (selected will be non editable, non selected will be optional)_
+
+User will have to input **Login Name, Password, Account Number & Account
+Type**.
+
+  * 13192 incomplete Password Hint Questions(Configurable) dso.passwordHint 13193 incomplete Hint Phrase Answer(Configurable) 13194 incomplete Security/Captcha(Configurable) dso.showCaptcha 13195 incomplete Business Tax ID (SSN) - (see the below info box) 13196 incomplete Date of Birth - (see the below info box)
+
+SSN/DOB
+
+Between **SSN** and Date of Birth(DOB), one information is mandatory. In
+either case, that information will need to be present in Client Authentication
+file(Auth).
+
+        3\. Which features do you want on the DSO sign in page? (multiple)
+
+13197 incomplete Forget username 13146 incomplete Forget password
+
+  
+
+## **Enrollment**
+
+  1.  _Do you want users to go through enrollment process?  \- (radio) sso.enrollment.eStatementEnrollment (H) = true_ 13214 complete Yes 13215 incomplete
+
+No
+
+We support up to 3 enrollment steps. Details are given below -
+
+Step 1| Step 2 selected| Step 3 selected  
+---|---|---  
+  
+In this step, we show a dummy PDF to make sure that the user is able to view
+PDF. We also support showing and validating captcha code in PDF in this step.
+
+Click here to view how Step 1 looks without captcha
+
+  
+
+Click here to view how Step 1 looks with captcha
+
+  
+
+|
+
+In this step,  we show the terms and conditions before signing up.
+
+Click here to view how Step 2 looks
+
+  
+
+|
+
+In this step, we show delivery preferences and notification preferences.
+**This step is mandatory.**
+
+Click here to view how Step 3 looks
+
+Attach Statement
+
+If you check Attach Statement, you can either provide a password for it, or
+leave the password empty. That means, if you provide a password, the attached
+statement will only be opened by that password, and if you don't provide a
+password, the statement will be attached without any encryption.
+
+  
+
+  
+
+  
+  
+  
+  
+
+2.  Which enrollment steps do you require? \- (multiple)
+
+12914 incomplete Step 1 dso/sso.enrollmentFlowTemplates (H) = (Q3 == With
+captcha ? "enrollEstmtVerifyCaptcha" : (Q3 == Without captcha || Q3 == not
+selected) ? "enrollEstmtVerify") 12915 complete Step 2
+dso/sso.enrollmentFlowTemplates (H) = "termsAndCondition" 12916 complete Step
+3( **Required** ) dso/sso.enrollmentFlowTemplates (H) = "enrollPreferences"
+
+3\. If you require step 1, do you want the pdf with or without captcha? -
+(radio)
+
+12917 incomplete With captcha 12918 incomplete Without captcha
+
+4\. In step 3, do you require Attach Statement? - (radio)
+
+12919 incomplete Yes, with encryption notificationPreference.attachedStatement
+(H) = {ignorePassword : false, notAutoCheckEmailAttachment : true,
+disableAttachment : false} || (IT) = {disableAttachment : false}  
+12920 incomplete Yes, without encryption
+notificationPreference.attachedStatement (H) = {ignorePassword : true,
+notAutoCheckEmailAttachment : true, disableAttachment : false} || (IT) =
+{disableAttachment : true} 12921 complete No
+notificationPreference.attachedStatement (H/IT) = undefined
+
+5.  Will user receive welcome notification? - (radio)
+
+12922 incomplete Yes notificationPreference.sendWelcomeNotification (H) = true
+12923 complete No
+
+## **Notification Preference**
+
+ **notificationPreference.npLinkType (H/IT/IS) = byUfa**
+
+1.  How you want your users be notified? - (radio)
+
+12924 complete Via Email notificationPreference (H) = {profilePrimaryEmail:
+true, profileEmailLimit: 1} 12925 incomplete Via SMS
+notificationPreference.smsNotification (H) = true 12926 incomplete Via both
+Email and SMS notificationPreference.emailAndSmsNotification (H) = true
+
+2.  Can users update Email/SMS from Enrollment step 3? - (radio) not need to set on InfoTrac
+
+12927 complete Yes sso.userUpdate (H) = true 12928 incomplete No
+
+3\. Can user update Email/SMS from _****_page? - (radio) not need to set on
+InfoTrac
+
+12929 complete Yes IF (Q1 == Via both Email and SMS ? notificationPreference =
+{editProfilePrimaryEmail : true, editProfilePhone : true} OR Q1 == Via Email ?
+notificationPreference.editProfilePrimaryEmail = true OR Q1 == Via SMS ?
+notificationPreference.editProfilePhone = true) 12930 incomplete No
+
+## **Delivery Preference**  
+
+1\. Which options do you want your users to see regarding their preference
+method for their statements received?  \- (multiple)
+
+12931 complete Via Electronic Media no flag 12932 complete Via Paper no flag
+12933 incomplete Via both Electronic and Paper
+deliveryPreference.bothPaperAndElectronic (H/IT) = true
+
+2\. Can users choose between their delivery preferences? - (radio)
+
+12957 complete Yes deliveryPreference.disablePaperlessToPaper (H) = false
+12958 incomplete No
+
+3\. Can users choose their delivery preference by each application type? ()
+\- (radio)
+
+12934 incomplete Yes (If yes, please specify in the below box)
+deliveryPreference.selectivePaperless (H/IT) = [{"type":
+"default","following": "default"}] Pre-populate array input box based on
+"statements" array. "type" field will be disable and "following" fields will
+show drop-down of "statements.type" 12935 complete No  
+  
+---  
+  
+  
+
+## **Account Preference**
+
+1.If you want to support account type, please fill up the below table. i.e -
+**LN|Loan Account type not available account.types (H) = {code: "NA", text:
+""}**
+
+Account type
+
+account.types.code
+
+|
+
+Description
+
+account.types.text
+
+| SSO Vendor Account type  
+---|---|---  
+  
+|  
+|  
+  
+  
+|  
+|  
+  
+  
+|  
+|  
+  
+  
+|  
+|  
+  
+  
+2\. Select from the below table regarding your account drop-down preference -
+(radio)
+
+Account Number Only
+
+| Account Number + Account type|
+
+Account Number + Description/Nickname
+
+account.showDescription (H) = true
+
+| Account Type + Account No + Account Description  
+---|---|---|---  
+  
+12959 complete
+
+I want this view
+
+Click here to expand
+
+  
+
+|
+
+12960 incomplete
+
+I want this view
+
+Click here to expand
+
+  
+
+|
+
+12961 incomplete
+
+I want this view
+
+Click here to expand
+
+  
+
+|
+
+12979 incomplete
+
+I want this view
+
+Click here to expand
+
+  
+  
+  
+3\. Do you want to view your account as masked? () account.numberMasking (H) =
+true || accoint.visibleLengthOfMaskedAccount (H) = 4 12962 incomplete Yes
+12963 complete No
+
+4\. Do you want to support Account type description (Description against every
+account type)? If yes, then please fill out the table below -
+
+12964 incomplete Yes  12965 complete No Account Type **Account type not
+available**|  Description  
+---|---  
+  
+|  
+  
+  
+|  
+  
+  
+|  
+  
+  
+|  
+  
+  
+  
+5\. Do you want to support nickname for accounts?
+
+12966 incomplete Yes 12967 complete No
+
+6\. Will Account description be captured from SSO?(Description/Nickname will
+be updated from login)
+
+12984 incomplete Yes sso.methods.captureAccountDescription (H) = true 12985
+complete No
+
+7\. Is account type required in SSO?
+
+12986 incomplete Yes sso.methods.accountTypeRequired (H) = true 12987 complete
+No
+
+8\. What will be the relation between user & account? (multiple)
+
+13163 complete One user linked to one account 13164 incomplete One user linked
+to multiple accounts 13165 incomplete
+
+Multiple users linked to a single account
+
+User-Account link
+
+"User linked to account" means how many users will have how many accounts.
+
+  
+
+## **Customer Site Add-on Features**
+
+We support some custom features in our customer site. Please check which
+features you want on your site. Here's a list below \- (multiple)
+
+12969 incomplete Viewing statement for paper users
+documents.viewStatementForPaperUser (H) = true 12970 incomplete Showing
+statement for closed accounts account.showClosedAccountStatement (H) = true
+12971 incomplete Hide paper preference in Delivery preference options
+deliveryPreference.hidePaperPreference (H) = true 12972 incomplete Showing
+info button on profile page for specific information (i.e - why user can't
+select paper preference) uiFeatures.showToolTip (H) = true 12973 incomplete
+Showing only selected delivery preference(Users won't be able to select
+delivery preference)  deliveryPreference.showOnlySelected (H) = true 12974
+incomplete Hiding account drop-down account.hideSelector (H) = true 12975
+incomplete
+
+Contextual search contextualSearch (H) = true
+
+Contextual Search
+
+The basic idea of the Contextual Search feature is to enable users to provide
+1/multiple pdf as a result(s) when he/she provides an input/ a keyword in the
+search box. The input provided will be highlighted in the pdf and displayed.
+
+It must be noted that all statements will be within the date ranges fixed from
+the archival period.
+
+  
+
+12977 incomplete Check Image. For Checks, please fill out the table below with
+necessary information checkImage (H) = {viewTab: true} checkImage (IT) = {}
+(if clicked below table will be expand) Vendor| Path/URL| Specs document URL|
+Passthrough| Datasource  
+---|---|---|---|---  
+checkImage.vendor.name(H)|  
+|  
+| checkImage.vendor.passthrough| checkImage.vendor.datasource  
+  
+  
+
+##  **Infotrac**
+
+ **userAndAccountCreation.primaryUserFlag (IT) = ignore**
+
+1\. Will admin users be able to update delivery preferences of the users?
+(radio)
+
+13042 complete Yes deliveryPreference (IT) = {disableEditOnDSO: false,
+disableEditOnSSO: false} 13043 incomplete No deliveryPreference (IT) =
+{disableEditOnDSO: true, disableEditOnSSO: true}
+
+2.  Which options do you want to see on user profile page? - (multiple)
+
+13205 complete Via Email 13206 incomplete Via SMS
+notificationPreference.smsNotification (IT) = true 13207 incomplete Via both
+Email and SMS notificationPreference (IT) = {emailAndSmsNotification: true,
+smsNotification: true}
+
+3\. Update Email & SMS? (radio)
+
+13210 complete Yes notificationPreference (IT) = (IF Q2 == "Via Email"
+{editProfilePrimaryEmail: true} || Q2 == "Via SMS" {editProfilePhone: true} ||
+Q2 == "Via both Email and SMS" {editProfilePrimaryEmail: true,
+editProfilePhone: true} 13211 incomplete No notificationPreference (IT) = (IF
+Q2 == "Via Email" {editProfilePrimaryEmail: false} || Q2 == "Via SMS"
+{editProfilePhone: false} || Q2 == "Via both Email and SMS"
+{editProfilePrimaryEmail: false, editProfilePhone: false}
+
+4\. Admin account search criteria(You can select multiple)
+
+13046 complete By Account Number (Required) account.searchCriteria: [{"value":
+"acctNum", "text": "Account Number"}] 13047 complete By User Email
+account.searchCriteria: [{"value": "acctNum", "text": "Account Number"},
+{"value": "email", "text": "User Email"}] 13048 incomplete By SSN
+accountSearchCriteria: [{"value": "acctNum", "text": "Account Number"},
+{"value": "ssn", "text": "Social Security Number"}]
+
+5\. Will admin users be able to create new users and accounts?
+
+13049 complete Yes userAndAccountCreation (IT) = {enableCreateUser: true,
+enableCreateAccount: true}  
+13050 incomplete No userAndAccountCreation (IT) = {enableCreateUser: false,
+enableCreateAccount: false}
+
+6\. Will admin users be able to delete users?
+
+13053 incomplete Yes userAndAccountCreation.enableUserDeletion (IT) = true
+13054 complete No userAndAccountCreation.enableUserDeletion (IT) = false
+
+Here's a list of reports that we support. Please select the ones that you want
+for the admin users - (multiple)
+
+13055 incomplete Statements Posted  13056 complete Paperless Enrollment 13057
+complete Email Collection 13058 complete Login Summary 13059 incomplete
+Notification Sent 13060 incomplete Insert Clicks 13061 incomplete Click
+Tracking 13062 complete Admin Login Activity 13063 incomplete Audit Log 13064
+incomplete Custom Report 13065 incomplete Account Creation Report 13066
+incomplete User Enrollment Report
+
+Here's a list of **Account Management** features that we support on the admin
+site. Please select the ones that you want on the admin site - (multiple)
+
+13068 incomplete
+
+Transfer Statement documents.showHtmlStatements (IT) = true
+
+Transfer Statement
+
+A sub-feature of Account Management, this module enables users to transfer
+documents from one account to another associated one. All document types are
+transferable.
+
+  
+
+13069 complete
+
+User Link Up
+
+User Link Up
+
+A new/different user can be linked to another user by selecting the Add User
+option
+
+  
+
+13070 incomplete
+
+On Demand Push PDF
+
+On Demand Push PDF
+
+This option enables the admin users to send a pdf document to a specific email
+address which will be password protected. Email account holder will need to
+know the password in order to view the attached pdf document in the email
+
+  
+
+Here's a list of other features that we support on the admin site. Please
+select the ones that you want on the admin site - (multiple)
+
+13071 incomplete
+
+Advanced Online Proofing
+
+Advanced Online Proofing
+
+This feature allows you to create roles(i.e - R1, R2, R3) and assign
+priorities to them. If R1 has the highest Level (L1) and R2 has a lower
+Level(L2) and R3 has the least Level(L3), R2 can not view/approve the job
+until R1 approves it and R3 can not view/approve the job until R2 approves it.
+Roles having lesser Levels won't be able view/approve a job before Roles with
+higher Levels approves it.
+
+  
+
+13075 complete
+
+E-insert Management
+
+E-insert Management
+
+Inserts are pdf documents sent with statements via emails for customers to
+view for marketing or other purposes.
+
+  
+
+13076 complete
+
+E-Notification
+
+E-Notification
+
+This feature deals with all notifications related with the eStatement &
+Infotrac applications to notify users.
+
+  
+
+System Variables
+
+System Variables such as Account Names, User Names, etc are variables that are
+already stored in the system. When a system variable is selected in a
+template, before it is sent to a recipients, the variable is replaced by
+actual data (such as account number, user name, etc) from the csv file. System
+variables need be selected for the E-Notification templates.
+
+Please select system variables from below that you want to support -
+(multiple)
+
+13118 complete Account Name 13119 incomplete Account Number 13120 incomplete
+User Name 13121 complete Notice List 13122 complete Tax List 13123 incomplete
+Email Address 13124 incomplete Statement Date 13125 incomplete Account Pseudo
+Name  
+---  
+  
+ userAndAccountCreation
+
+13077 incomplete
+
+Job Status
+
+Job Status
+
+This feature enables users to Release/Reject or Approve/Disapprove Electronic
+and Paper jobs. Permission for the roles for have this feature will be
+configurable by Admin/Infoimage.
+
+  
+
+13079 incomplete
+
+Message Manager
+
+Message Manager
+
+This feature enables user to set graphics or text messages in a customizable
+area of a pdf document for marketing or other purposes.
+
+  
+
+13080 incomplete
+
+Online Proofing
+
+Online Proofing
+
+When an application has been set up for online proofing, you can review and
+approve ongoing production jobs.
+
+  
+
+13082 incomplete
+
+Return Mail
+
+Return Mail
+
+The return mail processing product that InfoIMAGE offers allows our clients to
+maintain a high quality mailing list by updating address changes and providing
+a report to the client. InfoIMAGE provides the client with a report that will
+prevent the client from mailing to bad addresses or provide address updates as
+provided by the USPS via a Nixie label.
+
+  
+
+## **Processing-UI**
+
+ _ **Auth process:**_
+
+1\. How will the auth index file will be? - (multiple)
+
+13083 incomplete
+
+Full Auth file
+
+Full Auth
+
+Full Auth will contains all the latest user-account relation in a single file,
+any CIF or account number not present in the process index file but present in
+the infoImage data base will be deleted
+
+  
+
+Business Auth File Specs
+
+  
+
+Consumer Auth File Specs
+
+  
+
+13084 incomplete
+
+Partial Auth file
+
+Partial Auth
+
+Partial Auth will contain only the CIF, Accounts that will be  updated,added
+or deleted.
+
+  
+
+Standard Partial Auth File Specs
+
+  
+
+2.What fields will be passed in the index file? - (multiple)
+
+13085 incomplete
+
+Maintcode
+
+MAINT CODE
+
+The action to be taken. Currently support two actions:
+
+A: Add - add/update the user-account relationship
+
+D: Delete - delete the user-account relationship, e.g. unlink the user from
+the specified account. If the user is unlinked from its last account, the user
+will be deactivated.
+
+  
+
+13086 incomplete Tax ID as CIF Number 13087 incomplete SSN ID as CIF Number
+13088 incomplete SSN  13089 incomplete First Name 13090 incomplete Last Name
+13091 incomplete DOB 13092 incomplete Account Number 13093 incomplete Account
+Type
+
+  
+
+**User Creation**
+
+If you want some processing jobs(i.e - Statement process) to create users,
+then please specify below -
+
+Jobs that will create users (Array)  
+---  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+ **Account Creation**
+
+If you want some processing jobs(i.e - Enotice/Etax) to create accounts, then
+please specify below -
+
+Jobs that will create accounts (multiple)  
+---  
+13154 incomplete Enotice 13155 incomplete Etax  
+  
+  
+
+3\. Do you want Pre-enrollment process?([Enrollment File
+Specifications](https://confluence.infoimageinc.com/display/IN/Enrollment+File+Specifications))
+
+13148 incomplete Yes 13149 incomplete No
+
+4\. Do you want Pre-ingestion?
+
+13150 incomplete Yes 13151 incomplete No Pre-Ingestion
+
+Pre-ingestion is the process of posting documents for a certain period of
+time. Usually we run this while setting up new clients.
+[Here](https://confluence.infoimageinc.com/display/IN/Document+File+Specifications)
+is the Pre-ingestion file specifications.
+
+  
+
+##  **Shared Add-on Features - (multiple)**
+
+13166 incomplete
+
+ batchDownload (H) = {ttl: 30, enableCombineIntoSinglePdf: false,
+enableCompressToZip : true} batchDownload (IT) = {ttl: 30,
+enableCombineIntoSinglePdf: false, enableCompressToZip : true, searchType:
+"statement"}
+
+Batch Download
+
+This feature allows either the financial institution(Admins) or its customers
+to search eStatement archives and download them in a batch in a zip or
+combined pdf file. eStatement archives can be filtered across multiple
+accounts, document types, and given date ranges.
+
+  
+
+13168 incomplete (We support 2 types of pop up, one is for unviewed documents,
+another one is for undeliverable emails) popupAlert =
+{undeliverableEmailMessage: "These are the following email address you have
+undeliverable email which may be due to a bad email address :"} 13169
+incomplete
+
+Banner/Banner Management banner (H) = {"showVerbiage": true, "showImage":
+false, "imageName": "banner.gif"}
+
+Banner
+
+This feature enables users/customers to view advertisement banners on web
+pages. And Banner Management feature enables Admin users to create
+advertisement banners on web pages. Banner areas/multimedia contents are all
+customizable.
+
+  
+
+13139 complete Undeliverable Email Report ([See
+Specs](https://confluence.infoimageinc.com/display/IN/Bounceback+Report+Specifications))
+
+  
+
+

@@ -1,0 +1,174 @@
+title: Onbase processing-ui back end changes
+body: _**processing-conf-schedule project:**_
+
+  * Creating new configuration file for TFSL.
+  * Updating processing.conf file for processing new index file(format is ) format and sending emails.
+
+    **Processing.conf new configuration:**
+
+// processing steps  
+processing.step.1=doc1  
+processing.step.2=paperless
+
+  
+// setting begins  
+global.autoRegister=false  
+global.ms1=default  
+global.me1=loan  
+global.ml1=loan  
+global.mt1=etax  
+global.ssoOrDsoRequired=true
+
+  
+//stmt_type description  
+global.default.desc=Deposit eStatements  
+global.loan.desc=Loan eStatements  
+global.analysis.desc=Account Analysis eStmts  
+global.enotice.desc=eNotices  
+global.enotice4.desc=eNotices  
+global.etax.desc=Tax forms  
+global.enableAccountType=true  
+global.hasExtTypeMapping=false  
+global.ssoKey=tfsl@2022
+
+  
+
+global.email.command=email_onbase
+
+//email Notification  
+email.default.needApproval=false  
+email.loan.needApproval=false  
+email.etax.needApproval=false  
+email.usrSessionRequired=true  
+notification.isSendEmailViaAPI=true  
+notification.isEmailManageByEstmt=false
+
+//pre-enrollment process  
+paperless.classPath=com.infoimage.processing.application.paperless.handler.StandardEnrollmentHandler  
+paperless.headers=cif,usrtype,acctnum,app,acctname,email,status  
+paperless.validStatus=E,P  
+paperless.createAccount=true
+
+//external enrollment report  
+enrollment.classPath=com.infoimage.processing.application.file.upload.handler.EnrollmentReportCU  
+enrollment.method=client_pickup  
+enrollment.clientPickupPath=/d/SECURE3/Usr/tfsl/client_pickup/Enrollment  
+enrollment.notifyClient=true  
+enrollment.email.recipients=mamunur.rashid@[dsinnovators.com](http://dsinnovators.com)  
+enrollment.email.bcc_recipients=mamunur.rashid@[dsinnovators.com](http://dsinnovators.com)  
+enrollment.email.templatePath=/com/infoimage/processing/application/file/upload/email/client_pickup4.txt  
+enrollment.pickup_time=5  
+enrollment.queryName=SELECT_ENROLL_STATUS  
+enrollment.incremental=true  
+enrollment.customDateFormat=MMddyyyy HHmmss  
+enrollment.zip.protection=false  
+//The record will be included in the report if NP or DP or both is modified.  
+enrollment.includeOnlyModifiedDp=true
+
+  
+
+ _ **processing-ui project:**_
+
+Added new package for processing onbase meta file. Also added email related
+classes for sending onbase emails.
+
+  
+
+ _ **processing-Root ui project:**_
+
+Added new code with jsp files related to new document index processing.
+
+/src/main/webapp/applications/doc1
+
+  
+
+ _ **infoimage-commons project:**_
+
+Added an entry for showing cid on processing-ui interface.
+
+  
+
+ _ **I3-core project:**_
+
+Added a new method to persist data into p_job_estmt_doc_onbase table.
+
+  
+
+ _ **Database updates:**_
+
+Created below new tables
+
+CREATE TABLE "PILOT_CU"."P_JOB_ESTMT_DOC_ONBASE"  
+   (    "DOC_ONBASE_ID" NUMBER NOT NULL ENABLE,  
+    "P_JOB_ID" NUMBER,   
+    "ACCT_ID" NUMBER NOT NULL ENABLE,  
+    "CLOSINGDATE" DATE NOT NULL ENABLE,  
+    "DOC_TYPE" VARCHAR2(32 BYTE) NOT NULL ENABLE,  
+    "STMT_TYPE" VARCHAR2(32 BYTE) DEFAULT 'default',  
+    "SSN" VARCHAR2(25 BYTE),    
+     PRIMARY KEY ("DOC_ONBASE_ID")  
+  USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS  
+  STORAGE(INITIAL 4194304 NEXT 4194304 MINEXTENTS 1 MAXEXTENTS 2147483645  
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1  
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)  
+  TABLESPACE "I3INDX"  ENABLE  
+   ) SEGMENT CREATION IMMEDIATE  
+  PCTFREE 10 PCTUSED 60 INITRANS 1 MAXTRANS 255  
+ NOCOMPRESS LOGGING  
+  STORAGE(INITIAL 4194304 NEXT 4194304 MINEXTENTS 1 MAXEXTENTS 2147483645  
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1  
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)  
+  TABLESPACE "I3DATA" ;
+
+  
+
+CREATE TABLE "PILOT_CU"."P_ESTMT_EMAIL_ONBASE"  
+   (    "DOC_ONBASE_ID" NUMBER,  
+    "USR_ID" NUMBER,   
+    "EMAIL" VARCHAR2(100 BYTE),   
+    "SENT_TIME" DATE,   
+    "STATUS" NUMBER,   
+    "ERR_MSG" VARCHAR2(256 BYTE),   
+     FOREIGN KEY ("DOC_ONBASE_ID")  
+      REFERENCES "PILOT_CU"."P_JOB_ESTMT_DOC_ONBASE" ("DOC_ONBASE_ID") DISABLE  
+   ) SEGMENT CREATION IMMEDIATE  
+  PCTFREE 10 PCTUSED 60 INITRANS 1 MAXTRANS 255  
+ NOCOMPRESS LOGGING  
+  STORAGE(INITIAL 1048576 NEXT 4194304 MINEXTENTS 1 MAXEXTENTS 2147483645  
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1  
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)  
+  TABLESPACE "I3DATA" ;
+
+  CREATE INDEX "PILOT_CU"."I1_P_ESTMT_EMAIL_ONBASE" ON
+"PILOT_CU"."P_ESTMT_EMAIL_ONBASE" ("DOC_ONBASE_ID")  
+  PCTFREE 10 INITRANS 2 MAXTRANS 255 COMPUTE STATISTICS  
+  STORAGE(INITIAL 1048576 NEXT 4194304 MINEXTENTS 1 MAXEXTENTS 2147483645  
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1  
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)  
+  TABLESPACE "I3DATA" ;
+
+  
+
+ _ **Created new sequence:**_
+
+CREATE SEQUENCE  "PILOT_CU"."X_DOC_ONBASE_ID_SEQ"  MINVALUE 1 MAXVALUE
+999999999999999999999999999 INCREMENT BY 1 START WITH 1 CACHE 100 NOORDER
+NOCYCLE ;
+
+  
+
+ _ **Updated stored procesure:**_
+
+P_ESTMT_DML procedure. Undo_estmt
+
+DELETE FROM P_JOB_ESTMT_DOC_ONBASE WHERE p_job_id=i_p_job_id;
+
+  
+
+ _ **Add passphrase for notifyservice on pui:**_
+
+` tfsl.passphrase=bB7yY8eO2l`
+
+  
+
+

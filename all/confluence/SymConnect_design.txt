@@ -1,0 +1,113 @@
+title: SymConnect_design
+body: **SymXchange API - Technical Design Document**  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+**ESignature**  
+**User Guide**  
+  
+  
+Date: January 2015  
+  
+  
+  
+  
+  
+  
+  
+  
+**Contents:**  
+Table of Contents  
+1.0 Introduction  
+2.0 SymXchange Account API  
+3.0 Sample Request and Response  
+3.1 getNameListSelectFields  
+3.2 updateAccountByID - enroll account in estatement  
+3.3 updateAccountByID - update email and sms information for primary account
+holder  
+4.0 SymXchange API Interaction using JAX-WS Proxy  
+5.0 Update Account REST API  
+5.1 PUT /v1/jackhenry/symxchange/account/deliveryPreference/{cid}  
+5.2 PUT /v1/jackhenry/symxchange/account/notificationPreference/{cid}  
+5.3 GET /v1/jackhenry/symxchange/{cid}/transactionReport/csv/download  
+6.0 API Work Flow  
+7.0 Technical Details  
+7.1 Mongo Database Changes  
+7.2 Oracle Database changes  
+7.3 Proxy Stubs  
+7.4 wsdl and xsd location  
+**No table of contents entries found.**  
+  
+
+  1. eSignature Introduction..3
+  2. Admin Access..4
+  3. Admin tab..5
+  4. Create Package..6 
+    1. Package details and creation.6
+    2. Add Member signers6
+    3. Add non Member signers.7
+    4. Authentication Methods8
+    5. Add Documents9
+    6. Add Signature to documents..10
+  5. Template Folder.12 
+    1. Create Package.12
+    2. Edit template Package.12
+  6. Package Folder.13 
+    1. Draft Tab13
+    2. Pending Tab.14
+    3. Completed Tab..15
+    4. Declined Tab16
+  7. Member Signature Process ...17
+
+7.1 Member Login17  
+7.2Consent/Disclosure Acceptance18  
+7.3 Signature Ceremony.19
+
+  1. Non Member Signature Process21 
+    1. Login..21
+    2. Signature Process....22
+  2. Package Completion..23
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+_Toc4416829_Toc4428948_Toc4429918_Toc4430278_Toc4496935_Toc4497297_Toc4497663_Toc4498023_Toc4498383_Toc4498743_Toc4499094_Toc4604243_Toc4604804_Toc4605128_Toc4605452_Toc4605775_Toc19798981_GoBack  
+_Toc4416830_Toc4428949_Toc4429919_Toc4430279_Toc4496936_Toc4497298_Toc4497664_Toc4498024_Toc4498384_Toc4498744_Toc4499095_Toc4604244_Toc4604805_Toc4605129_Toc4605453_Toc4605776_Toc19798982  
+_Toc4416831_Toc4428950_Toc4429920_Toc4430280_Toc4496937_Toc4497299_Toc4497665_Toc4498025_Toc4498385_Toc4498745_Toc4499096_Toc4604245_Toc4604806_Toc4605130_Toc4605454_Toc4605777_Toc19798983  
+_Toc4416832_Toc4428951_Toc4429921_Toc4430281_Toc4496938_Toc4497300_Toc4497666_Toc4498026_Toc4498386_Toc4498746_Toc4499097_Toc4604246_Toc4604807_Toc4605131_Toc4605455_Toc4605778_Toc19798984  
+_Toc473105193_Toc473105279_Toc473105422_Toc473106922_Toc473107940_Toc473107997_Toc473108054_Toc473112650_Toc3990680_Toc4151753_Toc4158140_Toc4158199_Toc4167080_Toc4167140_Toc4167517_Toc4416833_Toc4428952_Toc4429922_Toc4430282_Toc4496939_Toc4497301_Toc4497667_Toc4498027_Toc4498387_Toc4498747_Toc4499098_Toc4604247_Toc4604808_Toc4605132_Toc4605456_Toc4605779_Toc19798985  
+_Toc473105194_Toc473105280_Toc473105423_Toc473106923_Toc473107941_Toc473107998_Toc473108055_Toc473112651_Toc3990681_Toc4151754_Toc4158141_Toc4158200_Toc4167081_Toc4167141_Toc4167518_Toc4416834_Toc4428953_Toc4429923_Toc4430283_Toc4496940_Toc4497302_Toc4497668_Toc4498028_Toc4498388_Toc4498748_Toc4499099_Toc4604248_Toc4604809_Toc4605133_Toc4605457_Toc4605780_Toc19798986  
+_Toc473105195_Toc473105281_Toc473105424_Toc473106924_Toc473107942_Toc473107999_Toc473108056_Toc473112652_Toc3990682_Toc4151755_Toc4158142_Toc4158201_Toc4167082_Toc4167142_Toc4167519_Toc4416835_Toc4428954_Toc4429924_Toc4430284_Toc4496941_Toc4497303_Toc4497669_Toc4498029_Toc4498389_Toc4498749_Toc4499100_Toc4604249_Toc4604810_Toc4605134_Toc4605458_Toc4605781_Toc19798987  
+_Toc473105196_Toc473105282_Toc473105425_Toc473106925_Toc473107943_Toc473108000_Toc473108057_Toc473112653_Toc3990683_Toc4151756_Toc4158143_Toc4158202_Toc4167083_Toc4167143_Toc4167520_Toc4416836_Toc4428955_Toc4429925_Toc4430285_Toc4496942_Toc4497304_Toc4497670_Toc4498030_Toc4498390_Toc4498750_Toc4499101_Toc4604250_Toc4604811_Toc4605135_Toc4605459_Toc4605782_Toc19798988  
+
+

@@ -1,0 +1,1305 @@
+title: RWCU - [22692][pvt] eNotices Project - Return file for Archival
+description: SOW Link:
+ [http://sharepoint-svr/AS/Shared%20Documents/SOW%20Directory/RWCU%20-%20Redwood%20Credit%20Union/SOW/RWCU-2014.09%20Letter-%20Daily.docx]
+
+IS Assessment:
+
+*Hours for development:*
+
+90 IS hours (15 hours for each notice x 6 notice applications to setup) + Adjust existing 1 rwcudla notice program to fix the tag name + ISD hours not required
+ Turnover Date : 10/15/2021
+ Sample Date: 11/15/2021
+ Sample Approval Date: 11/18/2021
+ Go live date : 11/30/2021
+
+Developer: Rahat
+
+
+
+*Print Assessment Details (Please copy these details into the Description in the IS Jira Story!):*
+
+Parallel required: Yes
+
+Setup individual PDF archival with +one+ xml index file
+
+Each zip file needs to contain 500MB per zip.
+
+Zip File Naming Convention:
+
+RWCU_NOTICES{color:#ff0000}_*<JID>*_{color}_Archival_<MMDDYYYY>_<Seg#>.zip{color:#00875a}.<zip sequence>{color}
+
+
+
+{color:#de350b}Encrypt all files [usingeed@redwoodcu.org|mailto:using%C2%A0eed@redwoodcu.org]pgp key.{color}
+
+
+
+{color:#172b4d}Index Filenaming Convention:{color}
+
+RWCU_NOTICES_<JID>_{color:#de350b}<SEQ#>{color}.xml (500 records per XML);
+
+e.g.:
+
+RWCU_NOTICES_DLA_1.xml
+
+RWCU_NOTICES_DLA_{color:#ce0000}2{color}.xml
+
+RWCU_NOTICES_DLA_{color:#ce0000}3{color}.xml
+
+
+
+{color:#de350b}PDF File Naming Convention:{color}
+
+MMDDYYYY_NOTICE_JID_ACCTNUM_SEQ.pdf (e.g.: 11202021_NOTICE_DLA_123457_99.pdf
+
+
+
+Total 6 applications
+ # RWCU - Daily Notices - IRA Withholding (RWCUDLD)
+ Latest data file: rwcuiraw0603.txt.asc
+ # RWCU - Daily PDF Letter (RWCUDNA)
+ Latest data file: : rwcuPDFloan0917.pdf.asc
+ # RWCU-Invoice - Loan Coupon Daily (RWCULC1)
+ Latest data file: rwcu0917_lc.txt
+ # RWCU-Letter - Youth Letter(RWCUML1 or rwcuml1_ywel)
+ Latest data file: rwcu0917_ytranq.txt.asc
+ # RWCU-Letter - Daily C (RWCUDLC)
+ Data file arrived everyday. But we will not get all notices in the application.
+ # RWCU-Letter B - Daily (RWCUDLB)
+ Data file arrived everyday. But we will not get all notices in the application.
+ # RWCU-Letter - Daily (RWCUDLA)
+ We already have a working PDF archival program. The only thing to do is fix one tag, the <FileRoom> as mentioned below to use "REDWOOD CREDIT UNION" instead of "REDWOOD"
+
+Refer to the existing rwcudla_pdf.control, rwcudla_pdf_template.control,rwcudla_pdf_template_header.control, andrwcudla_pdf_template_footer.control as a reference point for creating the PDF archival index file and naming convention. Please note for the rwcudla_pdf_template_header.control, the tag <FileRoom> value needs to be updated from "REDWOOD" TO "REDWOOD CREDIT UNION"
+
+
+
+
+
+*Use the afp2pdf.py index_build{color:#ff0000}_multicore{color} program syntax similar to:*
+
+ssh -o BatchMode=yes $LOGNAME@rhs2 "export testmode=$testmode; . ${home_master}/master/env_init.sh; python /home/master/afp2pdf.py index_build_{color:#ff0000}multicore{color} input_folder=${afp_dir} OutputFilePath=${pdf_dir} data_input_file=${home_master}/control/${cid}dla_pdf.control"
+
+
+
+*/home/control/rwcudla_pdf.control:*
+
+prefix = rwcudla
+ clear_output_path_files = y
+ pdf_fn_pattern = \{{ PDF_FILE_NAME }}
+ PDFVersion = 1.2
+
+index_parameter = START
+ output_index_file = Billing_Statement_index.xml
+ index_file_type = template
+ index_template = rwcudla_pdf_template.control
+ index_header_file = rwcudla_pdf_template_header.control
+ index_footer_file = rwcudla_pdf_template_footer.control
+ index_fields = dummy
+ index_parameter = END
+
+
+
+*/home/control/rwcudla_pdf_template.control:*
+
+<Document SeqNum="\{{ SEQUENCE_NUM }}">
+ <DocName>BUSINESS LENDING BILLING STATEMENTS</DocName>
+ <Cabinet>STATEMENTS</Cabinet>
+ <Type>BUSINESS LENDING BILLING STATEMENTS</Type>
+ <Institution>226</Institution>
+ <Indexes>
+ <Index Name="ACCOUNT NUMBER" SmartIndexLookup="true">\{{ ACCOUNT_NUMBER }}</Index>
+ <Index Name="NAME">\{{ ACCOUNT_NAME }}</Index>
+ <Index Name="DOC DATE">\{{ DATE }}</Index>
+ </Indexes>
+ <Pages>
+ <Page SeqNum="\{{ SEQUENCE_NUM }}">\{{ PDF_FILE_NAME }}</Page>
+ </Pages>
+ </Document>
+
+*/home/control/rwcudla_pdf_template_header.control (Note: Please fix this control file to use REDWOOD CREDIT UNION instead of REDWOOD:*
+
+<?xml version="1.0"?>
+ <FilingJob>
+ <Batch SeqNum="1">
+ <FileRoom>REDWOOD CREDIT UNION</FileRoom>
+ <DeleteFiles>true</DeleteFiles>
+ 
+
+*/home/control/rwcudla_pdf_template_footer.control:*
+
+</Batch>
+ </FilingJob>
+
+
+author: tuna
+comment: Hi [~rony]
+
+William allocated (IS-490 RWCU) to Rahat in IS Upcoming list. Could you please assign?
+
+Thanks
+
+Tun
+
+
+
+[~William.Kong], [~dyuen]
+
+
+
+
+author: tuna
+comment: Hi[~rony]
+
+Just reminder again. William allocated (IS-490RWCU) to Rahat in IS Upcoming list. Could you please assign?
+
+Thanks
+
+Tun
+
+
+
+Work Order approval needed by: 10/15/21
+
+Samples Due by: 11/15/21
+
+Sample Approval Needed by: 11/18/21
+
+Target Live Date: 11/30/21
+
+
+
+[~William.Kong],[~dyuen]
+
+
+author: amirr
+comment: Is there any SOW for this?
+
+
+author: dyuen
+comment: [~amirR], sorry, I forgot to add it earlier. Please see following link:
+http://sharepoint-svr/AS/Shared%20Documents/SOW%20Directory/RWCU%20-%20Redwood%20Credit%20Union/SOW/RWCU-2014.09%20Letter-%20Daily.docx
+
+
+author: amirr
+comment: Thanks Daphne.
+
+
+author: dyuen
+comment: Hi [~amirR], just checking to confirm we are on track for a sample date of 11/15. Please note that onshore QA needs to review the sample before I ask the client to review. Thanks
+
+
+author: tuna
+comment: Hi [~rony]/[~amirR] : [~dyuen]followed up for sample. Are we going to get sample today or when can we get sample? *Please response.*
+
+Thanks
+
+Tun
+
+
+
+[~William.Kong],
+
+
+
+
+author: amirr
+comment: Hi,
+
+
+
+I am uploading sample for RWCUDLD. We have to assume some specifications here because we could not match these with dla specification.
+
+
+
+DLD Specifications:
+
+Zip name:RWCU_DND_Archival_<MMDDYYYY>_<SEG>.zip
+
+Index name:IRA_Witholding_index.xml
+
+Individual PDF name: <Account Number>_<Sequence Number>.pdf
+
+DocName value in index:IRA Witholding
+----
+
+
+Let me know if these values are correct. Otherwise we also need these information for dlb, dlc, dna and lc1. Let me know if you need suggestion of specifications like this.
+
+
+
+Archival Sample: Vend_DSI/client_pickup/print_process/rwcu/RWCU_DND_Archival_11152021_1.zip
+
+
+
+^Thanks,^
+
+^Rahat^
+
+
+
+
+author: tuna
+comment: Hi [~amirR],
+
+I think the request is for setting up archival for 7 applications.
+
+- Following sample is for what application? ( /d/infoftps3/Vend_DSI/client_pickup/print_process/rwcu/RWCU_DND_Archival_11152021_1.zip )
+
+- Also, the individual PDF file names and xml index file do not seem following the naming convention inTicket #22694. Can you please explain why?
+
+If you are not sure, please discuss with [~William.Kong]or [~rony]for the project.
+
+
+
+Thanks,
+
+Tun
+
+
+
+[~dyuen]
+
+
+
+
+
+
+author: amirr
+comment: Hi Tun,
+
+
+
+I understood the requirements wrong. I will send you the samples tomorrow.
+
+
+
+One question: What should be the archival index names?
+
+
+
+Thanks,
+
+
+author: william.kong
+comment: [~amirR]: For now, please use the following zip file naming convention+temporarily+ until I get confirmation from client:
+
+
+
+RWCU_NOTICES{color:#ff0000}_JID{color}_Archival_<MMDDYYYY>_<Seg#>.zip{color:#ff0000}.<zip sequence>{color}
+
+e.g.:
+
+RWCU_NOTICES_DLA_Archival_11032021_1.zip.001
+
+RWCU_NOTICES_DLA_Archival_11032021_1.zip.002
+
+RWCU_NOTICES_DLA_Archival_11032021_1.zip.003
+
+
+
+Once confirmed, I will update the description above.
+
+
+
+
+
+For now, lets use the following naming index filenaming convention:
+
+RWCU_NOTICES_JID.xml
+
+
+
+e.g.:
+
+RWCU_NOTICES_DLA.xml
+
+
+
+
+author: william.kong
+comment: [~dyuen]: We encountered some specification issues as we were working towards the end of this project which we are a little late:
+
+
+
+*Item #1: Zip File Naming Convention:*
+
+There are 7 daily notice program so we cannot use what was originally proposed. The reason for this, is that the zip file will be overwritten if RWCU does not download in time.
+
+Client Suggested this:
+
+RWCU_NOTICES_Archival_<MMDDYYYY>_<Seg#>_<zip sequence>.zip
+
+
+
+We are suggesting the following:
+
+RWCU_NOTICES{color:#ff0000}_*<JID>*_{color}_Archival_<MMDDYYYY>_<Seg#>.zip{color:#00875a}.<zip sequence>{color}
+
+
+JID is the 3 letter job description for these apps:
+ # RWCU - Daily Notices - IRA Withholding (RWCU*DLD*)
+ # RWCU - Daily PDF Letter (RWCU*DNA*)
+ # RWCU-Invoice - Loan Coupon Daily (RWCU*LC1*)
+ # RWCU-Letter - Youth Letter(RWCU*ML1*)
+ # RWCU-Letter - Daily C (RWCU*DLC*)
+ # RWCU-Letter B - Daily (RWCU*DLB*)
+ # RWCU-Letter - Daily (RWCU*DLA*)
+
+
+
+e.g.:
+
+RWCU_NOTICES_{color:#FF0000}DLA{color}_Archival_11032021_1.zip.{color:#00875a}001{color}
+
+RWCU_NOTICES_{color:#FF0000}DLA{color}_Archival_11032021_1.zip.{color:#00875a}002{color}
+
+RWCU_NOTICES_{color:#FF0000}DLA{color}_Archival_11032021_1.zip.{color:#00875a}003{color}
+
+
+
+In addition, the requirement is to have 500 pdf files per zip. We need to put the 3 digit sequence at the end (see above in green).
+
+
+
+*Item #2: XML Index File Naming convention:*
+
+We neglected to ask for the xml index file naming convention inside the zip file. Today, for RWCU - Letter Daily program, we use the fixed XML file naming convention Billing_Statement_index.xml
+
+Do you want to use this fixed name for ALL you 7 daily letter archival programs? For now, I've asked our team to change it to the following:
+
+RWCU_NOTICES_{color:#de350b}<JID>{color}.xml
+
+e.g.:
+
+RWCU_NOTICES_DLA.xml
+
+Please advise if this would work, if not, please provide examples of what is need.
+
+
+
+
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~amirR]: Description is updated to use one XML file. As for the requirement to use 500 files per zip, please adjust logic to 500MB and provide samples tomorrow. I don't think client has responded.
+
+
+
+[~dyuen]: I spoke with Rahat this morning. There was an issue with the logic to support file count. Can we advise client that we split the file by file size. Our default is 500MB per zip. If they want a different size requirement, then please let us know.
+
+Thanks!
+
+
+
+-- Will
+
+
+author: dyuen
+comment: [~William.Kong] [~amirR], please see response from RWCU:
+
+Hi Daphne, it looks good. The naming updates you provide will work just fine with the exception of the .xml file name. You'll need to include the sequence number if more than one zip file (over 500) for a specific notice.
+
+Item #1: Zip File
+
+e.g.:
+
+RWCU_NOTICES_{color:#ff0000}DLA{color}_Archival_11032021_1.zip.{color:#00875a}{color:#57d9a3}001{color}{color}
+
+RWCU_NOTICES_{color:#ff0000}DLA{color}_Archival_11032021_1.zip.{color:#00875a}{color:#57d9a3}002{color}{color}
+
+RWCU_NOTICES_{color:#ff0000}DLA{color}_Archival_11032021_1.zip.{color:#00875a}{color:#57d9a3}003{color}{color}
+
+
+
+Item #2: XML
+
+e.g.:
+
+RWCU_NOTICES_DLA.xml
+
+
+
+We would have a problem with the XML files once unzipped. They would need to include the seq # as well.
+
+Clients Example:
+
+RWCU_NOTICES_DLA_{color:#ce0000}1{color}.xml
+
+RWCU_NOTICES_DLA_{color:#ce0000}2{color}.xml
+
+RWCU_NOTICES_DLA_{color:#ce0000}3{color}.xml
+
+
+
+Then we should be good. 
+ Thanks
+ Johnny
+
+----------------------
+
+Per email correspondence, I should expect samples by Monday. Please have Igor/QA team review before I send to client for review.
+
+Thanks,
+ Daphne
+
+
+author: william.kong
+comment: [~dyuen]/[~amirR]: I've just updated the description of work with the following:
+
+
+
+!image-2021-11-17-12-43-45-697.png!
+
+
+
+[~dyuen]: I'm not sure for the Index Files we can split per 500 records. Our standard PDF module just generates one large XML. I will need to check with [~amirR]tonight/first thing in the morning to see if is feasible. If it is not feasible, we will generate sample with one XML to see if client can use it so that we do not delay the sample process further.
+
+
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~amirR]: For the DLA program, please use the following test file:
+
+/t/amirR/rwcudl116_1145\ \(3\).zip
+
+It has 540 records which is over 500 accounts.
+
+
+
+
+author: amirr
+comment: Hi William/Daphne:
+
+
+
+As we are creating multi-part of zip file, client needs to unzip all the zips at once and one particular zip cannot be unzipped separately. So I think we don't need to split the index file. But it can be done if the client still wants it.
+
+
+
+Thanks,
+
+Rahat
+
+
+author: william.kong
+comment: [~amirR]: Please use annotation in the Jira comments. [~dyuen]may not see your responses.
+
+
+
+[~dyuen]: As I feared, we can only generate one big XML index file instead of the following client requested:
+
+
+RWCU_NOTICES_DLA_1.xml
+
+RWCU_NOTICES_DLA_{color:#ce0000}2{color}.xml
+
+RWCU_NOTICES_DLA_{color:#ce0000}3{color}.xml
+
+
+
+I gave [~amirR]a large DLA file that has over 500 records. Let's see if RWCU can handle it.
+
+
+
+[~amirR]: Please let me know if you missing any data files to use for the other 6 applications (i.e. dna, lc1, dlb, dlc, etc etc..).
+
+
+
+
+
+
+author: amirr
+comment: Hi [~William.Kong]/[~dyuen],
+
+
+
+Archival samples are copied to client pickup directory.
+
+
+
+Files are:
+Vend_DSI/client_pickup/print_process/rwcu/RWCU_NOTICES_DLA_Archival_11222021_1.zip.001
+Vend_DSI/client_pickup/print_process/rwcu/RWCU_NOTICES_DLB_Archival_11222021_1.zip.001
+Vend_DSI/client_pickup/print_process/rwcu/RWCU_NOTICES_DLC_Archival_11222021_1.zip.001
+Vend_DSI/client_pickup/print_process/rwcu/RWCU_NOTICES_DLD_Archival_11222021_1.zip.001
+Vend_DSI/client_pickup/print_process/rwcu/RWCU_NOTICES_DNA_Archival_03292021_1.zip.001
+Vend_DSI/client_pickup/print_process/rwcu/RWCU_NOTICES_LC1_Archival_10222021_1.zip.001
+Vend_DSI/client_pickup/print_process/rwcu/RWCU_NOTICES_ML1_Archival_08012021_1.zip.001
+
+Thanks,
+Rahat
+
+
+author: william.kong
+comment: [~dyuen]: The files are placed into the client's pickup folder inside test:
+
+client_pickup/test/
+{noformat}
+-rwxrwxrwx 1 root root  17M Nov 22 12:35 RWCU_NOTICES_DLA_Archival_11222021_1.zip.001.pgp
+-rwxrwxrwx 1 root root  69M Nov 22 12:35 RWCU_NOTICES_DLB_Archival_11222021_1.zip.001.pgp
+-rwxrwxrwx 1 root root  34M Nov 22 12:36 RWCU_NOTICES_DLC_Archival_11222021_1.zip.001.pgp
+-rwxrwxrwx 1 root root 305M Nov 22 12:36 RWCU_NOTICES_DLD_Archival_11222021_1.zip.001.pgp
+-rwxrwxrwx 1 root root 578K Nov 22 12:36 RWCU_NOTICES_DNA_Archival_03292021_1.zip.001.pgp
+-rwxrwxrwx 1 root root  36M Nov 22 12:36 RWCU_NOTICES_LC1_Archival_10222021_1.zip.001.pgp
+-rwxrwxrwx 1 root root 173K Nov 22 12:36 RWCU_NOTICES_ML1_Archival_08012021_1.zip.001.pgp
+
+{noformat}
+I noticed [~amirR]was able to split the xml file for "DLA". DLA has 544 accounts.
+
+Please inform RWCU to download and test out the archival and confirm they are able to decrypt, unzip & load into the test archival system.
+
+
+
+
+
+[~amirR]: Per my skype, the files were not PGP encrypted. I've updated the description above to include PGP encryption specifications.
+
+
+
+
+
+
+author: berezinez
+comment: [~dyuen]
+
+please advise, I don't see this update for pdf archival in SOW. what page is it?
+
+
+
+Zip File Naming Convention:
+
+RWCU_NOTICES{color:#ff0000}_*<JID>*_{color}_Archival_<MMDDYYYY>_<Seg#>.zip{color:#00875a}.<zip sequence>{color}
+
+
+
+{color:#172b4d}Index Filenaming Convention:{color}
+
+RWCU_NOTICES_<JID>_{color:#de350b}<SEQ#>{color}.xml
+
+
+author: dyuen
+comment: [~berezinez], It should be on page 3. Under the zipfile screenshot. Thanks
+
+
+author: berezinez
+comment: [~dyuen]
+
+Pdf archival files dont match SOW. Please update an SOW with correct Index file name, zip file name and individual pdf name . see SS attached. !PDF ARCHIVAL.GIF!
+
+
+
+
+author: dyuen
+comment: [~berezinez], the zip file name matches, but it does not appear to match for the index file name.
+
+!image-2021-11-22-16-11-38-570.png!
+
+
+
+[~amirR] [~William.Kong], please advise based on Alis' above screenshot
+
+
+author: amirr
+comment: Hi [~dyuen]/[~berezinez] ,
+
+Here is the screen shot of index naming:
+
+!image-2021-11-23-12-35-19-501.png|width=608,height=422!
+
+The index naming matches with the description.
+
+
+
+The individual pdf naming convention came from Team Support # 22692 (Comment #1), which is:
+
+<processing date>_NOTICES_<member account number notice/letter being sent>_<sequence>.pdf
+
+
+
+I also copied the encrypted samples at client pickup directory (Vend_DSI/client_pickup/print_process/rwcu/).
+
+
+
+Thanks,
+
+Rahat
+
+
+
+
+
+
+author: dyuen
+comment: [~amirR], thank you.
+
+[~berezinez], please use this SOW link to compare/highlighted portion. SOW has been updated with the individual PDF naming convention.
+
+http://sharepoint-svr/AS/Shared%20Documents/SOW%20Directory/RWCU%20-%20Redwood%20Credit%20Union/SOW/RWCU-2014.09%20Letter-%20Daily.docx
+
+
+author: berezinez
+comment: [~dyuen] [~amirR]
+
+QA pass, ready for CU approval.
+
+
+author: dyuen
+comment: [~amirR], please see following feedback from RWCU:
+
+We started taking a look at these today. It looks like some of the notices are being returned with only a truncated account number as reference in the PDF name and in the XML. I know some of the data files are sent to you with the account number truncated and some are not.
+
+We will need to determine which files being sent need to be updated so that you can return the notices to us with the full account for each notice.
+
+Also, the PDFs within each zip file will need to have the Type indicated in the file name like the zip file. IE - the PDF file needs to include "DLA", "DLB" in the name otherwise we might run the risk of overwriting two different types of notices for the same account number.
+
+Let me know what questions you have or if we need to hop on a call.
+----
+Can you make adjustments to the PDFs as requested? Also do you have any suggestions about the truncated account numbers or should we wait until we hear back from RWCU?
+
+Thanks
+
+
+author: william.kong
+comment: [~dyuen]: I will suggest the following PDF Filenaming convention:
+
+
+
+MMDDYYYY_NOTICE_JID_ACCTNUM_SEQ.pdf (e.g.: 11202021_NOTICE_DLA_123457_99.pdf
+
+
+
+[~amirR]: Please make this adjustment and provide new samples. I will update the specifications above.
+
+
+author: rony
+comment: Hi [~dyuen]
+
+/d/infoftps3/Vend_DSI/client_pickup/print_process/rwcu/11272021 has archival sample with pdf name update. Although DNA is missing from the samples the code is also updated for it. We will provide it later if necessary. It has both encrypted and unencrypted versions.
+
+Thanks
+
+
+author: dyuen
+comment: Hi [~rony],
+
+Thank you. I've notified RWCU of the new sample.
+
+
+author: william.kong
+comment: [~dyuen]: Looks like it took us longer to give RWCU proper samples. The due date of 11/30 is going to be past due. I would advise to reschedule the live date to be 12/13/2021 before code freeze. Please advise if you think CU can provide approvals of this project by the end of this week so that we can schedule QA & Paralllel testing next week.
+
+
+author: dyuen
+comment: [~rony], please see feedback from client:
+
+I was able to download the test samples.
+
+DLB is mostly unusable because most of the notices have a truncated account number. Our Synergy Document retention needs a complete account number to file these correctly.
+
+DLD, DNA and ML1 are the same, no full account number.
+
+That all being said, I know that many of the data files we send do not include the full account number. Can you tell me which files within these groups do not include them? We will need to identify the process that is creating these data files so that we can correct them while also keeping the notices, as is when mailed out. IE if the notice is sending a truncated account number, it will need to continue that way even if we send the full account number.
+
+We will test the other groups to see if we can import them into Synergy.
+
+----------
+
+Can you please ID the files that do not include the full account number?
+
+Thanks,
+
+Daphne
+
+
+author: amirr
+comment: HI [~dyuen],
+
+
+
+It is not possible for us to verify if the account number is Full or Short. It is just a number to us.
+
+
+
+The only thing I can say that ML1 data file do not contain any account number.
+
+
+
+Thanks,
+
+Amir
+
+
+author: william.kong
+comment: Hi [~amirR],
+
+I was not able to reach you today since you missed the scrum meeting. Do you have a data file for each letter? Can you go through and see which ones are obvious where the data does not have complete account numbers:
+
+e.g. Account ####1344
+
+
+
+We should at least let RWCU know the obvious one. As for the others, client will need to check the results.
+
+
+
+[~dyuen]: In short, this project for sure will be late. Client is going to change the requirements where we will need to incur more programming because they will update their programming to not send truncated account number+but+ we also need to update the formatting programming to truncate them back again.
+
+I would assume client will have the understanding that this project will not make it this month and both parties, RWCU & InfoIMAGE needs to spend time to do analysis to assess that additional effort/timeline and send a new change request order for this job.
+
+
+
+-- Will
+
+
+
+
+
+
+
+
+author: dyuen
+comment: [~William.Kong], will this project be worked on during the code freeze? I think it's unfair to RWCU that some of the delay has come from our end and because of that the project would have to be placed on hold until February.
+
+Thanks
+
+
+author: william.kong
+comment: [~dyuen]: Let's assess the letters first. RWCU will need to go back to programming team or Statement core to make coding updates as well so it will depend on their resourcing to confirm how much time it will take to do the coding. From there, we can determine where in the code freeze period it is to will see what [~amirR]can do or if we need additional developer to do format coding since there is changes in their requirements.
+
+
+
+I did not get a response from him yesterday, so i will be escalating to [~rony]/ [~anwarh]; Not sure if he was OOO yesterday or not.
+
+
+author: rony
+comment: Hi [~William.Kong] [~dyuen]
+
+I uploaded the data files to/d/infoftps3/Vend_DSI/client_pickup/print_process/rwcu/12032021 directory application wise.
+
+Ignore the zip or encrypted file there, refer to the raw file.
+
+for dld -rwcuiraw0512.txt looks like truncated account no
+
+for dna -rwcuPDFloan0329.pdf , we have all account no 0 in pdf naming
+
+for dlb -rwcuils1115 looks like truncated
+
+Thanks
+
+
+
+
+author: billr
+comment: Rony,
+
+
+
+Customer responded below:
+
+We are reviewing all of these and will start making changes on our end one at a time so as to include the full account number and also work with your team for each item to update your programming.
+
+For those files that we are already sending over the full account number, IE rwcucomboMMDDYY, would you be able to send only those notices back with the correct XML for us? Would you be able to split out certain notices in DLA?
+
+
+author: rony
+comment: Hi [~billr]
+
+
+
+So the client wants us to send only those samples with correct/full account no? If we need to send a sample again please provide us with data.
+
+
+
+Thanks
+
+
+
+
+author: dyuen
+comment: [~rony], client responded as follows:
+
+"Yes, we want to see if you will be able to start sending just the notices that we are already providing the full account number to you. I believe everything in the*rwcucombo*file has a full account number.
+
+I will send over a copy of the Daily file*rwcucombo*to the test folder tomorrow if that works. "
+
+I will update the Jira when I get the new test file.
+
+Thanks,
+Daphne
+
+
+author: dyuen
+comment: [~rony], client just provided a new test file.
+|*File Name*|*Size*|*MD5*|
+|test/rwcucomb1229.txt.asc|683.57 kb|08a60cc3dfb491f0caeb3f6ebfcaf6d7|
+
+Please provide a new sample at your earliest convenience.
+
+Thanks
+
+
+author: william.kong
+comment: [~rony]: As discussed, please help create sample. Please provide your next availability on code release upon getting their approvals by Jan __ , 2022 date. I need this ticket updated with new dates since this project is past due.
+
+
+author: rony
+comment: Hi [~dyuen]
+
+I uploadedRWCU_NOTICES_DLC_Archival_12302021_1.zip.001 in/d/infoftps3/Vend_DSI/client_pickup/print_process/rwcu. If you don't have access there please ask some technical person to pick it for you.
+
+If this can get approved and it's ok release after approval then we can release it by Jan 07.
+
+Thanks,
+
+
+
+
+author: dyuen
+comment: [~berezinez], do you need to QA the latest sample from Rony before I have it sent to RWCU?
+
+Thanks
+
+
+author: berezinez
+comment: [~dyuen]
+
+please send for the client approval.
+
+
+author: dyuen
+comment: Sample sent to RWCU for review/approval.
+
+
+author: dyuen
+comment: [~rony], please see below note from RWCU:
+
+!image-2022-01-06-16-48-14-972.png!
+
+Please correct and provide a new sample.
+
+
+author: rony
+comment: Hi [~dyuen]
+
+Can I get a screenshot of this to better understand about the location of & sign that client wants to be converted to &amp.
+
+Thanks
+
+
+author: dyuen
+comment: [~rony], please see following:
+
+!image-2022-01-07-11-25-43-138.png!
+
+!image-2022-01-07-11-25-56-791.png!
+
+
+author: dyuen
+comment: [~rony], any updates?
+
+Thanks
+
+
+author: amirr
+comment: Script has been updated.
+
+
+
+Sample has been copied to client pickup directory : client_pickup/print_process/RWCU_NOTICES_DLC_Archival_01132022_1.zip.001
+
+
+
+Thanks,
+
+Rahat
+
+
+author: rony
+comment: Hi [~dyuen]
+
+Any feedback?
+
+
+author: dyuen
+comment: [~rony], not yet. I believe RWCU is taking care of taxes before reviewing these. Thanks
+
+
+author: dyuen
+comment: [~rony], please see feedback from RWCU:
+
+"We finally got around to testing this batch and it looks like the ampersand issue is still in the XML file:
+
+!image-2022-01-21-16-38-47-602.png! "
+
+
+
+Please correct and provide a new sample. Thanks
+
+
+author: amirr
+comment: [~dyuen],
+
+
+
+I cannot produce this error in parallel environment.
+
+Which data file did you use? And which environment was used to create this index file?
+
+
+author: tuna
+comment: Hi [~amirR], [~rony],
+
+I think above screenshot is coming from one of the XML index files from our archival samples, that you provided to RWCU. Can you please check the xml files inside the sample archival zip files? May be, you can search by "Name" or pdf file names in above screenshot.
+
+Thanks,
+
+Tun
+
+
+
+[~William.Kong], [~dyuen]
+
+
+author: dyuen
+comment: [~amirR] [~rony] [~William.Kong] [~TunA],
+
+Any updates regarding the client's last feedback?
+
+Thanks
+
+
+author: rony
+comment: I am not sure which file the client is looking into. I don't see any & but &amp.
+
+!image-2022-02-01-04-20-05-012.png!
+
+
+
+I am uploading the archival sample again./d/infoftps3/Vend_DSI/client_pickup/print_process/RWCU/RWCU_NOTICES_DLC_Archival_01242022_1.zip.001 would you please ask the client to recheck.
+
+
+
+
+author: dyuen
+comment: [~rony], please see response regarding where the ampersand issue persists:
+
+This is from the Test file for the rwcucomboMMDDYY.txt file. Both of the XML files inRWCU_NOTICES_DLC_Archival_12302021_1.zip contain names with the ampersand.
+
+----------
+
+Can you review before I advise the sample was re-copied to their pickup folder?
+
+Thanks
+
+
+author: rony
+comment: Hi [~dyuen]
+
+I did review.
+
+
+author: rony
+comment: Hi [~dyuen]
+
+Did you send the sample to client?
+
+
+author: dyuen
+comment: [~rony], yes it was sent on 2/3. Pending response whether test was successful or not.
+
+Thanks
+
+
+author: dyuen
+comment: [~rony], per ticket #22692 comment 83, it sounds like RWCU wants to release code in phases. Can that be done? Or would this be one release for everything?
+
+Thanks
+
+
+author: dyuen
+comment: [~rony], please advise. Thanks
+
+
+author: rony
+comment: Hi [~dyuen] , sorry for the late response. Yes it can be done. So let me know which one is approved and which one the client wants to release.
+
+
+author: dyuen
+comment: Thank you [~rony]
+
+[~berezinez], please complete final QA.
+
+[~Igor.Khosid], FYI
+
+
+author: berezinez
+comment: [~dyuen] [~rony]
+
+QA is completed, please attach IS checklist if needed.
+
+
+author: dyuen
+comment: [~rony] [~berezinez],
+
+I think it would be best to do parallel for all the codes and confirm everything looks OK, then we can proceed with releasing code in phases. Agree?
+
+Also please see below from RWCU regarding what will be released first:
+
+Let's start with this list. These are the current letters that already include the full account numbers. We will want to build the return file with XML the same.
+
+I will get together with Programming and see if we can work out a timeline for the rest of the letters.
+
+I can provide test files for each of these as soon as you are ready.
+ * rwcubusbMMDD.txt
+ * rwcubusaMMDD.txt
+ * rwcuinthelMMDD.csv
+ * rwcugtmMMDDYY.csv (Also see ticket #23346)
+ * rwcuratepay<mmdd>.txt
+ * rwcuatmmmyy.txt
+ * rwcuMMDD_lc.txt
+ * rwcumachMMDD.txt
+
+[~TunA] [~Igor.Khosid] [~William.Kong], FYI
+
+
+author: rony
+comment: Hi [~berezinez] [~dyuen]
+
+QA checklist[^QA Checklist#is-490.docx], please request parallel form.
+
+
+
+Thanks
+
+
+author: berezinez
+comment: [~dyuen]
+
+IS checklist attached.
+
+[^RWCU_IS_490_IS_Checklist.docx]
+
+
+author: dyuen
+comment: [~rony] [~berezinez], masterparallel #26567 created.
+
+
+author: rony
+comment: Hi [~TunA]
+
+Per ts [https://app.na3.teamsupport.com/?TicketNumber=26567]client wants to release dla dlc lc1.
+
+Attached is the transfer form [^IS-490_PROGRAM_TRANSFER_FORM.doc]total 50 files. Files are in my xfer folder.
+
+Also need help to change cron set up for lc1 to remove *job sel* value.
+
+*From/home/master/rwculc_process.sh s 0*
+
+to
+
+*/home/master/rwculc_process.sh 0*
+
+
+
+Thanks
+
+
+
+
+
+
+
+
+author: tuna
+comment: Hi [~rony]
+
+I released total 50 files and updated the CRONTAB as follow:
+
+Thanks,
+
+Tun
+
+
+
+[oper1@rhs ~]$ crontab -l | grep rwculc_process
+49 11 * * 5 . /home/control/daily.control; /home/master/rwculc_process.sh 0 2>&1 > /d/rwcu/today.log
+
+
+
+total 50 files
+
+[oper1@rhs backup]$ ll /d/is/cvs/xfer/ronyD/
+total 2616
+-rwxrwxrwx 1 ronyD DSI 15843 Feb 18 12:49 RWCUDL001.dfa
+-rwxrwxrwx 1 ronyD DSI 0 Feb 18 12:50 RWCUDL001.prj
+-rwxrwxrwx 1 ronyD DSI 23510 Feb 18 12:53 RWCUDL002.dfa
+-rwxrwxrwx 1 ronyD DSI 0 Feb 18 12:50 RWCUDL002.prj
+-rwxrwxrwx 1 ronyD DSI 15427 Feb 18 12:52 RWCUDL003.dfa
+-rwxrwxrwx 1 ronyD DSI 0 Feb 18 12:50 RWCUDL003.prj
+-rwxrwxrwx 1 ronyD DSI 17166 Feb 18 12:53 RWCUDL004.dfa
+-rwxrwxrwx 1 ronyD DSI 0 Feb 18 12:50 RWCUDL004.prj
+-rwxrwxrwx 1 ronyD DSI 15474 Feb 18 12:50 RWCUDL005.dfa
+-rwxrwxrwx 1 ronyD DSI 0 Feb 18 12:50 RWCUDL005.prj
+-rwxrwxrwx 1 ronyD DSI 9905 Feb 18 12:53 RWCUDL006.dfa
+-rwxrwxrwx 1 ronyD DSI 0 Feb 18 12:50 RWCUDL006.prj
+-rwxrwxrwx 1 ronyD DSI 12976 Feb 18 12:52 RWCUDL007.dfa
+-rwxrwxrwx 1 ronyD DSI 0 Feb 18 12:50 RWCUDL007.prj
+-rwxrwxrwx 1 ronyD DSI 11892 Feb 18 12:52 RWCUDL008.dfa
+-rwxrwxrwx 1 ronyD DSI 0 Feb 18 12:53 RWCUDL008.prj
+-rwxrwxrwx 1 ronyD DSI 11011 Feb 18 12:52 RWCUDL009.dfa
+-rwxrwxrwx 1 ronyD DSI 0 Feb 18 12:52 RWCUDL009.prj
+-rwxrwxrwx 1 ronyD DSI 10382 Feb 18 12:52 RWCUDL010.dfa
+-rwxrwxrwx 1 ronyD DSI 0 Feb 18 12:50 RWCUDL010.prj
+-rwxrwxrwx 1 ronyD DSI 12354 Feb 18 12:50 RWCUDL011.dfa
+-rwxrwxrwx 1 ronyD DSI 0 Feb 18 12:50 RWCUDL011.prj
+-rwxrwxrwx 1 ronyD DSI 9681 Feb 18 12:50 RWCUDL012.dfa
+-rwxrwxrwx 1 ronyD DSI 0 Feb 18 12:53 RWCUDL012.prj
+-rwxrwxrwx 1 ronyD DSI 12165 Feb 18 12:52 RWCUDL013.dfa
+-rwxrwxrwx 1 ronyD DSI 0 Feb 18 12:52 RWCUDL013.prj
+-rwxrwxrwx 1 ronyD DSI 26125 Feb 18 12:47 RWCUDL014.dfa
+-rwxrwxrwx 1 ronyD DSI 0 Feb 18 12:52 RWCUDL014.prj
+-rwxrwxrwx 1 ronyD DSI 6838 Feb 18 12:52 RWCUDL015.dfa
+-rwxrwxrwx 1 ronyD DSI 0 Feb 18 12:50 RWCUDL015.prj
+-rwxrwxrwx 1 ronyD DSI 21283 Feb 18 12:52 RWCUDL053.dfa
+-rwxrwxrwx 1 ronyD DSI 0 Feb 18 12:50 RWCUDL053.prj
+-rwxrwxrwx 1 ronyD DSI 417 Feb 18 12:53 rwcudla_pdf.control
+-rwxrwxrwx 1 ronyD DSI 157 Feb 18 12:53 rwcudla_pdf_template_header.control
+-rwxrwxrwx 1 ronyD DSI 7805 Feb 18 12:53 rwcudla.procs
+-rwxrwxrwx 1 ronyD DSI 201 Feb 18 12:53 RWCUDL_ARCHIVAL_INDEX.dfa
+-rwxrwxrwx 1 ronyD DSI 0 Feb 18 12:34 RWCUDL_ARCHIVAL_INDEX.prj
+-rwxrwxrwx 1 ronyD DSI 480 Feb 18 12:50 rwcudlc_pdf.control
+-rwxrwxrwx 1 ronyD DSI 759 Feb 18 12:46 rwcudlc_pdf_template.control
+-rwxrwxrwx 1 ronyD DSI 9624 Feb 18 12:52 rwcudlc_process.sh
+-rwxrwxrwx 1 ronyD DSI 3285 Feb 18 12:50 rwcudlc.procs
+-rwxrwxrwx 1 ronyD DSI 34765 Feb 18 12:50 rwcudl_process.pl
+-rwxrwxrwx 1 ronyD DSI 1481 Feb 18 12:52 rwcudl_process.sh
+-rwxrwxrwx 1 ronyD DSI 16125 Feb 18 12:50 RWCULC11.dfa
+-rwxrwxrwx 1 ronyD DSI 0 Feb 18 12:47 RWCULC11.prj
+-rwxrwxrwx 1 ronyD DSI 480 Feb 18 12:50 rwculc1_pdf.control
+-rwxrwxrwx 1 ronyD DSI 759 Feb 18 12:50 rwculc1_pdf_template.control
+-rwxrwxrwx 1 ronyD DSI 2170 Feb 18 12:53 rwculc1.procs
+-rwxrwxrwx 1 ronyD DSI 8199 Feb 18 12:50 rwculc_process.sh
+-rwxrwxrwx 1 ronyD DSI 3493 Feb 18 12:46 rwcu_notice_archival.sh
+
+
+author: rony
+comment: [~dyuen]
+
+
+author: dyuen
+comment: [~rony], RWCU reviewed the first live archive file and found the following:
+
+
+
+UPDATE:
+
+In the DLC file it looks like the Bad Address is mis-spelled in the XML file.
+
+!image-2022-02-23-11-16-09-789.png!
+
+
+
+Please correct.
+
+
+author: rony
+comment: Hi [~TunA]
+
+Would you please releaseRWCUDL015.dfa in prod.
+
+Release message "correct spelling Bad Adress to Bad Address"
+
+
+
+Thanks
+
+
+author: tuna
+comment: HI [~rony], [~dyuen]
+
+Code has been released.
+
+Thanks,
+
+Tun
+
+
+
+20220223113248 02/23/2022 ronyD IS-490 RWCU - [22692][pvt] eNotices Project - Return file for Archival
+
+[oper1@rhs files]$ ll /d/is/cvs/xfer/ronyD/
+total 48
+-rwxrwxrwx 1 ronyD DSI 6839 Feb 23 11:25 RWCUDL015.dfa
+
+
+author: rony
+comment: Hi [~dyuen]
+
+update has been released.
+
+
+
+
+author: william.kong
+comment: [~rony]: Please close this project out if this is done.
+
+
+author: rony
+comment: [~William.Kong] Not yet, only 3 apps are live nowdla dlc lc1. Rest will be on client demand.
+
+
+author: rony
+comment: Attaching transfer form here to track of files released. 2 new files added,RWCUDLT1.dfa RWCUDLU1.dfa
+
+
+author: rony
+comment: [^IS-490_PROGRAM_TRANSFER_FORM.doc]
+
+
+author: william.kong
+comment: [~rony]: Has this been released? If so, please close out this ticket.
+
+
+author: dyuen
+comment: [~William.Kong], this is still waiting on client confirmation on when to release code for the remaining apps/statements.
+
+
+author: rony
+comment: Hi [~dyuen]
+
+I think at this point we can close this issue. Since we are handling archival with different ts/story. Let me know.
+
+
+
+Thanks
+
+
+author: dyuen
+comment: [~rony], I don't believe all of the code updates/releases have been done. If I recall correctly, there is 2 or 3 parts to this update and they are still pending release. Please confirm.
+
+Reference Masterparallel #26567
+
+Thanks,
+
+
+author: rony
+comment: Hi [~dyuen]
+
+I believe we don't need this story any longer. Let me know.
+
+
+author: dyuen
+comment: [~rony], correct. We can close it out now.

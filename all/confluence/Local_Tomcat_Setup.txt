@@ -1,0 +1,49 @@
+title: Local Tomcat Setup
+body: Setup Steps:
+
+  1. Find the "Tomcat-clean-install" folder in path: "\\\dell-2100\share\Isd\Local tomcat clean install".
+  2. Unzip the folder to Desktop or somewhere accessible.
+  3. Create a folder ApacheTomcat in your C:\ directory (C:\ApacheTomcat\\)
+  4. Move the folders tomcat-bank, tomcat-cu, and tomcat-default (tomcat-*\\) from Tomcat-clean-install into your C:\ApacheTomcat\ folder
+  5. Update file tomcat-*\conf\catalina.properties, "shared.loader=" value to point to your own local estmt2-depends-libs and _jar_files_dev Jar locations (all 3 tomcat-*\ folders)
+
+shared.loader=C:/Users/ethyu/workspace/Development/estmt2-depend-
+libs/*.jar,C:/Users/ethyu/workspace/Development/_jar_files_dev/*.jar
+
+  
+
+  6. (Can ignore this step if you put tomcat-* folders into C:\ApacheTomcat\ directory)
+    1. Update tomcat-*/i3webapps/system.prop "webserver.root", "webserver.config", "webapps.root", and "com.infoimage.api.configfile" to connect to your local tomcat directory
+  7. Update tomcat-*/conf/server.xml to add in your own client. You can follow the examples of previous server setups commented in the file.
+
+Copy and paste from <Host> </Host> outside of comments.  
+Make adjustments to the client names, 3 instances.  
+ex: "____" will depict the areas you need to replace with client name  
+<Host name="____local.infoimageinc.com" appBase="i3webapps/____" and  
+prefix="____-local.infoimageinc.com_access_log." suffix=".txt"
+
+  
+
+  8. Create your client folder in tomcat-*\i3webapps.
+  9. Move and update the logging.conf file in C:\ApacheTomcat\tomcat-bank\i3webapps with the corresponding client's CID and copy over to the client folder you made.
+  10. Checkout client code from SVN onto your workspace.
+  11. In your eclipse workspace, "Run As 5 Maven install" the pom.xml file in your client code folder
+  12. Copy over the msm.war and ROOT.war files from the client target folder over to client folder you created in tomcat-*.
+
+"C:\Users\ethyu\workspace\Development\gcbk\target" \--->
+"C:\ApacheTomcat\tomcat-bank\i3webapps\gcbk"
+
+  
+
+  13. Call Command: "tomcat-*\bin\setenv.bat" to set the environment path
+    1. Do it in tomcat-* directory, or tomcat-*\bin\ directory
+  14. On your hosts file, add "127.0.0.1 [cid]local.infoimageinc.com for the client(s) you want to set up.
+    1. ex: "127.0.0.1 [gcbklocal.infoimageinc.com](http://gcbklocal.infoimageinc.com)" for each of your tomcat-* and clients
+  15. To start tomcat local server:
+  16. Call Command: "tomcat-*\bin\startup.bat" to start tomcat
+  17. \- Do it in tomcat-* directory, or tomcat-*\bin\ directory
+  18. If JRE_HOME Error comes up, open setenv.bat and add line: set "JRE_HOME=C:\Program Files\Java\jdk1.7.0_79\jre"
+
+250
+
+

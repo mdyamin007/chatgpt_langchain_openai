@@ -1,0 +1,67 @@
+title: HTBK - [21669][pvt] Question about automatically adding accounts to estatements
+description: *Client Request*
+
+Setup a process to automatically enroll accounts into Electronic delivery. In doing so, the user will also not be required to go through the Enrollment Steps at the time of first SSO.
+
+
+
+*Suggestion*
+
+Update Auth File process to the Standard Auth Logic, so that enrollment logic can be used.
+
+
+
+*Requirements/Existing Logic*
+ # Auth File is a Full File, so automatic user removals are done through the post-process.
+ # Auth File will ignore all user-account relationships that were created via SSO.
+ # Auth File will enroll accounts to Electronic delivery when provided a delivery preference of E, and a valid email address. The user will have their enrollment status updated, so that they will not have to go through enrollment via SSO again.
+
+Confirm with Client:For (2), currently, when a user logs into SSO before the Auth File is processed, a user who exists inside an Auth File will be permanently flagged as an "SSO" user. Updating to the Standard logic, whenever a user-account relationship is found inside the Auth file, that relationship is no longer flagged as "SSO".
+
+
+
+*Specs*
+
+Current Format
+
+SSN|Account Name|Account Number|DOB
+
+
+
+New Format
+
+*CIF*|SSN|*User Name**|Account Name|Account Number|DOB|*Delivery Preference*|*Email Address*
+ # *CIF*: This is simply the SSN. The Standard Logic requires the values to be provided in two different columns.
+ # *User Name*: This is optional. However, providing this value will provide more clarity in data. The User Name and Account Name can be different due to the fact that a single user may have access to different accounts. So John Doe may have access to Jane's account. In that case, the User Name would be John Doe, and the Account Name would be Jane Doe. This is why InfoIMAGE would like to differentiate between User Name and Account Name.
+ # *Delivery Preference*: The delivery preference of the account. By default, this field*should be left empty*, signifying that there will be no changes to delivery preferences. For accounts that need to be enrolled into Electronic delivery preference, then the value should be "E".
+ # *Email Address*: The email address for electronic notification. This is required only for accounts that need to be enrolled into Electronic delivery.
+
+In the case that Delivery Preference is E, but no email is given, the enrollment information will be ignored. The user/account/relationship will still be created, but there would not be a change to the account's paperless status nor will the user be pre-enrolled.
+
+
+
+
+
+Estimate: 20 hours
+
+TO: 10/29
+
+Pilot: 11/4/21
+
+Approval: 11/9/21
+
+Target Live Date: 11/17/21
+
+
+
+
+
+*For the Developer*
+ # AuthUtil will need to be enhanced to support filtering by ufa.source to filter out all ufas with a source of "SSO".
+ # Otherwise, setup will move client to the Standard handler and registrar.
+ # Make sure that empty delivery preference can still be processed and will not change accounts back to paper.
+ # Use "InfoImageDailyCIFDigital_10282021" file.
+
+
+author: dyuen
+comment: [~tai.trinh], I created the ISD story and used tentative dates for pilot, pilot approval, etc. Feel free to adjust as necessary. Thanks

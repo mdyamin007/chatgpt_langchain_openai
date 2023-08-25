@@ -1,0 +1,68 @@
+This is how the <prefix>.dyn_sam( which contain one account ) file run in the server.
+This generate ${fn}.afp and is copied to pdf_afp directory:
+so${d_dir}/pdf_afp/${cid}/${prefix}/afp/ this directory must exist otherwise you will get error when testing in pilot site.
+Then it converted the afp and put it to isd directory to show the pdf in pilot site.
+badaccount and mailcode report should only be producing in s option.
+backer is not needed for message manager , &job_type<>m and &job_type<>d then display the backer.
+message portal file generated in /t/cid/prefix/sample/ in dev
+also tiff files are generated there
+zipfile(where all the message manager resources like tiff portal file are included from isd side) - /t/isd_input_dev/I3/mtcu/mtcu_ms1_09012016_09012016.zip
+/t/mtcu/mtcums1/mtcums1_msg_portal.txt
+/t/isd_input_dev/IS/MsgMgr/gdcu/201405/gdcums1.imp
+sometimes in pilot we see the message like "sorry for the inconvenience" message when previewing sample or approving sample. In this scenario we can try to look into some related log file to
+see what wrong is happening.
+Below is a discussion between me and Diego which might be helpful:
+[12:33:41 AM] Diego Franco: well i see one in the log
+[12:33:55 AM] Diego Franco: so on rht if you go into /d/cobz/
+[12:34:07 AM] Diego Franco: there is a file called cobz_ms1_msgmgr2_preview_sam.log
+[12:34:16 AM] Rony Das: ok
+[12:34:30 AM] Diego Franco: inside there is a repetition of the same call
+[12:34:35 AM] Rony Das: o
+[12:34:41 AM] Diego Franco: /home/master/approve_sample_msgid.sh cobz ms1 1|cobz_ms1_02222017_03102017.zip 02222017 03102017 DDA 1
+[12:34:53 AM] Diego Franco: so this is the error message isd usually sends us
+[12:35:26 AM] Diego Franco: if you run that command it will return what the error is ... only difference is you need to put quotes around 2 items
+[12:35:36 AM] Diego Franco: like this
+[12:35:37 AM] Diego Franco: /home/master/approve_sample_msgid.sh cobz ms1 "1|cobz_ms1_02222017_03102017.zip" 02222017 03102017 DDA 1
+[12:35:58 AM] Diego Franco: if you run that we get returned 4|unable to tranfer pdf file
+[12:36:18 AM] Rony Das: ok
+[12:37:12 AM] Diego Franco: this error is what gives us insight into whats going on in the backend with ISD servers
+[12:37:28 AM] Diego Franco: in this case it looks the same as what i was running into which was a permissions issu e
+[12:38:07 AM] Diego Franco: you did your part i asked for in the last email which was to generate the error.
+[12:45:01 AM] Rony Das: + /home/master/approve_sample_msgid.sh cobz ms1 '1|cobz_ms1_03232017_03232017.zip' 03232017 03232017 DDA 1
+cp: cannot create regular file '/d/test/msgmgr/pseg/base_pseg_30123.icd': Permission denied
+bash: /d/test/msgmgr/pseg/base_pseg_30123.icd: Permission denied
+bash: /d/test/msgmgr/pseg/base_pseg_30123.icd: Permission denied
+cp: cannot create regular file '/d/test/msgmgr/pseg/base_pseg_30124.icd': Permission denied
+bash: /d/test/msgmgr/pseg/base_pseg_30124.icd: Permission denied
+bash: /d/test/msgmgr/pseg/base_pseg_30124.icd: Permission denied
+cp: cannot create regular file '/d/test/msgmgr/pseg/base_pseg_30122.icd': Permission denied
+bash: /d/test/msgmgr/pseg/base_pseg_30122.icd: Permission denied
+bash: /d/test/msgmgr/pseg/base_pseg_30122.icd: Permission denied
+[12:45:17 AM] Rony Das: I got this
+[12:47:37 AM] Diego Franco: ah your permissions on your own server are messing you up
+[12:47:42 AM] Diego Franco: thats a network issue
+[12:47:46 AM] Rony Das: o
+[12:48:14 AM] Diego Franco: so ISD just change the permissions and i am generating the next step now
+**********************************************************
+From Le Tuan La:
+I believe applications that are not daily should follow this structure but check with the individual programmers.
+It is failing message manager because the working directory folder is "${d_dir}/${cid}/${jid}/
+/d/sana/sanads1/sanads1_msg_portal.txt
+checking mm2 index file
+/d/sana/ds1/sanads1/sanads1_msg_portal.txt does not exist! Please inform IS!
+Error within program: ck_mm2_idx.sh
+Error within program: isisdisk.sh
+Control file:
+Change dir="${d_dir}/${cid}/${jid}/"
+To dir="${d_dir}/${cid}/"
+Debugging message manager Error:
+1)vi /var/log/is_server.log
+2) Go to end of file and you will see something like
+64709 10.8.9.180 02-23-2018 06:41:42 Incoming request - /home/master/approve_sample_msgid.sh whcu cc1 1|whcu_cc1_02232018_02232018.zip 02232018 02232018 Credit_Card 1
+3) Go back to terminal screen and run from command line. Make sure to add the enclose quotation marks before the 1 and after the zip.
+/home/master/approve_sample_msgid.sh whcu cc1 1|whcu_cc1_02232018_02232018.zip 02232018 02232018 Credit_Card 1
+ This will tell you what kind of error you get so you can open /home/master/approve_sample_msgid.shto see whats generating the error message.
+This folder was missing in pilot.
+/d/pdf_afp/whcu/whcucc1/afp
+It should be ok now.
+Please try again.

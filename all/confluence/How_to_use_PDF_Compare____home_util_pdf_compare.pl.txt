@@ -1,0 +1,195 @@
+title: How to use PDF Compare:  /home/util/pdf_compare.pl
+body: The following is documentation on how to use the Java Based PDFCompare program
+via a pdf_compare.pl wrapper script.  The PDFCompare java program was
+developed by [GitHub - red6/pdfcompare: A simple Java library to compare two
+PDF files](https://github.com/red6/pdfcompare).  For the manual and more
+detailed information on this program, please goto this website.  This perl
+script parses two directories containing individual pdf files and outputs the
+results into an output directory that you supply.  There is additional
+arguments you can include if you want to overload any of the default settings.
+
+  
+
+This script should run on  **non-production  **related system since this
+utility is very CPU & Memory intentive.  Servers like RHT, ca-isis-dv-02, and
+ca-unittest-pr-01 would be ideal non-production targeted system to use for
+testing.
+
+  
+
+Type perl /home/util/[pdf_compare.pl](http://pdf_compare.pl) -help and it will
+list all the available arguments:
+
+    
+    
+      
+    Usage:       [pdf_compare.pl](http://pdf_compare.pl) orig_pdf_dir new_pdf_dir result_dir [options]
+    
+    
+                 orig_pdf:    Directory containing all the individual PDF  
+                 new_pdf_dir: Directory containing the new PDF  
+                 result_dir:  The directory name of where you want the log file and the pdfs that have differences/issues.  
+      
+      
+      Options:     --regex 'REGEX_STR' - The regular expression to use if the filename of the pdf uses dynamic sequences numbers  
+                                         With this option, it will ignore the sequence number in the <SEQ> position  
+                                         e.g.:  -regex 'flcu_dn_[0-9]+_[0-9]+_[0-9]+_<SEQ>.pdf'  
+      
+                                         With this option, it will ignore the custom random patternn in <CUSTOM=......> position  
+                                         Replace "......" with your custom regex  
+                                         e.g.:  -regex 'flcu_dn_[0-9]+_[0-9]+_[0-9]+_<CUSTOM=[a-z]+_[0-9]+>.pdf'  
+      
+                   --pixels  #         - The number of pixel range to ignore differences (default is 0.2)  
+      
+                   --threads #         - The number of threads (default is 5)  
+      
+                   --maxfiles #        - The maximum number of PDF files to examine (default is 6000)  
+      
+                   --exclusion json_fn  - This is an exlusion json config if you want to define area on certain pages to ignore  
+                                         Go to <https://github.com/red6/pdfcompare/blob/master/README.md> for examples  
+      
+      
+                   --help            - Prints script usage.
+
+  
+
+  
+
+ _ **Examples:**_
+
+    
+    
+    perl [pdf_compare.pl](http://pdf_compare.pl) tkcums1_prod/ tkcums1_parallel/ result_tkcums1 -pixels 5-threads 16 -maxfiles 500   
+      
+    $result_dir folder contents:
+
+  * If there are differences in the PDFs, the program will create a pdf leading with diff_ in the $result_dir folder.  You will see red and green color representing the differences between the two PDFs. 
+  * In the $result_dir folder location is a report filename 'pdf_compare_rpt.txt' that summarizes the results
+  * In the $result_dir folder location is a pdf_list.log file that list out the file names from the orig_pdf folder it used to compare and the page count.
+  * In the $result_dir folder, you will see a log folder.  It contains individual log files of the STDOUT from the pdfcompare java jar program for troubleshooting.
+
+## \--regex 'REGEX_STR'
+
+This parameter is used when both the source and destination PDF folders have
+sequence numbers that are different in the filenaming convention.  The script
+will ignore the <SEQ> position in the file name and look for the closest
+matching filename in the other directory for comparison
+
+  1. Avoid adding parenthesis in the regex;  The script cannot handle another (....) regex grouping within value.  For example, if you wanted something like '[0-9]+(_S[0-9]+)*_<SEQ>.pdf' where the _S## may or may not appear in the filename, then replace it with this:  '[0-9]+_*S*[0-9]*_<SEQ>.pdf' as a work around for the option _S[0-9]+ string.
+  2. You can also copy and paste or drag and drop images into your instructions.
+
+## \--pixels #
+
+Additional Notes:
+
+  1. 0.2 is the default setting coming from the PDFCompare.jar file.  Based on most of InfoIMAGE needs, typical differences should be 5 pixels.  However, when we have to deal with large PSEG (i.e. backers), I have gone as far up as 15 pixels to ignore.
+  2. You can also copy and paste or drag and drop images into your instructions.
+
+## \--threads #
+
+Additional Notes:
+
+  1. Please be careful to not  _exhaust_ the server.  PDFCompare is very Memory & CPU intensive.  If you use too many threads, the PDFCompare will fail.   If you are comparing notices that are 1-2 pages in length, you can use higher amount of CPU.  At the time of writing, the server we were using has 32 CPU cores,  I used 32 threads.  If it is a statement job that has many pages or check images/graphic images, I would use up half of the CPU.
+  2. Please use the htop utility to monitor the CPU load & Memory load to not  _exhaust_ / crash the system.
+  3. You can also copy and paste or drag and drop images into your instructions.
+
+## \--maxfiles #
+
+Additional Notes:
+
+  1. By default, the script will parse up to 500 documents.  You can overload an increase the number for files if you like, but it just takes more time to process.  
+  2. You can also copy and paste or drag and drop images into your instructions.
+
+  
+
+## \--exclusions json_filename
+
+There are times where there are some areas of the pages you want PDFCompare to
+ignore the differences.  PDFCompare will show the color of the highlighted
+Yellow to indicate which regions of the statement you are ignoring.  Here is a
+small illustration/example:
+
+  
+
+ _Configuring Acrobat Reader to show Ruler and Units:_
+
+  1. Open Acrobat software, select "Edit" and choose "Preference".  Select "Units & Guides" in the left navigation tree.  Update the settings to match the following:
+  2. 
+
+  
+
+  
+
+How to define the dimensions to ignore:
+
+  1. Go to <https://github.com/red6/pdfcompare/blob/master/README.md> for examples.
+  2. Open the statement you want to define the area to ignore via Acrobat
+  3. Click "View" menu, scroll down to "Show/Hide", then "Rulers & Grids" and then "Rulers";  Or you can hit Ctrl+R on the keyboard to show the rulers:
+  4.   5. Drag from the left ruler or right ruler so that the blue lines appear and place them in the area where you can to ignore so that you can measure the distance:
+  6.   7. Create a json file and type in the dimensions as illustrated above:
+  8.   9. The JSON above ignores two areas defined above for ONLY page 1.  If you want to ignore Logo in the same dimension for all pages, just remove "page: 1" line above.
+
+  
+
+## Step-by-step guide
+
+Add the steps involved:
+
+  1. Insert your steps.
+  2. You can also copy and paste or drag and drop images into your instructions.
+
+## Step-by-step guide
+
+Add the steps involved:
+
+  1. Insert your steps.
+  2. You can also copy and paste or drag and drop images into your instructions.
+
+  
+
+  
+
+# Troubleshooting Articles:
+
+Please navigate to all the Troubleshooting Articles in this link:
+<https://confluence.infoimageinc.com/x/cgEWC>
+
+  
+
+  
+
+  
+
+  
+
+As of 9/21/2022, this program can run on:
+
+ca-unit-test-pr-01 server  (Note:  This server only has 8 CPUs).
+
+ca-isis-pr-04 server  (Note:  In the coming weeks, this server name will
+change to ca-unittest-pr-02.  This server has 32 CPUs)
+
+## Related articles
+
+Related articles appear here based on the labels you select. Click to edit the
+macro and add or change labels.
+
+  
+
+  
+
+true
+
+  
+
+Related issues|  
+  
+---|---  
+  
+  
+
+  
+
+  
+
+

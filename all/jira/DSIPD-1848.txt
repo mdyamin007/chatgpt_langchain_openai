@@ -1,0 +1,49 @@
+title: BANB bounceback API 504 error from infoservice side
+description: None
+
+
+author: golam.azrin
+comment: How bounceback API works:
+ #  infoservice pulls all the P_JOB within the given time range and makes a P_JOB list.
+ #  infoservice make a list with all apiJobId from the P_JOB list
+ #  infoservice call notifyservice for each apiJobId to get required data for a particular job
+ #  Notifyservice retrieve all the data from mongoDB for that job.
+ #  create a CSV file with all information and return it to the caller.
+ #  infoservice iterates each row of the csv that is given by notifyservice.
+ #  If the status is Bounced then create a query on oracle for notification preference.
+
+
+
+Some assumption:
+
+Lets say, there are 100 jobs and each job has 3000 notifications and 50 notifications are bounced in each job.
+
+
+
+Then how many queries and API calls occur on both infoservice and notificationservice side?
+
+
+
+1 query in oracle to get all the P_JOB
+
+100 API calls to notifyservice to get all information about the job.
+
+50*100 =5000 query to get the notification preference.
+
+
+
+100 mongo query for job level information.
+
+3*100=300 mongo query to get all the notification level information.
+
+
+
+In summary, there will be 5001 oracle query, 100 API calls and 400 mongo query.
+
+
+
+To solve the issue, I believe we should make the API call asynchronous.
+
+
+author: golam.azrin
+comment: https://confluence.infoimageinc.com/display/IN/bounceback+API+enhancement+design

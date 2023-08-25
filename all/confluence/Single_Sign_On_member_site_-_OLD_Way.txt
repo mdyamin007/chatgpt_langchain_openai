@@ -1,0 +1,64 @@
+title: Single Sign On member site - OLD Way
+body: The single sign on test prov_sso_test.html page the source code look like
+below
+
+<form action = "<https://10.8.8.221:11421/hblogin.jsp>" method = "post">  
+   <input type = "hidden" name = "SessionId" value= "CMONTGOMERY">  
+   <input type = "hidden" name = "ReturnURL" value=
+"<http://10.8.8.221:9999/provtest.html?WES=dfsdfsf>">  
+   <input type = submit name = "submit" value="ok1">  
+   </form>
+
+    
+    
+      
+    
+
+  
+
+There is another html page provtest.html (10.8.8.221/d/host-static/test) which
+only contains the below
+
+    
+    
+    CMONTGOMERY
+    
+
+  
+
+You need to do the following before trying to h it the member site of an SSO
+client
+
+  1. Following three values should the same eg. !prov@2008
+
+cid.conf>  global.ssoKey=!prov@2008  
+  web.xml>       <context-param>  
+        <param-name>com.infoimage.security.ssignonpw</param-name>  
+        <param-value>!prov@2008</param-value>  
+        <description>Single-signon password</description>  
+    </context-param>
+
+usr_session.sess_password ( before login in this value will be unencrypted)
+
+  1. In the html page you should modify the action url to reflect the right environment  
+return url should match the value of string String OSIHomeBankingURL =
+"<http://10.8.8.212:9999/provtest.html?WES=dfsdfsf>"; in root/hblogin.jsp
+
+  2. Make sure you have processed a recent auth file this will link acct_number used in the file with user_id. The acct_number in the file should match acct_number you have used in the application (eg. tax,statement etc)
+  3. Single sign on case you are already registered.
+  4. Run the following query after you run the auth file  
+
+select fa.acct_number, fa.acct_id, sess_login_id from fin_Account fa,
+usr_fin_account ufa, usr_session us  
+where fa.acct_id=ufa.acct_id  
+and us.usr_id=ufa.usr_id  
+and fa.org_id=getorgid('prov');
+
+    
+          
+    
+
+  5. which ever acct you are trying to test make sure sessionid in prov_sso_test.html,provtest.html and sess_login_id values are matching
+  6. Hit the prov_sso_test.html. Click on ok button. If SSO is working correctly you should land on member site accept disclosure page.
+
+

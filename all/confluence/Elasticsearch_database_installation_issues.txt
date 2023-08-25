@@ -1,0 +1,101 @@
+title: Elasticsearch database installation issues
+body:   
+1\. Not able to start elastic search using systemctl command :
+
+    **Issue** :
+
+root@[ContSearch-01:/etc/systemd/system#](http://ContSearch-01/etc/systemd/system)
+systemctl status elasticsearch.service  
+ elasticsearch.service - LSB: Starts elasticsearch  
+Loaded: loaded (/etc/init.d/elasticsearch; bad; vendor preset: enabled)  
+Active: failed (Result: exit-code) since Wed 2020-03-25 15:35:36 PDT; 10s ago  
+Docs: man:systemd-sysv-generator(8)  
+Process: 30059 ExecStart=/etc/init.d/elasticsearch start (code=exited,
+status=1/FAILURE)  
+Main PID: 29861 (code=exited, status=203/EXEC)
+
+Mar 25 15:35:36 ContSearch-01 systemd[1]: Starting LSB: Starts
+elasticsearch...  
+Mar 25 15:35:36 ContSearch-01 elasticsearch[30059]: The elasticsearch startup
+script does not exists or it is not executable, t  
+Mar 25 15:35:36 ContSearch-01 systemd[1]: elasticsearch.service: Control
+process exited, code=exited status=1  
+Mar 25 15:35:36 ContSearch-01 systemd[1]: Failed to start LSB: Starts
+elasticsearch.  
+Mar 25 15:35:36 ContSearch-01 systemd[1]: elasticsearch.service: Unit entered
+failed state.  
+Mar 25 15:35:36 ContSearch-01 systemd[1]: elasticsearch.service: Failed with
+result 'exit-code'.
+
+  
+
+ **Solution** : Issue is with the elasticsearch.service startup script. There
+was an additional unknown character at the end which was causing this issue
+
+Rebooted system and corrected the script file to solve this.
+
+  
+
+2\. Elasticsearch starts but when checked on the http port, it does not show
+up message
+
+<http://10.8.9.177:9200/> \--> not working
+
+when checked logs it is for the memory issue:
+
+  
+
+[2020-03-25T21:50:09,826][INFO ][o.e.n.Node ] initialized  
+[2020-03-25T21:50:09,829][INFO ][o.e.n.Node ] [OYBKEEo] starting ...  
+[2020-03-25T21:50:10,533][INFO ][o.e.t.TransportService ] [OYBKEEo]
+publish_address {10.8.9.177:9300}, bound_addresses {10.8.9.177:9300}  
+[2020-03-25T21:50:10,617][INFO ][o.e.b.BootstrapChecks ] [OYBKEEo] bound or
+publishing to a non-loopback address, enforcing bootstrap checks  
+[2020-03-25T21:50:10,636][ERROR][o.e.b.Bootstrap ] [OYBKEEo] node validation
+exception  
+[2] bootstrap checks failed  
+[1]: max file descriptors [4096] for elasticsearch process is too low,
+increase to at least [65536]  
+[2]: max virtual memory areas vm.max_map_count [65530] is too low, increase to
+at least [262144]  
+[2020-03-25T21:50:10,654][INFO ][o.e.n.Node ] [OYBKEEo] stopping ...  
+[2020-03-25T21:50:10,713][INFO ][o.e.n.Node ] [OYBKEEo] stopped  
+[2020-03-25T21:50:10,715][INFO ][o.e.n.Node ] [OYBKEEo] closing ...  
+[2020-03-25T21:50:10,753][INFO ][o.e.n.Node ] [OYBKEEo] closed  
+[2020-03-25T21:50:19,019][INFO ][o.e.n.Node ] [] initializing ...  
+[2020-03-25T21:50:19,448][INFO ][o.e.e.NodeEnvironment ] [OYBKEEo] using [1]
+data paths, mounts [[/ (/dev/sda1)]], net usable_space [631.8gb], net
+total_space [673.5gb], spins? [possibly], types [ext4]  
+[2020-03-25T21:50:19,455][INFO ][o.e.e.NodeEnvironment ] [OYBKEEo] heap size
+[1.9gb], compressed ordinary object pointers [true]  
+[2020-03-25T21:50:19,615][INFO ][o.e.n.Node ] node name [OYBKEEo] derived from
+node ID [OYBKEEoYT0Cu0QvWvG7Mdw]; set [[node.name](http://node.name)] to
+override  
+[2020-03-25T21:50:19,618][INFO ][o.e.n.Node ] version[5.6.16], pid[30295],
+build[3a740d1/2019-03-13T15:33:36.565Z], OS[Linux/4.4.0-176-generic/amd64],
+JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_161/25.161-b12]  
+[2020-03-25T21:50:19,619][INFO ][o.e.n.Node ] JVM arguments [-Xms2g, -Xmx2g,
+-XX:+UseConcMarkSweepGC, -XX:CMSInitiatingOccupancyFraction=75,
+-XX:+UseCMSInitiatingOccupancyOnly, -XX:+AlwaysPreTouch, -Xss1m,
+-Djava.awt.headless=true, -Dfile.encoding=UTF-8, -Djna.nosys=true,
+-[Djdk.io](http://Djdk.io).permissionsUseCanonicalPath=true,
+-Dio.netty.noUnsafe=true, -Dio.netty.noKeySetOptimization=true,
+-Dio.netty.recycler.maxCapacityPerThread=0, -Dlog4j.shutdownHookEnabled=false,
+-Dlog4j2.disable.jmx=true, -Dlog4j.skipJansi=true,
+-XX:+HeapDumpOnOutOfMemoryError, -Des.path.home=/usr/local/elk/elasticsearch]
+
+  
+ **Solution** :  Add below entry in /etc/systemd/system/elasticsearch.service
+script file
+
+LimitNOFILE=65536
+
+Also add below entry in /etc/sysctl.conf
+
+vm.max_map_count=262144
+
+and then run below command:
+
+sysctl -p
+
+

@@ -1,0 +1,14 @@
+To scan data file in parallel please put the file in /z/infoftp_int/<cid>/test/ folder.
+After some time it is supposed to finish scanning the file and the file goes to /z/ftpbu/<cid>bu/test/ folder.
+Exception:
+If the data path from contains subfolder before cid folder say 'jha' put the data file in /z/infoftp_int/jha/<cid>/test/ and it will be moved to/z/ftpbu/jhabu/<cid>/test/.
+Technical Details:
+There is service named FTP scanner which checks these 'infoftp_int' cid folders for files. If it finds any, it will store the file name, size, crc, md5 checksum in database table 'I3.INCOMING_FILE'.
+When we run the processing script, Our script(chk_file_id.pl) then compares the file inside ftpbu folder using 'file name' and checks if the md5 from database matches with the md5 from ftpbu folder file. if the name of the file doesn't exist in the database or the md5 checksum doesn't match, it will error out.
+To solve it, we have scan it.
+For error log:
+/z/ftpbu/*dp
+Bypassing, only for development:
+python /z/anwarH/utils/scan.py <cid> <data file name>
+This will scan the file instantly. Only works inside 'dsi' server.
+Tagged:dt_job_idscanscan dirscanner

@@ -1,0 +1,65 @@
+title: LCCU - [26507][pvt] LCCU - Business rules
+description: Assessment Details (IS):
+- Parallel required: (no) ** MAKE SURE The Updated Suppression logic works
+
+- Update lccums4 for not to suppress Product where there is <closeDate> AND <transaction> exist
+
+- Test file attached in TS 26507 comment# 106
+
+
+
+- In DFA: LCCUMS41.dfa
+
+Change
+
+ IF EMPTY(~SHARE_CLOSE_DATE) OR ~SHARE_CLOSE_DATE AND
+ CLOSE_DATE_PTR==SHARE_ARRAY_PTR ;
+
+                 to
+
+ IF EMPTY(~SHARE_CLOSE_DATE) OR ~SHARE_CLOSE_DATE AND
+ (CLOSE_DATE_PTR==SHARE_ARRAY_PTR OR ~TRANSACTION_ARRAY_PTR>0) ;
+
+
+
+Change
+
+ IF EMPTY(~CERT_CLOSE_DATE) OR ~CERT_CLOSE_DATE AND CLOSE_DATE_PTR==
+ SHARE_ARRAY_PTR ;
+
+                 to
+
+ IF EMPTY(~CERT_CLOSE_DATE) OR ~CERT_CLOSE_DATE AND (CLOSE_DATE_PTR==
+ SHARE_ARRAY_PTR OR ~TRANSACTION_ARRAY_PTR>0) ;
+
+
+
+Change: (NOTE: This occurs in 2 places in the dfa )
+
+ IF EMPTY(~LOAN_CLOSE_DATE) OR ~LOAN_CLOSE_DATE AND CLOSE_DATE_PTR==
+ SHARE_ARRAY_PTR ;
+
+                 to
+
+ IF EMPTY(~LOAN_CLOSE_DATE) OR ~LOAN_CLOSE_DATE AND (CLOSE_DATE_PTR==
+ SHARE_ARRAY_PTR OR ~TRANSACTION_ARRAY_PTR>0)
+
+
+
+Change:
+
+ IF EMPTY(~CHK_CLOSE_DATE) OR ~CHK_CLOSE_DATE AND CLOSE_DATE_PTR==
+ SHARE_ARRAY_PTR ;
+
+                 to
+
+ IF EMPTY(~CHK_CLOSE_DATE) OR ~CHK_CLOSE_DATE AND (CLOSE_DATE_PTR==
+ SHARE_ARRAY_PTR OR ~DEPOSIT_TRANSACTION_ARRAY_PTR>0 );
+
+
+
+Hours for development: 2 IS hours
+*Turnover Date : 03/25/22*
+*Sample to QA Date:**03/30/22*
+*Sample Approval Date:**04/01/22***
+*Go live date :**04/04/22***

@@ -1,0 +1,42 @@
+As we have seen so far, to run our dfa there are over hundreds of scripts that are run in the server. These scripts have to be run on a daily basis as the clients data are coming regularly on a certain time. So there are hundreds of scripts that have to be run on a daily basis which is a tiresome job. Here comes the cron which can be scheduled for each script to run on a specific time. We can set the command for each script in the cron and the script will be run automatically at the specified time.
+minute hour day_of_month month weekday command
+rhs:
+#15 05 * * 2-6 . /home/control/daily.control; /home/master/plbkdna_process.sh 1 0 2>&1 > /d/daily/plbkdna/today.log
+#02 05 * * 2-6 . /home/control/daily.control; /home/master/plbkdla_process.sh 1 0 2>&1 > /d/daily/plbk/today.log
+The bottom one is to set to run testmode parallel.
+11 17 * * 1-7 export testmode='y'; . /home/test/control/daily.control; /home/test/master/plbkdna_process.sh 1 0 2>&1 > /d/iss/Hosein/today.log
+rhs2:
+# PLBK DDA @ 05:15 Tues-SAT
+#15 05 * * 2,3,4,5,6 . /home/control/daily.control; /home/master/plbkms1.sh 1 0 2>&1 >> /d/plbk/plbkms1_today.log
+Peter, 11:27 PM
+this one on rhs2
+Below 2 is done by William .
+On RHS2:
+LCCU
+30 08   * . /home/control/daily.control; /home/master/lccudna_process.sh 1 0 2>&1 > /d/daily/lccu/lccudla_today.log
+MFCU
+30 06 * * * . /home/control/daily.control; /home/master/mfcudla_process.sh 2 0 2>&1 > /d/daily/mfcu/today_dla_2.log
+30 07 * * * . /home/control/daily.control; /home/master/mfcudla_process.sh 1 0 2>&1 > /d/daily/mfcu/today_dla_1.log
+On RHS:
+LCCU LC2 Coupons
+30 08   * . /home/control/daily.control; /home/master/lcculc2_process.sh 1 0 2>&1 > /d/daily/lccu/lcculc2.log
+Explanation how to set the time for cron:
+for starln by Peter per skype:
+#3004 * 2-6 . /home/control/daily.control; /home/master/starln_process.sh 1 0 2>&1 > /d/star/starln.log
+and the data file arrival time is Mon-Fri, 4am PST:
+so the cron is set to search for data in 30 minutes after 4am . And also need to include dailly.control to set the environment variable . while calling the script need to provide 0 in bypass argument.
+Here are some examples set by Tun:
+Daily Notices M - Sunday @ 6:30am PST
+30 06   1-7 export dp_printer="tx_dp"; . /home/control/daily.control; /home/master/ufcudla_process.sh 1 0 2>> /d/daily/ufcu/today.log
+Mortgage M - F @ 6:30am PST
+30 06   1,2,3,4,5 export dp_printer="tx_dp"; . /home/control/daily.control; /home/master/ufcuml1_process.sh 1 0 n,s,e 2>> /d/ufcu/ufcuml1_today.log
+Escrow EOM from 28th - 2nd @ 6:30am PST
+30 06 28,30,31,1,2   export dp_printer="tx_dp"; . /home/control/daily.control; /home/master/ufcuea1_process.sh 1 0 n,s,e 2>> /d/ufcu/ufcuea1_today.log
+Monthly Daily Ad Hoc M - F @ 6:30am PST
+30 06   1,2,3,4,5 export dp_printer="tx_dp"; . /home/control/daily.control; /home/master/ufcums1_process.sh 1 0 n,s,e 2>> /d/ufcu/ufcums1_today.log
+We can not set the schedule on our own. Offshore team sends us the scheduling and we send the command to the offshore manager and the manager sets the command in the cron.
+Attached are files for the Existing CRON setup in each server.
+crontab_rhs2
+crontab_rh2
+crontab_rht
+crontab_rhs

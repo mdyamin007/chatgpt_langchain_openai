@@ -1,0 +1,42 @@
+Sometimes running afp2pdf script will cause this error:
+Running...python /home/test/master/afp2pdf.py index_build data_input_file=/home/test/control/fnbkmla_pdf.control input_folder=/z/pdf_afp/fnbk/fnbkmla/afp/ OutputFilePath=/z/pdf_afp/fnbk/fnbkmla/pdf/
+--- Initiated Index File Builder ---
+--- Initiated Index Parsed Conversion ---
+--- Initiated AFP2WEB Conversion Program ---
+testmode: y
+DT_JOB_ID: 128970-C01.01-V22216
+dt_job_id: 128970-C01.01-V22216
+cid: fnbk
+app_name: Invoice - Commercial LOC /Loan Bill
+order_date: 2017-11-02
+state: RUNNING
+Traceback (most recent call last):
+  File "/home/test/master/afp2pdf.py", line 186, in <module>
+    main(sys.argv)
+  File "/home/test/master/afp2pdf.py", line 51, in main
+    conversion_type(mapped_args)
+  File "/home/test/master/afp2pdf.py", line 97, in index_file_build_process
+    process_instance.pre_process()
+  File "/home/test/master/afp2pdf_index_file_builder.py", line 49, in pre_process
+    self.reporter.create_init_entry(dt_job_id = self.dt_job_id, cid = self.cid, app_name = self.reporter_fields['app_name'], order_date = self.reporter_fields['order_date'])
+  File "/home/test/master/afp2pdf_report_handler.py", line 43, in create_init_entry
+    cursor.execute(sql_stmt, **bound_vars)
+cx_Oracle.IntegrityError: ORA-00001: unique constraint (ISPARALLEL.PDF_ARCHIVAL_PROCESS_PK) violated
+Error within program: afp2pdf.py
+You have new mail in /var/spool/mail/oper1
+To fix this, we need to delete existing entries of that dt_job_id.
+This can be achived by a script named cleanup_pdf_archival_process.py, currently located in `/home/anwarH/cleanup_pdf_archival_process`
+Bellow is the help of that script:
+Shows or deletes entries from 'PDF_ARCHIVAL_PROCESS' table is IS Parallel database!
+Usage: cleanup_pdf_archival_process.py <command> <params>
+command:
+show : Shows result of the queries based on provided params
+delete : Deletes entries based on params provided.
+Params:
+cid : Query is based on CID
+2. dt_job_id : Query is based on DT_JOB_ID
+Example:
+python cleanup_pdf_archival_process.py show dt_job_id=128226-C03.01-V22024
+To Run this script, you should run this before:
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/anwarH/cleanup_pdf_archival_process/
+Tagged:afp2pdfPDF_ARCHIVAL_PROCESS_PKpython

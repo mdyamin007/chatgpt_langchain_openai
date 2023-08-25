@@ -1,0 +1,83 @@
+title: Wrapper Service code deployment for prism
+body: Code changes to integrate wrapper service on the prism site were made to
+I3-core only, there are No front end changes needed for wrapper service.
+
+Files changed on i3-core are -
+
+`/com/infoimage/financial/enotices/EnoticeServlet2.java`
+
+`/com/infoimage/financial/estmtdoc/CombineEstmtServlet.java`
+
+`/com/infoimage/financial/estmtdoc/EstmtServlet.java`
+
+`/com/infoimage/financial/eTax/ETaxServlet.java`
+
+`/com/infoimage/financial/security/ViewDocService.java`
+
+  
+
+`/com/infoimage/financial/proofing/ProofingStmtServlet.java(This class
+probably isn't in use anymore, but I've added changes just to be safe)`
+
+  
+  
+  
+---  
+  
+Newly added files are -
+
+        `/com/infoimage/financial/document/Afp2PdfClient.java`
+
+`    /com/infoimage/financial/document/WrapperService.java`  
+  
+---  
+  
+  
+
+##  **For releasing wrapper service updates for prism to any environment,
+following are the steps -  **
+
+  
+
+  1. Stop all tomcats. To shutdown tomcat server, enter the following command - 
+
+                          ` sudo -u tomcat /usr/local/tomcat/tomcat-default/bin/shutdown.sh `
+
+`             (run it for bank and cu as well)   `
+
+            Check if the processes died.
+
+                            `ps -ef | grep tomcat-default`
+
+`             (run it for bank and cu as well) `
+
+             If not, kill it by
+
+                           `sudo kill -9 {process number}`  
+                         
+
+         2\. After shutdown, start the corresponding i3-core jar build on Jenkins for the specific environment.
+
+         3\. Add the following line in _/usr/local/tomcat/tomcat-default/i3webapps/api.prop  _
+
+  
+
+                           ` _com.infoimage.apiurl.wrapperService =<http://10.8.9.129:8080/wrapperservice/v1/document/>_`
+
+`            (add this to bank and cu api.prop as well)`
+
+               
+
+         4\. After the Jenkins build and adding wrapper service api url to api.prop,  run the following command on all tomcats - 
+
+  
+
+                           `sudo -u tomcat /usr/local/tomcat/tomcat-default/bin/startup.sh`
+
+  
+
+         5\. After the servers are started, test wrapper service by pulling documents from front end, either from msm or ROOT. You should see **_status : 200  _** on the log file if the document is successfully pulled through wrapper service API.
+
+  
+
+

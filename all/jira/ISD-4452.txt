@@ -1,0 +1,22 @@
+title: 19514 - WECU - Members receiving multiple emails
+description: Things to check:
+ * Auth file.
+ ** Go to the Production PUI site and search for their latest Auth file Process to find out the name of the latest auth file. It should be named something like WECU_CIF...
+ ** Open up the Production PUI linux server and go to this path to find their latest auth file:/d/INPUT/I3/process-files-backup/wecu/202104
+ ** Look into the file itself and search for those specific account numbers as shown in the screenshot on the team support ticket in comment 1.
+ * Database, most likely will need the following tables:
+ ** fin_account
+ ** usr_fin_account (join to fin_account by acct_id)
+ ** ***notification_preference (join to usr_fin_account by usr_id)
+ ** usr_mapping (join to usr_fin_account by usr_id)
+
+
+
+
+
+
+author: tye.wu@infoimageinc.com
+comment: Select * from fin_account fa
+join usr_fin_account ufa on ufa.ACCT_ID = fa.ACCT_ID
+Join notification_preference np on np.USR_ID = ufa.USR_ID
+Where fa.org_id = getorgid('wecu');

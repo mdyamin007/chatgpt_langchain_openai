@@ -1,0 +1,67 @@
+Paper suppression meaning suppressed from paper. Those accounts who get suppressed from paper will not be mailed( physical copy) to customer.
+Paper suppression mainly done based on the mail code value in paper( job type 's' ) index file (writerecord field 53).
+example(wecuml1):
+Paper suppression specifications are generally given in SOW.
+Below is a list of possible mail codes-
+:
+:
+a		= Audit (aud)
+f 		= Foreign (fgn)
+m-q		= Print and Mail, no inserts (pm1-pm5)
+M-Q                  = Print and Mail with inserts (sm1-sm5)
+r-v		= Print and Return to customer (rt1-rt5)
+z		= non print (nop)
+y, x, w               = non print (np1- np3)
+1-9		= Special files (sf1-sf9)
+h-l		= UCSF Blue and White returns (rt6-rt0)
+e		= Estatement suppression from paperless file (e.sup)
+d                        = Estatement suppression from datafile (e.sup2)
+A, B, C              = suppressed accts.  Create pdf only for these selective accts (pdf1-pdf3)
+So there are various types of mail codes use for a different purposes. Among those r-v, z, y, z, x, w, 1-9, e, d, A, B, C used for paper suppression. Different mail codes create files with different extensions as mentioned above. So if sow says nop we have to set mail code z.
+Here some of the mail codes will be discussed.
+Suppose, you see like below in the SOW.
+It means if,
+in the customer address line "DO NOT MAIL" verbiage is found
+mail Code (some field in the data file ) is 888
+mail Code (some field in the data file ) is 999
+we have to set mail code 'z' ( since sow says nop ) in the format dfa writerecord. Check the mail code section to see appropriate mail codes to set file extension.
+For mail code 'z', processing script creates a file with an extension ".nop". This ".nop" file contains only the write record entries which have mail code z. That means the customers those have "DO NOT MAIL" in their address, they will be found in the ".nop" file and they will be treated differently per infoimage standards( see attached document at the end ). Like, their statements will not be printed, which is called print suppressed.
+An example for nop file:
+So when you run for s option, txt file get created ( e.g. /t/fcba/fcbaml1202.txt ) with all customers which then got split into separate smaller txt files based on various criteria such as
+mail codes (.nop, e.sup, .rt1, .pdf1)
+heavy page counts (.hvy)
+invalid address (depends on misc_type in control file)
+foreign address (.fgn)
+regular address and page count(4.2o1, 4.2o2,...)
+etc etc.
+As an example for those records in txt file (say /t/fcba/fcbaml1202.txt ) which has z in 53 column those records go into .nop file (say /t/fcba/fcbaml12025.nop ) . (this split is done by isiszipsep_new.pl )
+And this .nop file never used for printing. So these got suppressed from print and will not be mailed.
+But there are some extensions which got printed but those don't get mailed to the end customer. Like rt1,rt2, sf1 etc etc. Below is the list which is non print vs non mail. But all of those are suppressed meaning those don't get mailed to end customer.
+For some extensions like pdf1,rt1 , sf1 index file as well as print afp files got created in $d_dir(t,z,d)/afp/$cid folder.
+and for some extensions like nop or e.sup only txt file got create in working directory( $d_dir(t,z,d)/$cid folder or for daily $d_dir(t,z,d)/daily/$cid ). No print afp got created for those. As these will never get printed so no reason to create print afp.
+rt1-rt5 - If mail code is 'r', ".rt1" file is generated, if 's' then ".rt2" .... till 'v' for ".rt5".
+pdf1-pdf3 -If mail code is 'A', ".pdf1" file is generated, if 'B' then ".pdf2" and 'C' for ".pdf3". Both txt and afp got created as you see in above pdf1 screenshot.
+As an example to describe pdf1,2,3. Say according to sow client wants pdf files for suppress statements:
+So per SOW if some field is D L I it should be suppressed and we should send pdf.pgp file to customer . Below is the email for notifying customer per sow.
+And the Standard Handling Files also contains about this.
+In that case in dfa we can set mail_code to A which will create pdf1.afp in $d_dir/afp/cid folder. And we can convert this afp to pdf and encrypt and put it in client pickup and send email to customer.
+Reference: FFINMS21
+according to it pdf1.afp got created
+if we need to generate report for customer:
+So with different mail code you can control which files the accounts should be routed.
+There is some suppressions that get created totally from script we don't need to do anything in dfa for those. Such as:
+invalid address
+esuppression or paperless suppression
+Invalid address detected from some script (need to find out). Customers might want a report about those invalid addresses in different forms like a simple text report or pdf.
+in Sow the desired invalid address file extension is mentioned below;
+If customer wants report for invalid address the requirement given like below;
+In the control file, misc_type flag is responsible for the extension of the invalid address report.
+this will create rpt extension files automatically which will include all invalid address records from the txt file.
+contents of the above rpt file. See the address fields are empty, so it's an invalid address.
+An example of a sample invalid address report handling script( necums3 ):
+An example if the client wants pdf:
+In control file we have to write misc_type='pdf'. By doing this, the processing script creates a file in "5.pdf.afp" format which is later converted to pdf.
+search by misc_type in control file to see many references.
+File Extensions
+Here is pdf document for different file extensions and their handling instructions.
+File ID Standard_06.30.10

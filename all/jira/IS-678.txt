@@ -1,0 +1,146 @@
+title: MSBK - [24719][pvt] Daily Letter #35 Accounts Not Posted to Admin Site
+description: update DL035 acct number logic for notice 0701 and 0702 so account numbers won't be zero.
+
+
+
+
+author: kdishroon
+comment: Hi [~yameelee] - Will there be samples for the client to review?
+
+
+author: yameelee
+comment: [~kdishroon]there is no formatting update. You can still give the client the samples if they want. I have attached it.
+
+
+
+
+author: yameelee
+comment: [~kdishroon]there is no formatting update. You can still give the client the samples if they want. I have attached it.
+
+
+
+
+author: yameelee
+comment: [~Igor.Khosid]
+
+PR_ID:20211221162542
+
+estmt index:msbk_afp_enotice_12202021_163442_1.txt (all accounts now have account numbers)
+
+There is no formatting update, so I dont think there needs to be laser prints but is providing DPVS in case you need.
+
+
+author: igor.khosid
+comment:    Parallel ID: 20211221162542
+   Currently in parallel: Yes
+   User: yamee
+   Description: update acct num for 0701 and 0702
+   Date Submitted: 2021-12-21 16:26:05
+   Date Last Updated: 2021-12-21 16:26:05
+   Files:
+      1) MSBKDL035.dfa
+
+
+
+author: igor.khosid
+comment: [~kdishroon] [~jharvey]
+
+QA completed
+1. Parallel report
+Parallel ID: 20211221162542
+Currently in parallel: Yes
+User: yamee
+Description: update acct num for 0701 and 0702
+Date Submitted: 2021-12-21 16:26:05
+Date Last Updated: 2021-12-21 16:26:05
+Files:
+1) MSBKDL035.dfa
+
+2. Difference prod vs test
+MSBKDL035.dfa
+< LOAN_STR = EXTRACT(DATA_INFO,':',2) ;
+< IF MATCH(LOAN_STR,&LOAN_NUM_MASK_2)==1 ;
+---
+> LOAN_STR = NOSPACE(EXTRACT(DATA_INFO,':',2)) ;
+> IF MATCH(LOAN_STR,&LOAN_NUM_MASK)==1 ;
+921,922c921,922
+< LOAN_STR = EXTRACT(DATA_INFO,':',2) ;
+< IF MATCH(LOAN_STR,&LOAN_NUM_MASK_2)==1 ;
+---
+> LOAN_STR = NOSPACE(EXTRACT(DATA_INFO,':',2)) ;
+> IF MATCH(LOAN_STR,&LOAN_NUM_MASK)==1 ;
+
+3. Index file processed
+msbk_afp_enotice_12202021_163442_1.txt
+Randombly went through a few accouns with the Letter Code: [035]
+[12/21/2021 16:37:31] Insert enotice for acctNum: [44040055] Closing date: [Mon Dec 20 00:00:00 PST 2021] Letter Code: [035]
+
+
+author: kdishroon
+comment: [~yameelee] [~Peter.Dang] - Does this require parallel?
+
+
+author: yameelee
+comment: Sorry Keri, this does need parallel. Please create parallel. I will add checklist.
+
+
+author: yameelee
+comment: [~Igor.Khosid]attached checklist.
+
+
+author: igor.khosid
+comment: IS checklist - attached >>>  [^IS-678_MSBK_IS Checklist.pdf] 
+
+
+author: kdishroon
+comment: HI [~yameelee] - It appears that parallel has passed. Please let me know when code is released.
+
+
+author: yameelee
+comment: [~kdishroon] Code has been released.
+
+backup id:20211230101522
+
+
+author: kdishroon
+comment: Hi [~yameelee] - Were the accounts that were missing posted to the admin site, or was this just updated for anything going forward? And if it is just going forward, is there any way to post the missing accounts?
+
+
+author: yameelee
+comment: [~kdishroon], this is only for going forward as estmt index gets created during processing. The only way to repost the old ones are to reprocess. I checked from August 2021 estmt index till now, it seems the only cycles with issues are client cycle 12/6 and 12/7.
+
+
+author: kdishroon
+comment: Hi [~yameelee] ,
+
+If we need to reprocess 12/6 and 12/7; do I just ask DP to reprocess for eNotice only?
+
+Thank-you,
+
+Keri
+
+
+author: yameelee
+comment: Actually the script runs both paper and estmt automatically, no option to run just estmt. The only other way is to process the files in test and then manually update the production estmt index with the correct account numbers from the test estmt index. But would need to confirm this with ISD.
+
+
+author: kdishroon
+comment: Hi [~Shun.Kuwashima],
+
+Can you please assist with this question? We need to post the 12/6 and 12/7 cycles to the admin site but not run paper. Please see YaMee's comment above and confirm.
+
+Thank-you,
+
+Keri
+
+
+author: shun.kuwashima
+comment: [~kdishroon] [~yameelee] That sounds correct, do you need ISD to update the index file manually? If not, then we can have DP post the files onto production after the files are processed on pilot/stage and updated with the correct acct numbers after.
+
+
+author: yameelee
+comment: [~Shun.Kuwashima]hey it just depends on what is easiest for you. I think there are quite a few accounts to go over and manually update to the correct account name, so if DP can post the staging index to production then maybe that will be easiest. But it's your call. If you prefer to have DP reprocess on staging and post on production, please let Keri know.
+
+
+author: shun.kuwashima
+comment: I've asked DP to reprocess the file onto stage per TS 24719.

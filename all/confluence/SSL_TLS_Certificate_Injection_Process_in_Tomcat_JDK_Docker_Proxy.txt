@@ -1,0 +1,417 @@
+title: SSL/TLS Certificate Injection Process in Tomcat/JDK/Docker/Proxy
+body: There are several places we need to add TLS/SSL certificate. Places are
+
+  * Tomcat *.infoimageinc.com (tomcat.jks) TLS cert
+  * JDK 
+    * *.infoimageinc.com (tomcat.jks)TLS cert
+    * JackHenry Cert (JackHenry.crt)
+    * safecu cert (pwp.safecu.org.cert)
+  * HAProxy (infoimageinc.com.pem)
+
+ **In this document we'll see how to inject these certificate in above
+applications.**
+
+  
+
+Document at a Glance  
+---  
+  
+  * Tomcat SSL/TLS Certificate Injection with Jenkins/Git
+  * Tomcat SSL/TLS Certificate Injection without Jenkins/Git
+  * SSL/TLS Cert injection in JDK with Jenkins/Git
+  * SSL/TLS Cert injection in JDK without Jenkins/Git
+  * Tomcat SSL/TLS Certificate Injection with Docker & Jenkins / Ansible
+  * Adding Certificate in HAProxy
+
+  
+  
+  
+
+# JKS File Creation
+
+We've the following certificates and we want to generate a jks keystore out of
+this.
+
+  1.  **DigiCertCA.crt   **
+  2.  **TrustedRoot.crt   **
+  3.  **i3wc20.key**
+  4.  **star_infoimageinc_com.crt**
+
+To do that, concatenate these two into one **infoimage.crt** file
+
+  * Star_infoimageinc_com.crt
+
+  * DigiCertCA.crt
+
+  
+
+so, the concatenated file looks something like this
+
+infoimage.crt  
+---  
+  
+\-----BEGIN CERTIFICATE-----
+
+AFKJFLLKFcsdfdsfsdfsdfsdfsJAdLfsdFfsd654ASDASDASDscsWQEdsfsQWADQdsfsdfsdASFAFKJFLLKFcsdfdsf
+
+
+
+\-----END CERTIFICATE-----
+
+\-----BEGIN CERTIFICATE-----
+
+AFKJFLLKFcsdfdsfsdfsdfsdfsJAdLfsdFfsd654ASDASDASDscsWQEdsfsQWADQdsfsdfsdASFAFKJFLLKFcsdfdsf
+
+
+
+\-----END CERTIFICATE-----  
+  
+  
+
+bash
+
+  
+
+bash
+
+  
+
+Well that's it. Now you have a **tomcat.jks** file to use in tomcat/
+**conf/web.xml**
+
+  
+
+  
+
+## Tomcat SSL/TLS Certificate Injection with Jenkins/Git
+
+  
+
+The applications/services that are deployed over **Jenkins,  **cert injection
+is taken care by Jenkins. All you need to know is the git repository where you
+need to put the cert.
+
+For, DEV/PILOT/STAGE/PROD we've several git repository for application
+configuration. So, you need to update the Certificate in Git-lab respective
+repository.
+
+The **location** of the cert for every repository is
+
+  
+
+#### SERVER CONFIGS Git Repository URLs for all Environments
+
+FOR PROD  
+1\. <https://gitlab.infoimageinc.com/configuration-management/server-configs-
+prod>  
+2\. <https://gitlab.infoimageinc.com/configuration-management/server-configs-
+infotrac-prod>
+
+FOR PILOT  
+3\. <https://gitlab.infoimageinc.com/configuration-management/server-configs-
+pilot>  
+4\. <https://gitlab.infoimageinc.com/configuration-management/server-configs-
+infotrac-stage>
+
+FOR STAGE  
+5\. <https://gitlab.infoimageinc.com/configuration-management/server-configs-
+stage-brisbane>  
+6\. <https://gitlab.infoimageinc.com/configuration-management/server-configs-
+infotrac-stage>
+
+FOR DEV  
+7\. <https://gitlab.infoimageinc.com/configuration-management/server-configs-
+dev>  
+8\. <https://gitlab.infoimageinc.com/configuration-management/server-configs-
+infotrac-dev>
+
+  
+
+**IMPORTANT:**
+
+  * After adding the certificate you need to trigger a build from **JENKINS**
+  * Please make sure, you mark the **configureTomcat** flag while triggering the build. The Jenkins pipeline will automatically update the TLS/SSL certificate in tomcat.
+  * The following pipelines need to be triggered
+  * PROD  44 incomplete notifyservice_ca-apipui-pr-01 45 incomplete infoservice_jass_ca-apipui-pr-01 46 incomplete notifyservice_ca-apipui-pr-02 47 incomplete infoservice_jass_ca-apipui-pr-02 48 incomplete notifyservice_ca-apipui-pr-03 49 incomplete infoservice_jass_ca-apipui-pr-03 50 incomplete notifyservice_ca-apipui-pr-04 51 incomplete infoservice_jass_ca-apipui-pr-04 52 incomplete contextual-search_ca-elk-p-01 53 incomplete infoscanner_ca-elk-pr-01 54 incomplete contextual-search_ca-elk-p-02 55 incomplete infoscanner_ca-elk-pr-02 56 incomplete infoservice_ca-hypercube-pr-01 57 incomplete posterservice_ca-hypercube-pr-01 59 incomplete infoservice_ca-hypercube-pr-02 60 incomplete posterservice_ca-hypercube-pr-02 62 incomplete infoservice_ca-hypercube-pr-03 63 incomplete posterservice_ca-hypercube-pr-03 64 incomplete notifyservice_ca-inforeach-pr-01 65 incomplete templateservice_ca-inforeach-pr-01 66 incomplete infoscanner_ca-inforeach-pr-01 68 incomplete notifyservice_ca-inforeach-pr-02 69 incomplete templateservice_ca-inforeach-pr-02 70 incomplete infoscanner_ca-inforeach-pr-02 71 incomplete infoservice_ca-infotrac-pr-01 72 incomplete notifyservice_ca-infotrac-pr-01 73 incomplete infotrac_ca-infotrac-pr-01 74 incomplete posterservice_ca-infotrac-pr-01 76 incomplete infoservice_ca-infotrac-pr-02 77 incomplete notifyservice_ca-infotrac-pr-02 78 incomplete infotrac_ca-infotrac-pr-02 79 incomplete posterservice_ca-infotrac-pr-02 80 incomplete indexFileProcessor_ca-jobtrack-pr-01 81 incomplete uspsscanservice_ca-jobtrack-pr-01 83 incomplete indexFileProcessor_ca-jobtrack-pr-02 84 incomplete uspsscanservice_ca-jobtrack-pr-02 85 incomplete wrapperservice_ca-wrapper-pr-01 86 incomplete wrapperservice_ca-wrapper-pr-02
+  * PILOT 156 incomplete notifyservice_ca-apipui-pi-01 157 incomplete infoservice_jass_ca-apipui-pi-01 158 incomplete notifyservice_ca-apipui-pi-02 159 incomplete infoservice_jass_ca-apipui-pi-02 160 incomplete contextual-search_ca-elk-pi-01 161 incomplete infoscanner_ca-elk-pi-01 162 incomplete contextual-search_ca-elk-pi-02 163 incomplete infoscanner_ca-elk-pi-02 164 incomplete infoservice_ca-hypercube-pi-01 165 incomplete posterservice_ca-hypercube-pi-01 166 incomplete infoservice_ca-hypercube-pi-02 167 incomplete posterservice_ca-hypercube-pi-02 168 incomplete notifyservice_ca-inforeach-pi-01 169 incomplete templateservice_ca-inforeach-pi-01 170 incomplete infoscanner_ca-inforeach-pi-01 171 incomplete infoservice_ca-infotrac-pi-01 172 incomplete notifyservice_ca-infotrac-pi-01 173 incomplete infotrac_ca-infotrac-pi-01 174 incomplete posterservice_ca-infotrac-pi-01 175 incomplete infoservice_ca-infotrac-pi-02 176 incomplete notifyservice_ca-infotrac-pi-02 177 incomplete infotrac_ca-infotrac-pi-02 178 incomplete posterservice_ca-infotrac-pi-02 179 incomplete indexFileprocessor_ca-jobtrack-pi-01 180 incomplete uspsscanservice_ca-jobtrack-pi-01 181 incomplete indexFileprocessor_ca-jobtrack-pi-02 182 incomplete uspsscanservice_ca-jobtrack-pi-02
+  * DEV  
+183 incomplete notifyservice_ca-apipui-dv-01 184 incomplete
+infoservice_jass_ca-apipui-dv-01 185 incomplete contextual-search_ca-elk-dv-01
+186 incomplete infoscanner_ca-elk-dv-01 187 incomplete infoservice_ca-
+hypercube-dv-01 188 incomplete posterservice_ca-hypercube-dv-01 189 incomplete
+notifyservice_ca-inforeach-dv-01 190 incomplete templateservice_ca-inforeach-
+dv-01 191 incomplete infoscanner_ca-inforeach-dv-01 192 incomplete
+infoservice_ca-infotrac-dv-01 193 incomplete notifyservice_ca-infotrac-dv-01
+194 incomplete infotrac_ca-infotrac-dv-01 195 incomplete posterservice_ca-
+infotrac-dv-01 196 incomplete infoservice_ca-infotrac-dv-02 197 incomplete
+notifyservice_ca-infotrac-dv-02 198 incomplete infotrac_ca-infotrac-dv-02 199
+incomplete posterservice_ca-infotrac-dv-02 200 incomplete
+indexFileprocessor_ca-jobtrack-dv-01 201 incomplete uspsscanservice_ca-
+jobtrack-dv-01 202 incomplete wrapperservice_wrapper-dv-01 203 incomplete
+wrapperservice_wrapper-dv-02
+
+  * STAGE 204 incomplete notifyservice_ca-apipui-st-01 205 incomplete infoservice_jass_ca-apipui-st-01 206 incomplete contextual-search_ca-elk-st-01 207 incomplete infoscanner_ca-elk-st-01 208 incomplete infoservice_ca-hypercube-st-01 209 incomplete posterservice_ca-hypercube-st-01 210 incomplete notifyservice_ca-inforeach-st-01 211 incomplete templateservice_ca-inforeach-st-01 212 incomplete infoscanner_ca-inforeach-st-01 213 incomplete infoservice_ca-infotrac-st-01 214 incomplete notifyservice_ca-infotrac-st-01 215 incomplete infotrac_ca-infotrac-st-01 216 incomplete posterservice_ca-infotrac-st-01 217 incomplete indexFileprocessor_ca-jobtrack-st-01 218 incomplete uspsscanservice_ca-jobtrack-st-01
+
+## Tomcat SSL/TLS Certificate Injection without Jenkins/Git
+
+  
+
+If you don't use Jenkins pipeline (the updated one) you can manually add the
+the tomcat.jks in your project.
+
+  * Copy the tomcat.jks file in /usr/local/tomcat/certs/tomcat.jks
+  * add the following in **tomcat/conf/server.xml**
+
+  
+
+xml
+
+  
+
+## SSL/TLS Cert injection in JDK with Jenkins/Git (Don't need this step for
+tomcat.jks change, we need to do this step for any other certificate change
+like, safecu, jackhenry etc.)
+
+  
+
+The applications/services that are deployed over **Jenkins,  **JDKs are copied
+through Ansible Script. You need to do few steps to add the cert in JD
+
+  1. Clone this git repository: <https://gitlab.infoimageinc.com/configuration-management/ansible-server-configure>
+  2. Go to **./ansible-server-configure/roles/jdk/install-oracle-jdk/files**
+  3.  **Copy the .cert/crt/jks file**
+  4. You'll get to JDK files.
+    1. jdk-7u71-linux-x64.tar.gz
+    2. jdk-8u202-linux-x64.tar.gz
+  5. Extract the files file using the following command (JDK 7):
+    1.  **tar xzvf  jdk-7u71-linux-x64.tar.gz**
+    2.  **tar xzvf  jdk-8u202-linux-x64.tar.gz**
+  6. Now export JAVA_HOME env using command: export JAVA_HOME=<location to the extracted folder>, for example: **export JAVA_HOME=/home/akhan/jdk1.7.0_71**
+  7. Run the following commands  
+
+    1. $JAVA_HOME/bin/keytool -importkeystore -srckeystore tomcat.jks -keypass infoimage -destkeystore [infoimageinc.com](http://infoimageinc.com).p12 -deststoretype PKCS12 -storepass infoimage -srcstorepass infoimage -noprompt
+
+    2. $JAVA_HOME/bin/keytool -importkeystore -deststorepass changeit -destkeypass changeit -destkeystore $JAVA_HOME/jre/lib/security/cacerts -srckeystore [infoimageinc.com](http://infoimageinc.com).p12 -srcstoretype PKCS12 -srcstorepass infoimage -alias *.[infoimageinc.com](http://infoimageinc.com)
+    3. $JAVA_HOME/bin/keytool -import -alias JackHenry -file JackHenry.crt -keystore $JAVA_HOME/jre/lib/security/cacerts -storepass changeit -noprompt
+    4. $JAVA_HOME/bin/keytool -import -alias [pwp.safecu.org](http://pwp.safecu.org) -file [pwp.safecu.org](http://pwp.safecu.org).cert -keystore $JAVA_HOME/jre/lib/security/cacerts -storepass changeit -noprompt
+
+                    First 2 commands are for tomcat.jks inject, number "c" is for JackHenry cert and "d" is for safecu certificate.
+
+Do step 5 & 6 for JDK-8 by changing the JAVA_HOME environment.
+
+After injecting the cert into jdk
+
+  * Compress jdk again with the following command:
+    *  **tar czvf  jdk-7u71-linux-x64.tar.gz jdk1.7.0_71 **
+    *  **tar czvf  jdk-8u202-linux-x64.tar.gz jdk1.8.0_202**
+  * Add the files in git repo.  Commit and push.
+
+Now you can Run the Jenkins Pipeline to deploy application with the updated
+certificate JDKs
+
+ **IMPORTANT:**   Please make sure you mark **copyJdk** flag while triggering
+the Jenkins pipeline.
+
+## SSL/TLS Cert injection in JDK without Jenkins/Git (Don't need this step for
+tomcat.jks change, we need to do this step for any other certificate change
+like, safecu, jackhenry etc.)
+
+  1. Copy the necessary certs in the respective servers.
+  2. export JAVA_HOME env using command: export JAVA_HOME=<location to the extracted folder>, for example: **export JAVA_HOME=/home/akhan/jdk1.7.0_71**
+  3. Run the following commands.  
+
+    1. $JAVA_HOME/bin/keytool -importkeystore -srckeystore tomcat.jks -keypass infoimage -destkeystore [infoimageinc.com](http://infoimageinc.com).p12 -deststoretype PKCS12 -storepass infoimage -srcstorepass infoimage -noprompt
+
+    2. $JAVA_HOME/bin/keytool -importkeystore -deststorepass changeit -destkeypass changeit -destkeystore $JAVA_HOME/jre/lib/security/cacerts -srckeystore [infoimageinc.com](http://infoimageinc.com).p12 -srcstoretype PKCS12 -srcstorepass infoimage -alias *.[infoimageinc.com](http://infoimageinc.com)
+    3. $JAVA_HOME/bin/keytool -import -alias JackHenry -file JackHenry.crt -keystore $JAVA_HOME/jre/lib/security/cacerts -storepass changeit -noprompt
+    4. $JAVA_HOME/bin/keytool -import -alias [pwp.safecu.org](http://pwp.safecu.org) -file [pwp.safecu.org](http://pwp.safecu.org).cert -keystore $JAVA_HOME/jre/lib/security/cacerts -storepass changeit -noprompt
+
+                    First 2 commands are for tomcat.jks inject, number "c" is for JackHenry cert and "d" is for safecu certificate.
+
+  
+
+  
+
+## Tomcat SSL/TLS Certificate Injection with Docker & Jenkins/Ansible (Don't
+need this step for tomcat.jks change, we need to do this step for any other
+certificate change like, safecu, jackhenry etc.)
+
+  
+
+There is a tomcat docker image git repository.
+<https://gitlab.infoimageinc.com/docker-images/tomcat>
+
+  1. Clone the above git repository.
+  2. Go to tomcat folder. Checkout in the necessary Git branch. For example (for tomcat-7 jdk 8, execute command:  **git checkout  tomcat7-serverjre8-ubuntu**)
+  3. Update the necessary certificate in . **/certs/** directory
+  4. Trigger build providing a new docker image version. (example command: **./build v2** ). This will create a docker image named: **harbor.infoimageinc.com/base-images/tomcat:7-serverjre-8-ubuntu-v2**
+  5. Push the docker image using command: **./push v2** (you need to pass the version here as well). This script will push  **harbor.infoimageinc.com/base-images/tomcat:7-serverjre-8-ubuntu-v2  **this docker image
+
+Every time you change anything please provide a unique version number. for
+example in the next build put version number v3
+
+Now you'll need to update all the docker image you used to deploy your
+application: for exmaple
+
+  * notifyservice
+  * templateservice
+  * infoscanner
+  * posterservice
+  * indexfileprocessor
+  * uspsscanservice
+  * wrapperservice
+  * contexual-search
+
+  
+
+ **You need to update all the docker-compose image in the following git
+repo:**
+
+#### SERVER CONFIGS Git Repository URLs for all Environments
+
+FOR PROD  
+1\. <https://gitlab.infoimageinc.com/configuration-management/server-configs-
+prod>  
+2\. <https://gitlab.infoimageinc.com/configuration-management/server-configs-
+infotrac-prod>
+
+FOR PILOT  
+3\. <https://gitlab.infoimageinc.com/configuration-management/server-configs-
+pilot>  
+4\. <https://gitlab.infoimageinc.com/configuration-management/server-configs-
+infotrac-stage>
+
+FOR STAGE  
+5\. <https://gitlab.infoimageinc.com/configuration-management/server-configs-
+stage-brisbane>  
+6\. <https://gitlab.infoimageinc.com/configuration-management/server-configs-
+infotrac-stage>
+
+FOR DEV  
+7\. <https://gitlab.infoimageinc.com/configuration-management/server-configs-
+dev>  
+8\. <https://gitlab.infoimageinc.com/configuration-management/server-configs-
+infotrac-dev>
+
+The **location** for the docker-compose is same for all repository:
+
+  
+
+For exmaple: in notifyservice-templateservice docker-compose file, we've
+update the image appending the **-v2.  **which is the new version of the
+tomcat docker image
+
+yml
+
+  
+
+Now, Deploy the application with JENKINS
+
+ **IMPORTANT:  **Remember to mark **copyAppConfigs** while triggering the
+Jenkins build.  
+
+  
+
+## Adding Certificate in HAProxy
+
+  
+
+ **star_infoimageinc_com.crt**  
+---  
+  
+\-----BEGIN CERTIFICATE-----
+
+AFKJFLLKFcsdfdsfsdfsdfsdfsJAdLfsdFfsd654ASDASDASDscsWQEdsfsQWADQdsfsdfsdASFAFKJFLLKFcsdfdsf
+
+
+
+\-----END CERTIFICATE-----  
+  
+  
+
+ **i3wc20.key**  
+  
+---  
+  
+\-----BEGIN PRIVATE KEY-----
+
+AFKJFLLKFcsdfdsfsdfsdfsdfsJAdLfsdFfsd654ASDASDASDscsWQEdsfsQWADQdsfsdfsdASFAFKJFLLKFcsdfdsfsd
+
+
+
+\-----END PRIVATE KEY-----  
+  
+  
+
+ **DigiCertCA.crt**  
+  
+---  
+  
+\-----BEGIN PRIVATE KEY-----
+
+AFKJFLLKFcsdfdsfsdfsdfsdfsJAdLfsdFfsd654ASDASDASDscsWQEdsfsQWADQdsfsdfsdASFAFKJFSDASDscsWQE
+
+
+
+\-----END PRIVATE KEY-----  
+  
+  
+
+.pem file generation (HAProxy)  
+---  
+  
+ **Concat the following 3 files**
+
+  1. i3wc20.key
+  2. star_infoimageinc_com.crt
+  3. DigiCertCA.crt
+
+  
+  
+Looks something like this
+
+infoimageinc.com.pem  
+---  
+  
+\-----BEGIN PRIVATE KEY-----
+
+AFKJFLLKFcsdfdsfsdfsdfsdfsJAdLfsdFfsd654ASDASDASDscsWQEdsfsQWADQdsfsdfsdASFAFKJFLLKFcsdfdsfsd
+
+
+
+\-----END PRIVATE KEY-----
+
+\-----BEGIN CERTIFICATE-----
+
+AFKJFLLKFcsdfdsfsdfsdfsdfsJAdLfsdFfsd654ASDASDASDscsWQEdsfsQWADQdsfsdfsdASFAFKJFLLKFcsdfdsf
+
+
+
+\-----END CERTIFICATE-----
+
+\-----BEGIN CERTIFICATE-----
+
+AFKJFLLKFcsdfdsfsdfsdfsdfsJAdLfsdFfsd654ASDASDASDscsWQEdsfsQWADQdsfsdfsdASFAFKJFLLKFcsdfdsf
+
+
+
+\-----END CERTIFICATE-----  
+  
+  
+
+Copy the infoimageinc.com.pem in in the following git repos and trigger
+repective Jenkins build.
+
+  1. <https://gitlab.infoimageinc.com/configuration-management/haproxy-keepalived>
+  2. <https://gitlab.infoimageinc.com/configuration-management/haproxy-keepalived-st-pi-dv>
+
+  
+
+  *  **Go to jenkins.infoimageinc.com**
+  *  **Build Proxy Pipelines from jenkins**
+
+  
+
+  
+
+

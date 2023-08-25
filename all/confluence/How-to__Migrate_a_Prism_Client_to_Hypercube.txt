@@ -1,0 +1,158 @@
+title: How-to: Migrate a Prism Client to Hypercube
+body: The goal of a Hypercube Migration is to migrate existing clients off of the
+old Prism application to the new Hypercube and InfoTRAC standard. Once on the
+standard setup, the client can utilize all of the latest features and modules.
+With standardized codes and less customizations, support, research, and
+enhancements will be streamlined.
+
+A Hypercube Migration, is, in essence, a Hypecube Setup. In addition of
+reviewing the SOW, analysis will also need to be done on the existing Prism
+setup to determine how to offer the same features the client has on Prism on
+the Hypercube/InfoTRAC platform. Therefore, it would be good to get familiar
+on , particularly the Hypercube Standard section. This document will details
+additional things to look out for during a Hypercube Migration.
+
+# Analysis
+
+Prior work should have been done for all clients that need to be migrated to
+Hypercube. For any specific client, an analysis document should be present as
+a child page of . Use the document as a reference while working on the
+migration.
+
+If additional analysis needs to be done, or a review is necessary, follow the
+guidelines below. Overall, log into the sites and test out all possible
+functionalities to observe any unique behavior. Use the Production database
+when querying, since the lower environment will not have current data and may
+include bad data due to testing.
+
+### eStatement Site
+
+Functionality| Notes  
+---|---  
+Login Method| Check which login method thet client is using in the
+**web.xml**. Also check the SSO Test Page to see which methods are set up.
+Sometimes, the web.xml includes more than what is being used by the client.
+Note the init-param (method, password, createLogin, emailUpdate, etc.).  
+Enrollment Steps|
+
+Check how the enrollment steps are displayed, and whether any unique logic
+exists during enrollment.  
+  
+Menu Header| Check what menus are available for the user.  
+Account Types| For clients that have account types, check all the existing
+account types.  
+Statement Types| Check all the available statement types. This can be done
+using the PUI configuration file and also checking the  **define.jspf**.  
+Archival Period| Check the archival periods of different statements. These are
+usually defined in the  **define.jspf**. The AGEOUT table can also be
+referenced, though eStatement statement types won't be differentiated.  
+Delivery Preference| Check the possible Delivery Preference. Query the
+distinct statuses in the database.  
+Selective Paperless| Check whether the client has selective paperless, i.e.
+being able to choose the Delivery Preference by statement type per account.  
+Enrollment Status|
+
+Determine how enrollment is determined for the client. The standard is to use
+the SSO/DSO dates, i.e. if these dates are null, the user has to go through
+the enrollment steps. Some older setup will simply use the Paperless status
+instead. If the SSO/DSO dates are not being used, some migration might need to
+be done.
+
+  
+Try to change delivery preference from electronic to paper and notice if it
+un-enrolls the user or not. This means that the next time the user logs in,
+they would have to go through the Enrollment Steps again.  
+  
+Notification Preference| Note if the NOTIFICATION_PREFERENCE is set up byUfa
+or byUsr. If both USR_ID and ACCT_ID are in NOTIFCATION_PREFERENCE table then
+npLinKType is byUfa. If only USR_ID is present in NP table then npLinkType is
+byUsr.  
+  
+If the client does not use the NOTIFICATION_PREFERENCE table at all, then the
+emails are stored in either CONTACT_INFO or USR_FIN_ACCOUNT. These data must
+be migrated over to NOTIFICATION_PREFERENCE.  
+Batch Download| Batch Download is configurable on Hypercube.  
+Other features| Any other features not listed above should be analyzed to see
+if there are Hypercube equivalents or alternatives. If not, discuss with
+Senior Engineers to decide whether the feature should be supported or
+discontinued. The decision is also contingent on the client.  
+  
+### Admin Site
+
+  1.  **Delivery preference:** Check if admin Users are allowed to update customer delivery preference and their email address.
+  2.  **Notification preference:** Check if admin Users are allowed to update notification preference.
+  3.  **User creation:** Find out if user creation is supported.
+  4.  **Account creation:** Find out if account creation is supported from msm site.
+  5.  **Batch download:** Check if batch download functionality is available.
+  6.  **Email proofing:** Check email proofing or template creating functionality is there.
+  7.  **Frontend reports:** Check which frontend reports are there in msm site. If there is any report in msm site but that is not available in Infotrac then make sure if the client wants a custom report for that or not.
+
+### PUI
+
+### Data Migration
+
+The queries below are templates. For some clients, they might need to be
+modified. For insertion queries, calling a select query beforehand, using
+dummy values in place of ID sequence, might be a good idea to validate the
+records that will be inserted.
+
+  1. USR_MAPPING table.
+    1. If the client does not use the USR_MAPPING table, then the user is either logging in with the account number or an ID from the OLB, which should be stored in the VENDOR_USER_ID column in the USR_SESSION table.  
+
+      1. Migrating if account number will be CIF_NUM. Call the select to validate the records.
+
+sqlMidnightAccount Number
+
+  
+
+      2. Migrating if vendor ID will be CIF_NUM. 
+
+sqlMidnightVendor ID
+
+  
+
+      3. DSO users will need to be assessed separately.
+    2. Some clients use a combination of USR_MAPPING and the USR_SESSION.VENDOR_USER_ID. These are typically business users who share the same primary ID, the CIF_NUM, but will have different vendor ID (subuser ID).
+      1. Migrate the data to the standard primaryCIF|subuserCIF format.
+
+sqlMidnightSubuser Migration
+
+  
+
+  2. NOTIFICATION_PREFERENCE table.
+    1. Migrating from CONTACT_INFO.
+
+sqlMidnightFrom CONTACT_INFO
+
+  
+
+    2. Migrating from USR_FIN_ACCOUNT. Do check if multiple email addresses are stored. Hypercube might not be able to support such (will need assessment). Email attachment password may be stored in USER_NOTIFICATION_ATTACHMENT table. The passwords may be useable, but seems to be encrypted values (need assessment).
+
+sqlMidnightFrom USR_FIN_ACCOUNT
+
+  
+
+  
+
+  3. USR_SESSION table.
+    1. Updating USR_ID
+
+sqlMidnightUSR_ID Update
+
+  
+
+    2. If the client does not have DSO, should set DSO column to null. If the client does have DSO, make sure that users who haven't actually signed up for DSO yet have DSO column as null. 
+  4. User Enrollment data.
+    1. Older setup may have Enrollment status be defined by the Account Paperless Status. Need to migrate the paperless2 MODIFIED_DATE into the SSO field. Might be a bit more complicated if the client has selective paperless.
+
+sqlMidnightEnrollment Migration
+
+  
+
+    2. PAPERLESS status of U will need to be changed to E; and have SSO be null. This is because U status typically means that the user has to go through enrollment at first log in. Query may need to be changed, or additional queries may need to be created if the client has selective paperless.
+
+sqlMidnightU Status Migration
+
+  
+
+

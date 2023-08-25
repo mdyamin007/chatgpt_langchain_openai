@@ -1,0 +1,179 @@
+title: Could not format big afp for 'e' option, archival BB RHS2, APCUML4
+description: Could not format big AFP for e job, archival. Papyrus exits before completing format.
+
+
+
+Procdate is: 07182020
+prefix is apcuml4
+
+
+processing formatting step for afp to pdf ...
+/z/apcu/ml4//APCU_FICS_STATMENT_071820.1
+
+---------------------
+[09/01/2020 10:52:47] - apcuml4 e /z/apcu/apcuml4118 /z/apcu/ml4//APCU_FICS_STATMENT_071820.1
+PREFIX: apcuml4 not config for validate table at 09/01/2020 10:52:47
+INFO: apcuml4 was not setup for validate report
+
+
+
+However, was able to generate big AFP for print and AFP compare with production is good.
+
+
+author: william.kong
+comment: [~jira_naru]: Is this using PDFi? 
+
+
+author: jira_naru
+comment: No, not PDFI,
+
+When running the e option alone, we format the data to create a big AFP for AFP2WEB to create individual PDF. For some reason, was not able to create big AFP. However, was able for s option.
+
+
+author: william.kong
+comment: [~jira_naru]: Thanks for clarifying. Can you share the command as well.  I 'might' need Terrence and/or Ernest to review if I cannot troubleshoot this.
+
+Please reassign back to me when you have this info.
+
+
+
+Thanks!
+
+
+
+-- Wil
+
+
+author: jira_naru
+comment: Command executed:
+
+/home/test/master/isisdisk.sh "apcuml4" "e" /z/apcu/ml4/APCU_FICS_STATMENT_071820.1 1
+
+
+author: william.kong
+comment: [~jira_naru]: Thanks for the command. I have a few brisbane reported issue to work on now and will look into this one later;  I've assigned this ticket to me.
+
+
+author: william.kong
+comment: [~jira_naru]: Can you try again? I think the issue was that I was missing the following directory in red:
+
+
+
+[williamK@rhs2 z]$ ls -l /z/ | grep -i iswk
+{color:#de350b}lrwxrwxrwx 1 williamK isgroup 16 Sep 2 2020 Iswk -> /d/Iswk_new/test{color}
+lrwxrwxrwx 1 williamK isgroup 16 Sep 2 2020 Iswk_new -> /d/Iswk_new/test
+
+
+author: jira_naru
+comment: Will,
+
+I just reprocess and it still fail.
+
+It is not the /d/Iswk_new/test/ path but papyrus itself that failed.
+
+See attached log file, line 16, I believe is the issue.
+
+[^apcuml41188.log]
+
+
+author: jira_naru
+comment: Please ignore last comment, Papyrus did format, this issue is the big AFP filename. Let look further..
+
+
+author: jira_naru
+comment: Will,
+
+The filename for the archival AFP file is apcuml41188.afp ${cid}${jid}${seg_num}${cycle}8.afp
+
+Note, the 8.afp just identify that this AFP generated from the e option.
+
+However, AFP2Web is looking forapcuml418.afp, missing the cycle.
+
+The issue is, the program was not able to get the cycle. To get the cycle, the program needs to get the filedate as follow:
+
+filedate=`echo "$pgp_file"|cut -d'_' -f4|sed 's/\.//g'|cut -c0-6`
+
+
+
+Unfortunately, the cut command fails because on this system (Ubuntu), the cut command field positions are numbered from 1 not zero. So, the cut command at the end of the above failed.
+
+If you execute the cut command:
+
+echo 'APCU_FICS_STATMENT_071820.1.zip'|cut -c0-6
+
+you will get an error like this:
+
+cut: fields and positions are numbered from 1
+Try `cut --help' for more information.
+
+
+
+
+author: william.kong
+comment: [~jira_naru]: Thanks for troubleshooting and identifying the source of the problem.
+
+
+
+How come when I run this on rhs2 (Menlo), I also get the same error message with the cut command?
+
+!image-2020-09-02-18-50-55-069.png!
+
+I +think+ this an existing issue on rhs2.
+
+
+
+!image-2020-09-02-18-57-22-751.png! 
+
+
+
+
+
+
+
+
+
+
+
+
+author: jira_naru
+comment: Will,
+
+APCUML4 is normally run on RH2, no issue with cut command on RH2.
+
+
+author: william.kong
+comment: [~jira_naru]: Oops. I thought we were currently testing on rhs2; Didn't realize this issue was on rh2. 
+
+Can we update the code permanently to cut -c1-6? It looks to be backwards compatible. All of the servers in Menlo in green provides the same results.
+
+If you agree, please submit to *Menlo*production and re-assign the ticket back to me. Since yesterday, I disabled the parallel code sync from Menlo to Brisbane. So I will need to manually sync this file:
+
+
+
+!image-2020-09-03-10-36-35-240.png!
+
+
+
+I will need to create a new ticket (outside of your apcuml4 code) to get this logic corrected for peter/terrence to be assigned to get it to work. Here is a list of scripts I noticed using column '0':
+
+!image-2020-09-03-10-40-57-424.png!
+
+
+
+
+
+
+author: william.kong
+comment: [~jira_naru]:  Were you able to get the apcu code updated to use cut -c1 command?
+
+
+author: jira_naru
+comment: Yes, I can modify the cut command to use c1-7 instead of c0-6
+
+
+author: jira_naru
+comment: I am also able to run the e-opion (archival) successfully after the cut command modification.
+
+
+author: william.kong
+comment: [~jira_naru]: Thanks for the update. Will close the ticket now.

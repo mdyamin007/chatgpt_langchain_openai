@@ -1,0 +1,602 @@
+title: InfoSense_Design_Diagram- InfoSense Data Processing & Ingestion
+body: ## Purpose/Objective Summary
+
+  * Determining the Audience data for Target Engine based on user specific information which comes from different sources(File etc).
+  * Store Audience data to MongoDB.
+
+  
+  
+
+## Technology Used
+
+  * Spring Boot 2.0.1.RELEASE (For creating Rest API End-Point)
+  * JDK 1.8
+  * Apache Kafka ( kafka_2.11-2.0.0.tgz)
+  * Apache Spark (spark-2.2.1-bin-hadoop2.7.tgz)
+  * Maven 3.3.3
+  * MongoDB 3.4
+  * Tomcat 7
+
+  
+  
+
+## Design Workflow
+
+We can divide the workflow into two parts for better understanding -
+
+  1. Kafka Messaging System (API End Point process workflow / Read file from path)
+  2. Spark Streaming process (Background process based on Kafka Topic)
+
+  
+
+## Kafka Messaging System-
+
+  
+  
+
+  
+
+## Spark Streaming Process-
+
+  
+  
+
+  
+
+## Now showing the whole InfoSense design workflow that given below -
+
+  
+  
+
+  
+
+## Data Model
+
+### infoSenseRegex
+
+    
+    
+    /* 1 */
+
+{  
+    "_id": ObjectId("5bb4a1d8ca80ff13f235d8b8"),  
+    "modelName": "testFlat",  
+    "fileType": "FLAT",  
+    "bankInfo": {  
+        "recordParameter": "^100.*"  
+    },  
+    "regex": "(?s)200~.*?(?=(200~)|$(?!(200~)))",  
+    "collection": {  
+        "collectionName": "userInfo",  
+        "records": [  
+            {  
+                "recordParameter": "200~.*",  
+                "properties": [  
+                    {  
+                        "propertyName": "mailCode",  
+                        "rules": [  
+                            {  
+                                "type": "fetchPrefix",  
+                                "operationType": "execute",  
+                                "startWith": "~01",  
+                                "endWith": "~",  
+                                "regex": "(?<=~01).*?(?=~)"  
+                            }  
+                        ]  
+                    },  
+                    {  
+                        "propertyName": "ssn",  
+                        "isPrimary": true,  
+                        "rules": [  
+                            {  
+                                "type": "fetchPrefix",  
+                                "operationType": "execute",  
+                                "startWith": "~03",  
+                                "endWith": "~",  
+                                "regex": "(?<=~03).*?(?=~)"  
+                            }  
+                        ]  
+                    },  
+                    {  
+                        "propertyName": "city",  
+                        "rules": [  
+                            {  
+                                "type": "fetchPrefix",  
+                                "operationType": "execute",  
+                                "startWith": "~12",  
+                                "endWith": "~",  
+                                "regex": "(?<=~12).*?(?=~)"  
+                            }  
+                        ]  
+                    },  
+                    {  
+                        "propertyName": "state",  
+                        "rules": [  
+                            {  
+                                "type": "fetchPrefix",  
+                                "operationType": "execute",  
+                                "startWith": "~13",  
+                                "endWith": "~",  
+                                "regex": "(?<=~13).*?(?=~)"  
+                            }  
+                        ]  
+                    },  
+                    {  
+                        "propertyName": "zip",  
+                        "rules": [  
+                            {  
+                                "type": "fetchPrefix",  
+                                "operationType": "execute",  
+                                "startWith": "~14",  
+                                "endWith": "~",  
+                                "regex": "(?<=~14).*?(?=~)"  
+                            }  
+                        ]  
+                    }  
+                ]  
+            }  
+        ],  
+        "collection": {  
+            "collectionName": "accountInfo",  
+            "records": [  
+                {  
+                    "recordParameter": "200~.*",  
+                    "properties": [  
+                        {  
+                            "propertyName": "accountNumber",  
+                            "isPrimary": true,  
+                            "rules": [  
+                                {  
+                                    "type": "fetchPrefix",  
+                                    "operationType": "execute",  
+                                    "startWith": "~02",  
+                                    "endWith": "~",  
+                                    "regex": "(?<=~02).*?(?=~)"  
+                                }  
+                            ]  
+                        },  
+                        {  
+                            "propertyName": "accountType",  
+                            "rules": [  
+                                {  
+                                    "type": "fetchPrefix",  
+                                    "operationType": "execute",  
+                                    "startWith": "~18",  
+                                    "endWith": "~",  
+                                    "regex": "(?<=~18).*?(?=~)"  
+                                }  
+                            ]  
+                        },  
+                        {  
+                            "propertyName": "branch",  
+                            "rules": [  
+                                {  
+                                    "type": "fetchPrefix",  
+                                    "operationType": "execute",  
+                                    "startWith": "~19",  
+                                    "endWith": "~",  
+                                    "regex": "(?<=~19).*?(?=~)"  
+                                }  
+                            ]  
+                        }  
+                    ]  
+                },  
+                {  
+                    "recordParameter": "400~.*",  
+                    "properties": [  
+                        {  
+                            "propertyName": "startingDate",  
+                            "rules": [  
+                                {  
+                                    "type": "fetchPrefix",  
+                                    "operationType": "execute",  
+                                    "startWith": "~01",  
+                                    "endWith": "~",  
+                                    "regex": "(?<=~01).*?(?=~)"  
+                                }  
+                            ]  
+                        },  
+                        {  
+                            "propertyName": "beginningBalanceDesc",  
+                            "rules": [  
+                                {  
+                                    "type": "fetchPrefix",  
+                                    "operationType": "execute",  
+                                    "startWith": "~04",  
+                                    "endWith": "~",  
+                                    "regex": "(?<=~04).*?(?=~)"  
+                                }  
+                            ]  
+                        },  
+                        {  
+                            "propertyName": "beginningBalance",  
+                            "rules": [  
+                                {  
+                                    "type": "fetchPrefix",  
+                                    "operationType": "execute",  
+                                    "startWith": "~05",  
+                                    "endWith": "~",  
+                                    "regex": "(?<=~05).*?(?=~)"  
+                                }  
+                            ]  
+                        }  
+                    ]  
+                }  
+            ]  
+        }  
+    }  
+}
+
+    
+    
+    /*2*/
+
+{  
+    "_id": ObjectId("5b9247d0ca80ff3da4906f29"),  
+    "_class": "com.infoimage.infosense.domain.InfoSenseRegex",  
+    "modelName": "silverlake",  
+    "fileType": "XML",  
+    "collections": [  
+        {  
+            "collectionName": "userInfo",  
+            "records": [  
+                {  
+                    "recordParameter": "Primary",  
+                    "properties": [  
+                        {  
+                            "xmlPropertyName": "Acct",  
+                            "propertyName": "accountNumber"  
+                        },  
+                        {  
+                            "xmlPropertyName": "AcctType",  
+                            "propertyName": "AccountType"  
+                        },  
+                        {  
+                            "xmlPropertyName": "FullName",  
+                            "propertyName": "name"  
+                        },  
+                        {  
+                            "xmlPropertyName": "BirthDate",  
+                            "propertyName": "birthDate"  
+                        },  
+                        {  
+                            "xmlPropertyName": "ZipCode",  
+                            "propertyName": "zipCode"  
+                        },  
+                        {  
+                            "xmlPropertyName": "StmtEmail",  
+                            "propertyName": "email"  
+                        }  
+                    ]  
+                }  
+            ]  
+        },  
+        {  
+            "collectionName": "accountSummary",  
+            "records": [  
+                {  
+                    "recordParameter": "Primary",  
+                    "properties": [  
+                        {  
+                            "xmlPropertyName": "Acct",  
+                            "propertyName": "accountNumber"  
+                        },  
+                        {  
+                            "xmlPropertyName": "AcctType",  
+                            "propertyName": "AccountType"  
+                        },  
+                        {  
+                            "xmlPropertyName": "BegBal",  
+                            "propertyName": "beginningBalance"  
+                        },  
+                        {  
+                            "xmlPropertyName": "EndBal",  
+                            "propertyName": "endingBalance"  
+                        }  
+                    ]  
+                }  
+            ]  
+        }  
+        .................................................  
+        .................................................  
+    ]  
+}
+
+    
+    
+      
+    
+
+### userInfo
+
+    
+    
+    for Save
+    /*1*/
+
+{  
+    "_id": ObjectId("5bf4055b68a2443ce63b1212"),  
+    "cid": "fffc",  
+    "insertionToken": "cfa14b82-5bf5-410b-a361-556afa219ef7",  
+    "mailCode": "",  
+    "ssn": "32323",  
+    "city": "TEXAS CITY",  
+    "state": "TX",  
+    "zip": "77591",  
+    "primary": [  
+        "ssn"  
+    ]  
+    .................................................  
+    .................................................  
+}
+
+    
+    
+    for Update
+    /*2*/
+
+{  
+    "_id": ObjectId("5bf4055c68a2443ce63b1801"),  
+    "cid": "fffc",  
+    "insertionToken": "cfa14b82-5bf5-410b-a361-556afa219ef7",  
+    "accountNumber": "5486911242",  
+    "accountType": "",  
+    "branch": "1505",  
+    "startingDate": "11012015",  
+    "beginningBalanceDesc": "Balance Forward",  
+    "beginningBalance": "85",  
+    "primary": [  
+        "accountNumber"  
+    ],   
+     ............................  
+     ............................  
+}  
+  
+ for Update  
+ /*2*/  
+{  
+    "_id": ObjectId("5bf4055c68a2443ce63b1811"),  
+    "cid": "fffc",  
+    "accountNumber": "5486911242",  
+    "accountType": "",  
+    "branch": "1505",  
+    "startingDate": "11012015",  
+    "beginningBalanceDesc": "Balance Forward",  
+    "beginningBalance": "85",  
+    "primary": [  
+        "accountNumber"  
+    ],  
+    "oldData": {  
+        "cid": "fffc",  
+        "insertionToken": "cfa14b82-5bf5-410b-a361-556afa219ef7",  
+        "accountNumber": "5486911242",  
+        "accountType": "",  
+        "branch": "1505",  
+        "startingDate": "11012015",  
+        "beginningBalanceDesc": "Balance Forward",  
+        "beginningBalance": "85",  
+        "primary": [  
+            "accountNumber"  
+        ]  
+    },  
+    "updatedToken": "6a773e76-8027-4b03-8e99-25767280f066"  
+}
+
+    
+    
+      
+    
+
+### accountInfo
+
+    
+    
+    for Save
+    /*1*/
+
+{  
+    "_id": ObjectId("5bf4055c68a2443ce63b1801"),  
+    "cid": "fffc",  
+    "insertionToken": "cfa14b82-5bf5-410b-a361-556afa219ef7",  
+    "accountNumber": "5486911242",  
+    "accountType": "",  
+    "branch": "1505",  
+    "startingDate": "11012015",  
+    "beginningBalanceDesc": "Balance Forward",  
+    "beginningBalance": "85",  
+    "primary": [  
+        "accountNumber"  
+    ],   
+     ............................  
+     ............................  
+}
+
+    
+    
+    for Update
+    /*2*/
+
+{  
+    "_id": ObjectId("5bf4055c68a2443ce63b1811"),  
+    "cid": "fffc",  
+    "accountNumber": "5486911242",  
+    "accountType": "",  
+    "branch": "1505",  
+    "startingDate": "11012015",  
+    "beginningBalanceDesc": "Balance Forward",  
+    "beginningBalance": "85",  
+    "primary": [  
+        "accountNumber"  
+    ],  
+    "oldData": {  
+        "cid": "fffc",  
+        "insertionToken": "cfa14b82-5bf5-410b-a361-556afa219ef7",  
+        "accountNumber": "5486911242",  
+        "accountType": "",  
+        "branch": "1505",  
+        "startingDate": "11012015",  
+        "beginningBalanceDesc": "Balance Forward",  
+        "beginningBalance": "85",  
+        "primary": [  
+            "accountNumber"  
+        ]  
+    },  
+    "updatedToken": "6a773e76-8027-4b03-8e99-25767280f066"  
+}
+
+    
+    
+      
+    
+
+### userAccountInfo
+
+    
+    
+    /*1*/
+
+{  
+    "_id": ObjectId("5bf4055c68a2443ce63b1816"),  
+    "userInfo": {  
+        "ssn": "32323"  
+    },  
+    "accountInfo": {  
+        "accountNumber": "5486911242"  
+    }  
+     ........................  
+     ........................  
+}
+
+    
+    
+      
+    
+
+### transactionInfo
+
+    
+    
+    h4. for Save
+    /*1*/
+
+{  
+    "_id": ObjectId("5b923c08ca80ff379abb2ed4"),  
+    "insertionToken": "cfa14b82-5bf5-410b-a361-556afa219ef7",  
+    ........................  
+    ........................  
+}
+
+    
+    
+      
+    
+
+  
+
+## API Sample
+
+### Add cid, modelName, filePathUrl to Kafka Producer
+
+ **[PUT]** <https://infosense-
+dev.infoimageinc.com/infosense/api/v1/csbk/pathUrl?modelName=silverlake>
+
+{  
+"message": "Message sent to the Kafka 'path' Topic Successfully."  
+}
+
+    
+    
+      
+    
+
+  
+  
+
+## Sharing application screenshot  
+InfoSense process workflow has two part one is UI and another one is API end-
+point. In UI section, we can create model which model will be use for file
+parsing. Initially we can create model for two different types of file one is
+FLAT and another one is XML. We are sharing some screenshots related to this
+UI section.
+
+  
+  
+
+### UI of Symiter  
+
+  
+  
+
+### UI of Silverlake  
+
+  
+  
+
+### UI of Model List  
+
+  
+  
+
+## Installation Process
+
+### 1 JDK install
+
+  * Atfirst need to download jdk-1.8 version.
+  * Then extract zip file and put extract file into usr directory and renaming it to java.
+  * Then check java version command is - "java -version". If it shows version then install process is ok
+
+2\. Kafka install
+
+  * Atfirst you need to download kafka_2.11-2.0.0.tgz binary file
+  * Then extract command is - "tar xzf kafka_2.11-2.0.0.tgz" and put extract file into usr directory command is - "sudo mv kafka_2.11-2.0.0 /usr/" with renaming kafka instead of kafka_2.11-2.0.0.
+  * Open a file name is config/server.properties and Now make changes (check if they are set) to following properties:
+
+[broker.id](http://broker.id)=0  
+listeners=PLAINTEXT://:9092  
+num.partitions=1  
+log.dirs=/var/tmp/kafka-logs-0
+
+  
+
+### 3\. Spark install
+
+  * Atfirst you need to download spark-2.2.1-bin-hadoop2.7.tgz binary file
+  * Then extract command is - "tar xzf spark-2.2.1-bin-hadoop2.7.tgz" and put extract file into usr directory command is - "sudo mv spark-2.2.1-bin-hadoop2.7 /usr/" with renaming spark instead of spark-2.2.1-bin-hadoop2.7.
+
+### 4\. Tomcat install
+
+  * Atfirst need to download tomcat 7 version.
+  * Then extract zip file and put extract file into usr directory and renaming it to tomcat.
+  * Need to change tomcat permission command is - "sudo chmod -R 777 /usr/tomcat"  
+*Then go to the tomcat directory command is - "cd /usr/tomcat" then infosense.war file put into tomcat webapps directory
+
+  
+  
+
+## Starting Everything UP
+
+1\. Need to run MongoDB command is - "sudo service mongod start"  
+2\. Log in as root  
+3\. Go to the kafka directory. Command is - "cd /usr/kafka"  
+4 First you need to start the zookeeper, it will be used to store the offsets
+for topics. Command is - "./bin/zookeeper-server-start.sh
+./config/zookeeper.properties"  
+5\. Open another terminal and follow the step 2 & 3  
+6\. Then need to start kafka server. Command is - "./bin/kafka-server-start.sh
+./config/server.properties"  
+7\. Open another terminal and follow the step 2 & 3  
+8\. Then creating a topic (need only once). Command is - "bin/kafka-topics.sh
+--create --zookeeper localhost:2181 --replication-factor 1 --partitions 1
+--topic path"  
+9\. Then need to start tomcat server.  
+  
+
+  
+
+## Machine Requirement
+
+  * Ram is preferred to be equal or greater than 32GB (Whereas Spark uses shared memory)
+  * CPU is preferred to be similar to Intel Xeon E3-1270 v5
+  * Storage depends on the required space
+
+

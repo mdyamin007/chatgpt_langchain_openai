@@ -1,0 +1,199 @@
+title: ISD-6692 - Separate AEE and SNR invoices
+body: # General - **All fields must be filled out**
+
+CID| SURU  
+---|---  
+TeamSupport #| 27234  
+Title| Separate AEE and SNR invoices  
+Requested By| client  
+Date Started|
+
+  
+  
+Pilot Date|  
+  
+Release Date|  
+  
+Tag #|  
+  
+Type| Bug Fix | **Release** | Other  
+Developer|  
+Witness|  
+  
+  
+  
+
+  
+| Development| Pilot| Staging| Production (Commit)| Production (Release)  
+---|---|---|---|---|---  
+suru.conf|  206 complete global.ml2=billing 207 complete
+global.invoice.desc=SNR Invoices 208 complete global.billing.desc=AEE Invoices
+209 complete doc.billing.createAccount=true 210 complete
+email.billing.featureType=attach 211 complete
+email.billing.disableEncryption=true 212 complete // billing - staggering 213
+complete notification.billing.isStaggering=true 214 complete
+notification.billing.staggeringHour=2 215 complete
+notification.billing.staggeringLimit=8000 |  180 complete global.ml2=billing
+181 complete global.invoice.desc=SNR Invoices 182 complete
+global.billing.desc=AEE Invoices 183 complete doc.billing.createAccount=true
+184 complete email.billing.featureType=attach 185 complete
+email.billing.disableEncryption=true 186 complete // billing - staggering 187
+complete notification.billing.isStaggering=true 188 complete
+notification.billing.staggeringHour=2 189 complete
+notification.billing.staggeringLimit=8000 |  
+|  
+|  
+  
+  
+InfoTRAC
+
+Notification Tempalte Names
+
+|  
+| SNR Invoices,AEE Invoices|  
+|  
+|  
+  
+  
+InfoTRAC
+
+E-Notification
+
+|  
+| Create new email and attach templates for SNR Invoices and AEE Invoices.|  
+|  
+|  
+  
+OracleDB|  216 complete UPDATE P_JOB SET text = 'SNR Invoices'  
+WHERE p_job_id IN  
+(  
+    SELECT DISTINCT p_job_id  
+    FROM P_JOB  
+    WHERE org_name = 'suru'  
+    AND name = 'doc'  
+    AND text = 'Invoices'  
+    AND doc_type = 'statement'  
+    AND REGEXP_LIKE(input_file, '.*/ml1_[0-9_]*_suru\\.txt')  
+); 217 complete UPDATE P_JOB SET text = 'AEE Invoices'  
+WHERE p_job_id IN  
+(  
+    SELECT DISTINCT p_job_id  
+    FROM P_JOB  
+    WHERE org_name = 'suru'  
+    AND name = 'doc'  
+    AND text = 'Invoices'  
+    AND doc_type = 'statement'  
+    AND REGEXP_LIKE(input_file, '.*/ml2_[0-9_]*_suru\\.txt')  
+); 218 complete UPDATE ESTMT_DOC ed  
+SET ed.stmt_type = 'billing'  
+WHERE ed.esd_id IN (  
+    SELECT DISTINCT pje.esd_id  
+    FROM P_JOB_ESTMT pje  
+    JOIN P_JOB pj ON pj.p_job_id = pje.p_job_id  
+    WHERE pj.org_name = 'suru'  
+    AND [pj.name](http://pj.name) = 'doc'  
+    AND pj.text = 'AEE Invoices'  
+    AND pj.doc_type = 'statement'  
+    AND REGEXP_LIKE(pj.input_file, '.*/ml2_[0-9_]*_suru\\.txt')  
+); |  190 complete UPDATE P_JOB SET text = 'SNR Invoices'  
+WHERE p_job_id IN  
+(  
+    SELECT DISTINCT p_job_id  
+    FROM P_JOB  
+    WHERE org_name = 'suru'  
+    AND name = 'doc'  
+    AND text = 'Invoices'  
+    AND doc_type = 'statement'  
+    AND REGEXP_LIKE(input_file, '.*/ml1_[0-9_]*_suru\\.txt')  
+); 191 complete UPDATE P_JOB SET text = 'AEE Invoices'  
+WHERE p_job_id IN  
+(  
+    SELECT DISTINCT p_job_id  
+    FROM P_JOB  
+    WHERE org_name = 'suru'  
+    AND name = 'doc'  
+    AND text = 'Invoices'  
+    AND doc_type = 'statement'  
+    AND REGEXP_LIKE(input_file, '.*/ml2_[0-9_]*_suru\\.txt')  
+); 192 complete UPDATE ESTMT_DOC ed  
+SET ed.stmt_type = 'billing'  
+WHERE ed.esd_id IN (  
+    SELECT DISTINCT pje.esd_id  
+    FROM P_JOB_ESTMT pje  
+    JOIN P_JOB pj ON pj.p_job_id = pje.p_job_id  
+    WHERE pj.org_name = 'suru'  
+    AND [pj.name](http://pj.name) = 'doc'  
+    AND pj.text = 'AEE Invoices'  
+    AND pj.doc_type = 'statement'  
+    AND REGEXP_LIKE(pj.input_file, '.*/ml2_[0-9_]*_suru\\.txt')  
+); |  
+|  
+|  
+  
+MongoDB| "archivalPeriod" : {  
+    "billing" : 12  
+}  
+"statements" : {  
+    "invoice" : {  
+        "name" : "SNR Invoices"  
+    },  
+    "billing" : {  
+        "name" : "AEE Invoices"  
+    }  
+}|
+
+"archivalPeriod" : {  
+    "billing" : 12  
+}  
+"statements" : {  
+    "invoice" : {  
+        "name" : "SNR Invoices"  
+    },  
+    "billing" : {  
+        "name" : "AEE Invoices"  
+    }  
+}
+
+|  
+|  
+|  
+  
+InfoConfig| SURU does not exist.| "archivalPeriod": {  
+    "statements": {  
+        "infoservice": [  
+            {  
+                "type": "billing",  
+                "month": 12  
+            }  
+        ]  
+    }  
+}  
+"statements": {  
+    "infotrac": [  
+        {  
+            "type": "invoice",  
+            "name": "SNR Invoices"  
+        },  
+        {  
+            "type": "billing",  
+            "name": "AEE Invoices"  
+        }  
+    ],  
+    "infoservice": [  
+        {  
+            "type": "invoice",  
+            "name": "SNR Invoices"  
+            },  
+        {  
+            "type": "billing",  
+            "name": "AEE Invoices"  
+        }  
+    ]  
+}|  
+|  
+|  
+  
+  
+  
+
+

@@ -1,0 +1,700 @@
+title: Elasticsearch Administration
+body: **1\. Create an Index for demo(CID) for default STMT Type**
+
+    
+    
+     PUT demo
+    {
+        "mappings": {
+            "default": {
+                "properties": {
+                    "acctNum": {
+                        "type": "keyword" 
+                    },
+                    "acctType": {
+                        "type": "keyword" 
+                    },
+                    "stmt": {
+                        "type": "attachment" 
+                    },
+                    "stmtName": {
+                        "type": "keyword" 
+                    },
+                    "jobId": {
+                        "type": "keyword" 
+                    },
+                    "dtJobId": {
+                        "type": "keyword" 
+                    },
+                     "cycleDate": {
+                        "type": "date",
+                        "format": "MMddyyyy" 
+                    },
+                    "stmtDate": {
+                        "type": "date",
+                        "format": "MMddyyyy" 
+                    }
+                }
+            }
+        }
+    }
+    
+
+**2\. Add a new Type heloc(STMT type) of demo(Index)**
+
+    
+    
+     PUT demo/_mapping/heloc?update_all_types
+    {
+        "properties": {
+            "acctNum": {
+                "type": "keyword" 
+            },
+            "acctType": {
+                "type": "keyword" 
+            },
+            "stmt": {
+                "type": "attachment" 
+            },
+            "stmtName": {
+                "type": "keyword" 
+            },
+            "jobId": {
+                "type": "keyword" 
+            },
+            "dtJobId": {
+                "type": "keyword" 
+            },
+            "cycleDate": {
+                "type": "date",
+                "format": "MMddyyyy" 
+            },
+            "stmtDate": {
+                "type": "date",
+                "format": "MMddyyyy" 
+            }
+        }
+    }
+    
+
+**3\. Read list if all STMT type (Type) of demo(Index)**
+
+GET demo/_mappings
+
+ **4\. Delete an Index(demo)**
+
+DELETE demo?pretty
+
+ **5\. Read list of Index(CID)**
+
+GET _cat/indices
+
+ **6\. Check an Index(CID) is exist**
+
+HEAD demo
+
+ **7\. Check Index(CID)/Type(StmtType) mapping exist**
+
+HEAD mtro/_mapping/default
+
+*8. Some Queries
+    
+    
+    GET /_analyze?analyzer=standard
+    
+    DELETE /mtro?pretty
+    DELETE /estmt?pretty
+    
+    HEAD mtro/_mapping/default
+    GET _cluster/health
+    
+    GET _cat/indices
+    GET mtro/_mappings
+    
+    GET mtro/default/_search?pretty
+    
+    GET /mtro/_mapping/default
+    
+    GET ewbb/default/_mapping
+    
+    GET estmt/ewbb/_mapping
+    
+
+  
+
+    
+    
+    GET mtro/default/_search?pretty
+    {
+     "_source" : ["acctNum", "acctType", "stmtName", "dtJobId", "invoiceDate"],
+     "query": {
+     "match" : {
+     "dtJobId" : "112" 
+     }
+     }
+    }
+    
+    GET mtro/default/_search?pretty
+    {
+     "query": {
+     "match" : {
+     "dtJobId" : "87189" 
+     }
+     }
+    }
+    
+    GET mtro/default/_search?pretty
+    {
+     "query": {
+     "match" : {
+     "acctType": "DD" 
+     }
+     }
+    }
+    
+    POST mtro/default/_delete_by_query
+    {
+     "query": { 
+     "match" : {
+     "dtJobId" : "200" 
+     }
+     }
+    }
+    
+    GET mtro/default/_search?pretty
+    {
+     "query": {
+     "bool": {
+    
+     "must": [
+     {
+     "match_phrase" : { "stmt.content" :"regular" } 
+     }
+     ], 
+     "filter": [ 
+     { 
+     "term": { "acctNum": "1167011301" }
+     },
+     { 
+     "term": { "acctType": "NA" }
+     }
+     ]
+     }
+     }
+    }
+    
+    GET estmt_bank/ewbb/_search?pretty
+    {
+     "query": {
+     "bool": {
+     "must": {
+     "match_phrase" : { "stmt.content" :"597" } 
+     },
+     "filter": [ 
+     { 
+     "term": { "acctNum": "8003008789" }
+    
+     },
+     { 
+     "term": { "acctType": "ms1" }
+    
+     },
+     { "range": { "invoiceDate": { "gte": "07312016" }}} 
+    
+     ]
+     }
+     }
+    }
+    
+    GET mtro/default/_search?pretty
+    {
+     "query": {
+     "bool": {
+     "must": {
+     "match_phrase" : { "stmt.content" :"BEGINNING" } 
+     } 
+     }
+     }
+    }
+    
+    GET estmt/mtro/_search
+    {
+     "query": {
+     "match" : {
+     "stmt.content" : {
+     "query" : "this" 
+     }
+     }
+     },
+     "sort": { "invoiceDate": { "order": "asc" }}
+    }
+    
+    PUT mtro
+    {
+     "mappings": {
+     "default": {
+     "properties": {
+     "acctNum": {
+     "type": "keyword" 
+     },
+     "acctType": {
+     "type": "keyword" 
+     },
+     "stmt": {
+     "type": "attachment" 
+     },
+     "stmtName": {
+     "type": "keyword" 
+     },
+     "jobId": {
+     "type": "keyword" 
+     },
+     "dtJobId": {
+     "type": "keyword" 
+     },
+     "cycleDate": {
+     "type": "date",
+     "format": "MMddyyyy" 
+     },
+     "stmtDate": {
+     "type": "date",
+     "format": "MMddyyyy" 
+     }
+     }
+     }
+     }
+    }
+    
+    PUT mtro/_mapping/default?update_all_types
+    {
+    
+     "properties": {
+     "acctNum": {
+     "type": "text" 
+     },
+     "acctType": {
+     "type": "text",
+     "analyzer": "" 
+     },
+     "stmt": {
+     "type": "attachment" 
+     },
+     "stmtName": {
+     "type": "text" 
+     },
+     "jobId": {
+     "type": "text" 
+     },
+     "dtJobId": {
+     "type": "text" 
+     },
+     "cycleDate": {
+     "type": "date",
+
+# Elasticsearch
+Administration[](https://i3dev.easyredmine.com/projects/hypercube_meteor-
+multi-tenant/wiki/Elasticsearch_Administration#Elasticsearch-Administration)
+
+    
+    
+      
+    
+
+ **1\. Create an Index for demo(CID) for default STMT Type**
+
+    
+    
+      
+    
+    
+    
+     PUT demo
+    {
+        "mappings": {
+            "default": {
+                "properties": {
+                    "acctNum": {
+                        "type": "keyword" 
+                    },
+                    "acctType": {
+                        "type": "keyword" 
+                    },
+                    "stmt": {
+                        "type": "attachment" 
+                    },
+                    "stmtName": {
+                        "type": "keyword" 
+                    },
+                    "jobId": {
+                        "type": "keyword" 
+                    },
+                    "dtJobId": {
+                        "type": "keyword" 
+                    },
+                     "cycleDate": {
+                        "type": "date",
+                        "format": "MMddyyyy" 
+                    },
+                    "stmtDate": {
+                        "type": "date",
+                        "format": "MMddyyyy" 
+                    }
+                }
+            }
+        }
+    }
+    
+    
+    
+      
+    
+
+**2\. Add a new Type heloc(STMT type) of demo(Index)**
+
+    
+    
+      
+    
+    
+    
+     PUT demo/_mapping/heloc?update_all_types
+    {
+        "properties": {
+            "acctNum": {
+                "type": "keyword" 
+            },
+            "acctType": {
+                "type": "keyword" 
+            },
+            "stmt": {
+                "type": "attachment" 
+            },
+            "stmtName": {
+                "type": "keyword" 
+            },
+            "jobId": {
+                "type": "keyword" 
+            },
+            "dtJobId": {
+                "type": "keyword" 
+            },
+            "cycleDate": {
+                "type": "date",
+                "format": "MMddyyyy" 
+            },
+            "stmtDate": {
+                "type": "date",
+                "format": "MMddyyyy" 
+            }
+        }
+    }
+    
+    
+    
+      
+    
+
+**3\. Read list if all STMT type (Type) of demo(Index)**
+
+    
+    
+      
+    
+
+GET demo/_mappings
+
+    
+    
+      
+    
+
+ **4\. Delete an Index(demo)**
+
+    
+    
+      
+    
+
+DELETE demo?pretty
+
+    
+    
+      
+    
+
+ **5\. Read list of Index(CID)**
+
+    
+    
+      
+    
+
+GET _cat/indices
+
+    
+    
+      
+    
+
+ **6\. Check an Index(CID) is exist**
+
+    
+    
+      
+    
+
+HEAD demo
+
+    
+    
+      
+    
+
+ **7\. Check Index(CID)/Type(StmtType) mapping exist**
+
+    
+    
+      
+    
+
+HEAD mtro/_mapping/default
+
+    
+    
+      
+    
+
+*8. Some Queries
+    
+    
+      
+    
+    
+    
+    GET /_analyze?analyzer=standard
+    
+    DELETE /mtro?pretty
+    DELETE /estmt?pretty
+    
+    HEAD mtro/_mapping/default
+    GET _cluster/health
+    
+    GET _cat/indices
+    GET mtro/_mappings
+    
+    GET mtro/default/_search?pretty
+    
+    GET /mtro/_mapping/default
+    
+    GET ewbb/default/_mapping
+    
+    GET estmt/ewbb/_mapping
+    
+    
+    
+      
+    
+    
+    
+    GET mtro/default/_search?pretty
+    {
+     "_source" : ["acctNum", "acctType", "stmtName", "dtJobId", "invoiceDate"],
+     "query": {
+     "match" : {
+     "dtJobId" : "112" 
+     }
+     }
+    }
+    
+    GET mtro/default/_search?pretty
+    {
+     "query": {
+     "match" : {
+     "dtJobId" : "87189" 
+     }
+     }
+    }
+    
+    GET mtro/default/_search?pretty
+    {
+     "query": {
+     "match" : {
+     "acctType": "DD" 
+     }
+     }
+    }
+    
+    POST mtro/default/_delete_by_query
+    {
+     "query": { 
+     "match" : {
+     "dtJobId" : "200" 
+     }
+     }
+    }
+    
+    GET mtro/default/_search?pretty
+    {
+     "query": {
+     "bool": {
+    
+     "must": [
+     {
+     "match_phrase" : { "stmt.content" :"regular" } 
+     }
+     ], 
+     "filter": [ 
+     { 
+     "term": { "acctNum": "1167011301" }
+     },
+     { 
+     "term": { "acctType": "NA" }
+     }
+     ]
+     }
+     }
+    }
+    
+    GET estmt_bank/ewbb/_search?pretty
+    {
+     "query": {
+     "bool": {
+     "must": {
+     "match_phrase" : { "stmt.content" :"597" } 
+     },
+     "filter": [ 
+     { 
+     "term": { "acctNum": "8003008789" }
+    
+     },
+     { 
+     "term": { "acctType": "ms1" }
+    
+     },
+     { "range": { "invoiceDate": { "gte": "07312016" }}} 
+    
+     ]
+     }
+     }
+    }
+    
+    GET mtro/default/_search?pretty
+    {
+     "query": {
+     "bool": {
+     "must": {
+     "match_phrase" : { "stmt.content" :"BEGINNING" } 
+     } 
+     }
+     }
+    }
+    
+    GET estmt/mtro/_search
+    {
+     "query": {
+     "match" : {
+     "stmt.content" : {
+     "query" : "this" 
+     }
+     }
+     },
+     "sort": { "invoiceDate": { "order": "asc" }}
+    }
+    
+    PUT mtro
+    {
+     "mappings": {
+     "default": {
+     "properties": {
+     "acctNum": {
+     "type": "keyword" 
+     },
+     "acctType": {
+     "type": "keyword" 
+     },
+     "stmt": {
+     "type": "attachment" 
+     },
+     "stmtName": {
+     "type": "keyword" 
+     },
+     "jobId": {
+     "type": "keyword" 
+     },
+     "dtJobId": {
+     "type": "keyword" 
+     },
+     "cycleDate": {
+     "type": "date",
+     "format": "MMddyyyy" 
+     },
+     "stmtDate": {
+     "type": "date",
+     "format": "MMddyyyy" 
+     }
+     }
+     }
+     }
+    }
+    
+    PUT mtro/_mapping/default?update_all_types
+    {
+    
+     "properties": {
+     "acctNum": {
+     "type": "text" 
+     },
+     "acctType": {
+     "type": "text",
+     "analyzer": "" 
+     },
+     "stmt": {
+     "type": "attachment" 
+     },
+     "stmtName": {
+     "type": "text" 
+     },
+     "jobId": {
+     "type": "text" 
+     },
+     "dtJobId": {
+     "type": "text" 
+     },
+     "cycleDate": {
+     "type": "date",
+     "format": "MMddyyyy" 
+     },
+     "stmtDate": {
+     "type": "date",
+     "format": "MMddyyyy" 
+     }
+     }
+    
+    }
+    
+    PUT ewbb/_mapping/heloc?update_all_types
+    {
+    
+        "properties": {
+        "stmt": {
+        "type": "attachment" 
+        },
+        "extAcctNum": {
+        "type": "text" 
+        },
+        "acctType": {
+        "type": "text" 
+        },
+        "acctId": {
+        "type": "text" 
+        },
+        "stmtName": {
+        "type": "text" 
+        }
+        }
+    }
+    
+    
+     "format": "MMddyyyy" }, "stmtDate": { "type": "date", "format": "MMddyyyy" } } } PUT ewbb/_mapping/heloc?update_all_types { "properties": { "stmt": { "type": "attachment" }, "extAcctNum": { "type": "text" }, "acctType": { "type": "text" }, "acctId": { "type": "text" }, "stmtName": { "type": "text" } } }
+
+

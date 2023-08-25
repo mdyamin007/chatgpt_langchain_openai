@@ -1,0 +1,76 @@
+title: ES Installation ERROR And FIX
+body: 
+    ERROR: bootstrap checks failed
+    max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]
+    system call filters failed to install; check the logs and fix your configuration or disable system call filters at your own risk  
+    
+    [2017-05-25T19:46:44,953][INFO ][o.e.n.Node               ] [OmLq2xd] stopping ...
+    [2017-05-25T19:46:44,961][INFO ][o.e.n.Node               ] [OmLq2xd] stopped
+    [2017-05-25T19:46:44,961][INFO ][o.e.n.Node               ] [OmLq2xd] closing ...
+    [2017-05-25T19:46:44,966][INFO ][o.e.n.Node               ] [OmLq2xd] closed
+    
+    
+    
+    Virtual memoryedit
+    Elasticsearch uses a hybrid mmapfs / niofs directory by default to store its indices. The default operating system limits on mmap counts is likely to be too low, which may result in out of memory exceptions.
+    On Linux, you can increase the limits by running the following command as root:
+    sysctl -w vm.max_map_count=262144
+    To set this value permanently, update the vm.max_map_count setting in /etc/sysctl.conf. To verify after rebooting, run sysctl vm.max_map_count.
+    The RPM and Debian packages will configure this setting automatically. No further configuration is required.
+    
+    https://stackoverflow.com/questions/11683850/how-much-memory-could-vm-use
+    https://github.com/docker-library/elasticsearch/issues/111
+    https://www.elastic.co/guide/en/elasticsearch/reference/current/vm-max-map-count.html  
+    
+    
+    
+    
+    [2017-05-25T19:59:01,052][INFO ][o.e.b.BootstrapChecks ] [OmLq2xd] bound or publishing to a non-loopback or non-link-local address, enforcing bootstrap checks  
+    ERROR: bootstrap checks failed  
+    system call filters failed to install; check the logs and fix your configuration or disable system call filters at your own risk  
+    [2017-05-25T19:59:01,056][INFO ][o.e.n.Node ] [OmLq2xd] stopping ...  
+    [2017-05-25T19:59:01,063][INFO ][o.e.n.Node ] [OmLq2xd] stopped  
+    [2017-05-25T19:59:01,063][INFO ][o.e.n.Node ] [OmLq2xd] closing ...  
+    [2017-05-25T19:59:01,068][INFO ][o.e.n.Node ] [OmLq2xd] closed  
+    
+    
+    
+    
+    Elasticsearch has attempted to install a system call filter since version 2.1.0. On some systems, installing this system call filter could fail. Previous versions of Elasticsearch would log a warning, 
+    but would otherwise continue executing potentially leaving the end-user unaware of this situation. Starting in Elasticsearch 5.2.0, there is now a bootstrap check for success of installing the system call filter. If you encounter an issue starting Elasticsearch due to this bootstrap check, you need to either fix your configuration so that the system call filter can be installed, or at your own
+    risk disable the 
+    
+    https://www.elastic.co/guide/en/elasticsearch/reference/current/breaking-changes-5.2.html
+    
+    add the following line in config/elasticsearch.yml
+    bootstrap.system_call_filter: false  
+    
+    
+    
+    
+      
+    
+
+java.lang.ClassNotFoundException: org.apache.logging.log4j.Logger
+
+    
+    
+      
+    
+    
+
+<dependency>  
+    <groupId>org.apache.logging.log4j</groupId>  
+    <artifactId>log4j-api</artifactId>  
+    <version>2.8.2</version>  
+  </dependency>  
+  <dependency>  
+    <groupId>org.apache.logging.log4j</groupId>  
+    <artifactId>log4j-core</artifactId>  
+    <version>2.8.2</version>  
+  </dependency>
+
+https:
+//[www.elastic.co/guide/en/elasticsearch/reference/5.0/breaking_50_java_api_changes.html#_elasticsearch_will_no_longer](http://www.elastic.co/guide/en/elasticsearch/reference/5.0/breaking_50_java_api_changes.html#_elasticsearch_will_no_longer)
+
+

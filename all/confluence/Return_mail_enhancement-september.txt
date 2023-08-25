@@ -1,0 +1,31 @@
+title: Return mail enhancement-september
+body:   1. We have seen some sporadic report generation in production which was triggered from swagger. So we are implementing some restriction over return mail report APIs. We are restricting all report generation APIs rather that weekly and billing report API. As we are using weekly report from infotrac and billing report from PUI. To enable this restriction, we have to add following properties into uspsscanservice side. Here true means we can call the API and false means if we call the API, API will throw some exception.
+
+  
+
+  2. As of now, if there is no content to generate return mail weekly report, we are sending 204 (NO_CONTENT) to infotrac and no report is generated for client. As infotrac gets 204 as a status code, it does not trigger any email to client. But now we are generating report whether there is any content or not. If there is no content we are putting something **like No mail was returned from 2021-09-09 15:43:32 to 2021-09-09 15:43:32** in the csv. and we are returning 200 to infotrac so that client will be notify about the report. To recapitulate, we are generating weekly report any way and notify our clients also. To support this functionality, we have to add some property into uspsscanservice property file. Here You can find a sample empty report. [Sample empty CSV](https://confluence.infoimageinc.com/pages/viewpageattachments.action?pageId=107741237&sortBy=date&highlight=weeklyReport_necu_Return_mail_2021-09-09.csv&)
+
+  
+
+  3. As of now, we don't have any mechanism to know whether there is any exception when generation the weekly reports or not. So we have implemented some internal notification mechanism. If there is any exception while generation the weekly report, an email will be triggered. To support this functionality, we have to add following properties into uspsscanservice property file.
+
+  
+
+  4. As of now, we are not storing clients weekly report anywhere. So we are going to store all weekly report as a backup. To support this functionality, we have to add the following property into uspsscanservice property file.
+
+  
+
+  
+
+  
+
+  
+
+    
+    
+      
+    
+
+  
+
+

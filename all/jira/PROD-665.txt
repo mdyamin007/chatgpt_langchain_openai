@@ -1,0 +1,35 @@
+title: Create script to kill blocking sessions
+description: ====== Per Kent, create script which will kill blocking sessions which were idle for more than 10 minutes and save blocker session data =====
+
+----Original Message-----
+From: Kent Chan
+Sent: Tuesday, March 8, 2022 9:52 AM
+To: Junho Whang <Junho.Whang@infoimageinc.com>; Tin Sing Chak <Tin.Chak@infoimageinc.com>; Anil Dasa <Anil.Dasa@infoimageinc.com>; David Trang <David.Trang@infoimageinc.com>; Ethan Yu <Ethan.Yu@infoimageinc.com>; Lin Aung <Lin.Aung@infoimageinc.com>; Mac Huynh <Mac.Huynh@infoimageinc.com>; Shun Kuwashima <Shun.Kuwashima@infoimageinc.com>; Tai Trinh <Tai.Trinh@infoimageinc.com>; William Kong <William.Kong@infoimageinc.com>; MCIT <MCIT@infoimageinc.com>
+Subject: RE: 1684 sessions on database production:10.4.24.12:wodb!
+
+Hi Jun
+
+Can you confirm that the script that we discussed to systematically remove blocks after 10 mins is in place?
+
+Thanks!
+
+Kent Chan
+Director of Infrastructure and Networks
+Kent.chan@infoimageinc.com
+469-293-0788
+
+-----Original Message-----
+From: Junho Whang <Junho.Whang@infoimageinc.com>
+Sent: Friday, February 18, 2022 4:23 PM
+To: Kent Chan <Kent.Chan@infoimageinc.com>; Tin Sing Chak <Tin.Chak@infoimageinc.com>; Anil Dasa <Anil.Dasa@infoimageinc.com>; David Trang <David.Trang@infoimageinc.com>; Ethan Yu <Ethan.Yu@infoimageinc.com>; Lin Aung <Lin.Aung@infoimageinc.com>; Mac Huynh <Mac.Huynh@infoimageinc.com>; Shun Kuwashima <Shun.Kuwashima@infoimageinc.com>; Tai Trinh <tai.Trinh@infoimageinc.com>; William Kong <William.Kong@infoimageinc.com>; MCIT <MCIT@infoimageinc.com>
+Subject: RE: 1684 sessions on database production:10.4.24.12:wodb!
+
+Hi Kent,
+
+Blocking sessions which went idle and holding locks for quite some time (order of 10's of minutes or longer) is something that should not occur normally. When session is terminated, all the updates get rolled back, so whether it's harmful or not depend on how application recover from this. If application performs multiple transactions and commits some of them and goes idle with blocking locks, maybe it might be difficult to recover, but usually applications should be designed with possibility of transaction failing and automatically recover from this. I don't believe terminating idle blocking sessions which has gone idle for more than some threshold minutes of time should not be detrimental when that might be needed to be done manually anyway to resolve the blocking issue.
+
+Thank you
+
+Jun
+
+

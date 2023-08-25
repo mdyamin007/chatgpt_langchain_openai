@@ -1,0 +1,79 @@
+title: GOCU - [29396][pvt][in-house] DP - GOCU student visa cksum error
+description: Programming Hours: 1hr IS (In-house) - 0 hrs ISD
+
+Start Date: 5/25/2022
+
+Live Date: 5/31/2022
+
+Note: updated live date to 5/31 since 5/30 is a holiday.
+
+Description of Work:
+
+Update the"/home/master/gocuvs1_process.sh"to detect bad file naming convention inside the zip file.
+
+Update the following lines of code to add if condition to check if it cannot find pattern case in-sensitive: "SVCD????.G1" inside zip
+
+echo "unzip ${decryptFile} -d ${decryptDir}"
+ unzip ${decryptFile} -d ${decryptDir}
+ procFile=`find $decryptDir -maxdepth 1 -iname "SVCD????.G1"`
+ echo "procFile $procFile"
+
+Error message should state something like: "Error: Program cannot find pattern case insensitive "SVCD????.G1" inside $decryptFile zip file. Program will terminate."
+
+Test file with issue is located in: /d/iss/willK/cid/gocu/ts29396/sv22MAY.zip.pgp
+
+7c26e3147bc127ea1eb8e0a4adfe97b5 sv22MAY.zip.pgp
+
+Start Date: 5/25/2022
+
+Live Date: 5/30/2022
+
+
+author: william.kong
+comment: [~jun]: Can start working on this in-house fix? If 5/31 date is too short, then let me know and I can re-adjust to later in June. Thanks!
+
+
+
+-- Will
+
+
+author: jun
+comment: [~Igor.Khosid],
+
+I cannot put script in parallel because Amir is holding it in parallel.
+
+Script is in my folder:/d/iss/junM/gocu/is-1151/updated_files/gocuvs1_process.sh
+
+diff /d/iss/junM/gocu/is-1151/updated_files/gocuvs1_process.sh /home/master/
+71,76c71
+< filePattern="SVCD????.G1"
+< procFile=`find $decryptDir -maxdepth 1 -iname ${filePattern}`
+< if [ ! $procFile ]; then
+< echo "Error: Program cannot find pattern case insensitive ${filePattern} inside ${decryptFile} zip file. Program will terminate."
+< exit 1
+< fi
+---
+> procFile=`find $decryptDir -maxdepth 1 -iname "SVCD????.G1"`
+
+
+author: igor.khosid
+comment: [~gthillaivel] - Please review and confirm
+
+
+author: gthillaivel
+comment: [~jun]
+Verified the script ,looks good to release
+
+ !diff_qa.PNG|thumbnail! 
+
+
+author: billr
+comment: [~jun] [~Jessica]
+
+Will this be released today?
+
+
+author: jun
+comment: [~billr],
+
+code released to production

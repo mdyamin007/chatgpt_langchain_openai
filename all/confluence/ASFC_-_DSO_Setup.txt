@@ -1,0 +1,295 @@
+title: ASFC - DSO Setup
+body:   
+
+  
+
+Target release| Release name or number  
+---|---  
+Epic| Link to related Jira epic or feature  
+Document status|
+
+DRAFT  
+  
+Document owner|  
+  
+Designer| Lead designer  
+Developers| Lead developer  
+QA|  
+  
+  
+  
+
+truenumber
+
+Goals
+
+  * Set up DSO for ASFC
+  * Set up multi-factor authentication for DSO
+  * Set up Auth file processing for ASFC
+
+## Background and strategic fit
+
+To enable DSO for ASFC per client's request.
+
+## Assumptions
+
+  * Auth file processing is mainly used for DSO, but if a user logs in with SSO, we will allow it if and only if they have never logged in with DSO before. 
+  * Auth file will be a partial file.
+  * ASFC only has one-to-one relationship.
+  * Besides the condition above, DSO and SSO are mutually exclusive.
+  * Multi-factor authentication is enabled via the Profile page.
+  * Reference DSO setup for SNFB if needed. We can also reference Hypercube DSO. 
+    * IMPORTANT: SNFB is a bank and ASFC is a CU, so there are distinct differences such as ASFC does not have acct type. The reference is mainly for UI / UX; not back-end / data structure. 
+  * Newly created users should have both DSO and SSO fields null
+
+## Requirements
+
+#| Title| User Story| Importance| Notes  
+---|---|---|---|---  
+1| Responsive UI| Any new pages should be responsive.|  _Must Have_|
+
+  * I am unsure whether ASFC is responsive. However, any new pages we create should be coded to be responsive, so that we can lessen the work needed to be done if ASFC were to convert to responsive.
+  * Do not modify existing to be pages responsive. This is not within scope. 
+
+  
+2| Auth file| The client will use the auth file to load DSO users.|  _Must
+Have_|
+
+  * File data format is: Member Number|User Type|First Name|Last Name|Account Owner Name|TIN|DOB
+    * Member number is the account number, which will also be used as the CIF num
+    * User Type denotes a business user (N) vs a personal user (P)
+      * These values are entered into the usr.type. 
+      * All users should also have usr_mapping.primary_user_flag set to 'P'. 
+    * First Name is entered into the usr.usr_firstname
+    * Last Name (if exists) is entered into the usr.usr_lastname
+    * Account Owner Name is entered into fin_account.acct_owner_name
+    * TIN is entered into usr.usr_ssn
+    * This extra field is being provided by the client. We can ignore it. Using the Hypercube standard, we do not need the DOB.
+  * The registrar should implement AuthRegistrarImpl. 
+  * Validate data to maintain integrity
+    * For ASFC, CIF-AcctNum-SSN relationships is strictly a 1-1-1 relationship. The CIF is actually just the AcctNum, so it should not be tied to any other account. The SSN should not be tied to multiple accounts.
+
+Auth file process: reference APCU auth registrar for function structure
+
+  1. We will use the pre-process from the implementation to get the CIFset. This can be used to easily check whether a cif_num already exists.
+  2. process will addAccount using the provided AuthData
+  3. addAccount will first addUser
+    1. addUser will use the acct number as a CIF to look up usr_mapping to see if the user already exists
+    2. If the user already exists, perform an update on First Name and Last Name information if there are differences.
+      1. Check the SSN, if it is different than what is stored, stop processing the data, and log the error. 
+      2. Check user.type. If the data's user type is different than in the database, do not process the data, and log the error. We can update if the user type is null.
+    3. If the user does not exist, we will create the user.
+      1. create the usr_session also
+        * set sess_login_id to the acct number
+        * set sess_permission to 1
+        * set initial password to the value obtained from global.ssoKey config.
+        * status set to "active"
+        * set password changed date to current date
+        * set DSO and SSO to null (most likely null by default)
+      2. attach CIF (the same as acct_number) to user
+  4. addAccount create fin_account
+    1. If the account already exists, perform an update on the acct_owner_name if necessary.
+      1. Account type is always NA 
+      2. If an account needs to be created, also create a paperless status of N to B. 
+    2. If status is not active, set to active.
+  5. create the user fin account tying the acct to the user if the UFA doesn't already exist
+    1. status should be "pre-reg"
+  6. Post-process should be overridden with an empty function, because the client is using a partial file setup.
+
+  
+3| Other Processing| Accounts created by any other processing used by ASFC
+will have null DSO.|  _Must Have_|
+
+  1. Move to HypercubeEstmtRegistrar
+  2. Move to HypercubeEnoticeRegistrar
+  3. Move to HypercubeEtaxRegistrar
+  4. Include in conf file the necessary flags for AccountRegistrar to support Hypercube (nullDsoTimestamp and isHypercube to true)
+
+  
+4| Update database| Update the database.|  _Must Have_|
+
+  * Phase 1
+    1. For all the current user session
+      1. If there is an SSO date, set DSO to null. (This can probably be accomplished through a query)
+      2. Create a usr_mapping entry for each user session
+        1. The CIF will be the same as the account number
+        2. primary_user_flag can be null
+
+  
+5| DSO Page| The end user will use the DSO login page to login.|  _Must Have_|
+
+  * login.jsp seems to already be a page in the asfc repo; we can expand on this
+  * When the user access the base site URL, they should now be redirected to the DSO page (login.jsp)
+  * Login steps
+    1. Validate username and password
+    2. Check for device token
+    3. If device token exists, skip to step.
+    4. If device token doesn't exist, ask whether the user is using a public or private system.
+      1. If private, create and store token.
+      2. If public, create and use for login once.
+    5. Go through MFA to create device token
+    6. Login
+
+  
+6| DSO Enrollment| A new user can create a DSO account with an option provided
+on the DSO Page|  _Must Have_|
+
+  * The user cannot enroll for DSO if they already logged in via SSO
+
+Enrollment will have 5 steps:
+
+  1. eStatement Verification: the user will verify that they can see the statement
+    1. If the user indicate that they cannot view the statement, redirect to a redirection page. This will have the option to go to Adobe's page to download Acrobat Reader. 
+  2. Terms and Conditions / Disclosure: the user will accept or decline the terms and conditions
+    1. On a decline, they are redirected back to the DSO login page
+  3. Account Verification
+    1. The user must provide account number, SSN, and verify a "captcha". For the captcha code, use Hypercube latest captcha. It is the most viewable. 
+    2. SSN field should only accept up to 9 numbers, and be completely masked.
+    3. Check to see if the user already enroll in DSO or SSO. If true, return to the Login page.
+      1. If already enroll in DSO, display error saying that the user is already enrolled to use the system. The verbiage can be as follows:
+        1. You are currently registered to use this system. Please login in with the username and password that you originally created. If you forgot your password, please click on the password recovery link located in the login page.
+      2. If already enroll in SSO, display error saying that the user is enrolled to use SSO and should use that method instead.
+  4. Login information
+    1. The user will be asked to provide a login name, passwords
+    2. Validate user input before accepting
+  5. Preferences (see profile page for how to display both delivery preference and email address)
+    1. The user will be asked to confirm their preferences. They actually will not have any choice. They have to enroll in Electronic to create an account
+      1. If the status is currently Paper, display verbiage saying "After clicking Enroll, your delivery preference will be changed to Receiving e-Documents".
+      2. If the status is already Electronic, display nothing. 
+    2. Display email address
+    3. MFA Setup (required)
+      1. The user can optionally enter a phone number
+  6. Success Confirmation
+    1. Page confirming success of account creation and a button to return to the login page
+
+  
+7| Password Reset| The end user can reset their password with an option
+provided on the DSO Page|  _Must Have_|  Password Reset will have two or three
+steps:  
+
+  1. Security Check 1
+    1. Ask for username (sess_login_id), last 4 digits of SSN, and account number to verify
+    2. Setup is 1 to 1 so there is only 1 account number the user can provide that would be correct
+  2. Security Check 2
+    1. The user will have to go through MFA
+  3. Complete
+    1. If all checks passed, the user's password will be updated.
+    2. A confirmation page will appear with a button to return to the login page. 
+    3. If the user does not click the the button to return to the login page, we will automatically redirect after 5 seconds.
+
+  
+8| Update SSO| InfoIMAGE will keep track of users who have already SSO in.|
+_Must Have_|
+
+  * Update SSO to check for whether the user is already enrolled in DSO. Deny access and display error page saying they should use the DSO site instead.
+  * There are three states related to SSO / DSO for users.
+
+  1. New members enrolled through Auth file
+    1. DSO is null
+    2. SSO is null
+    3. sess_active_status is active
+    4. This user can enroll for DSO or SSO
+  2. User who has DSO
+    1. DSO is the date the user create an account in DSO
+    2. SSO is null
+    3. sess_active_status is active
+    4. This user can no longer enroll for SSO
+  3. User who has SSO
+    1. DSO date is null
+    2. SSO is the date the user complete SSO enrollment
+    3. sess_active_status is active
+    4. This user can no longer create a DSO account
+
+  
+9| Profile Page for DSO| DSO user will have additional information displayed
+on the Profile page that can be changed.|  _Must Have_|
+
+  * For input validation, use JavaScript form validation. However, validate the data again in the change code, and display an error if any data is not valid. This is to take care of the case where scripting is disabled on Internet Explorer. The JavaScript validation will be skipped.
+  * The additional information is displayed above the account / delivery preference data. 
+  * MFA should always have the option to resend a new token.
+
+  1. Login Name / Username
+  2. Current email address
+  3. Option to update phone number for MFA
+  4. Option to update password by providing the old password and the new password twice
+
+  
+10| Multifactor Authentication| All DSO users must go through MFA to log in.|
+_Must Have_|
+
+  *  **I am unsure where MFA status is stored. From what I know, Hypercube should have MFA ready. Please research how Hypercube stores MFA status (MFA on /off, MFA email / sms), and let's see if that can applied to Prism**.
+  * MFA is enabled for all users.
+  * MFA can be either be email or SMS
+  * Use the API that is used for MFA on Hypercube
+    * I don't think MFA is set up for Prism. Ideally, if we have to set it up, set it up in i3-core, so that we only need to call functions from there. That way, when other clients set up MFA, we do not have to add the code / library to their individual repo. We would only need to add in code that calls standard functions from i3-core. Create a new package under security called mfa (com.infoimage.security.mfa) where all code or needed sub-folder can be stored.
+    * This i3-core code should simply make calls to the same API we use for Hypercube. It should not have its own MFA logic, besides any private helper functions that's needed. 
+  * MFA is used in two occasions. 
+    1. During DSO login (#4)
+    2. When the user wants to change / reset their password (#6)
+
+  
+  
+## User interaction and design
+
+### DSO Enrollment
+
+#### Enrollment step 1
+
+#### Enrollment step 1 (Cannot view statement chosen)
+
+Enrollment step 2
+
+  
+
+#### Enrollment Step 3
+
+The below is taken from DEMO Hypercube instead of SNFB. Instead of Business
+Tax ID, it should just be TIN.
+
+#### Enrollment Step 4
+
+#### Enrollment Step 5
+
+Below is taken from the profile page, but we should display the Email Address
+and Delivery Preference in the same way. The user can confirm or deny.
+
+  
+
+### Password reset
+
+#### Security Check 1
+
+Color scheme should match ASFC set up.
+
+#### Security Check 2
+
+There is no example I can find. This is up to the developer's discretion.
+
+#### Security Check 3
+
+Color scheme should match ASFC setup.
+
+### Profile
+
+The below is an example of how DSO profile can look. The would be an
+additional Old Password requirement (I think it is standard design that we ask
+for old password before we update new password in case the user leave their
+browser open for another person to peruse).
+
+There would also be an additional area for MFA opt-in.
+
+## Questions
+
+Below is a list of questions to be addressed as a result of this requirements
+document:
+
+Question| Outcome  
+---|---  
+(e.g. How we make users more aware of this feature?)| Communicate the decision
+reached  
+  
+## Not Doing
+
+  * List the features discussed which are out of scope or might be revisited in a later release.
+
+

@@ -1,0 +1,34 @@
+title: 21421 - BANB - Member enrollment issue
+description: Attached description of the issue and logs in the attachment banb_21421.docx
+
+
+author: tai.trinh
+comment: From reviewing the hypercube logs, it seem like the user simply did not set the 39 accounts to Paperless, and that is why they were not changed to Paperless. However, please review the Profile page code/Enrollment code to see if there could potentially be any way an error might have occurred such that our data ended up the way it was (20 on Paperless and 39 on Paper).
+
+
+author: sadman anik
+comment: Hi [~tai.trinh],
+
+I have to take a deep look at pr-01 log for BANB and didn't think this user enroll on 2021-07-07 . Because I find that the SSO date is2017-07-10 09:26:09 on the usr_session table for this user. Also find out that this user manually changes DP from the profile page. If you check JSON structure for updateUserAccount API data you can see that there is some np object missing for accounts which is on paper. But this is not possible when the user goes through enrollment. In enrollmentupdateUserAccount API data it always contains np object for each object account even if it's on paper on paperless.
+
+So, I think it happens when the user manually changes this from the profile page on2021-07-07.
+
+Thanks,
+
+Sadman
+
+
+author: shun.kuwashima
+comment: Hi [~sadman anik], are we fairly convinced that the user simply did not update all of the accounts on their profile? Just wanted to confirm before responding back to the client, since they claim they went through it twice.
+Thanks,
+Shun
+
+
+author: sadman anik
+comment: Hi [~Shun.Kuwashima],
+
+Yes. Since there were some account objects without the np object that means the user did not update np for all the accounts.
+
+Thanks,
+
+Sadman

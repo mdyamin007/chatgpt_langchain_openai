@@ -1,0 +1,77 @@
+title: 42940 - DFCU - Fixing User Info Creation
+body:   
+
+  
+
+Target release| Release name or number  
+---|---  
+Epic|  
+  
+Document status| DRAFT  
+Document owner|  
+  
+Designer|  
+  
+Developers|  
+  
+QA| Lead tester  
+  
+  
+
+## Goals
+
+  * Fix bug where CIF is not created in processes where fin_account are created: check_image and paperless
+
+## Background and strategic fit
+
+Ensure all processes populate our database with the needed information for
+features to function properly.
+
+## Assumptions
+
+  * global.autoRegister should only be true for CU that have 1-to-1 CIF-acct number relationship. This implies that the CIF is the account number.
+  * If global.autoRegister is on, we will attach CIF to user using the acct number as the CIF num.
+
+## Requirements
+
+#| Title| User Story| Importance| Notes  
+---|---|---|---|---  
+1| Update Check Image Process| Update the AccountRegistrar to attach CIF to
+user|  _Must have_|
+
+  * In the autoRegister block; add attach CIF to user
+  * Attach CIF to user even if user exist in the case that somehow user is created, but CIF hasn't been attached yet
+
+  
+2| Update DefaultPaperlessRegistrar3| Update usr/usr_session/cif creation
+logic to be independent|  _Must have_  |
+
+  * Separate usr and usr session creation into its own logic
+  * After acct is created, find UFA
+  * If UFA does not exist; create usr and create usr_fin_account connection fin_account with usr_fin_account
+  * Then check if usr_session exist; if not, create usr_session
+  * Then reach acctLookup block
+  * In the acctLookup else block, add an additional check for if CIF exist; if it doesn't create the CIF (existing line of code)
+
+  
+  
+## User interaction and design
+
+Include any mockups, diagrams or visual designs relating to these
+requirements.
+
+## Questions
+
+Below is a list of questions to be addressed as a result of this requirements
+document:
+
+Question| Outcome  
+---|---  
+(e.g. How we make users more aware of this feature?)| Communicate the decision
+reached  
+  
+## Not Doing
+
+  * List the features discussed which are out of scope or might be revisited in a later release.
+
+

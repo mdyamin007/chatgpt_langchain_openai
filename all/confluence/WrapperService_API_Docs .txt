@@ -1,0 +1,287 @@
+title: WrapperService API Docs
+body:   
+  
+
+**wrapper service API(s)**  
+
+Wrapper service API is used for transforming the AFP documents to PDF  format
+synchronously and asynchronously. wrapper service has two APIs
+
+  1. GET /v1/document/{cid}
+  2. POST /v1/document/{cid}/transform-afp
+
+  
+
+  *  **GET /v1/document/{cid}**
+
+  
+
+ **Parameter**
+
+|
+
+ **Value**
+
+|
+
+ **Description**  
+  
+---|---|---  
+  
+cid (required)
+
+|
+
+Example: demo, mtro
+
+|
+
+Client id  
+  
+acctId
+
+|  
+|
+
+Account Number of the document  
+  
+fileName (required)
+
+|
+
+(Example: abcd.afp)
+
+|
+
+Name of the afp file  
+  
+parentPath (required)
+
+|
+
+(Example: abcd.zip)
+
+|
+
+Name of parent zipped file of the afp file  
+  
+stmtType (required)
+
+|
+
+STMT, ENOTICE, ETAX, PROOFING
+
+|
+
+Statement type (case insensitive)  
+  
+fileStoragePath (required)
+
+|
+
+Example: /mnt/PV-NAS/indiv_afp/
+
+|
+
+Location of the zipped afp files(relative to wrapper service)  
+  
+stmtType| SMMT| Type of the statements (etax, notice, stmt)  
+fullPath| Example:
+
+/mnt/PV-NAS/indiv_afp/afp-archive/demo/abcd.afp
+
+| The full path of the AFP file. You should use either full path or filename
+with location(filename, parentPath, fileStoragePath). Not the both.  
+  
+isAdaDoc
+
+|
+
+true, false (Default: false)
+
+|
+
+Flag: Is the document ADA compatible?  
+  
+applicationUrl
+
+|  
+|
+
+Application url (same as the infoservice's get-pdf-api has)  
+  
+outputFileFormat| pdf, html| The format you want to convert from AFP file. You
+can select either PDF or HTML  
+  
+serviceName
+
+|
+
+BIBO, FIFO (Default: BIBO)
+
+|
+
+Types of afp2web transformation service (case insensitive)
+
+  * buffer-input-buffer-output(BIBO)
+  * file-input-file-output(FIFO)
+
+  
+  
+Operation
+
+|
+
+SYNC, ASYNC (Default: SYNC)
+
+|
+
+Types of afp2web transformation operation(case insensitive)  
+  
+iniFile
+
+|
+
+Name of the ini file
+
+|
+
+If provided, it will override the default iniFile name  
+  
+environment
+
+|
+
+DEV,PILOT,STAGE,PROD(Default:DEV
+
+|
+
+Environment variable for the different environments (case insensitive)  
+  
+  
+
+  *  **Response:** Transformed output document will be sent as HTML with proper mime type.
+
+  *  **Error Response:** WrapperService will send a Standard HTTP status code and a custom/standard error message will be
+
+{
+
+  "status" : STATUS_CODE,
+
+  "message" : "ERROR_MESSAGE_LITERAL"
+
+}  
+  
+---  
+  
+
+
+  *  **POST /v1/document/{cid}/transform-afp**
+
+  
+
+ **Parameter**
+
+|
+
+ **Value**
+
+|
+
+ **Description**  
+  
+---|---|---  
+  
+cid (required)
+
+|
+
+Example: demo, mtro
+
+|
+
+Client id  
+  
+afpFile (required)
+
+|
+
+@File
+
+|
+
+Afp file stream  
+  
+iniFile
+
+|
+
+Name of the ini file
+
+|
+
+If provided, it will override the default iniFile name  
+  
+environment
+
+|
+
+DEV,PILOT,STAGE,PROD(Default:DEV
+
+|
+
+Environment variable for the different environments (case insensitive)  
+  
+isAdaDoc
+
+|
+
+true, false (Default: false)
+
+|
+
+Flag: Is the document ADA compatible?  
+  
+  
+
+  *  **Response:** Transformed output document will be sent as HTML with proper mime type.
+
+  *  **Error Response:** WrapperService will send a standard HTTP status code and a custom/standard error message will be 
+
+{
+
+  "status" : STATUS_CODE,
+
+  "message" : "ERROR_MESSAGE_LITERAL"
+
+}  
+  
+---  
+  
+  
+
+#### Required Argument for Afp2Web call from Wrapper service side
+
+  
+
+For  FIFO (File Input- File Output)
+
+  * UserAction
+  * OutputMode
+  * TransformLogging
+  * QuietMode
+  * OutputFormat
+  * InputFileName
+  * OutputFilePath
+  * IniFileName
+
+For BIBO (Buffer Input -Buffer Output)
+
+  * OutputFormat
+  * MemoryOutputStream
+  * UserAction
+  * transform_logging
+  * IniFileName
+  * InputBuffer
+
+

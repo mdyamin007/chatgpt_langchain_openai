@@ -1,0 +1,69 @@
+title: Divert Account Search
+body: Request Type| Endpoint  
+---|---  
+`GET`|  _`/account-search/cid/<>/job_2d/<>/dt_job_id/<>?accounts=<>`_  
+  
+## Steps
+
+  1. Checks `dt_job_id` exists in `tblRTWO_Cycle` table in PC/mssql database
+
+    * if not found, throw `404` error
+  2. if matches, Lookup in `PROC_ID` from `PROCESS_MAIN` table in `IS` Database, with following query
+
+  
+
+pythonConfluencetrue
+
+  
+
+  3. Find all dds accounts in the `DDS` database with the help of stored procedure  
+`infotrac_get_pieces_by_acct_num_n_job2d @orgId=%s, @job2d=%s, @acctNum=%s`
+
+  4. Combine results found in `DDS` database with `OLP_DIVERT_SUMMARY` in IS Database with the help of `MAIL_PIECE_ID`
+
+  5. Append response from endpoint [Divert Job Search _`/job-search/facility/<>/cid/<>/job_2d/<>/dt_job_id/<>`_](//confluence.infoimageinc.com/divert/divert-job-search)
+
+  6. Send all the accounts found and not found into the response
+
+## Path Parameters
+
+Name| Description| Example  
+---|---|---  
+`cid`| 4 digit customer id| `afcu`  
+`job_2d`| 3 digit job_2d code| `60g`  
+`dt_job_id`| dt job id| `122511-C13.01-V20327`  
+  
+## Query Parameters
+
+Name| Description| Example  
+---|---|---  
+`accounts`| comma separated account numbers|
+0000695767,0000693895,0000761179,0000736405  
+  
+## Response Code
+
+Code| Description  
+---|---  
+`200`| Data found  
+`400`| Data-center (Facility) Mismatch  
+`404`| Job missing in DataTrac or IS Database or in both  
+  
+## Example Request
+
+shellConfluencetrue
+
+## Example Response
+
+`200` OK
+
+jsonConfluencetrue
+
+* * *
+
+`404` NOT FOUND
+
+jsonConfluencetrue
+
+  
+
+

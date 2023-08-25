@@ -1,0 +1,120 @@
+title: Job Status Online Proofing
+body: New APIs for supporting online proofing.
+
+1) Update Mongo  
+Print team calls this API after divert is done on paper side. This API will
+update mongo database records with status provided by print team.
+
+ **URL:**  
+[http://pd-
+pilot1.infoimageinc.com:8580/infoservice/api/v1/onlineproofing/updateMongo?cid=tkcu&procId=948600](http://pd-
+pilot1.infoimageinc.com:8580/infoservice/api/v1/onlineproofing/updateMongo?cid=tkcu&procId=948600)
+
+ **Request body:**  {  
+"values" : [ {  
+"mail_piece_code": "qkd4a00001",  
+"pull_status" : "success"  
+}, {  
+"mail_piece_code": "qkd4a00002",  
+"pull_status" : "fail"  
+}, {  
+"mail_piece_code": "qkd4a0002",  
+"pull_status" : "fail"  
+}  
+]  
+}
+
+ **Response Json:**
+
+[ {  
+"pull_status": "success",  
+"mail_piece_code": "qkd4a00001",  
+"mongo_update": true  
+}, {  
+"pull_status": "fail",  
+"mail_piece_code": "qkd4a00002",  
+"mongo_update": true  
+}, {  
+"pull_status": "fail",  
+"mail_piece_code": "qkd4a0002",  
+"mongo_update": false  
+}  
+]
+
+2) E Statement Divert Report
+
+This API will pull records with status as 8 from E statement database. In put
+parameters for GET request are cid, appName, dt_job_id, proc_id and doc_type.
+
+GET  
+ **URL**  
+<http://pd-
+pilot1.infoimageinc.com:8580/api/v1/onlineproofing/eStatmentGetDivertReport/tkcu/TaxStatements/136468-C01.01-V21622/85853/etax>
+
+ **Response :**  {  
+"cid": "tkcu",  
+"total_num": "2",  
+"appName": "TaxStatements",  
+"dt_job_id": "136468-C01.01-V21622",  
+"p_job_id": "85853",  
+"doclist": [ {  
+"doc_id": "3201868",  
+"acct_num": "9153863",  
+"name": "HONG T MILLER"  
+}, {  
+"doc_id": "3201869",  
+"acct_num": "9407886",  
+"name": "Member"  
+}  
+]  
+}
+
+3) E statement GET status
+
+This API will fetch current status of e statement job based on list of
+p_job_ids passed to request.  
+GET  
+ **URL**  
+<http://pd-
+pilot1.infoimageinc.com:8580/infoservice/api/v1/onlineproofing/eStatmentGetStatusApi/cid/tkcu/p_job_ids/84537,84519>
+
+ **Response**  
+[ {  
+"client_id": "tkcu",  
+"p_job_id": 84537,  
+"dt_job_id": "136468-C01.01-V21622",  
+"status": "released",  
+"performed_by": "mholden",  
+"performed_date": "Dec 19, 2017 2:13:21 PM"  
+}, {  
+"client_id": "tkcu",  
+"p_job_id": 84519,  
+"dt_job_id": "136472-C01.01-V21447",  
+"status": "released",  
+"performed_by": "tkcu_anilk",  
+"performed_date": "Mar 28, 2018 1:41:20 PM"  
+}  
+]
+
+4) E statement Update  
+This API updates database tables and triggers appropriate email.  
+@PUT  
+ **URL**  
+<http://pd-
+pilot1.infoimageinc.com:8580/infoservice/api/v1/onlineproofing/eStatmentStatusUpdateApi?cid=tkcu>
+
+ **Request body**  {  
+"pJobId":"84519",  
+"doc_type" : "etax",  
+"reviewUser" : "tkcu_anilk",  
+"approvalStatus" : "released",  
+"divert" : "false",  
+"divertDocIdsList" : ["3201868","3201869"],  
+"dt_job_id" : "136472-C01.01-V21447",  
+"application_id" : "TAX 1042s"
+
+}
+
+  
+
+

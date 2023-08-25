@@ -1,0 +1,214 @@
+title: RHS - Dev Parallel: check in error
+description: !image-2020-11-03-13-30-19-172.png!
+
+
+author: rony
+comment: Hi Will, It says ronyD is not valid user.
+
+
+
+
+
+
+author: william.kong
+comment: [~rony]: I think you guys are reporting that /d/is/development/ronyD/ directory does not exist. If that is the case, i need to work creating and syncing. I'll keep you guys posted when that this is fixed.
+
+
+
+Please advise in new tickets if there are other issues. Thanks!
+
+
+
+
+
+
+author: william.kong
+comment: [~rony] and [~anwarh]: I need more time. Files are still syncing and I also need help from Prem to create a shared folder in our server so that i can have the /d/is folder to place the synced files.
+
+
+author: william.kong
+comment: [~rony] and [~anwarh]: Prem was able to help get things configured. Can you confirm that it works? If so, please re-assign ticket back to me to review and close out.
+
+
+
+
+author: rony
+comment: still can't check in.
+
+
+
+!image-2020-11-04-21-30-38-276.png!
+
+
+
+I don't think this is directory issue.
+
+
+
+
+author: william.kong
+comment: [~rony]: Issue is fixed. Apparently the authorized keys were missing on rhs server. Please re-test the check in/out .
+
+
+author: rony
+comment: Thanks check in for dev is resolved , but the problem is now for parallel . I can't check in .
+
+
+
+!image-2020-11-05-21-41-59-016.png!
+
+
+
+It says no files but there are actually files . Not sure what's the issue here. I will check more.
+
+
+
+[~William.Kong] [~anwarh]
+
+Thanks,
+
+Rony
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~rony] and [~anwarh]: I'm sync most of the /d/*** folders on RHT now. I think another 2 to 3 hours should be completed. I but I think at least /d/is/ is done.
+
+
+
+Please re-assign ticket back to him if you confirmed it works or if there are additional issues.
+
+
+author: tohiduli
+comment: Hi [~William.Kong]
+
+We still can't check-in to parallel. There maybe mount issues. see the attached images.
+
+!image-2020-11-11-15-10-40-645.png!
+
+!image-2020-11-11-15-10-54-857.png!
+
+
+author: william.kong
+comment: [~anwarh]: Can you share the error you are getting so that I can troubleshoot?
+
+
+
+Here's what I did and I don't see any error messages:
+
+
+
+!image-2020-11-11-21-21-02-445.png!
+
+
+author: tohiduli
+comment: Hi [~William.Kong]
+
+We can check-in to development but when we try to check-in parallel environment then there is a error called "cannot access '/d/is/parallel/tohidulI/': no such file or directory."
+
+But there is already files in that directory.
+
+!image-2020-11-12-14-02-23-769.png!
+
+
+author: william.kong
+comment: [~tohidulI]: I just fixed it. Please re-test the parallel checkin.
+
+
+
+Apparently I did not sync the folders correctly and the permissions were off.
+
+
+author: anwarh
+comment: [~William.Kong]: this issue still persists
+
++*On DSI machine:*+
+
+!image-2020-11-13-20-16-58-800.png|width=307,height=35!
+
++*when we tried to Checkin:*+
+
+*!image-2020-11-13-20-18-38-237.png|width=644,height=242!*
+
+
+
++*Possible Cause:*+
+
+When I checked in `RHS`, there is no folder mounted at `/d/is/parallel`
+
+That's why even though the file shows in our DSI machine, the same file doesn't show up in the `RHS` machine
+
+!image-2020-11-13-20-23-15-232.png|width=374,height=51!
+
+That's why the scripts fail for parallel check-in.
+
+
+
++*Possible Solution:*+
+
+I think you need to mount the `/d/is/parallel` folder into the `RHS` machine, as this shows up in our `DSI` machine.
+
+!image-2020-11-13-20-43-55-243.png|width=682,height=93!
+
+
+
+
+author: william.kong
+comment: [~anwarh]: Sorry about that! I've fixed it on the rhs server. It was not mounted toca-isilon02-nfs::/rhstore/is.
+
+
+
+good job on the troubleshooting!
+
+
+author: anwarh
+comment: [~William.Kong]: That mount issue got solved, but faced another one,
+
+!image-2020-11-16-14-29-01-965.png|width=647,height=179!
+
+Looks like you need to set up a new authentication key pair for this new server.
+
+
+
+
+author: william.kong
+comment: [~anwarh]: I'm not able to trouble. Which account are you using and which server are you running the parallel code submit. please share command so I can troubleshoot. Please re-assign ticket back to me when you are done.
+
+
+author: anwarh
+comment: [~William.Kong]: from `dsi` machine with `testmain` account.
+
+check-in was successful, but it asks for a password when it tries to sync resources with texas.
+
+!image-2020-11-17-13-21-50-145.png|width=604,height=432!
+
+With our old server, this process never asks for a password here.
+
+
+
+
+author: william.kong
+comment: [~anwarh]: I was able to fix it. Please re-test.
+
+
+author: anwarh
+comment: [~William.Kong]: Looks like the mounting issue resurfaced again.
+
+Same as: [Above Comment|https://jira.infoimageinc.com/browse/IBTL-170?focusedCommentId=15104&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-15104]
+
+
+
+!image-2020-11-19-20-44-26-452.png|width=710,height=282! :
+
+
+author: william.kong
+comment: [~anwarh]: Can you try again? I was able to get it to work. I+think+ you were using the menlo dsi server instead of the brisbane dsi server when testing above:
+
+
+
+!image-2020-11-19-10-25-58-375.png!

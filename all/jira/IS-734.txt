@@ -1,0 +1,787 @@
+title: SEFC Mortgage Statement (Regular) - Core conversion to Black Knight
+description: SEFC Mortgage Statement - Core conversion to Black Knight. Please note, there are 4 templates.
+
+1. Regular
+
+2. Delinquent
+
+3. Bankruptcy
+
+4. Reinstated/Accelerated
+
+
+author: ratnam
+comment: Hi Tanmay, please review updating mapping for Standard Mortgage in below link. As mentioned on call, please note that certain fields in red need to be revised with by SEFCU or Black Night.
+
+
+
+[http://sharepoint-svr/AS/Mapping%20Documents/Forms/AllItems.aspx?RootFolder=%2fAS%2fMapping%20Documents%2fSEFC%20%2d%20SEFCU%2fCore%20Conversion%20%28to%20Black%20Night%29%2fMortgage&FolderCTID=&View=%7bFB06A6A8%2d3105%2d42F3%2dA6B3%2d8100357CA393%7d]
+
+
+
+Thanks
+
+Ratna
+
+
+author: ratnam
+comment: Tanmay, as discussed on call this morning attached are current core mappingsefcu_current_core_mapping.zip for various versions of mortgage noted below. Also included hfs record layout for reference. Please help look up logic/flag within current core code as noted in mapping.
+ # Standard Mortgage- we are good and pretty much covered. There is just one verbiage noted in red to confirm if it is hardcoded across all templates.
+ # Standard Mortgage with Delinquency- Pretty much covered with mapping. Only need help figuring the logic/flag to include delinquency section.
+ # Bankruptcy - i found templates for BK Chap 7 and Chap 13. I am not sure if there is a standard bankruptcy template out there. Please review and let me know if bankruptcy is generated specifically for these two chapters or if there is an additional standard bankruptcy template as well? Also, there are sections highlighted in red to look up in code and confirm logic/flag.
+ # Mortgage accounts with Accelerated and Reinstatement Amounts -**we are good and pretty much covered. Please review anything you may want to add for this template.
+
+Thanks for the help!
+
+Ratna
+
+
+author: tanmay
+comment: [~ratnam] updated mapping ([^sefcu_current_core_mapping_dsi_01272022.zip]) with note. please check.
+ # *Standard Mortgage- we are good and pretty much covered. There is just one verbiage noted in red to confirm if it is hardcoded across all templates.*
+ {color:#ff0000}we missed the red note. can you give a snapshot of it ?{color}
+ # *Standard Mortgage with Delinquency- Pretty much covered with mapping. Only need help figuring the logic/flag to include delinquency section.*
+ {color:#ff0000}If there is E1 record is present thendelinquency section will be displayed both for standard and BK.{color}
+ # *Bankruptcy - i found templates for BK Chap 7 and Chap 13. I am not sure if there is a standard bankruptcy template out there. Please review and let me know if bankruptcy is generated specifically for these two chapters or if there is an additional standard bankruptcy template as well? Also, there are sections highlighted in red to look up in code and confirm logic/flag.*
+ {color:#ff0000}Apparently there are two templates, one for BK (7 and 13 ) and standard one. BK templates get displayed when record A1 618-619 is 13 or 7. In BK template there is minor changes based on BK value 7 or 13 but maximum is similar. I have added note on your provided mapping. Moreover i add some additional flag to display certain verbiagebased on code.please check.{color}
+ # *Mortgage accounts with Accelerated and Reinstatement Amounts -**we are good and pretty much covered. Please review anything you may want to add for this template.*
+ {color:#ff0000}It looks good. this section may appear in BK template as well.{color}
+
+[~ratnam] if there any confusion we can discuss on a quick call
+
+
+author: JIRAUSER10907
+comment: HI [~ratnam],
+
+_*Archival specification is listed below:*_
+
+*+Zip File name:+sefc_hfsbill_archival_<mmddyy>.zip*
+
+*Zip Contents::*
+
+*+Index file name:+{color:#172b4d}sefcml1.archive.txt{color}*
+
+*{color:#172b4d}+Index Contents:+ MEMBER_NAME|LOAN_NUMBER|PDF_FILE_NAME{color}*
+
+*{color:#172b4d}+Index Content Example:+ Melissa K. Vivenzio|254273910|254273910_3872.pdf{color}*
+
+*{color:#172b4d}+Individual PDF Name:+{LOAN_NUMBER}_\{SEQ_NUM}.pdf{color}*
+
+*+PDF Name Example:+ 254273910_3872.pdf*
+
+
+
+*+File Name in client pickup(SEFC/client_pickup):+sefc_hfsbill_archival_<mmddyy>.zip.pgp*
+
+ *-No Email Notification*
+
+{color:#172b4d}*-No splitting logic applicable*{color}
+
+
+
+{color:#172b4d}Thanks{color}
+
+{color:#172b4d}Najoa{color}
+
+
+
+
+author: tanmay
+comment: [~stephen.yee@infoimageinc.com] [~ratnam] the provided date filesefc.test.EXT0571.220224.2239.pgp has only one statement data and that is standard mortgage and dont have anyAccelerated/Reinstated accounts.
+I have attached that one statement([^sefcml11_sefc.test.EXT0571.220224.2239.pdf]) here .please check.
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~tanmay] [~Najoa] - Can you please provide samples for the following accounts from the test file...
+
+552700900
+9909383900
+351348900
+57255900
+57816910
+59711910
+39120930
+5318900
+9895404900
+
+Can you also please provide statement samples for these accountsusing that December statement file?
+
+Ch 7 bankruptcy 
+- 485482900  Lisa Thomas, 
+- 64547900- Paul Bedrey
+- 396809900  Justin Genevick
+
+Ch 13 bankruptcy
+
+- 9872112900  Alison Rapuano,
+
+- 271273910  Robert Traina
+
+- 691232900  Robert Levine
+
+
+Delinquency /Accelerated and reinstated accounts
+- 286945900  Shawn Cootware
+- 2661910  Paul Kosnick
+- 28620900  Donald Emerich
+- 201055900  Donna Ford, 
+- 419722900  Leroy Green
+
+
+
+
+author: stephen.yee@infoimageinc.com
+comment: Hi [~tanmay]- 1 more account.
+
+0600243900 - in data file -sefc/sefc.test.EXT0571.220309.2103.pgp sent on 3/9.
+
+
+
+CU would like these samples by Monday, 3/14.
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~tanmay]- Please also advise on the following...
+
+1. When index file will be ready for ISD testing.
+
+2. Your review of the PDF archival Specs. Please advise on sample date.
+
+3. Your review of the Invalid address report. Please advise on sample date.
+
+
+author: tanmay
+comment: [~stephen.yee@infoimageinc.com] [~ratnam]
+
+Sample has been attached please check.
+Sample File:
+
+[^sample_selective_account_03142022_sefc.test.EXT0571.211216.2219.zip]
+
+[^sample_03142022_sefc.test.EXT0571.220309.2103.pgp.zip]
+
+
+
+
+author: ratnam
+comment: Hi Steve, CU did not confirm Index portion for Mortgage statements. They are still figuring if a cross reference file will be required to pull matching account number for loan number. I did notify Tanmay to hold E portion.
+
+
+
+Thanks
+
+Ratna
+
+
+author: stephen.yee@infoimageinc.com
+comment: Understood [~ratnam]. [~tanmay]- Please advise on ...
+
+2. Your review of the PDF archival Specs. Please advise on sample date.
+
+3. Your review of the Invalid address report. Please advise on sample date.
+
+
+
+
+author: tanmay
+comment: [~stephen.yee@infoimageinc.com]we will provide you sample of pdf archival and invalid address report 03/29/2022
+
+
+author: ratnam
+comment: Hi Tanmay, I uploaded new file sefc.test.EXT0571.220314.2102.pgp to Jira. Please generate samples for below accounts (Accelerated) -
+
+2661910  Paul Kosnick
+ 28620900  Donald Emerich
+ 286945900  Shawn Cootware
+ 635740900  Christy Barton
+
+
+
+Thanks
+
+Ratna
+
+
+author: tanmay
+comment: [~ratnam]sample([^sefc_sample_03162022_sefc.test.EXT0571.220314.2102.zip]) has been attached fromsefc.test.EXT0571.220314.2102.pgp for selective accounts. Please check
+
+
+author: tanmay
+comment: [~ratnam] [~stephen.yee@infoimageinc.com]sample has been placed at/d/infoftps3/Vend_DSI/client_pickup/print_process/SEFC/
+
+file name issefc_sample_03212022.zip
+
+
+author: tanmay
+comment: [~ratnam]
+
+Sample has been placed at/d/infoftps3/Vend_DSI/client_pickup/print_process/SEFC/
+
+File name :sefc_sample_220316.zip
+
+generated from
+sefc.test.EXT0571.220316.2104
+
+
+author: ratnam
+comment: Hi [~tanmay] , please find account list for sample. Please review these as well.
+
+
+
+Thanks
+
+Ratna
+
+
+author: tanmay
+comment: Sample([^sefc_selective_accounts_sample_0316.zip]) has been attached from selective accounts.
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~tanmay]- Per my zoom message, here is the list of samples the CU would like from the filesefc/sefc.test.EXT0571.220316.2104.pgp.
+
+[^SMS Statement Review Scenarios.xlsx]
+
+
+author: tanmay
+comment: [~stephen.yee@infoimageinc.com] [~ratnam]Sample([^sefc_sample_0316_03242022.pdf]) has been attached . Some accounts are missing (red one)
+
+!image-2022-03-24-16-29-04-470.png!
+
+
+author: ratnam
+comment: Hi [~tanmay]please generate samples for attached account list "Accelerated and Reinstated_Account Lis_0571_03242022.xlsx".
+
+
+
+Thanks
+
+Ratna
+
+
+
+
+author: tanmay
+comment: [~ratnam] [~stephen.yee@infoimageinc.com]
+
+Sample ([^sefc_sample_0316_03252022.pdf]) has been attached from given account list(Accelerated and Reinstated_Account Lis_0571_03242022.xlsx).But no account match the logic forAccelerated and Reinstated
+The following accounts are missing (red one)
+
+!image-2022-03-25-16-31-13-744.png!
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~tanmay]- They just sent a data file last night to generate samples using the account list. I'm having DP move for you now. Let you know as soon as it's in place.
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~tanmay]- File is there now. Please use to generate samples from the account list"Accelerated and Reinstated_Account Lis_0571_03242022.xlsx".
+
+sefc.test.EXT0571.220324.2103.pgp
+
+
+
+
+author: tanmay
+comment: [~stephen.yee@infoimageinc.com] [~ratnam]
+
+Sample ([^sefc_sample_0324_03282022.pdf]) has been attached generated fromsefc.test.EXT0571.220324.2103.pgp
+
+
+author: stephen.yee@infoimageinc.com
+comment: HI [~tanmay]- Can you please generate samples for the entire test file -sefc.test.EXT0571.220316.2104.pgp, but when you generate, can you generate using multiple PDF's? The CU could not open the last PDF as it was too large. Please advise. Thanks.
+
+
+author: ratnam
+comment: Hi [~tanmay],
+ # Please generate full sample for CU usingsefc.test.EXT1387.220311.2102 file.Can you provide these samples in smaller sets (multiple files with reduced file size) rather than one single big file because CU is having difficulty opening the huge file and search for accounts.
+ # Also generate another set using attached account list03282022_SEFCU_EXT0571_03162022_Samples.xlsx
+
+Thanks
+
+Ratna
+
+
+author: tanmay
+comment: [~ratnam]
+
+I dont find the data filesefc.test.EXT1387.220311.2102, please ask dp to copy the data file at/d/infoftps3/Vend_DSI/client_pickup/print_process/SEFC/
+
+Thanks
+Tanmay
+
+
+author: tanmay
+comment: [~stephen.yee@infoimageinc.com] [~ratnam]
+
+Sample has been placed at/d/infoftps3/Vend_DSI/client_pickup/print_process/SEFC/mtg
+
+generated fromsefc.test.EXT0571.220316.2104.pgp
+
+!image-2022-03-29-17-10-59-663.png!
+
+
+author: ratnam
+comment: Sorry [~tanmay]all i needed was using 03/16 data file.
+
+
+author: tanmay
+comment: [~ratnam]
+
+Sample([^sefc_sample_selective_accounts_0316_03292022.zip]) has attached from 0316 cycle using03282022_SEFCU_EXT0571_03162022_Samples.xlsx list
+
+
+author: stephen.yee@infoimageinc.com
+comment: Hi [~tanmay]- I have down the PDF archival and Invalid address reports samples are due today. Please advise.
+
+
+author: tanmay
+comment: [~stephen.yee@infoimageinc.com]We are working on it . we will provide report once done.
+
+
+author: ratnam
+comment: Hi [~tanmay]
+
+please hold on PDF Archival. CU is going to include doctype in index content and confirm the value. I will turn over SOW with updated PDF Archival Specifications.
+
+Please hold on E portion as well as Steve confirmed that CU will be providing a cross reference file to pull SEFCU Member Number for corresponding Loan Number with data file.
+
+You may proceed with generating Invalid Address Report sample.
+
+[~stephen.yee@infoimageinc.com]do you have an ETA when CU will be sending the cross reference file?
+
+
+
+Thanks
+
+Ratna
+
+
+author: tanmay
+comment: [~ratnam] [~stephen.yee@infoimageinc.com]
+
+Invalid address report has attached from arbitrary data. Please review the report
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~tanmay]- Please see attached list of accounts to generate samples for from the files SEFCU sent to us. Today if possible.
+
+[^04182022_Loss Mit_Monthly Statement0571_Loss Mit.xlsx]
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~tanmay]- Please also generate samples from this 2nd account list.
+
+[^04182022_SMS Kristen_Monthly Statement 0571_SMS Kristen.xlsx]
+
+
+author: tanmay
+comment: [~stephen.yee@infoimageinc.com] [~ratnam]
+
+Sample ([^sample_sefcml11_04182022_Loss Mit_Monthly Statement.pdf][^sample_sefcml11_04182022_SMS Kristen_Monthly Statement.pdf]) has been attached.please check
+
+
+author: ratnam
+comment: [~tanmay]per mapping both the dates below are populated using same field. But sample has different values. Why is that so? Please fix this if there is an issue from our end and resend samples ASAP. Thanks!
+
+
+
+!image-2022-04-20-11-13-53-304.png|width=1294,height=198!
+
+
+author: ratnam
+comment: Hi [~tanmay]I requested DP to copy data file from 4/11 to/d/infoftps3/Vend_DSI/client_pickup/print_process/SEFC/. You are included in email as well. Please generate samples using the uploaded account list *04112022_Loss Mit_Monthly Statement0571_Loss Mit.xlsx* as soon as you receive the file.
+
+
+
+I added few feedback items to smartsheet. Please review if you are able to include the mapping updates in sample. If you are not able to include all updates then please just generate sample with whatever you have ready so far with a note the feedback items resolved.
+
+
+
+Thanks
+
+Ratna
+
+
+author: ratnam
+comment: Hi [~tanmay]please generate another sample using data file from 4/18 that DP just copied to/d/infoftps3/Vend_DSI/client_pickup/print_process/SEFC/. And uploaded account list 04272022_LossMit_Mtg Stmt_Delq.xlsx to generate samples using this file.
+
+
+|sefc/sefc.test.EXT0571.220418.2105.pgp|23.01 Mb|befbdb8a1f41038f24a3310dbd8e3048|
+
+
+
+Thanks
+
+Ratna
+
+
+author: tanmay
+comment: [~ratnam]sample([^sefcml5_sample_220411_selective_accounts.pdf][^sefcml5_sample_220418_selective_accounts.pdf]) has been attached
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~tanmay]- Please generate 1 more sample from the filefrom 4/18 that DP copied to /d/infoftps3/Vend_DSI/client_pickup/print_process/SEFC/. See attached.
+
+[^Katherine Larson Request Template.xlsx]
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~tanmay]- Please generate samples from the 0571 files that came in on 4/28 and 4/29. DP has copied them to your folder.
+
+
+
+[oper1@rhs2 test]$ cp sefc.test.EXT0571.220428.2102.pgp /d/infoftps3/Vend_DSI/client_pickup/print_process/SEFC
+
+[oper1@rhs2 test]$ cp sefc.test.EXT0571.220429.2103.pgp /d/infoftps3/Vend_DSI/client_pickup/print_process/SEFC
+
+
+
+
+author: tanmay
+comment: [~stephen.yee@infoimageinc.com] [~ratnam]
+
+Request samples has been attached . please check.
+
+[^Katherine Larson Request Template Sample.pdf]
+
+[^sample_sefcml5_220428_05062022.pdf]
+
+[^sample_sefcml5_220429_05062022.pdf]
+
+
+author: william.kong
+comment: [~stephen.yee@infoimageinc.com]& [~ratnam]: Per [~tanmay]email to me this morning, revised sample date based on clients new round of feedback will be 5/27 instead of 5/24. I also understand from Ratna last Thursday and Monday this week, that it sounds like SEFC +might+++still provide more changes to mapping on Mortgage in addition to the ones we Tanmay is going to provide revised sample. Ratna is not confident that this will be the last round of changes.
+
+
+
+[~stephen.yee@infoimageinc.com]: Per my escalation in the management meeting with [~phoebe.george], Guy and Tomas this morning, I have communicated that SEFC & BlackKnight are still make rounds and rounds of changes and my understanding was that we are to have all the approvals by 6/3 to lock down this application. We the additional delays getting the feedback with this new around of changes, I believe the timeline will have to change again potentially jeopardizing the July live date.
+
+
+
+Guy wants us to document via an updated timeline tell them how much timeline will be push further out versus telling them that project will be late. Please consult with [~phoebe.george]in your next staff meeting to discuss about this project and what you need from us to re-establish a new timeline.
+
+
+
+Thanks!
+
+
+
+ Will
+
+
+author: ratnam
+comment: [~tanmay]please find account list05202022_SMS_LossMit_EXT0571 Billing File.xlsx and generate the sample.
+
+I will have another request soon for April file as well.
+
+
+
+Thanks
+
+Ratna
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~tanmay]-Please see the account lists for April EXT 0571 monthly billing file samples. Please provide samples from the 4/18 file. Thank you!
+
+[^04182022_LossMit_Mtg Stmt_Delq.xlsx]
+
+[^04182022_Loss Mit_Monthly Statement0571_Loss Mit (1).xlsx]
+
+[^04182022_SMS Kristen_Monthly Statement 0571_SMS Kristen (1).xlsx]
+
+
+author: ratnam
+comment: Hi [~tanmay] CU wants to change eStatement index to use *DNA_Account* within cross reference file instead of Member_Number. I updated SOW. Please review and program accordingly.
+
+
+
+Thanks
+
+Ratna
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~tanmay]- Please also use the list when generating samples from the file -sefc.test.EXT0571.220621.2103.pgp
+
+[^06222022_SMS & Loss Mit_Mortgage 0571_June2022.xlsx]
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~tanmay]- CU has confirmed no more updates. Anything further will be moved to a phase 2. Can you please ready index file so ISD can post to pilot? [~Shun.Kuwashima]- FYI.
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~berezinez] [~Igor.Khosid] [~tanmay] [~Shun.Kuwashima]-
+
+This has been approved. Please prepare for QA and change status to ready for QA. Please provide...
+
+1. Parallel ID
+ 2. Export projects into QA Folder
+ 3. Provide DPVS for print samples.
+ 4. Provide index file for QA posting - (Please have ready by 6/29)
+
+Approved samples -[^06222022_SMS_and_Loss_Mit_Mortgage_0571_June2022.zip]
+
+SOW - [http://sharepoint-svr/AS/Shared%20Documents/SOW%20Directory/SEFC%20-%20SEFCU/SOWs/SEFC%20Mortgage%20Stmt%20SOW%20Black%20Knight%20Conversion%202.1.22.docx]
+
+Mapping - [http://sharepoint-svr/AS/Mapping%20Documents/Forms/AllItems.aspx?RootFolder=%2fAS%2fMapping%20Documents%2fSEFC%20%2d%20SEFCU%2fCore%20Conversion%20%28to%20Black%20Night%29%2fMortgage&FolderCTID=&View=%7bFB06A6A8%2d3105%2d42F3%2dA6B3%2d8100357CA393%7d]
+
+
+
+
+author: tanmay
+comment: [~Igor.Khosid] [~berezinez] [~stephen.yee@infoimageinc.com] [~ratnam] [~Najoa][~rony]
+ 1. project has been placed at /d/iss/qa/SEFC/SEFCML51.zip
+ 2. dpvs( [^sefcml5124.print] ) has attached
+ 3. parallel id 20220302045635
+ 4. print range: 1-3,25-26,29-30,33-34,37-38,49-50 from sefcml51244.2o1.afp
+ 5. index file name : ml5_20220610_1_20220629_0341_sefc.txt([~Shun.Kuwashima] for posting in stage)
+ 6. please provide approved sample
+ 7. archival sample has been placed at /z/infoftps3/sefc/client_pickup/sefc_ext0571_archival_062422_1_1.zip.pgp
+ 8. procs file has been placed at parallel
+ 9. version id , app id in datatrac still pending , confirm you when done
+
+
+author: tanmay
+comment: [~Shun.Kuwashima] [~stephen.yee@infoimageinc.com]
+
+for pilot site we have run the big data file from 0621
+please post the following index file in pilot site
+ml5_20220621_1_20220629_0531_sefc.txt
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220302045635
+   Currently in parallel: Yes
+   User: mahbuburT
+   Description: SEFC mortgage
+   Date Submitted: 2022-03-02 04:56:46
+   Date Last Updated: 2022-06-29 06:51:41
+   Files:
+      1) SEFCML51.prj
+      2) SEFCML51.dfa
+      3) S1SEFCL4.300
+      4) sefcml5.control
+      5) sefcml5_pdf.control
+      6) sefcml5_process.sh
+      7) sefcml5.procs
+
+
+author: igor.khosid
+comment: [~Shun.Kuwashima] - sounds like "S1SEFCL4.300" need to be uploaded. Please check 
+
+[~berezinez] - FYI
+
+
+author: shun.kuwashima
+comment: [~tanmay] Do I need to upload this resource file S1SEFCL4.300 or any others? If so please provide them on ISD-6187.
+
+
+author: JIRAUSER11104
+comment: Print samples >>>[^IS-734_SEFC_PrintSamples_06292022.pdf]
+
+
+author: JIRAUSER11104
+comment: Tap test - FAILED.
+
+Mailer ID #901811969
+The logo and address in the upper window of the envelope are hidden:
+ !scr_tap_test_06292022.png|thumbnail! 
+
+
+author: shun.kuwashima
+comment: [~stephen.yee@infoimageinc.com] [~tanmay] I posted ml5_20220621_1_20220629_0531_sefc.txt onto pilot and it should be showing under job status.
+
+ I tried posting ml5_20220610_1_20220629_0341_sefc.txt on stage, but estmt job tracking does not seem to be enabled, hence it failed posting. Can you reach out to PC to enable this?
+
+
+author: shun.kuwashima
+comment: [~stephen.yee@infoimageinc.com] [~tanmay] index file ml5_20220610_1_20220629_0341_sefc.txt reposted successfully on stage after estmt tracking was enabled.
+
+
+author: berezinez
+comment: [~stephen.yee@infoimageinc.com]
+
+please advise account number should be masked?
+
+!account number.GIF!
+
+
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~berezinez]- Yes, all but the last 4 digits. SOW has been updated.
+
+
+author: tanmay
+comment: [~Igor.Khosid] [~berezinez]
+For tap test
+1. updated project has been placed at /d/iss/qa/SEFC/SEFCML51.zip
+2. updated dpvs( [^sefcml5124.print] ) has been attached
+3. print range: 1-3,25-26,29-30,33-34,37-38,49-50 from sefcml51244.2o1.afp
+
+
+author: JIRAUSER11104
+comment: [~berezinez]
+Print samples >>>  [^IS-734_SEFC_PrntSmpls_06302022.pdf] 
+
+
+author: JIRAUSER11104
+comment: [~berezinez] FYI
+Tap test - FAILED.
+
+Mailer ID #901811969
+The address in the upper window of the envelope is hidden:
+ !scr_tap_test_06302022.png|thumbnail! 
+
+
+author: tanmay
+comment: [~Igor.Khosid] [~berezinez] please check again
+For tap test
+1. updated project has been placed at /d/iss/qa/SEFC/SEFCML51.zip
+2. updated dpvs(  [^sefcml5124.print] ) has been attached
+3. print range: 1-3,25-26,29-30,33-34,37-38,49-50 from sefcml51244.2o1.afp
+
+
+author: berezinez
+comment: [~stephen.yee@infoimageinc.com]
+
+please advise, it's not SOW, should we add bre envelope?
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~berezinez]- No BRE required.
+
+
+author: JIRAUSER11104
+comment: Print samples >>>[^IS-734_SEFC_PrintSamples_07012022.pdf]
+
+Tap test - PASSED.
+ !scr_tap_test_07012022.png|thumbnail! 
+
+
+
+author: berezinez
+comment: [~tanmay]please attach IS checklist
+
+
+author: tanmay
+comment: [~berezinez] IS checklist( [^IS-734#is_checklist.docx] ) has been attached. 
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~tanmay] [~berezinez]- FYI - will submit parallel after EOM on 7/7.
+
+
+author: berezinez
+comment: [~tanmay] [~stephen.yee@infoimageinc.com]
+
+QA is completed, IS checklist is attached.
+
+[^IS_734_SEFC_IS_checklist.pdf]
+
+
+
+
+author: stephen.yee@infoimageinc.com
+comment: Hi [~berezinez]- FYI - the last update has been approved.
+
+[~tanmay]- Please export to QA.
+
+To recap, the update was...
+
+*Updated Transaction Code Mapping for Tran Code 351:*
+
+{color:#242424}IF (RECORD S) AND (TRAN IN [310, 312,{color}{color:#242424}{color}{color:#de350b}351{color}{color:#242424}]) AND DISB-PROC-DATE (S,1006-1011) IN [04/30/22, 06/30/22]){color}
+ THEN
+  Suppress TRANSACTION from statement
+ ELSE
+  DATE: DISB-PROC-DATE(S/W,1006-1011)
+  DESCRIPTION: Cross Reference TRAN() against Transaction Mapping document
+  AMOUNT: NET-DISB(S/W,0016-0021)
+  (Refer Transaction Mapping document to display in Payments vs Charges column within Transaction Activity. All the transaction amounts within Additional Information section will be displayed in Amount column)
+
+
+
+Here are the approved samples. Please QA as we need to submit to parallel tomorrow.
+
+[^sefc_mortgage_sample_0705_07122022.pdf]
+
+
+author: tanmay
+comment: [~Igor.Khosid][~berezinez][~stephen.yee@infoimageinc.com]
+
+1. project has been placed at /d/iss/qa/SEFC/SEFCML51.zip
+2. dpvs( sefcml5124.print ) has attached
+3. parallel id 20220302045635
+4. print range: 1-3,25-26,29-30,33-34,37-38,49-50 from sefcml51244.2o1.afp
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220302045635
+   Currently in parallel: Yes
+   User: mahbuburT
+   Description: SEFC mortgage
+   Date Submitted: 2022-03-02 04:56:46
+   Date Last Updated: 2022-07-12 06:52:16
+   Files:
+      1) SEFCML51.prj
+      2) SEFCML51.dfa
+      3) S1SEFCL4.300
+      4) sefcml5.control
+      5) sefcml5_pdf.control
+      6) sefcml5_process.sh
+      7) sefcml5.procs
+
+
+author: igor.khosid
+comment: [~berezinez] - please proceed as discussed
+[~stephen.yee@infoimageinc.com] - please request print samples and need to discuss the due date
+
+
+author: berezinez
+comment: [~tanmay] [~stephen.yee@infoimageinc.com]
+
+QA is completed, TRAN CODE updated.
+
+
+author: tanmay
+comment: [~TunA] [~stephen.yee@infoimageinc.com]
+
+Transfer form ( [^IS_PROGRAM_TRANSFER_FORM_IS-734.doc] ) has been attached and files has been placed at /d/is/cvs/xfer/mahbuburT/
+Please proceed to production.
+
+
+
+author: tuna
+comment: Hi [~tanmay], [~stephen.yee@infoimageinc.com],
+
+Following codes have been released.
+
+You marked "*Update email list? = Y".*
+
+But I dont see the mail list attached. I assume you already copied that.
+
+
+
+Thanks,
+
+Tun
+
+
+
+07/20/2022 mahbuburT IS-734 SEFC Mortgage Statement (Regular) - Core conversion to Black Knight
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/mahbuburT/
+ total 808
+ -rwxrwxrwx 1 mahbuburT DSI 4875 Jul 20 04:27 S1SEFCL4.300
+ -rwxrwxrwx 1 mahbuburT DSI 217117 Jul 20 04:27 SEFCML51.dfa
+ -rwxrwxrwx 1 mahbuburT DSI 664 Jul 20 04:27 SEFCML51.prj
+ -rwxrwxrwx 1 mahbuburT DSI 1672 Jul 20 04:27 sefcml5.control
+ -rwxrwxrwx 1 mahbuburT DSI 467 Jul 20 04:27 sefcml5_pdf.control
+ -rwxrwxrwx 1 mahbuburT DSI 16362 Jul 20 04:28 sefcml5_process.sh
+ -rwxrwxrwx 1 mahbuburT DSI 3373 Jul 20 04:28 sefcml5.procs
+
+

@@ -1,0 +1,44 @@
+title: Release note for stateless version of FCSB customer site.
+body: ## **Objective**
+
+Making FCSB customer site responsive and stateless.
+
+##  **Goal**
+
+Cookie will be used instead of session in the entire application for SSO
+login, DSO will still use session. User information (encrypted token) will be
+stored in cookie instead of session.
+
+##  **Development**
+
+A filter class has been introduced to do some validation on cookies. Every
+request is intercepted by that filter. The filter class checks if encrypted
+user information is saved in cookie or not. After validation, it adds
+additional information to the cookie and forwards the request to the expected
+endpoint.
+
+To support both SSO7(SingleSignOn servlet) and DI login in the stateless
+version, there are some changes in the following files:
+
+  1. com.infoimage.security.SingleSignOnServlet.java( ** _i3-core_** )
+  2. IFSIBssoexchange.jsp
+  3. hblogin.jsp
+
+Also in every page data is fetched from the cookie instead of session.
+
+  * In SingleSignOnServlet.java previously set cookies are being cleared.
+  * In IFSIBssoexchange.jsp encrypted user information is being set after clearing the previously set data in the cookie.
+  * Also in hblogin.jsp  after clearing the previously set data in the cookie.
+  * Sitemesh filter mapping has been added in web.xml file.
+  * A new folder named "box" has been added for base layout.
+  * Some endpoints are excluded from filter class in ROOT/WEB-INF/conf/decorators.xml
+
+##  **Changed files**
+
+  1. com.infoimage.security.SingleSignOnServlet.java
+  2. IFSIBssoexchange.jsp
+  3. hblogin.jsp
+  4. web.xml
+  5. And all other pages have some changes for fetching data from cookies and request instead of session.
+
+

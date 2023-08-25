@@ -1,0 +1,42 @@
+title: 13755 - BKFN - Member enrolling issue
+description: Issue on prod. When users try to enroll via dso, test.jsp sets the attribute as ssoLogin instead.
+
+Step 1: [https://www.bankfinancial.com/bankfinancial/enrollment](click eStatements Forgot Enrollment)
+
+Step 2: [https://onlinebanking.bankfinancial.com/enroll/test.jsp](should be Enrollment Step 1 of 4 )
+
+
+author: patric k
+comment: unable to reach check_point.jsp on prod
+
+
+author: patric k
+comment: identified issue in test.jsp (root). The logic is setting attribute to ssoLogin, but it should be dsoLogin. I think its because the production path isn't /login.jsp before getting to test.jsp
+
+
+
+
+author: abdullah.baki
+comment: Hi [~Patric K],
+
+I have a similar finding as yours. at *test.jsp* page*previous_page*variable doesn't contain "/login.jsp" so it doesn't set "dsoLogin" attribute to the session. this is also visible on the test page as the enrollment steps count is wrong.. instead of "Enrollment - Step 1 of 4" it shows "Enrollment - Step 1 of 3".
+
+All the ssoExchange pages set "ssoLogin" from that pages (IFSBBssoexchange.jsp,IFSIBssoexchange.jsp,IFSBFSssoexchange.jsp) and the from [https://www.bankfinancial.com/bankfinancial/enrollment]this page we get previous_page value as "https://www.bankfinancial.com/" so we could add this in the test.jsp page to set *dsoLogin*attribute. As this is a bug in the production environment I'm not sure how to replicate the sso scenario to have a complete test but I did test on dso so I think it will work fine. Let me know.
+
+
+
+Thanks,
+
+Abdullah
+
+
+author: patric k
+comment: [~abdullah.baki] Thanks for the feedback.
+
+
+author: patric k
+comment: Client presented with options to either update the link to include /login.jsp, or send programming request.
+
+
+author: patric k
+comment: Client never responded, but on production site seems to work properly

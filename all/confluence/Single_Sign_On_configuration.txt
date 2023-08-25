@@ -1,0 +1,430 @@
+title: Single Sign On configuration
+body:   
+
+250
+
+  
+
+ **TERMS RELATED TO Active Directory Federation   Service ** **(ADFS):**
+
+ **Claim Provider Trust:** In the ADFS Management snap-in, claims provider
+trusts are trust objects typically created in resource partner organizations
+to represent the organization in the trust relationship whose accounts will be
+accessing resources in the resource partner organization
+
+ **Relying Party Trust:**  A relying party trust is the configuration that is
+used in the accounts partner organization that is used to create claims.
+Normally it is used between the accounts partner and the resource partner but
+can also be used with a claims based application.
+
+ **Claims** : A claim is a statement about a user that is used for
+authorization purposes in an application. ADFS brokers trust between disparate
+entities by allowing the trusted exchange of arbitrary claims that contain
+arbitrary values. The receiving party uses these claims to make authorization
+decisions.
+
+ADFS supports three types of claims:
+
+  1. Identity claim. There are three types of identity claims:
+    1. User Principal Name (UPN). Indicates a Kerberos-style user UPN, such as _user@realm._
+    2. E-mail. Indicates RFC 2822-style e-mail names of the form _user@domain._
+    3. Common name. Indicates an arbitrary string that is used for personalization. Examples include _John Smith_ or _Tailspin Toys Employee_ _._ Note that you cannot guarantee the uniqueness of the common name claim. Therefore, use caution when you are using this claim type for authorization decisions.
+  2. Group claim. Indicates a user's membership in a group or role.
+  3. Custom claim. Contains custom information about a user, such as an employee ID number.
+
+An organization claim is a claim in intermediate or normalized form in an
+organization's namespace.
+
+  
+
+  
+
+  
+
+Federation Metadata:
+
+The **Federation Metadata** file contains information about the ADFS server's
+certificates. If the **Federation Metadata** endpoint
+(https://<ADFS_SERVER>/FederationMetadata/2007-06/FederationMetadata **)**.
+
+  
+
+  
+
+ **Setting Up a Client** :
+
+Since we are taking claims from external clients we need to register them as a
+CLAIM Provider Trusts. If client is using ADFS then they just need to provide
+us the federation
+
+Metadata. In generation following will be the
+
+[https://<SERVER_ADDRESS>/FederationMetadata/2007-06/FederationMetadata.xml](https://server/FederationMetadata/2007-06/FederationMetadata.xml)
+
+If the URL is not present we can manually configure it using the following
+method-
+
+Please refer to the following microsoft documentation:
+
+[https://docs.microsoft.com/en-us/windows-server/identity/ad-
+fs/operations/create-a-claims-provider-trust](https://docs.microsoft.com/en-
+us/windows-server/identity/ad-fs/operations/create-a-claims-provider-trust)
+
+Once a claim provider trust is registered we need to configure Claim Issuance
+Policy. This feature allows us to configure what claim the provider is going
+to send us.
+
+  
+  
+
+On the other hand at the Client's ADFS they need to configure our ADFS as a
+RELYING PARTY TRUST.
+
+In this case we just need to provide them our FEDERATION METADATA URL:
+
+[https://<INFOIMAGE_ADFS>/FederationMetadata/2007-06/FederationMetadata.xml](https://server/FederationMetadata/2007-06/FederationMetadata.xml)
+
+  
+  
+  
+  
+  
+
+Internal ADFS configuration:
+
+Enable IDP initiated page:
+
+  1. Open Windows PowerShell
+  2. Enter: Get-AdfsProperties and hit enter
+  3. Verify that EnableIdpInitiatedSignonPage is set to false
+
+4\. In PowerShell, enter: _Set-AdfsProperties -EnableIdpInitiatedSignonPage
+$tru_
+
+5\. You will not see a confirmation so enter Get-AdfsProperties again and
+verify that EnableIdpInitatedSignonPage is set to true.
+
+  
+
+We need to customize the Home Realm Discovery Page. We need to go through the
+following steps:
+
+Create a directory in the ADFS server. We can create it anywhere on the server
+using following command:
+
+mkdir adfs-themes  
+  
+---  
+  
+  
+  
+  
+  
+  
+
+We need to check the default theme name. Run the following command to check
+the current ADFSWeb Theme:
+
+Get-AdfsWebConfig  
+  
+---  
+  
+We can see the ActiveThemeName is default
+
+Run the following PowerShell command to export the current theme to a
+location. The command will export the default theme into the **C:\adfs-themes
+location**
+
+Export-AdfsWebTheme -Name default -DirectoryPath C:\adfs-themes  
+  
+---  
+  
+  
+
+Once the theme is exported we need to update the css/style.css and
+scripts/onload.js files as follows:
+
+Updating **onload.js.  **
+
+We need to find out the INFOAUTH_URL and change it with corresponding infoauth
+service url.
+
+For example if the infoauth url is:
+[https://infoauth.infoimageinc.com](https://infoauth.infoimageinc.com) then we
+need to put the url there.
+
+//**********************************************  
+//Customized load process from here...  
+//**********************************************
+
+//**********************************************  
+//Auto redirect based on client request's IP    address...  
+//**********************************************  
+(function () {  
+    var dom = '<div id="howa">' + '<div id="inner">' + '<h3>INFOIMAGE Auth Challenge</h3>' + '<p>Please wait, we will get you to your desired endpoint</p>' + '<div class="loader"></div>' + '</div>' + '</div>';
+
+    var elem = document.createElement('div'); elem.innerHTML = dom; document.body.appendChild(elem);
+
+    function loadScript(url, callback) {  
+        var script = document.createElement("script"); script.type = "text/javascript";  
+        console.log('Loading jQuery');  
+        if (script.readyState) {//IE  
+            script.onreadystatechange = function () {  
+                if (script.readyState === "loaded" || script.readyState === "complete") {  
+                    script.onreadystatechange = null;  
+                    callback();  
+                }  
+            };  
+        } else {  
+            //Others  
+            script.onload = function () {  
+                callback();  
+            };  
+        }  
+        script.src = url;  
+        document.getElementsByTagName("head")[0].appendChild(script);  
+    }
+
+    loadScript("<https://code.jquery.com/jquery-1.12.4.min.js>", function () {  
+        // jQuery loaded  
+        console.log('jQuery loaded', $);  
+        var $ = jQuery;  
+        var ipService = "[INFOAUTH_URL]/app/client/realm?request=" \+ encodeURIComponent(location.search);
+
+        var getIp = function (callback) {  
+            $.ajax({  
+                url: ipService,  
+                dataType: 'json',  
+                contentType: 'application/json',  
+                success: function (data, status, xhr) {  
+                    if (data == null || data.RedirectName == null)  
+                        return;
+
+                    var res = data.RedirectName;  
+                    console.log(res); callback(res);  
+                },  
+                error: function (xhr, status, errorString) {  
+                    console.log(errorString);  
+                }  
+            });  
+        }  
+        $(document).ready(function () {  
+            try {  
+                getIp(function (redirect) {  
+                    if (typeof HRD !== "undefined") {  
+                        console.log("Redirecting...", redirect);  
+                        HRD.selection(redirect);  
+                    }  
+                });  
+            }  
+            catch (err) {  
+                console.log(err);  
+            }  
+        });  
+    });  
+})();  
+  
+---  
+  
+  
+  
+
+Updating style.css
+
+We need to add the following css on the css file:
+
+#howa {  
+            position: fixed;  
+            height: 100vh;  
+            width: 100%;  
+              
+        }  
+        .loader {  
+            border: 16px solid #f3f3f3; /* Light grey */  
+            border-top: 16px solid #3498db; /* Blue */  
+            border-radius: 50%;  
+            width: 120px;  
+            height: 120px;  
+            animation: spin 2s linear infinite;  
+            margin-left: 84px;  
+        }  
+  
+        @keyframes spin {  
+            0% { transform: rotate(0deg); }  
+            100% { transform: rotate(360deg); }  
+        }  
+  
+        #inner {  
+            position: relative;  
+            width: 50%;  
+            left: 35%;  
+            top: 25%;  
+        }  
+  
+---  
+  
+  
+
+Replace the following css with the value in the file:
+
+#fullPage, #brandingWrapper  
+{  
+    width:100%;  
+    height:100%;  
+    background-color:inherit;  
+}  
+  
+---  
+  
+  
+  
+
+#fullPage, #brandingWrapper  
+{  
+    width:100%;  
+    height:100%;  
+    background-color:inherit;  
+    **display** **: none;** **  
+**}  
+  
+---  
+  
+  
+  
+
+After we are done with the changes. We need to run the following command to
+apply our customize theme:
+
+  
+
+Set-AdfsWebTheme -TargetName custom -AdditionalFileResource
+@{Uri='/adfs/portal/script/onload.js';path="C:\adfs-theme\script\onload.js"}  
+  
+---  
+  
+  
+
+Set-AdfsWebTheme -TargetName custom -StyleSheet @{path="C:\adfs-
+theme\css\style.css"}  
+  
+---  
+  
+  
+
+Set-AdfsWebConfig -ActiveThemeName custom -HRDCookieEnabled $false  
+  
+---  
+  
+  
+
+Here custom is the new theme name. To check if theme is applied correctly we
+can verify it using following command:
+
+Get-AdfsWebConfig  
+  
+---  
+  
+  
+
+We are done with the setup now.
+
+  
+
+We need a claim CLIENT ID for our application. For this, we need to add a new
+claim description to our ADFS.
+
+  
+
+Claim Type is as follows:
+
+<http://schema.adfs.infoimageinc.com/claims/org_id>
+
+  
+
+  
+
+  
+
+  
+Using this claim in Claim Provider Trust(Our client)
+
+Just like other claim rules, add this as a custom claim rule: the Claim Rule
+should be as follows:
+
+=> issue(Type = "<http://schema.adfs.infoimageinc.com/claims/org_id>", Value =
+"{CID}");
+
+{CID} = demo, apcu etc.
+
+InfoTrac SSO Configuration:
+
+Now that we are done with the ADFS server configuration, we need to enable the
+SSO feature enabled into infotrac.
+
+We need to log in as root user and go to the **Client Management** module and
+assign SSO feature for the client.
+
+If the client has both SSO and DSO enabled we need to check the Has DSO as
+well.
+
+Now the sso feature will be visible in the client dashboard.
+
+From this UI we need to create client id and client secret. The steps are as
+follows:
+
+In the above UI we need to input the following information:
+
+ **Identifier** : The Claim Provider Trust Identifier from the ADFS server.
+
+Getting the Identifier from adfs:
+
+Login into ADFS server and copy the Claim Provider trust identifier:
+
+Here,
+[http://ACTIVEDIRECTORY.dsinnovators.com/adfs/services/trust](http://activedirectory.dsinnovators.com/adfs/services/trust)  
+
+is the identifier.
+
+  
+
+ **Application Name** : The application we are configuring sso. For example,
+infotrac
+
+Application Redirect URL: The sso redirect url for  the application. For
+infotrac the URL is as follows:
+
+https://[INFOTRAC _URL]/auth/[sso.do](http://sso.do)  
+  
+---  
+  
+  
+
+ **Default Role** : The default role can be selected from the dropdown as per
+client's roles
+
+ **Allowed Ips** : This is an optional field. (Not implemented as of now)
+
+Once we click on the create button we will get a sso service application
+created from where we need to share the **client_id** and the
+**client_secret** to the clients.
+
+Clients side configuration:  
+Clients need to initiate an SSO call from their application. First they make a
+POST call the following url and get a SSOSession Token
+
+  
+
+https://[INFOAUTH_URL]/app/challenge?client-id=${clientId}&client-
+secret=${clientSecret}
+
+In response to the request they get a session id. The need to make a GET
+request to the following url:
+
+https://[INFOAUTH_URL]/app/doLogin?session-data-id=${session-data-id}&client-
+id=${clientId}
+
+  
+
+  
+
+

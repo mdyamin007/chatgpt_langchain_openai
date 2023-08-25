@@ -1,0 +1,48 @@
+title: Balance/Auth File Processing(com.infoimage.processing.application.auth.ProcessingJob)
+body:   * comes in daily there is a cut off time
+  * ties patient account relationships together and used in account balances in Account Summary section.
+
+  * file name convention - CVHS_balance.MM-DD-YYYY.TXT.gpg
+  * Required fields are below in the same order  
+Seed Account Number|Guarantor Account Number| Internal Account number
+|Disposition| Patient DOB (MM/DD/YYYY) | Guarantor Last Name| Guarantor First
+Name| Statement Date (MM/DD/YYYY) | Amount Due|current Balance|.
+
+  *  **Tables**  involved
+
+> populate  **usr_fin_account**  table  
+>  **Usr_fin_account**  table also populated with same usr_id for all accounts
+> of same seed number.  
+> populate  **usr**  table  
+>  **Usr_paperless**  table populated
+>
+
+>> > P_ID USR_ID OS NS m date m by sttype  
+> 161203 14280089 N B 25-JUL-12 1 payebill  
+> initially when account is created in balance sheet processing the paperless
+> status is paper i.e. NS = B  
+> when the user registers NS=E i.e. electronic
+>
+>  **Usr_mapping**  also populated contains seed account number(cif_num) and
+> usr_id mapping  
+>  **fin_account_bill_ext**
+>
+
+>> > balance sheet data stored in this table  
+> guarantor account number stored in this table
+
+  * when one of the guarantor account number closes then only that individual account is closed.  
+usr_fin_account table the entry is removed (no link between usr_id and
+acct_id)  
+fin_account.acct_number renamed to something like below and status=C
+
+select * from fin_account where acct_number like '80%' and
+org_id=getorgid('huhs')  
+(in above query 80 was the hospital account number which was closed)  
+\-- 17627069 11351 80_inactive_1343772005421
+
+  * Seed account closes
+
+  * all exceptions of type CollectableDataException are logged in db in the processing.job class itself
+
+

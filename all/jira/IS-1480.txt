@@ -1,0 +1,284 @@
+title: UFCU - [30308][pvt][in-house] Missing Mortgage Statement from Return Archive File
+description: Below are the steps we will need to carry out for this reprocess. Estimate 3 programming hours for this one time process.
+
+
+
+1) Create a Jira ticket one time remove all print suppression. - Bryan
+
+2) Request a dt job id for segment 2 with insert bin 2. Bryan
+
+3) Update program and run test in parallel with invert list using segment 2 (data file UFCU_mtg_061622_2.xml.pgp). Set insert 2 for all account using zip range 00000-99999 from .ins file - Rony
+
+5) After QA approved, code must release with rollback same date. Rony/Peter
+
+6) Job need to reprocess after the normal production cycle is completed.
+
+7) Rename UFCU archival to ufcu_MTG_archival_06162022_2.zip.001.pgp if the program does not rename automatically. Rony/Peter
+
+8) Roll back the code. Rony/Peter
+
+9) Inform UFCU archival file for ready to pickup.
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+I am trying to explain the history of this ticket briefly:
+
+The original UFCU_mtg_061622_1.xml.pgp file that the client sent in production had total of 11383 accounts. Later client complained they are missing lots of accounts. Then we asked the client to resend the data fileUFCU_mtg_061622_1.xml.pgp to check. And we checked that the resent data file has 13468 accounts. So the original data was missing over 2000 accounts.
+
+Now by discussing with the client, we came to a decision that, we will reprocess this new file and this time we will mail only the missing accounts (the accounts in resent file that were not in the originally sent file) with insert bin 2 but create an archival sample for all accounts.
+
+
+
+[^ufcuml1_06162022_1.account.list]this is the list of accounts with original data files for which we will not send mail this time so we will suppress those accounts this time.
+
+UFCU_mtg_061622_2.xml.pgp this data file which is in /z/download/ufcu/ has all the accounts 13468 .
+
+So to suppress original accounts and also adding insert 2 for missing accounts we modified 2 flags in insert file:
+
+!image-2022-08-23-18-49-57-712.png!
+
+
+
+MC_BY_ACCT will suppress the original accounts those already got mail. INSERT2 setting will responsible to have all the non suppressed meaning the missing accounts (or new accounts in current data file ) to have insert 2.
+
+/d/ac-secure-share/qa/IgorK/ufcu_MTG_archival_06162022_2.zip.001 archival sample.
+
+
+
+
+
+[^ufcuml1216-1.print]is the dpvs. Please print 1st 10 pages from 4.2o1 to check insert.
+
+
+
+no parallel id since no change in script or dfa. Just added in insert file.
+
+
+
+[~Sheikh_Fahim] [~Peter.Dang] [~Bryanl]
+
+Thanks
+
+
+
+
+
+
+
+
+author: gthillaivel
+comment: QA in progress
+
+
+author: gthillaivel
+comment: [~rony]--Verified the added in insert file in the DTJob. Looks good
+
+Do we need any checklist for this?. as there is no parallel for this ticket.Please Advise
+
+
+
+
+
+
+author: gthillaivel
+comment: [~Peter.Dang][~Bryanl][~Sheikh_Fahim]
+[~rony]--Can you please update the IS checklist in the ticket
+
+
+author: rony
+comment: Hi [~Peter.Dang]
+
+Want to mention one thing here. good amount of missing accounts( missing in originial cycle UFCU_mtg_061622_1.xml ) went to e.sup2.
+
+
+
+!image-2022-08-24-09-16-23-215.png!
+
+Hope this will not be an issue. What I am saying here is not all the missing accounts will get mailed. The reason for those account route to e.sup2 is the delivery method. Hope this will not be an issue.
+
+!image-2022-08-24-09-19-05-346.png!
+
+
+
+!image-2022-08-24-09-19-28-453.png!
+
+
+
+
+
+Thanks
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+author: rony
+comment: Hi [~gthillaivel]
+
+[^IS_Checklist.docx], we don't have time for dp to do parallel as per the due date. I will try to do a short discussion with Peter before release.
+
+
+
+Thanks
+
+
+author: gthillaivel
+comment: [~rony][~Peter.Dang][~Bryanl][~Sheikh_Fahim]
+
+Attached is the IS checklist
+  [^IS_1480_UFCU_Checklist.pdf] 
+
+
+author: rony
+comment: Hi [~Bryanl]
+
+I will release this today, but would it be possible to get a confirmation from the client about the below account list?
+
+[^to_be_mailed_account.list]
+
+only these accounts will be mailed.
+
+
+
+[~Peter.Dang]
+
+
+
+Thanks
+
+
+author: bryanl
+comment: [~rony] [~Peter.Dang]
+
+Technical side for client still hasn't looked at file, but they are requesting:
+
+Bryan--can you confirm the total account number to be mailed?
+
+
+author: rony
+comment: 
+
+HI [~Bryanl]
+
+2044
+
+!image-2022-08-26-08-41-33-902.png|width=822,height=534!
+
+
+
+[~Peter.Dang]
+
+
+
+Thanks
+
+
+
+
+author: bryanl
+comment: [~rony] [~Peter.Dang]
+
+Per client: Approved to send with this list.
+
+Thanks!
+
+
+author: rony
+comment: Hi [~TunA]
+
+[^IS_PROGRAM_TRANSFER_FORM.doc]need help to release.
+
+
+
+[~Bryanl], here are instructions for Dp:
+ * use*MC_BY_ACCT: /z/download/ufcu/ufcuml1_06162022_1.account.list_sorted z* in insert file
+ * run*UFCU_mtg_061622_2.xml.pgp* . It is in /z/download/ufcu folder now.
+
+
+
+[~Peter.Dang]after processing needs to roll back the UFCUML11.dfa.
+
+
+
+Thanks
+
+
+author: tuna
+comment: Hi [~rony],
+
+Following code has been released.
+
+Thanks,
+
+Tun
+
+
+
+20220826145024 08/26/2022 ronyD IS-1480 UFCU - [30308][pvt][in-house] Missing Mortgage Statement from Return Archive File
+
+[oper1@rhs research]$ ll /d/is/cvs/xfer/ronyD/
+total 336
+-rwxrwxrwx 1 ronyD DSI 102687 Aug 26 14:41 UFCUML11.dfa
+
+
+author: rony
+comment: Hi [~TunA]
+
+We mistakenly didn't revert the code after the process per description, point 8.
+
+need to relsese (put back) UFCUML11.dfa.
+
+[^IS_PROGRAM_TRANSFER_FORM-1.doc]
+
+
+
+[~Peter.Dang] [~Bryanl]
+
+Thanks
+
+
+author: tuna
+comment: Hi [~rony],
+
+Following code has been released.
+
+Thanks,
+
+Tun
+
+
+
+UFCUML11.dfa.20220926113700 09/26/2022 ronyD IS-1480 revert the code after the process per item 8 in description
+
+[oper1@rhs docdef]$ ll /d/is/cvs/xfer/ronyD/
+total 336
+-rwxrwxrwx 1 ronyD DSI 102591 Sep 26 11:16 UFCUML11.dfa
+
+
+
+
+
+[~Bryanl], [~Peter.Dang]
+
+
+
+
+author: rony
+comment: Hi [~Bryanl]
+
+After release please coordinate with Dp to run in parallel from cycle Aug 26 to current, to get the suppression count.
+
+
+
+Thanks

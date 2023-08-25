@@ -1,0 +1,40 @@
+title: How does payment api work?
+body: **need epay as account details for two accounts of demo**  
+Discussion email subject: need epay as account details for two accounts of
+demo
+
+ **Destination account of a payment/payment source**
+
+1\. epay front-end (hypercube/infoimage) fetch the fin account details by
+acctNum. Showing account's epay details like min-amount, due-date, balance on
+the bill.
+
+2\. Payment service get acctId from front-end(hypercube/infotrac) and fetch
+the fin account's details by acctId before call the epx.
+
+  * The Payment service send acctNum, acctType and stmtType to the epx during a payment/payment source creation to uniquely identify the destination account.
+  * The payment service get notification preference of an account from the fin-account details which is already fetched by acctId at the previous step and send the epay notification.
+
+3\. acctId is stored in the epay_transaction table as destination account.
+
+ **The tables are used by payment service**  
+ **epay_transaction**  : This table contains the actual transaction of an
+account. Only if the transaction is approved the by EPX at run time then we
+keep a record of the transaction. The transaction status from this table will
+be updated by a process whenever the epx settlement report will be parsed as
+well as data file from merchant.
+
+ **epay_epx_transaction**  : This table contains a record for each and every
+EPX call from our payment service. Its actually a history table of epx call
+from our payment service. Currently, we do the epx call for following items
+and for each of them we have a record in this table:
+
+  * auth transaction with zero amount.
+  * payment source creation for both card and ach.
+  * pay by card or ach or source and auto pay payment.
+
+ **epay_pmt_src**  : This tbale contains the payment source that user created.  
+ **epay_recurr_pmt**  : This table contains the information of scheduled
+payment of an account.
+
+

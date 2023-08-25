@@ -1,0 +1,201 @@
+title: Report Scheduler
+body: ## Overview
+
+  
+
+## Specifications
+
+  
+
+###  **Creating a Report Scheduler**
+
+  1. Go to DPJS->Report Schedule. Enter the CID and click Submit. The page will be redirect to  _reportSchedulerList.jsp_  page.
+  2.  _reportSchedulerList.jsp_  shows a list of all the schedules that are created for that CID.  
+250
+
+  3. To create a report click on  _here_  and the page will redirect to  _reportScheduleCreate.jsp_. In this page all the information for the report and scheduler need to be provided                                                                                                                          
+  
+ **CID:**  The organization short name.  
+ **File Name:**  This file name is used as the name of the report. File Name
+supports the following keywords: {appDesc}, {timeStamp}, {cid}. The value for
+appDesc and timeStamp can be provided in the parameter text area.  
+ **Report Title:**  This is used as the title of the report and shown in list
+page of the reports.  
+ **Command:**  The command is used to run the application command. i.e.
+bounceBackReportAPI  
+ **Parameters:**  It is a text area that contains the parameters as key value
+pair.  
+i.e.  _appDesc=monthly  
+timeStamp= YYYYMMDD_HHMMSS_  
+ **File Content:**  File content indicates the columns of the report. The
+columns of the report data will be ordered according to the keywords of the
+file content. For example for bounce back report following are the keyword
+that can be used:  
+${cifNum}|${acctNum}|${appCode}|${acctName}|${emailAddress}|${code}|${reason}|{date}  
+ **File Header:**  This will be used as the header of the report.  
+ **Encryption Type:**  The encryption type can be pgp or zip.  
+ **Encryption Value:**  The encryption value can be the email address for pgp
+or zip password.  
+ **Pickup Path:**  The pickup path for the report.  
+ **FTP Folder:**  The ftp folder path for the report.  
+ **FTP Login:**  The ftp login Id.  
+ **FTP Pass:**  The ftp login password.  
+ **Confirm Email:**  The email address where the confirmation email will be
+sent after completion of report generation.  
+ **Confirm Email Template:**  The template path for the email.  
+ **Confirm Email Subject:**  The subject of the confirmation email.  
+ **Start Date:**  The date from when the report generation will start  
+ **Due Time:**  The time of the report run.  
+ **Repeat:**  Indicated the schedule of the report. (Details about scheduling
+is described below).  
+The information in the above fields is stored in to two tables of the
+Database. P_REPORT and P_SCHEDULE.
+
+    *  **P_REPORT Table** :
+
+ **Coulumn Name**|  **Type**|  **UI Name**  
+---|---|---  
+ORG_NAME| VARCHAR2(25 BYTE)| CID  
+FILE_NAME| VARCHAR2(60 BYTE)| File Name  
+TITLE| VARCHAR2(255 BYTE)| Report Title  
+COMMAND| VARCHAR2(225 BYTE)| Command  
+PARAMETERS| BLOB| Parameters  
+FILE_CONTENT| VARCHAR2(255 BYTE)| File Content  
+FILE_HEADER| VARCHAR2(255 BYTE)| File Header  
+ENCRYPTION_TYPE| VARCHAR2(60 BYTE)| Encryption Type  
+ENCRYPTION_VALUE| VARCHAR2(255 BYTE)| Encryption Value  
+PICKUP_PATH| VARCHAR2(255 BYTE)| Pickup Path  
+FTP_FOLDER| VARCHAR2(255 BYTE)| FTP Folder  
+FTP_LOGIN| VARCHAR2(255 BYTE)| FTP Login  
+FTP_PASS| VARCHAR2(255 BYTE)| FTP Pass  
+CONFIRM_EMAIL| VARCHAR2(255 BYTE)| Confirm Email  
+CONFIRM_EMAIL_TEMPLATE| VARCHAR2(100 BYTE)| Confirm Email Template  
+CONFIRM_EMAIL_SUBJECT| VARCHAR2(100 BYTE)| Confirm Email Subject  
+  
+  
+
+    *  **P_REPORT Table** :
+
+ **Coulumn Name**|  **Type**|  **UI Name or Description**  
+---|---|---  
+START_DATE| DATE| Start Date Due Time  
+END_ON| VARCHAR2| End recurrence  
+(Never =  **N** , After "N" Occurence =  **O| "N"** On MM/DD/YYY =
+**T|MMDDYYYY)**  
+OFFSET| NUMBER| Repeat On: off-set(for monthly only)  
+OCCURRENCE| VARCHAR2| Repeats  
+FREQUENCY| VARCHAR2| Repeat Every  
+CONSTRAINT| VARCHAR2| Repeat on*  
+  
+  
+
+    *  *** Details of different values for constraint:**
+
+ **OCCURRENCE**|  **CONSTRAINT**|  **Details**|  **UI**  
+---|---|---|---  
+Daily| null| N/A| N/A  
+Weekly| D|SU,MO| On Sunday, Monday| BYDAY=SU,MO,TU  
+Weekly| D|MO,TU,WE,TH,FR| Weekdays| BYDAY=MO,...,FR  
+MONTHLY| DOM|"N"| On "N"th day of month| BYMONTHDAY="N"  
+MONTHLY| DOW|+2|SU| Second Sunday of month| BYDAY=+2SU  
+YEARLY| DOY|2|+1|SU| February 1st Sunday| BYMONTH=2  
+BYDAY = +1SU  
+YEARLY| DOY|3|2| 2nd day of March| BYMONTH=2  
+BYDAY = 2  
+  
+  
+
+  4. After providing all the report information to add a scheduler with the report click on  **" ADD"** button it will pop up an window. Set the scheduler using the window and click  **" Save"**. To create more scheduler with the same report Click  **" Add More Scheduler"**. It will show a new line with another  **" ADD"** button to create another scheduler.  
+ **Note:   _In case of multiple scheduler, all of them will share same Start
+Date and Due Time._**
+
+  5. After setting all the report and scheduling information click on  **" Submit"** Button. The page will be redirected to  _reportScheduleConfirm.jsp_. In this page all the information will be shown for confirmation. If all information is correct click continue to create the report scheduler.
+
+###  **Editing a Report Scheduler**
+
+  1. Providing the CID in the Report Scheduler redirect to the list page. In the list click on  **" Edit"** button of the expected report scheduler. The page will be redirected to  _reportScheduleEdit.jsp_  page.
+
+  1. Update all the information that need to be edited and click the button  **" Submit"**. It will take to the Confirmation page. After confirming all the provided information click on continue to update the report scheduler.  
+ **Note:   _Though there is feature to add multiple scheduler, in case of
+editing user can edit one report scheduler at a time as there is individual
+row for each of the scheduler._**
+
+  
+  
+
+###  **Deleting Report Scheduler**
+
+There is three kind of deletion feature :
+
+  1. Deleting report and all scheduler
+  2. Deleting all scheduler tied to the report
+  3. Deleting the current scheduler only.
+
+  1. For deleting a report scheduler go the edit page of the report and click on the "Delete" Button.  
+If there is multiple scheduler associated with the report then all of the
+three option mentioned above will be shown as separate radio button.  
+If there is only one scheduler associated with the report then only option 1(
+Delete report and the schedule) and option 3 will be shown as radio button.
+
+  2. Selecting one of the option click the "Continue" button.  
+ **Note:_ Even if all the scheduler is removed there will always be an empty
+scheduler attached with the report in database._**
+
+  
+  
+
+## Development Information:
+
+All the Host files are located in
+C:\resin-4.0.20\webapps\processing\ROOT\schedule. The files that are used for
+this application are:
+
+  1. reportScheduleAction
+  2. reportScheduleConfirm
+  3. reportScheduleCreate
+  4. reportScheduleDelete
+  5. reportScheduleDeleteConfirm
+  6. reportScheduleEdit
+  7. reportSchedulerIndex
+  8. reportSchedulerList
+  9. reportScheduleRun
+  10. reportScheduleRunConfirm
+
+To run the auto scheduler following lines need to be added in the
+**processing.conf** (C:\processing-ui):  
+ _ **// processing: reportSchedule  
+reportSchedule.desc = Report Schedule  
+reportSchedule.classPath=com.infoimage.processing.application.reportScheduler.ProcessingJob  
+reportSchedule.jobStatus=false  
+reportSchedule.undoable=false**_
+
+and run the bat file named  **reportSchedule.bat**  :
+
+    
+    
+    call exec.bat reportSchedule action:exec orgName:InfoIMAGE userName:system  
+      
+    Attachments  
+     
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+

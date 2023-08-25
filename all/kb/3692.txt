@@ -1,0 +1,18 @@
+Some clients want to display check images in statement. They send the check image files on regular basis( just like main data file ).
+And we need to build some configurations/script which process this check image files and extract the check images in /d/prep/<cid>/tiff/ folder. As an example:
+and in those date subfolders say 03222021:
+For this programmer needed to build some config file or script to extract check image like that (<cid>_<acccount>_<date>_<amount>_<sequence_no>_<side>) from the check image files they sent. An example of such a config file.
+if you check the img_fname_format in the config file you can realize that the naming of check images generated in the server is defined here. Also it defines the customer check image data file naming by reg_ex_xfer_fname and where the customer will send check image data file by dir_ftpbu.
+The check image file is normally a binary file. If you try to see the contents:
+Customer check image files can be of different types. Some known types are x937(FFIN), JHA(plbk), etc. The programmer needs to write the config file accordingly.
+So now let's say check images are extracted in server with some naming. The from dfa programmer needs to build the check image names from data file matching the same name in server to pull that image.
+Whenever we need to display check images in formatting cripple report also comes with it. We need to build this report for all missing checks. An example of a cripple report (check the attachment):
+FFIN_stmt_cripple_report_101620_6
+All check information included here is presented in data file but missing from server. For example:
+check image with account 1318772, seq 910995953, amount 133.96, and date 10/15/2020 is missing in the server but present in the data file. And if you see at the bottom :
+TOTAL NUMBER OF STATEMENT WITH CHECK ITEMS: -This means only this number of customer has check images
+TOTAL NUMBER OF STATEMENT WITH MISSING CHECK ITEMS: -This means this no of customers has at least one check missing (couldn't be found on server). Sometimes you will see (TOTAL NUMBER OF STATEMENT WITH 2 OR MORE MISSING CHECK ITEMS depends on sow which means for this client we will only consider those customers which have at least 2 checks missing not less than that. Those customers are called crippled customers.
+for ffin:
+for dacb:
+PERCENTAGE: 1.7453457446809% - 105 out of 6016 - This is <TOTAL NUMBER OF STATEMENT WITH MISSING CHECK ITEMS>/<TOTAL NUMBER OF STATEMENT WITH CHECK ITEMS> * 100
+So our final target is to calculate the percentage of cripple customers/statements. Sow includes this information that what percentage can be tolerable if exists more than that we need to hold the paper and estatement processing.

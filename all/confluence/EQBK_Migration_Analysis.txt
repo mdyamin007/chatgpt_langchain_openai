@@ -1,0 +1,1207 @@
+title: EQBK Migration Analysis
+body:   
+
+  
+
+Target release| Release name or number  
+---|---  
+Epic|  
+  
+Document status|
+
+YellowDRAFT  
+  
+Document owner|  
+  
+Designer|
+
+  
+  
+  
+
+  
+
+  
+
+  
+
+* * *
+
+##  **PRISM SITE ANALYSIS**
+
+* * *
+
+ **Additional Feature:** When a user with 'pre-enroll' status logs in, they
+will see the disclosure page. If the user agrees to the disclosure, the status
+will be set to 'active' and they will not see the disclosure again. If the
+user choose to disagree to the disclosure, they will still be redirected to
+the statement page, but the disclosure will be shown to the user when they
+logs in again.
+
+Note: Not supported in the hypercube, will need to discuss how should we
+handle this logic or whether should we support this logic if they migrate to
+the hypercube.
+
+#  **Key Points**
+
+ **Client Name**|  Equity Bank  
+---|---  
+ **Schema**|  Bank  
+ **SSO**|  Q2sso (SingleSignOn7Servlet)  
+ **CIF length**|  9 digits fixed. padded with **0** s  
+ **DSO**|  Yes  
+ **Account Types**|
+
+  * SD
+  * DD
+  * TD
+  * LN
+  * NA
+  * CD
+  * SV
+
+  
+ **Application Types**|
+
+  * default
+  * analysis
+  * heloc
+
+  
+ **User-Account Relation**|  Many-to-Many  
+ **Archival Period**|
+
+  1. default (e-Statement) : **25  **months
+  2. analysis(Account Analysis): **25** months
+  3. heloc (Line of Credit): **25  **months
+
+  
+ **Paperless Configuration**|  Non-Selective paperless  
+ **on DP change**|  opt-out page  
+ **Delivery Preference**|
+
+  * paper
+  * electronic
+  * both
+
+  
+ **Notification Preference**|  Email  
+ **NP Link Type**|  byUfa  
+ **Batch Download**|  N/A  
+ **Menu Tabs**|
+
+  * Statements
+  * Disclosure
+  * Account Reconciliation
+  * Profile
+  * Exit
+
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+#  _ **SSO**_
+
+3 step enrollment process, enrollment based on **SSO date**.
+
+ _ **Step 1:**_  
+
+  *  Pdf view (Can't view takes to Adobe reader download page)
+
+  
+
+  
+
+  
+
+  
+
+ _ **Step 2:**_
+
+  * Disclosure agreement ('cancel' closes the tab)
+
+
+
+  
+
+  
+
+ _ **Step 3:**_
+
+  * Creates user with adding 0 prefixes in front of the CIF provided length is not 9 digit
+  * Create New Accounts
+  * Can enroll with paper 
+  * Option to provide Optional 2nd Email address
+  * Masked Account number
+  * Option to provide employee name who assisted with the enrollment, which is stored in the " **source " **column of " **USR " **table.
+
+  
+
+  
+
+ **Enrollment Finish Page**
+
+  
+
+  
+
+  
+
+  
+
+#  _ **DSO:**_
+
+DSO has the following features
+
+  1. Log in 
+  2. Register
+  3. Password Recovery
+
+##  ** _Login:_**  
+
+2 Step login method.
+
+  1. log in with login ID and Password
+  2. Token Recovery
+    1.  **After login there 's an option to save this device as a personal device, to do so requires Zip code**
+
+  
+
+  
+
+##  ** _Registration:_**  
+
+4 steps enrollment:
+
+1.Pdf view ( clicking 'Can't view' takes to Adobe reader download page)
+
+  
+
+  
+
+2. Disclosure agreement (clicking 'cancel' closes the tab)
+
+3.   Login Information:
+
+  * Login ID
+  * Password
+  * Password Hint Question and Answer
+  * Email Address
+  * Account Number
+  * Zip Code
+
+  
+
+4\. Delivery Preference page
+
+  
+
+##  _ **Forget Password Recovery:**_
+
+  1. Login ID
+  2. Account num
+  3. App type. But app type must be **DD, TD, SV**
+
+  
+
+ _ ****_
+
+ _ ****_
+
+  
+
+  
+
+  
+
+  
+
+#  _ **Header**_
+
+has EQBK logo
+
+  
+
+  
+
+  
+
+#  _ **Statements:**_
+
+  
+
+  
+
+  
+
+  
+
+  
+
+#  _ **Disclosure:**_
+
+  * opens in a new tab
+  * with a close button that closes the new tab
+
+  
+
+  
+
+  
+
+#  _ **Reconciliation:**_
+
+  * Open in new tab
+  *  **reset** and **print** button
+
+  
+
+  
+
+  
+
+#  _ **Profile:**_
+
+###  _ **SSO:**_
+
+    * User can update Email address 
+    * User can change Delivery preferences to following:
+      * Paper
+      * Electronic Both
+    * Secure PDF Feature (email attachment with password)
+    * Shows account holder name
+    *  **User information empty**
+    *  **if DP is changed to paper it takes the user in opt out page.**
+
+ ****
+
+  
+
+  
+
+###  _ **DSO:**_
+
+    * User can update Email address 
+    * User can change Delivery preferences to following:
+      * Paper
+      * Electronic
+      * Both
+    * Secure PDF Feature (email attachment with password)
+    * Shows account holder name
+    *  **User information:** user name, *** password, hint question with update option, hint answer
+    *  **if DP is changed to paper it takes the user in opt out page.**
+
+  
+
+  
+
+  
+
+  
+
+#  _ **Exit**_
+
+  * Exit confirmation page
+  * If confirmed closes the tab
+
+  
+
+  
+
+  
+
+#  _ **Footer**_
+
+  *  _ **Adobe Reader  **_ links to "/exit_notice.jsp"
+  *  _ **About SSL certificates**_ links to "https://www.thawte.com/products/"
+
+#  **MSM:**
+
+  * ###  **Account Management** : [ Can change Delivery Preference, Can edit email address ]
+
+    1. Search By Account Number:
+    2. Search By Email Address
+    3. DP: electronic, paper
+    4. NP: Email notification only (Second email option is there which is optional)
+    5. Secure PDF option is present
+    6. Statement types: 
+      1. default [ e-Statements ]
+      2. e-Notice
+
+  
+
+  * Email Proofing: [Notification type: email/attachment email] 
+  *  e-Statements
+  *  Account Analysis
+  *  Line of  credit
+  *  Password Update 
+  *  AI user Removal 
+
+  
+
+  * ### Upload Inserts:Marketing Insert Management: stmtType: e-Statements    (PDF file only. File size less than 1.5 MB) 
+
+ **               **Mandatory:Closing Date,Insert Title,Upload file
+
+  
+  
+
+  * ### Reports
+
+[Latest
+Stats](https://mvcudev.infoimageinc.com:9880/msm/report/CurrentReport.jsp)
+
+|
+
+This report shows the current month's statistics for the Number of Statements
+Viewed/Unviewed, Number of Notifications Sent/Failed, and Number of Email
+Reminders Sent.  
+  
+---|---  
+  
+[User Login
+Activity](https://mvcudev.infoimageinc.com:9880/msm/report/loginReport.jsp)
+
+|
+
+This report shows how many users have logged into e-Statements during a
+specified time range, as well as showing peak periods of user activity.  
+  
+[AI Login
+Activity](https://mvcudev.infoimageinc.com:9880/msm/report/msmLoginReport.jsp)
+
+|
+
+This report shows how many authorized administrator users (such as Account
+Service) have logged into the AI (Administrative Interface) site.  
+  
+[AI User
+Activity](https://mvcudev.infoimageinc.com:9880/msm/aiUsers/userReport.jsp?reportType=1)
+
+|
+
+This report show the last time an administrator user logged into the AI
+(Administrative Interface) site along with their last password change date.  
+  
+[AI User Modification Activity
+Report](https://mvcudev.infoimageinc.com:9880/msm/aiUsers/auditReport.jsp)
+
+|
+
+This report show the audit trail of changes by administrator user
+(add/edit/delete) administrator user.  
+  
+[Email Address
+Collection](https://mvcudev.infoimageinc.com:9880/msm/eac/report_results.jsp?reportType=1)
+
+|
+
+Downloadable as a .TXT file, this report lists all registered e-Statement
+users, as well as their account numbers and email addresses.  
+  
+[Paperless](https://mvcudev.infoimageinc.com:9880/msm/paperless/report_results.jsp)
+
+|
+
+This report shows which users (and how many) have elected to opt out of
+receiving paper statements. The report includes opt-in and opt-out users by
+month, and can be downloaded in .TXT or Excel file format, including account
+numbers.  
+  
+  
+  
+
+  * ### Administration
+
+This page will allow you to change your password. You can also
+create/view/modify/remove/enable other users that have lower privileges. Only
+superuser and Admin Managers can reset other users who are locked out.
+
+[Create]: Creates New Admin User.
+
+[Modify]: Allows the ability to update the Admin User's First Name, Last Name
+and Password. If the password is changed, the Admin User whose password got
+updated will receive an email notification.
+
+[Modify Email]: Allows the ability to update the Admin User's Email address.
+
+[Remove]: Removes the user from the Administrative Interface Console. The
+Admin User that got removed will receive an email notification that their
+Admin account has been removed.
+
+[Enable In-active User]: Re-enable an Admin User to an active status if their
+account was disabled due to inactivity over 90 days.
+
+[Reset]: When an Admin User account is locked out.
+
+[In-Active User]: This Admin Superuser is in-active. You will need to contact
+InfoIMAGE Inc. to re-active this use
+
+  
+
+  *  **   List:**
+
+  1. Admin Superusers: Update SuperUser:Modify|Modify Email
+  2. Admin Manager: Update Admin Manager:Modify|Modify Email|Remove|Create 
+  3. Admin Manager: Update Customer Servicer:Modify|Modify Email|Remove|Create User
+  4. Admin Guests:               Update Admin Guestsr:Modify|Modify Email|Remove|Create
+
+  
+  
+
+  * ### Exit: Clicking on 'Yes" from the exit message redirects to [https://eqbkdev.infoimageinc.com:9780/msm/signoff.jsp](https://eqbkdev.infoimageinc.com:9780/msm/signoff.jsp)
+
+  
+
+#  _ **Points to Discuss on Pirsm:**_
+
+  * They have a " **Secure PDF " **( **PDF**   **Attachment)**  feature which is only accessible from the profile page but not during sso enrollment, if they migrate it will be on enrollment too.
+  * The account number is masked during so enrollment but nowhere else throughout the member site
+  * option 2nd email is not supported
+  * Assisted Employee name not supported during sso enrollment.
+  * Enrollment finish page
+  * Zip Code ( _stored in Contact_info from auth_ ) is required for DSO login and sign up, but not supported in the hypercube.
+  * Home page disclosure doesn't match with the archival period for default, analysis and heloc, it says 7 years but actual is 25 months.
+  * in profile page shows "Account Holder Name" Not supported in hypercube
+
+  
+
+  
+
+Target release| Release name or number  
+---|---  
+Epic|  
+  
+Document status|
+
+YellowDRAFT  
+  
+Document owner|  
+  
+Designer|
+
+  
+  
+  
+
+  
+
+  
+
+  
+
+* * *
+
+##  **PRISM SITE ANALYSIS**
+
+* * *
+
+  
+
+#  **Key Points**
+
+ **Client Name**|  Equity Bank  
+---|---  
+ **Schema**|  Bank  
+ **SSO**|  Q2sso (SingleSignOn7Servlet)  
+ **CIF length**|  9 digits fixed. padded with **0** s  
+ **DSO**|  Yes  
+ **Account Types**|
+
+  * SD
+  * DD
+  * TD
+  * LN
+  * NA
+  * CD
+  * SV
+
+  
+ **Application Types**|
+
+  * default
+  * analysis
+  * heloc
+
+  
+ **User-Account Relation**|  Many-to-Many  
+ **Archival Period**|
+
+  1. default (e-Statement) : **25  **months
+  2. analysis(Account Analysis): **25** months
+  3. heloc (Line of Credit): **25  **months
+
+  
+ **Paperless Configuration**|  Non-Selective paperless  
+ **on DP change**|  opt-out page  
+ **Delivery Preference**|
+
+  * paper
+  * electronic
+  * both
+
+  
+ **Notification Preference**|  Email  
+ **NP Link Type**|  byUfa  
+ **Batch Download**|  N/A  
+ **Menu Tabs**|
+
+  * Statements
+  * Disclosure
+  * Account Reconciliation
+  * Profile
+  * Exit
+
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+#  _ **SSO**_
+
+3 step enrollment process, enrollment based on **SSO date**.
+
+ _ **Step 1:**_  
+
+  *  Pdf view (Can't view takes to Adobe reader download page)
+
+  
+
+  
+
+  
+
+  
+
+ _ **Step 2:**_
+
+  * Disclosure agreement ('cancel' closes the tab)
+
+
+
+  
+
+  
+
+ _ **Step 3:**_
+
+  * Creates user with adding 0 prefixes in front of the CIF provided length is not 9 digit
+  * Create New Accounts
+  * Can enroll with paper 
+  * Option to provide Optional 2nd Email address
+  * Masked Account number
+  * Option to provide employee name who assisted with the enrollment, which is stored in the " **source " **column of " **USR " **table.
+
+  
+
+  
+
+ **Enrollment Finish Page**
+
+  
+
+  
+
+  
+
+  
+
+#  _ **DSO:**_
+
+DSO has the following features
+
+  1. Log in 
+  2. Register
+  3. Password Recovery
+
+##  ** _Login:_**  
+
+2 Step login method.
+
+  1. log in with login ID and Password
+  2. Token Recovery
+    1.  **After login there 's an option to save this device as a personal device, to do so requires Zip code**
+
+  
+
+  
+
+##  ** _Registration:_**  
+
+4 steps enrollment:
+
+1.Pdf view ( clicking 'Can't view' takes to Adobe reader download page)
+
+  
+
+  
+
+2. Disclosure agreement (clicking 'cancel' closes the tab)
+
+3.   Login Information:
+
+  * Login ID
+  * Password
+  * Password Hint Question and Answer
+  * Email Address
+  * Account Number
+  * Zip Code
+
+  
+
+4\. Delivery Preference page
+
+  
+
+##  _ **Forget Password Recovery:**_
+
+  1. Login ID
+  2. Account num
+  3. App type. But app type must be **DD, TD, SV**
+
+  
+
+ _ ****_
+
+ _ ****_
+
+  
+
+  
+
+  
+
+  
+
+#  _ **Header**_
+
+has EQBK logo
+
+  
+
+  
+
+  
+
+#  _ **Statements:**_
+
+  
+
+  
+
+  
+
+  
+
+  
+
+#  _ **Disclosure:**_
+
+  * opens in a new tab
+  * with a close button that closes the new tab
+
+  
+
+  
+
+  
+
+#  _ **Reconciliation:**_
+
+  * Open in new tab
+  *  **reset** and **print** button
+
+  
+
+  
+
+  
+
+#  _ **Profile:**_
+
+###  _ **SSO:**_
+
+    * User can update Email address 
+    * User can change Delivery preferences to following:
+      * Paper
+      * Electronic Both
+    * Secure PDF Feature (email attachment with password)
+    * Shows account holder name
+    *  **User information empty**
+    *  **if DP is changed to paper it takes the user in opt out page.**
+
+ ****
+
+  
+
+  
+
+###  _ **DSO:**_
+
+    * User can update Email address 
+    * User can change Delivery preferences to following:
+      * Paper
+      * Electronic Both
+    * Secure PDF Feature (email attachment with password)
+    * Shows account holder name
+    *  **User information:** user name, *** password, hint question with update option, hint answer
+    *  **if DP is changed to paper it takes the user in opt out page.**
+
+  
+
+  
+
+  
+
+  
+
+#  _ **Exit**_
+
+  * Exit confirmation page
+  * If confirmed closes the tab
+
+  
+
+  
+
+  
+
+#  _ **Footer**_
+
+  *  _ **Adobe Reader  **_ links to "/exit_notice.jsp"
+  *  _ **About SSL certificates**_ links to "https://www.thawte.com/products/"
+
+#  **MSM:**
+
+  * ###  **Account Management** : [ Can change Delivery Preference, Can edit email address ]
+
+    1. Search By Account Number:
+    2. Search By Email Address
+    3. DP: electronic, paper
+    4. NP: Email notification only (Second email option is there which is optional)
+    5. Secure PDF option is present
+    6. Statement types: 
+      1. default [ e-Statements ]
+      2. e-Notice
+
+  
+
+  * Email Proofing: [Notification type: email/attachment email] 
+  *  e-Statements
+  *  Account Analysis
+  *  Line of  credit
+  *  Password Update 
+  *  AI user Removal 
+
+  
+
+  * ### Upload Inserts:Marketing Insert Management: stmtType: e-Statements    (PDF file only. File size less than 1.5 MB) 
+
+ **               **Mandatory:Closing Date,Insert Title,Upload file
+
+  
+  
+
+  * ### Reports
+
+[Latest
+Stats](https://mvcudev.infoimageinc.com:9880/msm/report/CurrentReport.jsp)
+
+|
+
+This report shows the current month's statistics for the Number of Statements
+Viewed/Unviewed, Number of Notifications Sent/Failed, and Number of Email
+Reminders Sent.  
+  
+---|---  
+  
+[User Login
+Activity](https://mvcudev.infoimageinc.com:9880/msm/report/loginReport.jsp)
+
+|
+
+This report shows how many users have logged into e-Statements during a
+specified time range, as well as showing peak periods of user activity.  
+  
+[AI Login
+Activity](https://mvcudev.infoimageinc.com:9880/msm/report/msmLoginReport.jsp)
+
+|
+
+This report shows how many authorized administrator users (such as Account
+Service) have logged into the AI (Administrative Interface) site.  
+  
+[AI User
+Activity](https://mvcudev.infoimageinc.com:9880/msm/aiUsers/userReport.jsp?reportType=1)
+
+|
+
+This report show the last time an administrator user logged into the AI
+(Administrative Interface) site along with their last password change date.  
+  
+[AI User Modification Activity
+Report](https://mvcudev.infoimageinc.com:9880/msm/aiUsers/auditReport.jsp)
+
+|
+
+This report show the audit trail of changes by administrator user
+(add/edit/delete) administrator user.  
+  
+[Email Address
+Collection](https://mvcudev.infoimageinc.com:9880/msm/eac/report_results.jsp?reportType=1)
+
+|
+
+Downloadable as a .TXT file, this report lists all registered e-Statement
+users, as well as their account numbers and email addresses.  
+  
+[Paperless](https://mvcudev.infoimageinc.com:9880/msm/paperless/report_results.jsp)
+
+|
+
+This report shows which users (and how many) have elected to opt out of
+receiving paper statements. The report includes opt-in and opt-out users by
+month, and can be downloaded in .TXT or Excel file format, including account
+numbers.  
+  
+  
+  
+
+  * ### Administration
+
+This page will allow you to change your password. You can also
+create/view/modify/remove/enable other users that have lower privileges. Only
+superuser and Admin Managers can reset other users who are locked out.
+
+[Create]: Creates New Admin User.
+
+[Modify]: Allows the ability to update the Admin User's First Name, Last Name
+and Password. If the password is changed, the Admin User whose password got
+updated will receive an email notification.
+
+[Modify Email]: Allows the ability to update the Admin User's Email address.
+
+[Remove]: Removes the user from the Administrative Interface Console. The
+Admin User that got removed will receive an email notification that their
+Admin account has been removed.
+
+[Enable In-active User]: Re-enable an Admin User to an active status if their
+account was disabled due to inactivity over 90 days.
+
+[Reset]: When an Admin User account is locked out.
+
+[In-Active User]: This Admin Superuser is in-active. You will need to contact
+InfoIMAGE Inc. to re-active this use
+
+  
+
+  *  **   List:**
+
+  1. Admin Superusers: Update SuperUser:Modify|Modify Email
+  2. Admin Manager: Update Admin Manager:Modify|Modify Email|Remove|Create 
+  3. Customer Service:  Update Customer Servicer:Modify|Modify Email|Remove|Create User
+  4. Admin Guests:               Update Admin Guestsr:Modify|Modify Email|Remove|Create
+
+  
+  
+
+  * ### Exit: Clicking on 'Yes" from the exit message redirects to [https://eqbkdev.infoimageinc.com:9780/msm/signoff.jsp](https://eqbkdev.infoimageinc.com:9780/msm/signoff.jsp)
+
+  
+
+#  ** _Analysis Summary_**
+
+#  ** _ROOT_**
+
+Scope| Feature| EQBK business| Hypercube| Note  
+---|---|---|---|---  
+  
+  
+ **SSO**|  SSO vendor| Q2 (singleSignOn7Servlet)|  84 complete Supported  85
+incomplete Not Supported |  
+  
+User Enrollment logic|
+
+  * Goes through enrollment based on SSO date 
+
+|  48 complete Supported  49 incomplete Not Supported |  
+  
+Enrollment Step 1| PDF view verficiation |  47 complete Supported  0
+incomplete Not Supported |  
+  
+Enrollment Step 2| E statement Disclosure|  1 complete Supported  2 incomplete
+Not Supported |  
+  
+Enrollment Step 3|
+
+  * Update NP (email only)
+  * Updated DP(Electronic, paper, Both)
+
+|  3 complete Supported  4 incomplete Not Supported |  
+  
+  
+  * Optional Second Email option
+
+|  5 incomplete Supported  6 complete Not Supported |  
+  
+  
+  * Masked account number
+
+|  7 incomplete Supported  8 complete Not Supported | Masked account number is
+supported in hypercube, if this feature is turned on it masks account number
+through out the whole application. But EQBK only masks account number during
+enrollment not on home page drop down or profile page  
+  
+  * option to provide Assisted by Employee name (optional)
+
+|  9 incomplete Supported  10 complete Not Supported | this is stored in
+"source" column in usr table  
+  
+  * No option for " **Secure PDF " **( **PDF**   **Attachment)**
+
+|  11 incomplete Supported  12 complete Not Supported | user can turn secure
+pdf option from profile page but not from enrollment, on hypercube it will
+show on both enrollment and profile page  
+  
+  * Enrollment Confirmation page
+
+|  13 incomplete Supported  14 complete Not Supported | after successfully
+completing  
+ **DSO**  
+  
+  
+  
+  
+|  Login|
+
+login with Login ID and Password
+
+|  15 complete Supported  16 incomplete Not Supported |  
+  
+after login there's a option to save device which requires Zip Code|  17
+incomplete Supported  18 complete Not Supported | Zip code is stored in
+Contact_info table which is not used in current standard data structure  
+Register| Step 1: PDF verification |  19 complete Supported  20 incomplete Not
+Supported |  
+  
+  
+| Step 2: Disclosure Agreement|  21 complete Supported  22 incomplete Not
+Supported |  
+  
+  
+|
+
+Step 3: Login Information
+
+  * to verify account requires addition zip code information 
+
+|  23 incomplete Supported  24 complete Not Supported | Zip code is stored in
+Contact_info table which is not used in current standard data structure  
+Forget Password Recovery | Requires loginID, Hint Qurstion & Answer|  25
+complete Supported  26 complete Not Supported |  
+  
+**Statement   page**| homepage (header menu)|
+
+  * Shows all statement types
+  * has inserts
+
+|  27 complete Supported  28 incomplete Not Supported |  
+  
+**Disclosure**|  Disclosure (header menu )|
+
+  * open in new tab
+
+|  29 complete Supported  30 incomplete Not Supported |  
+  
+**Reconciliation**  | Reconciliation (header menu)|
+
+  * open in new tab
+
+|  31 complete Supported  32 incomplete Not Supported |  
+  
+**Profile(SSO)**  
+  
+  
+  
+  
+|  Notification Preference|
+
+  * can update email
+
+|  33 complete Supported  34 incomplete Not Supported |  
+  
+  
+  * can edit /add optional 2nd email
+
+|  35 incomplete Supported  36 complete Not Supported |  
+  
+Delivery Preference|
+
+  * Can change to Electronic, Paper or Both
+
+|  37 complete Supported  38 incomplete Not Supported |  
+  
+  
+  * if changed to paper then goes to optout page 
+
+|  39 incomplete Supported  40 complete Not Supported | if the selected
+account is in paper on home page it shows optout page instead of home page,
+from that page user can go to electronic again.  
+Secure PDF|
+
+  * user can opt in providing a password
+
+|  41 complete Supported  42 incomplete Not Supported |  
+  
+information|
+
+  * Shows account Owner name
+
+|  43 incomplete Supported  44 complete Not Supported |  
+  
+**Profile(DSO)**|  Notification Preference|
+
+  * can update email
+
+|  46 complete Supported  45 incomplete Not Supported |  
+  
+  
+|
+
+  * can edit /add optional 2nd email
+
+|  66 incomplete Supported  67 complete Not Supported |  
+  
+  
+| Delivery Preference|
+
+  * Can change to Electronic, Paper or Both
+
+|  68 complete Supported  69 incomplete Not Supported |  
+  
+  
+|
+
+  * if changed to paper then goes to optout page 
+
+|  70 incomplete Supported  71 complete Not Supported | if the selected
+account is in paper on home page it shows optout page instead of home page,
+from that page user can go to electronic again.  
+  
+| Secure PDF|
+
+  * user can opt in providing a password
+
+|  72 complete Supported  73 incomplete Not Supported |  
+  
+  
+| information|
+
+  * Shows account Owner name
+
+|  74 incomplete Supported  75 complete Not Supported |  
+  
+  
+| User information|
+
+  * Registration Date
+
+|  76 incomplete Supported  77 complete Not Supported |  
+  
+  
+|  
+|
+
+  * Option to update security question
+
+|  78 complete Supported  79 incomplete Not Supported |  
+  
+**Exit**|  Exit (header menu)|
+
+  * option to logout
+
+|  80 complete Supported  81 incomplete Not Supported |  
+  
+  
+  
+
+# **_MSM_**
+
+Scope| Feature| EQBK business| Infotrac| Note  
+---|---|---|---|---  
+ **Account Management**|  Account Search| Search account by account number and
+Email Address|  104 complete Supported  105 incomplete Not Supported |  
+  
+Delivery Preference| Can switch to Electronicr, Paper or Both|  106 complete
+Supported  107 incomplete Not Supported |  
+  
+Notification Preference| Update Email Address|  108 complete Supported  109
+incomplete Not Supported |  
+  
+  
+| Update 2nd optional Email address|  110 incomplete Supported  111 complete
+Not Supported |  
+  
+  
+| Secure PDF|  112 complete Supported  113 incomplete Not Supported |  
+  
+**Email Proofing**|  Create/Update email template| e-statement, Account
+Analysis, Line of credit|  114 complete Supported  115 incomplete Not
+Supported |  
+  
+**Upload insert**|  insert|  
+|  116 complete Supported  117 incomplete Not Supported |  
+  
+**Reports**|  
+|  Latest stats, User login Activity, AI login activity, Email address
+collection, paperless|  118 complete Supported  119 incomplete Not Supported |  
+  
+**Administration**|  admin user create/update/delete| User creation and role
+management|  120 complete Supported  121 incomplete Not Supported |  
+  
+  
+|  
+|  
+|  
+|  
+  
+  
+|  
+|  
+|  
+|  
+  
+  
+  
+
+# _**Points to Discuss on Pirsm:**_
+
+  * They have a " **Secure PDF " **( **PDF**   **Attachment)**  feature which is only accessible from the profile page but not during sso enrollment, if they migrate it will be on enrollment too.
+  * The account number is masked during so enrollment but nowhere else throughout the member site
+  * option 2nd email is not supported
+  * Assisted Employee name not supported during sso enrollment.
+  * Enrollment finish page
+  * Zip Code ( _stored in Contact_info from auth_ ) is required for DSO login and sign up, but not supported in the hypercube.
+  * Home page disclosure doesn't match with the archival period for default, analysis and heloc, it says 7 years but actual is 25 months.
+  * in profile page shows "Account Holder Name" Not supported in hypercube
+
+

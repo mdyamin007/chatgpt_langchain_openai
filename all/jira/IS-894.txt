@@ -1,0 +1,130 @@
+title: PFCU - [24435][pvt] Exclude restricted statements from the monthly sample files
+description: Suppress the empcode 1 accounts from the InfoTRAC sample files
+
+
+
+Programming hours: 4 hr
+
+Sample Date: 3/3/2022
+
+Sample Approval: 3/4/2022
+
+Live Date: 3/10/2022
+
+
+author: william.kong
+comment: [~mahbubS]: Can you work with [~rony]with this request? We want this project to be released at the same time as IS-890.
+
+
+author: william.kong
+comment: [~rony]: Assigning ticket to you now. Bear in mind, Sakib is also working on IS-890. Would like to this project to be released together.
+
+
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+parallel id:20220227133404
+
+The update is to not to display customer with emp code 1 in job status proof sample.
+
+check [https://app.na3.teamsupport.com/?TicketNumber=24435]comment 90 to see the logic Will proposed.
+
+and in comment 97 I explained my testing to William.
+
+Coding logic is:
+
+I am adding the value "n" in field381 of paper txt , if account + appl code match found between data vs cif file ( from where the emp code comes). Cif file entry looks like this:
+
+21|JOHN BEMENT|JOHN BEMENT|14857928|00|JOHN||BEMENT|*1*|Savings
+
+9th column is emp code. So if emp code is 1 I am adding "n" in paper txt file.
+
+!image-2022-03-05-05-40-47-095.png!
+
+After that I am building the proof file from where the prf sample get generated with only those entries that doesn't have this n in 381 no column and the final proof sample will not include account that has emp code 1 ( "n" is paper txt ).
+
+
+
+[^pfcums1228.zip]inside this zip file it has c1bmcok file ( which is paper txt file that contains all accounts ) and prf txt file which contains 1 account ( 707701701MARY ANN SHEPTOCK OR) from c1bmcok file and that account doesn't have n in 381 column. And with this account proof sample is built.
+
+!image-2022-03-05-05-47-45-863.png!
+
+
+
+This is from stage.
+
+
+
+!image-2022-03-05-05-48-09-805.png!
+
+
+
+Proof sample .
+
+
+
+PFCUMS11.zip was already uploaded by Sakib in is-890.
+
+
+
+I am quite not sure how will you test this but I tried to explain what I implemented.
+
+
+
+Let me know if you need anything.
+
+
+
+Thanks
+
+Rony
+
+
+
+
+
+
+
+
+author: igor.khosid
+comment: Parallel ID: 20220227133404
+ Currently in parallel: Yes
+ User: mahbubS
+ Description: ts 24435 pfcu exclude restricted statements and IS-890 updates
+ Date Submitted: 2022-02-27 13:34:32
+ Date Last Updated: 2022-03-01 05:56:09
+ Files:
+ 1) PFCUMS11.dfa
+ 2) pfcums1.control
+ 3) pfcums1_get_ms_sample.sh
+ 4) pfcums1_process.sh
+
+
+author: igor.khosid
+comment: [~rony]
+
+QA completed - please attach IS checklist
+
+
+author: rony
+comment: [~Igor.Khosid]
+
+[^IS-894 Checklist for Paper Parallel Template.docx]
+
+
+
+
+
+
+author: igor.khosid
+comment: IS checklist - attached >>>[^IS-894_PFCU_IS checklist.pdf]
+
+
+author: dawnl
+comment: Hi Rony - please confirm this has been released to production. Thanks.
+
+
+author: rony
+comment: yes released.

@@ -1,0 +1,30 @@
+DVD archival is needed when clients want to backup their statement in a physical DVD. If there is a requirement for DVD archival it will be specified in the SOW (Statement of Work).
+Take a look at the above image. The screenshot is taken from a SOW of a project.
+Just like normal archival requirements DVD archival also needs to have various information such as pdf file name, account number, account name, etc. as its index. In the DFA code just set those information in GROUPINDEX as you do for normal archival requirements.
+In the processing script you just need to call the afp2pdf.py script with the parameter index_dvd and prefix. The value of the prefix parameter should be the (<CID><JID>) of the project. The value of InputFilename will be the afp file path that was generated under "e" (archival) option and the value of OutputFilePath will be path of pdf files.
+run_dvd_opt () {
+    e_opt_afp_dir="${d_dir}/pdf_afp/${cid}/${cid}${jid}/afp"
+    e_opt_pdf_dir="${d_dir}/pdf_afp/${cid}/${cid}${jid}/pdf"
+	dir_cleanup $e_opt_afp_dir
+    cp ${d_dir}/${cid}/${cid}${jid}${g_segment}${cycle_no}8.afp ${e_opt_afp_dir}
+    e_opt_file="${e_opt_afp_dir}/${cid}${jid}${g_segment}${cycle_no}8.afp"
+    if [ -s "${e_opt_file}" ]
+    then
+        python ${home_master}/master/afp2pdf.py index_dvd prefix="${cid}${jid}" InputFilename="${e_opt_file}" OutputFilePath="${e_opt_pdf_dir}/" clear_output_path_files=y
+        chk_exit_status $? afp2pdf.py
+    else
+        echo -e "Potential Error: This cycle did not produce any PDF archival files for ${cid} ${jid} !!!"
+        exit 1
+    fi
+}
+See the above code snippet from a processing script. The variables used in the script explained below.
+$d_dir: The value can be /z, /d or /t according to the environment. For example in rht environment the value is /t
+$cid: The CID of a project.
+$jid: The JID of a project.
+dir_cleanup ()
+{
+	[ -d $1 ] && rm -rf $1
+    mkdir -m 777 -p "$1"	    
+}
+The dir_cleanup function create a fresh directory with a given path.
+In the above run_dvd_opt function the afp file generated with isisdisk script is copied to the directory specified in e_opt_afp_dir variable. The dir_cleanup() function made sure that there was no previous or unwanted file in the directory mentioned in e_opt_afp_dir variable before copying the afp file. After that the afp2pdf.py called to generate DVD archival. For the above example the dvd archival will be generated in the e_opt_pdf_dir which was set as the value OutputFilePath parameter. The clear_output_path_files=y means it will remove all files in the OutputFilePath before the generating files. By default this action will not be performed.

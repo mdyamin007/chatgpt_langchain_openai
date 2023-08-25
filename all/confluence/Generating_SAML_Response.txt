@@ -1,0 +1,285 @@
+title: Generating SAML Response
+body: **Here is the simplified xml that will be encoded by base64 algorithm to
+generate SAMLResponse:**
+
+<samlp:Response
+
+   Version="2.0"
+
+   ID="DVK.KXwOeOFWpkTVIJv9B1fj-QP"
+
+   IssueInstant="2019-07-18T15:56:11.766Z"
+
+   Destination="<https://demopilot.infoimageinc.com/ssoOneWayLogin>"
+
+   xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol">
+
+   <saml:Issuer
+
+       xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">[pfd.qal1.digitalinsight.com](http://pfd.qal1.digitalinsight.com)
+
+   </saml:Issuer>
+
+   <ds:Signature
+
+       xmlns:ds="[http://www.w3.org/2000/09/xmldsig#](http://www.w3.org/2000/09/xmldsig)">
+
+       <ds:SignedInfo>
+
+           <ds:CanonicalizationMethod
+
+               Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+
+           <ds:SignatureMethod
+
+               Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
+
+           <ds:Reference
+
+               URI="#DVK.KXwOeOFWpkTVIJv9B1fj-QP">
+
+               <ds:Transforms>
+
+                   <ds:Transform
+
+                       Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
+
+                   <ds:Transform
+
+                       Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+
+               </ds:Transforms>
+
+               <ds:DigestMethod
+
+                   Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+
+               <ds:DigestValue>
+
+               </ds:DigestValue>
+
+           </ds:Reference>
+
+       </ds:SignedInfo>
+
+       <ds:SignatureValue>
+
+       </ds:SignatureValue>
+
+       <ds:KeyInfo>
+
+           <ds:X509Data>
+
+                **< ds:X509Certificate>**
+
+                        **It should be matched with the text inside /cert/certificate.crt file except the first and last line (-----BEGIN CERTIFICATE----- and -----END CERTIFICATE-----).**
+
+ **              </ds:X509Certificate>**
+
+           </ds:X509Data>              
+
+           <ds:KeyValue>
+
+               <ds:RSAKeyValue>
+
+                   <ds:Modulus>
+
+                   </ds:Modulus>
+
+                   <ds:Exponent>
+
+                   </ds:Exponent>
+
+               </ds:RSAKeyValue>
+
+           </ds:KeyValue>
+
+       </ds:KeyInfo>
+
+   </ds:Signature>
+
+   <samlp:Status>
+
+       <samlp:StatusCode
+
+           Value="urn:oasis:names:tc:SAML:2.0:status:Success"/>
+
+   </samlp:Status>
+
+   <saml:EncryptedAssertion
+
+       xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">
+
+       <xenc:EncryptedData
+
+           Type="<http://www.w3.org/2001/04/xmlenc#Element>"
+
+           xmlns:xenc="[http://www.w3.org/2001/04/xmlenc#](http://www.w3.org/2001/04/xmlenc)">
+
+           <xenc:EncryptionMethod
+
+               Algorithm="http://www.w3.org/2001/04/xmlenc#aes128-cbc"/>
+
+           <ds:KeyInfo
+
+               xmlns:ds="[http://www.w3.org/2000/09/xmldsig#](http://www.w3.org/2000/09/xmldsig)">
+
+               <xenc:EncryptedKey>
+
+                   <xenc:EncryptionMethod
+
+                       Algorithm="http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p"/>
+
+                   <xenc:CipherData>
+
+                        **< xenc:CipherValue>**
+
+ **It should be encrypted using the algorithm rsa-oeap (using public key) and
+then base64.**
+
+ **This encrypted key will be decoded firstly using base64 decoding and then
+the base64 decoded key will be again decoded by rsa-oeap algorithm using the
+private key that is stored inside a private.pem file.**
+
+ **The final decoded key will be used to decode the xenc:CipherValue provided
+below in this xml.**
+
+ **                      </xenc:CipherValue>**  
+                   </xenc:CipherData>
+
+               </xenc:EncryptedKey>
+
+           </ds:KeyInfo>
+
+           <xenc:CipherData>
+
+                **< xenc:CipherValue>**
+
+                   
+
+ **It should be the base64 and AES-CBC encoded data.**
+
+ **This data will be decoded by the decoded key obtained from above in this
+xml.**
+
+ **Here 2 steps will be followed to encrypt data.**
+
+ **1\. Encrypt xml data using AES-CBC first (using a 16 bit initialization
+vector).**
+
+ **2\. Now add the same 16 bit initialization vector at the beginning of AES-
+CBC encrypted data and encrypt it using base64.**
+
+  
+
+ **The following xml will be encoded (AES-CBC base64) and placed here.**
+
+<saml:Assertion>
+
+   <saml:AttributeStatement>
+
+       <saml:Attribute Name="XML_DATA">
+
+           <saml:AttributeValue>
+
+<![CDATA[<userInfo><MEMBER_ID></MEMBER_ID><name></name><user_email></user_email></userInfo>]]>
+
+           </saml:AttributeValue>
+
+       </saml:Attribute>
+
+       <saml:Attribute Name="USER_ACCOUNTS">
+
+           <saml:AttributeValue>
+
+<![CDATA[<Accounts><account><type></type><nickName></nickName><accountNumber></accountNumber></account></Accounts>]]>
+
+           </saml:AttributeValue>
+
+       </saml:Attribute>
+
+       <saml:Attribute Name="user_type">
+
+           <saml:AttributeValue>
+
+           </saml:AttributeValue>
+
+       </saml:Attribute>
+
+       <saml:Attribute Name="MEMBER_ID">
+
+           <saml:AttributeValue>
+
+           </saml:AttributeValue>
+
+       </saml:Attribute>
+
+       <saml:Attribute Name="LOGIN_ID">
+
+           <saml:AttributeValue>
+
+           </saml:AttributeValue>
+
+       </saml:Attribute>
+
+       <saml:Attribute Name="FI_ID">
+
+           <saml:AttributeValue>
+
+           </saml:AttributeValue>
+
+       </saml:Attribute>
+
+   </saml:AttributeStatement>
+
+</saml:Assertion>
+
+ **< /xenc:CipherValue>**  
+
+</xenc:CipherData>  
+
+       </xenc:EncryptedData>
+
+   </saml:EncryptedAssertion>
+
+</samlp:Response>
+
+  
+
+ **The necessary field description:**
+
+  1.  **MEMBER_ID:** USR_ID.
+  2.  **name:** USR_FRISTNAME (USR) / ACCT_OWNER_NAME (FIN_ACCOUNT).
+  3.  **user_email:** email.
+  4.  **type:** account type.
+  5.  **nickName:** Account type description. (it will be inserted into the DESCRIPTION column of USR_ACCT_TYPE_MAPPING table and will be shown in the account selector **).**
+  6.  **accountNumber:** ACCT_NUMBER.
+  7.  **user_type:** User type from USR table.
+  8.  **MEMBER_ID:** Primary user ID.
+  9.  **LOGIN_ID:** Sub-user ID.
+  10.  **FI_ID:** CIF number. (If not provided then there will be error: FI_ID is missing. There is no other use of this field.)
+
+  
+
+ **Code change for testing:**
+
+  1. Replace code in /server/auth.js " **decipher.update(forge.util.createBuffer(xencCipherValue), "utf-8");**" by the following line of code:
+
+**decipher.update(forge.util.createBuffer(forge.util.decode64(xencCipherValue)),
+"utf-8");**
+
+  1. Replace 565th line of code inside **getSamlValue** function in /lib/allConstants/util.js " **return samlAttributeValue[0][ "_"];**" by the following line:
+
+  **return samlAttributeValue[0];**
+
+  
+  
+
+ **Key generation and encryption tools:**
+
+  1. To generate public and private key pair: [https://www.devglan.com/online-tools/rsa-encryption-decryption](https://www.devglan.com/online-tools/rsa-encryption-decryption)
+  2. To encrypt secret key using RSA-OAEP: [https://www.devglan.com/online-tools/rsa-encryption-decryption](https://www.devglan.com/online-tools/rsa-encryption-decryption)
+  3. To encrypt data using AES-CBC: [https://www.devglan.com/online-tools/aes-encryption-decryption](https://www.devglan.com/online-tools/aes-encryption-decryption)
+  4. To encrypt whole xml into saml response using base64: [https://www.browserling.com/tools/xml-to-base64](https://www.browserling.com/tools/xml-to-base64)
+
+

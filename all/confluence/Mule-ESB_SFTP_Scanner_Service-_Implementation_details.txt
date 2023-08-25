@@ -1,0 +1,170 @@
+title: Mule-ESB SFTP Scanner Service- Implementation details
+body:   
+
+## A. Overview
+
+The Mule-ESB SFTP Scanner Service is developed to perform scanning & file
+transferring for source sFTP Servers to internal BU Server. Also, it performs
+validation check against each file by checking the schedule in BU file list
+and send confirmation email to the BU client.  
+  
+
+### a) As-Is Process
+
+  1. Currently, PUI Scanner is performing the SFTP Scanner services by transferring the files from source FTP Server to target BU Server.
+  2. There are five (5) source FTP Servers, which resides in DMZ zone, where clients can login & upload/downdoad data file(s) for PUI processing.
+  3. These five FTP servers act like a landing zone for external BU clients in order to upload/download the files from PUI Application.
+  4. The PUI Scanner keeps polling the source FTP Servers at regular interval (15-min frequency) and transfer the files to internal BU Server, which resides inside the firewall.
+  5. The PUI Scanner pickes-up & transfer each file (except files placed under `'client-pickup'` sub-folder) to target BU Server and validate against the file schedule list in order to identify the file type (known or unkown file).
+
+  
+  
+
+### b) To-Be Process
+
+  1. The SFTP Scanner Service is implemented using the Mule-ESB, which will perform the similar job as PUI Scanner, by polling the source FTP Server folders and transfer the files to the target BU Server.
+
+  1. The Mule SFTP Scanner will perform folder scanning at regular intervals (15-min freq) and move the files from source SFTP landing-zone server to the target BU FTP Server.
+  2. It will provide the same functionality without bringing any changes to the original PUI application. It will use the same DB schema to log the file transcation details.
+
+  
+  
+
+## B. Implementation Details
+
+  
+  
+
+### a) High-level Steps
+
+  1. Mule-ESB has built-in sFTP Adapter to connect with the sFTP Server and process the files using upload/download operations.
+  2. The Inbound End-Point (EP) will poll/scan the source SFTP Servers to pick-up the source incoing-file(s) using secure transport channel and broadcast the file details as MuleMessage with SftpInputStream poitner for the source source incoing-file.
+  3. The target outbound End-Point (EP) will use the SftpInputStream source data file poitner to deliver the files to the target destination.
+  4. The MuleMessage will also have the source incoing-file details under header attributes covering file-name, file-size, file date-timestamp in order to capture the incoing-file transaction log details into the database table.
+  5. The Mule-ESB workflow will also perform the duplicate file check by applying the filter to maintian the list of last 1000-files (with complete file-name path) in memory-store in oder to avoid duplicate file processing (this will avoid large files to be picked-up again in case previous run already picked-up for processing. In As-Is, this is maintainted by temp-inconing-file database table entry).
+  6. The Mule-ESB Workfflow will perform a validation check against the File-Schedule table to validate the schedule and file-name patterns in order to classify the file for known/unkwnown file type or missing file, if any.
+  7. It will also send one consolidated email per BU Client having list of all received files (known + unknwon) and another mail for the missing files, if any not submitted by the client.
+
+  
+  
+
+### b) Source/Target End-points
+
+Mule-ESB Workflow has two End-Points (EPs) - Inbound & Outbound - for source &
+target SFTP Servers respectively.
+
+  * Inbound EP - polls & process the SFTP folder resources recursively at specified intervals and prepares & submit a Mule-Message for each incoing-file details to the Mule Workflow.
+  * Outbound EP - process mule-message and deliver, store the file(s) to the target destinations - SFTP BU Site and Backup Site.
+  * Other outbound EP - Email Sender - it will process the payload for the file schedule proccessing in order to generate the email to each BU client having list of known/unknown files.
+
+  
+
+Given below diagram describes high-level flow steps covering source ->target
+server file transer & delivery.
+
+    
+    
+    Figure-1: High level Mule Workflow diagram
+
+  * In the above top main-workflow diagram, left-most and right-most box depicts Inbound & Outbound end-points covering source/target SFTP Server.
+  * In below sub-workflow diagram, right-most box depicts outbound endpoint for the SMTP email message sender for each BU Client.
+
+  
+  
+
+### c) SFTP Scanner Interface - Key Features
+
+  * The SFTP Scanner Interface uses built-in SFTP Adapter to connect with source/target servers. The inbound/outbound end-points are configured using the SFTP connectors. The inbound SFTP end-point uses embedded sftp client to poll the folders and scan/read the incoming-file(s) using secured sftp channel.
+  * SFTP Adapter also support SSH identity key & passphrase login (password-less login feature) in order to avoid password configuration & storage.
+  * SFTP server configurations deails are stored into the configuation properties file. No code changes required in case of any sftp server name/ip o crdential changes happen in future.
+  * Polling frequency and email list also configured in the properties files and database tables.
+  * Logging and Auditing feature enabled to capture the transaction log in he Mule Management Console (MMC). Also, error logging details inside the DB Table.
+  * Combination of the Sync/Async processing logic in order to optimize the the file transfer process.
+  * File scanning - RegEx & Wildcard file-name pattern support (e.g.  **.txt, *.log, client**.dat) without bringing any changes to the existing PUI database schema.
+  * Mule-Workflow also performs check for the duplicate files by filtering the incoming file-name (with complete path) into memory object-store.  
+In case of duplicate file detected during two consecutive runs, the Interface
+will simply ignore the file for further processing & delivery.
+
+  * Mule-Workflow also captures errors & exceptions into the database encountered duing the workflow processing.
+
+  
+  
+
+## C. Mule-ESB Workflow
+
+  * The inbound endpoint - SFTP service - polls SFTP server folder at regular inervals (15-min run inerval) and passes the input-stream to the next avaiable service in the main workflow for further processing.
+  * The Java custom component performs validation check for the incoming file-name and makes the incoming_file object for the database transaction log storage.
+  * The SMTP Email component and JDBC component handled notification & database services.
+
+    
+    
+    Figure-2: High level Mule Main-Workflow diagram
+    
+    
+    Figure-3: High level Mule Sub-Workflow diagram
+
+  
+  
+
+## D. Integration Patterns
+
+Given below section describes the Integration Patterns used in the Mule-ESB
+SFTP Scanner Service.
+
+a) File Transfer:  
+
+  * An application would like to transfer data to another application using File Transfer.
+  * It can support multiple applications that are being built independently, with different  
+languages and platforms to transfer the files with or without eading file
+contents.
+
+b) Polling Consumer:  
+
+  * The inbound receiver polls the files at regular intervals according to the nature of the business.
+  * When monitoring a resource in a non-invasive way is the only option for integration.
+
+c) Idempotent Receiver  
+
+  * Even when a client upload a file once, the receiver application may receive the file (message)  
+more than once especially when file is too large (> 1GB).
+
+  * The Idempotent filer pattern will avoid the duplicate file/message processing in order to track the duplicate messages.
+
+d) Wire Tap Pattern:  
+
+  * Being able to divert copies of messages opens up new integration possibilities.
+  * To capture the message and send a copy for parallel processing with specific purpose like auditing etc.
+
+e) Aggregator Pattern:  
+
+  * The workflow captures and aggregate all the messages for the given BU client using the CID in order to  
+consolidate incoming-file list to perform validation check and send email.
+
+  
+  
+
+## E. Database Services - REST, DAO, JPA Implemenation
+
+The database objects services are implemented using the DAO, JPA, REST based
+web-services. It is based on the layered architecture for the SFTP Scanner
+database table objects.  
+The database is accessed by a Data Access layer (i.e. DAO Layer). The DAO
+layer uses Hibernate API to interact with database. The DAO layer will be
+invoked by a service layer. In SFTP Scanner Inerface, a service interface
+called IncomingFileService, which provides CRUD operations for the
+INCOMING_FILE database table. This table is created in the MySQL Mule-ESB
+database (PUI application is using Oracle DB).
+
+    
+    
+    Figure-4: DAO Implementation for the Incoming_file Service
+
+* * *
+
+  
+
+### Attachments
+
+  
+
+

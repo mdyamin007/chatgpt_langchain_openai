@@ -1,0 +1,261 @@
+title: Build Automation Steps
+body: ## Build Script
+
+Build project is checked into svn repository /tmp/build  
+Repository view in pd-tools  
+  
+
+### Prereqs before running the script
+
+Install JDK -
+<http://redmine.infoimage.com/projects/reference/wiki/Build_Automation_Steps#JDK>  
+Install Apache Maven -
+<http://redmine.infoimage.com/projects/reference/wiki/Build_Automation_Steps#Maven>  
+Install Apache Tomcat Web Server -
+<http://redmine.infoimage.com/projects/reference/wiki/Build_Automation_Steps#Apache-
+Tomcat>  
+  
+
+### How to run the script
+
+  1. Go the your home directory /home/builder create directory build. In this directory drop the build.sh file which you can grab from svn location tmp/build
+  2. At the prompt run the script  **./build.sh srv/svn/tmp current**  ( here is is checking out from current branch of tmp repository  
+
+    
+            builder@pd-tools:~/build$ ./build.sh srv/svn/tmp current
+    
+
+  3. Now it will ask you which application you want to build choose option  **a**  which is processing
+  4. At this point you should see the script in action. It will be doing everything which is explained in "What it does" section.
+
+  
+  
+
+### What it does
+
+  1. User involved in the script is the builder (headless) user on pd-tools and pd-dev1
+  2. Takes two parameter  **svn location**  eg. srv/svn/tmp and  **branchname**  eg. current
+  3. Prompts user for application to build. Currently only option is option  **a**  which is processing(PUI).
+  4. Cleans up the tmp working folder.  
+This folder is the location where code gets checked out too or code here gets
+updated.
+
+  5. Checks out "build" trunk project from SVN. Build project also contains the parent pom.xml. Build only has trunk no branches.
+  6. For the main project (eg. processing) check out all the dependent projects from SVN
+  7. Copy pom.xml from build project to one level above. This pom.xml needs to be peer of build and other projects.
+  8. Kick off a maven build on parent pom.xml
+  9. Reads values from buildNumber.properties file to come up with the artifact war name to deploy  
+scp the war to the archive location on pd-dev1 /var/www/archive/war/processing  
+<http://pd-dev1/archive/war/processing/>
+
+  1. {TODO}Build Script}
+
+when builder user is checking out their working copy would be in /home/builder
+-- come up with path  
+>> {TODO} - location where checkout is happening to should be made a constant  
+>> {TODO} - processing war being developed has curly braces being created also
+when using build number plugin. How ever this same plugin works in joveens
+home and no braces are created  
+>> {TODO} - clean up of tmp working directory should happen only in the case
+of checkout but not update  
+>> {TODO} - do svn checkout or update based on a param being passed  
+>> {TODO} - stop tomcat ,clear tomcat webapp, deployment of war , start tomcat  
+>> {TODO} - svn tagging of files after a successful clean build which can be
+tag, to tag or not can go in as a param  
+>> {TODO} - backup buildnumber.properties file  
+>> {TODO} - developers local build script non shell  
+>> {TODO} - end whatever projects are in repository should be updated with
+production updated code  
+>> {TODO} - make sure latest build script is checked into svn
+
+    
+        >> tomcat lib directory does not have all the application related libraries since it was causing a conflict with some of the lib which came with tomcat install. When testing begins we can use this opportunity to clean up unwanted jars.   
+            >> how to add dependency to external lib folder in tomcat  
+            >> multiple ports for different instances  
+            >> use jalopy plugin to take care of auto indentation before doing a checkin  
+            >> useful command to remove CVS dir : find . -name CVS -exec rm -rf {} \;
+
+  
+
+## Project setup
+
+  1. Copied over following production branch projects to /home/Joveen/production_projects location  
+Afp2pdf,dp,i3-core,processing-ui,infoimage-commons (new one by Dharmi) and
+processing(jsp)
+
+  2. Mavenized each of the above projects i.e created the corresponding pom.xml  
+  
+All dependencies were created with scope=provided  
+More info on maven can be found here
+[[<http://redmine.infoimage.com/projects/reference/wiki/Maven>]]  
+You can run the pom.xml in each of the above projects by going into each
+project and doing a "mvn clean install" this will generated the artifact for
+you  
+all dependent jars were copied over to /home/Joveen/tools/apache-
+tomcat-7.0.35/lib directory so that they can serve the application. Remember
+to leave the original tomcat jars in this folder as it is.
+
+  3. Processing Project
+    1. Pom.xml of "processing" project is the one which creates the deployable skinny war.
+    2.  **buildNumber.properties**  
+
+        
+                #maven.buildNumber.plugin properties file
+        #Wed Jun 05 16:38:26 PDT 2013
+        majorVersion=3.0
+        buildNumber=18
+        
+
+      1. The build number plugin used in the pom.xml to do build versions create a buildNumber.properties file which gets dropped into the project when created.
+      2. Make sure that the buildNumber value in this file is the same as the project version in the pom.xml <version>3.0</version>
+      3. the value of the buildNumber always gets updated in this file each time a maven build on this project happens
+    3. Make sure WEB-INF/web.xml of processing project has the following entry  
+
+        
+                        <resource-ref>
+                <description>PUI Jndi</description>
+                <res-ref-name>jdbc/default</res-ref-name>
+                <res-type>oracle.jdbc.pool.OracleDataSource</res-type>
+                <res-auth>Container</res-auth>
+            </resource-ref>
+        
+        
+
+  
+
+## PD-Tools
+
+  
+
+### Java JDK
+
+(these are instructions for ubuntu box)
+
+  1. JDK 1.6 was set up /usr/local/java/jdk1.6.0_39
+
+  
+  
+
+### Apache Maven
+
+(these are instructions for ubuntu box)
+
+  1. Unzipped  **Maven**  to /home/Joveen/tools/ Apache-maven-3.0.4  
+Add the following to the end of the .profile file in /home/Joveen  
+
+    
+                export MAVEN_HOME=/home/joveen/tools/apache-maven-3.0.4
+            export PATH=$PATH:$MAVEN_HOME/bin
+    
+
+  2. One can enforce what compiler and runtime to use with maven compiler plugin in pom.xml  
+
+    
+          
+    <plugin>
+                               <artifactId>maven-compiler-plugin</artifactId>
+                               <version>2.3.2</version>
+                               <configuration>
+                                      <source>1.6</source>
+                                      <target>1.6</target>
+                               </configuration>
+                         </plugin>
+    
+
+  
+  
+
+### Apache Tomcat
+
+(these are instructions for ubuntu box)
+
+  1. Unzipped  **Apache Tomcat**  to /home/Joveen/tools/apache-tomcat-7.0.35  
+Add database configuration to the following files
+
+      1. apache-tomcat-7.0.35/conf/server.xml  
+in the <GlobalNamingResources> section right after <Resource
+name="UserDatabase">section put the entry below  
+
+            
+                              <Resource name="jdbc/default" 
+                   auth="Container" 
+                   type="oracle.jdbc.pool.OracleDataSource" 
+                   driverClassName="oracle.jdbc.driver.OracleDriver" 
+                   factory="oracle.jdbc.pool.OracleDataSourceFactory" 
+                   url="jdbc:oracle:thin:@//10.8.8.215:1521/wodb.EDATA" 
+                   user="ora_admin" 
+                   password="ora_admin" 
+                   maxActive="20" 
+                   maxIdle="10" 
+                   maxWait="-1" />
+            
+
+  2. apache-tomcat-7.0.35/conf/context.xml  
+After this following section  
+<!-- Default set of monitored resources -->  
+<WatchedResource>WEB-INF/web.xml</WatchedResource>  
+Add  
+
+    
+          <ResourceLink global="jdbc/default" name="jdbc/default" type="oracle.jdbc.pool.OracleDataSource"/>
+    
+
+  3. apache-tomcat-7.0.35/conf/tomcat_users.xml  
+Add the following entry in  
+
+    
+        <role rolename="manager-gui"/>
+    <user username="tomcat" password="tomcat" roles="manager-gui"/>
+    
+
+  4. bounce Tomcat server
+
+## PD-Dev1
+
+  
+
+(this is also a ubuntu box)  
+h3. Java
+
+  
+
+  1. JDK 1.7
+
+  
+
+### Apache Tomcat
+
+  
+
+  1. /usr/local/workers/tomcat-8081 (apache-tomcat-7.0.37)
+  2. Modified server.xml and context.xml as mentioned in Pd-tools section above
+  3. Added all the jars to tomcat-8081/lib directory
+
+`  
+  
+`
+
+### Apache Server
+
+  
+
+  * Location ???
+
+  
+
+### Archive
+
+  
+
+  * <http://pd-dev1/archive/installs/> \-- install downloads
+  * <http://pd-dev1/archive/war/> \-- all wars
+
+  
+
+### Attachments
+
+  
+
+  
+
+

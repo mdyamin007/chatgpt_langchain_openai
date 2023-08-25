@@ -1,0 +1,97 @@
+title: RWCU - [22692][pvt] eNotices Project - Return file for Archival
+description: IS Assessment:
+
+*Hours for development:*
+
+90 IS hours (15 hours for each notice x 6 notice applications to setup) + Adjust existing 1 rwcudla notice program to fix the tag name + ISD hours not required
+Turnover Date : 10/15/2021
+Sample Date: 11/15/2021
+Sample Approval Date: 11/18/2021
+Go live date : 11/30/2021
+
+Developer: Rahat
+
+
+
+*Print Assessment Details (Please copy these details into the Description in the IS Jira Story!):*
+
+Parallel required: Yes
+
+Setup individual PDF archival with xml index file
+
+Total 6 applications
+ # RWCU - Daily Notices - IRA Withholding (RWCUDLD)
+Latest data file: rwcuiraw0603.txt.asc
+ # RWCU - Daily PDF Letter (RWCUDNA)
+Latest data file: : rwcuPDFloan0917.pdf.asc
+ # RWCU-Invoice - Loan Coupon Daily (RWCULC1)
+Latest data file: rwcu0917_lc.txt
+ # RWCU-Letter - Youth Letter(RWCUML1 or rwcuml1_ywel)
+Latest data file: rwcu0917_ytranq.txt.asc
+ # RWCU-Letter - Daily C (RWCUDLC)
+Data file arrived everyday. But we will not get all notices in the application.
+ # RWCU-Letter B - Daily (RWCUDLB)
+Data file arrived everyday. But we will not get all notices in the application.
+ # RWCU-Letter - Daily (RWCUDLA)
+We already have a working PDF archival program. The only thing to do is fix one tag, the <FileRoom> as mentioned below to use "REDWOOD CREDIT UNION" instead of "REDWOOD"
+
+Refer to the existing rwcudla_pdf.control, rwcudla_pdf_template.control,rwcudla_pdf_template_header.control, andrwcudla_pdf_template_footer.control as a reference point for creating the PDF archival index file and naming convention. Please note for the rwcudla_pdf_template_header.control, the tag <FileRoom> value needs to be updated from "REDWOOD" TO "REDWOOD CREDIT UNION"
+
+
+
+
+
+*Use the afp2pdf.py index_build program syntax similar to:*
+
+ssh -o BatchMode=yes $LOGNAME@rhs2 "export testmode=$testmode; . ${home_master}/master/env_init.sh; python /home/master/afp2pdf.py index_build input_folder=${afp_dir} OutputFilePath=${pdf_dir} data_input_file=${home_master}/control/${cid}dla_pdf.control"
+
+
+
+*/home/control/rwcudla_pdf.control:*
+
+prefix = rwcudla
+clear_output_path_files = y
+pdf_fn_pattern = \{{ PDF_FILE_NAME }}
+PDFVersion = 1.2
+
+index_parameter = START
+output_index_file = Billing_Statement_index.xml
+index_file_type = template
+index_template = rwcudla_pdf_template.control
+index_header_file = rwcudla_pdf_template_header.control
+index_footer_file = rwcudla_pdf_template_footer.control
+index_fields = dummy
+index_parameter = END
+
+
+
+*/home/control/rwcudla_pdf_template.control:*
+
+<Document SeqNum="\{{ SEQUENCE_NUM }}">
+<DocName>BUSINESS LENDING BILLING STATEMENTS</DocName>
+<Cabinet>STATEMENTS</Cabinet>
+<Type>BUSINESS LENDING BILLING STATEMENTS</Type>
+<Institution>226</Institution>
+<Indexes>
+<Index Name="ACCOUNT NUMBER" SmartIndexLookup="true">\{{ ACCOUNT_NUMBER }}</Index>
+<Index Name="NAME">\{{ ACCOUNT_NAME }}</Index>
+<Index Name="DOC DATE">\{{ DATE }}</Index>
+</Indexes>
+<Pages>
+<Page SeqNum="\{{ SEQUENCE_NUM }}">\{{ PDF_FILE_NAME }}</Page>
+</Pages>
+</Document>
+
+*/home/control/rwcudla_pdf_template_header.control (Note: Please fix this control file to use REDWOOD CREDIT UNION instead of REDWOOD:*
+
+<?xml version="1.0"?>
+<FilingJob>
+<Batch SeqNum="1">
+<FileRoom>REDWOOD CREDIT UNION</FileRoom>
+<DeleteFiles>true</DeleteFiles>
+
+
+*/home/control/rwcudla_pdf_template_footer.control:*
+
+</Batch>
+</FilingJob>

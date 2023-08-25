@@ -1,0 +1,578 @@
+title: SSO7 Specification
+body: # InfoIMAGE Single Sign-On
+
+The Single Sign-On module allows a user from a financial institution to gain a
+secure access to InfoIMAGE eStatements services without asking the user to
+perform any authentication on screen. The financial institution will handle
+the authentication process behind the screen by delivering predefined
+authentication data to InfoIMAGE over the secure sockets layer (SSL) protocol.
+This allows the user to have quick and seamless access to InfoIMAGE
+eStatements services.  
+When a user clicks on the eStatements link on the home banking site of the
+financial institution, the financial institution will construct the
+authentication data and transmit it with the user's email address to InfoIMAGE
+over the SSL protocol. InfoIMAGE will validate the authentication data by
+using a secret message that is shared between the two parties. If the
+authentication succeeds, InfoIMAGE will reply the financial institution with a
+session key; otherwise, the financial institution will receive an error
+message. Given a session key, the financial institution will embed the session
+key to the link to InfoIMAGE eStatements services and send the modified link
+to the user's browser, which should automatically redirect the user to the
+link. InfoIMAGE will validate the session key and grant the access to the
+user. If necessary, session information can be posted back to the financial
+institution's servers, allowing its home banking application to keep the
+user's session alive while the user is accessing InfoIMAGE eStatements
+services. The following diagram illustrates the entire single sign-on process
+in the normal situation.  
+  
+_Figure 1: single sign-on process_  
+In order to provide additional security on the transmission of the
+authentication data, InfoIMAGE will enable IP filtering such that only
+requests coming from the financial institution will be processed on
+InfoIMAGE's servers.
+
+## Technical Details - "data" HTTP Parameter Field Specification
+
+### Authentication Data
+
+Authentication data is an ASCII string that is sent from the financial
+institution to InfoIMAGE. It consists with a hash value, a user's account
+number, and the current date. Depending on the hashing algorithm that is
+chosen, the length of authentication data is different. Table 1 describes the
+specification of authentication data encrypted by MD5. Table 2 describes the
+specification of authentication data encrypted by SHA-1. Table 3 describes the
+specification of authentication data encrypted by SHA-256
+
+  
+Table 1: Specification of authentication data encrypted by MD5.
+
+ **Field**
+
+|
+
+ **Start Position**
+
+|
+
+ **End Position**
+
+|
+
+ **Length**
+
+|
+
+ **Comment**  
+  
+---|---|---|---|---  
+  
+Hash value
+
+|
+
+1
+
+|
+
+32
+
+|
+
+32
+
+|
+
+It is the result of MD5 and it is represented in hexadecimal. All characters
+must be in lowercase.  
+  
+Account number
+
+|
+
+33
+
+|
+
+52
+
+|
+
+20
+
+|
+
+If the account number doesn't have 20 characters long, fill it up with leading
+zeros.  
+This field is the primary field to identify the user. If they system has a
+unique identifier like a CIF id, then please use the CIF id.  
+  
+Current date
+
+|
+
+53
+
+|
+
+60
+
+|
+
+8
+
+|
+
+The date that the request is sent to InfoIMAGE's server. The format is in
+MMDDYYYY.  
+  
+  
+Table 2: Specification of authentication data encrypted by SHA-1.
+
+ **Field**
+
+|
+
+ **Start Position**
+
+|
+
+ **End Position**
+
+|
+
+ **Length**
+
+|
+
+ **Comment**  
+  
+---|---|---|---|---  
+  
+Hash value
+
+|
+
+1
+
+|
+
+40
+
+|
+
+40
+
+|
+
+It is the result of SHA-1 and it is represented in hexadecimal. All characters
+must be in lowercase.  
+  
+CIF/Account number/SSN
+
+|
+
+41
+
+|
+
+60
+
+|
+
+20
+
+|
+
+If the account number doesn't have 20 characters long, fill it up with leading
+zeros. This field is the primary field to identify the user. If they system
+has a unique identifier like a CIF id, then please use the CIF id.  
+  
+Current date
+
+|
+
+61
+
+|
+
+68
+
+|
+
+8
+
+|
+
+The date that the request is sent to InfoIMAGE's server. The format is in
+MMDDYYYY.  
+  
+  
+Table 3: Specification of authentication data encrypted by SHA-256.
+
+ **Field**
+
+|
+
+ **Start Position**
+
+|
+
+ **End Position**
+
+|
+
+ **Length**
+
+|
+
+ **Comment**  
+  
+---|---|---|---|---  
+  
+Hash value
+
+|
+
+1
+
+|
+
+64
+
+|
+
+64
+
+|
+
+It is the result of SHA-256 and it is represented in hexadecimal. All
+characters must be in lowercase.  
+  
+CIF/Account number/SSN
+
+|
+
+65
+
+|
+
+84
+
+|
+
+20
+
+|
+
+If the account number doesn't have 20 characters long, fill it up with leading
+zeros. This field is the primary field to identify the user. If they system
+has a unique identifier like a CIF id, then please use the CIF id.  
+  
+Current date
+
+|
+
+85
+
+|
+
+92
+
+|
+
+8
+
+|
+
+The date that the request is sent to InfoIMAGE's server. The format is in
+MMDDYYYY.  
+  
+  
+
+### Hash Value
+
+A hash value is a hexadecimal string representing the result of a hashing
+algorithm. If MD5 is used, the length of the string is 32 characters long. If
+SHA-1 is used, the length of the string is 40 characters long. If SHA-256 is
+used, the length of the string is 64 characters long. In addition, all
+characters must be in lower case. The input of a hashing algorithm is a
+36-character-long ASCII string consists with a client code ID, a user's
+account number, a password, and the current date. Table 4 describes the
+specification of the input in details.
+
+  
+Table 4: Specification of the input of a hashing algorithm.
+
+ **Field**
+
+|
+
+ **Start Position**
+
+|
+
+ **End Position**
+
+|
+
+ **Length**
+
+|
+
+ **Comment**  
+  
+---|---|---|---|---  
+  
+Client code ID
+
+|
+
+1
+
+|
+
+8
+
+|
+
+8
+
+|
+
+It is a 8-digit number assigned by InfoIMAGE during installation. Different
+number is used on InfoIMAGE's testing system and production system.  
+  
+CIF/Account number/SSN
+
+|
+
+9
+
+|
+
+28
+
+|
+
+20
+
+|
+
+If the account number doesn't have 20 characters long, fill it up with leading
+zeros.  
+  
+Password
+
+|
+
+29
+
+|
+
+38
+
+|
+
+10
+
+|
+
+Left justified. It is a secret message that is only known by the financial
+institution and InfoIMAGE. All requests will use the same password. If the
+password doesn't have 10 characters long, fill it up with space characters.  
+  
+Current Date
+
+|
+
+39
+
+|
+
+46
+
+|
+
+8
+
+|
+
+The date that the request is sent to InfoIMAGE's server. The format is in
+MMDDYYYY.  
+  
+  
+  
+Sending the authentication data and email address to InfoIMAGE  
+The preferred method to send authentication data to InfoIMAGE's server is to
+use FORM POST. Different URL will be used to contact InfoIMAGE's test server
+and production server. InfoIMAGE will provide the URLs during installation.
+The name of the parameter for the authentication data is "data" and the name
+of the parameter for email address is "email". If the authentication succeeds,
+the financial institution will receive a session key in plain text; otherwise,
+it will receive an error message beginning with this string: "Error:"  
+Example:  
+Suppose we have the following configuration:  
+Hashing Algorithm = MD5  
+Client Code ID = 00001234  
+CIF/Account Number/SSN = 00000000000000999999  
+Password = secret  
+Email Address = john_doe@infoimageinc.com  
+Current Date = 06262008  
+URL = https://12.123.456.78/Q2SSO
+
+The authentication data
+
+    
+    
+    4ac27e3a8ec0b75151e88b834edac22f0000000000000099999906262008
+
+  
+
+xmlWe can send the authentication data through the following way:
+
+Note: Please do not include the secret password when sending the post request.
+The password is only used when generating the hash value.
+
+Successful authentication
+
+    
+    
+    akel2q4menr2le3jhgls
+
+  
+
+Failed authentication
+
+    
+    
+    Error:hash value does not match
+
+  
+
+Validation on InfoIMAGE
+
+When InfoIMAGE receives the authentication data from the financial
+institution, InfoIMAGE will construct a hash value using the given account
+number, current date, and the secret message that's kept by InfoIMAGE. If the
+secret message is the same as the one on the financial institution, the hash
+value will be the same as the hash value in the authentication data. InfoIMAGE
+utilizes this hashing technique in authentication.  
+Redirection to InfoIMAGE eStatements Services  
+After the financial institution obtains a session key from InfoIMAGE, the
+financial institution should modify the URL to InfoIMAGE eStatements service
+in the following way:
+
+Suppose the URL is https://demopilot.infoimageinc.com/ssoExchange and the
+session key is akel2q4menr2le3jhgls. The modified URL will be:
+
+    
+    
+    https://demopilot.infoimageinc.com/ssoExchange?key=akel2q4menr2le3jhgls
+
+  
+
+The financial institution can use the following HTML code to redirect the user
+to InfoIMAGE eStatements services:
+
+    
+    
+    <HTML><HEAD> <META HTTP-EQUIV="refresh" CONTENT="URL= https://demopilot.infoimageinc.com/ssoExchange?key=akel2q4menr2le3jhgls"> </HEAD><BODY></BODY></HTML>
+
+Technical Details - Additional Optional HTTP Parameters for BANK Model
+
+The following are additional optional parameter that may be required for the
+SSO setup depending on the Financial Institution's requirements:  
+  
+
+**HTTP Parameter**
+
+|
+
+ **Max Length**
+
+|
+
+ **Comment**  
+  
+---|---|---  
+  
+selected_acct#
+
+|
+
+100
+
+|
+
+The account number to display. The account number should not have any leading
+zeros.  
+  
+selected_acct_type#
+
+|
+
+2
+
+|
+
+2 digit alpha numeric application code identifier for the selected account.  
+  
+selected_acct_desc#
+
+|
+
+50
+
+|
+
+The account's nickname to be display on the site in place of the account
+number.  
+  
+user_type
+
+|
+
+1
+
+|
+
+Indicate if the type of user is a personal or business.  
+P = Personal  
+N = Business  
+  
+login_id
+
+|
+
+100
+
+|
+
+Login ID of the user  
+  
+user_name
+
+|
+
+100
+
+|
+
+User's full name.  
+  
+  
+The following is an example of a post request with all the optional HTTP
+parameter:
+
+xmlThe following is an example of a post request with all the optional HTTP
+parameter:
+
+###  
+Certification Requirements
+
+If the Home Banking application requires additional
+certification/authentication methods, such as P3P, client-side certificate
+authentication, and any other authentication methods, InfoIMAGE must be
+informed of these requirement(s) before SSO setup begins.
+
+

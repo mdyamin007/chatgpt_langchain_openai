@@ -1,0 +1,177 @@
+title: Audit Log
+body: The purpose of audit log is to keep trac the changes for particular
+module/function/object by logged in user.  
+Log data would be stored based on the operation type. Operation type means
+various actions that we allow authenticated user to do in application. i.e
+crateTargetGroup, createVideoMessage, createImageMessage,
+modifyTargetGroupTemplate, copyCampaign, approveCampaign, deleteCampaign.
+
+For tracking we will store objects as json format including its hierarchical
+structure, During update operation we will keep only diff value of previous
+and new object.  
+  
+
+# Data Model
+
+ **NOTE:**  The proposed table schema for audit log  
+ _ **Table: audit_log**_
+
+Property| Type| Description  
+---|---|---  
+id| long| auto incremented value and primary key.  
+app_id| VARCHAR2| Application id  
+cid| VARCHAR2| Client id  
+user_name| VARCHAR2| Logged in user name  
+operation_type| VARCHAR2| User activity type, i.e createUser, approveMessage,
+changePermission, activateUser  
+ip| VARCHAR2| Machine IP  
+uagent| VARCHAR2| User agent  
+session_id| VARCHAR2| Logged in user session id  
+curr_data| clob| Current data as json format  
+prev_data| clob| Previous data as json format  
+user_role_permission| VARCHAR2| User all roles and permissions  
+last_modified_ts| TIMESTAMP| Date of last modified  
+modified_table| VARCHAR2| Modified table name  
+modified_record_id| VARCHAR2| Unique identifier of table record  
+  
+  
+  
+
+# SQL to see audit log by date
+
+ **NOTE:**  This SQL is for getting audit log for the day after doing some
+operation from UI, before execute the sql please change  **user_name**  and
+the  **date**  as you expect, The following query is for the  **admin**  and
+day  **July 20, 2016**.
+
+    
+    
+    SELECT * FROM audit_log WHERE user_name = 'admin' AND to_date(last_modified, 'DD-MON-YY')= to_date('20-JUL-16','DD-MON-YY') ORDER BY ID DESC;
+    
+
+  
+
+# Action items of features to capture audit log
+
+  
+
+### # Account center action items
+
+>  ** _Create new user_**
+>
+
+>> Save user ( **usr** )  
+> Save client access( **client_access** )  
+> Save user role access( **user_role** )
+>
+>  ** _Update user info_**
+>
+
+>> Update user( **usr** )  
+> Delete alerts if user not enable( **alert** )
+>
+>  ** _User role settings_**
+>
+
+>> Update user( **usr** )  
+> Update user role settings ( **user_role** )  
+> Delete alert for inactive roles(client type BASIC)( **alert** )  
+> Update alerts for ROOT and WHOLESALE( **alert** )
+>
+>  ** _Email alert subscription_**
+>
+
+>> Update alert for each feature( **alert** )  
+> Update alert meta( **alert** )
+>
+>  ** _Feature Settings_**
+>
+
+>> Save role( **role** )  
+> Remove alerts ( **alert** )  
+> Save Feature Access( **feature_access** )
+>
+>  ** _Create new roles_**
+>
+
+>> Save role( **role** )  
+> Save feature access( **feature_access** )
+>
+>  ** _Edit roles_**
+>
+
+>> Update role( **role** )  
+> Update feature access( **feature_access** )
+>
+>  ** _Delete roles_**
+>
+
+>> Remove alerts( **alert** )  
+> Remove user role mapping( **user_role** )  
+> Remove feature access( **feature_access** )  
+> Delete role( **role** )
+>
+>  ** _Applications_**
+>
+
+>> Approval role setting( **appl_approval_roles** )
+
+  
+  
+
+### # Client Management action items
+
+>  ** _Create new client_**
+>
+
+>> Save client( **client** )
+
+>
+>  ** _Update client_**
+>
+
+>> Update client( **client** )  
+> Delete alerts( **alert** )
+>
+>  ** _Feature settings_**
+>
+
+>> Update meta for all available features( **client** )
+
+>
+>  ** _Message settings_**
+>
+
+>> Setup application types( **M_STMT_TYPE** )  
+> Update application types( **M_STMT_TYPE** )  
+> Setup selection criteria( **M_SELECTION_CRITERIA** )  
+> Update selection criteria( **M_SELECTION_CRITERIA** )  
+> Create new client statement( **m_org_stmt_type** )  
+> Update new client statement( **m_org_stmt_type** )  
+> Save message area
+>>
+
+>>> > Save message area( **MESSAGE_AREA** )  
+> Save message area criteria( **m_mess_criteria** )  
+> Save org selection area criteria( **m_client_sel_criteria** )  
+> Update message area criteria meta( **m_mess_criteria** )
+>>
+
+>> Update message area
+
+  
+
+### # Transfer stmt action items
+
+>  ** _Transfer statement_**
+>
+
+>> Transfer statement(currently we are using info service to transfer stmt)
+
+  
+
+### # User logged in history
+
+>  ** _Capture log for user login_**
+
+

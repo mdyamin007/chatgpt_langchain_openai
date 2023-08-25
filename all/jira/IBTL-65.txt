@@ -1,0 +1,249 @@
+title: rhs2  - Parallel (10.4.20.40):  CFCU MV1 Brisbane 
+description: Hi Will,
+
+CFCU MV1 was failed to process in Brisbane rhs2 (10.4.20.40)
+
+
+
+- cfcumv1_process.sh is callingcfcu_ecl.pl to create ECL files.
+
+- The process is failed to access "/z/isd_input/I3" incfcu_ecl.pl.
+
+my $path;
+if ($ENV\{HOSTNAME} eq "rht") {
+ $path="$ENV\{d_dir}/isd_input_dev/I3/process-files/cfcu/${mm1}/";
+}
+else {
+ $path="$ENV\{d_dir}/isd_input/I3/process-files/cfcu/${mm1}/";
+}
+if (! -d $path) {
+ my $mkdir_error = system ("mkdir -p $path");
+ if ($mkdir_error != 0) {
+ print "ERROR: making directory $path\n";
+ exit 1;
+ }
+}
+
+
+
+Process stopped on pre-processing script:
+
+!image-2020-09-02-10-33-08-043.png!
+
+
+
+[~William.Kong]
+
+[~Terrence.Tong]
+
+
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~TunA]: Thanks for reporting this issue. It is a known issue where isd_input server is not available yet. I'm going to see if I can help ISD get this configured for them to expedite our testing process. Once done, I will re-assign this ticket to you.
+
+
+author: tuna
+comment: Hi Will,
+
+Adding extra status.
+
+- After comments out "cfcu_ecl.pl" script, the process failed in message manager.
+
+- After comments out "message manager" flags in control file, the process failed in file scanner.
+
+- After comments out "infotrac" flags, the process completed. But the e-stmt afp files cannot be created in /z/isd_input_dev/ file. (cp: cannot create regular file `/z/isd_input_dev/indiv_afp/cfcu/afp-archive/cfcumv3-08122020/': No such file or directory)
+
+Thanks
+
+Tun
+
+
+
+[~William.Kong]
+
+[~Terrence.Tong]
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~TunA]: Please retest the ECL program and re-enable infotrac flags. The /z/isd_input_dev directory is working. I finally am able to mount to ISD isd_input dev server.
+
+
+author: tuna
+comment: Hi Will,
+
+The ECL script stage is OK now. But we still have issue file scanner stage.
+
+The process failed with "Error: /home/test/master/chk_file_id.pl missing file_size".
+
+If we get this error, normally we need to rescan the file in infoftps folder (In this case, /z/infoftps4/jha/cfcu/cfcu081220.vis.zip.pgp).
+
+But the file is not pick up from that folder.
+
+Please advise.
+
+Thanks,
+
+Tun
+
+
+
+[~William.Kong]
+
+[~Terrence.Tong]
+
+[~TunA]
+
+
+
+
+
+
+author: william.kong
+comment: [~TunA]: Thanks Tun for confirm that the ECL is working. The internal ftp scanner is a known issue not being available yet and notated in the Known Global Issues. I will assign this ticket to me for now until all issues are resolved and re-tested.
+
+
+
+Thanks!
+
+
+
+-- Will
+
+
+author: tuna
+comment: Hi Will, Just to be clear. We cannot turn on infotrac flags in control file if internal ftp scanner is not working, I think you asked me to re-enable infotrac flags for testing.
+
+Thanks!
+
+Tun
+
+
+
+[~William.Kong]
+
+
+author: william.kong
+comment: [~TunA]: Can you restore the control files and retest this in RHS2 {color:#de350b}*parallel**environment*{color}before Friday?
+
+
+author: tuna
+comment: Hi Will,
+
+
+
+After I restored infotrac flag in control file, I got following file scanner error again in (rhs2:10.4.20.40) and process stopped.
+
+The files scanner does not pickup files from either/z/infoftps4/jha/cfcu/ or/d/infoftps4/jha/cfcu/
+
+Please advise.
+
+Thanks,
+
+Tun
+
+
+
+*Test data:*
+
+/z/ftpbu/JHABU/cfcu/cfcu081220.vis.zip.pgp
+
+/z/ftpbu/JHABU/cfcu/cfcu083120.stm.zip.pgp
+
+
+
+*File scanner error:*
+
+perl /home/test/master/chk_file_id.pl parallel cfcu mv1
+
+Getfilecid is exported from control file
+Error: /home/test/master/chk_file_id.pl *missing file_size*
+cfcu mv1 : /home/test/master/get_infotrac.pl - Error in chk_file_id.pl program.
+/home/test/master/isisdisk.sh: line 552: /: Is a directory
+Error within program: isisdisk.sh
+
+
+
+
+
+[~William.Kong]
+
+[~Terrence.Tong]
+
+[~davidt]
+
+
+
+
+author: william.kong
+comment: [~TunA]: Can you confirm if you copied the data file into /z/infoftp_int/JHA/cfcu folder to ensure the file was scanned and in the database? Unfortunately I cannot find the /cfcu083120.stm.zip.pgp and cfcu081220.vis.zip.pgp to verify.
+
+
+
+Please advise.
+
+
+
+
+author: tuna
+comment: Thanks, Will! Seems like/z/infoftp_int/JHA/cfcu is worked for scanning.
+
+I will keep update the status.
+
+Tun
+
+
+
+[~William.Kong]
+
+[~Terrence.Tong]
+
+
+
+
+
+
+author: william.kong
+comment: [~TunA]: once you update the status to smartsheet, please re-assign to me to review and close. thanks!!
+
+
+
+[https://app.smartsheet.com/sheets/Gxwc79WFwW3wxqc2QJPvrp22CQrgf3Qgjv4R7pF1]
+
+
+
+
+
+
+author: william.kong
+comment: [~TunA]: Can you please advise if the status can be updated on the smartsheet?
+
+[https://app.smartsheet.com/sheets/Gxwc79WFwW3wxqc2QJPvrp22CQrgf3Qgjv4R7pF1]
+
+
+author: tuna
+comment: [~William.Kong]
+
+This test has been completed. I also updated the status in Smart sheet.
+
+Thanks,
+
+Tun
+
+
+
+
+author: william.kong
+comment: [~TunA]: Thanks! I'll close this ticket out.

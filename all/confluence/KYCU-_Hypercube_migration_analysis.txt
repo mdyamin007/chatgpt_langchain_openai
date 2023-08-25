@@ -1,0 +1,629 @@
+title: KYCU- Hypercube migration analysis
+body: ## _****_
+
+## _**ROOT**_
+
+ **Schema: CU**
+
+  
+|  
+  
+---|---  
+ **Account Types**|  NA  
+ **Archival Period**|
+
+  * Default: 36
+  * Enotice: 4
+  * Etax: 18
+
+  
+ **Batch Download**|  N/A  
+ **Delivery Preference**|
+
+  * Paper=B
+  * Paperless=E
+
+  
+ **Enrollment**|
+
+SSO: 3 Steps  
+  
+ **Login Method**|
+
+  * ACISSO (SingleSignOn7Servlet)
+
+  
+ **Menu**|
+
+Statements, Disclosure, Account Reconciliation, Profile, Exit  
+  
+ **Notification Preference**|  Email  
+ **NP Link Type**|  byUfa  
+ **Statement Types**|
+
+default, loan, etax, enotice  
+  
+ **Unenrollment of DP change**|  NO  
+ **Welcome Email**|  True  
+  
+##  _ **Login methods:**_
+
+  *  **ACISSO (SingleSignOn7Servlet)**
+    *  **createLogin=true, updateEmail=true, loginId=cif, linkUFA=false,** **hasMultipleAcct=true** , **createAccount=true, acctLogic=addAdd, subusers=false, accountDigits=9, updateEmailIfExist=true**
+    * Email is not mandatory. Doesn't update from sso.
+    * user = Search form usr_mapping by cifNumber. cif number is last 9 digits of loginId
+    * If user found, search for user profile. If no user profile found, **create a new user profile.  **
+      * If no user found with the cif number, exception thrown saying "cif not found". So **we need to provide an existing cif.**
+      * Create a new user profile with loginName= userId preceding with a "!" and a sso key.
+    *  **For an existing user, (user profile exists) ufa won't be updated. Even if a new account is passed via sso, user will login with its existing accounts.**
+    * If a new user profile is created, then updateLinkRetail  
+
+      * If a new account (not found in fin_account table) is passed in sso file, create the new fa with status="A".
+      * If no paperless found (searched by acctId and stmtType="default"), create a new paperless. new status="B", old status="N", stmtType=default.
+      * Create ufa with ufa_status="pre_reg" and link with the user. Existing ufas don't get unlinked with the user if not passed through sso. 
+      *  **updateEmail:  **
+        * Search for np (byUfa) of the user. (Finds the ufas of the user and then search np by the usrId and acctId). 
+        *  **If np found i.e np != null and np is not empty** in notification_preference table, **skip. No update.**
+        * But,If np not found i.e null or empty email, delete the record and update according to the email addresses passed via sso. If emails passed in sso are not null and length is less than 3, create new np as buUfa. Each accounts of the ufaList are updated with the email addresses passed via sso. Suppose, the user is linked with 3 accounts and 2 emails were passed via sso. Then every np record of that user will be updated with the 2 email addresses. total 3*2=6 entires will be inserted in notification_preference table.
+  *  **aci_hblogin.jsp**
+    * enotice pop reminder = true, undelivered email reminder=true.
+    * np = Serch for np list sorted by np_id asc. the second row is assigned as np.
+    * reminder_option is true. Update the latest email notification date. Insert usr_id in **reminder_status** table
+    * If no sso date or sess_active_status is not "active", go to enrollment. Otherwise, go to homepage.
+
+  * User goes through enrollment if sso=null or sess_active_status != active (key exchange page aci_hblogin.jsp)
+
+##  _Enrollment:_
+
+  *  **Step 1:** Pdf view
+  *   *  **Step 2:**
+    * Disclosure and un-editable email address field.
+    * Searchs for ufa (sorted by acctNum) of that user. Then search for np records as byUfa from notification preference table. If two records found, display the latest email address in the Email Address field.
+    * If two email addresses are available, always shows the second email address.
+    *   *  **Step 3** : 
+    * For existing user profiles, log in with existing accounts. If a new user profile is created, then login with the accounts provided in sso.
+    * "I agree to receive paperless" remains auto-selected. No paper option.
+    * Email address uneditable. For a newly created user profile, ** ** If two email address is passed via sso (separated by comma), the second email gets populated in frontend. NP table gets updated with the 2 email addresses.
+    * For an existing user profile login, email won't be updated from sso.
+  * 
+
+  
+
+##  _Statements_
+
+  * Account Selector dropdown. Shows account number. The first optout account (E) remains selected.
+  * If any account with B is selected from account selector dropdown, shows optout page
+  * Email uneditable.
+  *   *  **eStatement:** Statement Date, Status, Monthly Inserts
+  *  **eTaxes:** Tax Date, Description
+  *  **Notices:** Notice Date, Status, Description
+  * 
+
+##  _Disclosure_
+
+  * Electronic Document Delivery Enrollment.
+  * Opens in a new tab.
+  * 
+
+##  _Account Reconciliation:_
+
+  * Opens in a new tab.
+  * 
+
+##  _Profile:_
+
+  *  **User Information:**
+    *  Uneditable email address. The latest email address of the first ufa (ufas of the user sorted by acctNum) of the user is displayed. 
+  *  **Delivery Preference:**
+    * Displays account number, account holder name and status.
+    *  **$2 per month charge is applicable for receiving paper statements.**
+    * 
+
+##  _Exit:_
+
+  * Displays a confirmation message to exit.
+  * 
+
+  
+
+##  _MSM_
+
+##  _Account Management:_
+
+##  _Email Proofing:_
+
+  
+
+##  _Upload Inserts:_
+
+ __
+
+##  _Reports:_
+
+  * Accounts not enrolled: 
+    * This report will display all accounts that are linked to a member that never accepted the electronic disclosure.
+    * Pulls those records whose sess_active_status="pre_enroll" or null or sess_active_status is not 'pre_enroll" without sso and dso date from usr_mapping, usr_fin_account, fin_account and usr_session.
+    * Displays cif_num and acctNum
+
+ __
+
+##  _Administration_
+
+##  _Exit_
+
+##  _Backend_
+
+##  _Processes_
+
+###  _auth:_
+
+  *  **Handler: KycuAuthHandler**
+    * Format: Bank Number|CIF Number|Customer Type|Tin|Tin Type|Branch|First Name|Last Name|Date of Birth|Application Type|Account Number|Account Active Status|Date Closed|Employee Code|Maintenance Code
+    * Bank Number must be "01"
+    * CIF NUmber must be minimum 9 digits
+    * Valid Client types ie. Customer Types are "P" and "N".
+    * If firstName is not provided, firstName is set as "Customer"
+    * If Date of Birth isn't provided, it gets set as "00000000"
+    * Account number must contain numbers only.
+  *  **Registrar:** **KycuAuthRegistrar**
+    *  **cifSet:** All cif_num's which has users and accounts linked with them. Fetches from fin_account, paperless, usr_fin_account, usr_mapping and usr table.
+    *  **ufaSet:** All ufa_id's which are linked with users and accounts. Fetches from fin_account, paperless, usr_fin_account, usr_mapping and usr table.
+    *  **USER:**
+      * Search for users by usr_id's which are fetched from usr_mapping table by cifNumber.
+      * If no users found, create a new user with firstName, lastName, type, expirationDate=null, ssn=tin. Also **attach cif to it** i.e. insert cif_num, orgId and usr_id into usr_mapping table. 
+      * If multiple users found, update firstName, lastName, type, expirationDate=null, ssn=tin only for the first user.
+    *  **FIN_ACCOUNT:**
+      * Search for fin_account by acctNum. If no fa found, create a new one with acctNum, acctName, orgId, lastModified=current date. Sets status="A" for both new and existing accounts. 
+    *  **PAPERLESS:**
+      * Search for paperless by acctId and stmtType="default". If not found, create a new one. modifiedBy="0", modifiedDate=current date, oldStatus="N", newStatus="B", stmtTye="default".
+    *  **USR_FIN_ACCOUNT:**
+      * Search ufas of the user. If no ufa found, create a new one with ufa_status="pre_reg".  If found, remove the ufa from ufaSet.
+    *  **ACCT_ACCESS:** Insert into/Update acct_access table. Set aa_min_level for an acct. If Employee Code is passed as "Y" in the index file, permission = 15. otherwise, permission = 1.
+    * Remove cifNumber from cifSet.
+    * postProcess()
+      * Search for ufaBeans by the leftover ufaSet's accountId's. If any account is tied with any enrolled user, no update is done. If a account has no enrolled user i.e. sso=null, then search for paperless by acctId and stmtType='default'. If the new status of the paperless is "E", then change its paperless status as "B". Insert into audit_log_kycu as event="default2B", location="auth"
+      * Search for userProfile by the leftover cifNumbers in cifSet. (search usrId by cifNum from usr_mapping, then search from usr_session by the usrId). If the user has ufa linked to it, skipCifDeletion. but if no user has ufa linked to it, deactivate the user. set inactive_loginName_timestamp and sess_active_status="inactive". Insert event="deactivate", location="auth" in audit_log_kycu table.
+      * Delete the usrId from usr_mapping. Insert event="deleteCif" and location="auth" into audit_log_kycu table.
+    *  **Database changes:** USR_MAPPING, USR, FIN_ACCOUNT, PAPERLESS, USR_FIN_ACCOUNT, ACCT_ACCESS, AUDIT_LOG_KYCU 
+
+###  _afp:_
+
+  *  **Handler:** **AfpStatementData9**
+    * ms1=default, lb1=loan, pa1=default, la1=loan, tax=etax
+    *  **Format: fileName** | **accountNumber** | **beginDate** | **closingDate** | **numberOfPages** | **accountName** | SSN | appType | messageIDs | hasCheckStr | inserted | regionCode | crippleFlag | zipFileName | outputFormat [bold fields are mandatory] 
+  *  **Registrar** : **MessageEstmtRegistrar3**
+    * autoregister= false, enableAccountType=false, nullDsoTime=false, acctNumHasLeadingZeros=false, global.multipleStmtType=true, global.multipleDocType=false
+    * Find fin account by acctNum. If not found, create a new fa with orgId, acctNum, acctname, acctType, lastModified=current date, status="A".
+    * If fa found with a different acctName or acctName is neither "MEMBER" nor CUSTOMER", update acct_owner_name.
+    * Insert paperless .
+      * Search for paperless by acctId and stmtType. If not found, create a new one and insert. modifiedBy="1", oldStatus="N", newStatus="B",stmtType.
+      *  **If stmtType is not "default"**, search for paperless by acctId and stmtType="default". If not found, create a new one and insert. modifiedBy="1", oldStatus="N", newStatus="B",  **stmtType= "default".**
+    * Insert entry into estmt_doc, p_job_estmt(p_job_id, est_id)
+    *  **Database changes:** FIN_ACCOUNT, PAPERLESS, ESTMT_DOC, P_JOB_ESTMT
+
+###  _enotice4:_
+
+  *  ** _Handler:_  ENoticeData7**
+    * Field count must be 11 or 12
+    *  **Format** :  **letterRecord**  | acctNum | acctType | acctname | afpFileName | type | closingDate | imageCount | postCardFlag |  **zipFileName**  | region |  **letterRecord  ** [bold fields are mandatory] 
+    * The first field value is Letter Record (Record Type). Its value must be L.
+    * The value of last field value must be L also. It indicates the Letter Record (Record Terminator).
+    * Value of postCardFlag must be 0 or 1
+  *  ** _Registrar:_  DefaultENotice4Registrar**
+    *  **enotice4.createAccount=true, global.autoRegister=false**
+    * Search for account with acctNum. If no account found, create a new one and insert acctNum, acctName,type=acctType into fin_account.
+    * If account found, update acct owner name if is is different and does not contain any of these keywords: "MEMBER", "CUSTOMER", "USER" 
+    * If paperless not found of the acctId with stmtType="enotice", Insert paperless. modifiedBy="1", oldStatus="N", newStatus="B", stmtType="enotice"
+    * Insert arch_file_id, file_type, file_name, parent_path in arch_file.
+    * Insert acctId, stmtType, arch_file_id, postCardFlag, type i.e. letter code into enotice table.
+    * Insert p_job_id and enotice_id in p_job_enotice table.
+    *  **Database changes:** FIN_ACCOUNT, PAPERLESS, ARCH_FILE, ENOTICE, P_JOB_ENOTICE
+
+###  _etax:_
+
+  *  ** _Handler:_  ETaxData3**
+    * Must have 8 columns in index file.
+    * Format:  **acctNum**  |  **type**  |  **afpFileName**  | date | suffix | appType | ssn | zipFileName
+    * global.FItype=null, so acctName="Member"
+  *  ** _Registrar:_  ETaxRegistrar3**
+    *  **etax.createAccount=true, global.autoRegister=false, global.enableAccountType=false**
+    * Search for account with acctNum. If no account found,
+      * Create a new one and insert acctNum, acctName,type=type (if present in index file), lastModified=current date, status="A" into fin_account.
+      * Search for paperless by acctId and stmtType="default". If not found, create a new one and insert. modifiedBy="1", oldStatus="N", newStatus="B",stmtType=default.
+    * If account found, but no paperless , insert paperless . modifiedBy="1", oldStatus="N", newStatus="B",stmtType. 
+    * Insert file_type, file_name, parent_path in arch_file.
+    * Insert acctId, type, arch_file_id, date, ssn to etax table. 
+    * Insert p_job_id and etax_id into p_job_etax table.
+    * Database changes: FIN_ACCOUNT,PAPERLESS, ARCH_FILE, ETAX,  P_JOB_ETAX
+
+###  _ecl:_
+
+  *  ** _Handler:_ DefaultEclHandler4**
+    * ecl. **purge=false** , ecl. **append=false** , ecl. **clientType=bk** , ecl.delimiter=|, ecl. **combination=CIF,Email,AcctNum**
+    * emailStorage = notifyPref. ecl.emailType=null, so **emailType= "account", **maxEmailPer=1
+    *  **fbean** =find Account with acctNum. **user** = find user by cifNumber. If no account or user is found, increment warning count and skip that line. If email is null, then increment warning count and skip the line.
+    * If account and user is not null, update.
+      * Search for ufa by usrId and acctId. if no ufa found, that means, user doesn't link to the account. Proceed to the next line of index file.
+      * Search for notificationPreference list by usrId, acctId and stmtType=default. If no nplist found, create a new np (byUfa).
+      * If more than 1 np found, skip the line throwing an exception. 
+      * Insert the new np or update the existing one np with the email address provided in index file. (Insert/update into notification_preference and notification_history)
+
+##  _Reports:_
+
+ _ **Bounceback Report**_
+
+ _ **Client Paperless Report**_
+
+  *     ACCOUNT NUMBER|ACCOUNT NAME|DELIVERY PREFERENCE|CHANGE DATE
+
+ _ **Paperless Report**_
+
+#  _Analysis Summary(ROOT)_
+
+Scope| Feature| KYCU| Hypercube| Note  
+---|---|---|---|---  
+  
+ **Enrollment(SSO)**
+
+|  User enrollment|
+
+The user goes through enrollment based on the following conditions.
+
+  1. SSO is null
+  2. If the sess_active_status is not "active"
+
+|  3589 incomplete  Supported  3590 incomplete Not Supported 3591 complete
+Supported alternatively | In Hypercube, a user goes through enrollment if
+he/she never logged in via SSO  
+Enrollment Step 1| Pdf view|  3592 complete Supported  3593 incomplete Not
+Supported |  
+  
+Enrollment Step 2|
+
+  * Electronic Document Delivery Enrollment (Disclosure)
+  * Email Address is displayed. Non-editable.
+
+|  3594 incomplete Supported  3595 incomplete Not Supported 3596 complete
+Supported alternatively |
+
+  * In hypercube, Disclosure is shown in enrollment step 2. Email address will be provided on enrollment step 3.
+
+  
+  
+  * If there are two np records are available is np table, displays the second email address. 2 emails can be passed from SSO separated by comma(,)
+
+|  3631 incomplete Supported 3632 complete Not Supported |
+
+  * Currently hypercube doesn't  support 2 email addresses.
+
+  
+Enrollment Step 3| Delivery Preference: Always enroll as paperless. No paper
+option.|  3597 complete Supported  3598 incomplete Not Supported |  
+  
+  
+  * Email Address:  Non-editable email address field. 
+  * Pulls UFA list by usrId and order by acctNum and shows the latest np entry of the first ufa of ufaList.
+
+|  3599 incomplete Supported  3600 complete Not Supported |  
+  
+Shows Account Number and Account holder name|  3601 complete Supported  3602
+incomplete Not Supported |  
+  
+Send a welcome email after enrollment.|  3603 complete Supported  3604
+incomplete Not Supported |  
+  
+**Statements**  
+  
+  
+  
+|  Account Optout|
+
+A user is redirected to the opt-out page If any account which is on paper are
+selected in the account dropdown. Optout page contains:
+
+  * Disclosure
+  * Email address (Non-editable)
+  * Button to agree receiving paperless statements.
+
+|  3605 incomplete Supported  3606 complete Not Supported |  
+  
+eStatement| Statement Date, Status, Monthly Inserts|  3607 complete Supported
+3608 incomplete Not Supported |  
+  
+eTaxes| Tax Date, Description|  3609 complete Supported  3610 incomplete Not
+Supported |  
+  
+Notices| Notice Date, Status, Description|  3611 complete Supported  3612
+incomplete Not Supported |  
+  
+Closed Account| Displays closed account message.|  3613 complete Supported
+3614 incomplete Not Supported |  
+  
+**Profile**|  User Information|
+
+  * Email Address: The user can not update the email address.
+  * Displays a message under email address field 
+  * 
+
+|  3615 complete Supported  3616 incomplete Not Supported |  
+  
+Delivery Preference|
+
+  * Account Number
+  * Account Holder Name
+  * Status: Option to change delivery preference (Paper or Electronic)
+
+|  3617 complete Supported  3618 incomplete Not Supported |
+
+  
+  
+  
+  * $2 per month charge is applicable for receiving paper statements.
+  * 
+
+|  3627 incomplete Supported  3628 complete Not Supported |  
+  
+**Disclosure**|  
+|
+
+  * Electronic Document Delivery Enrollment.
+  * Opens in a new tab
+
+|  3619 complete Supported  3620 incomplete Not Supported 87 complete   |  
+  
+**Account Reconciliation**|  
+|  Opens in a new tab|  3621 complete Supported  3622 incomplete Not Supported
+|  
+  
+**Exit**|  
+|  Logs out a user by showing a confirmation page.|  3623 complete Supported
+3624 incomplete Not Supported |  
+  
+  
+# _Analysis Summary(MSM)_
+
+Scope| Feature| KYCU| Infotrac| Note  
+---|---|---|---|---  
+ **Account Management**
+
+  
+
+|  Account Information|
+
+Displays the following fields:
+
+  * Member Name
+  * Account Number
+  * Account Name
+  * Account Status
+  * Member Register Status
+
+|  3519 complete Supported  3520 incomplete Not Supported |  
+  
+Account search|
+
+Search by account number and email address.
+
+|  3521 complete Supported  3522 incomplete Not Supported |  
+  
+Change delivery preference|
+
+  * Admin can update delivery preference (paperless, paper).
+  * Admin can browse delivery preference history
+
+|  3523 complete Supported  3524 incomplete Not Supported |  
+  
+Notification preference| Email. Admin can update email addresses for a
+particular account of the user. If any account has two email addresses in the
+notification_preference table, the latest row gets updated. |  3525 incomplete
+Supported  3526 complete Not Supported |
+
+  * Infotrac supports one email address
+
+  
+ **Email proofing**|  7 templates for email proofing  
+  
+  
+  
+|
+
+  * Monthly Statements
+  * Loan Bills
+  * Notices
+  * e-Tax 
+  * welcome
+  * Password Update
+  * AI User Removal
+
+|  3527 complete Supported  3528 incomplete Not Supported |  
+  
+**Upload Inserts**|  
+|  Inserts can be uploaded online for Monthly Statements and Loan Bills|  3529
+complete Supported  3530 incomplete Not Supported |  
+  
+**Reports**|  10 types of reports are available| Latest Stats|  3531 complete
+Supported  3532 incomplete Not Supported |  
+  
+User Login Activity|  3533 complete Supported  3534 incomplete Not Supported |  
+  
+AI Login Activity|  3535 complete Supported  3536 incomplete Not Supported |  
+  
+AI User Activity|  3537 complete Supported  3538 incomplete Not Supported |  
+  
+  
+AI User Modification Activity Report
+
+  * This report shows the audit trial of changes by administrator user (add/edit/delete)
+  * Modified By | Applied to Admin user | Modification Type | Modified Time
+
+|  3539 incomplete Supported  3540 complete Not Supported |  
+  
+  
+Accounts Not Enrolled
+
+|  3541 complete Supported  3542 incomplete Not Supported |  
+  
+  
+Account Receiving Paper
+
+  * This report displays only the account numbers.
+
+|  3543 complete Supported  3544 incomplete Not Supported |  
+  
+Email Address Collection|  3545 complete Supported  3546 incomplete Not
+Supported |  
+  
+Paperless|  3547 complete Supported  3548 incomplete Not Supported |  
+  
+Marketing Insert Report|  3549 incomplete Supported  3550 complete Not
+Supported |  
+  
+**Administration**|  Admin user management|
+
+Can create, update and delete new admin user.
+
+|  3551 complete Supported  3552 incomplete Not Supported |  
+  
+  
+  
+
+  
+
+# _**Analysis Summary (PUI)**_
+
+Process
+
+|
+
+Prefix
+
+|
+
+Backend Business
+
+|
+
+Mismatch with hypercube business
+
+|
+
+Changes needed
+
+|
+
+Note  
+  
+---|---|---|---|---|---  
+afp|
+
+  * ms1=default
+  * lb1 = loan
+  * pa1 = default
+  * la1 = loan
+  * tax = etax
+
+|
+
+  *  **Handler:  **AfpStatementData9
+  *  **Registrar:   **MessageEstmtRegistrar3****
+    * Creates new account. 
+    * Update account owner name for existing accounts.
+    * Insert paperless
+    * Insert entry into estmt_doc, p_job_estmt
+  *  **Database changes:  **
+    * FIN_ACCOUNT, PAPERLESS, ESTMT_DOC, P_JOB_ESTMT
+
+|  
+|  
+|  
+  
+auth|  
+|
+
+  *  **Handler: KycuAuthHandler**
+  *  **Registrar: KycuAuthRegistrar**
+    * Create user and attach cif to it  if not found searched by cifNum from usr_mapping.
+    * Create finAccount and paperless (If not found). Sets fin account status="A" for both existing and new accounts.
+    * Creates ufa(if not found) and sets ufa_status="pre_reg".
+    * Insert/update acct_access table. sets aa_main_level for any account.
+  *  **Database changes:  **
+    * USR, USR_MAPPING, FIN_ACCOUNT, AUDIT_LOG_KYCU, PAPERLESS, USR_FIN_ACCOUNT
+
+|  
+|  
+|  
+  
+enotice4|
+
+  * enotice4.createAccount=true
+  * global.autoRegister=false
+
+|
+
+  *  **Handler:  ENoticeData7**
+  *  **Registrar:  DefaultENotice4Registrar**  
+
+    * Create a new fin account if not found searched by acctNum and acctType.
+    * Update account owner name for existing accounts.
+    * Insert paperles with stmtType="enotice"
+    * Insert entry into arch_file, enotice, p_job_enotice.
+  *  **Database changes:**
+    * FIN_ACCOUNT, PAPERLESS, ARCH_FILE, ENOTICE, P_JOB_ENOTICE
+
+|  
+|  
+|  
+  
+etax|
+
+  * etax.createAccount=true
+
+|
+
+  *  **Handler:  ETaxData3**
+  *  **Registrar:  ETaxRegistrar3**  
+
+    * Create new account and paperless. 
+    * Insert into arch_file, etax, p_job_etax.
+  *  **Database changes:**
+    * FIN_ACCOUNT,PAPERLESS, ARCH_FILE, ETAX,  P_JOB_ETAX
+
+|  
+|  
+|  
+  
+ecl|
+
+  * ecl.combination=CIF,Email,AcctNum
+  * emailStorage=notifyPref
+
+|
+
+  *  ** _Handler:_ DefaultEclHandler4**
+    * Search for ufa by usrId and acctId. if no ufa found, that means, user doesn't link to the account. Proceed to the next line of index file.
+    * Search for np as byUfa. If no np found, create a new one.
+    * If more than 1 np found, skip the line throwing an exception. 
+    * Update the existing np with the email address provided in the ecl file.
+  *  **Database changes:**
+    * NOTIFICATION_PREFERENCE, NOTIFICATION_HISTORY
+
+|  
+|  
+|  
+  
+Reports|  
+|
+
+  *  **bounceback report**
+  *  **Client paperless report**
+    * ACCOUNT NUMBER | ACCOUNT NAME | DELIVERY PREFERENCE | CHANGE DATE
+  *  **Paperless report**
+
+|  
+|  
+|  
+  
+  
+  
+
+

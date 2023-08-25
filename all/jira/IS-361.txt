@@ -1,0 +1,159 @@
+title: VWCU [22166] [pvt] Daily Notices error [in house]
+description: Per IS, update to the program to accommodate the content position shift due to the SLID changed from 2 digits to 4 digits for these notices.
+
+Phase I sample: Notice of Overdraft Privilege Usage (exc code 370) and Non Sufficient Funds Notice (exc code 306) by Friday 8/27.
+
+Per Eric,these two will be in phase I fix as well.
+
+Past Due Notice
+
+Share Certificate Maturity Notice
+
+
+
+Phase II sample Transfer Notice (exc code 000) provided by Friday 9/3
+
+
+author: william.kong
+comment: [~eric.yan]: Per our conversation, we are looking to possibly provide samples for Phase I by tomorrow. The phase II sample maybe next week.
+
+
+author: eric.yan
+comment: 1) The following Notices are missing the member's name after "dear". Also 3 digits are printing for the ID as opposed to 4 digits (i.e. "Re:*****8943-007, should be "Re:*****8943-0071) (see attachment 1):
+
+*Notice of Overdraft Privilege Usage*
+*exc code 370*
+/home/isis/docdef/VWCUDL006.dfa
+/home/isis/docdef/VWCUDL007.dfa
+/home/isis/docdef/VWCUDL008.dfa
+/home/isis/docdef/VWCUDL009.dfa
+
+*Past Due Notice*
+/home/isis/docdef/VWCUDL011.dfa
+
+*Share Certificate Maturity Notice*
+/home/isis/docdef/VWCUDL004.dfa
+
+Cause: SLID changed from 2 digits to 4 digits, and pushing address block below by 1 line.
+
+
+The Transfer Notice is missing the information as identified above in #1, plus, additional characters are printing on the notice, making the notice look garbled. (see attachment 2)
+
+*Transfer Notice*
+*exc code 000*
+/home/isis/docdef/VWCUDL006.dfa
+/home/isis/docdef/VWCUDL007.dfa
+/home/isis/docdef/VWCUDL008.dfa
+/home/isis/docdef/VWCUDL009.dfa
+
+Cause: SLID changed from 2 digits to 4 digits, and shift position of the transfer description block and other contents mapping.
+
+3) The Non Sufficient Funds Notice didn't print at all (see attachment 3). It printed as an "unknown notice type" w/ EXC Code 306. But this is a normal notice we do print daily.
+*exc 306*
+/home/isis/docdef/VWCUDL006.dfa
+/home/isis/docdef/VWCUDL007.dfa
+/home/isis/docdef/VWCUDL008.dfa
+/home/isis/docdef/VWCUDL009.dfa
+
+Cause: SLID changed from 2 digits to 4 digits and cause misinterpation of of the SLID type. It needs to be '0' to print the notice.
+
+
+author: eric.yan
+comment: [~dawnl] [~TunA] [~William.Kong] 
+
+
+
+I've fixed issues in both phase I and phase II, and reprocess the data file of cycle #17 and #18. Here are the samples ready for client review.
+
+
+
+I discovered that the very first date of the new format data is cycle #17, which was cycle #17.
+
+The client admitted changing the format of data and pointed out that InfoImage confirmed that data format change (SLID 2 digit -> 4 digits) would not impact the output. This conversation was not documented though.
+
+As I'm updating the program, I found that if the change were only SLID 2 digit -> 4 digit, it INDEED would NOT impact the output, as the format dfa is reading 4 digit byte for the SLID. The initial analysis was correct. However, the change of data format is not limited to this scope.
+
+The change include at least the following items:
+ # SLID 2 digits -> 4 digits
+ # Address block shift down by 1 row
+ # SLID type position shifts
+ # Various data fields shift position impacting the content of letters.
+
+The identified impacted letters so far are:
+ * Notice of Overdraft Privilege Usage( exc 370)
+ * Past Due Notice
+ * Share Certificate Maturity Notice
+ * Transfer Notice (exc 000)
+ * Non Sufficient Funds Notice (exc 306)**
+
+The issues in the above letters are fixed by updating the following dfa.
+
+VWCUDL004.dfa -> Share Certificate Maturity Notice
+
+VWCUDL006.dfa -> Notice of Overdraft Privilege Usage, Transfer Notice, Non Sufficient Funds Notice
+
+VWCUDL007.dfa -> Notice of Overdraft Privilege Usage, Transfer Notice, Non Sufficient Funds Notice
+
+VWCUDL008.dfa -> Notice of Overdraft Privilege Usage, Transfer Notice, Non Sufficient Funds Notice
+
+VWCUDL009.dfa -> Notice of Overdraft Privilege Usage, Transfer Notice, Non Sufficient Funds Notice
+
+VWCUDL011.dfa -> Past Due Notice
+
+
+
+*My concern is there could be more changes of data format not caught and the output has not been tested thoroughly. There could potentially be more error in the output not being captured.* 
+
+*I suggest the client to provide a full list of changes in data format and a set of comprehensive test data so that Infoimage could do a thorough analysis and make proper update in the program to accommodate the change.*
+
+
+author: william.kong
+comment: [~eric.yan]: Per our conversation, we should quote this effort as well as getting the additional data to confirm there are no changes from the client as well.
+
+
+
+Please keep me and Tun posted on this.
+
+
+author: dawnl
+comment: Hi Eric, client has approved the samples. See below. Can you release the fix? Thanks.
+
+"
+
+Hi Dawn,
+
+These look great. Even the ones we thought were going to take extra time are fixed. Thank you so much. You have my approval to move this to live. Also the two (Transfer Notice exc000) and Non Sufficient funds (exc306) that we had requested be suppressed can also be released, since these two are fixed.
+
+Thank you
+
+Tammy
+
+"
+
+
+author: eric.yan
+comment: [~dawnl]
+
+Code is released. I'll copy my analysis and suggestion to ticket 22166 to follow up with client.
+
+[~Igor.Khosid]
+
+The hot fix is released to production, please check the two sample and see if there's verbiage error that were not caught by me or client. Thanks!
+
+
+author: igor.khosid
+comment: [~eric.yan]
+
+The samples looks good to me. Not sure what else I can do here
+
+
+author: eric.yan
+comment: [~Igor.Khosid]
+
+Thanks, that's good enough, just want an extra step of assurance.
+
+
+author: eric.yan
+comment: [~TunA] [~William.Kong] [~dawnl] 
+
+Code is released to production. Suggestion of further action would be followed in ticket 22166.

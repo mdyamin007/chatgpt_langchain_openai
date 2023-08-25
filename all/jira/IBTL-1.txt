@@ -1,0 +1,58 @@
+title: RHS:  /home/ proc1 control1 master1 File Logic Cleanup
+description: As part of the RHS system setup, I noticed these three files in /home/ directory:
+ * procs1
+ * control1
+ * master1
+
+I think it is in this program:
+
+
+{noformat}
+$ grep -irH 'procs1' /home/master/*
+/home/master/cp_file1.pl: elsif ($file_name =~ /\.procs$/) { return "procs1";}
+/home/master/cp_file1.pl: elsif ($file_name =~ /\.sf$/) { return "procs1";}
+/home/master/file_name_check2.pm: return "procs1";
+/home/master/file_name_check2.pm: return "procs1";
+{noformat}
+
+
+
+
+Please advise why these files are needed. Can you please fix them because when we move to brisbane, the /home/ directory will reside in a different file server and it cannot be written directly in /home/
+
+
+
+The purpose for these folders is to have backup if the RHS system goes down. Backing up from CVS can take time, thus will have some down time. Let discuss if we need to keep these folders when moving to BB.
+
+ !image-2019-12-27-10-10-01-583.png!
+
+
+
+
+
+
+author: peter.dang
+comment: This cp_file1.pl is replicate from cp_file.pl The cp_file1.pl is use to move file to development environment. I can rename it to cp_file_dev.pl
+
+
+author: william.kong
+comment: [~Peter.Dang]: Please confirm that this will correct the issue moving forward.  If so, can you delete the following files from /home/:
+ * procs1
+ * control1
+ * master1
+
+
+
+If it no longer appears, after a few days of code check in/out, then we can mark this task as completed.
+
+
+author: william.kong
+comment: [~Peter.Dang]: Per our conversation, you will revisit why on rhs2, these 3 files are being created
+
+
+author: peter.dang
+comment: These files were being backup as redundancy process. Per our discussion we already have CVS system which will take approximate 30 mins to get it loaded and it is okay to remove these backup file.
+
+
+author: peter.dang
+comment: cp_file.pl Code has updated to remove backup to RHS2.

@@ -1,0 +1,32 @@
+Often when we run infotrac job again it got hanged at certain point and we need to enter Y and then 11 to pass this situation. We normally something like this in the screen when it got stuck.
+You see it is hanging while executing the /home/dsi/master/chk_job_id.pl program. This program is being called from another program named/home/dsi/master/get_infotrac.pl and this is called from isisdisk if infotrac flag is on.
+if [ ${infotrac} -a ${infotrac} = "m" -a ${jobsel} = "s" ]; then
+     infotrac="y" #reset infotrac variable
+     export infotrac="y"
+     if [ ${bypass} = 0 ]; then
+          if [ ! -n "$4" ]; then
+               echo -e "Error: Infotrac requires automated job must have segment. Please check with I.S."
+               exit 1
+          else
+               segment_num=$4
+          fi
+     fi
+     if [  $infotrac -a $infotrac = 'y' ]; then
+          echo " ${home_master}/master/get_infotrac.pl ${cid} ${jid} $segment_num"
+          perl ${home_master}/master/get_infotrac.pl ${cid} ${jid} $segment_num
+          if [ $? != 0 ]; then
+               subject="$0: $cid - Error in get_infotrac.pl program."
+               message="Please verify DT_JOB_ID from insert file. Call I.S. for assistance."
+               if [ $jobid != "888888" -a $jobid != "999999" ]; then
+                    perl ${codebase}/daily_mail2.pl 2 "$subject" "$message" "dp@infoimageinc.com"
+               fi
+               echo "$0: Error $subject" >> ${targetBase}/${daily_log}
+               exit 1
+          fi
+     fi
+fi
+In this program it actually checks if a job with certain dt_job_id is run again. In that case:
+if bypass value is false then it will exit. Otherwise it will ask for user input saying:
+print "Job: $dt_job_id has been processed before. Is this a re-run (Y/N)?\n";
+In this case just enter Y and then 11. And if you look above snapshot you will know it will work to pass this hanging situation.
+Tagged:bypassinfotrac

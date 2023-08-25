@@ -1,0 +1,94 @@
+title: Elasticsearch Backup and Restore R&D
+body:   
+
+We can take backup for elastic search in two ways:
+
+  1. Snapshot and restore method
+  2. Cross Cluster Replication (CCR).
+
+  
+
+ **Snapshot and restore method:**
+
+A snapshot is a backup of a running Elasticsearch cluster. You can use
+snapshots to:
+
+  * Regularly back up a cluster with no downtime
+  * Recover data after deletion or a hardware failure
+  * Transfer data between clusters
+
+Advantages:
+
+  * Snapshot backup is incremental. 
+  * We can run a scheduler which will periodically (hourly, daily, monthly or yearly) take snapshot and store.
+  * We can store snapshots on File System and restore it.
+  * Snapshots are  independent. If elasticsearch version remains same, then we can just copy snapshots form one instance and restore them in another instance.
+
+  
+
+Disadvantages:
+
+  * Bi-directional backup and restore not possible automatically.
+  * When restoring, we must delete/rename indexes with same name.
+  * Real time backup is not possible. 
+
+  
+
+The workflow is - we register our cluster with a repository for our snapshots.
+When our snapshot policy run, snapshot will be stored on the repository.
+
+  
+
+When we want to restore it, we just need to call the restore api and the data
+will be restored back to the cluster.
+
+  
+
+  
+
+But what if we need to restore it into another server like DR server?
+
+  
+
+As we know snapshots aren't tied to a particular cluster or a cluster name.
+You can create a snapshot in one cluster and restore it in another [compatible
+cluster](https://www.elastic.co/guide/en/elasticsearch/reference/current/snapshot-
+restore.html#snapshot-restore-version-compatibility "Snapshot compatibility").
+Any data stream or index you restore from a snapshot must also be compatible
+with the current cluster's version. The topology of the clusters doesn't need
+to match.So if our DR server has the compatible version of elasticsearch we
+can just copy/paste those snapshots or share the repository with our DR server
+so that DR server can restore it.
+
+  
+
+But we need bi-directional backup and restore. So that, when other server went
+down and DR server is running we can store backups and restore them when our
+main server is up. So we may make it bi-directional by sharing a common
+repository.
+
+  
+
+But this design has an issue. If two cluster registered to the same repository
+and has write access to that repository at the same time, It may corrupt
+repository's contents. So we should give only one cluster write access and
+other cluster read access only.
+
+So how we can achieve bi-directional backup and restore? Here is a design
+proposal.
+
+We will have two repositories instead of one. Servers will restore snapshot
+from one repository and use another repository for storing backup.
+
+  
+
+  
+
+  
+
+ **Taking a snapshot is the only reliable and supported way to back up a
+cluster.**
+
+  
+
+

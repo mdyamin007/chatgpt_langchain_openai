@@ -1,0 +1,282 @@
+title: FRST - Letter - Dormant Certified MailPDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133585-C30.01-V21900
+
+Processing Scripts to modify:
+ frstdc1_process.sh
+
+Data Files to use:
+ "Frst_Checks_091720.csv, Frst_DormantLetter_091720.csv"
+
+
+
+*UPDATE*:
+
+Please ensure this script can run on RHS server since this program currently runs on RH2. If there are any errors related to running on RHS server, please report it in this ticket and make the appropriate corrections.
+
+
+
+
+
+
+
+
+author: mahbubs
+comment: Hi [~William.Kong],
+
+Getting below errorwhile running frstdc1 process in rh2.
+
+!image-2022-07-25-20-13-17-493.png!
+
+Please advise.
+
+Thanks
+
+
+author: william.kong
+comment: [~mahbubS]: I'm guessing that is a test system URL hence it is not working via pilot/parallel. As long as the production URL is unchanged (i.e. your code is current and the production URL has not changed), then we can ignore this connection issue. If and when this passes QA, please diff the code to ensure the URL in production is the same as your code (i.e. just want to make sure no one changed the URL while you work working on this project).
+
+
+
+I also noticed that this script runs on RH2. Since we are migrating RH2 to RHS server, please remove any associate logic that is hard coded to RH2. Please also regress test all options to make sure it is compatible with RHS server. If there any issues, please report via this ticket and report what was fixed. Description of work has been updated.
+
+
+
+
+author: mahbubs
+comment: Hi [~William.Kong],
+
+In the processing script i can only see hardcoded rh2 at the beginning of the main function.
+
+!image-2022-07-26-17-57-05-152.png!
+
+I will update it to rhs and run the script in rhs and let you know the impediments I face in the way.
+
+Thanks
+
+
+author: mahbubs
+comment: Hi [~William.Kong],
+
+I commented out the rh2 part in script. The same Walz issue is happening if I run in rhs.
+
+And i can see in production code no archival index file created and in SOW nothing is mentioned about archival index.
+
+Thanks
+
+
+author: mahbubs
+comment: Hi[~William.Kong],
+
+The updates are done.
+
+Ran the process in rhs2 using data file "Frst_Checks_091720.csv" and "Frst_DormantLetter_091720.csv".
+
+Sample is at:/z/pdf_afp/frst/frstdc1/zip/frst_DormantLetter_07152022_1.zip
+
+Please check.
+
+Thanks
+
+
+author: william.kong
+comment: [~mahbubS]: Per instructions above, please run using *RHS* server instead of RHS2. The Papyrus version on RHS2 is different compared to RHS & RH2.
+
+
+
+In addition, please use a more current production cycle data file so that we can compare the production version vs parallel content via afpcompare and pdf_compare.
+
+
+
+I've made a backup copy of the PDF archival files from production
+
+
+
+Please use the following Production Cycle 7/15:
+
+[williamK@rhs2 util]$ /home/test/util/get_processed_filename.pl frst 2409043
+ cid: frst
+ jid: dc1
+ proc_id 2409043
+ file_name: Frst_Checks_071522.csv
+ md5 094d0e968e2cf48afed7eb728a8e23c6
+
+cid: frst
+ jid: dc1
+ proc_id 2409043
+ file_name: Frst_DormantLetter_071522.csv
+ md5 6f3dcce6bfefcaa2605a8185842a027f
+
+
+
+
+
+I've made a copy of these data files in:/d/ac-secure-share/dsi_print/mahbubS/is-1217/
+
+
+
+
+
+
+author: mahbubs
+comment: Hi [~William.Kong],
+
+I ran the process in rhs using data cycle 071522.
+
+Archival sample is at:/z/pdf_afp/frst/frstdc1/zip/frst_DormantLetter_07152022_1.zip
+
+Thanks
+
+
+author: william.kong
+comment: [~mahbubS]: Great work! Please submit to QA so that Igor can schedule this in. In the meantiime, I will update the live date from 7/15 to 8/11 tentatively:
+
+
+
+[~Igor.Khosid]:
+
+
+
+*PDF Comparison Good:*
+
+ca-isis-pr-04:/d/pdf_compare/result_frstdc1/pdf_compare_rpt.txt
+
+Total PDF Files Scanned: 449
+allowedDifferenceInPercentPerPage: 5:
+Thread Count: 32
+
+Total PDF Files with Differences: 0
+Start Time: Mon Aug 1 09:33:34 PDT 2022
+Finish Time: Mon Aug 1 09:36:47 PDT 2022
+
+
+
+
+
+*AFPCompare Good:*
+
+NO Difference found in 2409043_frstdc401.afp_1_890_diff.xml
+
+Compared /d/iss/willK/proj_64b/afpcompare_test/frstdc1/prod/2409043_frstdc401.afp vs /d/iss/willK/proj_64b/afpcompare_test/frstdc1/parallel/708797_frstdc401.afp
+3309f5d4b9f6b433a40a5d182dace9e6 /d/iss/willK/proj_64b/afpcompare_test/frstdc1/prod/2409043_frstdc401.afp
+59c686833f7c5db4276cefaeab6d6144 /d/iss/willK/proj_64b/afpcompare_test/frstdc1/parallel/708797_frstdc401.afp
+
+Start Time: Mon Aug 1 09:19:23 PDT 2022
+Finish Time: Mon Aug 1 09:19:24 PDT 2022
+
+Total Page Count: /d/iss/willK/proj_64b/afpcompare_test/frstdc1/prod/2409043_frstdc401.afp (890)
+Total Page Count: /d/iss/willK/proj_64b/afpcompare_test/frstdc1/parallel/708797_frstdc401.afp (890)
+
+
+
+NO Difference found in 2409043_frstdc402.afp_1_8_diff.xml
+
+Compared /d/iss/willK/proj_64b/afpcompare_test/frstdc1/prod/2409043_frstdc402.afp vs /d/iss/willK/proj_64b/afpcompare_test/frstdc1/parallel/708797_frstdc402.afp
+8d990004e0a9e875cbfcb3ed08a2f09f /d/iss/willK/proj_64b/afpcompare_test/frstdc1/prod/2409043_frstdc402.afp
+974fc4a4d2fef1312d0598e383179f3b /d/iss/willK/proj_64b/afpcompare_test/frstdc1/parallel/708797_frstdc402.afp
+
+Start Time: Mon Aug 1 09:32:11 PDT 2022
+Finish Time: Mon Aug 1 09:32:11 PDT 2022
+
+Total Page Count: /d/iss/willK/proj_64b/afpcompare_test/frstdc1/prod/2409043_frstdc402.afp (8)
+Total Page Count: /d/iss/willK/proj_64b/afpcompare_test/frstdc1/parallel/708797_frstdc402.afp (8)
+
+
+
+*AFP Format TXT Files Good (Extra QA Step)*
+
+[oper1@ca-isis-dv-02 frstdc1]$ md5sum prod/2409043_frstdc401.txt parallel/708797_frstdc401.txt
+a2535d37f7172cad295b51426d1d7c30 prod/2409043_frstdc401.txt
+a2535d37f7172cad295b51426d1d7c30 parallel/708797_frstdc401.txt
+[oper1@ca-isis-dv-02 frstdc1]$ md5sum prod/2409043_frstdc402.txt parallel/708797_frstdc402.txt
+c3f4adde3ae8ca96114f3b8afe7b653d prod/2409043_frstdc402.txt
+c3f4adde3ae8ca96114f3b8afe7b653d parallel/708797_frstdc402.txt
+
+
+
+
+
+
+author: william.kong
+comment: [~Igor.Khosid]/[~Andrey.Kutsenko]: Please advise if we are still on schedule for 8/11 live date. If not, I can reschedule for 8/16. Please advise when time permits.
+
+
+author: JIRAUSER11104
+comment: QA test - *PASSED*
+ * PDF Comparison - Verified:
+ _Ran Script:_
+{code:sh}
+[andreyK@ca-isis-pr-04 pdf_compare]$ perl pdf_compare.pl frstdc1_prod/ frstdc1_parallel/ result_frstdc1 -pixels 5 -threads 32{code}
+_Report:_
+{code:sh}
+[andreyK@ca-isis-pr-04 pdf_compare]$ cat /d/pdf_compare/result_frstdc1/pdf_compare_rpt.txt
+Total PDF Files Scanned: 449
+allowedDifferenceInPercentPerPage: 5:
+Thread Count: 32
+
+Total PDF Files with Differences: 0
+Start Time: Thu Aug 11 16:07:30 PDT 2022
+Finish Time: Thu Aug 11 16:10:42 PDT 2022
+{code}
+
+ * MD5 hashes for TXT Files - Verified
+{code:sh}
+[andreyK@ca-isis-pr-04 pdf_compare]$ md5sum ./frstdc1_prod/2409043_frstdc401.txt ./frstdc1_parallel/708797_frstdc401.txt
+a2535d37f7172cad295b51426d1d7c30  ./frstdc1_prod/2409043_frstdc401.txt
+a2535d37f7172cad295b51426d1d7c30  ./frstdc1_parallel/708797_frstdc401.txt
+[andreyK@ca-isis-pr-04 pdf_compare]$ md5sum ./frstdc1_prod/2409043_frstdc402.txt ./frstdc1_parallel/708797_frstdc402.txt
+c3f4adde3ae8ca96114f3b8afe7b653d  ./frstdc1_prod/2409043_frstdc402.txt
+c3f4adde3ae8ca96114f3b8afe7b653d  ./frstdc1_parallel/708797_frstdc402.txt
+{code}
+
+
+author: william.kong
+comment: [~mahbubS]:Can you please prepare the File Transfer form and have this released on Monday, August 22, 2022? Once completed, please alert me or email[dp@infoimageinc.com|mailto:dp@infoimageinc.com]because we need to advise DP that they need to start running this program via RHS server moving forward.
+
+
+author: mahbubs
+comment: Hi [~TunA],
+
+Please release this.
+
+Transfer form attached.[^IS_PROGRAM_TRANSFER_FORM_Rev 07132016.doc]
+
+I did cvs checkin.
+
+Thanks
+
+
+author: tuna
+comment: Hi [~mahbubS],
+
+Following codes have been released.
+
+Thanks,
+
+Tun
+
+
+
+20220822090044 08/22/2022 mahbubS IS-1217 FRST - Letter - Dormant Certified MailPDFi Conversion to AFP2PDF Python [InHse][oper1@rhs ~]$ ll /d/is/cvs/xfer/mahbubS/
+total 1136
+-rwxrwxrwx 1 mahbubS DSI 424 Aug 22 02:08 frstdc1_pdf.control
+-rwxrwxrwx 1 mahbubS DSI 28609 Aug 22 02:07 frstdc1_process.sh
+-rwxrwxrwx 1 mahbubS DSI 236327 Aug 22 02:07 FRSTDC401.dfa
+-rwxrwxrwx 1 mahbubS DSI 116557 Aug 22 02:08 FRSTDC402.dfa
+-rwxrwxrwx 1 mahbubS DSI 15866 Aug 22 02:08 FRSTDC403.dfa
+
+
+
+[~William.Kong]

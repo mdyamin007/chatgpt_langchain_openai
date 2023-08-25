@@ -1,0 +1,80 @@
+title: Black Knight - SEFC Integration
+body: # Current Workflow
+
+Data contains BK Number -> Cross-reference File -> DNA Number -> Post to
+Electronic.
+
+For SSO, the vendor might send more accounts than we should display. A PS_ALL
+file is processed to determine the accounts that should be visible.
+
+# Phase 1 - Live July 1st
+
+Users access with SSO via Alkami/Bottomline.
+
+ **Conflicts with Standard Setup:**
+
+  1. Print will post to DNA Number with NA account type.
+
+This will still align with how SSO work currently. Everything will work as
+normal for Alkami and Bottomline.
+
+# Phase 2 - Live TBD
+
+BKI API will need to be available.
+
+ **Changes to make** :
+
+  1. Cross reference will be removed. Print will post to BK Number.
+  2. One-time remapping of all DNA account to BK account with type BK.
+  3. BK will send an enrollment file to update enrollment information.
+
+ **Conflict** :
+
+  1. Alkami SSO
+    1. It is possible for Alkami to send the BK number. 
+    2. Still need to use the PS_ALL file to filter down the account lists.
+  2. Bottomline SSO
+    1. As of right now, it seems like Bottomline cannot send the BK number. They would still only send the DNA number.
+  3. Even if we can use all BK numbers, the PS_ALL comes from Fiserv, so the mappings can't map to BK numbers.
+
+  
+
+## Potential Solution 1 - Double Posting
+
+Post all the statements to both an NA account and a BK account. The NA
+accounts will be used for SSO. The BK accounts will be used exclusively by
+Black Knight.
+
+This is for the case where Alkami and Bottomline cannot make the necessary
+changes to support the new system. The client wants us to plan for this
+possibility.
+
+ **Issues to Resolve** :
+
+  1. Volume will double for posting.
+    1. Since we are going to reuse the afp/pdf, maybe we can set up a contract to not double the client's bill, which is not something the client would want to do.
+  2. Paperless Status.
+    1. Enrollment file from BK would update the NA accounts.
+    2. BK Accounts would  **never** have their paperless information changed.
+
+## Potential Solution 2
+
+This is an idea by the client.
+
+  1. Alkami will change to using API.
+  2. Bottomline would be the only SSO left with a small number of users (about 70).
+
+ **Conflict** :
+
+  1. Uncertain whether Alkami can request only the statement-holding accounts in the API request.
+  2. Still need a solution on how Bottomline SSO can still remain working.
+
+## Potential Solution 3
+
+Mapping from the Black Knight API side: BK Number -> DNA Number.
+
+ **Conflict** :
+
+  1. This is a unique logic that we might not want to have support for at the API level.
+
+

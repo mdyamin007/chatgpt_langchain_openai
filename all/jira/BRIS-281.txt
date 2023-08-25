@@ -1,0 +1,178 @@
+title: Stage Message Manager script issue
+description: Print script is returning error on infotrac stage. We are calling ca-isis-dv-01.infoimageinc.com 3490 port.
+
+!image-2020-11-10-16-18-23-033.png!
+
+
+author: william.kong
+comment: [~anil.dasa]: Can you re-test?  Apparently I did not sync any of the dev code so it may be pointing to an old menlo IP. I just synced it earlier.
+
+
+
+If you still get the same error, please let me know and i will ask Terrence and Tien to review again.
+
+
+author: anil.dasa
+comment: [~William.Kong]
+
+Same error.
+
+
+
++*Trace:*+
+
+2020-11-10 17:37:25 INFO AbstractZipFileGenerator:51 - adding demo_ms1_11102020_11102020.txt to zip file, checksum=7d611d844933a95604f6e77704900c52
+2020-11-10 17:37:25 INFO CommandGenerator:96 - Send command to IS: /home/master/approve_sample_msgid.sh demo ms1 "1|demo_ms1_11102020_11102020.zip" 11102020 11102020 Monthly 2
+2020-11-10 17:37:25 INFO AbstractViewStmtController:87 - Send IS command {color:#de350b}/home/master/approve_sample_msgid.sh demo ms1 "1|demo_ms1_11102020_11102020.zip" 11102020 11102020 Monthly 2 to ca-isis-dv-01:3490{color}
+2020-11-10 17:37:25 INFO AbstractViewStmtController:104 - {color:#de350b}Reply from IS: [Server Hung, Ask Tien to restart the service ]{color}
+2020-11-10 17:37:25 INFO AbstractViewStmtController:116 - Please contact IS team to solve the IS server issue.
+2020-11-10 17:37:25 ERROR PreviewStmtController_30:238 - Server Hung, Ask Tien to restart the service
+java.lang.Exception: Server Hung, Ask Tien to restart the service
+ at com.infoimage.infotrac.msgMgr.web.AbstractViewStmtController.sendCommand(AbstractViewStmtController.java:122)
+ at com.infoimage.infotrac.msgMgr.web.PreviewStmtController_30.handleRequestInternal(PreviewStmtController
+
+
+author: william.kong
+comment: [~anil.dasa]: Thanks! That log message is more helpful! 
+
+
+
+/home/master/approve_sample_msgid.sh demo ms1 "1|demo_ms1_11102020_11102020.zip" 11102020 11102020 Monthly 2
+
+
+
+I'm in the process of troubleshooting and fixing the issues. I will let you know when i'm done.
+
+
+author: william.kong
+comment: [~anil.dasa]: We fixed two issues (directory permission) & (papyrus license).  However, right now there is 3rd issue with converting to pdf.
+
+
+
+I will need Prem to open up port 80. I did not realize port 80 is needed. I'll keep this ticket assigned to me for now.
+
+
+
+https://jira.infoimageinc.com/browse/BRIS-284
+
+
+
+
+
+
+author: misuna.hassan
+comment: No zip file error is showing
+ !mm3_1.PNG|thumbnail! 
+
+
+author: william.kong
+comment: [~anil.dasa]: Prem fixed the issue in BRIS-184, however, i cannot re-test right now. RHT license is deactivated. I will have to try later this evening when we are done with our other production testing today and switch the RHT dev license back up.
+
+
+author: william.kong
+comment: [~anil.dasa]: I just re-active RHT and it works. can you please re-test first thing in the morning:
+
+
+
+!image-2020-11-11-21-25-41-740.png!
+
+
+author: anil.dasa
+comment: [~William.Kong]
+
+When I tried to create a new campaign for wecu client, I am getting no zip file error.
+
+Trace:
+
+2020-11-12 10:10:58 INFO AbstractZipFileGenerator:51 - adding wecu_mv1_11132020_11132020.txt to zip file, checksum=7e40c6088c868e593b91a04d7df4e0a6
+2020-11-12 10:10:58 INFO CommandGenerator:96 - Send command to IS: {color:#de350b}/home/master/approve_sample_msgid.sh wecu mv1 "1|wecu_mv1_11132020_11132020.zip" 11132020 11132020 Visa 2{color}
+2020-11-12 10:10:58 INFO AbstractViewStmtController:87 - Send IS command /home/master/approve_sample_msgid.sh wecu mv1 "1|wecu_mv1_11132020_11132020.zip" 11132020 11132020 Visa 2 to ca-isis-dv-01:3490
+2020-11-12 10:10:59 INFO AbstractViewStmtController:104 - Reply from IS: {color:#de350b}[2|no zip file ]{color}
+2020-11-12 10:10:59 INFO AbstractViewStmtController:116 - Please contact IS team to solve the IS server issue.
+2020-11-12 10:10:59 ERROR PreviewStmtController_30:238 - no zip file
+java.lang.Exception: no zip file
+ at com.infoimage.infotrac.msgMgr.web.AbstractViewStmtController.sendCommand(AbstractViewStmtController.java:120)
+ at com.infoimage.infotrac.msgMgr.web.PreviewStmtController_30.handleRequestInternal(PreviewStmtController_30.java:203)
+ at org.springframework.web.servlet.mvc.AbstractController.handleRequest(AbstractController.java:153)
+ at org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter.handle(SimpleControllerHandlerAdapter.java:48)
+ at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:925)
+
+
+
+!image-2020-11-12-12-11-35-044.png!
+
+
+author: william.kong
+comment: [~anil.dasa]: Did you program create the zip file?
+
+
+
+ISD_INPUT server (ca-isilon01-nfs:/input-dv)
+
+/d/isd_input_dev/I3/MsgSample/wecu/txt/wecu_mv1_11132020_11132020.zip
+
+
+
+i.e.: ca-isilon01-nfs:/input-dv/I3/MsgSample/wecu/txt/wecu_mv1_11132020_11132020.zip
+
+
+author: anil.dasa
+comment: Path is wrong -/d/isd_input_dev/I3/{color:#de350b}MsgSample{color}/..
+
+correct path is/d/isd_input_dev/I3/{color:#00875a}MsgSampleStaging{color}/..
+
+
+author: anil.dasa
+comment: [~William.Kong]
+
+I have changed script path to /home/test/master. Even this script is not generating pdf.
+
+
+
++*New logs:*+
+
+2020-11-12 11:02:00 INFO AbstractZipFileGenerator:51 - adding wecu_mv1_11132020_11132020.txt to zip file, checksum=7e40c6088c868e593b91a04d7df4e0a6
+2020-11-12 11:02:00 INFO CommandGenerator:96 - Send command to IS: /home/test/master/approve_sample_msgid.sh wecu mv1 "1|wecu_mv1_11132020_11132020.zip" 11132020 11132020 Visa 2
+2020-11-12 11:02:00 INFO AbstractViewStmtController:87 - Send IS command {color:#de350b}/home/test/master/approve_sample_msgid.sh wecu mv1 "1|wecu_mv1_11132020_11132020.zip" 11132020 11132020 Visa 2 to ca-isis-dv-01:3490{color}
+2020-11-12 11:02:01 INFO AbstractViewStmtController:104 - Reply from IS: [2|no zip file ]
+2020-11-12 11:02:01 INFO AbstractViewStmtController:116 - Please contact IS team to solve the IS server issue.
+2020-11-12 11:02:01 ERROR PreviewStmtController_30:238 - no zip file
+java.lang.Exception: no zip file
+
+
+author: william.kong
+comment: [~anil.dasa]: You error log does not match up with the error i'm getting. I'm getting an error code 4 instead of error code 2; Also, are we testing stage? If so, we should be talking to ca-isis-pr-01 instead of ca-isis-dv-01. ca-isis-dv-01 is for dev/pilot testing. ca-isis-pr-01 is for prod/stage testing
+
+
+
+
+
+!image-2020-11-12-12-25-56-967.png!
+
+
+author: william.kong
+comment: [~anil.dasa]: Ok. It's working! When we cloned the system 3 weeks ago I forgot to delete the ca-preproc-pr-02 in the accounts .ssh/known_hosts file. Also, please see my comment above as well before you re-test.
+
+
+author: anil.dasa
+comment: [~premraj.patil]
+
+can you open port access for ca-isis-pr-01 3490 from ca-infotrac-st-01 machine?
+
+
+author: premraj.patil
+comment: Done
+
+
+author: anil.dasa
+comment: 
+
+[~William.Kong]
+
+
+
+I am able to view pdf now and was able to approve campaign.
+
+
+
+!image-2020-11-12-20-59-20-020.png!

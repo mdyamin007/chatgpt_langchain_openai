@@ -1,0 +1,52 @@
+title: SEFC - emails not being displayed in InfoTRAC correctly. Email Collection report duplicate entries.
+description: I duplicated SEFC notification_preference to new accounts.
+The Email Collection report is displaying the duplicate email records but does not display the account number correctly. Can someone look into this.
+
+From InfoTRAC the profile is also not displaying the email for the duplicated entries that I created. Is infotrac pulling from or expecting additional information outside of the notification_preference table itself?
+
+I can only provide some screenshots for now. Is it because the second account hasn't "enrolled" yet? The second account doesn't have a usr_fin_account link yet. I probably need to create that link as well. !sefc.emailCollection.jpg|thumbnail!  !sefc.databaseNPRec.jpg|thumbnail!  !sefc.profile.100066.jpg|thumbnail!  !sefc.profile.1698972221.jpg|thumbnail! 
+
+
+author: rifat.mahmud
+comment: Hi Michael,
+
+Im looking into this. As far as I have seen the email collection report query, it seems that if any account is in paper,it wont show up in the report. So in that case, I think those accounts need to be enrolled.  Ill let you know when I have more update on this. I couldnt figure out which db youre using. Please let me know.
+
+Thanks,
+
+Rifat
+
+
+author: rifat.mahmud
+comment: Hi Michael,
+
+For the email collection report, Ive seen that multiple rows show in the report of the same result. For example, account number 100 appears in the result multiple times with the exact same data. Ive done the exact same thing you did, I created new account and duplicated notification preference table, at first I couldnt find it, but found it in later pages. This account wont appear in the email collection report if it is in paper. So it has to be in paperless in order to view it in the report.
+
+I couldnt reproduce the issue you mentioned in the infotrac profile page. I was able to see the email after I switched its delivery preference to electronic from paper. Im not sure why it happened in your end. Did you create any user for that account? and then linked it in notification_preference table? In that case, it should have worked fine. Can you look into it?
+
+Let me know your findings on this.
+
+Thanks,
+
+Rifat
+
+
+author: 5ba1267164a35f4858f0f5ea
+comment: ok. i figured out its because the paperless2 stmt_type isnt being filtered so the records are unique based on fa.acct_id=p2.acct_id when the acct_id has multiple p2 records due to default and enotice
+
+
+
+now what to do about it.
+
+
+author: 5ba1267164a35f4858f0f5ea
+comment: my query for reference. I appended p2.stmt_type to the select and ordered differently so i could verify.
+
+
+
+SELECT fa.acct_number, fa.TYPE, np.email_address, np.sms_number, to_char(np.modified_time, 'mm/dd/yyyy hh:mi:ss AM') mod_time, cif_num,
+Decode (email_status, 'Y', 'Email', decode(sms_status, 'Y', 'SMS', decode(email_attachment_status, 'Y', 'Email Attachment'))) preference, p2.stmt_type
+FROM fin_account fa, notification_preference np, usr_mapping um, PAPERLESS2 p2
+WHERE fa.acct_id=np.acct_id AND fa.org_id=getorgid('sefc') AND p2.p_latest_status\!='B' AND um.usr_id=np.usr_id AND fa.acct_id=p2.acct_id
+AND (np.email_address IS NOT NULL OR np.sms_number IS NOT NULL)
+order by fa.acct_id asc;

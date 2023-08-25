@@ -1,0 +1,620 @@
+title: WHCU Hypercube migration analysis
+body: ##
+
+## Schema: CU
+
+## Frontend:
+
+##  _ **ROOT**_
+
+  
+
+  
+|  
+  
+---|---  
+ **Account Types**|  N/A  
+ **Archival Period**|
+
+  * Default: 13
+  * Enotice: 13
+  * Etax: 84
+
+  
+ **Batch Download**|  N/A  
+ **Delivery Preference**|
+
+  * Paper=B
+  * Paperless=E
+
+  
+ **Enrollment**|
+
+  * SSO: 2 steps
+
+  
+ **Login Method**|
+
+  * JWSSO(SingleSignOn7Servlet
+
+  
+ **Menu**|
+
+  * Statements
+  * Disclosure
+  * Account Reconciliation
+  * Profile 
+  * Exit
+
+  
+ **Notification Preference**|  Email  
+ **NP Link Type**|  Uses contact_info  
+ **Paperless Configuration**|  Selective Paperless  
+ **Statement Types**|
+
+  * default
+  * enotice
+  * etax
+
+  
+ **Data Migration**  | Needed Data migration (notification_preference,
+usr_mapping, usr_session)  
+ **User-Account relationship**|  One-to-One  
+  
+### Login methods:
+
+  *  **JWSSO (SingleSignOn7Servlet)**
+    * createLogin: true, updateEmail: true
+    * if user_name is not passed via SSO, set userName="New User".
+    * Leading zeroes are removed from loginId of sso data.
+    * Search for user (User Details) from USR table. (Get usr_id from usr_session by **acctNum as sess_login_id** ) 
+    * If user found, search for usr profile by userId. If user is not found, we won't get user profile as well. If no usr profile found, create new user(If doesn't exist) and user profile.
+      *  **acctNum = loginId** after removing leading zeores. (loginId of sso data)
+      * If user is null, create fa, paperless, user, usr_fin_account
+        *  **fa** : If fa not found, create. set acctNum, acctName=acctNum, status="A".
+        *  **paperless** : If no paperless found by acctId and stmtType="default", create. set newStatus="B", oldStatus="N", stmtType="default", modifiedBy="1", modifiedDate=current date.
+        *  **user:** set user firstName=acctNum, contactInfo
+        *  **ufa** : create ufa. set acctId, usrId, status="active", regDate=current date.
+    * If email is passed via sso i.e. not null and not an empty String, update email address.
+      * insert/update email address in contact_info table.
+      * If email_addr is empty for the user, insert new email address in contact_info. 
+      * If email_addr is not matched with the new email address(passed via sso), set the new email address and set ci_is_eaddr1_valid=true. 
+      * Insert an entry to audit_log_whcu as event="updEmail" and location="sso".
+
+###  _SSO:_
+
+###  _Homepage:_
+
+  * If an account number is of length=12 and starts with 99, consider this account as a bankrupted account. Redirect to the error page. That means, bankrupted accounts = "99"+10_digit_number (for example: 991234567890)
+  * Search for latest paperless status of the account for stmtType "default" and "enotice". If paperless status of "enotice" is null, create a new one with new status="B", stmtType="enotice" and insert. (stmtType="etax" is considered as "default")
+  * If the paperless status for **both "default" and "enotice" is "B", redirect to enrollment**.
+  * If the paperless status for "enotice" is "E" and for "default" is "B", then land on "Enotice" tab. Otherwise, always land on default homepage.
+  * If the paperless status is "B" and the stmtType is selected from the left side navigation, redirect to opt-out page.
+    *   * If the contact_info and email_addr1 is null for the user, ask the user to update email address.  
+
+    * 
+
+###  _Enrollment:_  
+
+  * If the paperless status for **both "default" and "enotice" is "B", redirect to enrollment**.
+
+ _ **Enrollment steps:**_
+
+  *  **Step 1 of 2:** Pdf view
+  *   *  **Step 2 of 2:** Electronic Delivery of Documents Disclosure  
+
+    * Uneditable email address field.
+    * 
+
+###  _Statements:_  
+
+  * e-Statement: Statement Date, Status, Monthly Inserts
+  * e-Tax: Tax Date, Description
+  * e-Notice: Notice Date, Status, Description
+
+Type| Description  
+---|---  
+001| ARM Notice  
+002| New Loan Letter  
+003| New Member Letter  
+004| Rate Change Notice  
+005| W8-BEN Letter  
+006| Visa NSF Letter  
+301| Escrow Analysis Statement  
+302| Escrow Final Statement  
+  
+  
+
+###  _Disclosure:_
+
+  * Opens in a new tab. A jsp page.
+  * 
+
+###  _Account Reconciliation:_
+
+  * Opens ina new tab.
+  * 
+
+###  _Profile:_
+
+  * User can't update email address.
+  * User can switch delivery preference only from paper to paperless. 
+  * 
+
+  
+
+###  _Exit:_
+
+##  _ **MSM**_
+
+###  _ **Account Management**_
+
+  * Search by account number and email address.
+  * Admin can not update the email address.
+  * Admin Can update delivery preference **only from paperless to paper.**
+  * Admin can browse delivery preference history
+  * 
+
+###  _ **Email proofing:**_
+
+  * e-Statements: MEMBER
+  * e-Notices: MEMBER, NOTICE_LIST
+  * e-Tax: MEMBER, TAX_LIST
+
+###  _ **Upload Inserts:**_
+
+  * Marketing Insert Management - Upload Insert
+  * 
+
+###  _ **Marketing Promo Email:**_
+
+  * 
+
+###  _ **Reports:**_
+
+  * 
+
+###  _ **Administartion:**_
+
+Can create, update and delete new admin user.
+
+###  _ **Exit**_
+
+##  _ **Backend**_
+
+###  _ **Processes:**_
+
+  *  _ **Afp**_
+    *  _ **Handler: AfpStatementData9**_
+      *  _ **format:**_ **fileName** | **acctNum** | **beginDate** | **closingDate** | **numOfPages** | **actName** |SSN|appType|messageIds| **hascheckStr** |InsertId|regionCode|regionCode|cirppleFlag|zipFileName|outputFormat
+    *  _ **Registrar: MessageEstmtRegistrar3**_
+      * autoregister= true, enableAccountType=false, enableAccountLookup=false, multipleStmtType=true, default.imageMessage=true
+      * Search for account by orgId and acctNum. If not found, create fa, usr, usr_profile, ufa.
+        *  **fa:** Insert orgId, actNum, acctName, lastMofidied=current date, status="A" into fin_account
+        *  **user, usrProfile:** Set acctName as firstName,  **acctNum as LoginName** , basic_permission=1, **DSO=current date**
+        *  **ufa:** Insert usrId, acctId, status="active", reg_date=current date in usr_fin_account.
+      * If account found, 
+        * Update acct_owner_name and acct_owner_contact_id=null if different name is passed via index file. If "MEMBER", "CUSTOMER" is passed as acct_owner_name, no update. skip.
+        * Search for ufa by acctNum. If ufa found, search for user profile by the userId. If user profile found, update the firstName with acctName and save to db.
+      * Insert paperless. Search for paperless by acctId and stmtType. If no paperless found, create a new one with acctId, modifiedBy="1", modifiedDate=current date, newStatus="B", oldStatus="N", semtType.
+      * If stmtType is not default, search for paperless by acctId and stmtType="default". If not found, insert a new paperless entry with stmtType="default".
+      * Insert into estmt_doc
+      * imageMessage is true for "default". Search for m_name, image_height, image_width, image_x, image_y from message_area, m_message by messageId. If not found, increment bad count. Otherwise, if found, insert an entry with the previously fetched fields into estmt_message table.
+      * Insert p_job_id and est_id into p_Job_estmt table.
+    * Database changes: FIN_ACCOUNT, USR_FIN_ACCOUNT, USR, USR_SESSION, PAPERLESS, ESTMT_MESSAGE
+  *  _ **Enotice4**_
+    *  _ **Handler: ENoticeData7**_
+      * Must have 11 or 12 fields.
+      * First field value and last field value must be "L" 
+      * format: Letter Record | acctNum | acctType | acctName | afpFileName | type | closingDAte | imageCount | postCardFlag | zipFileName | region | Letter Record
+    *  _ **Registrar: DefaultEnotice4Registrar**_
+      * enotice4.createAccount=false
+      * Search for account by acctNum and orgId. If account not found, return. If account found, update acct_owner_name and user firstName if it is different and doesn't matched with either "MEMBER", or "CUSTOMER" or "USER".
+      * Insert paperless with stmtType="enotice"
+      * Insert parentPath, afpFileName and afp_type="afp" into arch_file.
+      * Insert entry into enotice table.
+      * Insert p_job_id and enotice_id into p_Job_enotice
+    * Database changes: FIN_ACCOUNT, USER, ARCH_FILE, ENOTICE, P_JOB_ENOTICE
+  *  _ **etax**_
+    *  _ **Handler: ETaxData3**_
+      * Must contain 8 columns.
+      * acctName="Member"
+      *  **acctName** | **type** |  **afpFileName** | date | suffix | appType | ssn | zipFileName 
+    *  **Registrar: ETaxRegistrar3**
+      * etax.createAccount=false
+      * Search for account by acctNum and orgId. If not found, return. 
+      * Insert paperless. Search for paperless by actId and stmtType. If not found, create and insert. new status="B", old status="N", stmtType.
+      * Insert parentPath, afpFileName, fileType into arch_file.
+      * Insert acctId, type, arch_file_id, time, ssn into etax table.
+      * Insert p_job_id and etax_id into p_job_etax table.
+    * Database changes: Paperless, arch_file, etax, p_job_etax
+
+###  _Reports:_
+
+  * Paperless Report
+  *  **undeliverable report**
+    * resetPaperlessStatus=false, notifyDp=false, insertToDB=true, clusterFlag=true, setEmailInvalid=true, record=ci_id, pui_usr_id=1
+    *  **emailServers** = Get all ha_server_name from ha_server table searched by ha_in_use="Y" and ha_server_type="ha_zimbra"
+    * fileName=orgName_BounceBackReport_Date.txt
+    * to_be_processed=inbox
+    * compareBounceBackEmailsFromMailServer(inbox, emailServer, whcu, creditunion, whcu@mailerserver.com)
+      * bounceBackMsgs = search for bounceback emails from server.
+      * For each message, get the TO address from original email and put it into the result array. Copy the message to the backup directory and mark the message as DELETED.
+      * acctInfo = get acctNum and acctId from fin_account, usr, usr_fin_account searched by orgId and message_id (ci_id).
+      *  **logBounceEmail:** insert orgId, email_address, sess_login_id, email_time, err_code(reason_code), err_msg(reason) into **email_err** table.
+      *  **handleUndeliverable** (acctId, stmtType=default) : Update contact_info table. Set ci_is_eaddr_valid="n" of the ci_id. (ci_id searched from usr and usr_fin_account by acct_id) .
+    * generateReport()
+      * Search for acct_number, type, acct_owner_name, email_address, em_err_email_time, em_err_counter, err_code, err_msg from fin_account and email_err table by orgId and em_err_last_modified_date(current date). 
+      * Display acctNumber|type|acct_owner_name|email_address|err_code|err_msg
+    * insertReport()
+      * Insert org_id, start_date, end_date, report_tye="undeliverable", report, file_size, file_type=text, report_count(jobStatus goodCount) into **summary_reports** table. 
+      * Update file_size in summary_reports table 
+    * Zip protection is true for this report.
+    * Database changes: email_err, contact_info, summary_reports
+  *  **customized enrollment Report**
+    * Displays AcctNum and acctStatus
+
+  
+
+  
+
+##  _Analysis Summary(ROOT)_
+
+Scope| Feature| WHCU| Hypercube| Note  
+---|---|---|---|---  
+ **JWSSO (SingleSignOn7Servlet)**|  
+|
+
+  * Search for user by acctNum as sess_login_id. If not found, create new fa, paperless, user and ufa.
+    * fa: acctName=acctNum, status="A"
+    * user: firstName=acctNum
+    * ufa: status="active", regDate=current date
+    * paperless: newStatus="B", oldStaus="N", stmtType="default"
+  * Stores email into contact_info table.
+  * Email is updated from SSO to contact_info table. Email is updated only if empty or null email is not passed via sso.
+  * If email is updated, Insert entry into audit_log_whcu (event="updEmail",location="sso")
+
+|  178 incomplete Supported  179 incomplete Not Supported 242 complete
+Supported Alternatively |
+
+  * In Hypercube, always search from usr_mapping by cif_number
+  * notification_preference is used to store email
+
+  
+  
+ **Enrollment(SSO)**
+
+|  User enrollment|
+
+User goes through enrollment if paperless status for both stmtType="default"
+and "enotice" is B.
+
+|  48 complete Supported  49 incomplete Not Supported |
+
+  * "unenrollOnDeliveryPreferenceChange" flag will be set as true to support this.
+
+  
+Enrollment Step 1| Pdf view|  50 complete Supported  51 incomplete Not
+Supported |  
+  
+Enrollment Step 2|
+
+Electronic Delivery of Documents Disclosure
+
+  * Disclosure
+  * Uneditable email address field.
+
+|  52 incomplete Supported  53 incomplete Not Supported 153 complete Supported
+alternatively | In Hypercube, Disclosure is shown in enrollment step 2. Email
+address will be provided on enrollment step 3.  
+ **Homepage**  
+  
+|  Account Optout|
+
+  * From the left side navigation menu, If any stmtType is selected and the paperless status is B for that stmtType, redirect to opt-out page.
+  * 
+
+|  61 incomplete Supported  25 incomplete Not Supported 243 complete Supported
+Alternatively | In Hypercube, If the paperless status is B, a message is
+displayed to the user saying the account is on paper. User is also asked to go
+to profile page and change the delivery preference to paperless in order to
+view statements.  
+ **Profile**|  Email Address|
+
+  * User can't update email address
+
+|  71 complete Supported  72 incomplete Not Supported |  
+  
+Statement Delivery Preference|
+
+  * User can only switch from paper to paperless.
+
+|  73 complete Supported  74 incomplete Not Supported |  
+  
+Enotice Delivery Preference|
+
+  * User can only switch from paper to paperless.
+
+|  184 complete Supported  185 incomplete Not Supported |  
+  
+**Statements**  
+  
+|  e-Statement| Statement Date, Status, Monthly Inserts|  81 complete
+Supported  82 incomplete Not Supported |  
+  
+e-Notice|
+
+Notice Date, Status, Description
+
+|  83 complete Supported  84 incomplete Not Supported |
+
+  
+  
+  
+e-Tax|
+
+Tax Date, Description
+
+|  87 complete Supported  88 incomplete Not Supported |  
+  
+**Disclosure**|  
+|  Opens in a new tab.|  186 complete Supported  187 incomplete Not Supported
+|  
+  
+  
+**Account Reconciliation**
+
+|  
+|  Opens in a new tab.|  188 complete Supported  189 incomplete Not Supported
+|  
+  
+**Exit**|  
+|  
+|  190 complete Supported  191 incomplete Not Supported |  
+  
+  
+  
+
+  
+
+## _Analysis Summary(MSM)_
+
+Scope| Feature| WHCU| Infotrac| Note  
+---|---|---|---|---  
+ **Account Management**
+
+  
+
+|  Account search|
+
+Search by account number and email address.
+
+|  31 complete Supported  32 incomplete Not Supported |  
+  
+Change delivery preference|
+
+Admin can update delivery preference only from paperless to paper.
+
+|  39 complete Supported  40 incomplete Not Supported |  
+  
+Browse delivery preference history| Admin can view the delivery preference
+history|  192 complete Supported  193 incomplete Not Supported |  
+  
+Update Email| Admin can not update email address|  194 complete Supported  195
+incomplete Not Supported |  
+  
+**Email Proofing**|  
+|
+
+  * e-Statements
+  * e-Notices
+  * e-Tax
+
+|  196 complete Supported  197 incomplete Not Supported |  
+  
+**Upload Inserts**|  
+|
+
+  * Inserts can be uploaded online for e-Statements
+
+|  121 complete Supported  122 incomplete Not Supported |  
+  
+**Marketing Promo Email**  
+  
+|  
+  
+  
+|  
+|  123 incomplete Supported  124 complete Not Supported |
+
+  * Will be removed. Not supported anymore.
+
+  
+ **Administration**|  Admin user management|
+
+Can create, update and delete new admin user.
+
+|  145 complete Supported  146 incomplete Not Supported |  
+  
+**Reports**|  7 reports|
+
+Latest Stats
+
+|  217 complete Supported  218 incomplete Not Supported |  
+  
+  
+User Login Activity
+
+|  219 complete Supported  220 incomplete Not Supported |  
+  
+  
+AI Login Activity
+
+|  221 complete Supported  222 incomplete Not Supported |  
+  
+  
+AI User Activity
+
+|  223 complete Supported  224 incomplete Not Supported |  
+  
+  
+AI User Modification Activity Report:
+
+  *     * This report show the audit trail of changes by administrator user (add/edit/delete) administrator user.
+    * Modified By | Applied To Admin User | Modification Type | Modified Time
+
+|  225 complete Supported  226 incomplete Not Supported |  
+  
+  
+Email Address Collection:
+
+  *     * Shows Account Number, Account Owner Name and email Address. Emails are fetched from contact_info table.
+
+|  227 complete Supported  228 incomplete Not Supported |
+
+  
+  
+  
+Paperless
+
+|  230 complete Supported  231 incomplete Not Supported |  
+  
+**Exit**|  
+|  
+|  238 complete Supported  239 incomplete Not Supported |  
+  
+  
+## _Analysis Summary(PUI)_
+
+Process
+
+|
+
+Prefix/Flags
+
+|
+
+Backend Business
+
+|
+
+Mismatch with hypercube business
+
+|
+
+Changes needed
+
+|
+
+Note  
+  
+---|---|---|---|---|---  
+afp|
+
+  * ds1=default
+  * cc1=default
+  * es1=escrow
+  * autoregister= true
+  * enableAccountType=false
+
+|
+
+  *  **Handler: AfpStatementData9**
+  *  **Registrar: MessageEstmtRegistrar3**
+    * If account not found, create new account, user, userprofile and ufa. 
+      * Stores acctNum as sess_login_id
+      * Stores current date as DSO
+    * If account found, update account_owner_name and user firstName.
+    * If "MEMBER" or "CUSTOMER" is passed as acctName, no update.
+    * Insert paperless. Always insert a paperless for stmtType="default"
+    * Insert entry into estmt_doc and p_job_estmt table.
+    * imageMessage is true for "default". If data found from message_area and m_message table by messageId, Insert into estmt_message table.
+  * Database changes: FIN_ACCOUNT, USR_FIN_ACCOUNT, USR, USR_SESSION, PAPERLESS, ESTMT_MESSAGE
+
+|
+
+  * Stores acctNum as sess_login_id
+  * Stores DSO
+  * Doesn't use usr_mapping table. 
+
+|
+
+Use HypercubeEStmtRegistrar.
+
+If Afp is moved to Doc, then the following flags are needed:
+
+  * global.nullDsoTime=true
+  * global.acctNumAsLoginId=false
+  * doc.compression=true
+
+|
+
+  
+  
+  
+enotice4|
+
+  * enotice4.createAccount=false
+
+|
+
+  *  **Handler: ENoticeData7**
+  *  **Registrar: DefaultEnotice4Registrar**
+    * If account not found, do noting as createAccount is false. For existing accounts, update account_owner_name and user firstName (Except "MEMBER", "CUSTOMER", "USER")
+    * Insert paperless (stmtType="enotice")
+    * Insert entry into enotice, arch_file, p_job_enotice
+  * Database changes: FIN_ACCOUNT, USER, ARCH_FILE, ENOTICE, P_JOB_ENOTICE
+
+|  
+|  
+|
+
+  * Will be moved to DOC process
+
+  
+etax|
+
+  * etax.createAccount=false
+
+|
+
+  *  **Handler: ETaxData3**
+  *  ** **Registrar: ETaxRegistrar3****
+    * Insert entry into paperless. (If not found searched by acctId and stmtType)
+    * Insert parentPath, afpFileName, fileType into arch_file
+    * Insert actId, type, arch_file_id, ssn into etax
+    * Insert p_job_id and etax_id into p_Job_etax
+  * Database changes: paperless, arch_file, etax, p_Job_etax
+
+|  
+|  
+|
+
+  
+  
+  
+Reports|  
+|
+
+  * Paperless Report
+    * Displays account number and paperless status.
+  * Undeliverable Report
+    * paperless_status.update=false
+    * email_status.update=true
+    * message_id=ci_id
+    * insertToDB=true
+  * Customized Enrollment Report:
+    * Displays AcctNum and AcctStatus
+
+|  
+|  
+|
+
+  *  **Undeliverable report:  ** will be converted to bounceback report
+  *  **Customized Enrollment Report:** No closed account. Will client still need this report?
+
+  
+  
+  
+
+

@@ -1,0 +1,98 @@
+title: Scanner - Simple Continuously Running Update
+body:   
+
+  
+
+Target release| Release name or number  
+---|---  
+Epic| Link to related Jira epic or feature  
+Document status|
+
+GreenDONE  
+  
+Document owner|  
+  
+Designer|
+
+  
+  
+Developers| Lead developer  
+QA| Lead tester  
+  
+  
+
+## Goals
+
+  * Allows the scanner to continously scan for files from the FTP
+  * Allows for a way to pause and stop the scanner for deployment and triage
+
+## Background and strategic fit
+
+The scanner being blocked from scanning new files when one or two CIDs have
+too many files to scan is a major pain point that need to be resolved.
+
+## Assumptions
+
+  * List the assumptions you have such as user, technical or other business assumptions. (e.g. users will primarily access this feature from a tablet).
+
+## Requirements
+
+  
+| Title| User Story| Importance| Notes  
+---|---|---|---|---  
+1| Run continuously| As InfoIMAGE, I would like to scan any given FTP folder
+every fifteen minutes without being blocked by the scanning of one individual
+folder.|  _Must Have_|
+
+Instead of a single loop that adds all the folders to scan to a list, have a
+thread that does the following:
+
+  * Run every 15 minutes
+  * Maintain a threadsafe composite object that is a queue for the folders to scan, but also have lookup capability to identify if a folder already exists in the queue. Note again that this object must be threadsafe and should only be accessible by one class at atime.
+  * Will perform the traverse logic, but will only insert the CID folder into the queue if it is not already in the queue, i.e. the folder is still being processed or pending.
+
+The worker threads will now also run continuously. They will consume work from
+the composite object. They will continously poll for work.  
+  
+2| Halt scanning| As InfoIMAGE, I would like to be able to stop the scanner
+from adding more scanning jobs, so that I can gracefully shutdown the scanner
+to do deployment or necessary production triage.|  _Must Have_|
+
+The 15 minute loop will first read from a file to confirm whether it should
+continue running. If it detects a halt command, it will no longer add more
+scan jobs to the queue. It will then wait until all jobs are finished and
+print out an "All jobs done!" into the logs to identify that the queue is
+empty.  
+  
+3| Periodic error emails| As InfoIMAGE, I would like to receive emails
+periodically about scanner errors.|  _Must Have_|  Have a threadsafe object
+that stores all the scanner errors. Previously, email will be sent out once
+the scanner is finished. Now, send an email every 15 minutes with all the
+scanner errors found so far.  
+4| One scanner| As InfoIMAGE, I would like to maintain only one scanner for
+all FTP locations.|  _Optional_|  Since the scanner can now continously run,
+it is possible to group all scanners together. There is already logic to spawn
+cluster of threads per FTP location. Since everything is continously scanning,
+we no longer have to worry about one FTP location blocking another from being
+scanned.  
+  
+## User interaction and design
+
+Include any mockups, diagrams or visual designs relating to these
+requirements.
+
+## Questions
+
+Below is a list of questions to be addressed as a result of this requirements
+document:
+
+Question| Outcome  
+---|---  
+(e.g. How we make users more aware of this feature?)| Communicate the decision
+reached  
+  
+## Not Doing
+
+  * List the features discussed which are out of scope or might be revisited in a later release.
+
+

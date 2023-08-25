@@ -1,0 +1,104 @@
+For estatement the outputs are individual afp files ( one afp for each customer ) and index file which contains different info mentioned below which is used by estatement team to post on estatement site. You can also see the output in account management tab in infotrac after running process if e_automate flag is on in control file. Each afp ultimately sent to customer through email that is why it is called estatement electronic statement.
+you will see indiviual afp file most possibly in afpds directory.
+you will also see index file most possibly in afpds300 directory.
+sample index file(HFCUMS21)). See the contents column names.
+Job Type - for monthly job it's most like DDA Statement but still need to ask onshore
+PresentmentType - It's mostly pdf
+DocumentCode - 001 except for daily where letter code will be automatically put here by print dfa
+Filename - afp name (<prefix>_<end_date>_<account_no>_seq.afp). Date is most yyyymmdd format. Account no should be without leading zeros.
+ZipFileName - set by script . We provide all the individual afps and index file in zip to isd/estatement team splitted by say 10000 afps in one zip. This field contains which afp is in which zip.
+DocumentBeginDate - statement begin date
+DocumentEndDate - statement end date
+ImageCount - total logical pages
+AccountNumber - can be member no too if exists. Confirm from Onshore. Should be without leading zeros in index file.
+AccountType - confirm this from Onshore. If no account type is applicable it should be NA in index file.
+AccountSuffix - if present in data file
+SSN - if present in data file.
+Message ID - message ids from portal files.
+InsertID - if present. So far I haven't used this.
+RegionCode - if present . So far I haven't used this.
+CrippleFlag - So far I haven't used this.
+PostcardFlag - So far I haven't used this.
+Afp2webPM - So far I haven't used this.
+Afp2webIni - So far I haven't used this.
+e-Statement Tests
+-- copy data file to ftpbu
+-- run script with 'f' option
+Test No
+Test Name
+Procedure
+File/Directory To Test
+Log File Test
+* Check ISISDISK Log file to see if there is any error
+* Check STDOUT log file for ISD index file name / Zip directory
+ISISDISK log:
+$dir/$cid$jid$segment${cycle}9.log
+Index creation & naming check
+* local index created.
+* Index copied to ISD directory
+* go to ISD directory and check naming
+Local index:
+stmt: $dir/${jid}_pdfidx.txt
+daily: $dir/${fn}_enotices_pdfidx.txtISD directory:
+$d_dir/isd_input/I3/process-files/${cid}/ISD index name:
+doc format: ${jid}_${enddate_yyyymmdd}_${segment}_${processdate_yyyymmdd}_${processdate_HHMM}_${cid}.txt
+afp format: ${jid}_${enddate_mmddyyyy}_${segment}_${processdate_mmddyyyy}_${processdate_HHMM}_${cid}.txt
+Zip creation & naming check
+* Take the zip name from ISD index
+* go to AFP Archive directory
+* check if zip exist
+* check if zip naming is correct
+(zip naming doesn't have a strict rule)
+* ISD Zip directory:
+$d_dir/isd_input/indiv_afp/${cid}/afp-archive/${prefix}-${enddate_mmddyyyy}/* Zip name:
+doc format: ${prefix}_${cycle_no}_${segment}_${processdate_yyyymmdd}_${processdate_HHMM}_${seq}.zip
+afp format: ${prefix}_${cycle_no}_${segment}_${processdate_mmddyyyy}_${processdate_HHMM}_${seq}.zip
+Index Format test
+* Check SOW to find Index format
+* There are two format: doc format & afp format
+* doc format is new and have a header
+* afp format is old and doesn't have a fixed format
+* Open index file (in ISD directory) to check format
+* SOW
+* Index file
+Index content test
+* Open index file (in ISD directory)
+* Check if required fields are there
+* Check if the values are in correct format
+* Check if values are in correct place
+* Index file
+Individual AFP creation & naming check
+* Open Index file and count Total pdfs
+* Go to individual afp directory and count total pdf
+* Total pdf listed == total pdf created
+* Check Naming
+* Local Individual afp directory:
+stmt: $dir/${prefix}-indiv/
+daily: $dir/enotices/* Individual afp naming:
+${prefix}_${document_end_date}_${acct_no}_${sequence}.afp
+Individual AFP view check
+* Convers 2/3 afp files to PDF file
+* Downlaod PDF file
+* Open PDF and check if view looks alright.
+* Check the image count from index files
+* Individual afp files
+Zip file content check
+* go to zip directory
+* List files in zip file
+* Check total count with index's total count
+* Check if afp count matches with 'afp_split_count'
+* Zip file
+Account Number Check
+* There should be same account number in afp name and in index file
+* Check Account numbers in Index file
+* Check Account number in afp file name
+* We use member number/Account number. Make sure correct account numbers are pulled from data file
+* Index file
+* Individual afp file
+Auto Post
+* If there is no online proofing there should be auto posting
+* Open control file
+* check the veriable:
+stmt: e_automate="s"
+daily: e_automate="e4"
+* ${prefix}.control

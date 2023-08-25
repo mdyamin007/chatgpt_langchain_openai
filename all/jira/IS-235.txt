@@ -1,0 +1,190 @@
+title: RedTitan Parallel Processing Research (In-House)
+description: Hi Jun,
+
+
+
+Here is the special R&D project that I would like you to research in between your project. If this is successful, then we may have a solution to parallel process for EWBB tax job that takes forever and/or create a custom unique one for EWBB depending on the outcome of your research. In this project you will hopefully gain more experience with Perl to understand client / server port connections and working with threads / parallel processing.
+
+*++*
+
+*++*
+
+*+Objective:+*
+ * Would like to confirm if we can run two or more RedTitan jobs in parallel. For now, lets assume a most 2 processes.
+ * Create your own version of the server perl script; e.g. copy iswk_server1.pl to your local name iswk_server_jun.pl for initial testing)
+ * Review and understand the iswk_server1.pl script by updating your version of the script (e.g. iswk_server_jun.pl)
+ * Find two or more existing RedTitan program that you can run in parallel to do your testing; Please use test environment for testing so that we do not write files to production).
+ * {color:#de350b}*Add yt2 to ETABoard. Reuse existing appno & verision id number.*{color}
+ * {color:#de350b}*ISD needs to add yt2 to the PUI eStatement platform to process.*{color}
+
+
+
+
+
+
+
+*+Initial Environment Setup / Troubleshooting:+*
+
+
+
+After updating the iswk_server_jun.pl version, to use a different port (e.g. port 3370), double-click on it to start up the server program.
+
+
+
+Then go to a server like rhs2, rhs or rh2 and confirm that port is opened.
+
+telnet ca-rtitan-pr-04.infoimageinc.com 3370
+
+
+
+If it does not connect, please let me know immediately as I may need to get Network team involved to open up the port. I pretty sure the port is not blocked since the ca-rtitan-pr-## server sits on the same subnet as ca-isis-pr-## (i.e. Papyrus processing servers).
+
+
+
+
+
+*EWBB Tax File Location:*
+
+ewbbbu\TAX\PROCESSED
+
+
+
+Thanks!
+
+
+
+ Will
+
+
+
+
+
+
+
+
+
+
+author: william.kong
+comment: Hi [~jun] ,
+
+
+
+The parallel processing of EWBB stopped at about 1:24am Saturday, July 24, 2021. Roughly close to 10 hours processing. However, there is a processing error message. Can you advise what this issue is?
+
+
+
+Thanks!
+
+
+
+-- Will
+
+
+
+
+
+
+
+
+author: jun
+comment: [~William.Kong],
+
+The position for address 6 in the EE file was too close to the previous address causing address 6 to capture 2 address lines and pushed an extra line into the CSV file. I've lowered the position for address 6. in the EE file. It should be ok now.
+
+
+author: william.kong
+comment: [~jun]:
+
+
+
++Task #1:+
+
+Here is a list of all the EWBB Tax Applications. Can the program process these sequentially per form? I would like to discuss the feasibility if it is possible to enhance. If so, please share your response here so that we can schedule this project.
+
+*EWBB Tax:*
+
+1099I - 26 seg
+
+1098 - 14 seg
+
+1042 - 16 seg
+
+1099m - 6
+
+1099oid -1
+
+
+
++Task #2:+
+
+Can you enable the following two applications to run on your script in parallel to test with EWBB processing above?
+
+TKCU Mortgage Statement
+
+FLCU CUSO/Mortgage
+
+
+
++Task #3:+
+
+Can you help run and test fcsbdna on ca-isis-pr-04 on the+latest+ RedTitan version? I would like to see if the existing fcsbdna program will crash with the most current version (10.59d) of the RedTitan software. The original file is located:
+
+
+
+/d/download/fcsb/FCSB_dn_pdf_080821_01.zip.pgp.orig (note: you will need to remove the '.orig' filename extension
+
+
+
+
+
+
+
+
+
+
+
+
+author: jun
+comment: Hi [~William.Kong],
+
+#1 : Yes, the script already have a loop set up to keep processing PDF files in the files directory. Since we've been only processing 1 file at a time, I think it would be best to test that it actually works and see if anything needs to be updated.
+
+#2: TKCU mortgage stmt and FLCU CUSO/mortgage is added to .124 server.
+
+#3: FCSB finished without crashing on .124 Redtitan10.59d.
+
+
+author: william.kong
+comment: 
+
+[~jun]: Per our conversation today with Neil, please update the ewbb scripts to trigger your new port number. We want to test all the forms and do some benchmark testing. Neil will do the benchmark testing this afternoon to run through the weekend.
+
+
+
+
+
+
+author: william.kong
+comment: [~jun]: Per our meeting yesterday, you will create yt2:
+
+
+
+yt1 & yt2 has the same functionality logic.
+
+Custom logic will be applied to yt1 and yt2 processing shell to review+both+ yt1 & yt2 /home/keep/ck_sum/ log file; The purpose is for both yt1 & yt2 to detect if a file has been processed before in+either+ of these programs.
+
+
+
+Jun will fix script to include Transmission File information in the DPVS.
+
+
+
+Next test, Rogeilio with run ALL the tax files. His testing last week only was a subset.
+
+
+
+
+author: jun
+comment: [~William.Kong]
+
+Code released to production

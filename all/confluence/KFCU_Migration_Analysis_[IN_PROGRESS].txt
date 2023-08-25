@@ -1,0 +1,601 @@
+title: KFCU Migration Analysis [IN PROGRESS]
+body:   
+
+Document Status|
+
+YellowDRAFT  
+  
+---|---  
+Document Owner|
+
+  
+  
+  
+
+# Keesler Federal Credit Union
+
+32circle
+
+#  **Frontend:**
+
+##  **ROOT**
+
+  
+|  
+  
+---|---  
+ **Client Name**|  Keesler Federal Credit Union  
+ **Login Method**|  WESCOMSSO (SingleSignOn7Servlet)  
+ **Enrollment Step**|  N/A  
+ **Welcome Email**|  None  
+ **Menu**|
+
+  * Statements
+  * Home Equity
+  * e-Tax
+  * Disclosure
+  * Account Reconciliation
+  * Profile
+  * Exit
+
+  
+ **Account Types**|
+
+N/A  
+  
+ **Statement Types**|
+
+  * default  (Monthly Statements)
+  * heloc (Home Equity)
+  * etax (e-Tax)
+
+  
+ **Archival Period**|
+
+  * Default: 18 
+  * Heloc: 18
+  * eTax: 84
+
+  
+  
+  
+ **Paperless Configuration**|  Non-Selective  
+ **Delivery Preference**|
+
+  * e-Documents (E)
+  * Paper (B)
+
+  
+ **Notification Preference**|  Email only  
+ **NP Link Type**|  byUSR  
+ **Batch Download  **| N/A  
+ **Schema**|  CU  
+ **User-Account Relation**|
+
+One to One  
+  
+###  **Database Migration**
+
+ **USR_SESSION** : acct_number used as sess_login_id. So migration is needed.
+
+ **USR_MAPPING** : No inserted data for new user. So migration is needed.
+
+ **NOTIFICATION_PREFERENCE** : No data inserted in NP table. Uses Contact_Info
+table. So migration is needed.
+
+###  **SSO (signlesignon7)**
+
+####  **SignleSignOn7Servlet:**
+
+  * createLogin=true, UpdateEmail=true
+  *  **email** , mobileNumber, carrierId,  hashValue, loginId, requestTime, userType, vendorLoginId, userName, acctType, acctNumList, acctTypeList,
+    * If the email doesn't exist throw an exception.
+    * if carrierId doesn't exist set carrierId='na'.
+  *  **PrimaryUser** : Get user_id from **USR_MAPPING** by org_id and cif_num.
+  * If PrimaryUser equals NULL, Create an **UserProfile   **
+    * Remove leading zeros from loginId and assign as acctNum.
+    * If user is null then search the **account** by org_id and acct_num.
+    * If acct is null create an account with acctNum=acctNum, acctName=acctNum, orgId, status='A'.
+    * Search **paperless** by acctId and stmtType='default'. If paperless is null Insert into **paperless** with acctId, stmtType='default', modifiedBy='1', modifiedDate. 
+    * Create **user** with firstName=acctNum.
+    *  Update **ufa** with userId, acctId, status='active', regDate.
+  * If email not null for sso login
+    * If **ContactInfo** is null, Set **contactInfo** with ciId, modifiedFlag=true
+    * If email doesn't exist in **contactInfo** and provide the new email then set new email into the contactInfo.
+    * If email exists into the contactInfo and provide the new email. If oldEmail doesn't match with the newEmail then update the contactInto with the new email.
+
+ **wc_hblogin.jsp:**
+
+  * Get the sso_key from the request.
+  * Find User by org_id and sso_key from the **USR_SESSION** table. If user not null, set sessionAttribute.
+  * redirect to **/home.jsp** page
+
+### DSO
+
+  * DSO login page exists and the DSO user id found in the production database.
+  * Access log doesn't have any hit on /login.jsp
+  * Get data from the request: **loginId** , **password** , **email**.
+    * Find user by loginId and password.
+    * Find user data into **Contact_Info** table, If Contact_Info null then set user data and email into the Contact_Info table.
+  * Redirect to /hone.jsp.
+
+###  **home.jsp:**
+
+  * If acct_num length equals 12 and starting with 99 then redirect to error.jsp page with errorMessage=BA1.
+  * If contact_info or email equals null forward to error.jsp with errorMessage=NO_EMAIL.
+  * If the paperless status is null or not 'E' then update paperless status by 'E'.
+
+###  **Menu Tabs**
+
+  *  **Statements:**
+    * Shows statement: Date, Status, Monthly Inserts.
+    * When clicking on statement date open a statement details pdf in the new tab.
+    * 
+
+  
+
+  *  **Home Equity:**
+    * Shows statement: Date, Status, Monthly Inserts.
+    * When clicking on statement date open a statement details pdf in the new tab.
+    *  ****
+
+  
+
+  *  **e-Tax:**
+    * Shows Tax: Date, Description.
+    * When clicking on tax date open a statement details pdf in the new tab.
+    * 
+
+  
+
+  *  **Disclosure:**
+    * When clicking on the disclosure menu open the disclosure agreement pdf (edoc_discl.pdf) into the new tab.
+    * 
+
+  
+
+  *  **Account Reconciliation:**
+    * When clicking on the Account Reconciliation menu open a reconcile html file (acct_recon.html) into the new tab.
+    * 
+
+  
+
+  *  **Profile**
+    * Show Email address and delivery preference type.
+    * Show back button When clicking on redirect the previous page.
+    * Email Address: Uneditable
+    * 
+
+  
+
+  *  **Exit:**
+    * When clicking on the Exit menu redirect the logout.jsp page and shoeing confirmation option for logout or not.
+    * 
+
+  
+
+* * *
+
+##  **MSM**
+
+### Account Management
+
+  * Search account information and statements by account number.
+  * Shows account number, account name, and email address
+  * Admin can't change the email address.
+  * Shows all account numbers by searching email address
+
+### Email Proofing
+
+  * Statement types:
+    * Monthly Statement
+      *  **Keyword:** _MEMBER_ **  (**To be replaced by the actual MEMBER NAME )
+    * Home Equity
+      *  **Keyword:** _MEMBER_ **  (**To be replaced by the actual MEMBER NAME )
+    * e-Tax
+      *  **Keywords:** _MEMBER_ **  (**To be replaced by the actual MEMBER NAME ),  _TAX_LIST_ (To be replaced by the actual TAX-FORM NAME)
+    * Password Update
+      *  **Keyword** : _ADMIN_FULLNAME_ (To be replaced by the actual Administrator Full Name)
+    * AI User Removal
+      *  **Keyword** : _ADMIN_FULLNAME_ (To be replaced by the actual Administrator Full Name)
+
+    
+
+### Upload Inserts
+
+  * Shows Begin date, closing date, stmt type, title of the statements.
+  * Can be uploaded customer insert.
+
+### Reports
+
+  * Shows all the available reports with descriptions.
+  * Reports:
+    1. Latest Stats
+    2. User Login Activity
+    3. AI Login Activity
+    4. AI User Activity
+    5. AI User Modification Activity Report
+    6. Email Address Collection
+    7. Undelivered Report
+  * Can download the reports as .txt file
+
+### Administration
+
+  * Admin can create: Admin managers, Admin users, Admin Guests with User ID, First Name, Last Name, Password, Confirm Password, Email, Confirm Email.
+
+### Exit
+
+  * Showing the confirmation for logout e-statement session or not.
+
+* * *
+
+##  **Processing UI**
+
+### BACKEND PROCESSES
+
+KFCU has 3 processes,
+
+  1. AFP
+  2. ECL
+  3. ETAX
+
+### Settings
+
+  * global.multipleStmtType=true
+  * global.multipleDocType=false
+  * global.autoRegister=true
+  * global.ssoKey=78aB*3J99x
+  * global.enableAccountType=false
+  * global.acctNumHasLeadingZeros=false
+
+### Statement Types and Index file prefix
+
+  *  **global.ms1** =default
+  *  **global.ml1** =heloc
+  *  **global.tax** =etax
+
+### AFP Process
+
+Flags:
+
+  * afp.compression=false
+  * afp.isZipped=true
+  * afp.copyZipBuffer=65536
+  * afp.storage.path=a
+
+#### Handler: AfpStatementData9
+
+  * Fields: **fileName** , **acctNum** , **beginDate** , **closingDate** , **numOfPages** , **acctName** , SSN, appType, messageIds, **hasCheckStr** , insertId, regionCode, crippleFlag, zipFileName.
+
+** **Bold** indicates all are mandatory fields.
+
+#### Registrar: HypercubeEStmtRegistrar
+
+  * autoRegister=true, enableAccountType=false, acctLookUp=false
+  * Find **account** from the **FIN_ACCOUNT** by org_id and acct_number.
+  * If **account** is null create an account where orgId, acctNum, acctName, lastModified=currentdate, status='A'
+  * As global.autoRegister is true, creates a new  **USR**  and  **USR_SESSION**  record. 
+  * Insert into **USR_MAPPING** with org_id, cif_num, usr_id.
+  * Insert into **USR_FIN_ACCOUNT  **user_id, account_id, status,  email, source.
+  * Insert into **PAPERLESS** with acctId, modifiedBy='1', modifiedDate, newStatus='B', oldStatus='N', stmtType.
+
+### ECL Process
+
+Flags:
+
+  * ecl.classPath=com.infoimage.processing.application.ecl.handler.DefaultEclHandler4
+  * ecl.purge=true
+  * ecl.append=false
+  * ecl.delimiter=|
+  * ecl.clientType=cu
+  * ecl.combination=Email,AcctNum
+  * ecl.totalColumns=2
+
+ **Handler** :  **DefaultEclHandler4**
+
+  * Fields: cif, **email_addr** , **acct_number** , application, sms_number.
+  * Remove all leading zeros beginning of the acct_number.
+  * Update **CONTACT_INFO** table with orgName, acctNum, email.
+
+ ** **Bold** indicates all are mandatory fields.
+
+### ETAX Process
+
+Flags:
+
+  * etax.compression=false
+  * etax.createAccount=false
+  * etax.isZipped=true
+  * etax.copyZipBuffer=32768
+  * etax.automatedEmailNotification=true
+
+#### Handler: EtaxData3
+
+  * Fields: acctName, **acctNum** , **type** , **afpFileName** , date, suffix, appType, SSN, zipFileName.
+  * If isZipped=true, the total field must have 8 otherwise total fields must have 6.
+
+ ** **Bold** indicates all are mandatory fields.
+
+#### Registrar: HypercubeEtaxRegistrar
+
+  * Find account from **FIN_ACCOUNT** by org_id and acct_number
+  * As etax.createAccount=false, No account will be created if not found.
+  * Insert into the **PAPERLESS  **with acctId, modifiedBy='1', modifiedDate, newStatus='B', oldStatus='N', stmtType='default'.
+  * Insert into ETAX with type, acctId, archiveId, timeStamp ssn, isCorrection.
+
+  
+
+* * *
+
+## Analysis Summary (ROOT)
+
+Scope| Feature| KFCU Business| Hypercube| Note  
+---|---|---|---|---  
+  
+ **Enrollment(SSO)**
+
+|  User enrollment|
+
+No enrollment
+
+|  822 complete  Supported  823 incomplete Not Supported 824 incomplete
+Supported alternatively |  
+  
+**Statements**|
+
+  * Account Statements
+  * Home Equity
+
+|
+
+  * Statement Date
+  * Status
+  * Monthly Inserts
+
+|  825 complete Supported  826 incomplete Not Supported 827 incomplete
+Supported alternatively |  
+  
+  
+  * e-Tax
+
+|
+
+  * Tax Date
+  * Description
+
+|  828 complete  Supported  829 incomplete Not Supported 830 incomplete
+Supported alternatively |  
+  
+  
+  * Disclosure verbiage
+
+|
+
+  
+
+|  831 incomplete  Supported  832 incomplete Not Supported 833 complete
+Supported alternatively | This portion will be displayed in the Important
+Disclosure section.  
+ **Account Reconciliation**|  
+|  
+|  834 complete  Supported  835 incomplete Not Supported 836 incomplete
+Supported alternatively |  
+  
+**Profile**|  Delivery Preference|
+
+  * User can't update delivery preference
+
+|  837 complete  Supported  838 incomplete Not Supported 839 incomplete
+Supported alternatively |  
+  
+Email Address|
+
+  * Fetch email from CONTACT_INFO table.
+
+|  840 complete  Supported  841 incomplete Not Supported 842 incomplete
+Supported alternatively |
+
+Need data migration to fetch email from NOTIFICATION_PREFERENCE table.  
+  
+  * Email address is non-editable.
+
+|  2706 complete  Supported  2707 incomplete Not Supported 2708 incomplete
+Supported alternatively |  
+  
+**Disclosure**|  
+|
+
+  * Open the disclosure agreement pdf (edoc_discl.pdf) into the new tab.
+
+|  2709 complete  Supported  2710 incomplete Not Supported 2711 incomplete
+Supported alternatively |  
+  
+**Exit**|  
+|  Logs out a user by showing a confirmation page.|  2712 complete  Supported
+2713 incomplete Not Supported 2714 incomplete Supported alternatively |  
+  
+  
+  
+
+## Analysis Summary (MSM)
+
+Scope| Feature| KFCU Business| InfoTRAC| Note  
+---|---|---|---|---  
+Account Management|
+
+Account Management
+
+|
+
+  * Search by Account Number
+  * Search by E-mail Address
+
+|  2715 complete  Supported  2716 incomplete Not Supported 2717 incomplete
+Supported alternatively |  
+  
+  
+  * Account Information
+    * Account Number
+    * Account Name
+    * Email Address: Non-editable
+
+|  2718 complete  Supported  2719 incomplete Not Supported 2720 incomplete
+Supported alternatively |  
+  
+  
+Account Statements:
+
+  * Statement Date
+  * Monthly Inserts
+
+|  2721 complete  Supported  2722 incomplete Not Supported 2723 incomplete
+Supported alternatively |  
+  
+  
+e-Tax:
+
+  * Tax Date
+  * Description
+
+|  2724 complete  Supported  2725 incomplete Not Supported 2726 incomplete
+Supported alternatively |  
+  
+  
+  * Can't update email address.
+
+|  2727 complete  Supported  2728 incomplete Not Supported 2729 incomplete
+Supported alternatively |  
+  
+Email proofing|  
+|
+
+  * Email Notifications Templates:
+    * Monthly Statement
+    * Home Equity
+    * e-Tax
+    * Password Update
+    * AI User Removal
+  * Keywords:
+    *  **MEMBER**
+    *  **TAX_LIST**
+    *  **ADMIN_FULLNAME**
+
+|  2730 complete  Supported  2731 incomplete Not Supported 2732 incomplete
+Supported alternatively |  
+  
+Upload Inserts|  
+|
+
+  * Marketing Insert Management
+
+|  2733 complete  Supported  2734 incomplete Not Supported 2735 incomplete
+Supported alternatively |  
+  
+Reports|  
+|
+
+  * Shows all the available reports with descriptions.
+  * Reports:
+    1. Latest Stats
+    2. User Login Activity
+    3. AI Login Activity
+    4. AI User Activity
+    5. AI User Modification Activity Report
+    6. Email Address Collection
+    7.  **Undelivered Report**
+  * Can download the reports as .txt file
+
+|  2736 complete  Supported  2737 incomplete Not Supported 2738 incomplete
+Supported alternatively |  
+  
+Administration|  
+|
+
+  * Can create, update and delete new admin user.
+
+|  2739 complete  Supported  2740 incomplete Not Supported 2741 incomplete
+Supported alternatively |  
+  
+Exit|  
+|  
+|  2742 complete  Supported  2743 incomplete Not Supported 2744 incomplete
+Supported alternatively |  
+  
+  
+  
+
+## Analysis Summary (PUI)
+
+Process| Prefix| Backend Business| Mismatch with Hypercube Business| Changes
+Needed  
+---|---|---|---|---  
+AFP|
+
+  * ms1
+  * ml1
+
+|
+
+#### Handler: AfpStatementData9
+
+#### Registrar: HypercubeEStmtRegistrar
+
+  * autoRegister=true, enableAccountType=false, acctLookUp=false
+  * Find **account** from the **FIN_ACCOUNT** by org_id and acct_number.
+  * If **account** is null create an account where orgId, acctNum, acctName, lastModified=currentdate, status='A'
+  * As global.autoRegister is true, creates a new  **USR**  and  **USR_SESSION**  record. 
+  * Insert into **USR_MAPPING** with org_id, cif_num, usr_id.
+  * Insert into **USR_FIN_ACCOUNT  **user_id, account_id, status,  email, source.
+  * Insert into **PAPERLESS** with acctId, modifiedBy='1', modifiedDate, newStatus='B', oldStatus='N', stmtType.
+
+|
+
+  * Sets account_number as sess_login id into the USER SESSION table.
+
+|
+
+  * global.acctNumAsLoginId=false
+
+  
+ECL|  
+|
+
+ **Handler** :  **DefaultEclHandler4**
+
+  * Fields: cif, **email_addr** , **acct_number** , application, sms_number.
+  * Remove all leading zeros beginning of the acct_number.
+  * Update **CONTACT_INFO** table with orgName, acctNum, email.
+
+|
+
+  * Stores email into the CONTACT_INFO table
+
+|
+
+  * global.email.storage=notifyPref
+
+  
+ETAX|
+
+  * tax
+
+|
+
+#### Handler: EtaxData3
+
+  * If isZipped=true, the total field must have 8 otherwise total fields must have 6.
+
+#### Registrar: HypercubeEtaxRegistrar
+
+  * Find account from **FIN_ACCOUNT** by org_id and acct_number
+  * As etax.createAccount=false, No account will be created if not found.
+  * Insert into the **PAPERLESS  **with acctId, modifiedBy='1', modifiedDate, newStatus='B', oldStatus='N', stmtType='default'.
+  * Insert into ETAX with type, acctId, archiveId, timeStamp ssn, isCorrection.
+
+|  
+|  
+  
+  
+  
+
+

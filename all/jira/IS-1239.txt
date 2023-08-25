@@ -1,0 +1,169 @@
+title: IDCU - Letter - Daily PDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133612-C30.01-V21354
+
+Processing Scripts to modify:
+ idcu_dl_process.pl
+
+Data Files to use:
+ IDCU_DL_053022.7z.gpg
+
+
+
+*NOTE*: This job runs on RH2. Since we are migrating from RHS to RH2, we should test all options so that we can do afpcompare and also ensure there is no errors in the processing logs.
+
+
+
+*{color:#de350b}WARNING: POTENTIAL CODE CONFLICT{color}*:
+
+There is another concurrent project IS-1503at the time of assigning this project. Please check if IS-1503 was released before this project goes live. If so, please merge the code with IS-1503; However, if this code is released+after+ IS-1503 goes live, please inform the developer on IS-1503 that they need to merge this project.
+
+
+
+
+author: william.kong
+comment: [~Hamimul.Chowdhuri]/[~anwarh]: Any progress with this project? I have not seen any activity. Please advise.
+
+
+author: william.kong
+comment: per Anwar's email, there is a conflicting project:[IS-1503] IDCU - [31563][pvt] New Daily Letter DL_GAP - Jira (infoimageinc.com). This needs to be completed before we can start.
+
+
+author: william.kong
+comment: [~anwarh]/[~Hamimul.Chowdhuri] : Per my email yesterday. We will need to get started on this project even though there is a existing project active (IS-1503). If this project finishes before IS-1503, then we will ask developer to merge your code. However, if IS-1503 goes live before this project finishes, we will ask you to merge this code with IS-1503
+
+
+
+For now, I'm going to tentatively mark 9/30/2022 as the live date. If you need another 2 - 3 days to go live, it will be ok since this is 'additional' unplanned project added to the scope of phase I of this project 64B.
+
+
+
+
+author: anwarh
+comment: [~William.Kong], the Development of this is complete.
+
+Need to merge the code, convert the new letter that was added in IS-1503 and generate sample for QA.
+
+Thanks
+
+
+author: william.kong
+comment: [~anwarh]: Please keep two versions of the code per description of work. I just check IS-1503 and it has not been released yet. So if you are done, we can go QA immediately and inform developer for IS-1503 to merge the code afterward if we are still waiting for approval.
+
+
+
+If IS-1503 is approved before this project is released, then merge the code and we will redo QA.
+
+
+
+-- Will
+
+
+author: anwarh
+comment: [~William.Kong], I won't be able to generate sample without merging the code first (Won't be able to check-in the code). Need to wait for it to approve. Thanks
+
+
+author: anwarh
+comment: Hi [~William.Kong], Can you please check with the release of IS-1503? 
+
+
+author: william.kong
+comment: [~anwarh]: Looks like they are close to releasing IS-1503. Please work off the parallel version that Zhuouxin has. By the time you are done, I would assume the code has been released. Thanks!
+
+
+author: anwarh
+comment: Hi [~William.Kong],
+
+Parallel ID: 20221022172957
+production cycle: 09/22
+
+Data files:
+/z/dsi_pdfi_testing/idcudla/data/IDCU_DL_092222.7z.gpg
+
+old zips:  /z/dsi_pdfi_testing/idcudla/old/
+new zips: /z/dsi_pdfi_testing/idcudla/new/
+
+Notes: 
+* It creates two different type of zip files with different index content
+* Didn't found any data file with all the letters
+* Index file has comma issue
+* some date is from system date in index file, so will be different
+
+Thanks,
+Anwar
+
+
+author: igor.khosid
+comment: [~Andrey.Kutsenko]
+Due to the EOM - this is not a priority for today!!
+I already mentioned this to you a few times ..
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+Compared files from the archive 'dl1_09222022_1_idcu.7z'
+Ran script:
+{code:sh}[andreyK@ca-unittest-pr-02 pdf_compare]$ perl pdf_compare.pl idcudla_prod idcudla_parallel result_idcudla -pixels 6 -threads 16{code}
+Result:
+{quote}Total PDF Files Scanned: 395
+allowedDifferenceInPercentPerPage: 6:
+Thread Count: 16
+
+Total PDF Files with Differences: 0
+Start Time: Thu Nov  3 16:24:09 PDT 2022
+Finish Time: Thu Nov  3 16:31:08 PDT 2022{quote}
+
+
+
+author: william.kong
+comment: [~anwarh]: Can you please submit the File Transfer form and see if Tun can help with code release no later than Wednesday. Thanks!
+
+
+author: anwarh
+comment: Hi [~TunA],
+
+Transfer form:  [^IS-1239 IDCU Transfer Form.doc] 
+
+Code is in:
+*/d/is/cvs/xfer/anwarH_backup/is-1239*
+
+Can you please move them into /d/is/cvs/xfer/anwarH/ and then release?
+
+Thanks,
+Anwar
+
+[~William.Kong]
+
+
+
+author: yameelee
+comment: [main@rhs ~]$ ll /d/is/cvs/xfer/anwarH_backup/is-1239
+ls: /d/is/cvs/xfer/anwarH_backup/is-1239: No such file or directory
+
+
+
+[~anwarh]: Please check.
+
+
+author: william.kong
+comment: Hi [~yameelee], I noticed anwarH had the folder in uppercase.
+
+instead of:
+
+/d/is/cvs/xfer/anwarH_backup/is-1239, it should be/d/is/cvs/xfer/anwarH_backup/*IS*-1239
+
+
+
+Can you look into this later today? Thanks!

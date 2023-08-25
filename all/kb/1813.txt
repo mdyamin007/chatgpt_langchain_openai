@@ -1,0 +1,41 @@
+Hi Rony,
+- Following contextual search base scripts has been released to production.
+move_afp_threads.sh
+I3.socket.pl
+context_filter.pl
+contextual_search_index_edit.pl
+contextual_search.sh
+- For WECU, you will need context_search="y" and export context_search in control file for WECU application.
+- Once you process, you should get following contextual search output files. You will need to test with ISD team for after that.
+Idx file: this file includes filename and dtJobId information.
+Example:
+/d/isd_input_dev/I3/process-files/tkcu/ms1_20191231_1_20200303_1554_tkcu.txt
+/d/isd_input_dev/I3/process-files/tkcu/search_index_ms1_20191231_1_20200303_1554_tkcu.idx
+Idx file: There is 1 idx file per cycle which contains a listing of all the txt files to be processed, one per record.
+This file should be in ( /d/isd_share/$cid/$jid/text_search/index/ ) folder
+Example:
+-rw-rw-rw- 1 oper1 opers 33338 Mar 3 15:54 /d/isd_share/tkcu/ms1/text_search/index/ms1_20191231_1_20200303_1554_tkcu.idx
+txt files: each txt file contains the text dump from an estatement individual afp file.
+The txt filename will be the afp filename with .txt added to the end. The files should be in ( /d/isd_share/$cid/jid/text_search/txt/cycle_date/ ) folder. Each cycle will have its own folder with all the txt files inside
+Example:
+[oper1@rht ~]$ ls -ltr /d/isd_share/tkcu/ms1/text_search/txt/20191231/* | head -5
+-rw-rw-rw- 1 oper1 opers 4076 Mar 3 15:54 /d/isd_share/tkcu/ms1/text_search/txt/20191231/tkcums1_20191231_90146_134.afp.txt
+-rw-rw-rw- 1 oper1 opers 3374 Mar 3 15:54 /d/isd_share/tkcu/ms1/text_search/txt/20191231/tkcums1_20191231_37109_50.afp.txt
+Thanks,
+Tun
+Rony,
+For contextual feature to work: (for now statement only)
+Add context_search='y to control file
+Add new_e_index=1 to control file
+export context_search in control file
+There are four backend programs needed for this feature (these programs are currently in rht):
+move_afp_threads.sh
+move_daily_afp_threads.sh
+I3.socket.pl
+contextual_search.sh
+Output: in addition to existing estatement index file
+/d/isd_input_dev/I3/process-files/$cid/search_index_ms1_20191231_1_20200213_1050_$cid.idx
+/d/isd_share/$cid/ms1/text_search/index/ms1_20191231_1_20200213_1050_$cid.idx
+/d/isd_share/$cid/ms1/text_search/txt/*.afp.txt
+The feature is created by Rifat. API is created by Naim. You can talk to them to get a better understand of the feature. I attached an incomplete documentation for you to reference.
+We are using tkcu for testing and we are waiting for Bryant and Sean to validate the idx format and their content. We will release the code once Bryant and Sean confirmed the format and content are correct.

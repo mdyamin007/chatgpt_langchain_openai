@@ -1,0 +1,104 @@
+title: eSafetyBox Setup Details
+body:   
+
+## SVN info
+
+ **Branch**|  **Description**  
+---|---  
+/srv/is_svn/branches/dsi/vhost/template| DSi branch that holds the webapp
+source code for eStmt w/ eSafetyBox  
+/srv/is_svn/branches/current/vhost/template| Latest development branch that
+InfoIMAGE PD team build upon  
+  
+  
+  
+
+## Summary
+
+eSafetyBox constitutes of 3 components, two of which are exposed as API's and
+the third is the The UI component which is a part of eStatement project that
+acts as a web client that invokes the API's. The two API projects are listed
+below.
+
+  1. InfoScanner
+  2. InfoService
+
+  
+  
+
+## High-level Production and Development/QA Setup
+
+  
+  
+
+## Additional details:
+
+1\. Port 9880 on Apache mule box (10.8.9.55) is forwarded to [pd-
+dev2.infoimage.com](http://pd-dev2.infoimage.com):8880  
+sudo socat TCP-LISTEN:9880,fork TCP:[pd-dev2.infoimage.com](http://pd-
+dev2.infoimage.com):8880
+
+ **  
+h1. EsafetyBox installation in Dsi:**
+
+1\. Import the pd-dev2_infoservice.crt certificate file into your keystore by:
+
+    
+    
+    a.Keytool -importcert -keystore c:\.....\lib\security\cacerts -alias pd-dev2 -file c:\......\pd-dev2_infoservice.crt
+    
+    
+    b.JRE's keystore password is "changeit" by default if you haven't change it before.
+
+2.Since the certificate is carrying the hostname '[pd-
+dev2.infoimage.com](http://pd-dev2.infoimage.com)', the service calls need to
+be made to [pd-dev2.infoimage.com](http://pd-dev2.infoimage.com)
+
+    
+    
+    a.Update both box.properties file to following
+    
+    
+    i.      infoServiceUri=https://pd-dev2.infoimage.com:9880/infoservice/api/v1/box
+    
+    
+    b.Update your hosts file to point pd-dev2.infoimage.com to the IP address:
+    
+    
+    i.      12.189.22.102                     pd-dev2.infoimage.com
+
+3.set your machines preffered DNS server(for dsi 10.0.0.2) and alternate DNS
+server (for dsi 4.2.2.1).
+
+4.take update from svn oof the host files(template) and modify the following
+files:  
+i .msm/WEB-INF/web.xml : have changed all <param-value> tag values with our
+host location  
+(e.g. <param-value>c:/hosts/template/msm/templates</param-value> is changed to
+<param-value>  
+c:/resin-4.0.20 /webapps/template/msm/templates</param-value>).
+
+    
+    
+    ii.msm/WEB-INF/conf/box.properties : infoServiceUri=https://pd-dev2.infoimage.com:9880/infoservice/api/v1/box  
+                                                     infoScannerUri=https:///pd-dev2.infoimage.com:9880/infoscanner/api/v1/box
+    
+    
+    iii.msm/WEB-INF/config/settings.properties : db.driverClassName=oracle.jdbc.driver.OracleDriver  
+                                                             db.url=jdbc:oracle:thin:@10.0.0.1:1521:orcl  
+                                                             db.username=estmtdev_offshore  
+                                                             db.password=estmtdev_offshore  
+                iv.ROOT/WEB-INF/web.xml : same as msm/WEB-INF/web.xml .
+    
+    
+    v.ROOT/WEB-INF/conf/box.properties : infoServiceUri=https://pd-dev2.infoimage.com:9880/infoservice/api/v1/box  
+                                                     infoScannerUri=https:///pd-dev2.infoimage.com:9880/infoscanner/api/v1/box
+
+5.put the template folder in the resin host location.  
+6.start resin.url for member site :
+<https://localhost:9381/login.jsp(username>: 1 passwrd: 97g2*42M8l) admin
+site: <https://localhost:9381/msm> (username: superuser passwrd: superuser)
+
+  
+
+

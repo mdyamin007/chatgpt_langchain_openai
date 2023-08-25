@@ -1,0 +1,179 @@
+title: MTCU frontend analysis
+body: ## **ROOT:**
+
+###  **ENrollment flow:**
+
+  1. Disclosure 
+  2. Estatement enroll preference (email / sms)
+  3. If disagree then logout successfully.
+
+###  **Menu:**
+
+  1. Statements
+  2. Disclosure
+  3. User Options
+
+  
+
+###  **Page:**
+
+  1.  **Estatement:**  
+
+ **Statement type: Estatements**
+
+Table contains 4 columns:
+
+  1. Account number
+  2. Statement date
+  3. Status
+  4. Monthly inserts
+
+  
+
+ **Statement type: eNotices**
+
+Table contains 2 columns
+
+  1. Account number
+  2. Statement date
+
+There is another table which has one column named **Archived eNotices**.
+
+ **Statement type: ETax**
+
+     
+
+  1. **Disclosure:** Shows MTCU_Stmt.pdf
+
+  
+
+  1. **User Options:**  
+
+         Contains a table with 3 column and 3 rows.
+
+         Shows Member number, E-mail address and update button.
+
+         Contains a link to change Notification preference from electronic to paper and vice versa.
+
+ **Business logic:** **Unenroll if Delivery Preference is changed from
+electronic to paper.**
+
+  
+
+ **MSM:**
+
+ **Account management:**
+
+  
+
+  
+
+  1. Search account by account number: 
+
+    1. Can update paperless status.
+    2. Can see user's paperless history status.
+    3. Can update Notification preference.
+
+      
+
+        2.  Search account by email:
+
+                  a. Can update paperless status.
+
+                  b. Can see user's paperless history status.
+
+                  c. Can update Notification preference.
+
+ **  Email Proofing: **
+
+ Types:
+
+  1. eStatements
+  2. eNotice
+  3. eTax
+  4. Reminder 1 (We do not support )
+  5. Reminder 2 (We do not support )
+  6. Welcome
+
+ **Email Reminder:** All eStatement users will receive at most two email
+reminders if they have any unviewed eStatement and haven't logged into
+eStatements for a certain period of time. This page allows to set the time
+period of the first email reminder and the second email reminder. **(We don 't
+have the support for this feature)**
+
+ **Upload inserts:** Marketing insert management (Upload Insert)
+
+Take insert title, file, stmt type, method, closing date to upload inserts.
+
+ **Marketing promo email:** **( Will this feature be in infotrac? Need
+feedback)**
+
+  
+
+ **Reports:  **
+
+ **(a) Latest stats:** This report shows the current month's statistics for
+the Number of Statements Viewed/Unviewed, Number of Notifications Sent/Failed,
+and Number of Email Reminders Sent.
+
+Database packages and tables used:
+
+(i) report_sel.estatement(?,?,?,?,?,?,?) [ table: p_job, p_job_email,
+p_job_estmt, estmt_doc]
+
+(ii) report_sel.reminder(?,?,?) [table: p_job, p_email_remainder]
+
+(iii) report_sel.paperless(?,?,?,?) [table: paperless2, fin_account]
+
+ **(b) User Login Activity:** This report shows how many users have logged
+into eStatements during a specified time range, as well as showing peak
+periods of user activity.
+
+Database packages and tables used:
+
+(i) Log_Report_Sel.cumulative_user(?, ?, ?, ?, ?) [ table: log_record,
+organization, usr_session]
+
+(ii) Log_Report_Sel.time_slots(?, ?, ?, ?, ?) [table: og_record, organization,
+usr_session]
+
+(ii) Log_Report_Sel.events_over_time(?, ?, ?) [table: og_record, organization,
+usr_session]
+
+ **(c) AI Login Activity:** This report shows how many authorized
+administrator users (such as Account Service) have logged into the AI
+(Administrative Interface) site.
+
+ **(d) E-mail Address Collection:** Downloadable as a .TXT file, this report
+lists all registered eStatement users, as well as their account numbers and
+email addresses.
+
+Database packages and tables used: [table: fin_account, usr_fin_account,
+notification_preference]
+
+ **(e) Paperless:** This report shows which users (and how many) have elected
+to opt out of receiving paper statements. The report includes opt-in and opt-
+out users by month, and can be downloaded in .TXT or Excel file format,
+including account numbers.
+
+Database packages and tables used: [table: fin_account, paperless]
+
+ **(f) Email reminder:** This report shows the number of email reminders that
+were sent each month. This report can be downloaded in .TXT or Excel file
+format. You can also download a list of user names and account numbers of
+users who received email reminders during a specified month.
+
+ **(g) Marketing insert Report:** This report shows the number of times each
+marketing insert was viewed. This report can be downloaded in .TXT or Excel
+file format.
+
+Database packages and tables used: [table: fin_account, usr_fin_account,
+notification_preference]
+
+ **Admin:** Used to change password. Also used to create/view/modify/remove
+other users that have lower privileges. Only superuser and Admin Managers can
+reset other users who are locked out.
+
+
+
+

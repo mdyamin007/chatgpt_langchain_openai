@@ -1,0 +1,70 @@
+title: /usr/bin/vcp vs /home/master/vcp2.sh Code Cleanup
+description: There are two scripts:
+
+
+{noformat}
+/usr/bin/vcp
+/home/master/vcp2.sh
+{noformat}
+
+
+
+
+The difference is as follows:
+
+
+{noformat}
+[williamK@rhs2 ~]$ diff /usr/bin/vcp /home/master/vcp2.sh
+45c45
+< exit 0
+---
+> exit 1
+77c77
+< exit 0
+---
+> exit 1{noformat}
+
+
+
+
+The /usr/bin/vcp logic is not following the convention to exit with a value greater than zero for errors. (i.e. Right now the vcp command exits will a value of 0 instead of 1 or higher). This can be very misleading to other developers are who not familiar with the implementation of this coding and+will assume+ it will exit with a non-zero value.
+
+We need to fix this code to exit properly and revisit the scripts using this command line to ensure they are checking a non-zero exit value properly and to determine it exiting the command is necessary. (e.g. program that checks vcp exit code is/home/master/vwcu_stmt_combine_process.sh; but not ALL script invoking vcp is checking exit code)
+
+
+
+I would recommend updating all the scripts to use /home/master/vcp2.sh command instead of /usr/bin/vcp.
+
+
+
+When setting up a new system, the admin may forget to copy this 'vcp' command in /usr/bin/ directory. Since+most+ code does NOT check the 'vcp' exit code, we will have to rely on DP or developer to check the logs to hopefully catch this error message when a 'new' RHS# or preprocessing## box is setup.
+
+
+
+In the meantime, I have*NOT* install /usr/bin/vcp utility until we have a commitment to get this code updated & cleaned up.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+author: peter.dang
+comment: The vcp command was design to exit with error code 0 when it fails trying copy 3 times. An email will be send out to DP. This was design on purpose when file fail to place in network folder.

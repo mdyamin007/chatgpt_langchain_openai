@@ -1,0 +1,154 @@
+title: Advanced Online Proofing
+body: The purpose of the advanced online proofing is to act as a gatekeeper for
+processed jobs until client can approve the contents. Part of this process can
+include the optional 'Divert Document' feature. An overall state workflow can
+be found attached 'Estmt Online Proofing Sequence 2.0.pdf'. Documents going
+through the approval process are not visible via the admin or member site. The
+only way a customer can view the samples is to go to the 'Job Status' tab on
+InfoTRAC.
+
+  
+
+## Setup
+
+### InfoTRAC
+
+Client Management > { CID } > Feature Settings
+
+The following options need to be selected as well as have the correct levels
+set. Advanced online proofing is split between Print and Electronic (I believe
+Print needs to be enabled for Electronic to work as well. Need someone to
+double check).
+
+  * E-Statement Online Proofing
+  * Extended Tracking : Level 3
+  * Mail Tracking : Level 3
+  * Job Status
+  * Print Online Proofing
+
+#### Job Status
+
+The top job has not yet been reviewd by DP (Internal). Once an internal team
+member reviews and approves they will select the circle checkbox. Only then
+will the corrosponding icons shows in the second job appear visible to the
+client. Once the client approves or disapproves the icons will be changed to a
+message of who made the the Approve/Disapprove action as well as a timestamp.
+
+### Processing Configurations
+
+The { CID }.conf will need to include flags to let the ProcessingJob that to
+go through the advanced online proofing logic.
+
+#### needApproval
+
+The standard flag for setting the approval logic is
+global.{application}.needApproval=true. For etax, all jobs are required to go
+through the advanced online proofing system and hence are true by default. To
+bypass etax approval process (pilot) you will need to explicitly set the
+needApproval flag to false.
+
+#### bypassApproval
+
+If we want to bypass an operator in the approval process we can specify
+global.{application}.bypassApproval=DP. This will automatically set the
+approval status as 'Reviewd_By_DP', and notify the client the job is ready for
+review. At this time we cannot bypass the client (for possible internal
+approval only?).
+
+## New Database Fields
+
+### Process Job
+
+#### Approval Status
+
+This field is used to store the overall approval status of the job. The PUI
+will display the stated depending on this data. The Approved/Dissaproved flags
+are used as modifiers to the actual status. While DP or the Client reviews the
+job but disapproves it, the final status will be a negative value as either -2
+or -10.
+
+The approval_status' (JobStatus.ApprovalStatus) values are as follows:
+
+  * No Approval Required (0)
+
+  * Need Approval (1)
+
+  * Reviewed By DP (2)
+
+  * Reviewed By Client (10)
+
+    
+    
+    public static final int JOB_APPROVED = 1;  
+    public static final int JOB_DISAPPROVED = -1;
+
+#### Document Type
+
+The document type is used to let observers of the document processing know for
+which document table they will need to search for relevant information. This
+information is inserted into the database at the Worker level.
+
+The doc_type status' (JobStatus.DocType) values are as follows:
+
+  * statement
+  * notice
+  * tax
+
+  
+
+javaWorker.javatrue
+
+  
+
+### Document Table (ESTMT_DOC, ENOTICE, ETAX)
+
+#### Status
+
+The document status lets the ui know whether or not the document is to be
+displayed. Only values of NULL or APPROVED (9) are visible to the end user.
+
+The Document Status fields are as follows:
+
+  * Pending Approval (0)
+  * DP Approved (1)
+  * Diverted Document (8)
+  * Approved (9)
+
+## Processing Workflow Code
+
+Each of the document ProcessingJob application code has been updated to
+include this code. The first code block is a short circuit that will fail the
+job if the advanced online proofing flag is turned on but the backend code is
+not valid.
+
+  * A missing DT_JOB_ID means that there was an error during Print processing (or no print process)
+  * Missing Estmt Job Tracking can happen one of two ways. The most likely is that the Production Control (PC) database does not have the JobTracking flag setup for the application. The second flag is from the IS control file will need to set estmt_trac='y'.
+
+Since we partial commit during large jobs we need to make sure all documents
+for the job have the correct pending status and not visible to the end-user
+until they are approved.
+
+Finally, we let the next operator in the chain that the job is ready for
+review. We can bypass both DP (internal) or the Client (NOT YET IMPLEMENTED,
+in case we want to setup internal audits only?)
+
+    
+    
+      
+    
+
+javaProcessingJob.javatrue
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+

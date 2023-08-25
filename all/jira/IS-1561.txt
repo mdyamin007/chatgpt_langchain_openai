@@ -1,0 +1,170 @@
+title: IDCU - [32699] [pvt] Setup CRON for Automated Processing/trigger AOLP for Print and Electronic 
+description: Setup CRON for automated processing/trigger AOLP for print and electronic (time TBD once customer automates).
+
+Setup internal email notification if file is empty (no MTG accounts); send to dp@infoimageinc.com and juliana.vannik@infoimageinc.com
+
+Update paperless file name to: idcu_paperless.Month-Day-YYYY.txt
+
+pdf file name matches the name in archival index file.
+
+Start date 9/7/22
+
+Due date: 9/12/22
+
+SOW Link:
+
+[http://sharepoint-svr/AS/Shared%20Documents/SOW%20Directory/IDCU%20-%20Idaho%20Credit%20Union%20(OSI)/SOW/IDCU_ARM_Letters_SOW_8.26.22_NotSigned.docx
+]
+
+
+
+Adding this update from IS-1112 to combine with this release:
+
+Request from customer to update/fix:
+
+_When uploading the archives to onBase they came across a naming error that was causing some issues. They think it was caused by some of the issues they had with the file on Friday. They also say it wasnt hard to adjust the number and the files loaded correctly but CU wanted to make sure that this was not going to be an issue on future runs._
+
+_NOTE: In response to the file name between 200 and 201. The name doesnt matter so much as that the Index file was different from the actual file names. The way the onBase ingests the ARMS is it uses the Index file to fill in the prompts. Where the Index file said 200 then the file names said 201. We just need the file name to match what is in the index file._
+
+__
+
+
+
+
+
+
+author: JIRAUSER11101
+comment: [~Igor.Khosid] 
+ Parallel ID: 20220907170156
+ Currently in parallel: Yes
+ User: zhuoxinT
+ Description: IS-1561 CRON setup for IDCUDLH and add email alert
+ Date Submitted: 2022-09-07 17:03:01
+ Date Last Updated: 2022-09-08 14:23:28
+ Files:
+ 1) IDCUDL201.dfa
+ 2) idcudlh_process.sh
+
+DPVS:[^idcudlh108.print]
+archival:[^DLH_09082022_1_IDCU.7z]
+
+updated the pdf file name in index file:DLH_09082022_1_IDCU.txt
+Now pdf file name in zip file should matches the pdf file name on index file.
+
+Also, added the email alert when no MTG tag account found. email to DP, AC
+
+
+author: igor.khosid
+comment: [~Andrey.Kutsenko] - please proceed with testing
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+ Checked:
+ 1) CRON on rhs
+{code:sh}
+#idcudlh ARM  m-sat 5:10am
+    927 25 13 * * 1,2,3,4,5,6 export testmode='y'; . /home/test/control/daily.control; /home/test/master/idcudlh_process.sh 1 0 2>&1 > /z/daily/idcudlh/today.log{code}
+2) email alert if the data file doesn't contain any MTG account (in script line 577):
+ !scr_email_alert.png|thumbnail! 
+ 3) paperless file name to: idcu_paperless.Month-Day-YYYY.txt (see attached log file >>> [^process.log])
+ 4) pdf file name matches the name in the archival index file
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik][^DLH_09082022_1_IDCU.7z]please ask for approval on the archival
+Thanks
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik] 
+any update on this?
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik] 
+any update??
+
+
+author: JIRAUSER11300
+comment: Hi [~zhuoxinT],
+
+Thank you for reminding. I have sent the 3rd reminder this morning. Main contact from the customer side was on leave last week. Hopefully they reply shortly after he is back
+
+Thanks,
+
+Juliana
+
+
+author: JIRAUSER11300
+comment: [~zhuoxinT]
+
+Please note this is approved
+
+Thank you for your patience!
+
+Juliana
+
+
+author: JIRAUSER11101
+comment: [~Andrey.Kutsenko] 
+Client approved. Any more test from QA?
+
+
+author: JIRAUSER11104
+comment: [~zhuoxinT]
+QA is completed.
+See my [comment|https://jira.infoimageinc.com/browse/IS-1561?focusedCommentId=49834&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-49834] of September 8th.
+
+
+author: JIRAUSER11300
+comment: Adding this update from IS-1112 to combine with this release:
+
+Request from customer to update/fix:
+
+_When uploading the archives to onBase they came across a naming error that was causing some issues. They think it was caused by some of the issues they had with the file on Friday. They also say it wasnt hard to adjust the number and the files loaded correctly but CU wanted to make sure that this was not going to be an issue on future runs._
+
+
+
+_NOTE: In response to the file name between 200 and 201. The name doesnt matter so much as that the Index file was different from the actual file names. The way the onBase ingests the ARMS is it uses the Index file to fill in the prompts. Where the Index file said 200 then the file names said 201. We just need the file name to match what is in the index file._
+
+
+
+_[~zhuoxinT] FYI_
+
+__
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik] [~phoebe.george] 
+Are we good to release the archival update? If its good, I can release this first.
+
+For CRON automation, please provide the exact time. The description doesn't have that information.
+**Setup CRON for automated processing/trigger AOLP for print and electronic (time TBD once customer automates).
+
+
+author: JIRAUSER11300
+comment: [~zhuoxinT]
+
+Thank you for waiting! It is good to release today. 
+Also, please set the CRON to run at 5am PST, Mon - Sun
+
+Thank you!
+Juliana
+
+[~phoebe.george] FYI
+
+
+author: JIRAUSER11101
+comment: [~TunA] 
+[^IS-1561_PROGRAM_TRANSFER_FORM.doc]
+
+
+author: JIRAUSER11101
+comment: [~Juliana Vannik] 
+code released
+back up id : 20220921150622
+
+Cron automation set up to run at 5am PST Mon - Sun
+
+Thanks

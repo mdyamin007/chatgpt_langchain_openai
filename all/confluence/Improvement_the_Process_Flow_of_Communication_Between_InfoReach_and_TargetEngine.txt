@@ -1,0 +1,50 @@
+title: Improvement the Process Flow of Communication Between InfoReach and TargetEngine
+body: ## Current flow:-
+
+  1. When user request for activate a  **Campaign**  at first we check if  **Offers**  are active or not.
+  2. All  **Offers**  are launch able or not between the campaigns start and end date.
+  3. A request is sent to  **TargetEngine**  to generate  **Eligible Audience**  and active the  **Campaign**.
+  4.  **TargetEngine**  first check if campaign is launch able today or not.
+  5. If launch able generate  **Eligible Audience** , activate the campaign and create a  **Transaction log**  as COMPLETED.
+  6. If  **Campaign's**  start date is on future then don't create  **Eligible Audience**  but active the  **Campaign**  and create a  **Transaction log**  as FAILED.
+  7. If there is no  **Eligible Audience**  then deactivate the  **Campaign**  and create a  **Transaction log**  as FAILED.
+  8. While launched is clicked we immediately launch the  **Campaign**.
+
+  
+  
+
+## Proposed flow:-
+
+### Campaign activation flow:-
+
+  1. When user request for activate a campaign at first we check if  **Offers**  are active or not.
+  2. All  **Offers**  are launch able or not between the campaigns start and end date.
+  3. If  **Campaign**  is already expired then show error.
+  4. If  **Campaign's**  start date is on future then activate the  **Campaign**  and show message that it will be launch able at  **START_DATE**  of  **Campaign**.
+  5. If  **Campaign**  is launch able today then activate the campaign and set Analyzing true on campaign.
+  6. Sent request is to  **TargetEngine**  to generate  **Eligible Audience**  with a callback URL which contains  **encrypted**  data.
+  7. Callback will contain two URL. SUCCESS URL and FAILED URL.
+
+  
+  
+
+### TargetEngine flow:-
+
+  1.  **TargetEngine**  first check if campaign is launch able today or not again.
+  2. If there is no  **Eligible Audience**  then deactivate the  **Campaign**  and create a  **Transaction log**  as FAILED. And also call the FAILED callback URL.
+  3. If launch able generate  **Eligible Audience** , create a  **Transaction log**  as COMPLETED and call the callback with SUCCESS URL.
+  4. If  **Eligible Audience**  generation failed or callback failed  **TargetEngine**  will set  **analyzing**  as  **false**  on  **Campaign**.
+  5. And if  **launching**  is  **true**  it will be  **false**  on  **Cmapaign**.
+
+  
+  
+
+### Campaign launch flow:-
+
+  1. While launched is clicked we will check if the campaign is launch able.
+  2. If  **Eligible Audience**  is generated today for this  **Campaign**  then launched the  **Campaign**.
+  3. If not generated then send request to  **TargetEngine**  for generate  **Eligible Audience**  with a callback URL which contains encrypted data.
+  4. The callback will decide the  **Campaign**  will be launch or not.
+  5. And user will also be able to get visual feedback.
+
+

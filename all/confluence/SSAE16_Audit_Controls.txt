@@ -1,0 +1,40 @@
+title: SSAE16 Audit Controls
+body:   
+
+## Authentication
+
+  1. eSafetyBox application is implemented as an add-on feature on top of our existing eStatement application. The same authentication mechanism from eStatement application based on client's requirement is honored. Currently the application could be accessed via Single-Sign-On handshake pre-agreed upon with client. Could also be using Direct-Sign-On logic that user has to be validate against the username/password stored on InfoIMAGE's servers.
+
+  
+  
+
+## Protection
+
+  1. Virus scan:
+    1. All files uploaded by end-users are scanned for viruses. The virus-scan engine that eSafetyBox adopted is ESET NOD32 Antivirus.
+    2. All files from end-users are uploaded to a separate 'infoscanner' server that in case of any concerned files are quarantined on that server alone. That protect the eSafetyBox infrastructure from the potential risks.
+  2. Client-specific encryption
+    1. We create separate container for each of our client deployment on our object store platform (Swift). Each client also get issued a distinct encryption key. All files stored into client's container are encrypted using their corresponding encryption key. Hence even if intruders got a hold of the object storage space, data/files can't be decrypted for further use.
+  3. Redundancy
+    1. Swift is utilized as our object store platform. The platform will automatically make redundant copies of files uploaded based on configuration. We will configure to carry at least 3 copies across our two data-centers in CA and TX.
+  4. User specific File-Password/Secure Q&A
+    1. In addition to the eStatement application's authentication checks, eSafetyBox offers extra level of security checks before a file could be downloaded. These extra security checks could be turned on/off per client's deployment specifications. Extra security checks include:
+      1. A second password to validate against if File-Access Level is set to Level 2
+      2. A set security question & answer need to be registered on system during enrollment. Security question would be prompted when download, Security Answer need to match before download can start.
+
+  
+  
+
+## Audit Trail
+
+  1. Any event happen around the end-users eSafetyBox is captured as historical trails for end-user's audit purpose when needed. Events include:
+    1. Login
+    2. File Uploads, Downloads, Move, Rename, Delete
+    3. Folder Create/Delete
+  2. These historical event logs are only available to the corresponding end-user, but not to client's administrative users.
+
+## Visibility Control
+
+  1. Files/Folders of end-users are only visible to corresponding end-user only. Even client's administrative users do not have override capability to look inside end-users' eSafetyBox content.
+
+

@@ -1,0 +1,179 @@
+title: The fee amount shown is not correct
+description: In the PDF sample, there is a line with ATM fee displaying the fee amount of 0.00, while the ATM actually charged $1.50:
+
+!fee amount is 0.00 but it isn't.png!
+
+UPDATE: I created pdf documents usingcombine_073122.pipe data file provided to me (please see attached).
+
+In the first document (and many others), ATM fees are listed without any amounts.
+
+In pages 65 and 66, amounts of fees shown are 550 and 200, while of course sums charged from the person are much less.
+
+And there are lots of Atm Fee Amount 0.00 where the person was actually charged a fee.
+
+
+author: JIRAUSER11800
+comment: Hi [~avannik],
+
+Per the screenshot, I noticed that the "Amount" and the "withdrawal Column" aren't identical.
+
+!image-2022-09-06-09-27-44-654.png!
+
+After researching the DFA, they both are extracted from the different columns in the data file.
+
+Thanks
+
+
+author: JIRAUSER11700
+comment: [~misbah.uddin@dsinnovators.com]
+
+I do not expect the fee and the withdrawal to be always identical. That does not mean the statement should not satisfy common sense.
+You just gave me one example irrelevant to the specific issues I listed in this bug.
+Could you pleasegive me examples of the cases I mention, in a document approved by the customer?
+
+[~Kbittmann]
+
+Kindly have a look if what I describe in the pdf samples are really the results expected by the customer.
+
+
+author: rony
+comment: Hi [~avannik]
+
+As an example from the data file:
+
+!image-2022-09-06-23-28-24-623.png!
+
+So we are showing the Amount after the transaction description if the <source option> is Fee
+
+The amount besides the transaction description is coming from <transaction amount>
+
+The withdrawal column amount is coming from grossAmount tag
+
+and the Balance column is coming from the newBalance tag.
+
+If you see the grossAmount and transaction amount is not same.
+
+Please let me know if you have any confusion.
+
+
+
+[~misbah.uddin@dsinnovators.com]
+
+
+
+Thanks
+
+
+
+
+
+
+
+
+author: rony
+comment: Hi [~Kbittmann]
+
+Would you please re-confirm the logic with the client please?
+
+!image-2022-09-06-23-28-24-623.png!
+
+
+
+<source option="F"> is Fee we are showing the<transactionAmount> besides transaction and rest of the column is as is meaning withdrawal column is from
+
+The withdrawal column amount is coming from grossAmount tag
+
+and the Balance column is coming from the newBalance tag.
+
+is this ok for this update? The reason for asking this is the amount besides the description and the withdrawal has a big difference in some cases. Is this ok? For example:
+
+for client JUST BEACHY HOME,
+
+!image-2022-09-07-00-33-52-722.png|width=976,height=286!
+
+
+the amount besides the description is 550 but the withdrawal is $26.00 is this ok?
+
+
+
+[~avannik]
+
+[~misbah.uddin@dsinnovators.com]
+
+
+
+Thanks
+
+
+
+
+
+
+author: JIRAUSER10911
+comment: [~misbah.uddin@dsinnovators.com] [~avannik]
+
+MVCU confirmed the logic is correct.
+
+
+author: JIRAUSER11700
+comment: [~Kbittmann],well, if they say so, who am I to argue...
+
+[~misbah.uddin@dsinnovators.com] [~rony], the amount being not displayed for some fees - is this ok too, or there's been an update I did not get in qa folder?
+
+!no fee amount.png!
+
+322|2022-07-11|W|-26.00|Courtesy Pay Visa Debit/ATM Fee|-775.86|Withdrawal|Fee|F||||||1728832816||||750.00|||||||||-26.00||||
+
+
+author: JIRAUSER11800
+comment: Hi [~avannik],
+
+There's been an update. The QA folder is updated now. Would you please check now?
+
+Thanks
+
+
+author: JIRAUSER11700
+comment: [~misbah.uddin@dsinnovators.com] [~rony]
+
+After the update, I still see the same result. I use[^combine_073122_1.pipe.part.txt]data file which is a piece ofcombine_073122.pipe file you shared earlier. Here is the result of pdf generation:[^combine_073122_1.pipe.part.pdf]
+
+Card Replacement Fee,Courtesy Pay Visa Debit/Atm Fee,Atm Fee,Monthly Maintenance Fee,Cash Advance Fee descriptions are all without amounts. Please check if they can be added. Thanks
+
+
+
+
+author: JIRAUSER11800
+comment: Hi [~avannik],
+
+Another person is working with MVCUMS31.zip. That's why there is a little bit of confusion. I rename my project in the QA folder as "MVCUMS31_misbah.zip".
+
+Updated sample:[^mvcums3.pdf]
+
+
+
+!image-2022-09-12-15-13-19-326.png!
+
+For this category, there is no "transactionAmount" field. That's why no amount is shown in the Cash Advance Fee description.
+
+!image-2022-09-12-16-24-02-794.png!
+
+Previously, the Amount is displayed if only the "achCompanyName" field is available. Due to the update request, we displayed the amount though "achCompanyName" field is available or not. ButPreviously amount has not been shown for this type of account if "achCompanyName" field is available.
+
+Except for this category, the amount is displayed.
+
+
+
+[~rony]
+
+
+
+Thanks
+
+
+author: JIRAUSER11700
+comment: [~misbah.uddin@dsinnovators.com]
+
+Thanks for the explanation. I tested your version and indeed I can see there the amounts I listed above.
+
+Closing.

@@ -1,0 +1,79 @@
+title: AFP2PDF ERROR on BB RHS2
+description: [~William.Kong]
+
+Will, when running the archival e option for amacln4, the following error was encounted:
+
+
+
+Traceback (most recent call last):
+ File "/home/test/master/afp2pdf.py", line 186, in <module>
+ main(sys.argv)
+ File "/home/test/master/afp2pdf.py", line 51, in main
+ conversion_type(mapped_args)
+ File "/home/test/master/afp2pdf.py", line 97, in index_file_build_process
+ process_instance.pre_process()
+ File "/mnt/nfs_stage_home/test/master/afp2pdf_index_file_builder.py", line 41, in pre_process
+ self.reporter = ReportHandler(testmode = self.testmode)
+ File "/mnt/nfs_stage_home/test/master/afp2pdf_report_handler.py", line 15, in __init__
+ self.conn = cx_Oracle.connect(self.configs['user'], self.configs['password'], self.dsn)
+cx_Oracle.DatabaseError: ORA-12170: TNS:Connect timeout occurred
+
+
+
+Here is the command:
+
+
+
+python /home/test/master/afp2pdf.py index_build data_input_file=/home/test/control/amacln4_pdf.control InputFilename=/z/pdf_afp/amac/amacln4/afp/amacln41038.afp OutputFilePath=/z/pdf_afp/amac/amacln4/pdf/ PKEY=TRANSPARENT
+
+
+author: william.kong
+comment: [~tient]: Thanks reporting this issue. Hosein also reported this issue on Friday. The root cause of the issue is due to hard coded database IP address in the python code:
+
+https://jira.infoimageinc.com/browse/IBTL-68
+
+I've asked Hosein and Peter to see if they can update the codes. I will keep this ticket assigned to me until they confirmed it is fixed and released.
+
+
+author: william.kong
+comment: [~tient]: Hosein made the code adjustment in "Menlo Parallel" and plan to release the changes to "Menlo Production". But in the meantime, I manually synced the "Menlo Parallel" code to "Brisbane Parallel" for the following two files:
+
+
+
+/home/test/master/afp2pdf_report_handler.py
+
+/home/test/master/afp2pdf_report_info_collector.py
+
+
+
+This should address the database error.
+
+
+
+Can you please retest also?
+
+
+
+
+
+
+author: tient
+comment: [~William.Kong]
+
+
+
+Looks good now. Thanks Will
+
+
+author: william.kong
+comment: [~tient]: Can you help me do one more test? Can you benchmark the performance between Menlo & Brisbane in parallel mode? I'm a little worried that these "fresh install" preprocessing## servers might have slowness issue. 
+
+
+author: tient
+comment: [~William.Kong] the jobs I'm testing are really small so they ran super fast.
+
+
+author: william.kong
+comment: [~tient]: Nevermind then. You are right. I will need a bigger job to be able to confirm the benchmarking result. Let's cancel for now.
+
+

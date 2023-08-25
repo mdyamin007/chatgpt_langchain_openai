@@ -1,0 +1,303 @@
+title: Removing eSafetybox and eSignature related springframework and hibernate configuration from PRISM
+description: None
+
+
+author: mamunur.rashid
+comment: Hi[~tai.trinh],
+
+I have attached a link to a confluence page here.
+
+I have tried removing those files and configurations from EWBB and GECU.
+
+For EWBB and GECU*MSM* site confirm email feature uses spring and hibernate. Currently, CONFIRM_MAIL_OPTION is false. Is there any chance that this option will be true in the future?
+
+For *ROOT*of both EWBB and GECU there is no use of spring framework and hibernate other than eSafetybox.
+
+Please check the confluence page and let me know if you have any suggestions.
+
+Thanks,
+
+Mamun
+
+
+author: tai.trinh
+comment: Hi [~mamunur.rashid],
+
+Since the changes for MSM is not related to eSafetyBox and eSignature, I am less inclined to remove those. What we can do is, for ROOT, we can remove all the configs and files; but for MSM, we only remove the config from web.xml, and keep the files in case we need it later.
+
+Furthermore, please keep a list of all clients that need to be changed, especially for MSM. I want to review what each MSM is changed for. If any time we turn something off for MSM, and it does somehow affect some live feature, please let me know.
+
+Thanks,
+Tai
+
+
+author: tai.trinh
+comment: [~mamunur.rashid],
+
+Also, for all of these updates, please make them in a separate branch. We'll move to trunk whenever we are ready to release. I don't want to leave them in trunk, and then some other update need to be released and we inadvertently release these code.
+
+
+author: mamunur.rashid
+comment: Hi[~tai.trinh],
+
+I have removed the configuration of eSafetybox and eSignature from the following clients:
+
+Schema: Default
+ # EWBB
+ # EECU
+ # FLCU
+ # GECU
+ # IDCU
+ # PROV
+ # SNFB
+
+Schema: Bank
+ # BKGC
+ # CAMB
+ # EQBK
+ # GCBK
+ # HTBK
+ # WASH
+
+Schema: CU
+ # APCU
+ # ASFC
+ # CTCU
+ # KFCU
+ # KYCU
+ # MPCU
+ # MVCU
+ # PPCU
+ # SANA
+ # SHEL
+ # SSCU
+ # TKCU
+ # UTCU
+ # WHCU
+
+I have tested only the clients from default and bank schema after removing the configurations. All clients need to be tested once again.
+
+But I want to commit the code to new branches first. *Please let me know what should be the branch name*.
+
+Thanks.
+
+
+author: tai.trinh
+comment: [~mamunur.rashid],
+
+Let's use [cid]_springRemoved.
+
+Thanks,
+Tai
+
+
+author: mamunur.rashid
+comment: Hi [~tai.trinh],
+
+I have committed the code to the branch of each client. I also provided a release note here.
+
+We need to test related clients before deploying on production.
+
+Thanks.
+
+
+author: tai.trinh
+comment: Hi [~mamunur.rashid],
+
+Are all of these branches deployed on ca-prism-dv-01? Can you compare the startup time? Without the branches deployed vs with the branches deployed.
+
+Also, have you guys done testing on your end?
+
+What I'm thinking is:
+ # DSI test on DEV.
+ # I will review all the changes.
+ # You move code from branch to trunk and deploy trunk to Pilot.
+ # ISD will test all sites again on Pilot.
+ # Onshore QA will do regression test for all sites on Staging.
+ # Deployment to Production.
+
+But first, I'd like to know how much we have improved startup time.
+
+Thanks,
+Tai
+
+
+author: mamunur.rashid
+comment: Hi [~tai.trinh],
+
+I have checked the startup time of tomcat for every client separately on my local pc. With spring configuration it takes around *2.5 to**2.8 minutes* for the individual clients. And without spring configuration it takes only *25-30 seconds* to start the tomcat for individual clients.
+
+Thanks
+
+
+author: mamunur.rashid
+comment: I haven't deployed the code on ca-prism-dv-01 yet. I'll let you know after deploying.
+
+
+author: rifat.mahmud
+comment: @isd
+
+Hi [~tai.trinh]
+
+Can we postpone this for a while? Because currently no resource is available. Mamun is working on LCCU migration. If this is on high priority, we can swap this with some other task. Let me know your thoughts. 
+
+Thanks,
+Rifat
+
+
+author: tai.trinh
+comment: [~mamunur.rashid],
+
+That's great news. That mean startup time is reduced by almost 80%.
+
+[~rifat.mahmud]
+
+That's fine. Please let me know when resource can be assigned again.
+
+Thanks,
+Tai
+
+
+author: rifat.mahmud
+comment: [~tai.trinh]
+
+Thanks Tai. Putting this on hold for now. I'll let you know when we restart this project again.
+
+Thanks,
+Rifat
+
+
+author: tai.trinh
+comment: [~rifat.mahmud]
+
+For this project, we do not have to release everything at once since each CID is independent of each other. We can have subtasks created for releases. For example, we can do 5 CIDs per release. This way each release is small, and we can do it over a period of time. I think 5 CIDs per week is better than all CIDs after 2 months, or something like that. It is more Agile and we are slowly solving the problem each week instead of waiting until one day to release everything.
+
+Thanks,
+Tai
+
+
+author: rifat.mahmud
+comment: Yes, I think this is better. We can release 5 CIDs per release. Is there any specific priority list(which clients will be released first) we should maintain before releasing these CIDs? Or should we just sequentially release the CIDs as per Mamun's list above? 
+
+Thanks,
+Rifat
+
+
+author: tai.trinh
+comment: [~rifat.mahmud]
+
+Let's take care of CU first. They take the longest to restart.
+
+And let's also keep the Key Accounts (listed here [https://confluence.infoimageinc.com/display/IN/Key+Account+SOP)]for last. We will need to take extreme caution with those.
+
+
+Thanks,
+Tai
+
+
+author: mamunur.rashid
+comment: Hi [~tai.trinh],
+
+Following clients have been deployed on dev for testing.
+
+Default: EECU
+
+Bank: BKGC
+
+CU: APCU, ASFC, CTCU
+
+Testing will be started from tomorrow.
+
+Thanks.
+
+
+author: tai.trinh
+comment: Hi [~mamunur.rashid],
+
+APCU is a key account.
+
+Also, please move this ticket to In Progress, and create a subtask for each batch of clients, so we can track progress individually.
+
+Thanks,
+ Tai
+
+
+author: tai.trinh
+comment: Hi [~mamunur.rashid],
+
+After the 5 batches, would that be all of the clients, or are there more?
+
+Thanks,
+Tai
+
+
+author: mamunur.rashid
+comment: Hi[~tai.trinh],
+
+After the 5 batches, there are 4 key clients EWBB, IDCU, GCBK, and APCU.
+
+Thanks,
+
+Mamun
+
+
+author: tai.trinh
+comment: [~mamunur.rashid] Please move the Fourth Batch into trunk also.
+
+
+
+Are the key clients already prepped with their branches, or work hasn't started yet?
+
+
+author: mamunur.rashid
+comment: Hi[~tai.trinh],
+
+I have moved Fourth Batch to trunk and deployed it on PILOT.
+
+Key clients are ready with their branches. If you want I can merge them with trunk.
+
+Thanks
+
+
+author: tai.trinh
+comment: [~mamunur.rashid],
+
+Please go ahead and merge the key clients, too.
+
+
+author: tai.trinh
+comment: Hi [~mamunur.rashid],
+
+Have you merged the key clients yet? Since some of them also have the console log code, I want to bundle the testing and release together.
+
+Thanks,
+Tai
+
+
+author: mamunur.rashid
+comment: Hi[~tai.trinh],
+
+I have merged key clients to trunk and deployed on pilot. Console log code of APCU, EWBB, GCBK has also been deployed on pilot. Console log code of IDCU hasn't been committed yet. Only Esafetybox related code of IDCU has been deployed.
+
+Thanks,
+
+Mamun
+
+
+author: tai.trinh
+comment: We released all batches to Production. You can go ahead and close out this ticket.
+
+I will check UTCU whenever I have the chance and let you know what I find. At the end of the day, having 1 client still causing issue is still a lot better than a lot of them.
+
+Thank you for your hard work.
+
+Thanks,
+Tai
+
+
+author: tai.trinh
+comment: I figured out the issue. We don't deploy msm for UTCU anymore. However, since we didn't delete the folders from i3webapps, it was still building that. And the code would have been the older code before the spring removal. After removing the msm folder, everything's good now.
+
+
+author: rifat.mahmud
+comment: Thanks for the feedback [~tai.trinh]. I'll close this one.

@@ -1,0 +1,113 @@
+title: Data Processing Scanner - IncomingFileHandler
+body: # Configurations
+
+* * *
+
+All configurations must be defined in config.properties (Config or Config
+File) for the handler to process successfully.
+
+## Global Configurations
+
+  1. global.ftpDonePath=the file location of the ftpDone folder
+  2. global.ftpInternalPath=the file location of the internal ftp
+  3. global.inputPath=the file location of the indiv_afp folder
+  4. global.print.host=the url for the print processing host
+  5. global.print.environment=the environment variable for print processing
+  6. global.pui.host: the url for the pui host
+  7. global.pui.inputPath: the mount point path to pvnas on the pui server
+  8.  ~~global.pui.port~~ : the port number for the pui. Reminder: Will be obsolete after pui is moved to tomcat. Remove from AbstractIncomingFileHandler when possible.
+  9. global.pvnasPath: the file location of pvnas
+
+## Individual Configurations
+
+  1. ${orgName}.regex.list: the list of mapping between processing and file name regex. 
+    1. Format: ${processing1}:${regex1};${processing2}:${regex2},...
+      1. Processing: the pui command name, e.g. auth for Auth File Processing.
+      2. Regex: the regex to be used in filename matching
+        * Must be lowercase. The default logic will set the filename to lower case before regex matching.
+      3. Semi-colon ( ; ) delimited for multiple entries.
+      4. Each mapping entry is split by a colon ( : ).
+    2.  **For Third Party Vendor** , configure the CID instead. The third party vendor must drop off the file inside /ftp/${thirdPartyVendorFolder}/${cidFolder}/${subFolder}
+  2. ${orgName}.isWholesaler: determines whether a cid is a wholesaler to enable logic that will switch successfully to subcid
+  3. ${orgName}.zip.pw: defines the zip password for client with encrypted zip
+  4. ${orgName].${processingName}.wakeupTime: defines the wakeupTIme for a specific processing for a specific cid
+
+## Supported Processing
+
+The list of supported processing is defined in the Processing enum in
+Config.java. For new processing, add an additional enum. The enum value is
+arbitrary. The enum String name must be unique and must be one of the
+processing command name, e.g. auth, ecl, paperless, etc.
+
+  * acctlookup
+  * afp
+  * aiUserProcessing
+  * altNameReport
+  * auth
+  * auth2
+  * authorization
+  * direct_enrollment
+  * doc
+  * ecl
+  * esignature
+  * estmt_notification
+  * idMap
+  * paperless
+  * permission
+  * print
+  * revertToPaper
+
+# Setup Procedure
+
+* * *
+
+The procedures below assume that no special logic needs to be introduced into
+the code.
+
+## New Client Setup
+
+Let demo be a new cid. Assume demo requires an auth processing for a file
+demo_auth_mmddyyyy.txt.pgp.
+
+  1. Inside config.properties: 
+    1. Add: "demo.regex.list=auth:demo_auth_\\\d{8}\\\\.txt\\\\.pgp".
+  2. Test, validate, and setup will be complete.
+
+## New Expected File Setup for CID
+
+Let demo be an existing cid. Assume demo already has an auth processing for a
+file demo_auth_mmddyyyy.txt.pgp, and needs to set up a paperless processing
+for file demo_enrollment_mmddyyyy.zip.pgp.
+
+  1. Inside config.properties:
+    1. Change:  "demo.regex.list=auth:demo_auth_\\\d{8}\\\\.txt\\\\.pgp" ->  "demo.regex.list=auth:demo_auth_\\\d{8}\\\\.txt\\\\.pgp **;paperless:demo_enrollment_\\\d{8}\\\\.zip\\\\.pgp** "
+  2. Test, validate, and setup will be complete.
+
+## New Expected File Setup for CID via Third Party Vendor
+
+Let demo be an existing cid. Let tpve be an existing third party vendor.
+
+  1. Setup configuration for the CID with the same steps in  **New Expected File Setup for CID**.
+  2. Ensure that the third party vendor drops the file off in /ftp/tpve/demo/subFolder/. 
+  3. Test, validate, and setup will be complete.
+
+## New Third Party Vendor
+
+Let tpvd be a new third party vendor, and /ftp/tpvd be the new ftp folder for
+ftvd.
+
+  1. Inside IncomingFileHandlerFactor.java:
+    1. Add: New else if case for ftvd, which must return ThirdPartyVendorIncomingFileHandler("ftvd", clientName),
+  2. Add configuration for the mutual CID with the same steps in  **New Expected File Setup for CID**.
+  3. Test, validate, and setup will be complete.
+
+## Adding New Supported Processing
+
+Assume the new  process only need to send a command to PUI without special
+logic like PDF processing.
+
+  1. Inside Config.java:
+    1. Add to the Processing enum: another enum. The String name must be the processing command used by the pui, e.g. auth is auth, enrollment is paperless, ecl is ecl, external ID mapping is idMap, etc.
+  2. Test, validate, and setup will be complete.
+
+

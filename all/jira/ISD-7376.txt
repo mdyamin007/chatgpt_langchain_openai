@@ -1,0 +1,224 @@
+title: KYCU -Loan Statement Re-design/File Format Change
+description: Resource upload
+
+
+author: shun.kuwashima
+comment: [~fahad] Let me know if there are any resources needed for uploading.
+
+
+author: shun.kuwashima
+comment: [~kericapote] live date 9/21 is past due, can we at least get a new tentative live date?
+
+
+author: kericapote
+comment: Time line is attached.  I think it's mid October now.  I'll double check after this call.
+
+
+author: kericapote
+comment: [~Shun.Kuwashima] please post samples to pilot for customer review.  Thx!
+
+
+author: shun.kuwashima
+comment: [~PramaG] [~fahad] [~ratnam] Are there any estatement index files generated yet? Please provide them on this story, thanks.
+
+
+author: JIRAUSER10910
+comment: Hi [~Shun.Kuwashima],
+ Here's the estmt index files:
+ /z/isd_input_dev/I3/process-files/kycu/ln1_09162022_1_09262022_0918_kycu.txt
+ /z/isd_input_dev/I3/process-files/kycu/ln1_08312022_1_09262022_0946_kycu.txt
+ /z/isd_input_dev/I3/process-files/kycu/ln1_07132022_1_09262022_1017_kycu.txt
+ All of them are generated in parallel.
+
+and this has run on pilot.
+ /t/isd_input/I3/process-files/kycu/ln1_09162022_1_09282022_0509_kycu.txt
+
+/t/isd_input/I3/process-files/kycu/ln1_08312022_1_09282022_0516_kycu.txt
+
+/t/isd_input/I3/process-files/kycu/ln1_07132022_1_09282022_0524_kycu.txt
+
+Thanks.
+
+
+author: shun.kuwashima
+comment: [~fahad] Out of the three index files, only ln1_07132022_1_09282022_0524_kycu.txt was successful to post on pilot. However, I took a look at a few accounts and there is some overlap on the statement itself. Below is a screenshot and the accounts I checked:
+
+41694680
+41743870
+44192680
+
+ !statement_overlap_pilot.png|thumbnail! 
+
+As for the other two index files, they failed to post as we're receiving this error: "infoTrac_flag is on but dt_job_id is missing from dataTrac(IS) database". Please look into this on your end.
+
+[~kericapote] Fyi
+
+
+author: kericapote
+comment: [~rony] escalating as we are not getting a response from anyone.
+[~phoebe.george] [~Peter.Dang]
+
+
+author: JIRAUSER10910
+comment: HI [~terrencet], [~Peter.Dang],
+ I checked my code, re-ran the process and also ran generated pdf file for the account number [~Shun.Kuwashima]mentioned. Then I checked both of the individual pdf and afp. All of them seems alright. No overlapping occurred as mentioned. So I'm unable to find out the reason behind the issue. Would you please help with your guidance.
+ Hi [~Shun.Kuwashima],
+ I talked with [~rony]and learned that we cannot post multiple index file under same dt_job_id. if we want to post all 3 of the index files, we would need to have separate dt_job_id for each of them.
+ FYI [~kericapote], incase you want all 3 of the index file to be posted please provide me with 2 more dt_job_id for pilot or let me know, I'll contact with PC for 2 more dt_job_id. 
+Thanks.
+
+
+author: shun.kuwashima
+comment: [~fahad] I see there was a newer index file ran on pilot today ln1_07132022_1_10062022_0537_kycu.txt, but there still seems to be overlapping. 
+
+[~kericapote] Like mentioned above, we may need PC to provide two more dtjobids on pilot for these loan index files to post.
+
+
+author: JIRAUSER10910
+comment: [^KYCULN1_07132022_41694680_1.pdf][^KYCULN1_07132022_41743870_2.pdf][^KYCULN1_07132022_44192680_21.pdf]
+
+Hi [~Shun.Kuwashima],
+Attached the pdf of the accounts you mentioned. I didn't find any overlapping issue. I also checked the afp's they seem to be alright. I don't know what is creating the issue. But my guess would be we might need to change some configuration regarding afp2web. Let me know if you find any solution or reason behind it.
+FYI [~Peter.Dang]
+Thanks.
+
+
+author: shun.kuwashima
+comment: [~fahad] I'm going to be OOO tomorrow and monday 10/10, so I will ask Eric to assist while I'm out. Meanwhile can you provide the ini file you are using? We might need to do some comparison and go from there.
+
+[~eric.yan] Can you also check a few accts from Ref#189543 on pilot PUI and search them on the pilot admin site to see if you see any overlapping text on the statement? We might need to compare the ini files between IS and ISD to see if there is any key difference. 
+
+[~kericapote] Fyi
+
+
+author: JIRAUSER10910
+comment: [^afp2web.ini]
+
+Hi [~Shun.Kuwashima], [~eric.yan],
+Attached the ini file we are using.
+
+FYI [~kericapote], [~anwarh].
+
+
+
+Thanks
+
+
+author: eric.yan
+comment: [~fahad]
+
+I checked the underlying AFP and it has the overlapping issue as well. Could you check the formatting step for estmt afp? Thanks.
+
+
+
+[~kericapote] [~anwarh], FYI
+
+
+
+!image-2022-10-10-10-05-56-539.png|width=500,height=673!
+
+
+author: JIRAUSER10910
+comment: Hi [~eric.yan],
+!image-2022-10-10-23-45-34-051.png!
+
+!image-2022-10-10-23-46-00-668.png!
+
+I don't see any overlapping in my end. I've re-ran the process again. Then downloaded the afp. here's the snippet.
+
+Thanks.
+
+
+author: JIRAUSER10910
+comment: Hi [~eric.yan],
+*I've ran the process another time.. The result is still the same when I download the individual afp. There's no overlapping issue.*
+
+*Have a look at the screenshot.*
+*The last ran isd index :ln1_07132022_1_10102022_1053_kycu.txt*
+
+
+!image-2022-10-10-23-56-08-974.png!
+
+Thanks,
+
+
+author: eric.yan
+comment: [~fahad]
+
+We are probably not looking at the same AFP. The one I got is from the ISD afp archival foler.
+
+/d/INPUT-DEV/indiv_afp/kycu/afp-archive/kyculn1-07132022/KYCULN1_07132022_41694680_1.afp
+
+The pseg is on both first and second page.
+
+!image-2022-10-10-11-36-22-644.png|width=793,height=837!
+
+!image-2022-10-10-11-37-09-909.png|width=672,height=887!
+
+
+
+
+author: JIRAUSER10910
+comment: Hi [~eric.yan], [~Shun.Kuwashima],
+Would you please try posting one more time. I've attached the updated resources.
+*Latest index file :_ln1_07132022_1_10102022_1416_kycu.txt_*
+Please let me know if the issue still persist.
+[^KYCU_Resources.zip]
+
+FYI [~kericapote] [~anwarh].
+
+Thanks,
+
+
+author: eric.yan
+comment: [~fahad],
+
+Thanks, that fixes it.
+
+[~kericapote],
+
+The sample is ready on pilot admin site.
+
+sampel account #, 41743870
+
+
+
+[~Shun.Kuwashima]
+
+Resources are uploaded in all env.
+
+I also update infoconfig so that the heloc is showing up on infotrac -> account management v2
+
+
+author: kericapote
+comment: [~Shun.Kuwashima] Eric C at KYCU has approved the eStatement.  Print is still in process.
+
+
+author: shun.kuwashima
+comment: Thanks [~kericapote], resources were already uploaded by Eric on all environments, so there's nothing else to update on the ISD side.
+
+
+author: JIRAUSER10910
+comment: Hi [~Shun.Kuwashima],
+Please advise on this error. QA tried to post it on stage and got this error.
+ISD index file:ln1_10152022_1_11032022_1226_kycu.txt
+
+
+
+!image-2022-11-04-02-02-23-935.png!
+
+
+author: eric.yan
+comment: [~fahad],
+
+It's already posted by the system, and it should be posted as AFP processing.
+
+!image-2022-11-03-14-02-43-084.png!
+
+
+author: JIRAUSER10910
+comment: Thanks [~eric.yan]!
+
+
+author: shun.kuwashima
+comment: [~kericapote] Confirmed resources are uploaded to all environments, as discussed there should not be any code release necessary from ISD. Closing this story. 

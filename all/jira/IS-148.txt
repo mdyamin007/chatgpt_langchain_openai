@@ -1,0 +1,69 @@
+title: CAMB (dlb):   redtitan_daily_process.sh RedTitan Page Count Validation [in-house]
+description: Since the launch of the redtitan_cvs_index.pl update to check page count, the redtitan_csv_index.pl could not locate the afp file to validate the page counts.
+
+Please update the following script to place the redtitan afp output file in the same location where the csv file is located in the first argument of redtitan_csv_index.pl
+
+/home/master/redtitan_csv_index.pl *{color:#ff0000}csvfile{color}* outfile page_total page_column.
+
+For testing, please run the entire job and make sure the dpvs count matches the original dpvs.
+
+
+
+
+
+The following was an example of the error message we got in production on this issue:
+
+This is a warning email to alert you that redtitan_csv_index.pl cannot locate the afp file, /d/daily/snfbdna/red/snfbdn007.afp, to verify the page count. Please update the processing script to place the AFP file into /d/daily/snfbdna/red so that we can verify that the total number of pages from the PDF file matches the total number of pages from the AFP file.
+
+
+
+Please note that the program did not exit and continued processing as normal. We may need to verify with DP that the PDF count matches the AFP count while we get this logic fixed.
+
+
+author: andyp
+comment: Parallel ID:20210826094342
+
+This update does not affect the AFP output.
+
+We don't need customer approval.
+
+We need to verify processing sanity and error handling.
+
+
+author: igor.khosid
+comment: Parallel ID: 20210826094342
+ Currently in parallel: Yes
+ User: andyP
+ Description: redtitan global script
+ Date Submitted: 2021-08-26 09:43:51
+ Date Last Updated: 2021-08-26 09:43:51
+ Files:
+ 1) redtitan_csv_index.pl
+
+
+author: berezinez
+comment: [~andyp]
+
+QA is completed, please attach IS checklist if needed.
+
+
+
+< $basefile = basename($ARGV[0], '.csv');
+< $filedir = dirname($ARGV[0]);
+---
+> $basefile = basename($ARGV[1], '.csv');
+> $filedir = dirname($ARGV[1]);
+36c36
+<
+---
+> $error_log = "$ENV\{d_dir}/daily/redtitan/redtitan_error.log";
+42,43c42,43
+< `echo '$msg' >> /d/share/william/redtitan_error.log`;
+< `echo '' >> /d/share/william/redtitan_error.log`;
+---
+> `echo '$msg' >> $error_log`;
+> `echo '------------' >> $error_log`;
+
+
+author: andyp
+comment: Code was released to production.

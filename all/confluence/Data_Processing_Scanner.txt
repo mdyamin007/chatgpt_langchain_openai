@@ -1,0 +1,30 @@
+title: Data Processing Scanner
+body: TODO: Explanation of the Scanner
+
+# Filename Rules for Files Expected By ISD
+
+  1. Filenames must be in lowercase.
+    1. For backward compatibility, we do support upper case. The handler calls toLowerCase() on the filename.
+  2. Encrypted files must end with ".pgp"
+    1. For backward compatibility, ".asc" and ".gpg" are also supported.
+  3. Zip files must end with ".zip"
+    1. Zip files that are also encrypted must end with ".zip.${enc}", with ${enc} being one of the supported encrypted file extensions.
+  4. Filenames  **must not contain**  semicolon ( ; ) or colon ( : ).
+  5. If possible, the first four letter of the filename must be the sub-cid to denote which sub-cid the processing will be for. 
+    1. e.g. FCSB (wholesaler) with filename  **fnbt** fiiautufl1.pgp will let us know that this file is for FNBT
+    2. This is important for wholesaler, but a normal client might become a wholesaler in the future, so it's best that all clients follow this convention.
+
+# Current Status and Known Issues
+
+## System Level
+
+  1. Currently, there is only one scanner for all clients and external vendors. As we get more and more clients, more files will come in throughout the day, and as such the one scanner will be the bottleneck.
+    1.  **Suggested Solution** : We should have multiple FTP locations that host a subset of clients. Each location would have its own scanner set up.
+
+## Application Level
+
+  1. The copying of files in AbstractIncomingFileHandler and FileMover can be optimized. Reference: <https://baptiste-wicht.com/posts/2010/08/file-copy-in-java-benchmark.html>
+  2. Decryption is also a bottleneck for the scanner. 
+  3. The scanner is reference files inside the $SCANNER_HOME/schedule/$CID folders. When two scanner instances try to edit these files at the same time, it causes one scanner to error out. This is a reason why we cannot have two scanner instances running at the same time.
+
+

@@ -1,0 +1,87 @@
+title: ssoKeyGen - Invalid Token
+description: Page Not Found - when we try open SSO Member site on Stage:
+ "You're trying to access a page that is not available or you supplied an Invalid Token.
+ Please reach out to your Financial Institution for assistance."
+ !scr_page_not_found.png|thumbnail! 
+
+Most likely this is due to an incorrect password value when generating a token.
+ !scr_pswd_value.png|thumbnail! 
+
+
+
+author: azad
+comment: [~Andrey.Kutsenko]
+
+The password is configured okay.
+
+
+
+SEFC has bottomline and singlesignon7 as sso methods. I am referencing bottomline sso here (_bbSSO Hypercube_ on sso test page for SEFC).
+
+For bottomline sso you have to pass a *comp_user_number* and one or more account number and account type pair.The account number and type can be found from FIN_ACCOUNT table.
+
+Finding the comp_user_number(cif_num) is a bit tricky. SEFC has a business called external ID mapping. This business uses two types of cif numbers - external and internal. The cif_num stored on the usr_mapping table are treated as the *internal* cif numbers. While doing sso for SEFC, you have to provide the mapped*external* cif number for that internal cif number.
+
+The external-internal cif number mapping is found on the*EXT_ID_MAPPING* table, column named*external_id*.
+
+
+
+
+
+Here are two queries that will help you to find data to do sso on SEFC.
+
+
+{code:java}
+select fa.ACCT_NUMBER, fa.TYPE, ufa.USR_ID
+from USR_FIN_ACCOUNT ufa, FIN_ACCOUNT fa
+where fa.ORG_ID = GETORGID('sefc')
+and fa.ACCT_ID = ufa.ACCT_ID
+and ufa.USR_ID in (
+  select um.USR_ID from USR_MAPPING um where um.ORG_ID = GETORGID('sefc') and CIF_NUM in (
+    select INTERNAL_ID from EXT_ID_MAPPING ext
+    where ext.ORG_ID = GETORGID('sefc')
+    and EXTERNAL_ID_TYPE = 'cif'
+    and INTERNAL_ID_TYPE = 'cif'
+  )
+);{code}
+From this query result, get any acct_number and type pair. For this example, I am taking1697669324/NA.
+
+
+
+Also, get the usr_id from this row i.e.26883081. Use this usr_id in the following query and get the external_id to use as the comp_user_number.
+
+
+{code:java}
+select ext.EXTERNAL_ID
+from USR_MAPPING um, EXT_ID_MAPPING ext
+where um.ORG_ID = GETORGID('sefc')
+and um.ORG_ID = ext.ORG_ID
+and um.CIF_NUM = ext.INTERNAL_ID
+and um.USR_ID = '26883081';
+{code}
+Use the comp_user_number and the account number/type pair on the sso test page.
+
+sso test page: [http://client-test.infoimageinc.com/sso/]
+
+I am attaching a screenshot of the sso test page with these data here (see attachment: sefc_sso_test_page_bb.png)
+
+
+
+Hope these all make sense.
+
+[~Tin.Chak]fyi.
+
+Thanks, Azhar
+
+
+author: JIRAUSER11104
+comment: Thank you [~Azad]
+However, for the search "comp_user_number", I use another query:
+{code:sql}
+select um.cif_num, fa.* from fin_account fa
+inner join usr_fin_account ufa on ufa.acct_id = fa.acct_id
+inner join usr_mapping um on um.usr_id = ufa.usr_id
+where fa.org_id = getorgid('sefc') and fa.acct_number in ('1697669324');
+{code}
+[~Tin.Chak] FYI
+

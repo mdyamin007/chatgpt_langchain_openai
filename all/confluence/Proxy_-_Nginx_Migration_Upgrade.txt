@@ -1,0 +1,72 @@
+title: Proxy - Nginx Migration/Upgrade
+body: ### Project Summary
+
+Upgrade Nginx to a newer versions for applications that are currently hosted
+on Nginx. Migrate applications hosted on Apache to Nginx. The new Nginx will
+be on version 1.20.1 released on 05/25/2021.
+
+### Change Details
+
+  * Nginx will be hosted on Docker.
+  * Nginx and client configuration files, and SSL certificates are stored in git repository and can be managed through Gitlab.
+  * Deployment will be done through Jenkins.
+  * New Nginx will have WAF (Modsecurity) installed and active with default configurations.
+  * New Nginx will have the most up-to-date security policy on the ciphersuite and encryption configurations. This change will be for all CID's.
+  * Combine some clients on different proxies into one to scale down the number of proxy servers required.
+  * Health check will monitor the traffic between Nginx and Hypercube.
+
+### Risk on Migration/Upgrading
+
+  * Vendors might have issue with SSO due to requests coming in with weaker encryption standards that are disabled in the new servers.
+
+### Advantage on Migration/Upgrading
+
+  * Active Health Checks
+
+  * Faster than Apache and Secured with WAF
+  * Traffic status page where the current proxy usage will be displayed with server upstream result.
+  * Docker ready, integrated with Jenkins and Gitlab to update any changes.
+
+### Risk on NOT Migration/Upgrade
+
+  * Current production Nginx are on version 1.4.6 (released on 03/04/2014) and 1.14.0 (released on 11/06/2018). It is severely out of date. This left security bug unpatched and unable to install some monitoring modules.
+
+### Advantage on NOT Migration/Upgrading
+
+  * Already tested on all of our environment.
+  * Apache official reference doc and user guide are more richer than Nginx
+  * Apache has been in the industry for a long time so, the are strong community support
+
+### Comparison Between Current Nginx Installation and New Nginx
+
+<https://confluence.infoimageinc.com/display/PROXY/NGINX+Comparison>
+
+### Comparison Between Current Apache Installation and New Nginx
+
+### Server List
+
+ _Dev/Pilot/Stage_
+
+Server Name| Applications  
+---|---  
+ca-extproxy-pi-01/02| Prism  
+ca-extproxy-pi-03/04| Prism  
+ca-extproxy-pi-05/06| Prism/Infotrac  
+ca-extproxy-pi-07/08| Hypercube  
+  
+ _Production_
+
+Server Name| Applications  
+---|---  
+ca-proxy-pr-21/22| Hypercube  
+ca-proxy-pr-23/24| Hypercube  
+ca-proxy-pr-25/26| Infotrac  
+  
+### Discussion Notes
+
+  * Current production Nginx doesn't have WAF installed. The new Nginx will have WAF enabled and active with default configurations. There's a possibility that it will be block some valid requests and the team need to adjust some configuration. The client and internal team will test on pilot but it might not catch all issues. Once deployed on production, the internal team needs to monitor the log and update any configuration, if needed.
+  * The new Nginx will have the most up-to-date security policy on the ciphersuite and encryption configurations for all CID's. Client needs to test the SSO on pilot to ensure that the encryption is supported due to some CID's are currently setup to allow requests with weaker encryptions. Allowing weaker encryption standards will lower the score on the vulnerability tests.
+  * Internal API's (Infoservice, Notify Service, etc.) are utilizing HA Proxy to serve its requests. This will be unchanged.
+  * Network team will manage SSL files and Nginx configuration through Gitlab and deploy with Jenkins.
+
+

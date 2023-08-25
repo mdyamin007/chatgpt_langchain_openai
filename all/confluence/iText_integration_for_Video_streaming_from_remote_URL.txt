@@ -1,0 +1,241 @@
+title: iText integration for Video streaming from remote URL
+body:   
+
+## pom.xml
+
+We need to add following dependency
+
+    
+    
+             <dependency>
+                <groupId>com.itextpdf</groupId>
+                <artifactId>itextpdf</artifactId>
+                <version>5.5.0</version>
+            </dependency>
+              <dependency>
+                <groupId>com.itextpdf</groupId>
+                <artifactId>itext-xtra</artifactId>
+                <version>5.5.0</version>
+            </dependency>
+    
+
+  
+  
+
+## Package:
+
+Necessary packages are followed
+
+    
+    
+    import com.itextpdf.text.Document;
+    import com.itextpdf.text.DocumentException;
+    import com.itextpdf.text.Rectangle;
+    import com.itextpdf.text.pdf.PdfAnnotation;
+    import com.itextpdf.text.pdf.PdfDeveloperExtension;
+    import com.itextpdf.text.pdf.PdfFileSpecification;
+    import com.itextpdf.text.pdf.PdfIndirectReference;
+    import com.itextpdf.text.pdf.PdfName;
+    import com.itextpdf.text.pdf.PdfWriter;
+    import com.itextpdf.text.pdf.richmedia.RichMediaActivation;
+    import com.itextpdf.text.pdf.richmedia.RichMediaAnnotation;
+    import com.itextpdf.text.pdf.richmedia.RichMediaConfiguration;
+    import com.itextpdf.text.pdf.richmedia.RichMediaInstance;
+    import com.itextpdf.text.pdf.richmedia.RichMediaParams;
+    
+    
+
+  
+
+## Implementation:
+
+Need to take a itext Document.
+
+    
+    
+    Document document = new Document();
+    
+
+  
+[Document](http://api.itextpdf.com/itext/com/itextpdf/text/Document.html)
+
+  
+
+Take a PdfWriter where "RESULT" contains where the PDF will be saved.
+
+    
+    
+    PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(RESULT));
+    
+
+  
+We can set PDF version.
+
+    
+    
+    writer.setPdfVersion(PdfWriter.PDF_VERSION_1_7);
+    
+
+  
+If we need to set any developer-specific PDF properties then we can set here.
+
+    
+    
+    writer.addDeveloperExtension(PdfDeveloperExtension.ADOBE_1_7_EXTENSIONLEVEL3);
+    
+
+  
+First need to open the PDF via document.
+
+    
+    
+    document.open();
+    
+
+  
+We have to prepare a RichMediaAnnotation where we will add the media file
+
+    
+    
+    RichMediaAnnotation richMedia = new RichMediaAnnotation(writer, new Rectangle(36, 400, 559,806));
+    
+
+  
+[RichMediaAnnotation](http://api.itextpdf.com/xtra/com/itextpdf/text/pdf/richmedia/RichMediaAnnotation.html)
+
+  
+
+PdfFileSpecification contains the media source.
+
+    
+    
+    PdfFileSpecification fs = PdfFileSpecification.url(writer, RESOURCE);
+    
+
+  
+[PdfFileSpecification](http://api.itextpdf.com/itext/com/itextpdf/text/pdf/PdfFileSpecification.html)
+
+  
+
+Following line is for if we want to embed the whole video with the PDF
+
+    
+    
+    PdfFileSpecification fs = PdfFileSpecification.fileEmbedded(writer, RESOURCE, "test.swf", null);
+    
+
+  
+[PdfFileSpecification](http://api.itextpdf.com/itext/com/itextpdf/text/pdf/PdfFileSpecification.html)
+
+  
+
+Then declare the media file as an PDF asset with a asset name
+
+    
+    
+    PdfIndirectReference asset = richMedia.addAsset("test.swf", fs);
+    
+
+  
+[PdfIndirectReference](http://api.itextpdf.com/itext/com/itextpdf/text/pdf/PdfIndirectReference.html)
+
+  
+
+Have to set media type in the while taking a configuration to set flashvars or
+other param for the flash object
+
+    
+    
+    RichMediaConfiguration configuration = new RichMediaConfiguration(PdfName.FLASH);
+    
+
+  
+[RichMediaConfiguration](http://api.itextpdf.com/xtra/com/itextpdf/text/pdf/richmedia/RichMediaConfiguration.html)
+
+  
+
+Take a RichMediaParams and set all the necessary parameters.  
+RichMediaParams flashVars = new RichMediaParams();  
+[RichMediaParams](http://api.itextpdf.com/xtra/com/itextpdf/text/pdf/richmedia/RichMediaParams.html)
+
+Declare a RichMediaInstance which will add the necessary tag in the PDF and
+link flashvars for its corresponding flash object.
+
+    
+    
+    RichMediaInstance instance = new RichMediaInstance(PdfName.FLASH);
+    
+
+  
+[RichMediaInstance](http://api.itextpdf.com/xtra/com/itextpdf/text/pdf/richmedia/RichMediaInstance.html)
+
+  
+
+Set flash variable for the annotation if necessary.
+
+    
+    
+    String vars = new String("&day=2011-10-13");
+    flashVars.setFlashVars(vars);
+    instance.setParams(flashVars);
+    instance.setAsset(asset);
+    configuration.addInstance(instance);
+    
+
+  
+
+Add the configuration to the annotation
+
+    
+    
+    PdfIndirectReference configurationRef = richMedia.addConfiguration(configuration);
+    
+
+  
+[PdfIndirectReference](http://api.itextpdf.com/itext/com/itextpdf/text/pdf/PdfIndirectReference.html)
+
+  
+
+Activation of the prepared rich media
+
+    
+    
+    RichMediaActivation activation = new RichMediaActivation();
+    activation.setConfiguration(configurationRef);
+    richMedia.setActivation(activation);
+    
+
+  
+[RichMediaActivation](http://api.itextpdf.com/xtra/com/itextpdf/text/pdf/richmedia/RichMediaActivation.html)
+
+  
+
+To add the rich media annotation we take PDF annotation from it.
+
+    
+    
+    PdfAnnotation richMediaAnnotation = richMedia.createAnnotation();
+    
+
+  
+[PdfAnnotation](http://api.itextpdf.com/itext/com/itextpdf/text/pdf/PdfAnnotation.html)
+
+  
+
+Write it in the pdf
+
+    
+    
+    richMediaAnnotation.setFlags(PdfAnnotation.FLAGS_PRINT);
+    writer.addAnnotation(richMediaAnnotation);
+    
+
+  
+
+Close the document.
+
+    
+    
+    document.close();
+
+

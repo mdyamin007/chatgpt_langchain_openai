@@ -1,0 +1,165 @@
+title: eTax File Specifications
+body:   
+
+  
+
+Table of Contents
+
+decimal
+
+  
+  
+  
+---  
+  
+  
+
+# Filename Specification
+
+* * *
+
+Format: etax_[ _form_ ]_[ _tax_closing_date_ ]_[ _segmentid_ ]_[
+_processed_date_ ]_[ _processed_time_ ]_[ _cid_ ].txt
+
+Field
+
+Number
+
+| Field Name| Description  
+---|---|---  
+1| etax| Application prefix; fixed field that is required for any eTax file.  
+2| Form|
+
+Listed are the forms that InfoIMAGE supports and the values for this field:
+
+    
+    
+    1098        1099I        1099R       5498SA  
+    1099B       1099MISC     1099SA      W2G   
+    1099C       1099Q        5498   
+    1099DIV     1099OID      5498ESA     
+
+Note that the hyphen has been removed from the form names.  
+  
+3| Tax Closing Date|
+
+Format: mmddyyyy. The tax form's closing date.  
+  
+4| Segment ID| Segment ID assigned by PC; this is a numeric value.  
+5| Processed Date|
+
+Format: mmddyyyy. The system date of when this file was created.  
+  
+6| Processed Time|
+
+Format: hhmmss. The system time in 24-hour format of when this file was
+created.  
+  
+7| Client ID| Internal client ID.  
+  
+  
+
+Filename Examples
+
+etax_5498ESA_12312010_1_01152011_1302_gdcu.txt
+
+  
+
+# Content Specification
+
+* * *
+
+Each field within a line of input is pipe delimited.
+
+Field
+
+Number
+
+| Field Name| Description  
+---|---|---  
+1| Account Number| The account number of the member of the client institution.  
+2| TYPE|
+
+An integer value mapping the tax form type:
+
+    
+    
+    1  -> 1098            128  -> 1099OID  
+    2  -> 1098B           256  -> 1099R  
+    4  -> 1099B           512  -> 1099SA  
+    8  -> 1099DIV         1024 -> 5498  
+    16 -> 1099I           2048 -> 5498ESA  
+    32 -> 1099MISC        4096 -> 5498SA  
+    64 -> 1099Q           8192 -> W2G  
+  
+3| AFP/PDF FIle| Individual AFP/PDF file for one statement.  
+4| Closing Date| Closing date.  
+5| Suffix| Account suffix (if applicable); leave blank if no suffix.  
+6| Account Type| Account Type (optional field).  
+7| SSN| SSN/Tax ID.  
+8| Zip Filename| Zipped AFP/PDF filename.  
+9| End of Line| Constant: semi-colon character.  
+  
+  
+
+Input Row Examples
+
+0000001580|8|tmcu_06212006_0000001580_1.pdf|12312010|01|DD|123456789|tmcu_1099_12312012_1_1.zip;
+
+    
+    
+      
+    
+
+# Configuration File Specification
+
+* * *
+
+Parameter| Input Value| Description  
+---|---|---  
+  
+etax.preprocess.step.[ _integer_ ]
+
+e.g. etax.preprocess.step.1
+
+|
+
+[ _preprocess_name_ ]
+
+e.g. acctlookup
+
+| Define any preprocess(es) to be carried out before the main process.  
+etax.automatedEmailNotification|
+
+[ _boolean_ ]: true, false
+
+| Define whether to send out automatic scheduled emails for eTax (AutoSend).
+This parameter will only be processed iff global.etax.blockEmail = true.
+Otherwise, AutoSend is turned on by default.  
+etax.compress.rootPath| [ _full pathname_ ]| Define the path to the directory
+where the compressed output will be saved.  
+etax.compression| [ _boolean_ ]: true, false| Define whether to compress the
+output files.  
+etax.copyZipBuffer| [ _integer_ ]| Define the size of the copy buffer.  
+etax.createAccount| [ _boolean_ ]: true, false| Define whether the processing
+will create a new entry in the fin_account table if the listed account number
+DNE.  
+etax.isSharingAfps| [ _boolean_ ]: true, false| Define  **TODO.**  
+etax.isZipped| [ _boolean_ ]: true, false| Define whether the input files are
+zipped, so that the processing knows to unzip.  
+etax.rootPath| [ _full pathname_ ]| Define the path to the directory
+containing the input files.  
+global.enableAccountType| [ _boolean_ ]: true, false| Define whether to append
+acctType (type column in fin_account table) to query.  
+global.etax.blockEmail| [ _boolean_ ]: true, false| If true, the process will
+refer to etax.automatedEmailNotification for AutoSend setting.  
+global.etax.needApproval|
+
+[ _boolean_ ]: true, false
+
+| Define whether the processing will need to be approved by the client. The
+default value is true.  
+  
+  
+
+

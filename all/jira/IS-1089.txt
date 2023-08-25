@@ -1,0 +1,150 @@
+title: SPCU - [28455][pvt] Include additional transaction narration for IRA accounts in Monthly Statements
+description: IS Assessment
+=============
+Hours for development: 3 IS hours + ISD hours not required
+Turnover Date : 05/09/2022
+Sample to QA Date: 05/16/2022
+Sample Approval Date: 05/19/2022 
+Go live date : 05/24/2022
+
+
+
+Assessment Details (IS):
+- Parallel required: (no)
+
+- Add additional transaction details on IRA transactions to display both the Federal Income Tax Withheld and the State Income Tax Withheld.
+
+- Add new "federalIncomeTaxWithheld" and "stateIncomeTaxWithheld" in spcums3_template.control
+
+- Update format program SPCUMS31.dfa
+
+- Tag mapping from the monthly statement .xml file noting what to include (in TS28484, comment #1)
+
+Statement_XML_Account_Details_03312022.docx
+
+- Comparison between old and new statements for this member (in TS28484, comment #1)
+"Comparison between core statements.docx"
+
+- Production data file (spcu_stmt_033122_1.xml) has <federalIncomeTaxWithheld> and <stateIncomeTaxWithheld> tags.
+
+
+
+USE : Last month data file (spcu_stmt_033122_1.xml) has <federalIncomeTaxWithheld> and <stateIncomeTaxWithheld> tags.
+
+
+author: thomasy
+comment: [~Bryanl]I have a question about this. Are we expected to subtract the two tax fields from the total value above it?
+
+
+
+!image-2022-05-18-13-01-40-428.png!
+
+
+author: william.kong
+comment: [~Bryanl]: Approval date of 5/19is missed. Timeline is no loner valid. Per [~thomasY], he mentioned that SPCU contact was OOO in regards to the question above. Please advise if SPCU is back to answer the question above. Thanks!
+
+
+author: bryanl
+comment: [~thomasY] [~William.Kong]
+
+Client responded with:
+
+I've reviewed transactions on the prior core and they broke it out as three separate line items. Unfortunately, Keystone does not, so will need to have InfoImage add logic to subtract the <federalIncomeTaxWithheld> and the <stateIncomeTaxWithheld> from the <grossAmount>. Note: there are times when a member does not elect to have either federal or state income tax withheld so we have to ensure the logic is flexible so it doesn't fail if one of these two items are empty.
+
+
+author: thomasy
+comment: [~Bryanl]Do we also need to subtract from the balance column or just leave i blank like the image?
+
+
+author: thomasy
+comment: [~Bryanl]I attached samples for now.[^spcu_stmt.pdf]
+
+
+author: bryanl
+comment: [~thomasY]
+
+Still pending client response to question, I will provide samples and see what they think. Thanks!
+
+
+author: bryanl
+comment: [~thomasY]
+
+Client approved sample, please let me know a live date so I can provide to client. Thanks!
+
+
+author: thomasy
+comment: Parallel:20220531125543
+
+
+
+[~Bryanl]We can set a live date of this Friday if QA is ok with it.
+
+
+author: berezinez
+comment: Parallel ID: 20220531125543
+ Currently in parallel: Yes
+ User: thomasY
+ Description: 1089
+ Date Submitted: 2022-05-31 12:55:47
+ Date Last Updated: 2022-05-31 12:55:47
+ Files:
+ 1) spcums3_template.control
+ 2) SPCUMS31.dfa
+
+
+author: gthillaivel
+comment: QA in progress
+
+
+author: gthillaivel
+comment: [~Bryanl][~thomasY]
+
+
+
+Verified the changes and looks good.Can you request print samples
+
+
+author: gthillaivel
+comment:  !SPCUMS31_qa.PNG|thumbnail!  [^diff_qa_SPCU.txt]  !control_changes qa_spcu.PNG|thumbnail! 
+
+
+author: gthillaivel
+comment: [~thomasY]- Can you request print samples
+
+
+
+author: thomasy
+comment: [~gthillaivel]We don't need to check print samples.
+
+
+author: gthillaivel
+comment: [~thomasY]
+Can you update IS checklist
+
+
+author: william.kong
+comment: [~thomasY]& [~Bryanl]: I confirmed with both Thomas & Bryan that this can be schedule to release for next EOM (i.e. before 6/30). Obviously we will release this a lot earlier once we get the approval for the other Jira ticket issue that SPCU reported in regards to the middle initial:
+
+[IS-1159] SPCU - [29067][pvt][in-house] Monthly Statement incorrectly mapping Joint Owner Name. Adding a "C" as middle initial that is not in statement file - Jira (infoimageinc.com)
+
+
+
+
+author: william.kong
+comment: [~Bryanl] i'm going to+tentatively+ mark the live date to be 6/13/2022 until we also get the approval for IS-1159.
+
+
+author: bryanl
+comment: [~William.Kong] [~thomasY]
+
+Client has approved IS 1159, please let Bill know if this can still can go live 6/13 as I will be OOO 6/8-6/10, thanks!
+
+
+author: billr
+comment: [~thomasY] [~William.Kong]
+
+Will this release today as scheduled?
+
+
+author: thomasy
+comment: This is released

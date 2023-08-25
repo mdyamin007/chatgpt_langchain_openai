@@ -1,0 +1,708 @@
+title: FHNB Migration Analysis
+body: # **ROOT:**
+
+  
+
+ **Login Method**
+
+|
+
+diSSO (ROOT/IFSIBhblogin.jsp), SSO(SingleSignOnServlet), DSO  
+  
+---|---  
+  
+ **Enrollment Step**
+
+|
+
+3 Steps  
+  
+ **Welcome Email**
+
+|
+
+Yes (unknown host exception "mailersvr")  
+  
+ **Menu**
+
+|
+
+  * E-Statements
+  * E-Notices
+  * E-Taxes
+  * Statement Reconcilement
+  * Profile 
+
+  
+  
+ **Account Types**
+
+|
+
+99,CA,CH,DD,01,LN,3B,4A,CD,CK,SV,SS,IR, BX,ML  
+  
+ **Statement Types**
+
+|
+
+default, enotice,etax  
+  
+ **Archival Period**
+
+|
+
+Default: 84,
+
+Enotice: 25,
+
+Etax: 84  
+  
+ **Paperless Configuration**
+
+|
+
+NonSelective  
+  
+ **Unenrollment on DP change**
+
+|
+
+False. If dp is changed from paperless to paper, users are redirected to opt
+out page first to view statements of that account..  
+  
+ **Delivery Preference**
+
+|
+
+Paper=B, Paperless=E  
+  
+ **Notification Preference**
+
+|
+
+Email  
+  
+ **NP Link Type**
+
+|
+
+byUsr  
+  
+ **Batch Download**
+
+|
+
+N/A  
+  
+###  **User-account Relation:**
+
+  * Many to many
+
+###  **Login methods:**
+
+  * ####  diSSO:
+
+    *  **Mandatory fields:** password, user_fi_number, email, gmt, timeout
+    * Leading zeros are removed from cif.
+    * Search user by cif. If no user is available then throws user_not_found error.
+    * If user exists then it searches the user profile in usr_session. If data doesn't exist in the usr_session table then it creates usr_session data for that user. Otherwise, if sess_active_status is "invalid" then it throws an error called errorMessage_DISABLED_USER. If sess_active_status is "inactive" then it sets sess_active_status as active.
+    * Emails are updated from sso file if the user has less than two emails in the NP table. Otherwise, email is not updated from sso file.
+  * #### SSO (SingleSignOnServlet): 
+
+    *  **Mandatory fields:** hash method, org_id, cif_num, data.
+    * Leading zeros are removed from cif.
+    * Optional fields: selected_acct, selected_acct_type, email
+    * Email is updated from SSO if email is provided in sso file.
+    * Search user by cif. If no user is available then throws cif not found error.
+    * If the user exists then it searches the user profile in usr_session. If data doesn't exist in the usr_session table then it creates usr_session data for that user.
+    * Emails are updated from sso file if the user has less than two emails in the NP table. Otherwise, email is not updated from sso file.
+
+###  **Enrollment:**
+
+  1. Step 1 of 3: pdf view
+  2. Step 2 of 3: E-Statement Disclosure
+  3. Step 3 of 3: Delivery preferences and Notification preferences. The email field is noneditable. There are two emails. NP email is checked if there is no restriction entry in the RESTRICTION table. A welcome email is sent after enrollment.
+
+  
+
+##  **Menu:**
+
+###  E-Statements:
+
+Statement table has 3 columns (Statement Date, Status, Monthly Inserts)
+
+### E-Notices:
+
+Enotice table has 3 columns (Notice Date, Status, Description)
+
+### E-Taxes:
+
+ETax table has 2 columns (Tax Date, Description)
+
+###  **Home:**
+
+  * If the account status is "C" the user is redirected to the ClosedAcct page.
+  * If paperless status is B or paperless status is E/W but the account has no email then the user is redirected to the opt-out page while the account is selected from account selector dropdown. Opt Out page is different for the viewer. This feature is not supported in hypercube. In hypercube the user is unenrolled if DP is changed to paper.
+
+  * System maintenance information is shown according to the data in p_maintenance table.
+
+###  **Profile:**
+
+  * Delivery Preference:
+    * Paperless(E), Paper(B)
+    * Delivery Preference is changeable. 
+    * If DP is changed from paper to paperless, welcome email is sent
+  * Notification Options: Email
+  * Email Address:
+    * Not Editable
+    * Email is checked if no entry is in Restriction table for that email
+  * For DSO login it shows login name, company name for those users whose type is not "P", password, security hint phrase question and allows to update security hint question's answer and password.
+  * For user type "N" it shows viewers information.
+
+### Special business:
+
+  * For user type "N" creating and assigning authorized viewers feature is available.
+  * Account having types "DD" or "SV" are selected by default in the account selector dropdown.
+  * For account types "DD" or "SV" statement type is "default and for account type "SS" stmt type is set to "etax" otherwise stmt type is set to "enotice".
+
+###  **DSO:**
+
+  * Only the signing in and forget password feature is available.
+  * For first time login it redirects to a page called token_recovery. There ar two options there:
+
+             1. I'm on a public computer. Please log me in without adding secure, unique device identifier.
+
+             2. Please log me in and add this secure, unique device identifier on my computer.
+
+             If 2nd option is selected then it creates and stores the token into the usr_token table for that computer. And it doesn't redirect to the token recovery page in future login from that computer.
+
+  * No dso enroll or register feature.
+  * System maintenance information is shown in login page according to the data in p_maintenance table.
+
+  
+
+#  
+ **MSM:**
+
+###  **Account Management** :
+
+  * Search By Account Number:
+  * Search By Email Address
+  * Search by Login Name for DSO user
+  * After searching account admin can do following task:
+
+                     1\. Can change Delivery Preference (paperless, paper, both)
+
+                     2\. Can brows paperless history
+
+                     3\. Can update and delete email address 
+
+                     4\. Have batch downloads
+
+                     5\. Can create viewers for user having type "N"
+
+  * Account creation module for personal account and commercial account.
+  * Statement types: 
+    1. default
+    2. enotice
+    3. etax
+    4. welcome
+    5. welcome2
+    6. emailChange
+  * Archival period: 
+
+                    Default: 84
+
+                    Enotice: 25
+
+                    Etax: 84 
+
+###  
+  
+ **Reports** :
+
+###  **Email Proofing: [Notification type: email]**
+
+  * E-Statements
+  * E-Notices
+  * E-Taxes
+  * Welcome
+  * Instant Enrollment Email
+  * Email change notification
+
+###  **Marketing Promo Email:**
+
+ **All E-Statement Users:** The Marketing Promotion e-mail will be sent to all
+the E-Statement users in InfoIMAGE's database regardless of the paperless
+status.
+
+ **Partial List:** The Marketing Promotion e-mail will be sent to all the
+e-mail addresses listed in the ECL file that you provide.
+
+The file should have the pipe delimited list of accounts in the following
+format:
+
+ACCOUNT #|FIRST NAME|LAST NAME|E-MAIL ADDRESS
+
+###  **Insert Mgmt**
+
+  * Marketing Insert Management: stmtType: E-Statements and E-Taxes
+
+###  **Profile:**
+
+Admin users profile, can update password.
+
+###  **Administration:**
+
+This page allows users to create, view, modify, and remove other users who
+have lower privileges.
+
+###  **Exit**
+
+  
+
+#  Backend analysis:
+
+FHNB has 6 backend process.
+
+  1. auth
+  2. afp
+  3. insert_range
+  4. enotice4
+  5. direct_enrollment
+  6. etax
+
+### Auth:
+
+  * Handler: FcsbAuthHandler
+  * Registrar: FcsbAuthRegistrar
+  * Every line in the Index file must have length 127. Otherwise it throws exception.
+  * Following fields are present in the index file:
+
+                  1\. Bank code: 01 for fnbt, 02 for fhnb (index file position: 0-2)
+
+                  2\. Cif (index file position: 2-16)
+
+                  3\. customerType (index file position: 16-17)
+
+                  4\. Tin (index file position: 17-26)
+
+                  5\. tinType (index file position: 28-29)
+
+                  6\. Branch (index file position: 29-32)
+
+                  7\. firstName (index file position: 32-52)
+
+                  8\. lastName (index file position: 52-72)
+
+                  9\. dob (index file position: 72-80)
+
+                  10\. Application (index file position: 80-82)
+
+                  11\. acctNum (index file position: 82-102)
+
+                  12\. acctStatus (index file position: 102-103)
+
+                  13\. prodcutType (index file position: 103-106)
+
+                  14\. closeDate (index file position: 106-114)
+
+                  15\. employeeCode (index file position: 114-115)
+
+                  16\. Maint (index file position: 115-116)
+
+                  17\. If maint="F" region is obtained from position 115-118 otherwise from positon 115-119
+
+                  18\. openDate (index file position: 119-127)
+
+  * If maint is "A" or "U" then it saves/updates user data, user mapping, fin account data, user fin account data, paperless data, access permission, account branch location.
+  * If the tin number is not null then it inserts a fin account with type SS and also inserts ufa and paperless data.
+  * If maint is "D" then it removes UFA for viewers.
+  * No user profile creation.
+
+ **Database changes:**
+
+  1. Usr
+  2. Usr_Mapping
+  3. Fin_Account
+  4. Usr_Fin_Account
+  5. Paperless
+  6. Acct_Access
+  7. Acct_Location
+  8. Audit_Log_Fhnb
+
+### AFP:
+
+  * Data: AfpStatementData9
+  * Registrar: FcsbEStmtRegistrar
+  * Index file format: afp_file|acct_num|begin_date|closing_date|page_count|acct_owner_name|SSN|Application Type|Message IDs for Market Link|Has_check|Insert ID|Region Code|Cripple Flag
+  * Optional field: SSN, Message IDS, Insert ID
+  * If acct is null then it creates account with region code. Otherwise it updates the region code of the existing account.
+  * It registrars statement.
+
+ **Database changes:**
+
+  1. Fin_Account
+  2. Estmt_Doc
+  3. Arch_File
+  4. Estmt_Sel_Insert
+
+### Enotice4:
+
+  * Data: ENoticeData7
+  * Registrar: FcsbENoticeRegistrar
+  * Index file format: L|acctNum|acctType|AcctName|afpName|letterCode|closingDate|imageCount|postCardFlag|zipFileName|region|L
+  * Mandatory field: L, acctNum, acctType, zipFileName, L
+  * Finds account, if account not found it creates new account with region code. Always updates region code.
+  * Inserts entoice data to enotice table
+
+ **Database changes:**
+
+  1. Fin_Account
+  2. Enotice
+  3. Arch_File
+
+### Etax:
+
+  * Data: EtaxData3
+  * Registrar: ETaxRegistrar3
+  * Index file format: acctNum|type|afpFileName|date|suffix|appType|SSN/TAX_ID|INPUT_ZIP_FILENAME
+  * Optional field: suffix, apptype, ssn
+  * Finds account. etax.createAccount=false, so doesn't create account if no account is found.
+  * Inserts paperless data
+  * Inserts Etax data
+
+ **Database changes:**
+
+  1. Paperless
+  2. Etax
+  3. Arch_File
+
+### Direct_Enrollment:
+
+  * Registrar: FcsbEnrollmentRegistrar
+  * Data: DefaultEnrollmentData
+  * Mandatory fields in index file: cifNum, userType, acctNum, acctType, email, acctName, status, region, branch
+  * Searches user by cif and user type.
+  * Searches account, if account not found then it creates new account.
+  * If account location doesn't exist it creates account location.
+  * If paperless data not found it creates paperless data.
+  * It updates restrictions for the new email.
+  * Searches user profile using cif and user type. If not found, it creates new usr_session data with sess_login_id as !"usr_id".
+  * Searches User fin accounts. Creates notification preference for every account as byUsr.
+  * At last it inserts "dir_enrll" to the audit_log_fhnb table.
+
+ **Database changes:**
+
+  1. Fin_Account
+  2. Location
+  3. Paperless
+  4. Restriction
+  5. Usr_Session
+  6. Notification_Preference
+  7. Usr_Fin_Account
+  8. Audit_Log_Fhnb
+
+  
+
+### Backend reports:
+
+  1. accountingReport
+  2. paperlessReport
+  3. fcsbPaperlessReport
+  4. dailyStatus
+  5. logRecordReport
+
+  
+
+#### Accounting report:
+
+It includes:
+
+  * Afp Report
+  * Email Notification Report
+  * Enotice Report
+  * Enotice Email Notification Report
+  * Insert Report
+  * Marketing promo email notification report
+  * Activated accounts report
+
+#### Paperless report:
+
+  * It generates report from all the account that has been opted out.
+
+#### Fcsb Paperless report:
+
+Paperless report that contains following fields
+
+  * Acct_id
+  * Acct number
+  * Acct owner name
+  * Type
+  * p_modified _date
+  * Session_login_id
+  * Sso
+  * Dso
+
+#### Daily Status report: It provides following reports
+
+  * View statements report (from log record table)
+  * View enotice report (from log record table)
+  * Disabled user user report from audit log table
+  * Paperless status change report
+
+#### Log record report:
+
+  * Data is shown in this report from Log record table
+  * This report contains cif number, user ssn and their activity in log record table
+
+  
+
+###  **Data migration Logic:**
+
+  1. uses user mapping
+  2. sess_logi_id is "!"usr_id
+  3. uses Notification preference table
+
+so no migration is needed.
+
+  
+
+# Analysis Summary (ROOT)
+
+Scope| Feature| FHNB| Hypercube| Note  
+---|---|---|---|---  
+  
+ **Enrollment(SSO)**
+
+|  User enrollment|
+
+The user goes through enrollment based on the following 3 conditions.
+
+  1. If the user never logged in via SSO and DSO
+  2. If the user logged in via DSO but not SSO
+  3. If the user never logged in via DSO but SSO with status="pending" (Admin user creation inserts sso date, **CHECK WHY; CHECK THE REPORTS; CHECK IF WE REMOVE SSO DATE FROM HYPERCUBE DOES ANYTHING AFFECT** )  
+  
+DSO users can do SSO. After SSO, sess_login_id remains email.  
+  
+SSO users can't do DSO as their sess_login_id is "!"usr_id.
+
+|  62 incomplete Supported  21 complete Not Supported 127 incomplete Supported
+alternatively | In Hypercube, a user goes through enrollment if he/she never
+logged in via SSO  
+  
+  
+Enrollment Step 1| Pdf view|  22 complete Supported  23 incomplete Not
+Supported |  
+  
+Enrollment Step 2|
+
+E-Statement Disclosure
+
+For FHNB, During pending enrollment, for the N-type users, commercial
+disclosure is shown.
+
+|  24 incomplete Supported  25 incomplete Not Supported 128 complete Supported
+Alternatively | In Hypercube, The same disclosure is displayed for all types
+of users.  
+Enrollment Step 3 | Set Delivery Preference, Notification preference|  
+|  
+  
+Number of supported Emails: 2 emails are supported.  
+Email is updated from sso file if there are less than 2 emails in the
+notification_preference table.|  26 incomplete Supported  27 incomplete Not
+Supported 129 complete Supported Alternatively | Hypercube supports 1 email  
+Email Restrictions: Emails are auto-checked if that entry is not listed in the
+RESTRICTION table.  
+For FHNB, users can choose which email address they want to receive their
+emails. In the enrollment step, at least one emails must be checked to proceed
+further.  
+|  28 incomplete Supported  29 complete Not Supported 130 incomplete Supported
+Alternatively | Hypercube doesn't support restrictions for emails.  
+ **Homepage (SSO)**|  System Maintenance|
+
+System maintenance information is shown.
+
+|  30 incomplete Supported  31 complete Not Supported |  
+  
+Selected account| On e-Statement tab, the selected account is determined based
+on the account type(DD or SV). The first opt-out account having type DD or SV,
+is auto selected while landing on e-Statement tab.|  32 complete Supported  33
+incomplete Not Supported |  
+  
+Account Optout|
+
+If an account is selected from the selected dropdown, a user might be
+redirected to the opt-out page based on the following 2 conditions:
+
+  1. If the account is on Paper
+  2. If the account is on electronic but no emails are associated with this account. 
+
+|  34 incomplete Supported  35 incomplete Not Supported 136 complete Supported
+Alternatively |
+
+Hypercube doesn't support for going through opt-out page for electronic
+accounts with no emails. In hypercube, if any account is changed to Paper,
+either unenrolls the user and logs out the user, or it just normally switches
+to Paper without showing any kind of optout
+
+ **We will show a pop up with a verbiage(if that is configurable)**  
+  
+Account Optout for Viewers| The viewers are redirected to viewer's opt out
+page but can't enroll for electronic statements. Viewers only see this
+verbiage "We are sorry that you do not have access to this account because the
+account owner has not set up this account for E-Statements."|  36 incomplete
+Supported  37 complete Not Supported |  
+  
+Viewers creation| N-type users can create and assign viewers|  65 incomplete
+Supported  66 complete Not Supported |  
+  
+**Homepage (DSO)**|  Reset Password| Users are asked to reset password if the
+session active status is "NEW"|  67 incomplete Supported  68 complete Not
+Supported | Need to implement temporary password module.  
+System Maintenance| System maintenance information is shown on the DSO login
+page|  38 incomplete Supported  39 complete Not Supported |  
+  
+Reset Password Hint| Users are asked to reset the password hint if not
+provided previously|  69 incomplete Supported  70 incomplete Not Supported 137
+incomplete   138 complete Supported Alternatively | Using token instead of
+password hint.  
+ **Profile (SSO)**|  Delivery Preference| Paperless(E), Paper(B). For delivery
+preference W, none can be selected, neither paperless nor paper.|  71
+incomplete Supported  72 complete Not Supported |  
+  
+Email Addresses| Email addressed remain checked/unchecked based on entry in
+RESTRICTION table. From profile page, user can know which email address is
+currently enabled for getting emails. User can enable/disable emails from
+profile page.|  73 incomplete Supported  74 complete Not Supported |  
+  
+Delivery Preference for Viewers|
+
+Viewers can't change delivery preferences.
+
+|  75 incomplete Supported  76 complete Not Supported |  
+Viewers module is not implemented in hypercube currently.  
+Authorized Viewers| This section is visible only for N type(Commercial)
+users.|  77 incomplete Supported  78 complete Not Supported  
+**Profile (DSO)**|  User Information| Some fields are visible/hidden based on
+User type|  79 incomplete Supported  80 complete Not Supported |  
+  
+**E-Statements**|  
+|  Statement Date, Status, Monthly Inserts|  81 complete Supported  82
+incomplete Not Supported |  
+  
+**E-Notices**|  
+|  Notice Date, Status, Description|  83 complete Supported  84 incomplete Not
+Supported |  
+  
+**E-Taxes**|  
+|  Tax Date, Description|  85 complete Supported  86 incomplete Not Supported
+|  
+  
+**Statement Reconcilement**|  
+|
+
+Opens pdf in a new tab
+
+|  87 complete Supported  88 incomplete Not Supported |  
+  
+  
+# Analysis Summary (MSM)
+
+ **Scope**
+
+|
+
+ **Feature**
+
+|
+
+ **Description**
+
+|
+
+ **Infotrac**
+
+|
+
+ **Note**  
+  
+---|---|---|---|---  
+  
+ **Account management**
+
+|
+
+Searching user
+
+|
+
+Supports search user by login name
+
+|  41 incomplete Supported  42 complete Not Supported |  
+  
+  
+Creating viewers
+
+|
+
+Can create viewers for users having type "N"
+
+|  43 incomplete Supported  44 complete Not Supported |  
+  
+  
+Changing Delivery Preference
+
+|
+
+Admin can't change the viewer's delivery preference. Admin can just see the
+delivery preference change history of viewer account.
+
+|  45 incomplete Supported  46 complete Not Supported |  
+  
+  
+Account Creation
+
+|
+
+Admin can create a personal and commercial account
+
+|  47 incomplete Supported  48 complete Not Supported |  
+  
+  
+Enabling and disabling email
+
+|
+
+Admin can enable and disable users' email using the checkbox.
+
+|  49 incomplete Supported  50 complete Not Supported |  
+  
+**E-Mail Proofing**|  
+|  
+|  51 complete Supported  52 incomplete Not Supported |  
+  
+**Insert Management**|  
+|  
+|  53 complete Supported  54 incomplete Not Supported |  
+  
+**Marketing Promo Email**|  
+|  
+|  55 complete Supported  56 incomplete Not Supported |  
+  
+**Reports**|  
+|  
+|  57 complete Supported  58 incomplete Not Supported |  
+  
+**Profile**|  
+|  
+|  59 complete Supported  60 incomplete Not Supported |  
+  
+**Administration**|  
+|  
+|  61 complete Supported  40 incomplete Not Supported |  
+  
+  
+  
+
+

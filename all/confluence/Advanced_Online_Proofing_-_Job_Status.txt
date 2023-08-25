@@ -1,0 +1,36 @@
+title: Advanced Online Proofing - Job Status
+body: Query for Paper Jobs; eStmt Jobs will only show if a corresponding Paper Job
+with the same DT_Job_ID is found. The default query uses range > a cutoff
+date. If we're using dt job id search, then it would use the dt job id key.
+
+select distinct detail.*  
+from (  
+SELECT
+temp.proc_id,temp.arrival_time,job_num,dt_job_id,site,app_num,acct_count,page_count,image_count,COUNT(*)
+AS file_count,temp.olp_id  
+FROM (SELECT
+m.proc_id,m.arrival_time,job_num,dt_job_id,site,app_num,SUM(acct_cnt) AS
+acct_count, SUM(page_cnt) AS page_count, SUM(image_cnt) AS
+image_count,m.olp_id  
+FROM PROCESS_MAIN m, DPVS_CNT c  
+WHERE **+(!proc_id.equals(which)? cid=? :m.proc_id=? )**  
+AND m.proc_id=c.proc_id  
+**(range.equals(which)? AND created_date > ? : )**  
+ **(dt_job_id.equals(which)? AND dt_job_id = ? : )**  
+ **(dtJobIdKey.equals(which)? AND created_date > ? AND dt_job_id like (?) :
+)**  
+AND TEST=0  
+AND status > 0  
+AND m.job_sel = 's'  
+AND c.FILE_ID != 'nonEstmt'  
+GROUP BY m.proc_id,m.arrival_time,job_num,dt_job_id,site,app_num,m.olp_id)
+temp, FILE_PROCESS f  
+WHERE temp.proc_id=f.proc_id  
+GROUP BY
+temp.proc_id,temp.arrival_time,job_num,dt_job_id,site,app_num,acct_count,page_count,image_count,temp.olp_id  
+ORDER BY **\+ orderBy**  
+) detail, estmt_dt et  
+where detail.dt_job_id = et.dt_job_id(+)  
+ORDER BY detail.arrival_time desc
+
+

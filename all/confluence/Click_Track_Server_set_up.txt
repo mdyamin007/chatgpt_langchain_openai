@@ -1,0 +1,67 @@
+title: Click Track Server set up
+body: 
+    Click Track set up
+    ------------------
+    
+    Click Track server is used to track clicks from various application from eStatement to offer management.
+    Below are the steps to set up click track server in any environment.
+    
+    1) Add nodejs user and install npn/node js
+        sudo useradd -m -G sudo -s /bin/bash nodejs 
+        sudo apt-get install npm
+        sudo apt-get install nodejs
+    
+    2) Check Out code from SVN  and make nodejs user to own the clicktrac folder.
+        svn+ssh://pd-tools.infoimage.com/srv/svn/clicktrack
+        chown -R nodejs:nodejs clickTrac/
+    
+    3) Configure config.json. It includes below key properties.Please refer sample config.json file as below.
+        > cid for which you want to enable click tracking
+        > Mongo DB host information
+        > Nginx/Apache2 global DNS host
+        > Name of MongoDB Collections
+        > Mongo TTL for records
+
+{  
+    "Encryption": {  
+        "fffc": {  
+            "key": "NvS04aP1f25G66y",  
+            "cipherConst": "9357"  
+        },  
+        "rabo": {  
+            "key": "J4f651322PCAvrx",  
+            "cipherConst": "2876"  
+        },  
+        "mvcu": {  
+            "key": "97vupTSC5ucPCSe",  
+            "cipherConst": "6278"  
+        },  
+        "banb": {  
+            "key": "NvS04aP1f25G66y",  
+            "cipherConst": "6389"  
+        }  
+    },  
+    "mongoDBHost": "10.8.9.137",  
+    "mongoDBPort": 27017,  
+    "mongoDBDatabase": "clickTrac-dev",  
+    "nginxServer": "<http://clk-dev.infoimageinc.com/>",  
+    "urlMapCollection": "urlMap",  
+    "urlMapSequence": "urlMapCounter",  
+    "clickTrackCollection": "trackClick",  
+    "clickExpireInDays": "90",  
+    "purgeTimeOut": 2000  
+}
+
+    
+    
+    4. if you want to change the port of server , go to Server.js and update below property.Default port will be 9050.
+        app.listen(9050);
+    
+    5. Create a log folder under ClickTrac folder using nodejs as user and create clickTrac.out file to make a log file.
+    
+    6. Start Server 
+        nohup nodejs Server.js > ./logs/clickTrac.out < /dev/null &
+    
+    7. Verify Server by making POST and GET API calls.
+
+

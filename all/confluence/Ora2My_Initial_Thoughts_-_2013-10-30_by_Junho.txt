@@ -1,0 +1,78 @@
+title: Ora2My Initial Thoughts - 2013-10-30 by Junho
+body:   * **Table of contents**
+  * [Ora2My Initial Thoughts - 2013-10-30 by Junho](https://i3dev.easyredmine.com/projects/relmgmt/wiki/Ora2my_initial_thoughts#Ora2My-Initial-Thoughts-2013-10-30-by-Junho)
+    * [sql level issues](https://i3dev.easyredmine.com/projects/relmgmt/wiki/Ora2my_initial_thoughts#sql-level-issues)
+    * [stored procedure level issues](https://i3dev.easyredmine.com/projects/relmgmt/wiki/Ora2my_initial_thoughts#stored-procedure-level-issues)
+    * [data and database level issues](https://i3dev.easyredmine.com/projects/relmgmt/wiki/Ora2my_initial_thoughts#data-and-database-level-issues)
+    * [replication issues from oracle to mysql](https://i3dev.easyredmine.com/projects/relmgmt/wiki/Ora2my_initial_thoughts#replication-issues-from-oracle-to-mysql)
+
+  
+  
+
+## sql level issues
+
+Sql embedded in application and stored procedures will need to be rewritten,
+as they were optimized for oracle and sql syntax are different. For example  
+any queries wihch use rowid/longs/clob/blob for oracle will have to be re-
+written. Any queries which use oracle data analytic functions will have to be  
+rewritten as these do not exist in mysql. In case of complex queries, mysql is
+still relatively poor at subqueries, so some Subqueries may need to be  
+rewritten as Joins or broken up into smaller queries. Also some query features
+are not available in mysql, such as recursive query, sequences,  
+synonyms, db link etc. But there are not show stoppers and just require work
+arounds. Mysql also processes string collation differently - default is
+
+Case insensitive. Mysql locking during dml queries is also different, but
+these differences can be managed.  
+There are also many syntax differences in sql function calls such as
+decode/instr/nvl/sysdate etc , but this is relatively a minor issues.  
+  
+
+## stored procedure level issues
+
+Store procedure language Syntax are not compatible between oracle PLSQL and
+mysql, and in addition, many PLSQL features are not available in mysql. So  
+stored procedures will need to be translated using automated tools and then
+manually edited/rewritten/tested. Some routines will need to be totally  
+rewritten as mysql not supporting in/out ref cursors and no error trapping, no
+packages etc. In some Cases it might make more sense to move stored  
+procedure functionality To application side by rewriting it as java code which
+is considerably more feature rich than mysql stored procedure code. In  
+addition, all application Calls to stored procedures will need to be
+rewritten.  
+  
+
+## data and database level issues
+
+Oracle and mysql have Very different performance profiles - oracle is better
+and faster at complex queries but mysql (meaning INNODB) excels at  
+processing simpler queries and transactions - (by order of magnitude either
+way and vice versa). This means that in Some Cases transactions processing  
+logic need to be rewritten.
+
+Oracle has flashback query capabiIity, but this is missing in mysql. Flashback
+queries are very useful for recovering from human errors on production  
+database. Without such ability, recovery of accidently lost data will be more
+complex and time consuming, such as rolling forward a lagging slave or  
+restoring old backup.
+
+There are also other missing database features such as materialized view.
+These will have to be substituted with summary table which is refreshed by  
+stored procedure.
+
+Data types are mostly compatible between oracle and mysql, but there are
+issues with some data types, such as rowid which does not exist in mysql.  
+  
+
+## replication issues from oracle to mysql
+
+Since entire database cannot be transferred at once during any reasonable
+switchover time, it's better to establish workable replication between oracle  
+to mysql which will allow mysql copy to keep up with oracle. There is product
+called tungsten replicator, but this uses CDC (change data capture)  
+feature of oracle, but CDC does not suppport blob/clob/long data types. So
+this makes tungsten useless for replicaion of database which uses clobs and  
+blobs, and custom process will need to be set up which will keep oracle
+production db and mysql copy in sync after bulk transfer of data.
+
+

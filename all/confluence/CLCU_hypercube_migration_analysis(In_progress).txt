@@ -1,0 +1,628 @@
+title: CLCU hypercube migration analysis(In progress)
+body: ## _****_
+
+## **Already setup in Hypercube but not turned on**
+
+#  _ **ROOT**_
+
+ **Schema: CU**
+
+ **Client Name**|
+
+Solarity Credit Union  
+  
+---|---  
+  
+ **Schema**
+
+|  DEFAULT  
+ **Account Types**|  NA  
+  
+ **Statement Types**
+
+|
+
+  * default
+  * visa
+  * heloc
+  * etax
+  * elite
+  * saving
+  * visa_plat
+
+  
+ **Archival Period**|
+
+  * default: 13 months
+  * elite: 13 months
+  * saving: 13 months 
+  * heloc: 13 months
+  * visa: 13 months
+  * visa_plat: 13 months
+  * etax: 84 months
+
+  
+ **Batch Download**|  N/A  
+ **Enrollment**|
+
+  * No enrollment
+
+  
+ **Login Method**|
+
+  * ACCSSO (SingleSignOn7Servlet)
+
+  
+ **Notification Preference**|  Email  
+ **Menu**|
+
+  * Account Statements
+  * Disclosure
+  * Profile
+  * Exit
+
+  
+ **Welcome Email**|  N/A  
+ **User account relation**|  one-to-one  
+  
+##  _ **Login methods:**_
+
+  *  **ACISSO (SingleSignOn7Servlet)**
+    *  **createLogin=true, updateEmail=false**
+    * profile: Search for user from usr, **usr_session** (by session_login_id (acctNum). Trim all leading zeros from acctNum). If user found, search for user profile. If no user profile found, create.
+      * Create fin_account, paperless, user, usr_fin_account. Doesn't insert into usr_mapping.
+      * fin_account: **** acctNum, acctName=acctNum, orgId, status="A"
+      * paperless: stmtType="default, modified date=current date
+      * user: firstName=acctNum
+      * ufa: ufa_status="active"
+  *  **ACC_hoblogin.jsp**
+    * Sets sso date in usr_session table. 
+
+##  _Account Statements_
+
+  * Display statements on Paper
+  * 
+
+##  _eTax_
+
+  * 
+
+##  _Disclosure_
+
+  * 
+
+##  _Profile:_
+
+  * 
+
+##  _Exit:_
+
+##  _MSM_
+
+##  _Account Mgmt.:_
+
+  * 
+
+##  _E-mail Proofing:_
+
+  * Templates for the following Stmt types:
+    * default (Account Statements)
+    * heloc (Home Equity)
+    * visa (VISA)
+    * reminder1 (Reminder 1)
+    * etax (eTax) : keyword: TAX_LIST
+  * Email contents can be uploaded in RTF format
+
+##  _E-mail Reminder:_
+
+##  _ViewTRAC Marketing Email:_
+
+  *  **Pricing info**
+    *   *  **Email List Management**
+    *  **Saved List:**
+      * Fetch list_name, file_name, list_id, create_time from mng_list by orgId order by list_name.
+      * Display list_name as "Email List Name", file_name as "File Name", create_time as "Create Time".
+      * Can delete and modify each list.
+    *  **Create a new list:**
+      * Inserts id, list_id, email_address, first_name, last_name into email_list table.
+    *   *  **Create A New Campaign:**
+    *  ****
+  *  **Pending Campaigns:**
+    *  **Draft Campaigns**
+    *  **Approved/Pending Campaigns**
+    *  **Active Campaigns**
+  *  **Campaign Tracking:** The report shows the overall statistics on the recent campaigns. Can be downloaded as a text file.
+    * 
+
+##  _Reports:_
+
+  * 
+
+##  _Admin.:_
+
+  * 
+
+##  _Exit:_
+
+##  _Backend_
+
+##  _Processes_
+
+###  _doc:_
+
+  * Handler: DataHandler
+  * Registrar: AfpRegistrar
+    * AfpRegistrar
+      * doc.acctNumAsLoginId= true
+      * enableAccountType= false
+      * autoregister= true
+      * Create fa, usr, usr_session(acctNum as loginname and dso=current date ), usr_mapping(acctNum=cifNum), ufa(status="active").
+      * If account found, update actName (except "MEMBER","CUSTOMER") and usr first name.
+      * Insert paperless if not found (acctId, stmtType).
+      * If paperless for stmtType="default". (If not found)
+      * insert into estmt_doc, p_job_estmt
+      * registerMessages
+
+###  _permission:_
+
+  * Handler: DefaultPermHandler
+  * Registrar: DefaultPermRegistrar
+    * Updates account permission level to 7
+
+###  _ecl:_
+
+  * Handler: DefaultEclHandler2
+    * acctNum | email
+  * stores email in contact_info table.
+
+###  _insert:_
+
+  * Handler: DefaultInsertHandler
+    * fileName | title 
+  * Registrar: InsertRegistrar
+    * updates ea_content in email_attach table.
+    * updates insert table.
+    * updates p_job_insert with ea_id, orgId, stmtType, title
+    * Insert p_job_id and insert_id in p_job_insert table.
+
+###  _etax:_
+
+  * Handler: ETaxData3
+  * Registrar: ETaxRegistrar3
+    * Create fin_account. acctNum, acctName, status="A"
+    * Create paperless for stmtType="default"
+    * Create user and user profile. firstName = acctName, loginName=acctNum, DSO=current date
+    * ufa is created with ufa_status="active"
+    * Insert paperless for the stmtType passed via index file.
+    * Insert entry into arch_file, etax and p_job_etax table.
+
+###  _paperless:_
+
+  * Handler: DefaultPaperlessHandler
+    * acctNum | paperless status
+
+###  ** _email notification:_**
+
+  * handler = ClcuEStmtEmailHandler, ClcuETaxEmailHandler
+  * sendMailViaApi = false, isEmailManageByEstmt = true, attachmentFeature = false, isSelectiveTemplate = false
+  * Fetch emails (not null) from contact_info table.
+
+##  _Reports:_
+
+ _ **Bounceback Report:**_ **ClcuBouncebackReport**
+
+  * Displays acct_number, acct_owner_name, email_address, err_code, err_msg.
+  * Fetches acct_number,  acct_owner_name, email_address, em_err_email_time, em_err_counter, err_code, err_msg from fin_account, email_err, usr_session and usr_fin_account table.
+  * Report zip protected.
+
+ _ **Undeliverable Report:**_ **UndeliverableReport3**
+
+  * paperless_status.update= false, email_status.update= false, insertToDB= true
+  * Report is zip protected
+
+ _ **Accounting Report:**_ **ClcuReport**
+
+  *  **Afp report:** Fetch data from p_job and p_estmt_count table and display that p_job related information such as Date, Description, count, success, warning, failed count etc.
+  *  **Email notification report:  **Pulls data from p_job searching by name="email" and status="1" i.e. success. Displays description and other information about this job.
+  *  **Check Index report:** Fetch data from p_job by org_name, name="check_index", status="success" , cycle. Displays Date, Job Num, Description, success, warning, failed count of that p_job. Also displays total number of success, warning and bad count.
+  *  **Marketing promo email notification report:**  Pulls data from p_job, p_job_email table searching by stmtType="marketing1" and status=1. 
+  *  **Inserts repor t:** Pulls data from p_job searching by name="insert" and displays the information about a job. 
+  *  **Accounting report:**  Pulls data from p_job and p_job_email.
+
+ _ **Paperless Report:**_
+
+  *  **Handler:** DefaultPaperlessReport
+  *  **Renderer:** DefaultPaperlessReportRender
+    * Displays acctNum | paperless status.
+
+#  _Analysis Summary(ROOT)_
+
+Scope| Feature| CLCU| Hypercube| Note  
+---|---|---|---|---  
+  
+ **Enrollment(SSO)**
+
+|  User enrollment|
+
+No enrollment
+
+|  3665 complete  Supported  3666 incomplete Not Supported 3667 incomplete
+Supported alternatively |  
+  
+**Account Statements**|
+
+  * Account Statements (  )
+
+|
+
+  * Account Number
+
+|  3693 incomplete  Supported  3694 incomplete Not Supported 3695 complete
+Supported alternatively | In Hypercube, Account number will be displayed in
+account selector.  
+  
+  * Statement Date
+  * Status
+  * Monthly Inserts
+
+|  3696 complete  Supported  3697 incomplete Not Supported 3698 incomplete
+Supported alternatively |  
+  
+  
+  * Disclosure verbiage
+
+|  3699 incomplete  Supported  3700 incomplete Not Supported 3701 complete
+Supported alternatively | This portion will be displayed in the Important
+Disclosure section, under the account selector.  
+ **eTax**|  
+|
+
+  * Account Number
+
+|  3702 incomplete  Supported  3703 incomplete Not Supported 3704 complete
+Supported alternatively | In Hypercube, Account number will be displayed in
+account selector.  
+  
+  * Year (format: YYYY)
+  * Form Name
+
+|  3705 incomplete  Supported  3706 incomplete Not Supported 3707 complete
+Supported alternatively | In Hypercube, "Year" will be displayed as "Date" in
+(YYYY-MM-DD) format. And "Form Name" will be displayed as "Tax"  
+  
+  * Archived eTaxes: A table containing the years. We can view eTaxes of a specific year by clicking a year from this table. ()
+
+|  3708 incomplete Supported  3709 incomplete Not Supported 3710 complete
+Supported alternatively | In Hypercube, eTaxes are displayed per year by
+default. "Archived eTaxes" table will be lost, but etaxes will be per year.  
+ **Profile**|  User Name|
+
+  * Displays loginName
+
+|  3615 incomplete Supported  3616 complete Not Supported |  
+  
+Email Address|
+
+  * Fetch email from contact_info table. If no email address found in contact_info table, displays N/A.
+
+|  3617 complete Supported  3618 incomplete Not Supported |
+
+Need data migration to fetch email from notification_preference table.  
+  
+  * User can't update notification preference and delivery preference
+  * Email address is non-editable.
+
+|  3627 complete Supported  3628 incomplete Not Supported |  
+  
+**Disclosure**|  2 types of disclosures|
+
+  * Account Statement Disclosure
+  * Visa Statement Disclosure
+
+|  3619 complete Supported  3620 incomplete Not Supported |  
+  
+**Exit**|  
+|  Logs out a user by showing a confirmation page.|  3623 complete Supported
+3624 incomplete Not Supported |  
+  
+  
+  
+
+# _Analysis Summary(MSM)_
+
+Scope| Feature| CLCU| Infotrac| Note  
+---|---|---|---|---  
+ **Account Management**
+
+  
+
+|  Account Management  
+  
+  
+|
+
+  * Search by Account Number
+  * Search by E-mail Address
+
+|  3519 complete Supported  3520 incomplete Not Supported |  
+  
+  
+  * Acount Information
+    * Account Number
+    * Account Name
+    * Email Address: Non-editable
+
+|  3521 complete Supported  3522 incomplete Not Supported |  
+  
+  
+Account Statements:
+
+  * Account Number
+  * Statement Date
+  * Monthly Inserts
+
+|  3523 complete Supported  3524 incomplete Not Supported |  
+  
+  
+  * eTax
+    * Account Number
+    * Year
+    * Form Name
+  * Archived eTaxes: A table containing the years. We can view eTaxes of a specific year by clicking a year from this table.
+
+|  3525 incomplete Supported  3526 incomplete Not Supported 3711 complete
+Supported Alternatively |
+
+  * In Infotrac, eTaxes are displayed per year by default. "Archived eTaxes" table will be lost, but etaxes will be displayed per year.
+
+  
+  
+  * Can't update delivery preference
+
+|  3712 complete Supported  3713 incomplete Not Supported |  
+  
+  
+  * Can't update notification preference and email address
+
+|  3714 complete Supported  3715 incomplete Not Supported |  
+  
+**Email proofing**|  
+  
+  
+|
+
+  
+
+|  3527 complete Supported  3528 incomplete Not Supported |  
+  
+**E-mail Reminder**|  
+|  
+|  3529 incomplete Supported  3530 complete Not Supported |
+
+  * Not supported anymore
+
+  
+ **Upload Inserts**|  
+|
+
+  * Marketing Insert Management
+
+|  3720 complete Supported  3721 incomplete Not Supported |  
+  
+**ViewTRAC Marketing Email**|  
+|  
+|  3724 complete Supported  3725 incomplete Not Supported |  
+  
+**Reports**|  
+|
+
+  * Latest Stats
+
+|  3531 complete Supported  3532 incomplete Not Supported |  
+  
+  
+  * User Login Activity
+
+|  3533 complete Supported  3534 incomplete Not Supported |  
+  
+  
+  * AI Login Activity
+
+|  3535 complete Supported  3536 incomplete Not Supported |  
+  
+  
+  * E-mail Address Collection: Fetch email from contact_info table.
+
+|  3537 complete Supported  3538 incomplete Not Supported |
+
+  * After data migration, emails will be fetched from notification preference table.
+
+  
+  
+  * Paperless
+
+|  3539 complete Supported  3540 incomplete Not Supported |  
+  
+  
+  * Email Reminder: Displays number of email reminders that were sent each month. Fetch the count from p_email_reminder table.
+
+|  3541 complete Supported  3542 incomplete Not Supported |  
+  
+  
+  * Marketing Insert Report
+
+|  3543 complete Supported  3544 incomplete Not Supported |  
+  
+**Admin**|  Admin user management|
+
+Can create, update and delete new admin user.
+
+|  3551 complete Supported  3552 incomplete Not Supported |  
+  
+**Exit**|  
+|  
+|  3716 complete Supported  3717 incomplete Not Supported |  
+  
+  
+# _**Analysis Summary (PUI)**_
+
+Process and Reports
+
+|
+
+Prefix
+
+|
+
+Backend Business
+
+|
+
+Mismatch with hypercube business
+
+|
+
+Changes needed
+
+|
+
+Note  
+  
+---|---|---|---|---|---  
+doc|
+
+  * ms1, ms2, ms3, ms4= default
+  * me1= heloc
+  * mv1, mv2= visa
+  * doc.acctNumAsLoginId= true
+  * enableAccountType= false
+  * autoregister= true
+
+|
+
+  * Handler: DataHandler
+  * Registrar: AfpRegistrar
+
+|
+
+  1. Sets DSO date in USR_SESSION table.
+  2. Sets account number as sess_login_id in USR_SESSION table.
+
+|
+
+  * global.nullDsoTime=true
+  * global.acctNumAsLoginId=false
+
+|  
+  
+permission| permission level= 7|
+
+  * Handler: DefaultPermHandler
+  * Registrar: DefaultPermRegistrar
+    * Updates account permission level to 7
+
+|  
+|  
+|  
+  
+ecl|
+
+  * emailStorage = ci_email_addr
+
+|
+
+  * Handler: DefaultEclHandler2
+    * acctNum | email
+
+|
+
+  * stores email in contact_info table.
+
+|
+
+  * global.email.storage=notifyPref
+
+|  
+  
+insert|  
+|
+
+  * Handler: DefaultInsertHandler
+    * fileName | title 
+  * Registrar: InsertRegistrar
+    * updates ea_content in email_attach table.
+    * updates insert table.
+    * updates p_job_insert with ea_id, orgId, stmtType, title
+    * Insert p_job_id and insert_id in p_job_insert table.
+
+|  
+|  
+|  
+  
+etax| etax.createAccount= true|
+
+  * Handler: ETaxData3
+  * Registrar: ETaxRegistrar3
+    * Create fin_account. acctNum, acctName, status="A"
+    * Create paperless for stmtType="default"
+    * Create user and user profile. firstName = acctName, loginName=acctNum, DSO=current date
+    * ufa is created with ufa_status="active"
+    * Insert paperless for the stmtType passed via index file.
+    * Insert entry into arch_file, etax and p_job_etax table.
+
+|
+
+  * Sets DSO date
+  * Sets acctNum as sess_login_id
+
+|
+
+  
+
+|  
+  
+paperless|  
+|
+
+  * Handler: DefaultPaperlessHandler
+    * acctNum | paperless status
+
+|  
+|  
+|  
+  
+Reports|  
+| Bounceback Report|  
+|  
+|
+
+  * will use both bounceback and undeliverable report?
+  * Need to inform PRINT team
+
+  
+  
+  * paperless_status.update= false
+  * email_status.update= false
+
+| Undeliverable Report|  
+|  
+  
+  
+| Accounting Report|  
+|  
+|  
+  
+  
+| Paperless Report|  
+|  
+|  
+  
+  
+##  _Data Migration:_
+
+Need Data migration.
+
+  * Np migration
+  * usr_session migration
+
+

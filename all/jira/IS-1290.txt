@@ -1,0 +1,392 @@
+title: PFCU-Tax Docs 5498
+description: In pfcu_customized_archival.sh put docID545 for 1099-r and 546 for 5498.
+
+!image-2022-08-24-18-10-28-340.png!
+
+
+
+Display 21-31 in tax forms for 1099r and 5498. tax_acctnum_main ref_number 33
+
+!image-2022-08-24-18-13-39-618.png!
+
+need to set 2 entries for 1099r and 5498 form intax_acctnum_ref table
+
+!image-2022-08-24-18-24-07-810.png!
+
+where for 10995 and 5498 display will have value 33. And change the current FORM column entry from all to rest.
+
+
+
+for 1099r and 5498 In pfcu_spec_handle.pl take $acct from 21-33 and if the last 2 digit is 00 $app will be 95 otherwise the app will be 96.
+
+!image-2022-08-24-18-15-44-251.png!
+
+
+
+
+
+
+
+
+author: JIRAUSER11400
+comment: Dev Hour : 8h ( xref file handle + archival + testing )
+Turnover Date: 08/08/22
+Sample Date: 08/15/22
+Approval Date: 08/22/22
+Live Date: 08/29/22
+Parallel Required
+
+ 
+
+Programmer: Rony
+
+
+author: rony
+comment: Hi [~Ricky Lopez]
+
+This is for 5498 and 1099r right, according to ts [https://app.na3.teamsupport.com/?TicketNumber=25947?]
+
+I will use these files to provide sample mentioned in comment 24 in the ts:
+
+!https://app.na3.teamsupport.com/dc/1888578/images/03e80dc6-78c6-495b-a429-c800355b982f.png!
+
+
+
+But I will also need an xref file which they sends while processing for existing tax forms .
+
+
+
+Thanks
+
+
+author: rony
+comment: Hi [~Ricky Lopez]
+
+Any feedback for xfer file.
+
+
+
+Thanks
+
+
+author: JIRAUSER11400
+comment: [~rony]-This one is still pending. I will need to get with Phoebe.
+
+
+author: rony
+comment: Hi [~Ricky Lopez]
+
+Any feedback yet?
+
+
+
+Thanks
+
+
+author: JIRAUSER11400
+comment: [~rony], I am needing to create another Epic for this story, as it will have a different timeline. I will link this story to Epic.
+
+
+author: rony
+comment: Ok, [~Ricky Lopez]let me know. Thanks.
+
+
+author: JIRAUSER11400
+comment: [~rony]-client is sending over, likely be tomorrow 08/17/22
+
+
+author: JIRAUSER11400
+comment: [~rony]File Name	Size	MD5
+test/pfcu_tax_xref_20220817-Test.txt.pgp	410.40 kb	a779aeb5c452e109704b6e95fd6361bb
+
+
+
+author: rony
+comment: Hi [~Ricky Lopez]
+
+Want to confirm the following with the client:
+
+In the cross-reference file:
+
+!image-2022-08-24-17-35-21-104.png!
+
+1st column is member no, 2nd account no, 3rd account type. Is it correct?
+
+We need to display plan numbers (record B, 21-31 ) in 1099r and 5498 forms. Is it correct?
+
+
+
+Thanks
+
+
+
+
+
+
+author: phoebe.george
+comment: [~rony] Here is the information that PFCU provided based on the xref file:
+
+Tax Data Files:
+ * 5498 and 1099R
+ * Account number - rec B pos 21-33
+ * Account number - rec B pos 21-33
+ * If the last two digits in the account number are '00' then query the xref using appl-code 95, otherwise use appl-code 96
+
+
+
+Tax Xref file - will help map the account number and appl-code derived from the tax data file to the Member number so that the tax forms are uploaded under the member number TX record at InfoIMAGE.
+
+
+
+Tax Form
+ * Only show the plan number on the tax forms (the plan number is the account number without the last two digits)
+ * Mask the SSN to only show the last four
+
+
+
+Let me know if best to setup a call to discuss this feedback. 
+
+Thanks!
+
+[~Ricky Lopez] FYI
+
+
+author: phoebe.george
+comment: [~rony] I was going to check on an update for this, but wanted to confirm if you wanted to have a quick review meeting on it.
+
+Thanks,
+
+Phoebe
+
+
+author: rony
+comment: Hi [~Ricky Lopez] [~Igor.Khosid]
+
+Here are the preliminary samples .
+
+[^pfcuyt1498.pdf]
+
+[^pfcuyt199r.pdf]
+
+
+
+[~phoebe.george]
+
+
+
+Thanks
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+etax_1099r_12312021_311_09012022_210143_pfcu.txt
+
+etax_5498_12312021_311_09012022_210157_pfcu.txt
+
+please post this to pilot.
+
+And archival sample is in/z/pdf_afp/pfcu/pfcutax/zip/ directory.
+
+
+
+[~Ricky Lopez]
+
+Thanks
+
+
+
+Thanks
+
+
+author: JIRAUSER11104
+comment: Hi [~Ricky Lopez]
+Have you found a solution for the Account Type?
+You wrote about it earlier [here|https://jira.infoimageinc.com/browse/ISD-7309?focusedCommentId=46315&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-46315] 
+
+
+author: rony
+comment: Hi [~Ricky Lopez]
+
+Any feedback for [~Andrey.Kutsenko]last message?
+
+
+
+Thanks
+
+
+author: JIRAUSER11400
+comment: [~rony] PFCU will be providing CIF file with Escrow file, so we are not having to ref another location.
+
+
+author: JIRAUSER11104
+comment: etax_1099r_12312021_311_09012022_210143_pfcu.txt
+etax_5498_12312021_311_09012022_210157_pfcu.txt
+# files have been successfully processed on stage
+{quote}Job ID:[196392]
+Job ID:[196393]{quote}
+
+
+author: JIRAUSER11104
+comment: Hi [~Ricky Lopez] please update the SOW for Tax Forms.
+
+
+author: JIRAUSER11104
+comment: Checked tax forms on InfoTRAC (stage) and SSO site (Hypercube diSSO Stage).
+ The tax forms look good and match the preliminary samples.
+ Verified:
+----
+*1099r*
+ IS Index File: /d/INPUT-DEV/I3/process-files/pfcu/etax_1099r_12312021_311_09012022_210143_pfcu.txt
+ File: /usr/local/processing-ui/station/logs/pfcu/etax/09082022_0532003.log
+ acctNum/user_fi_number:
+ 101260
+ 1246
+ 20488
+----
+*5498*
+ IS Index File: /d/INPUT-DEV/I3/process-files/pfcu/etax_5498_12312021_311_09012022_210157_pfcu.txt
+ File: /usr/local/processing-ui/station/logs/pfcu/etax/09082022_0532044.log
+ acctNum/user_fi_number:
+ 101334
+ 2155
+ 90249
+----
+
+
+author: JIRAUSER11104
+comment: Hi [~rony]please attach IS checklist.
+Thanks.
+
+
+author: phoebe.george
+comment: [~Andrey.Kutsenko] [~rony] Please hold off on the IS checklist. Although this went through QA, PFCU has not yet approved pilot site. It's now under review, but we pilot approval from client before we move forward with IS checklist and parallel test. Please hold off until that is done.
+
+[~Ricky Lopez] FYI
+
+
+author: JIRAUSER11104
+comment: Hi [~phoebe.george], any update?
+
+
+author: JIRAUSER11104
+comment: Hi [~phoebe.george]based on your comment: "PFCU has not yet approved pilot site.". Please turn over this story to the status "In Progress".
+
+
+
+
+author: phoebe.george
+comment: [~rony] Based on the pilot review, the tax forms are not appearing under the correct account type. I'm setting up a quick call with Diego, who is familiar with the PFCU setup so that we can discuss internally.
+
+[~Ricky Lopez] FYI.
+
+
+author: phoebe.george
+comment: [~rony] Here is the feedback from the pilot site review noted below.
+
+Customer provided new test files, as they made some updates to the data on their end. Received 10/20/22:
+|test/IRSTAP_5498.pgp|
+|test/pfcu_tax_xref_20221019.txt.pgp|
+|test/IRSTAP_1099R.pgp|
+
+FEEDBACK below - [~rony] Can you check these two items and see if we need to make any modification on our end, or if the newer test files reflect the checked boxes and state noted below?
+ * 5498 - Box 7 - IRA is not checked, but that box is checked on the forms we sent out last year. Quite possible that we were not supposed to check that box, but would like to have you review the code and IRSTap file to determine if that box should be checked. (one example is account/plan 1797)
+ * 1099R - Box 15 does not include the two character state like we have done on the forms that we sent out last year. Please review and determine if that should be populated.
+
+
+
+Also, can you confirm if there are any accounts that did not have a match in the xref file? Thanks!
+
+
+
+
+author: rony
+comment: Hi[~phoebe.george]
+
+I will try to process it tomorrow.
+
+
+
+about 5498 - box 7 - It depends on data file 547column in record B is 1 then this box will be checked.
+
+about 1099R - this seems odd to me because by looking at the current code it doesn't seem like it ever displayed the 2-character state. Can we talk to [~terrencet]about it.
+
+
+
+
+
+Thanks
+
+
+
+
+author: rony
+comment: Hi [~phoebe.george]
+
+/d/ac-secure-share/imp/phoebe/1290 has updated sample with the new data and xref. I don't see any account missing.
+
+
+
+Thanks
+
+
+
+
+author: phoebe.george
+comment: [~rony] PFCU has approved the latest samples for the 5498s and 1099-Rs.
+
+For 5498's, they reviewed the box indicators and data is fine as is.
+
+For 1099-R, no changes required to add in the 2-character state; samples approved as is.
+
+Can you proceed with creating the index files for these two latest test files/xref to post to pilot?
+
+Thanks!
+
+[~Ricky Lopez] FYI
+
+
+author: rony
+comment: Hi [~phoebe.george]
+
+
+
+I don't see any isd story for this, so would you please ask isd to post below in pilot?
+
+
+
+Index file name:
+
+etax_1099r_12312021_311_11012022_043122_pfcu.txt
+
+etax_5498_12312021_311_11012022_043137_pfcu.txt
+
+[~Ricky Lopez]
+
+
+
+Thanks
+
+
+
+
+author: phoebe.george
+comment: [~Ricky Lopez] There is a different Epic, but tied to same story on the PFCU EA Epic. Can you confirm who the previous developer was - we had posted eTaxes before for testing for this. Was it Eric in ISD? We need them to post this to pilot but take down the previous sets first:
+
+etax_1099r_12312021_311_11012022_043122_pfcu.txt
+
+etax_5498_12312021_311_11012022_043137_pfcu.txt
+
+
+author: JIRAUSER11400
+comment: [~phoebe.george] [~rony] This one is part of ISD-7309 [~Azad]is developer.
+
+
+author: rony
+comment: Hi [~Ricky Lopez] [~phoebe.george]
+
+Any suggestion on the next steps?
+
+
+
+Thanks

@@ -1,0 +1,13 @@
+each time while running process $home_keep/keep/<prefix>.datatrack.tmp this file got removed and the checksum and data file name of new data file got written in it.
+MD5:d8201cf9d62329295c5e3cd0ff93069f hfcu_stmt_050121.xml
+we know that customer sends a data file in some infoftp directory (infoftps4,infoftps3) shared directory with infoimage. This is a special directory. Any file put in this directory starts being scanned by a special program automatically and placed in ftpbu directory. 
+While scanning the checksum is recorded which later compared with the checksum from the datatrack.tmp file to ensure that we are running some data file from the customer, not just random data file. 
+So to actually run the process with a data file you also need to scan the data file meaning put the data file in infoftp directory first.
+${home_master}/master/get_md5_value.sh $main_data_file $cid $app
+chk_exit_status_w_email $? get_md5_sum.sh
+This call is responsible for writing the check sum in datatrack.tmp file . But before that the existing datatrack.tmp file needs to be removed. So only the latest one is in this file.
+get_segment $cid $jid
+This call is responsible for removing the datatrac.tmp file which comes from func_set1.sh. So this should be called before get_md5_value.sh call.
+after running process check $home_keep/keep/<prefix>.datatrack.tmp to see check sum and data file name like below
+MD5:d8201cf9d62329295c5e3cd0ff93069f hfcu_stmt_050121.xml
+check the script to see if the datatrac removal code is before get_md5_value.sh call.

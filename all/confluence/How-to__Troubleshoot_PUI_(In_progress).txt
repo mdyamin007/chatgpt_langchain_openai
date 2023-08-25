@@ -1,0 +1,89 @@
+title: How-to: Troubleshoot PUI (In progress)
+body:   
+
+#fff
+
+Types of Errors:
+
+  * The data file has been processed before
+  * Application Error: Job requires Approval but missing DT_JOB_ID
+  * The index file doesn't have the corresponding id in IS DB
+  * Infotrac flag is on but DT_JOB_ID missing from IS database
+  * Failed to insert records into estmt_sel_insert
+  * Failed to insert into inventory_pdfs table
+  * Job requires approval but ESTMTJOBTRACKING is not Y
+  * (filename) does not exist in src zip file
+  * Can't find the version ID=[id] in pc's database (tblal table)
+  * Very short log file ending with 'Report status for job Id...'
+  * No route to host
+  * Failed Emails: please configure client property
+  * PUI Interface: DT_JOB_ID is showing as 'null'
+  * Message from Message Manager not showing on statements
+  * Email is not approved for one of the feature for stmtType
+  * API Error research
+
+  
+
+  * The data file has been processed before
+    * Index file content matches a previous index file that was posted.
+      * Solution: Undo the previous index file, logs provide the p_job_id of the previous file. 
+    * Rare case: Index file content is different but checksum value is the same. 
+      * Solution 1: Add an empty line to the new index file and repost, which should cause the checksum value to change.
+      * Solution 2: Remove the checksum entry in the database.
+  * Application Error: Job requires Approval but missing DT_JOB_ID
+    * If no approval is needed, AOLP needs to be turned off in conf file.
+    * PC needs to create DT_JOB_ID
+    * The job needs to be created using the DT_JOB_ID provided by PC. IS can confirm by checking process_main table.
+    * IS needs to check if job tracking and AOLP is enabled on their side.
+  * The index file doesn't have the corresponding id in IS DB
+    * Might need to turn off estmtselinsert flag in conf file (if it shouldn't be on)
+    * Piece codes might have to be excluded from the index file
+    * No value in linkpaperandestmt table (IS db)
+  * Infotrac flag is on but DT_JOB_ID missing from IS database
+    * IS uses a dt_job_id but also might have to run paper option first. DP has to process the paper job first before running the Estatement job.
+  * Failed to insert records into estmt_sel_insert
+    * PC might not have linked the insert on the correct environment.
+      * Check inserts table on infotrac schema, piece code might not be matching inventoryid
+      * Check inventory_pdfs and estmt_sel_insert table on default/bank/cu schema, environment may not be correct (test vs. prod)
+  * Failed to insert into inventory_pdfs table
+    * PC needs to link the insert on infotrac. Check inventory tab on infotrac. All the piece codes need to be showing here.
+    * Piece codes under the Inventory tab need to match the inventoryID and the piece code column under the Insert Management tab. PC is able to update the inventoryID on their end (note: they sometimes refer to it as bins/trays).
+    * The inventoryID and the piece code needs to match.
+      * Check Insert Management tab (Inserts table on Infotrac schema)
+  * Job requires approval but ESTMTJOBTRACKING is not Y
+    * Estatement job tracking is not enabled, ask PC to enable.
+    * Check with DP if the correct dt_job_id was added to the insert file.
+  * (filename) does not exist in src zip file
+    * Process might be looking for an afp file that was already picked up in the same process. [appname].isSharingAfps flag might not be enabled. If turned on, ask AC to document the change somewhere.
+  * Can't find the version ID=[id] in pc's database (tblal table)
+    * Usually means dt_job_id is not created yet, ask PC to confirm if it is created. The version ID needs to match the latter portion of the DT_JOB_ID.
+  * Very short log file ending with 'Report status for job Id...'
+    * This mostly occurs when the print program autoposts an estatement index file, but the index file prefix does not exist in the conf file yet.
+  * No route to host
+    * Mailer server might be down, either check with Networks and/or the ha_server table to see which mailersvrs we have configured.
+  * Failed Emails: please configure client property
+    * Occurs usually during/after new client setups, need to add email passphrase to notifyservice properties on gitlab.
+  * PUI Interface: DT_JOB_ID is showing as 'null'
+    * needApproval flag might be disabled in the conf file.
+    * If enabled, it might be an issue with tracking. When we post eStatements, we look at PC's database to see if the job requires eStatement job tracking. If it is, we will query Print's database with the index file to get the DT_JOB_ID. If eStatement Job tracking is not enabled on PC's database, then we won't call Print's database to get the DT_JOB_ID.
+  * Message from Message Manager not showing on statements
+    * Might need to add imageMessage flag to the conf file.
+  * Email is not approved for one of the feature for stmtType
+    * Prism clients only: Admin site email template not approved. All templates need to be approved in order to send out email job, even if the specific template in question is already approved.  
+
+  * API Error in PUI log
+    * Sometimes there isn't much detail information in the PUI log about errors in API calls. This requires further research into the API logs.
+    * Examine the PUI code and identify which API is being invoked.
+    * The specific API URL could be located in the api.conf file.
+    * Identify the corresponding server for that specific API from 
+    * Locate the log file on that server and conduct further research.
+    * example:
+      * Search Index file PUI job shows errors in the API process.
+      * From the com.infoimage.processing.application.search_index, the API invokded is "Search_Index"
+      * In api.conf, the API URL is "contextualsearch-common.infoimageinc.com/api/v1/index/"
+      * From , the server on production is ca-elk-pr-01 and ca-elk-pr-02
+      * The detail log of API activity is on ca-elk-pr-02:/usr/local/docker/contextual-search/logs
+
+  
+
+

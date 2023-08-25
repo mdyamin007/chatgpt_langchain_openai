@@ -1,0 +1,135 @@
+title: Onbase (Hyland) Integration
+body:   
+
+  
+
+Target release| Release name or number  
+---|---  
+Epic|  
+  
+Document status|
+
+DRAFT  
+  
+Document owner|  
+  
+Designer| Lead designer  
+Developers| Lead developer  
+QA| Lead tester  
+  
+  
+
+## Goals
+
+  * The goal of this Integration is for InfoIMAGE to connect to Hyland's Onbase system to retrieve documents
+
+## Background and strategic fit
+
+Why are you doing this? How does this relate to your overall product strategy?
+
+## Requirements
+
+  
+| Requirement| Important| Notes  
+---|---|---|---  
+1| Support all existing eStatement features and functionality| Must Have|  
+  
+2| Integrate with Onbase to retrieve document from Onbase and display on
+eStatement and InfoTRAC portal. |  
+| See attached specification from Onbase.  
+3| InfoIMAGE will need to use Account Number for statement query and SSN for
+eTax query. |  
+|  
+  
+4| CU mention that not all the document returned in the query are in PDF
+format.  InfoIMAGE will need to configure a cutoff date to filter out some of
+the result in there query result|  
+|  
+  
+5| Support email notification|  
+|  
+  
+  
+  
+
+### API Request Sample:
+
+Account Number was replace with 12345678
+
+  
+
+  
+
+* * *
+
+#  _Analysis_
+
+## Assumptions
+
+  * All documents (statements, notices, taxes, and check images) are hosted on Onbase.
+  * InfoIMAGE will be making API call to Onbase to retrieve the documents list for each account and also retrieve each individual document in PDF format
+  * InfoIMAGE will be responsible for sending email notification when new set of document are available on Onbase's system.
+  * InfoIMAGE will setup eStatement Portal for the client and be able to support enrollment and other available feature that are not related to document composition.
+  * Integration will only apply to Hypercube clients.
+
+## Development :
+
+### Estatement Site:
+
+  *     * Update Hypercube site to support external document archive vendor.
+    * Introduce new property to indentify document archive vendor (infoimage, onBase, etc).
+    * Display generate error when infoIMAGE is not 
+
+### API:
+
+  *     * Create new API to connect to Onbase for document retrieval. 
+    * This will be a new plugin for InfoService API.
+
+### Processing:
+
+  *     * Create new processing application to process Meta Data file from client in order to send email notification. 
+    * Data will be store on MongoDB.
+    * Update email notification to retrieve data from MongoDB instead of Oracle. 
+
+  
+
+  
+
+##  Workflow:
+
+## Feature Not Support
+
+  * Message Manager
+  * Message ClickTrack
+  * eSelective Insert (Global is supported)
+  * InfoTRAC Job Status
+  * Email Attachment
+
+## Requirement from Client or Vendor
+
+  * Meta Data File:  Client must send InfoIMAGE a meta file for every application cycle that they had loaded to their Onbase system. ([Meta Data File Specification](https://confluence.infoimageinc.com/x/bYXLBg))
+  * Onbase Uptime:  Client to ensure that their Onbase system are up and available at all time.  InfoIMAGE will display generate to the user if we are not able to connect to Onbase to retrieve documents.
+  * Upgrade/Change:  Client must notify InfoIMAGE if they are making any changes or upgrade to the Onbase application that may affect the API call.  Changes must be schedule and test with InfoIMAGE on the Pilot environment prior to deploying to Production.
+  * Need client provide open up Pilot URL along with sample account number so that InfoIMAGE can develop and test.
+
+## Estimate:
+
+Development Hours:  80 hours (50 API & 30 Meta Data Processing)
+
+Integration Time:  60 days
+
+## Questions
+
+Below is a list of questions to be addressed as a result of this requirements
+document:
+
+Question| Outcome  
+---|---  
+(e.g. How we make users more aware of this feature?)| Communicate the decision
+reached  
+  
+## Not Doing
+
+  * List the features discussed which are out of scope or might be revisited in a later release.
+
+

@@ -1,0 +1,451 @@
+title: Temp server automatic start script
+body: ## **Services running on Docker:**
+
+Following services doesn't need any automatic start script because docker
+services  start automatically by default.
+
+  
+
+services| servers  
+---|---  
+Notifyservice|
+
+  * ca-infotrac-pr-01
+  * ca-infotrac-pr-02
+  * ca-apipui-pr-01
+  * ca-apipui-pr-02
+  * ca-apipui-pr-03
+  * ca-apipui-pr-04
+
+  
+Templateservice|
+
+  * ca-infotrac-pr-01
+  * ca-infotrac-pr-02
+  * ca-apipui-pr-01
+  * ca-apipui-pr-02
+  * ca-apipui-pr-03
+  * ca-apipui-pr-04
+
+  
+Infoscanner|
+
+  * ca-elk-pr-01
+  * ca-elk-pr-02
+
+  
+Logstash|
+
+  * ca-elk-pr-01
+  * ca-elk-pr-02
+
+  
+Posterservice|
+
+  * ca-hypercube-pr-01
+  * ca-hypercube-pr-02
+  * ca-hypercube-pr-03
+
+  
+Wrapper Service|
+
+  * ca-wrapper-pr-01
+  * ca-wrapper-pr-02
+
+  
+indexFileProcessor|
+
+  * ca-jobtrack-pr-01
+
+  
+Uspsscan Service|
+
+  * ca-jobtrack-pr-01
+  * ca-jobtrack-pr-02
+
+  
+  
+  
+
+####  **Alert:**
+
+But few cases it might need to be started manually. For say, Notifyservice
+needs mounted directory path to be mounted with docker to start the service.
+So, If Autofs doesn't start then Notifyservice/Templateservice won't start
+automatically.
+
+So we need a start script for Autofs. You might need to enable the autofs
+service in each machine, so that it start after the server get restarted. You
+can do so by the following bash script
+
+  
+
+ **Step1: Start autofs**
+
+sudo systemctl start autofs.service  
+  
+---  
+  
+  
+
+ **Step2: Enable Autofs**
+
+sudo systemctl enable autofs.service  
+---  
+  
+  
+
+If you want to manually start docker services, you've to go to corresponding
+services under /usr/local/docker directory and then execute "startup.sh" file.
+To shutdown execute "shutdown.sh" file.
+
+## ActiveMQ/MongoDB
+
+  
+
+For ActiveMQ and Mongodb needs to enable the systemd service scripts as well
+
+  
+
+Services| Servers  
+---|---  
+MongoDB (Primary)| ca-mongoreg-pr-01  
+MongoDB (Secondary)| ca-mongoreg-pr-02  
+MongoDB (Primary) i3JobTrac| ca-mongojob-pr-01  
+MongoDB (Secondary) i3JobTrac| ca-mongojob-pr-02  
+MongoDB (Primary) infoREACH| ca-mongoir-pr-01  
+MongoDB (Secondary) infoREACH| ca-mongoir-pr-02  
+ActiveMQ| ca-???-pr-01  
+ActiveMQ| ca-???-pr-02  
+  
+  
+
+### MongoDB:
+
+ **Step1: Start Mongodb**
+
+sudo systemctl start mongod.service  
+  
+---  
+  
+  
+
+ **Step2: Enable Autofs**
+
+sudo systemctl enable mongod.service  
+---  
+  
+  
+
+### ActiveMQ:
+
+ **Step1: Start ActiveMQ**
+
+sudo systemctl start activemq.service  
+  
+---  
+  
+  
+
+ **Step2: Enable ActiveMQ**
+
+sudo systemctl enable activemq.service  
+---  
+  
+  
+
+  
+
+##  **Services Running On Tomcat:**
+
+Services running on tomcat won't automatically start after server gets
+restarted if there's no systemd service written and enabled. Here are the
+services that runs on standalone tomcat servers:
+
+  
+
+Services| Servers  
+---|---  
+infoservice|
+
+  * ca-hypercube-pr-01
+  * ca-hypercube-pr-02
+  * ca-infotrac-pr-01
+  * ca-infotrac-pr-02
+
+  
+infotrac|
+
+  * ca-infotrac-pr-01
+  * ca-infotrac-pr-02
+
+  
+ContextualSearch|
+
+  * ca-elk-pr-01
+  * ca-elk-pr-02
+
+  
+infoservice-JASS|
+
+  * ca-apipui-pr-01
+  * ca-apipui-pr-02
+  * ca-apipui-pr-03
+  * ca-apipui-pr-04
+
+  
+  
+Prism-Default
+
+Prism-Bank
+
+Prism-CU
+
+|
+
+  * ca-prism-pr-01
+  * ca-prism-pr-02
+
+  
+PUI|
+
+  * ca-pui-pr-01
+  * ca-pui-pr-02
+  * ca-pui-pr-03
+
+  
+  
+  
+
+### Example Script:
+
+Let's say we want to write a infoservice systemd service. To create a systemd
+service for tomcat you can write a service like below in this file path:
+
+    
+    
+    sudo nano /etc/systemd/system/infoservice.service
+      
+  
+---  
+  
+  
+
+Copy and paste these script in the file. Make sure you change the Environment
+Variables according to your needs.
+
+  
+
+    
+    
+      
+    
+
+[Unit]  
+Description=Apache Tomcat Web Application Container  
+After=network.target
+
+    
+    
+      
+    
+
+[Service]  
+Type=forking
+
+    
+    
+      
+    
+
+User=tomcat  
+Group=tomcat
+
+    
+    
+      
+    
+
+Environment=JAVA_HOME=/usr/local/java/jdk1.8.0_202  
+Environment=CATALINA_PID=/usr/local/tomcat/tomcat-api/temp/tomcat.pid  
+Environment=CATALINA_HOME=/usr/local/tomcat/tomcat-api  
+Environment=CATALINA_BASE=/usr/local/tomcat/tomcat-api  
+Environment='CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC'  
+Environment='JAVA_OPTS=-Djava.awt.headless=true
+-Djava.security.egd=[file:/dev/./urandom](http://file/dev/./urandom)'
+
+    
+    
+      
+    
+
+ExecStart=/usr/local/tomcat/tomcat-api/bin/startup.sh  
+ExecStop=/usr/local/tomcat/tomcat-api/bin/shutdown.sh
+
+    
+    
+      
+    
+
+RestartSec=10  
+Restart=always
+
+    
+    
+      
+    
+
+[Install]  
+WantedBy=multi-user.target
+
+    
+    
+      
+      
+  
+---  
+  
+  
+
+Then start the tomcat service and enable tomcat service by following shell
+command
+
+  
+
+ **Step 1: Reload sytemd daemon**
+
+sudo systemctl daemon-reload  
+  
+---  
+  
+  
+
+ **Step 2: Start Infoservice**
+
+sudo systemctl start `infoservice`.service  
+  
+---  
+  
+  
+
+ **Step2: Enable Infoservice**
+
+sudo systemctl enable `infoservice`.service  
+---  
+  
+  
+
+##  **Hypercube:**
+
+Hypercube is a meteor application. It also won't get automatically started
+after server restart. You've to write the following systemd service and enable
+it to automatic app startup
+
+    
+    
+    sudo nano /etc/systemd/system/hypercube.service
+      
+  
+---  
+  
+  
+
+[Unit]  
+Description=Hypercube  
+After=network.target
+
+[Service]  
+Type=simple
+
+User=meteor  
+WorkingDirectory=/usr/local/meteor/hypercube  
+ExecStart=/usr/bin/meteor --settings /usr/local/meteor/hypercube/settings.json
+
+[Install]  
+WantedBy=multi-user.target  
+  
+---  
+  
+  
+
+ **Step 1: Reload sytemd daemon**
+
+sudo systemctl daemon-reload  
+  
+---  
+  
+  
+
+ **Step 2: Start Hypercube**
+
+sudo systemctl start `hypercube`.service  
+  
+---  
+  
+  
+
+ **Step2: Enable hypercube**
+
+sudo systemctl enable hypercube.service  
+---  
+  
+  
+
+ _ **Issues on replica sets:**_
+
+  * Infotrac war file was copied on to replica server automatically.
+  * Auto mount folders are not shown automatically on Infotrac. 
+
+  
+
+##  **Infoservice:**
+
+  * Property File Change
+
+Server Name| Property Name| Previous Value| Current Value  
+---|---|---|---  
+ **ca-hypercube-pr-01**|  oracle.default.db.url|
+jdbc:oracle:thin:@//10.8.14.51:1521/wodb.EDATA| jdbc:oracle:thin:@//ca-oracle-
+dev-01:1521/wodb.EDATA  
+oracle.cu.db.url| jdbc:oracle:thin:@//10.8.14.51:1521/wodb.EDATA|
+jdbc:oracle:thin:@//ca-oracle-dev-01:1521/wodb.EDATA  
+oracle.bank.db.url| jdbc:oracle:thin:@//10.8.14.51:1521/wodb.EDATA|
+jdbc:oracle:thin:@//ca-oracle-dev-01:1521/wodb.EDATA  
+oracle.infotrac.db.url| jdbc:oracle:thin:@//10.8.14.51:1521/wodb.edata|
+jdbc:oracle:thin:@//ca-oracle-dev-01:1521/wodb.edata  
+ **ca-hypercube-pr-02**  
+  
+  
+  
+  
+|  notify.service.base.url| http://ca-infotrac-
+pr-01.infoimageinc.com:8080/notifyservice/api/v1/notification| http://ca-
+infotrac-pr-02.infoimageinc.com:8080/notifyservice/api/v1/notification  
+template.service.base.url| http://ca-infotrac-
+pr-01.infoimageinc.com:8080/templateservice/api| http://ca-infotrac-
+pr-02.infoimageinc.com:8080/templateservice/api  
+oracle.default.db.url| jdbc:oracle:thin:@//10.8.14.51:1521/wodb.EDATA|
+jdbc:oracle:thin:@//ca-oracle-dev-01:1521/wodb.EDATA  
+oracle.cu.db.url| jdbc:oracle:thin:@//10.8.14.51:1521/wodb.EDATA|
+jdbc:oracle:thin:@//ca-oracle-dev-01:1521/wodb.EDATA  
+oracle.bank.db.url| jdbc:oracle:thin:@//10.8.14.51:1521/wodb.EDATA|
+jdbc:oracle:thin:@//ca-oracle-dev-01:1521/wodb.EDATA  
+oracle.infotrac.db.url| jdbc:oracle:thin:@//10.8.14.51:1521/wodb.edata|
+jdbc:oracle:thin:@//ca-oracle-dev-01:1521/wodb.edata  
+  
+  * DNS entry add in hosts file
+
+Server Name| Entry Name| Entry IP  
+---|---|---  
+ca-hypercube-pr-01| ca-oracle-dev-01| 10.8.14.51  
+ca-mailer-pr-01.infoimageinc.com| 10.4.18.43  
+ca-wrapper-dev-09.infoimageinc.com| 10.8.9.129  
+ca-hypercube-pr-02| ca-oracle-dev-01| 10.8.14.51  
+ca-mailer-pr-01.infoimageinc.com| 10.4.18.43  
+ca-wrapper-dev-09.infoimageinc.com| 10.8.9.129  
+ca-infotrac-pr-01| ca-wrapper-dev-09.infoimageinc.com| 10.8.9.129  
+ca-infotrac-pr-02| ca-wrapper-dev-09.infoimageinc.com| 10.8.9.129  
+  
+  
+
+

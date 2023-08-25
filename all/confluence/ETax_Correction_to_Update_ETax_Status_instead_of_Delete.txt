@@ -1,0 +1,106 @@
+title: ETax Correction to Update ETax Status instead of Delete
+body:   
+
+  
+
+Target release| Release name or number  
+---|---  
+Epic| Link to related Jira epic or feature  
+Document status|
+
+DRAFT  
+  
+Document owner|  
+  
+Designer|  
+  
+Developers|  
+  
+QA| Lead tester  
+  
+  
+
+## Goals
+
+  * Update the ETax Correction/Replacement process to update the eTax entries to an unviewable status instead of deleting the eTaxes out right
+
+## Background and strategic fit
+
+Preserving the ETaxes allow InfoIMAGE to provide clients with the ability to
+view corrected ETaxes as a billable feature.
+
+## Assumptions
+
+  * ETaxes with a status of 7 or ETax.CORRECTED will not be viewable. 
+    * Prism sites DML packages only pulls ETaxes with a status of 9 or null 
+  * Accounting will want to count corrected accounts for billing.
+    * Current accounting report pulls from p_job.GOOD. Changing the ETax status will not affect this.
+  * A replacement job will not post any new eTaxes unless it is to replace existing ones.
+
+## Requirements
+
+#| Title| User Story| Importance| Notes  
+---|---|---|---|---  
+1| Add a static value of ETax.CORRECTED| Update i3core ETax with static int
+ETax.CORRECTED = 7|  _Must Have_|  
+  
+2| Update replacement logic| Update replacement logic to replace instead of
+delete|  _Must Have_|
+
+When replacing, update the replaced etax with the correction job p_job id
+(into replace_p_job).
+
+final String replaceEtaxQUERY = "UPDATE etax SET status = ?, replacement_p_job
+= ? WHERE acct_id=? and etax_type=? AND etax_stamp=? AND (status is null or
+status != ?)";  
+final String countQUERY = " SELECT etax_id, arch_file_id FROM etax WHERE
+acct_id=? AND etax_type=? AND etax_stamp=? AND (status is null or status !=
+?)";  
+  
+3| Update the undo process to unhide corrected eTax| Update
+p_etax_dml.undo_etax|  
+|
+
+For the package in each schema
+
+Add UPDATE etax SET status = null, replacement_p_job = null WHERE
+replacement_p_job=i_p_job_id;  
+  
+4| Replacement job will skip all entries that it cannot replace | Store acct
+numbers to be replaced in a HashSet and only process entries for those acct
+numbers, skipping the rest. |  _Must Have_|
+
+Skipped entries will be outputted as Warnings.  
+  
+## User interaction and design
+
+ETax data after Original Posting
+
+Etax data after Correction Posting
+
+Line 3 and 4 have replaced Line 5 and 6, which now have status of 7
+(ETax.CORRECTED) and replacement_job_id = the p_job that did the replacement.
+
+Etax data after Correction Posting Undo
+
+Etax_ID 3300861 and 3300862 now have their status and replacement_job_id set
+to null. Etax_ID 3300869 and 3300870 are deleted (standard undo process)
+
+  
+
+## Questions
+
+Below is a list of questions to be addressed as a result of this requirements
+document:
+
+Question| Outcome  
+---|---  
+When a replacement job SKIP, it is still added to the GOOD count, should that
+be the case? If so, DP might not know the replacement failed.| SKIP will now
+become WARNING  
+  
+## Not Doing
+
+  * List the features discussed which are out of scope or might be revisited in a later release.
+
+

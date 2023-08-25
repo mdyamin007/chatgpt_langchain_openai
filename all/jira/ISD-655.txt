@@ -1,0 +1,83 @@
+title: 4364 - SEFC - Update Account Numbers
+description: None
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Update Account Numbers that were mapped incorrectly.
+Mapping file is provided.
+
+update fin_account set acct_number = '1706359832' where acct_number = '351441' and org_id = '13444';
+update fin_account set acct_number = '1706359840' where acct_number = '437994' and org_id = '13444';
+update fin_account set acct_number = '1706359858' where acct_number = '451885' and org_id = '13444';
+update fin_account set acct_number = '1706359866' where acct_number = '485208' and org_id = '13444';
+update fin_account set acct_number = '1706359874' where acct_number = '499788' and org_id = '13444';
+update fin_account set acct_number = '1706359882' where acct_number = '526840' and org_id = '13444';
+update fin_account set acct_number = '1706359890' where acct_number = '534858' and org_id = '13444';
+update fin_account set acct_number = '1706359907' where acct_number = '652905' and org_id = '13444';
+update fin_account set acct_number = '1706359915' where acct_number = '742610' and org_id = '13444';
+update fin_account set acct_number = '1706359923' where acct_number = '778479' and org_id = '13444';
+update fin_account set acct_number = '1706359931' where acct_number = '9798555' and org_id = '13444';
+update fin_account set acct_number = '1706359949' where acct_number = '9863838' and org_id = '13444';
+update fin_account set acct_number = '1706359957' where acct_number = '9863850' and org_id = '13444';
+update fin_account set acct_number = '1706359965' where acct_number = '18443' and org_id = '13444';
+update fin_account set acct_number = '1706363685' where acct_number = '68164' and org_id = '13444';
+update fin_account set acct_number = '1706363693' where acct_number = '161232' and org_id = '13444';
+update fin_account set acct_number = '1706363700' where acct_number = '667519' and org_id = '13444';
+update fin_account set acct_number = '1706363718' where acct_number = '668792' and org_id = '13444';
+update fin_account set acct_number = '1706363726' where acct_number = '695617' and org_id = '13444';
+update fin_account set acct_number = '1706363734' where acct_number = '710979' and org_id = '13444';
+update fin_account set acct_number = '1706363742' where acct_number = '744827' and org_id = '13444';
+update fin_account set acct_number = '1706363750' where acct_number = '9864514' and org_id = '13444';
+update fin_account set acct_number = '1706363768' where acct_number = '516238' and org_id = '13444';
+update fin_account set acct_number = '1706363776' where acct_number = '543669' and org_id = '13444';
+
+After this change, noticed that InfoTRAC didn't display any monthly statements, etax, enotice, etc.
+Realized that the estmt_doc status, as well as others were set to '1'. In order for InfoTRAC to display the stmts/docs, the status need to be 'null' or '9'.
+
+Ran below query to update all documents so they show for users:
+update estmt_doc set status = null where esd_id in
+(select esd_id
+from estmt_doc
+where acct_id in (
+select acct_id
+from fin_account
+where acct_number in ('1706359832','1706359840','1706359858','1706359866','1706359874','1706359882','1706359890','1706359907','1706359915','1706359923','1706359931','1706359949','1706359957','1706359965','1706363685','1706363693','1706363700','1706363718','1706363726','1706363734','1706363742','1706363750','1706363768','1706363776'
+)));
+
+
+author: 5ba31365b1a4b82e99864b79
+comment: Revert all work back:
+
+update estmt_doc set status = '1' where esd_id in
+(select esd_id
+from estmt_doc
+where acct_id in (
+select acct_id
+from fin_account
+where acct_number in ('1706359832','1706359840','1706359858','1706359866','1706359874','1706359882','1706359890','1706359907','1706359915','1706359923','1706359931','1706359949','1706359957','1706359965','1706363685','1706363693','1706363700','1706363718','1706363726','1706363734','1706363742','1706363750','1706363768','1706363776'
+)));
+
+update fin_account set acct_number = '351441' where acct_number = '1706359832' and org_id = '13444';
+update fin_account set acct_number = '437994' where acct_number = '1706359840' and org_id = '13444';
+update fin_account set acct_number = '451885' where acct_number = '1706359858' and org_id = '13444';
+update fin_account set acct_number = '485208' where acct_number = '1706359866' and org_id = '13444';
+update fin_account set acct_number = '499788' where acct_number = '1706359874' and org_id = '13444';
+update fin_account set acct_number = '526840' where acct_number = '1706359882' and org_id = '13444';
+update fin_account set acct_number = '534858' where acct_number = '1706359890' and org_id = '13444';
+update fin_account set acct_number = '652905' where acct_number = '1706359907' and org_id = '13444';
+update fin_account set acct_number = '742610' where acct_number = '1706359915' and org_id = '13444';
+update fin_account set acct_number = '778479' where acct_number = '1706359923' and org_id = '13444';
+update fin_account set acct_number = '9798555' where acct_number = '1706359931' and org_id = '13444';
+update fin_account set acct_number = '9863838' where acct_number = '1706359949' and org_id = '13444';
+update fin_account set acct_number = '9863850' where acct_number = '1706359957' and org_id = '13444';
+update fin_account set acct_number = '18443' where acct_number = '1706359965' and org_id = '13444';
+update fin_account set acct_number = '68164' where acct_number = '1706363685' and org_id = '13444';
+update fin_account set acct_number = '161232' where acct_number = '1706363693' and org_id = '13444';
+update fin_account set acct_number = '667519' where acct_number = '1706363700' and org_id = '13444';
+update fin_account set acct_number = '668792' where acct_number = '1706363718' and org_id = '13444';
+update fin_account set acct_number = '695617' where acct_number = '1706363726' and org_id = '13444';
+update fin_account set acct_number = '710979' where acct_number = '1706363734' and org_id = '13444';
+update fin_account set acct_number = '744827' where acct_number = '1706363742' and org_id = '13444';
+update fin_account set acct_number = '9864514' where acct_number = '1706363750' and org_id = '13444';
+update fin_account set acct_number = '516238' where acct_number = '1706363768' and org_id = '13444';
+update fin_account set acct_number = '543669' where acct_number = '1706363776' and org_id = '13444';

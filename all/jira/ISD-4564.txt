@@ -1,0 +1,50 @@
+title: 19945 - SLCU Mobile Responsive estatement site request
+description: SLCU is running Connect FSS for consumer online banking and Finastra/Malauzai for business online banking. Jen is requesting (see her emails below) if we can provide an upgraded mobile responsive site.
+
+Please let me know if we are able to do so?
+
+Thanks
+
+Gary
+
+
+
+Jens 2^nd^email-
+
+That is correct. We use the old WRG platform (acquired by Connect) for consumer and Finastra for business. We are in the process of a digital banking evaluation and I expect to wrap up contracts in 3^rd^quarter of this year, and I would expect a conversion in the second half of 2022. My ultimate goal would be an API integration with our future provider, but we need a better experience right now, so I was hopefully you had a mobile responsive site we could link to in the meantime.
+
+
+
+Today the Finastra site is an SSO as well and that experiences is also poor since its not mobile responsive.
+
+++++
+
+Hi Jen. I need to verify if you are still using Connect FSS for your retail online banking and Finastra/Malauzai for business banking. Are you anticipating making a move to another online banking platform in the next year?
+
+
+author: tai.trinh
+comment: I think this is a request to move to Hypercube.
+
+
+author: rifat.mahmud
+comment: After SLCU analysis, here are some points to discuss:-
+
+1. Leading Zero:
+    a) In ROOT site, user can do SSO by account number with or without leading zeros. If leading zero is not provided or account number is less than 10 digits long, the system will add leading zeros to make it 10 digits and then save to the database. But, account numbers are shown without leading zero in ROOT site. If we move SLCU to Hypercube, account numbers with leading zero must be provided during SSO for successful login.
+    b) In MSM site, email proofing template shows the account number with first 6 digits masked. Also, Login Activity Report shows account numbers with leading zeros. InfoTRAC supports leading zeros.
+ 
+2. Paperless process:
+    SLCU does not have a Profile page. Emails can only be inserted or updated from Paperless process in PUI. From paperless process, null email can be sent with paperless status 'E' and it will replace any existing email with null value in the database.  Also, there are about 77396 records in production database that have null email but have status "E" in Paperless2 table.
+
+If the client will agree to
+    1. Always make SSO request by account number with leading zeros, and
+    2. Send email address by Paperless process for the accounts with status "E",
+then we think it will be better to migrate SLCU to Hypercube than making it responsive.
+
+But, if migrating to Hypercube is out of the picture, then here is my estimation to make it responsive:
+
+After analyzing the client site of SLCU, they have banner management and also an odd type of session management which is kind of rare for prism clients. For which some developments will be needed. My estimation for ROOT site is 10 working days including test.
+
+For MSM site, they have transfer statement and banner management feature that might need some development to make responsive. We did not find any responsive admin site that have banner management. Other than that we can reuse some of the UI from other responsive client. If they want MSM site to be responsive then my estimation is it will take 12 working days including test.
+
+Currently, we are waiting for clients feedback. They have been proposed to move to hypercube.

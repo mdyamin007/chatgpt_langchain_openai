@@ -1,0 +1,39 @@
+title: 8750 - GCBK - Google Chrome 80 Update
+description: From client:
+
+
+
+Hello
+
+We received information today from our Online Banking provider Architect that Google is updating Chrome 80 on February 4th, 2020. This updateimpacts how same-site cookies are handled in which they have asked us to test our SSO integrations.[https://blog.chromium.org/2019/10/developers-get-ready-for-new.html]
+
+
+In our testing today it appears Info Image SSO is not Chrome 80 compliant.
+
+Can you help us resolve this issue prior to February 4, 2020.
+
+Thanks!
+
+
+
+!image-2020-01-17-14-09-39-478.png!
+
+
+author: abdullah.baki
+comment: hi [~Shun.Kuwashima]
+
+@isd
+
+
+
+As discussed with Joe today, I have committedthe code in the trunk and deployed in Pilot so that the vendor can test.
+When we tried to hit directly with SSO file it seems to add the "*SameSite=None; Secure*" attribute in the cookie which is required for accessingthird-party cookies. Then we tried with putting the SSO file inside an*IFrame,*but it did not work. Below is how we have tested it :
+
+{quote}<iframe src="file:///home/abdullah/Desktop/sso/gcbk/GCBK_SSO.html"></iframe>{quote}
+
+Since we are not sure about the real production scenario, Joe suggested to deploy in the pilot and have it tested by the vendor itself.
+So far, the only solution we can think of is to set the cookie from filter class as the cookie which is set by Q2 is being overridden by GCBK filter class. Besides, we are using servlet.jar to produce cookie, and servlet.jar doesn't support*SameSite*attribute yet. Another possible solution can be upgrading tomcat to version 8.5 or above, but if we go with this route, we need to test thoroughly with every client to be sure.
+
+We have found a solution for hypercube as well, but I think it also needs to be tested by the vendor.
+
+Let me know your thoughts on this.

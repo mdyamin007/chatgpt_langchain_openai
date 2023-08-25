@@ -1,0 +1,72 @@
+title: WFCU Hypercube and Infotrac Setup
+description: None
+
+
+author: moshiur.rahman
+comment: +AFP Process:+
+For AFP, instead of using DefaultEStmtRegistrar, HypercubeEStmtRegistrar has been used. User and Account is created in HypercubeEStmtRegistrar .
+First, account is searched. If not found, a new account is created and inserted into fin_account table.
+
+                       1. Fin_account: acctNum, acctName, lastModified=current date, status="A"
+                       2. If user is not found searching by orgId and usrId, creates a new one and inserted into USR table.
+                       3. Inserts into usr_session table. Here, sess_login_id = !usr_id
+                       4. Inserts into usr_mapping table. Here, cif_number=acctNumber
+                       5. A ufa is created and inserted into usr_fin_account table. usrId,orgId,acctId, status="active",acctNum,reg_date,email=null
+
+If account is found, If acctName in the index file is not matched with that account's acctName, acct_owner_name is updated in fin_account table. FirstName of the user is changed to acctName.  This name won't be updated if acctName in the index file is either "MEMBER" or "CUSTOMER".
+
+Paperless status is searched by acctId and stmtType. If nothing found, creates a new one. modifiedBy="1", modifiedDate=currentDate,newStatus="B",oldStatus="N",stmtType. And its inserted into paperless2 table. If stmtType is not "default", then its inserted as before but here,stmtType is inserted as "default".
+
+
++ECL Process:+
+For ECL, previously, emails were inserted into contact_info table. Two flags have been added to the conf file of WFCU so that emails are inserted into notification_preference table.
+
+global.email.storage=notifyPref
+global.emailUserAcctRef=byUFA
+
+In ECL, Exception will be thrown if the acctNum, which is provided in the index file doesn't have any ufa. Np is searched by both usr_id, acctId and stmtType.If more than one np is found, exception is thrown. If np is not found, creates a new one with usr_id and acctId. Then np is updated either by email or sms. for sms, emailStatus="N",smsStatus="Y",smsCarrierId="NA" and smsNumber = sms fro the index file. In both cases, either np is found or not, setModifiedBy is set to "1". 
+
+
+
+
+author: moshiur.rahman
+comment: Hi [~joec]
+
++*WFCU migration progress/Status*+
+# Hypercube set up is committed in the trunk
+# InfoTrac is set up on InfoTrac-dev
+# Processing UI is committed to the trunk. There were some changes on  wfcu.conf file, latest conf file is attached to the ticket [DSI-216]. N.B: The enrollment Report Testing is pending still]
+# The migration script is ready and we will upload that on a different branch under gitlab migration script repository on Monday.
+
+  +*Business Clarifications that should be checked with client :*+
+*  while user and account are created from SSO, it trims leading Zeros. But In the backend process, none of the processes trims leading Zeros.  So, if we process an account using leading zeros it will insert the account number with zeros, but if we log in using the account number(with leading zeros) then a new account will be created without leading zeros. This user and account creation logic from SSO is the same for both prism and hypercube.
+
+* WFCU prism site used to show "default" and "business" type statement under the same tab "eStatements".  hypercube doesn't support this. As of now, we are showing "business" type statements under the 'Business Statement' tab.
+
+
+author: sharmina.rahman
+comment: WFCU backend, hypercube, and Infotrac tests are completed in the Dev environment. I am uploading my test cases here for reference, with a release note.
+
+
+author: moshiur.rahman
+comment: Release Note
+
+
+author: moshiur.rahman
+comment: @isd
+
+We want to clear some business about WFCU which were mentioned in the release note:
+1. We found leading zero accounts in pilot DB but couldn't log in with those accounts. When we tried to log in with leading zero accounts via sso, it was creating new account trimming the zeros. It migrated in the same manner, just need the clarification. (*Joe confirmed it that there's no such account in dev. So no need to worry about this*)
+2. In properties file we found stmtType="regE", in pilot DB we found many data in paperless table regarding stmtType="regE. However, we couldn't find any process by which it was inserted.
+
+
+author: moshiur.rahman
+comment: @isd
+[~Ethan.Yu]
+Do you have any feedback regarding WFCU? Please let me know if everything is working fine or not. 
+
+
+author: moshiur.rahman
+comment: @isd
+[~Ethan.Yu]
+I heard that WFCU is going live soon. If you have any concern or need any assistance, please let me know. 

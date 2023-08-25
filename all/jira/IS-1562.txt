@@ -1,0 +1,58 @@
+title: GCBK - [32946][pvt][in-house] DP - GCBK Daily 06.01 - Error Warning - Maybe Acct w/ Multiple page
+description: Update transactions section to print those missing ones removed from updates from Jira IS-1301.
+
+Update the missing amounts between page breaks occurring from set up.
+
+
+
+PROGRAM: GCBKDL022.dfa
+
+
+author: yameelee
+comment: [~Igor.Khosid]: This is a hot fix. Production is on HOLD. Program exported to qa folder. Updates on .docx document.
+
+
+author: igor.khosid
+comment: 1. Papyrus output - validate
+ >> issue with the account (Update the missing amounts between page breaks) >> 3342185 - fixed
+
+2. Difference prod vs test
+---
+>             IF EMPTY(ITEM_AMOUNT) ;
+>             THEN ;
+>              ITEM_AMOUNT = NOSPACE(SUBSTR(TRAN[JJ-2],1,15, '')) ;
+>             ENDIF ;
+---
+>             IF EMPTY(CHARGE) ;
+>             THEN ;
+>              CHARGE = NOSPACE(SUBSTR(TRAN[JJ-2],1,15, '')) ;
+>             ENDIF ;
+---
+>     IF IS_END_BODY<>1 ;
+>     THEN ;
+>       IF  NOT EMPTY(CUR_LINE) AND ~CUR_PAGE>1 ;
+>       THEN ;
+>         IS_TRANSACTION = 1 ;
+>       ENDIF ;
+>     ENDIF ;
+<   IF IS_END_BODY<>1 ;
+<   THEN ;
+<     IF  NOT EMPTY(CUR_LINE) AND ~CUR_PAGE>1 ;
+<     THEN ;
+<       IS_TRANSACTION = 1 ;
+<     ENDIF ;
+<   ENDIF ;
+---
+
+
+
+author: yameelee
+comment: [~Igor.Khosid]: Please see .is afp file. Account is in there with the update.
+
+
+author: igor.khosid
+comment: QA  -  completed
+
+
+author: yameelee
+comment: code released.

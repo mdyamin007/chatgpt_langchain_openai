@@ -1,0 +1,154 @@
+title: IDCU - Letter - Visa Prequalification PDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133611-C30.01-V21841
+
+Processing Scripts to modify:
+ idcudle_process.sh
+
+Data Files to use:
+ "idcu_dn_visa_prequalify_05192022.csv.gpg, IDCU_REF_051922.7z.gpg"
+
+
+
+*NOTE*: This job runs on RH2. Since we are migrating from RHS to RH2, we should test all options so that we can do afpcompare and also ensure there is no errors in the processing logs.
+
+
+author: william.kong
+comment: [~Hamimul.Chowdhuri]: Please reach out to me BEFORE you start this project. I just sent email to team to confirm if this application is still active? Last production file received back in /5/22/2022 so leads me to believe that this application is no longer active but I need confirmation from client services team.
+
+
+author: william.kong
+comment: [~Hamimul.Chowdhuri]: I confirmed withDaphne in her email response on 7/26/2022 that this application may be reactivated at a later time so we do need to work on this conversion.
+
+
+author: william.kong
+comment: [~Hamimul.Chowdhuri]/[~anwarh]: Any progress with this project? I have not seen any activity since my comment above. Please advise.
+
+
+author: william.kong
+comment: Per [~anwarh]email on 9/13, the new revised live date is for 9/22. [~Hamimul.Chowdhuri], please do not miss this live date to submit to QA.
+
+
+author: anwarh
+comment: Hi [~William.Kong],
+
+Parallel ID: 20220924172842
+ production cycle: 05/12 (Because the latest one doesn't have any data)
+
+Data files:
+ /z/dsi_pdfi_testing/idcudle/data/idcu_dn_visa_prequalify_05122022.csv.gpg
+
+old zips: /z/dsi_pdfi_testing/idcudle/old/
+ new zips: /z/dsi_pdfi_testing/idcudle/new/
+
+Thanks,
+ Anwar
+
+
+author: william.kong
+comment: [~anwarh]/[~Hamimul.Chowdhuri] : The pdf_index.txt file in production is missing the enclosed double-quotes '"'. Can you please fix the index file and re-submit to QA.
+
+
+
+Thanks!
+
+
+
+ Will
+
+
+author: igor.khosid
+comment: [~William.Kong]
+I noticed you changed the story status to "QA failed." Next time instead of that, please create a bug and assign it to the person responsible for fixing it.
+
+[~Andrey.Kutsenko] - FYI  and please create a bug
+
+
+author: william.kong
+comment: [~anwarh]/[~Hamimul.Chowdhuri]: Do you guys think you can get this index file issue fixed this week?
+
+
+author: anwarh
+comment: [~William.Kong], this has been fixed.
+New archival at:/z/pdf_afp/idcu/idcudle/
+
+
+author: william.kong
+comment: Index file is good and the double-quote issue was fixed. The dates will be different because of the processing date.
+
+
+
+[~Andrey.Kutsenko]/[~Igor.Khosid]: I've placed the updated files in:
+
+
+
+ca-unittest-pr-02:/d/pdf_compare/idcudle_prod/
+
+ca-unittest-pr-02:/d/pdf_compare/idcudle_parallel/
+
+
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: Per your zoom chat, you asked me to review the pdf differences. Per my assessment, the newer version is sharper and looks better than the older version. I don't see any content differences so I think we are good with this one.
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: Based on my feedback above, can we consider this a pass?
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+Parallels pdf looks like is better.
+Run command:
+{code:sh}perl pdf_compare.pl idcudle_prod idcudle_parallel result_idcudle -pixels 12 -threads 8 -regex '[0-9]+_<CUSTOM=[0-9]+>_VISA_[0-9]+.pdf'{code}
+Result:
+{code:sh}
+Total PDF Files Scanned: 7
+allowedDifferenceInPercentPerPage: 12:
+Thread Count: 8
+
+Total PDF Files with Differences: 7
+Please review the directory in /d/pdf_compare/result_idcudle directory & /d/pdf_compare/result_idcudle/pdf_compare_rpt.txt report to see all the PDF differences
+Start Time: Thu Oct 20 10:58:43 PDT 2022
+Finish Time: Thu Oct 20 10:59:55 PDT 2022{code}
+
+
+author: william.kong
+comment: [~anwarh]: Please prepare File Transfer form so that we can release the code on Monday, 10/24
+
+
+author: william.kong
+comment: [~anwarh]: Just a reminder, please attach File Transfer form. Thanks!
+
+
+author: anwarh
+comment: Hi [~TunA]/[~yameelee],
+
+Transfer form:  [^IS-1238 IDCU Transfer Form.doc] 
+
+Code is in:
+*/d/is/cvs/xfer/anwarH_backup/is-1238*
+
+Can you please move them into /d/is/cvs/xfer/anwarH/ and then release?
+
+Thanks,
+Anwar
+
+[~William.Kong]
+
+
+author: yameelee
+comment: Code released.

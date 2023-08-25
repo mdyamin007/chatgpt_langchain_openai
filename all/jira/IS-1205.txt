@@ -1,0 +1,213 @@
+title: KFCU - Invoice - HE DF MortgagePDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed:  
+	${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+	 Also, clear the folder directory folder before each processing.  We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+133573-C30.01-V21661
+
+Processing Scripts to modify:
+kfcuml1_process.sh
+
+Data Files to use:
+KFCU_Mortgage_04302021.pgp
+
+
+author: jira_naru
+comment: QA:
+
+First round sample can be found in:
+
+/z/pdf_afp/kfcu/kfcuml1/zip/
+
+Project exported to /d/iss/qa/KFCU/KFCUML11.zip
+
+Parallel id:20220706104814
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220706104814
+   Currently in parallel: Yes
+   User: nar
+   Description: IS1205 kfcuml1_pdfiToAfp2web
+   Date Submitted: 2022-07-06 10:48:31
+   Date Last Updated: 2022-07-06 10:48:31
+   Files:
+      1) kfcuml1_pdf.control
+      2) kfcuml1_process.sh
+      3) KFCUML11.dfa
+
+
+author: tuna
+comment: Hi [~jira_naru],
+
+This project is overdue. I updated the due date to 07/22. Please let me know if we should use other due date.
+
+Thanks!
+
+Tun
+
+P.S. I don't see AC in JIRA.
+
+
+author: william.kong
+comment: [~jira_naru]: can you help create cycle 7/15 (KFCU_ML_Archival_071522_1.zip) in parallel? I backed up a copy of the production version and would like to compare the Production version with the parallel version via the pdf comparison utility.
+
+
+author: jira_naru
+comment: [~William.Kong]:
+
+Parallel version of 7/15 now available.
+
+/z/pdf_afp/kfcu/kfcuml1/zip/KFCU_ML_Archival_071522_1.zip
+
+
+author: william.kong
+comment: Thanks [~jira_naru]! I will review them now.
+
+
+author: william.kong
+comment: [~jira_naru]: Can you check the parallel output. On page 1, the heading font is missing:
+
+
+
+!image-2022-07-20-11-48-57-840.png!
+
+
+author: jira_naru
+comment: [~William.Kong]:
+
+I think this is a transparency issue.
+
+Even the AFP, the green bar is covering the font.
+
+I use to be able passPKEY="TRANSPARENT" in my direct afp2pdf.py call an enable transparency, But it is not working.
+
+Is there any other way?
+
+If not I will have to update the DFA
+
+
+author: william.kong
+comment: [~jira_naru]: Based on what you described above, you are invoking TRANSPARENT mode. By default the afp2pdf.py (in parallel) should pull from the /home/test/afp2web/afp2web.ini file where it has the PKEY=TRANSPARENT turned on by default. So even passing PKEY="TRANSPARENT" as an argument should apply explicitly that you want TRANSPARENT mode as well.
+
+I cloned a copy of the /home/test/afp2web/afp2web.ini to/home/test/afp2web/afp2web_no_transparency.ini option and commented out ;PKEY=TRANSPARENT.
+
+Can you manually convert in parallel environment IniFilename=afp2web_no_transparency.ini to see if +not+ defining TRANSPARENT will work or not. I wonder if it does NOT need TRANSPARENT mode. If it still does not work, then we will need to tweak the DFA.
+
+
+author: jira_naru
+comment: [~William.Kong]
+
+Yes, the newafp2web_no_transparency.ini worked.
+
+Revised PDF available in parallel.
+
+
+author: william.kong
+comment: [~jira_naru]: Can you cycle 7/15 for the parallel. I'm still comparing the 7/15 production version.
+
+
+author: jira_naru
+comment: [~William.Kong]:
+
+cycle 7/15, available in parallel.
+
+
+author: william.kong
+comment: Thanks [~jira_naru]! It looks much better now.
+
+
+
+[~Igor.Khosid]: The results are good. I had to increase the tolerance difference level from 5 pixels to 6 to not report any differences. There are pseg backers that caused me to increase the pixel tolerance level higher.
+
+
+
+results are in:
+
+ca-isis-pr-04:/d/pdf_compare/result_kfcuml1/
+
+
+
+Total PDF Files Scanned: 80
+allowedDifferenceInPercentPerPage: 6:
+Thread Count: 32
+
+Total PDF Files with Differences: 0
+Start Time: Wed Jul 20 16:55:51 PDT 2022
+Finish Time: Wed Jul 20 16:56:32 PDT 2022
+
+
+
+
+author: william.kong
+comment: [~Igor.Khosid]/[~Andrey.Kutsenko]: Any updates on this QA testing? Since Nar is OOO until 8/29, I'm going to target a 8/29 internal live date.
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+{code:sh}
+perl pdf_compare.pl kfcuml1_prod/ kfcuml1_parallel/ result_kfcuml1 -pixels 6 -threads 32
+{code}
+RESULT >> /d/pdf_compare/result_kfcuml1/pdf_compare_rpt.txt
+{quote}Total PDF Files Scanned: 80
+allowedDifferenceInPercentPerPage: 6:
+Thread Count: 32
+
+Total PDF Files with Differences: 0
+Start Time: Wed Aug 10 14:07:49 PDT 2022
+Finish Time: Wed Aug 10 14:08:29 PDT 2022
+{quote}
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: Thank you for your update!
+
+
+
+[~jira_naru]: When you return from vacation, please prep File Transfer Form for code release. This project will not need to go through Parallel Run. 
+
+Also, can you confirm where in your code in parallel are you defining:afp2web_no_transparency.ini
+
+
+
+I can't find in the/home/test/master/kfcuml1_process.sh or/home/test/control/kfcuml1_pdf.control
+
+
+author: JIRAUSER11104
+comment: Hi [~William.Kong], [~jira_naru]
+please update the status of this story based to SOP.
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: [~jira_naru]will return on Monday. He's take 3 weeks off so he will probably respond early next week after he catches up.
+
+
+author: jira_naru
+comment: [~William.Kong]:
+
+Sorry, the reference toafp2web_no_transparency.ini, is in the processing script.
+
+I have checked in the processing script to parallel.
+
+You should be able to see this use of the ini file now inkfcuml1_process.sh.
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: Looks like [~jira_naru]did have the logic in place when he created the pdf archivals before his vacation. 
+
+
+
+[~jira_naru]: Please proceed with the code release as early as today or by tomorrow.
+
+
+author: jira_naru
+comment: Code release completed.

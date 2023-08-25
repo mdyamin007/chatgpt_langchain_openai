@@ -1,0 +1,117 @@
+title: 44461 / 12777 - EWBB - Statement Name Correction
+description: None
+
+
+author: tai.trinh
+comment: # Remove all instances of User/Customer Name from the Admin Site and eStatement Site
+ # Update Email Templates to use AcctName instead of UserName. The email will be sent out with the Account Holder Name instead of the User Name.
+
+
+author: moshiur.rahman
+comment: @isd
+Can you please clarify my following concerns?
+
+On MSM site,
+
+1. Account Management page: 
+	i. Search for Account:
+		a. Customer Name: Here, we have to put the 	ACCT_OWNER_NAME for searching. You told us to remove all the instances of User/Customer Name. So, 
+                     should I change the verbiage from "Customer Name" to "Account Owner Name" or something else?
+
+		b.Account Number: Searching by account number, the listResult.jsp page shows the result. Here, there 3rd column shows the Customer name [user 
+                    firstName+user lastName]. Should I just remove this column? Or should I replace this column with account owner name?
+
+		c.Email Address: Searching by email, the result shows both Customer name(user firstName+lastName) and Account Holder name along with other 
+                   information. Should I just remove the Customer name portion?   
+
+2. Email Proofing page:
+	Should I just change the system variable from "User Name" to "Account Owner Name" so that the email templates makes with "Account Owner Name" instead of "User Name"?
+
+
+On Root site,
+
+	On Profile page, under "User Information" section, Name[user firstName+lastName] is shown. Should I just have to hide this "Name" portion?
+
+
+author: tai.trinh
+comment: Hi [~moshiur.rahman]
+
+Sorry, the comments were a bit vague. This will be more involved.
+
+Currently, there are two values that we use to display "Customer Name". It's either the usr_firstname from the usr table or the acct_owner_name from the fin_account table. Because of how we have set up all of our processes, there isn't any consistent way to update the usr_firstname in the usr table. Therefore, the decision is that, when displaying any sort of customer name, we will just use the acct_owner_name instead.
+
+So the effort that need to be taken here is:
+ # Any areas that display the usr_firstname should display the acct_owner_name instead if possible. Let me know if you encounter any dilemma.
+ # Any areas that display both usr_firstname and acct_owner_name should remove the usr_firstname and display acct_owner_name only.
+ # EWBB is using the latest standard email process. There are keywords that get replaced by values in the DB. Currently, most or all of their email templates are using the keyword that get replaced by usr_firstname. We will switch it to using the keyword for acct_owner_name instead.
+ # Any other areas that you discover.
+
+Thanks,
+ Tai
+
+
+author: tai.trinh
+comment: Hi [~moshiur.rahman]
+
+Sorry, I tagged the wrong person. Re-tagging in case you haven't seen the above comment yet.
+
+
+author: moshiur.rahman
+comment: @isd
+Hi [~tai.trinh] , 
+I've added a design doc. Please take a look.
+Thanks.
+
+
+author: tai.trinh
+comment: [~moshiur.rahman]
+
+Please let me know when this can be ready to be deployed on Pilot.
+
+Thanks,
+ Tai
+
+
+author: moshiur.rahman
+comment: @isd
+[~tai.trinh]
+Hopefully it'll be ready on 10th September by the end of the day. We're taking some extra time for code review. But, roughly it'll be ready on 9th.
+
+Thanks,
+Moshiur
+
+
+
+author: moshiur.rahman
+comment: @isd
+[~tai.trinh]
+Our QA raised some concerns. I need your feedback on this. I've attached three images (one.png, two.png,three.png). 
+
+On one.png (red underlined area),  We search here by acct_owner_name. But the verbiage is "Customer Name" which is little bit confusing. Should I change this verbiage?
+
+On two.png (inside the red circled area), We'll show the acct_owner_name here(as per requirement of this task). But the title is "Customer Name". Should I change the title here as well? 
+
+On "ACI EB Management" page, (shown on three.png) after searching by Organization Id, it shows "User Id" and "Customer Name". Here, value of "User Id" is the "vendor_user_id" and value of  "Customer Name" is "user_firstname" and "user_lastname". Here, Only USER related information are displayed. Should I replace this value of "Customer Name" in this page?
+
+Thanks,
+Moshiur
+
+
+author: tai.trinh
+comment: Hi [~moshiur.rahman],
+
+For one and two, change it to Account Owner Name.
+
+For ACI EB Management, leave it as is. The First and Last Names are inputted in by the "Create" function of that management page, and can also be edited using the same feature.
+
+Thanks,
+Tai
+
+
+author: moshiur.rahman
+comment: @isd
+[~tai.trinh]
+I committed the code on trunk. Can you please take a look?
+
+Thanks,
+Moshiur

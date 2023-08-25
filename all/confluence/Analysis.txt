@@ -1,0 +1,47 @@
+title: Analysis
+body: **Obtain  ** **Backup**
+
+  1. Use thinBackup to generate a full backup
+  2. Zip the backup
+    1. zip -r foldername.zip foldername
+
+    2. To exclude the build history: rsync -av -progress backupfoldername . --exclude */builds
+  3. Move the zip to /var/jenkins_home/backups on the  **setup  **server.
+    1. the path can be different depending on where we want to put the backup; if the backup path is changed need to change docker-compose.yml file and configure Jenkins thinBackup to point to the new path
+
+ **Setup**
+
+  1. Install Docker/Docker Engine/Docker Compose
+    1.  <https://docs.docker.com/install/linux/docker-ce/ubuntu/>
+    2. <https://docs.docker.com/compose/install/>
+  2. Pull the base jenkins image
+    1. sudo docker pull jenkins/jenkins:lts
+  3. Build docker image
+    1. sudo docker build -f /path/to/Dockerfile . (The period is part of the command)
+  4. Tag docker build
+    1. sudo docker build -t infoimageinc/jenkins:1.0.0 -t infoimageinc/jenkins:lts . (The period is part of the command)
+  5. Start the container with the docker compose file
+    1. sudo docker-compose up -d
+  6. Enter the container
+    1. sudo docker exec -u 0 -it jenkins /bin/bash 
+  7. Obtain the initial admin password
+    1. cat /var/jenkins_home/secrets/initialAdminPassword
+  8. Open up jenkins at https://ip.ad.r.ress:8080/jenkins
+  9. Go through the setup wizard
+  10. Go to Manage Jenkins -> Manage Plugins
+  11. Install thinBackup without restart
+  12. Go to Manage Jenkins -> thinBackup
+  13. Set up the backup folder to 
+
+ **Dependencies**
+
+  1. JDK 1.6
+  2. JDK 1.7
+  3. JDK 1.8
+  4. Apache Ant
+  5. Apache Maven
+    1. maven repo inside Docker or have a volume
+    2. need to set up proxy so maven can download?
+  6. Apache Tomcat
+
+

@@ -1,0 +1,109 @@
+title: HTBK - Invoice - Safe Deposit Box BillPDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133577-C30.01-V21571
+
+Processing Scripts to modify:
+ htbk_sb_process.pl
+
+Data Files to use:
+ 1349.0430.1103596.SDBBILLS-HERI1.STT.pgp
+
+
+
+
+
+*NOTE*: This job runs on RH2 server. Since we are migrating from RH2 server to RHS, please test ALL job_sel options to ensure RHS can run with error messages in the processing log files.
+
+
+
+
+
+
+
+
+author: yameelee
+comment: PR_ID:20220707182555
+
+estmt index:htbk_afp_enotice_02152022_182841_1.txt
+
+PDF archival:z/pdf_afp/htbk/htbksb1/pdf/
+
+zip file: /z/pdf_afp/htbk/htbksb1/zip/TCBSINFOIMAGE134901I.1349.0215.1251999.SDBBILLS-HERI1.STT.zip
+
+attached DPVS.
+
+
+author: william.kong
+comment: [~rodriguez]: Sorry to do this you, but I added one additional requirement to test and make sure this program can run via RHS server instead of RH2. Please ensure there is no error message. Please choose a more+recent+ production cycle to test all options.+Save+ a copy of the production pdf archival files because we will compare the parallel PDF files with the production version with the same cycle.
+
+
+author: rodriguez
+comment: [~William.Kong]No problem. I just tested on both servers. Sending to QA now.
+
+
+author: rodriguez
+comment: QA:
+
+ATTACHED ARE 3 ARCHIVAL ZIPS; 1 for prod, 1 for RHS, 1 for RH2
+
+CYCLE TESTED = 7/25/22
+
+PROD:PROD_TCBSINFOIMAGE134901I.1349.0725.1333504.SDBBILLS-HERI1.STT.zip.001
+
+RHS:RHS_TCBSINFOIMAGE134901I.1349.0725.1333504.SDBBILLS-HERI1.STT.zip.001
+
+RH2:RH2_TCBSINFOIMAGE134901I.1349.0725.1333504.SDBBILLS-HERI1.STT.zip.001
+
+PLEASE CHECK RAN FILE TO VERIFY THIS CYCLE WAS PROCESSED ON RH2 AND RHS.
+
+PLEASE CHECK THE FIRST COMMENT BY YAMEE FOR ALL PARALLEL INFO
+
+
+author: william.kong
+comment: [~Igor.Khosid]/[~Andrey.Kutsenko]: Please advise the QA progress. I would also like to target the internal release for Aug 16 as well. Please advise if this is also achievable. Thanks!
+
+
+author: JIRAUSER11104
+comment: QA test - *PASSED*
+
+Ran script:
+{code:sh}
+perl pdf_compare.pl htbksb1_prod/ htbksb1_parallel/ result_htbksb1 -pixels 5 -threads 32 -regex 'htbksb1_[0-9]+_[0-9]+_<SEQ>.pdf'{code}
+Report:
+{code:sh}
+[andreyK@ca-isis-pr-04 pdf_compare]$ cat /d/pdf_compare/result_htbksb1/pdf_compare_rpt.txt
+Active running thread count: 32
+Total PDF Files Scanned: 32
+allowedDifferenceInPercentPerPage: 5:
+Thread Count: 32
+
+Total PDF Files with Differences: 0
+Start Time: Thu Aug 11 17:09:59 PDT 2022
+Finish Time: Thu Aug 11 17:10:08 PDT 2022{code}
+
+
+
+author: william.kong
+comment: [~rodriguez]: Can you schedule the code release today? Once completed, please let me know and/or email [dp@infoimageinc.com|mailto:dp@infoimageinc.com]that this code has been released and they need to start running this job on RHS server moving forward.
+
+
+author: rodriguez
+comment: [~William.Kong]
+
+Just saw this, I will release by EOD today
+
+
+author: rodriguez
+comment: code has been released, backup id:20220818174639

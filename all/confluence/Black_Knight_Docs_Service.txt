@@ -1,0 +1,482 @@
+title: Black Knight Docs Service
+body: # Overview
+
+The Black Knight Docs Service is an API Spring Boot application that allows
+the Black Knight third-party vendor to query for the documents that are
+available to a Loan Number, and subsequently, the specific PDF documents
+themselves. The application is built specific to Black Knight's specs, and is
+intended to be used by Black Knight only.
+
+truenone  
+  
+---  
+  
+* * *
+
+# Specs
+
+The BKI Docs Service is coded to the specs provided by Black Knight: [SD Doc
+Provider
+Integration.pdf](https://confluence.infoimageinc.com/download/attachments/114002168/SD%20Doc%20Provider%20Integration.pdf?version=1&modificationDate=1652483657742&api=v2)
+(Note: this was obtained in 2022, so it may be out-of-date). The error
+responses follow this specs:
+[BlackKnight3_0.doc.yaml](https://confluence.infoimageinc.com/download/attachments/114002168/BlackKnight3_0.doc.yaml?version=1&modificationDate=1652483829177&api=v2)
+(Note: again obtained in 2022; use a Swagger yaml parser to display a legible
+UI).
+
+## Supported Statement Types
+
+  * mortgage
+  * escrow
+  * etax
+  * enotice
+
+## Category Type Mapping
+
+  * mortgage -> LoanStatement -> Billing
+  * escrow -> EscrowStatement -> Escrow
+  * etax -> TaxStatement -> Taxes
+  * enotice -> Other -> Other
+
+* * *
+
+# Endpoint
+
+The base URL is https://bkidocs-{env}.infoimageinc.com, with env being: dev,
+pilot, stage, or prod.
+
+Endpoint
+
+|
+
+HttpMethod
+
+|
+
+Exposure
+
+|
+
+Security
+
+|
+
+Description  
+  
+---|---|---|---|---  
+/api/v1/loans/(portfolioID)/(loanID)/docs| GET| External| OAuth2|
+
+Used by Black Knight to obtain the document list.  
+
+portfolioID=the number assigned to the client by Black Knight
+
+loanID=the MSP loan number that should match the same number in the InfoIMAGE
+database  
+  
+/api/v1/loans/(portfolioID)/(loanID)/docs/(docID)| GET| External| OAuth2|
+
+Used by Black Knight to pull the PDF document.
+
+documentID=the document ID provided by InfoIMAGE to identify the document,
+e.g. statement_12345, enotice_12345, or etax_12345. The number is the
+respective ID in the estmt_doc, enotice, and etax tables.  
+  
+/api/v1/healthcheck| GET| External | None| Used by upstream applications to
+check the health of the docs service. The response of this API is dependent on
+whether the application can access the Oracle DB, the PVNAS mount, the wrapper
+service, the oAuth server, and subscribe to ActiveMQ.  
+/api/v1/version| GET| Internal| None|
+
+Used by InfoConfig to retrieve the configuration versions saved by the auth
+server.
+
+This endpoint cannot be accessed via DNS, since it should not be publicly
+available. It can only be accessed directly per application, which is how
+InfoConfig use the endpoint.  
+  
+* * *
+
+# Design
+
+This section will document why certain design choices were made at the time of
+implementation.
+
+## Non-sticky Session
+
+Due to the fact that all calls to the Auth Server will, at the current moment,
+come only from a single external vendor, sticky sessions will negatively
+impact load balancing. It is entirely possible that all requests will come
+from a single IP, leading to all requests going to a single server instance.
+That would defeat the purpose of a distributed system. Furthermore, there is
+known reason why sticky sessions is necessary.
+
+## Distributed Cluster
+
+For client-facing environments, the Auth Server will be set up in a cluster of
+at least two server instances to avoid a single point of failure and provide
+high availability.
+
+## Local Cache
+
+Certain information is cached locally to optimize efficiency. For example, a
+lot of Oracle queries are to data that rarely change, therefore, the
+application will cache these data locally, and will only evict the cache on a
+time schedule to minimize the amount of queries made to the Oracle database.
+
+The InfoConfig versions are also cached locally instead of MongoDB. The
+reasons for this are:
+
+  1. The information is only relevant per application, and therefore, there is no need to persist in a database.
+  2. Since the cache capability is already set up, it is simpler to use cache. Using MongoDB would add additional development time and an extra dependency for the application.
+
+## Externalized Configuration
+
+Most configurations are placed in the application.yml that is packaged with
+the code. These configurations are not expected to change. They are also
+critical configurations that should not be changed on the fly, and as such
+recompilation is a desired step.
+
+Certain configurations are externalized for ease of edit, and also for added
+security. They are the service.yml and credentials.yml. Service.yml contains
+instance-related configurations. Credentials.yml contain credentials such as
+DB username and password that should not be packaged with the jar.
+
+* * *
+
+# Functionality
+
+## Account Mapping
+
+The Docs Service has support for Account Mapping, which will provide some rule
+on how to map the account numbers. The support currently is still minimal, and
+cannot be configured. However, it does not require much effort to enhance
+this. The account mapping is contingent on an accountMapper configuration that
+should be defined in InfoConfig (not yet implemented). This configuration is a
+comma-delimited String that define the operations that should be taken. Below
+are all the mapper operations currently supported.
+
+Mapper| Operation  
+---|---  
+noop| Does nothing.  
+removeLeadingZero| This mapper will remove all leading zeroes from the loanId.
+This is the default mapper for all CIDs due to the fact that Black Knight will
+query with leading zeroes.  
+  
+To define an accountMapper, one can do the following:
+
+  * accountMapper: removeLeadingZero,noop
+
+The above define an accountMapper with two steps: (1) removeLeadingZero, then
+(2) do nothing. Of course, the second step is unnecessary. However, with
+future enhancement, the accountMapper can be defined with multiple meaningful
+steps.
+
+## Category Mapping
+
+Similar to Account Mapping, there is built-in support for mappings of the
+internal statements to the four Category Types that Black Knight has:
+LoanStatement, EscrowStatement, TaxStatement, and Other. This mapping should
+be configured via InfoConfig (not yet implemented), because, as of right now,
+it is not expected that we will need any custom mapping.
+
+Currently, the default mapping is as follows:
+
+InfoIMAGE Statement Type| InfoIMAGE Type Code| Black Knight Category  
+---|---|---  
+mortage| All type codes| LoanStatement  
+escrow| All type codes| EscrowStatement  
+etax| All type codes| TaxStatement  
+enotice| All type codes| Other  
+  
+It is possible that some clients may want certain enotice type codes to go to
+LoanStatement and other to EscrowStatement. However, since no such requirement
+exists at the moment, extensive programming for such a case was not
+implemented. The skeleton for the system does exist, and it just need to be
+enhanced. However, alternatively, those enotices could be posted as mortgage
+or escrow statements with a different type codes, which would allow them to
+have a different descriptions.
+
+## EHCache
+
+This is a local cache that save some queries, so that the application does not
+need to call the Oracle DB again. The data is not expected to change often,
+and as such, repeated calls to the Oracle DB is unnecessary.
+
+Name| Type| Space| TTL| Persistent| Note  
+---|---|---|---|---|---  
+clientProperties| disk| 10 MB| N/A| Yes|
+
+This is to cache the configurations from InfoConfig. It is persistent, so that
+if the application restarts and cannot access InfoConfig, the application can
+pull from the cache instead.  **Note that the persistent cache only persists
+if the application closes gracefully. A crash will trigger EHCache to clear
+everything since it cannot guarantee data integrity.**
+
+Space will need to be increased as we add more clients.  
+  
+configVersions| disk| 10 MB| N/A| Yes|
+
+This cache the version information of the InfoConfig configurations so that it
+can be quickly pulled and returned to InfoConfig for validation.
+
+Space will need to be increased as we add more clients.  
+  
+organizationCache| heap| 16| N/A| No|
+
+Cache the Organization record from Oracle DB.
+
+Space will need to be increased as we add more clients.  
+  
+storageServerCache| heap| 3| 24 hrs| No| Space will need to increase whenever
+we add new sets of storage servers. Currently, there are exactly three: a, b,
+and c.  
+enoticeDescCache| heap| 32| 1 hrs| No|
+
+Cache the description for a specific type code belonging to a specific cid,
+
+Expected about 2-3 per client; will need to increase as more clients are
+integrated.  
+  
+estmtDescCache| heap| 32| 1 hrs| No|
+
+Cache the description for a specific type code of a specific statement type
+belonging to a specific cid,
+
+Expected about 2-3 per client; will need to increase as more clients are
+integrated.  
+  
+etaxDescCache| heap| 2| 1 hrs| No|
+
+Cache the description for the type code.
+
+The only tax statement expected should be 1098; will need to increase
+accordingly if that changes.  
+  
+* * *
+
+# Dependency
+
+## Oracle DB
+
+Table| Notes  
+---|---  
+organization|  
+  
+fin_account|  
+  
+storage_servers|  
+  
+estmt_doc|  
+  
+enotice|  
+  
+etax|  
+  
+arch_file|  
+  
+  
+estmt_file
+
+|  
+  
+doc_desc|  
+  
+log_record| viewstmt, viewnotice, viewtax records are inserted whenever a PDF
+is pulled via the GET Document API. These records will always have the USR_ID
+922, which is the blackKnight API user.  
+  
+## InfoConfig
+
+Used to obtain client-specific configurations that will then be persisted in
+the Oracle DB.
+
+Application| black-knight  
+---|---  
+Required Objects|
+
+  * blackKnight
+  * archivalPeriod
+
+  
+  
+## ActiveMQ
+
+Used to subscribe to the InfoConfig topic, so that the application will be
+notified of updates.
+
+## Network
+
+Type
+
+|
+
+From
+
+|
+
+To
+
+|
+
+Description  
+  
+---|---|---|---  
+DNS| NA| proxy| The domain of the auth server:
+bkidocs-(env).[infoimageinc.com](http://infoimageinc.com).  
+TCP| proxy| apipui:5000| The proxy need to be able to access the application
+server, e.g. ca-apipui-dv-01 for dev.  
+TCP| infoconfig| apipui:5000| InfoConfig needs access to the application
+server for service discovery.  
+TCP| infotrac| oracle:1521| DB access for application.  
+TCP| infotrac| mongoreg:61616| Access to ActiveMQ for the application to
+subscribe to the InfoConfig topic.  
+TCP| mongoreg| (unsure) application| ActiveMQ need access to the application
+to deliver message.  
+Mount| apipui| PVNAS| Storage server paths so that the application can pull
+the PDF directly for pre-converted documents.  
+HTTP| apipui| wrapperservice| The application will call the common DNS for
+wrapperservice for document conversion.  
+HTTP| apipui| bki-auth| The application will call the common DNS for bki-auth
+for oAuth2 token validation.  
+  
+* * *
+
+# Testing
+
+The application cannot be deployed unless it passes all tests at the Unit
+Testing and Application-Level Integration Test levels. That said, when the
+application is enhanced or modified, existing tests should be reviewed to see
+if update or addition is necessary.
+
+## Unit Testing
+
+Most classes have a corresponding Unit Test that will test that all functions
+work as intended to specs. Certain classes and functions are difficult to unit
+test, and are deferred to other form of testings. For these classes, it is
+important to take care when making modifications, and whenever possible,
+introduce tests either at the unit testing level or other level of testing.
+Below are the list of classes/functions that currently do not have a unit
+test:
+
+  1. com.infoimage.bki.aspect
+    1. Deferred to Application-Level Integration Testing, Third Party Integration Testing and Manual Testing
+  2. com.infoimage.bki.async.listener
+  3. com.infoimage.bki.config
+    1. All Spring configuration classes. Deferred to Integration Testing and Manual Testing.
+  4.  com.infoimage.bki.context
+    1. Methods are tested. However, whether these will work as ThreadLocal containers need to be tested during Integration Testing.
+  5.  com.infoimage.bki.entity
+    1. Simple POJO tests exist, but whether these entities can work with Hibernate and DB is not tested during Unit Testing. Deferred to Integration Testing.
+  6. com.infoimage.bki.repository
+    1. JPA repositories. Difficult to test since methods and inner workings are hidden. Since these are provided by Spring, we can apply some level of trust that they will work. Deferred to Integration Testing.
+  7. com.infoimage.bki.service.impl
+    1. DefaultCacheService
+      1. Need R&D on how to validate the cache. Maybe defer to Integration Testing.
+    2. DefaultDocumentService
+      1. There are some tests for all functions. However, additional tests to validate more (edge) cases would be desirable.
+  8. com.infoimage.bki.util
+    1. LogUtil. Affects logging, and thus not tested. If there's tool/technology to test logs, we should enhance the tests to validate this class.
+
+## Application-Level Integration Test
+
+The ApplicationIT will handle all self-contained application-level test.
+Currently, the test does not handle setting up a local ActiveMQ broker.
+
+ **Not Tested**
+
+  * The GET Document and GET DocumentList endpoints are not tested. There is some R&D necessary to figure out how to skip the OAuth2 step and reach the endpoint with a mocked authorized access.
+  * InfoConfig/ActiveMQ integration. Deferred to Manual Testing, Third Party Integration Testing, and potentially JMeter Testing.
+
+## Third Party Integration Test
+
+This is testing performed by Black Knight when the setup is deployed to Pilot.
+
+## Additional JMeter Test
+
+Additional JMeter should be developed to cover certain test cases that are not
+easily testable in Unit Testing or Application-Level Integration Testing. One
+suggested test would be for load testing.
+
+ **Not Yet Implemented**
+
+## Manual Testing
+
+Follow [How-to: Black Knight Testing With
+Postman](https://confluence.infoimageinc.com/display/IKB/How-
+to%3A+Black+Knight+Testing+With+Postman) for instructions.
+
+### Local/Developmental Testing
+
+Due to the fact that the application is built on Spring Boot, it can be
+quickly started up on a local environment to be tested during development.
+Review the dependencies below to ensure the local environment is setup
+correctly.
+
+Dependency
+
+|
+
+Required
+
+|
+
+Reason  
+  
+---|---|---  
+Port Access: From[localhost] To[ca-oracle-dv-01:1521]| Yes| The application
+persists its data in oracle db.  
+Port Access: From[infoconfig-dev] To[localhost:5000]| Yes| InfoConfig need to
+be able to call the healthcheck and version endpoints of the running
+application.  
+  
+DNS established:
+
+  * ca-oracle-dv-01
+  * infoconfig-dev
+
+| Yes| The application access dependencies based on DNS.  
+Port Access: From[ca-mongoreg-dv-02] To[localhost:9000]  
+ **Unsure about this one**|  No| ActiveMQ need to be able to connect with the
+application to provide update. If this is not available, then the application
+must be restarted every time a config is updated.  
+Port Access: From[localhost] To[ca-mongoreg-dv-02:61616]| No| The application
+need this to register with ActiveMQ. If this is not available, then the
+application must be restarted every time a config is updated.  
+Externalized Configurations| Yes| Certain configurations are externalized so
+that they do not get packaged in the JAR for added security. Follow the
+README.txt committed in the GitHub repo for instructions on how to set up
+those externalized configs.  
+Local OAuthServer| Yes| The docs service is dependent on an oauth server
+existing, so the oAuth Server must be hosted locally also. See .  
+Local PVNAS| Yes|
+
+The docs service requires connection to PVNAS to validate that the PDF/AFP
+exists. Therefore, the actual file from PVNAS must be downloaded and placed in
+the expected location.
+
+For DEV, it is expected to be
+
+/d/PV-NAS-DEV/indiv_afp/cid/(other path based on records in arch_file, e.g.
+.../compressed-afp/[zipfile])
+
+or /d/PV-NAS-DEV/indiv_afp2/cid/...  
+  
+* * *
+
+# Deployment
+
+The application can be deployed via bki-docs-service set of Jenkins pipeline.
+
+## New Setup
+
+  * Restart is required due to how HttpSecurity work. It can only be configured at startup.
+
+## Configuration Change
+
+  * Restart is not required. InfoConfig/ActiveMQ enable automatic update.
+
+## Discontinuation
+
+  * Restart is required. HttpSecurity is configured at startup, so API calls for the discontinued client technically are still possible. However, access will most likely be denied, because the oAuth2 token would not longer be obtainable. Additionally, if data is purged from the Oracle DB, there would be nothing to provide.
+
+

@@ -1,0 +1,108 @@
+title: Corelation Analysis
+body: # General
+
+  * We can use XML or JSON.
+  * If using JSON, all values should be defined as Strings.
+  * Null and boolean literals won't be accepted. Use "true", "false", and "" for true, false, and null respectively.
+
+# Setup Requirement
+
+  1. Must be one-to-one
+    1. Otherwise, we have to figure out how the client can tell us who is the Primary User. On Corelation side, only one single email address can be assigned to an account.
+  2. Email only; no SMS. (Though, we can simply update only email information on Corelation side if we are managing sms notifications)
+  3. Selective Paperless: enotice only
+    1. Corelation does not have any other option. Again, we technically can exclude updates related selective paperless other than enotice. 
+  4. NotificationPreference: can do byUFA or byUsr. 
+    1. Again, if not one-to-one; we need to figure out who is the Primary Owner of each account.
+
+# Specific
+
+Please reference attached documents for more details.
+
+## Objects of Interest
+
+  1.  **account**  
+
+    1.  **eStatementOption** : control the delivery preference of statements  
+
+      1. M - Mail
+      2. E - Electronic
+      3. B - Both
+    2.  **eNoticeOption** : control the delivery preference for notices
+      1. M - Mail
+      2. E - Electronic
+      3. B - Both
+    3.  **eStatementNotification** : unlike our system where emails is controlled by the same paperless ( **eStatementOption** ) option, whether an email is sent to the user is controlled by this.
+      1. Y
+      2. N
+    4.  **eStmtPersonContactSerial** : this is equivalent to an NP_ID, providing a link to the personContact record that contains the email address. This is a  _singular_ field, so one record can be assigned per **account**.
+  2.  **person**
+    1.  **personContact** : stores contact information. Each record provides for a unique value (an email address or a phone number). Since the  **eStatementNotification** field only relates to emails, we are only concerned with email addresses, which mean only records of type PE or BE.
+      1. PE - Personal Email
+      2. BE - Business Email
+      3.  **personContactSerial** : this is the NP_ID, which will be used to update the  **eStmtPersonContactSerial** in the  **account**
+
+  
+
+# Logic
+
+## Updating Delivery Preference
+
+ **Normal Paperless**
+
+  1. Query for Account by Account Number to obtain Serial (ID).
+  2. Query for columns on Account table by Serial to view **eStatementOption**.
+  3. Update the **eStatementOption** and  **eNoticeOption** accordingly. Both should always be the same value.
+    1. If changing to Paper only, remove the  **eStmtPersonContactSerial** (set it to "", which is null).
+
+ **Selective Paperless for Notice Only**
+
+  1. Query for Account by Account Number to obtain Serial (ID).
+  2. Query for columns on Account table by Serial to view **eStatementOption** and **eNoticeOption**.
+  3. Update the **eStatementOption** and/or **eNoticeOption** accordingly.
+    1. If changing to Paper, check if both options are Paper, and when true, remove the **eStmtPersonContactSerial** (set it to "", which is null).
+
+## Updating Notification Preference (Email Only - SMS not supported)
+
+ **ByUFA**
+
+  1. Query for Account by Account Number to obtain Serial (ID).
+  2. Query for columns on Account table by Serial to view the **eStatementNotification** and **eStmtPersonContactSerial** fields.
+  3. Using the **eStmtPersonContactSerial** , verify if the email address is the same as the new value.
+    1. If needing to update the email address, then query for the Person to check all email addresses tied to that user.
+      1. If one of the email address is the same as the email we want to update, then update **eStmtPersonContactSerial** to the Serial of that email record (PersonContact).
+      2. If none of the email addresses match, then insert a new record with the new email address. Then use the new record Serial to update **eStmtPersonContactSerial**.
+      3. What's important to note here is that we would actually never update an existing email record. We either switch to another existing record or create a new one. This is because the contact records that store the email addresses for the user are unique. It's a single record that can be tied to multiple accounts. Therefore, updating the record might inadvertently change more than we need to. 
+  4. Update both the **eStatementNotification** and **eStmtPersonContactSerial** once all the necessary information have been gathered and checked.
+
+Maybe 1 and 2 can be done in the same step somehow.
+
+ **ByUsr**
+
+  1. Perform ByUFA logic once for one Account.
+  2. With the new **eStmtPersonContactSerial** , update the rest of the accounts with that value.
+
+  
+
+# Documentation provided by Corelation
+
+ **Full Object Details** (Much won't be relevant, so it's a good idea to know
+what you're looking for)
+
+Obtained July 2022
+
+250
+
+ **eStatement Updates XML examples** (Most relevant regarding DP and NP)
+
+Obtained July 2022
+
+250
+
+ **Address and Contact Info examples** (Might not be as relevant)
+
+Obtained July 2022
+
+250
+
+

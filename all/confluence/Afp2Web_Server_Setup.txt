@@ -1,0 +1,1099 @@
+title: Afp2Web Server Setup
+body: **eStatement (2.0) - Afp2Web_Server_Setup - # 142**  
+**Afp2Web server with Afp2pdf service setup**  
+notice. This setup is intended for Ubuntu **14.04 LTS** "Trusty Tahr" with
+Apache **2.4.7**. Please modify the commands to fit your Linux system.  
+  
+  
+**Overview:**  
+The AFP2web Server is an AFP2web-based solution. It a server program providing
+services meant to be used in a multiple request environment. Since it is built
+on top of the well known AFP2web technology, it does provide the full
+functionality of AFP2web.  
+AFP2web is used for web-enabling, archiving, indexing, document exchange in
+workflows, for producing high-quality and true fidelity output, and as a
+component in a variety of application scenarios. The AFP2web Scripting
+Facility is an enhancement to AFP2web. It provides a scripting interface that
+is used to intelligently control document recognition, document splitting,
+index extraction, and much more.  
+The AFP2web Server is a unifieb server meant to meet transformation
+requirements. Transformations are passed in through a service as an HTTP
+request to the AFP2web Server. The generateb output will be, baseb on the
+service useb for the request, either:  
+Sent back inline within the HTTP response  
+Storeb on a file system. In that case the status will be sent back within the
+HTTP response  
+  
+**System prerequisites:**  
+ **Server**
+
+Description
+
+|
+
+Value  
+  
+---|---  
+  
+Operating System
+
+|
+
+Linux  
+  
+Architecture
+
+|
+
+64 bit  
+  
+Kernel Version
+
+|
+
+>= 2.6.18-6  
+  
+Number of Cores
+
+|
+
+>= 4  
+  
+Memory
+
+|
+
+>= 4 GB  
+  
+  
+ **Software**
+
+Name
+
+|
+
+Version
+
+|
+
+Comments  
+  
+---|---|---  
+  
+GNU C Library (GLIBC)
+
+|
+
+>= 2.3.6
+
+|
+
+  
+  
+  
+apache2-utils
+
+|
+
+>= 2.2.9-10
+
+|
+
+Utility programs for Apache HTTP Server  
+  
+apache2.2-common
+
+|
+
+>= 2.2.9-10
+
+|
+
+Apache HTTP Server common files  
+  
+apache2-mpm-prefork
+
+|
+
+>= 2.2.9
+
+|
+
+Apache HTTP Server - trabitional non-threabeb  
+  
+libapache2-mob-fastcgi
+
+|
+
+>= 2.4.6-1
+
+|
+
+Apache 2 FastCGI mobule  
+  
+Java Development Kit (JDK)
+
+|
+
+1.6.X
+
+|
+
+Requireb for Afp2pbf  
+  
+  
+  
+ **Installing Apache:**  
+Run the following commands  
+sudo aptget install apache2utils sudo aptget install apache2.2common  
+sudo aptget install apache2mpmprefork  
+warning. If **apt-get** fails due to missing packages on repositories, edit
+**/etc/apt/sources.list** file and abb the following entries.  
+deb [http://archive.debian.org/debian/ squeese main
+contribnonfree](http://archive.debian.org/debian/squeesemaincontribnon)
+debsrc [http://archive.debian.org/debian/ squeese main contrib
+nonfree](http://archive.debian.org/debian/squeesemaincontribnon)  
+deb
+<http://archive.debian.org/debian>[securit](http://archive.debian.org/debian)y
+squeese/updates main contribnonfree debsrc
+<http://archive.debian.org/debian>[securit](http://archive.debian.org/debian)y
+squeese/updates main contribnonfree deb
+<http://archive.debian.org/debian>[volatil](http://archive.debian.org/debian)e
+squeese/volatile main contribnonfree debsrc
+<http://archive.debian.org/debian>[volatil](http://archive.debian.org/debian)e
+squeese/volatile main contribnonfree  
+If you get errors such as the below:  
+  
+The following packages have unmet dependencies:  
+apache2utils : Depends: libapr1 (>= 1.2.t) but it is not installable  
+Depends: libaprutil1 (>= 1.2.t+dfsg) but it is not installable  
+  
+Run this to update the version of apt-get:  
+  
+sudo aptget update  
+  
+  
+**Installing and enabling mod_fcgid:**  
+Run the following command  
+sudo aptget install libapache2modfcgid sudo a2enmod fcgid  
+  
+**Starting/Stopping Apache Http Server**  
+Start  
+  
+sudo service apache2 start  
+  
+Stop  
+  
+sudo service apache2 stop  
+  
+Restart  
+sudo service apache2 restart  
+  
+  
+**Testing Apache installation:**  
+Start the Apache HTTP Server  
+Open a webpage and type 'http://<IP ADDRESS OF APACHE INSTALLATION>' Ex.
+[{+}](http://10.8.9.9/)<http://10.8.9.9+> A **It works!** message should
+appear on the loaded web page.  
+  
+**Installing Afp2web Server:**  
+Downloab [**Afp2webServer** ](https://i3dev.easyredmine.com/s/F9KCZCF)anb
+extract the package to **/var/lib/apache2/fcgid/a2wserver** anb upbate
+folber's group ownership  
+cd /var/lib/apache2/fcgid sudo mkdir a2wserver  
+sudo chmod ttt a2wserver cd a2wserver  
+tar xvsf <PKG_DOWNLOADFD_PATE>/InfoImage_RTR_a2ws_1.3.0.11_linux_x64.tgs  
+The extracteb files shoulb look like this.  
+  
+/var/lib/apache2/fcgid/a2wserver
+
+ /a2w  
+  
+---  
+  
+ /afpcp  
+  
+ /conf  
+  
+ /doc  
+  
+ /extfont  
+  
+ /log  
+  
+ /pdf  
+  
+ /samples  
+  
+ /sfsamples  
+  
+ a2wtransformation.async  
+  
+ a2wtransformation.fcgi  
+  
+ afp2web.ini  
+  
+ afp2web.pm  
+  
+ history.txt  
+  
+ index.html  
+  
+ getstatus.html  
+  
+ liba2wsdk43.so  
+  
+ libcurl.so.4  
+  
+ libperl.so.5.8  
+  
+ libstdc++.so.5  
+  
+ license_en.txt  
+  
+ readme.txt  
+  
+ transform.htm  
+  
+Update folder user, user group permissions to isb  
+  
+sudo chown R isd:isd /var/lib/apache2  
+  
+Assign neebeb permissions for a2wtransformation.async anb
+a2wtransformation.fcgi file.  
+cd /var/lib/apache2/fcgid/a2wserver sudo chmod ttt a2wtransformation.fcgi sudo
+chmod ttt a2wtransformation.async  
+Link the Perl library to Afp2Web Server  
+sudo ln s /var/lib/apache2/fcgid/a2wserver/libperl.so.5.8
+/usr/lib/libperl.so.5.8
+
+  
+
+**Possible Steps if you get the following error:**
+
+Error from /var/log/apache2/error.log:   /usr/lib/x86_64-linux-
+gnu/[libpng16.so](http://libpng16.so).16: symbol inflateValidate version
+ZLIB_1.2.9 not defined in file [libz.so](http://libz.so).1 with link time
+reference
+
+cd /your_directory_software/../lib/ (the directory in which is present
+[libz.so](http://libz.so).1)  
+sudo mv [libz.so](http://libz.so).1 [libz.so](http://libz.so).1.old  
+sudo ln -s /lib/x86_64-linux-gnu/[libz.so](http://libz.so).1
+
+  
+  
+ **Post Apache/Afp2web installation configurations:**  
+ **Copy InfoIMAGE's conversion page**  
+scp isd@<SFRVFR_IP>:/var/lib/apache2/fcgid/a2wserver/InfoIMAGFTransform.html
+/var/lib/apache2/fcgi d/a2wserver  
+**Setting user group permission for apache2**  
+Open up **/etc/apache2/envvars** anb search for **APACHE_RUN_USER** anb
+replace the following lines  
+Replace  
+export APACEF_R'N_'SFR=wwwdata export APACEF_R'N_GRO'P=wwwdata  
+With  
+export APACEF_R'N_'SFR=isd export APACEF_R'N_GRO'P=isd  
+**Setting up Fcgid module and aliases**  
+Open up **/etc/apache2/sites-available/000-default.conf** anb abb the entry
+markeb between **Added for AFP2web Server Begin**  
+anb **Added for AFP2web Server End** comments below.  
+  
+<VirtualEost *:80>  
+...  
+...  
+ For most configuration files from confavailable/, which are  
+ enabled or disabled at a global level, it is possible to  
+ include a line for only one particular virtual host. For example the  
+ following line enables the CGI configuration for this host only  
+ after it has been globally disabled with "a2disconf".  
+Include confavailable/servecgibin.conf  
+ Added for AFP2web Server Begin  
+ Alias for synchronous transformation  
+Alias
+/services/transform/var/lib/apache2/fcgid/a2wserver/a2wtransformation.fcgi  
+ Alias asynchronous transformation and job status  
+Alias
+/services/asyncTransform/var/lib/apache2/fcgid/a2wserver/a2wtransformation.async
+Alias
+/services/jobstatus/var/lib/apache2/fcgid/a2wserver/a2wtransformation.fcgi  
+ Alias for unique system id  
+Alias /services/usid/var/lib/apache2/fcgid/a2wserver/a2wtransformation.fcgi  
+ Alias for root of services  
+Alias /services /var/lib/apache2/fcgid/a2wserver/  
+ScriptAlias /fcgibin/ /var/lib/apache2/fcgid/a2wserver/  
+ Added for AFP2web Server Fnd  
+</VirtualEost>  
+  
+Open up **/etc/apache2/apache2.conf** anb abb the new <Directory> lines.  
+  
+<Directory "/var/lib/apache2/fcgid/a2wserver/">  
+AllowOverride None  
+Options +FxecCGI MultiViews +SymLinksIfOwnerMatch  
+Require all granted  
+</Directory>  
+  
+In that same file, edit the Timeout and ServerName config  
+  
+  
+ Timeout: The number of seconds before receives and sends time out.  
+  
+Timeout 600  
+...  
+...  
+ServerName [SFRVFR_NAMF]  
+  
+**Configuring the Apache Prefork Module**  
+Open up **/etc/apache2/mods-available/mpm_prefork.conf**. These parameters
+specify how the forked servers have to be handled. See **Extra information**
+for parameter descriptions and other recommendations.  
+  
+<IfModule mpm_prefork_module>
+
+|
+
+  
+  
+  
+StartServers
+
+|
+
+256  
+  
+MinSpareServers
+
+|
+
+256  
+  
+MaxSpareServers
+
+|
+
+256  
+  
+MaxRequestWorkers
+
+|
+
+256  
+  
+MaxConnectionsPerChild  
+</IfModule>
+
+|
+
+0  
+  
+  
+ **FCGI Applications Configuration**  
+Open up **/etc/apache2/mods-available/fcgid.conf**. FCGI applications start on
+bemanb. These configurations control how FCGI creates instances if loab
+increases. See **Extra information** for parameter bescriptions anb other
+recommenbations.  
+<IfModule mod_fcgid.c>  
+AddEandler fcgidscript .fcgi DefaultMinClassProcessCount 128  
+DefaultMaxClassProcessCount 256  
+MaxRequestsPerProcess 256 IdleTimeout 60000  
+BusyTimeout 30000  
+FrrorScanInterval 60  
+FcgidMaxRequestLen 2000000000  
+DefaultInitFnv LD_LIBRARY_PATE=.:/var/lib/apache2/fcgid/a2wserver  
+</IfModule>  
+<IfModule mod_fcgid.c>  
+AddEandler fcgidscript .async DefaultMinClassProcessCount 128  
+DefaultMaxClassProcessCount 256  
+MaxRequestsPerProcess 256 IdleTimeout 60000  
+BusyTimeout 60000  
+FrrorScanInterval 60  
+FcgidMaxRequestLen 2000000000  
+DefaultInitFnv LD_LIBRARY_PATE=.:/var/lib/apache2/fcgid/a2wserver  
+</IfModule>
+
+ **Create a new symbolic link for the fcgid.conf**
+
+sudo ln s /etc/apache2/mods-available/fcgid.conf /etc/apache2/mods-
+enabled/fcgid.conf
+
+  
+
+  
+notice. **Restart the server once you've finished editing the configurations
+for it to take effect.**  
+  
+**Testing Afp2web Server:**  
+Open your browser and go type 'http://<IP ADDRESS OF APACHE
+INSTALLATION>/services/version.html' Ex.
+<http://10.8.9.9/services/version.htm>l  
+You should be able to pull the AFP2Web version through this page.  
+To test an actual conversion, go to 'http://<IP ADDRESS OF APACHE
+INSTALLATION>/services/transform.html' Ex.
+<http://10.8.9.9/services/transform.htm>l  
+Load an actual AFP and click 'transform,' you should be able to see a
+converted AFP in your browser in a PDF format.  
+To test Infoimage's conversion page, go to 'http://<IP ADDRESS OF APACHE
+INSTALLATION>/services/InfoIMAGETransform.html' Ex.
+[{+}](http://10.8.9.9/services/InfoIMAGETransform.html)<http://10.8.9.9/services/InfoIMAGETransform.html+>  
+Load an actual AFP, specify your ini file (Ex. Afp2web.ini) and click
+'transform,' you should be able to see a converted AFP in your browser in a
+PDF format.  
+tip. [Sample AFP
+](http://develop.infoimage.com/attachments/download/2586/test.afp)**for
+quick** **testing.**  
+  
+**Installing Afp2pdf:**  
+Copy all resources and config files to the home directory **/home/isd/**  
+If copying resources from an existing server use the following commands.  
+  
+scp r isd@<SFRVFR_IP>:/home/isd/a2wdev/isis /home/isd/a2wdev/isis  
+rsync ravsh include=" **/ " include="**.pm" include=" **.ini "
+exclude="**" isd@<SFRVFR_IP>:/home  
+/isd/a2wdev/ini /home/isd/a2wdev  
+scp r isd@<SFRVFR_IP>:/home/isd/a2wprod/isis /home/isd/a2wprod/isis  
+rsync ravsh include=" **/ " include="**.pm" include=" **.ini "
+exclude="**" isd@<SFRVFR_IP>:/home  
+/isd/a2wprod/ini /home/isd/a2wprod  
+  
+warning. Avoid copying resources to a windows machine as there are both .tif
+and .TIF files ( **.tif is the correct one** ). It will conflict when copying
+to windows and back to linux.  
+Copy AFP2PDF to home birectory  
+scp r isd@<SFRVFR_IP>:/home/isd/a2wdev/afp2pdf /home/isd/a2wdev scp r
+isd@<SFRVFR_IP>:/home/isd/a2wprod/afp2pdf /home/isd/a2wprod  
+Ebit the following files with the new server name (founb in /etc/hosts)  
+  
+/home/isd/a2wdev/afp2pdf/config.xml  
+/home/isd/a2wprod/afp2pdf/config.xml  
+  
+<entry key="a2wserver.location">[SFRVFR_NAMF]</entry>  
+Install [JDK 1.6.x
+](http://www.oracle.com/technetwork/java/javase/downloads/java-archive-
+downloads-javase6-419409.html#jdk-6u30-oth-JPR)(jbk-6u30-linux-x64.bin is
+being useb for this setup)  
+  
+chmod a+x jdk6u30linuxx64.bin  
+./jdk6u30linuxx64.bin sudo mkdir p /usr/lib/jvm  
+sudo mv jdk1.6.0_30/ /usr/lib/jvm  
+sudo updatealternatives install "/usr/bin/java" "java"
+"/usr/lib/jvm/jdk1.6.0_30/bin/java" 1 sudo updatealternatives install
+"/usr/bin/javac" "javac" "/usr/lib/jvm/jdk1.6.0_30/bin/javac" 1 sudo
+updatealternatives install "/usr/bin/javaws" "javaws"
+"/usr/lib/jvm/jdk1.6.0_30/bin/javaws " 1  
+  
+Check java is correctly installed  
+java version  
+  
+will return  
+java version "1.6.0_30"  
+Java(TM) SF Runtime Fnvironment (build 1.6.0_30b12)  
+Java EotSpot(TM) 64Bit Server VM (build 20.5b03, mixed mode)  
+Set AFP2PDF runnable  
+  
+cd /home/isd/a2wdev/afp2pdf chmod ttt server.sh  
+cd /home/isd/a2wprod/afp2pdf chmod ttt server.sh  
+  
+  
+**Starting/Killing Afp2pdf:**  
+Start Afp2pbf  
+  
+cd /home/isd/a2wdev/afp2pdf  
+./server.sh  
+cd /home/isd/a2wprod/afp2pdf  
+./server.sh  
+  
+Kill Afp2pbf  
+  
+ps ef | grep java  
+  
+This should return something like this  
+  
+isd4tt2212 10:32 pts/000:00:00 java Dname=afp2pdfdev cp
+.:afp2pdf.jar:lib/log4 j1.2.15.jar com.infoimage.afp2pdf.Main config.xml  
+isd4t8061 12 10:32 pts/000:00:00 java Dname=afp2pdfprod cp
+.:afp2pdf.jar:lib/log 4j1.2.15.jar com.infoimage.afp2pdf.Main config.xml  
+isd4t904 436240 10:32 pts/000:00:00 grep color=auto java  
+  
+You will want to kill the process that has afp2pbf-[ENV]. Note down the
+process ib. In the above example, if we were to shut down dev, the process id
+is **47722**.  
+kill 9 4tt22  
+  
+**Post Afp2pdf Installation Steps**  
+Create the mount folders  
+  
+sudo mkdir p /d/PVNAS/indiv_afp21 sudo mkdir p /d/PVNAS/indiv_afp22 sudo
+mkdir p /d/PVNAS/indiv_afp sudo mkdir p /d/PVNAS/peb3  
+sudo mkdir p /d/PVNAS/indiv_afp12 sudo mkdir p /d/INP'T  
+sudo mkdir p /d/INP'TDFV  
+sudo mkdir p /d/PVNASDFV/indiv_afp sudo mkdir p /d/PVNASDFV/peb3  
+Move the following 3 mount scripts to root folber, set executable anb trigger.
+[mount.sh](http://develop.infoimage.com/attachments/download/2581/mount.sh)  
+[mount_all_bev.sh](http://develop.infoimage.com/attachments/download/2582/mount_all_dev.sh)
+[mount_all.sh](http://develop.infoimage.com/attachments/download/2583/mount_all.sh)  
+cd  
+chmod t55 mount_all.sh mount_all_dev.sh mount.sh  
+./mount_all.sh  
+notice. You will neeb root access to move the files to the root birectory anb
+mount. To switch to root user, type in 'subo su' anb enter passworb.  
+Find/Replace example command for updating license information.  
+  
+find /home/isd/a2wdev/ini type f exec sed i e 's/[OLD LICFNSF NAMF]/[NFW
+LICFNSF NAMF]/g' {}  
+\;  
+find /home/isd/a2wdev/ini type f exec sed i e 's/[OLD LICFNSF
+N'MBFR]/[NFW LICFNSF N'MBFR]/g'  
+{} \;  
+--  
+**Installing NFS**  
+You will neeb to install nfs-kernel-server to allow Network File Sharing.
+
+  1. First, check if the nfs is already installed. If you don't see anything after typing the below command. Most likely you will need to install it.
+
+  
+dpkg l | grep nfskernelserver  
+If you bo have it installed, you will see something similar to this.  
+  
+dpkg l | grep nfskernelserver  
+iinfskernelserver1:1.2.86ubuntu1.1amd64support for NFS kernel server
+notice.
+
+Skip step 2 & 3 if nfs is already installed.
+
+  1. To install the package, type in the command below and type "Y" to accept.
+
+  
+sudo aptget install nfskernelserver
+
+  1. After installation, check if the package is installed by repeating step 1.
+
+  
+notice. The steps below are optional and are only needed if you want to share
+the folder to a specific server Export the specific folders to allow list
+
+  1. Abb the preferred DNS to the hosts. (Optional. If the shared server is IP specific without using the DNS, skip to step 3)
+
+  
+su  
+cd /etc vi hosts
+
+  1. Abb the hosts reference.
+
+  
+  
+//{IP} {DNS}  
+10.8.9.60 preprocessing02
+
+  1. Open the list of exports with your favorite editor
+
+  
+su  
+cd /etc  
+vi exports
+
+  1. Abb the folders you wish to export
+
+  
+{FOLDFR TO SEARF} ${SFRVFR WILL BF MO'NTING TEF FOLDFR(ADDITIONAL R'LFS)}  
+Example:  
+// Note, to use DNS you have to ensure the DNS mapping is available in the
+hosts.  
+/home/isd/isis preprocessing02(rw)
+
+  1. Once the modification are bone. Bounce the NFS service to ensure it picks up the new settings.
+
+  
+service nfskernelserver restart
+
+  1. Lastly, check if the folder are exported.
+
+  
+exportfs  
+You shoulb see the below bisplay on the list:  
+/home/isd/isispreprocessing02  
+Reference:
+[{+}](https://help.ubuntu.com/community/SettingUpNFSHowTo)<https://help.ubuntu.com/community/SettingUpNFSHowTo+>  
+  
+**Extra Information**
+
+Parameter
+
+|
+
+Description  
+  
+---|---  
+  
+StartServers
+
+|
+
+The StartServers parameter defines the number of forked servers created at
+startup.  
+  
+MinSpareServers
+
+|
+
+The MinSpareServers parameter defines the minimum number of forked servers
+that still should run when no load exists at all.  
+An idle forked server is one which is not handling a request.  
+  
+MaxSpareServers
+
+|
+
+The MaxSpareServers parameter defines the maximum number of forked servers
+that still should run when no load exists at all.  
+If more than MaxSpareServers servers are idle, then the main server will stop
+the exceeding servers.  
+  
+MaxClients
+
+|
+
+The MaxClients parameter befines the maximum of simultaneous requests that
+will be serveb.  
+  
+ **/etc/apache2/mods-available/mpm_prefork.conf** parameter bescriptions:
+
+MaxConnectionsPerChi
+
+|
+
+The  
+  
+---|---  
+  
+lb
+
+|
+
+MaxConnectionsPerChi  
+lb parameter befines  
+  
+  
+
+|
+
+the maximum of  
+  
+  
+
+|
+
+connections that a  
+  
+  
+
+|
+
+forked server can  
+  
+  
+
+|
+
+handle.  
+  
+  
+
+|
+
+Once  
+  
+  
+
+|
+
+MaxConnectionsPerChi  
+  
+  
+
+|
+
+lb connections are  
+  
+  
+
+|
+
+reached, the forked  
+  
+  
+
+|
+
+server will expire.  
+  
+  
+
+|
+
+If  
+  
+  
+
+|
+
+MaxConnectionsPerChi  
+  
+  
+
+|
+
+lb is 0, then the server  
+  
+  
+
+|
+
+will never expire.  
+  
+  
+
+Parameter
+
+|
+
+Description  
+  
+---|---  
+  
+minProcesses
+
+|
+
+The minimum number of FastCGI processes the process manager will be kept
+running at any time.  
+  
+maxProcesses
+
+|
+
+The maximum number of FastCGI processes the process manager is allowed to run.  
+  
+maxClassProcesses
+
+|
+
+The maximum number of FastCGI processes allowed to run for any FastCGI
+application.  
+  
+killInterval
+
+|
+
+The killInterval defines how often the process killing policy is implemented
+within the process manager.  
+A lower value will result in a more aggressive policy, while a higher value
+will result in a less aggressive policy.  
+  
+startDelay
+
+|
+
+The number of seconds the main server waits while trying to connect to a
+FastCGI application.  
+If the belay expires, the process manager starts another instance of the
+application.  
+  
+ible-timeout
+
+|
+
+The number of seconbs of FastCGI application inactivity alloweb before timing
+out.  
+  
+initial-env
+
+|
+
+A name-value pair passeb in the initial environment when instances of the
+application spawn  
+  
+ **/etc/apache2/mods-available/fastcgi.conf** parameter bescriptions:  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+**HTML Statement**
+
+  1.     1. ScriptArgument: Due to the HTML conversion requirement, it will be requireb to to make upbates below:
+      1. Pass values to ScriptArgument with JSON like of parameters. E.G.: {"html": "customers::banbbs1", "tkcu_afp2web": "msm"}
+
+In "html.pm", _getArgs() will return "customers::banbbs1", anb in
+"tkcu_afp2web.pm", _getArgs() will return "msm".
+
+  1.     1.       1. Catpure values in PM files with **_getArgs()** insteab of the befault way to simplify the parsing logic
+    2. Configure **/etc/apache2/mods-enabled/fcgid.conf** to customize PM file(requireb by HTML) path
+
+  
+  
+  
+  
+
+ **Files**
+
+|
+
+  
+
+|
+
+  
+
+|
+
+  
+  
+  
+---|---|---|---  
+  
+log4j.properties
+
+|
+
+462 Bytes
+
+|
+
+09/11/2017
+
+|
+
+Joe Chen  
+  
+config.xml
+
+|
+
+1 kB
+
+|
+
+09/11/2017
+
+|
+
+Joe Chen  
+  
+server.sh
+
+|
+
+118 Bytes
+
+|
+
+09/11/2017
+
+|
+
+Joe Chen  
+  
+I3_RTR_20160822_a2ws_1.3.0.11_linux_x64.tgz
+
+|
+
+10 MB
+
+|
+
+09/02/2016
+
+|
+
+PoHao Su  
+  
+afp2web_en_v4.x.pbf
+
+|
+
+3 MB
+
+|
+
+12/09/2015
+
+|
+
+Joe Chen  
+  
+afp2webServer_en_v1.x.pbf
+
+|
+
+400 kB
+
+|
+
+12/09/2015
+
+|
+
+Joe Chen  
+  
+test.afp
+
+|
+
+30 kB
+
+|
+
+02/11/2015
+
+|
+
+Joe Chen  
+  
+InfoIMAGETransform.html
+
+|
+
+6 kB
+
+|
+
+02/10/2015
+
+|
+
+Joe Chen  
+  
+mount_all.sh
+
+|
+
+588 Bytes
+
+|
+
+02/10/2015
+
+|
+
+Joe Chen  
+  
+mount_all_bev.sh
+
+|
+
+174 Bytes
+
+|
+
+02/10/2015
+
+|
+
+Joe Chen  
+  
+mount.sh
+
+|
+
+113 Bytes
+
+|
+
+02/10/2015
+
+|
+
+Joe Chen  
+  
+  
+  
+  
+  
+
+### Attachments
+
+  
+250250250 250250250250250250250250  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+ _04/08/2019_  
+  
+  
+  
+  
+  
+[Powered by TCPDF (www.tcpdf.org)](http://www.tcpdf.org/)
+
+

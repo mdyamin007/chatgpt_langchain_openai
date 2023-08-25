@@ -1,0 +1,245 @@
+title: Hypercube - Meteor version upgrade
+description: None
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~Azad] Can you take a look the client's feedback? This is for BANB and I attached a screenshot:
+1. I enrolled a brand new client with a new CIF/Account.  Enrollment was successful with no issues from the Client UI.  However, when I look up the account, it shows it twice with an Account Application code of DD and dd.  I thought this was strange.  I have other brand new accounts in there and they do not do the same thing.  Account showing a duplicate is 123123123.  Account showing correctly is 125125125 and 126126126
+
+
+2. The Email notification is showing the system variable instead of the client name.  I tried to fix it but can't.  Not sure if there is an issue or just user error.
+
+
+ [^InfoTrac Inquiries.docx] 
+
+
+author: JIRAUSER10911
+comment: [~Azad] [~Tin.Chak]
+
+Any update on this?
+
+
+author: azad
+comment: [~Tin.Chak] [~Kbittmann]
+ # InfoTRAC is showing the account twice because database has both of these accounts with same account number but different application code of DD and dd. Currently Hypercube does not have the feature of checking if the account type passed from sso request is valid or not. Also, BANB has user and account auto create feature turned on if not found on DB. So, if not found on DB, Hypercube will create a new account. I am guessing, on a SSO request, account number 123123123 and type dd was passed, and hypercube created a new entry on fin_account table.
+ # Wrong welcome email template was activated on Pilot which was using the _acctName_ variable instead of the_userName_ variable . I activated the previous template which was using the _userName_ template.
+
+Let me know if those issues are found again.
+
+Thanks
+
+Azad
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~Azad] More question from BANB:
+
+I just identified another issue that needs to be reviewed.  Our businesses can have multiple users under one business online banking profile.  Therefore, when a user enrolls, the Q2 User ID is passed through the SSO and used to create the Unique Identifier on the InfoImage side so that they have their own profile with the list of accounts they have been provided permission to have access to.  While testing today, i found that the sub-users were just overriding each other and sharing one profile.  The Unique Identifier is the CIF and not the User ID from Q2.  SO this does not appear accurate to me. Attached is an example of what I am seeing and an explanation of what would expected.  Please let me know if you have any questions. 
+
+
+author: JIRAUSER10911
+comment: [~Azad] [~Tin.Chak]
+
+Any update on this item?
+
+
+author: azad
+comment: [~Kbittmann]
+
+For meteor 2.5 version upgrade, the SSO logic and the BANB configuration didn't get any update, so the scenario that client described didn't occur for meteor version upgrade.
+
+Although we looked into the Q2sso logic and are trying to recreate the issue on our side. Also, we are trying to figure out how the parent and child accounts linking are happening on Hypercube. We are going to look into it more deeply on Hypercube side as well as on Processing UI side, specially the auth process for BANB.
+
+We are also going to look into other Hypercube clients who are using sub-user logic with Q2sso, so that we can compare this scenario with multiple cids.
+
+fyi [~Tin.Chak] [~rifat.mahmud]
+
+Thanks
+
+Azhar
+
+
+author: JIRAUSER10911
+comment: [~Azad]
+
+Any update on this?
+
+
+author: azad
+comment: [~Kbittmann],
+
+We couldn't still replicate this issue on Pilot. We are looking into it further.
+
+Thanks!
+
+
+author: azad
+comment: [~Kbittmann]
+
+I've tried to replicate this issue with the account_7806037314_ and the following two users that have access to this account -
+
+cif:_CAA2097_   client-type:_P_   owner:_Kenneth M Crevier_
+
+cif:AAA1118   client-type:_N_   owner: _American Pressure Washing Inc_
+
+
+
+I've enrolled the sub-user(AA1118) from Hypercube and then checked InfoTRAC for this account. I've attached two screenshot for those two users and I think after enrolling with the sub-user, the sub-user's profile did not overwrite the primary user's profile (banb_Primary_User_Kenneth.png, banb_sub_user_American_Pressure.png)
+
+Can you please check with BANB if they would test this scenario with this account from their side and provide me the feedback?
+
+
+
+[~Tin.Chak] [~rifat.mahmud]fyi.
+
+
+
+Thanks
+
+Azad
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~Azad] I attached client's feedback. Please review.
+Sub User Override Retest_9.2.2022.docx
+
+
+author: JIRAUSER10911
+comment: [~Azad]
+
+Any update on this?
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~Kbittmann] I talked to them this morning. They saw in the SSO request that the user type value is "P" which is interpreted as retail (or personal) user. For those users, there's no sub-users, so it will always override the information. Login ID field from the SSO request will also be ignored.
+
+Sub-users should have user type value "N", which also indicates that it's a commercial user. The login ID field together with the CIF number will be used to identify the different sub-users.
+
+DSI is investigating on production if we have retail users that also pass in the login ID.
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~Azad] They test again and it works. Can you check the log for this user? Did you do anything?
+Sub User Override Retest_9.7.2022.docx
+
+
+author: azad
+comment: [~Tin.Chak]
+
+I just reviewed the document and found the request they made for sub-user login. Following is the request they made yesterday
+{code:java}
+{
+    "data":"4d53eae7cab611f3177b55e6fd934b300000000000000AAA084509072022",
+    "email":"rachelle.green@bannerbank.com",
+    "selected_acct1":"9306008613",
+    "selected_acct_type1":"DD",
+    "selected_acct_desc1":"",
+    "selected_acct2":"9320027915",
+    "selected_acct_type2":"SV",
+    "selected_acct_desc2":"",
+    "user_type":"N",
+    "login_id":"645138",
+    "user_name":"Bobby Payroll"
+}
+{code}
+It seems that they passed the user_type "N" for sub-user login with this request that's why it is working as expected. I've checked the Pilot database and there is a mapping created in usr_mapping table with645138 as cif and 'S' as the primary_user_flag.
+
+Thanks
+Azhar
+
+
+author: azad
+comment: To QA,
+
+We are upgrading Hypercube with Meteor 2.5 version (up to now, Hypercube is running on Meteor 1.2.1 version). We are moving this upgrade to Stage.
+
+We have deployed Hypercube tag 9.0.0.6 on Stage environment (this version is running on Meteor 2.5). Please move forward with testing the application on Stage. Due date is 9/18.
+
+Please note that, no business for any client is changed, the only thing that is changed is the underlying technology. So you need to test some clients with their usual business and see if you find any issues.
+
+fyi[~Tin.Chak] [~rifat.mahmud]
+
+Thanks
+Azhar
+
+
+author: igor.khosid
+comment: [~Azad] [~Tin.Chak]
+Please set up a meeting to discuss the timeline and the required information needed for testing
+
+[~Andrey.Kutsenko] - FYI
+
+
+author: JIRAUSER10911
+comment: [~Tin.Chak] [~Azad]
+
+Per BANB:
+
+I have since tested a couple of more users successfully so I think we should be ok with this weekend's deployment.
+
+
+author: igor.khosid
+comment: [~Tin.Chak] [~Kbittmann] [~Azad]  [~davidt]
+
+Due to the very aggressive timeline (the story received {color:red}09.12 {color}and the due date {color:red}09.16{color}), and as discussed during this morning's meeting, we will randomly select test cases and clients for the test execution.
+The test result will provide the executed test cases and clients list.
+This is a significant update, and next time, please be sure to let QA know about that ahead of time.
+
+[~Andrey.Kutsenko] - FYI
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+Test result - PASSED.
+Environment: Stage
+Browsers:
+Chrome - Version 104.0.5112.102 (Official Build) (64-bit)
+Firefox Browser - Version 104.0.2 (64-bit))
+Login/Password for DSO testing: testQA/15Sep2022!
+
+Functional testing was done manually.
+Test cases were randomly selected from the confluence page: https://confluence.infoimageinc.com/display/QSS/Banb_SSO
+
+SSO tested on clients: BANB, PFSU
+DSO tested on clients: DACB, FNBK, ALCU
+
+Business logic has not changed.
+
+
+author: 5b1ee5a72eea651bacdeca2e
+comment: [~Azad] Can you deploy this to Stage for QA? Make sure the code in 9.0.0.8 is there in your new tag. Mac had some change there that I'm not if it's in your tag or not. Thanks.
+
+
+author: azad
+comment: Hi [~Tin.Chak]
+
+Hypercube Meteor version 2.5 code with tag 10.0.0.0 is deployed to Stage. Tag 9.0.0.8 (contains SLCU migration code) is merged with this tag.
+
+I am passing this ticket to QA for testing.
+
+[~rifat.mahmud]FYI.
+
+Thanks
+Azhar
+
+
+author: azad
+comment: [~Andrey.Kutsenko]
+
+Hypercube tag 10.0.0.0 (meteor 2.5 version) is deployed to Staging. Please go through with Hypercube testing for some client. Here are some clients that we recommend that you should test - _BANB_, _FNBK_, _TFSL_, _WECU_. After that you may test other clients as you like.
+
+[~Tin.Chak] [~rifat.mahmud]FYI.
+
+Thanks
+Azhar
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+{quote}Functional testing was done manually.
+Business logic has not changed.
+
+SSO tested on clients: BANB, PFSU, ALCU
+DSO tested on clients: DACB, FNBK, ALCU{quote}
+
+

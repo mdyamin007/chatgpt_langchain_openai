@@ -1,0 +1,141 @@
+Check Link :
+Check link is a link that is embedded with each row (record) of check list , by clicking this link customer can see the respective check image.
+How to figure out that a project need to implement check link:
+A clear indication should be at sow. verbiage like check links for view statement ,  CHECK LINKS TO BE INCLUDED FOR VIEWSTATEMENT SITE or something like that at sow indicates need to implement check link.
+Even if there is check list or check image in a project , we may not need to implement check link unless there is any guideline at sow to add check link.
+See the following snaps from sow to add check link.
+How to implement check link :
+Implementation is done at two steps:
+Add special character to each row (record) of the check list, this has to be done at DFA file. Color the check no blue under job f .And generate check index filehere is the corresponding output
+Rest is handled by the isd (eStatement) team. With the help of index file (putting it database ) and calling certain api and wrapper service, encoded url has been added to the each check link to get the respective check image
+Check Index:
+Check Index comes with check link. We need to generate check index when project has check link to be added
+Why do we need to generate check Index:
+isd (eStatement) team need check index to add meaningful encoded url to each check list record to fetch respective check image
+Check Index File Specifications:
+Check Index File Naming Convention:
+Format: msX_check_ MMDDYYYY_MMDDYYYY_HHMM_SEGID_CID.txt
+Field Number
+Field Name
+Description
+1
+Application Prefix
+msX = Monthly Statement where X ranges from 1 to 9
+meX = HELOC statement where X ranges from 1 to 9
+mvX = Visa where X ranges from 1 to 9
+mcX = Mastercard Statement where X ranges from 1 to 9
+
+2
+Begin Date
+The Statement Begin Date:
+2 digit month, 2 digit day, and 4 digit year
+If begin date is not available, please use processing date.
+3
+Closing Date
+The Statement Closing Date:
+2 digit month, 2 digit day, and 4 digit year
+If begin date is not available, please use processing date.
+4
+Processed Time
+The Processing Time (Military Time:
+2 digit hour range between 1  24, 2 digit minute
+5
+Segment ID
+Segment Number (Default is 1)
+6
+Customer ID
+4 letter internal Customer ID
+Example(s):
+ms1_check_03012009_03312009_1302_1_gdcu.txt
+Production Location:
+\\10.8.9.23\input\i3\process-files\ CID\ msX_check_ MMDDYYYY_MMDDYYYY_HHMM_SEGID_CID.txt
+Staging Location:
+\\10.8.8.216\input\I3\process-files\CID\ msX_check_ MMDDYYYY_MMDDYYYY_HHMM_SEGID_CID.txt
+Content Specification:
+PUI Trigger Command:
+Check_image file:\\10.8.9.23\Input\I3\process-files\CID\ msX_check_ MMDDYYYY_MMDDYYYY_HHMM_SEGID_CID.txt orgName:CID userName:system action:exec
+Each column is has pipe delimited.
+Field Number
+Field Name
+Description
+Required
+1
+Account Number
+The Customers account number
+Yes
+2
+Checking Account Number
+The Checking account number
+(If not used, it can be left blank; This term is also known as item number)
+No
+3
+Check Number / Serial Number
+The check number.
+Yes
+4
+Check Date
+The check date
+Yes
+5
+Check Amount
+The check amount
+Yes
+6
+Tran. Code
+The Transaction Code
+No
+Content Example:
+2062197|190002062197|1109|03/10/2009|38.00|90
+How to implement check index at papyrus:
+Define index file path:
+Define index file output path based on server at DFA end.
+Write data :
+We need to put data for each record of check list for every product in same file.
+See sow what data need to put into the index file
+Since this index file used by the isd team (estatement team) , index file should be generated under sob jel f
+How things are handled at script:
+Get job cycle id from insert file.
+job_cyc_id=`grep ^DT_JOB_ID ${home_ins}/insert/${cid}${jid}.ins | tr -s " " | cut -d ":" -f2 | cut -d "-" -f1 | xargs`
+Defined isd path based on server from where isd team pick the index file
+			if [ "${job_cyc_id}" = "999999" -o "${job_cyc_id}" = "99999" -o "${job_cyc_id}" = "888888" -o "${job_cyc_id}" = "88888" -o "${HOSTNAME}" = "rht" -o "${testmode}" = "y" ]; then
+				isd_input_path="${d_dir}/isd_input_dev/I3/process-files/${cid}/"
+			else
+				isd_input_path="${d_dir}/isd_input/I3/process-files/${cid}/"
+			fi	
+Define the closing date and Processing Time (index_time_stamp) for file name
+		closing_date=`head -2 ${d_dir}/${cid}/${app}_pdfidx.txt | tail -1 | cut -d"|" -f7`
+		index_time_stamp=`ls -ltr ${isd_input_path}${app}_????????_?_????????_????_${cid}.txt | tail -1 | tr -s " " | cut -d " " -f 9 | rev | cut -d "/" -f 1 | rev | cut -d "_" -f 5`
+a. Copy check index file from working directory to isd path with proper naming convention.b. If no check index file is found send mail
+		    if [ -s ${working_dir}/CK_IDX.dat ]; then
+				echo "cp ${working_dir}/CK_IDX.dat ${isd_input_path}${app}_check_${closing_date}_${data_mm1}_${index_time_stamp}_${cid}.txt"
+				cp -v ${working_dir}/CK_IDX.dat ${isd_input_path}${app}_check_${closing_date}_${data_mm1}_${index_time_stamp}_${cid}.txt
+				mv ${working_dir}/CK_IDX.dat $work_data_dir/
+				perl ${home_master}/master/check_index_socket.pl ${app}_check_${closing_date}_${data_mm1}_${index_time_stamp}_${cid}.txt $cid $jid f
+				chk_exit_status_w_email $? "check_index_socket.pl" "$maillist_internal"
+			else
+				perl ${home_master}/master/daily_mail2.py 2 "${cid} - Statement No Check Index file ${cycle_no}" "There is no check index file for this cycle!" $maillist_internal
+			fi 
+The following snap is from wecums1_process.sh to handle check index file.
+	ckidx_handler () {
+		job_cyc_id=`grep ^DT_JOB_ID ${home_ins}/insert/${cid}${jid}.ins | tr -s " " | cut -d ":" -f2 | cut -d "-" -f1 | xargs`
+		HOSTNAME=`hostname`
+		data_mm1=`date +%m%d%Y`
+		if [ "${job_cyc_id}" = "999999" -o "${job_cyc_id}" = "99999" -o "${job_cyc_id}" = "888888" -o "${job_cyc_id}" = "88888" -o "${HOSTNAME}" = "rht" -o "${testmode}" = "y" ]; then
+			isd_input_path="${d_dir}/isd_input_dev/I3/process-files/${cid}/"
+		else
+			isd_input_path="${d_dir}/isd_input/I3/process-files/${cid}/"
+		fi
+		closing_date=`head -2 ${d_dir}/${cid}/${app}_pdfidx.txt | tail -1 | cut -d"|" -f7`
+		index_time_stamp=`ls -ltr ${isd_input_path}${app}_????????_?_????????_????_${cid}.txt | tail -1 | tr -s " " | cut -d " " -f 9 | rev | cut -d "/" -f 1 | rev | cut -d "_" -f 5`
+		if [ -s ${working_dir}/CK_IDX.dat ]; then
+			echo "cp ${working_dir}/CK_IDX.dat ${isd_input_path}${app}_check_${closing_date}_${data_mm1}_${index_time_stamp}_${cid}.txt"
+			cp -v ${working_dir}/CK_IDX.dat ${isd_input_path}${app}_check_${closing_date}_${data_mm1}_${index_time_stamp}_${cid}.txt
+			mv ${working_dir}/CK_IDX.dat $work_data_dir/
+			perl ${home_master}/master/check_index_socket.pl ${app}_check_${closing_date}_${data_mm1}_${index_time_stamp}_${cid}.txt $cid $jid f
+			chk_exit_status_w_email $? "check_index_socket.pl" "$maillist_internal"
+		else
+			perl ${home_master}/master/daily_mail2.py 2 "${cid} - Statement No Check Index file ${cycle_no}" "There is no check index file for this cycle!" $maillist_internal
+		fi 
+	}
+Reference :
+WECUMS12

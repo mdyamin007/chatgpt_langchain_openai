@@ -1,0 +1,716 @@
+title: DEV/QA Server - Configuation Setup
+body:   
+
+## 1\. Java/JDK 1.7 update-17 (64-bit Linux) - Installation Setup
+
+  
+  
+
+## 1.1. Preparation
+
+1\. Check to see if your Ubuntu Linux operating system architecture is 32-bit
+or 64-bit, open up a terminal and run the following command below:
+
+    
+    
+     _Type/Copy/Paste:_ file /sbin/init   
+        Note the bit version of your Ubuntu Linux operating system architecture it will display whether it is 32-bit or 64-bit.
+
+2.  **Check if you have Java installed on your system.**  To do this, you will have to run the Java version command from terminal.
+    
+    
+      Open up a terminal and enter the following command:   
+          _Type/Copy/Paste:_ java -version  
+      If you have **OpenJDK** installed on your system it may look like this:   
+        java version "1.6.0_21"   
+         OpenJDK Runtime Environment (IcedTea6 1.10pre) (6b21~pre1-0lucid1)
+         OpenJDK 64-Bit Server VM (build 19.0-b09, mixed mode)  
+     If you have **OpenJDK** installed on your system, you have the wrong vendor version of Java installed for this exercise.
+
+3\. Completely remove the OpenJDK/JRE from your system and create a directory
+to hold your Oracle Java JDK/JRE binaries.  
+This will prevent system conflicts and confusion between different vendor
+versions of Java.
+
+    
+    
+    For example, if you have the OpenJDK/JRE installed on your system, you can remove it by typing the following command:   
+        _Type/Copy/Paste:_ sudo apt-get purge openjdk-\*   
+         This command will completely remove OpenJDK/JRE from your system  
+       _Type/Copy/Paste:_ sudo mkdir -p /usr/local/java   
+         This command will create a directory to hold your Oracle Java JDK and JRE binaries.
+
+4\. Download the Oracle Java JDK/JRE for Linux. Make sure you select the
+correct compressed binaries for your system architecture 32-bit or 64-bit
+(which end in tar.gz).
+
+    
+    
+     For example, if you are on Ubuntu Linux 32-bit operating system download 32-bit Oracle Java binaries.  
+        if you are on Ubuntu Linux 64-bit operating system download 64-bit Oracle Java binaries.  
+       Optional, Download the Oracle Java JDK/JRE Documentation   
+         Select jdk-7u17-apidocs.zip  
+       **Important Information:** 64-bit Oracle Java binaries do not work on 32-bit Ubuntu Linux operating systems,   
+    you will receive multiple system error messages, if you attempt to install 64-bit Oracle Java on 32-bit Ubuntu Linux.
+
+>  **NOTE:**  
+>  PD-DEV1 is 64-bit Ubuntu Linux system. So, download 64bit Linux "compressed
+> file" \- it has a ".tar.gz" file extension  
+> The Sun Java/JDK binaries are already downloaded & placed under below folder
+> location.  
+> Folder: `/home/nirajt/Installer` Server: `pd-dev1 (10.8.9.57)`  
+> File-name: `jdk-7u17-linux-x64.tar.gz` (Note:
+> jdk-7u<version>-linux-x64.tar.gz for Linux 64-bit )
+
+5\. Copy the Oracle Java binaries into the /usr/local/java directory. In most
+cases, the Oracle Java binaries are downloaded to:
+/home/"your_user_name"/Downloads
+
+    
+    
+     **64-bit Oracle Java on 64-bit Ubuntu Linux installation instructions:**   
+     _Type/Copy/Paste:_ cd /home/"your_user_name"/Downloads  
+     _Type/Copy/Paste:_ sudo -s cp -r jdk-7u17-linux-x64.tar.gz /usr/local/java  
+     _Type/Copy/Paste:_ cd /usr/local/java
+
+6.  **Optional:**  Run the following commands on the downloaded Oracle Java tar.gz files. Make sure to do this as root in order to make them executable for all users on your system. To open a root terminal type sudo -s you will be prompted for your logon password.
+    
+    
+     64-bit Oracle Java on 64-bit Ubuntu Linux installation:   
+           Type/Copy/Paste: sudo -s chmod a+x jdk-7u17-linux-x64.tar.gz
+
+  
+  
+
+## 1.2. Installation
+
+7\. Unpack the compressed Java binaries, in the directory /usr/local/java
+
+    
+    
+     64-bit Oracle Java on 64-bit Ubuntu Linux installation:   
+          Type/Copy/Paste: sudo -s tar xvzf jdk-7u17-linux-x64.tar.gz  
+           It will extract JDK 7 package into ./jdk1.7.0_x directory, for example ./jdk1.7.0_17
+
+8\. Double-check your directories. At this point, you should have two
+uncompressed binary directories in /usr/local/java for the Java JDK listed as:
+
+    
+    
+     Type/Copy/Paste: ls -a  
+              jdk1.7.0_17
+
+9\. Edit the system PATH file /etc/profile and add the following system
+variables to your system path.
+
+    
+    
+    Use vi or any other text editor, as root, open up /etc/profile.   
+         Type/Copy/Paste: sudo vi /etc/profile
+
+10\. Scroll down to the end of the file using your arrow keys and add the
+following lines below to the end of your /etc/profile file:
+
+    
+    
+      
+    
+    
+    
+        JAVA_HOME=/usr/local/java/jdk1.7.0_17
+        PATH=$PATH:$HOME/bin:$JAVA_HOME/bin
+        #JRE_HOME=/usr/local/java/jre1.7.0_17
+        PATH=$PATH:$HOME/bin:$JRE_HOME/bin
+        export JAVA_HOME
+        #export JRE_HOME
+        export PATH
+       
+    
+    
+      
+    
+
+Save the /etc/profile file and exit.
+
+11\. Inform your Ubuntu Linux system where your Oracle Java JDK/JRE is
+located. This will tell the system that the new Oracle Java version is
+available for use.
+
+    
+    
+     Type/Copy/Paste:   
+          sudo update-alternatives --install "/usr/bin/javac" "javac" "/usr/local/java/jdk1.7.0_17/bin/javac" 1   
+         this command notifies the system that Oracle Java JDK is available for use
+
+ **Applicable, if JRE installed:**
+
+  _Type/Copy/Paste:_  `sudo update-alternatives --install "/usr/bin/java"
+"java" "/usr/local/java/jre1.7.0_17/bin/java" 1`  
+ This command notifies the system that Oracle Java JRE is available for use
+
+  
+
+12\. Inform your Ubuntu Linux system that Oracle Java JDK/JRE must be the
+default Java.
+
+    
+    
+      Type/Copy/Paste: sudo update-alternatives --set javac /usr/local/java/jdk1.7.0_17/bin/javac   
+            this command will set the javac compiler for the system
+
+ **Applicable, if JRE installed:**
+
+  _Type/Copy/Paste:_  `sudo update-alternatives --set java
+/usr/local/java/jre1.7.0_17/bin/java`  
+ This command will set the java runtime environment for the system
+
+  
+
+13\. Reload your system wide PATH /etc/profile by typing the following
+command:
+
+    
+    
+     Type/Copy/Paste: . /etc/profile  
+          Note your system-wide PATH /etc/profile file will reload after reboot of your Ubuntu Linux system
+
+14\. Test to see if Oracle Java was installed correctly on your system. Run
+the following commands and note the version of Java:
+
+    
+    
+    A successful installation of Oracle Java 64-bit will display:   
+        Type/Copy/Paste: java -version   
+     This command displays the version of java running on your system  
+     You should receive a message which displays:   
+    -------------------------------------------------------------------   
+    java version "1.7.0_17"   
+    Java(TM) SE Runtime Environment (build 1.7.0_17-b02)  
+    Java HotSpot(TM) 64-Bit Server VM (build 23.7-b01, mixed mode)  
+    -------------------------------------------------------------------  
+     Type/Copy/Paste: javac -version   
+     This command lets you know that you are now able to compile Java programs from the terminal.  
+     You should receive a message which displays:   
+    javac 1.7.0_17  
+     Run below command to check the JDK home folder on the box:  
+     Type/Copy/Paste: which java  
+    /usr/local/java/jdk1.7.0_17/bin/java
+
+Congratulations, you just installed Oracle Java on your Linux system.
+
+  1.  **Optional:**  Update the profile setup file to configure the Java/JDK Home path:  
+`$vi $HOME/.bash_profile`
+
+>  **Reference URLs:**  
+> <https://help.ubuntu.com/community/Java>  
+> <http://askubuntu.com/questions/67909/how-do-i-install-oracle-jdk-6>  
+> <http://www.oracle.com/technetwork/java/javase/downloads/index.html>
+
+* * *
+
+  
+  
+
+## 2\. Tomcat (V7.x) Installation Setup
+
+  1. Download the 64bit Linux "compressed binary file" \- it has a ".sh" file extension from "[apache.org](http://apache.org)"
+  2. The binaries are aeady downloaded & placed under below folder location.  
+Folder: `/home/nirajt/Installer` Server: `pd-dev1 (10.8.9.57)`  
+File-name:  
+apache-tomcat-7.0.37.tar.gz  
+Alternatively, tomcat binary image can be downloaded from below URL:  
+<http://tomcat.apache.org/download-70.cgi>
+
+>  **Note:**  The Mulesoft has it's own TCat Server, which is available under
+> folder:  
+> /home/nirajt/Installer/tcat  
+> `tcat-installer-7.0.0-linux-64bit.sh`
+
+  1. To install Tomcat using offline zip file, run the following command from a terminal prompt:  
+`tar xvfz apache-tomcat-7.0.37.tar.gz`  
+it will extract the files under the local folder with sub-folder name:
+'apache-tomcat-7.0.37'  
+Now, move this folder under 'usr/local' folder:  
+`sudo mv apache-tomcat-7.0.37 /usr/local`  
+Switch to the folder by running below command and check the files/folders
+listing:  
+$cd /usr/local/apache-tomcat-7.0.37  
+For Mule:  
+`$sh ./tcat-installer-7.0.0-linux-64bit.sh`
+
+  2. Set CATALINA_HOME (required) and CATALINA_BASE (optional)  
+The CATALINA_HOME environment variable should be set to the location of the  
+root directory of the "binary" distribution of Tomcat.  
+Make sure below files have entry for the CATALINA_HOME for the Tomcat Server:  
+`$vi $HOME/.bash_profile`  
+`$vi /etc/profile`  
+
+    
+                   CATALINA_HOME=/usr/local/apache-tomcat-7.0.37
+               export CATALINA_HOME
+    
+
+  1. Tomcat Start Up and Shut Down  
+a) Tomcat can be started by executing one of the following commands: |_.
+Option |_. Linux |_. Windows |_. Remarks | | 1. |
+$CATALINA_HOME/bin/startup.sh | CATALINA_HOME\bin\startup.bat | - | | 2. |
+$CATALINA_HOME/bin/catalina.sh start | CATALINA_HOME\bin\catalina.bat start |
+Preferred option|
+
+b) Tomcat can be shut down by executing one of the following commands:
+
+|_. Option |_. Linux |_. Windows |_. Remarks | | 1. |
+$CATALINA_HOME/bin/shutdown.sh | CATALINA_HOME\bin\shutdown.bat | - | | 2. |
+$CATALINA_HOME/bin/catalina.sh stop| CATALINA_HOME\bin\catalina.bat stop|
+Preferred option|
+
+c) After startup, the default web applications included with Tomcat will be
+available by visiting:  
+<http://localhost:8080/>  
+or  
+<http://10.8.9.57:8080/>
+
+>  **General:**  To install Tomcat using online package, run the following
+> command from a terminal prompt:  
+> `$sudo apt-get install tomcat7`
+
+* * *
+
+  
+  
+
+## 3\. Mule ESB (V3.3.2) Installation Setup
+
+  
+  
+
+### 3.1. Preparation
+
+ **Mule ESB Enterprise Edition(EE) Compatibility**
+
+  1. Compatibility - Mulesoft current release is available for:  
+ Both (32- and 64-bit) versions of the Windows: XP, 2003, 2008 and Windows 7  
+ Mac OS 10.6 and above  
+ Linux RHEL: 5.3, 6.1, and 7.1 - 64-bit  
+  **Ubuntu Server 11.04 (64-bit)**  
+ HP-UX 11i V3
+
+  2. Application Server Compatibility - Mule ESB code can be deployed with following application servers:  
+ Tomcat  
+ Tcat Server  
+ JBoss  
+ WebSphere  
+ WebLogic  
+ Geronimo  
+ Jetty
+
+  3. Messaging Platform Compatibility - Mule ESB is compatible with JMS from any vendor.  
+Currently following messaging platforms are suppored:  
+ Active MQ  
+ Open MQ  
+ Rabbit MQ  
+ Mule MQ  
+ TIBCO EMS  
+ TIBCO Rendezvous  
+ Oracle AQ  
+ IBM WebSphere MQ
+
+  4. Java - Users have reported success with JVMs from Oracle (Sun), JRockit, IBM, and OpenJDK.
+
+  
+  
+
+### 3.2. Installation
+
+1\. Download the 64-bit Linux "compressed binary file" \- it has a ".tar.gz"
+file extension from the "[mulesoft.org](http://mulesoft.org)"  
+Note: The image is available under below folder location:  
+/home/nirajt/Installer/mule/mule-ee-distribution-standalone-3.3.2.tar.gz
+
+2\. Mule-ESB Enerprise Edition (EE) V3.3.2 Installation -  
+Run below command to unzip the Mule-ESB EE3.3.2 installation file under
+"/home/nirajt/Installer/mule":
+
+    
+    
+    $tar -xvzf mule-ee-distribution-standalone-3.3.2.tar.gz
+    
+    
+    It will extract unzip file by creating output files under sub-folder "./mule-enterprise-standalone-3.3.2"   
+      Check file listing for the Mule-ESB3.3.2 extracted under:  "/mule-enterprise-standalone-3.3.2"   
+        ls /home/nirajt/Installer/mule/mule-enterprise-standalone-3.3.2
+
+3\. Now move the Mule-ESB3.3.2 directory to /opt@ folder:  
+`sudo -s cp -r mule-enterprise-standalone-3.3.2 /opt/muleEE3.3.2`
+
+4\. Run below command to create a link under /usr/local folder:  
+`sudo ln -s /opt/muleEE3.3.2 /usr/local/mulesb`
+
+  1. From the command line, start Mule using the following command:
+    * To start/stop Mule service on Linux or Mac:  
+`$ sudo ./bin/mule start`  
+This will start the MuleESB with banner having version details.  
+`$ sudo ./bin/mule stop`  
+This will stop the MuleESB service.
+
+For SFTP Scanner Service copy/replace below JARs under <MULE_HOME>/lib/opt
+folder:  
+\-------------------------------  
+Existing File / New Jar File  
+\-------------------------------  
+100884 Mar 28 16:37 hibernate-jpa-2.0-api-1.0.0.Final.jar hibernate-
+jpa-2.0-api-1.0.1.Final.jar  
+3083100 Mar 28 16:37 hibernate-core-3.6.0.Final.jar hibernate-
+core-4.1.9.Final.jar  
+71283 Mar 28 16:37 hibernate-commons-annotations-3.2.0.Final.jar hibernate-
+commons-annotations-4.0.1.Final.jar  
+\-------------------------------  
+Also,  
+a) Copy given below Jar files under the <MULE_HOME>/lib/opt folder:  
+hibernate-entitymanager-4.1.9.Final.jar  
+spring-orm-3.1.1.RELEASE.jar  
+b) Copy given below Jar files under the <MULE_HOME>/lib/user folder:  
+mysql-connector-java-5.1.22-bin.jar  
+ojdbc6.jar  
+velocity-1.7.jar  
+  
+
+### 3.3. Mule MMC Installation
+
+  1. Mule Management Console (MMC) installation
+
+Resource| Description| Remarks  
+---|---|---  
+MMC Agent Application| The management console AGENT as a Mule application,
+this enables your Mule ESB standalone instance and the management console to
+communicate.| mmc-agent-mule3-app-3.3.2.zip  
+Mule ESB: Release 3.3.2-EE| Mule ESB Standalone Stand-alone server, includes
+examples, javadocs, and 3rd-party libraries| mule-ee-distribution-
+standalone-3.3.2.tar.gz  
+  
+$cd /usr/local/mulesb/apps  
+/usr/local/mulesb/apps$sudo cp /home/nirajt/Installer/mule/mmc-agent-
+mule3-app-3.3.2.zip .  
+It will copy the zip file under the Mule ESB Apps folder.
+
+JDK: /usr/local/java/jdk1.7.0_15  
+JRE: /usr/local/java/jdk1.7.0_15/jre
+
+( In progress... )  
+  
+
+### 3.4. Mule EE License Installation
+
+  1. Mule Enterprise Edition license is available in the form of a license.lic file.
+  2. If you are installing your license on multiple platforms, back up your new license.lic file in another location before proceeding.
+  3. Open the terminal or command line on your system.
+    1. On Mac/Unix/Linux, from the $MULE_HOME/bin directory, run the following command:  
+`mule -installLicense ~/license.lic`
+
+    2. On Windows, first copy the license.lic file into the \bin folder, then execute the following in the command line:  
+`mule -installLicense license.lic`
+
+  4. Mule removes the trial license and replaces it with the enterprise edition license.
+    1. In the $MULE_HOME/conf directory, Mule saves a new file called muleLicenseKey.lic
+  5. Mule starts running automatically after you install the license.
+
+Here is the output captured by running the command:
+
+    
+        nirajt@pd-dev1:/usr/local/muleEE3.3.2/bin$ sudo ./mule -installLicense ./mule-ee-license.lic
+    MULE_HOME is set to /usr/local/muleEE3.3.2
+    Running in console (foreground) mode by default, use Ctrl-C to exit...
+    MULE_HOME is set to /usr/local/muleEE3.3.2
+    Running Mule Enterprise Edition...
+    --> Wrapper Started as Console
+    Java Service Wrapper Standard Edition 64-bit 3.5.7
+      Copyright (C) 1999-2010 Tanuki Software, Ltd. All Rights Reserved.
+        http://wrapper.tanukisoftware.com
+      Licensed to mulesoft.com for Mule ESB Enterprise Edition
+    
+    Launching a JVM...
+    
+    Installed license key.
+    Evaluation = false, Expiration Date = Mon Dec 16 16:00:00 PST 2013, Contact Name = Kim Mawla, 
+    Contact Email Address = kim.mawla@infoimageinc.com, Contact Telephone = (650) 473-6317, Contact Company = InfoImage, 
+    Contact Country = US, Entitlements =
+    
+    WrapperManager: Initializing...
+    <-- Wrapper Stopped
+    nirajt@pd-dev1:/usr/local/muleEE3.3.2/bin$
+    
+
+  
+
+  
+  
+
+### 3.5. Mule EE License Verify
+
+  1. To verify that Mule successfully installed your Enterprise Edition license, run the following command:  
+`mule -verifyLicense`
+
+  2. To uninstall a previously installed license, run the following command:  
+`mule -unInstallLicense`
+
+  3. Mule starts running automatically after you verify or uninstall a license.
+
+Here is the output captured by running the command:
+
+    
+        nirajt@pd-dev1:/usr/local/mulesb$ sudo ./bin/mule -verifyLicense
+    MULE_HOME is set to /opt/muleEE3.3.2
+    Running in console (foreground) mode by default, use Ctrl-C to exit...
+    MULE_HOME is set to /opt/muleEE3.3.2
+    Running Mule Enterprise Edition...
+    --> Wrapper Started as Console
+    Java Service Wrapper Standard Edition 64-bit 3.5.7
+      Copyright (C) 1999-2010 Tanuki Software, Ltd. All Rights Reserved.
+        http://wrapper.tanukisoftware.com
+      Licensed to mulesoft.com for Mule ESB Enterprise Edition
+    
+    Launching a JVM...
+    
+    Valid license key --> Evaluation = false, Expiration Date = Mon Dec 16 16:00:00 PST 2013, Contact Name = Kim Mawla, 
+    Contact Email Address = kim.mawla@infoimageinc.com, Contact Telephone = (650) 473-6317, Contact Company = InfoImage, 
+    Contact Country = US, Entitlements =
+    
+    WrapperManager: Initializing...
+    <-- Wrapper Stopped
+    nirajt@pd-dev1:/usr/local/mulesb$
+    
+    
+
+  
+
+> **Reference URLs:**  
+> <http://www.mulesoft.org/documentation/display/current/Installation+Guide>  
+>
+> <http://www.mulesoft.org/documentation/display/current/Downloading+and+Launching+Mule+ESB>  
+>
+> <http://www.mulesoft.org/documentation/display/current/Installing+an+Enterprise+License>
+
+* * *
+
+  
+  
+
+## 4\. MySQL DB (V5.5) Installation Setup
+
+MySQL is a fast, multi-threaded, multi-user, and robust SQL database server.
+It is intended for mission-critical, heavy-load production systems as well as
+for embedding into mass-deployed software.  
+  
+
+### 4.1. Installation
+
+1\. To install MySQL, run the following command from a terminal prompt:  
+`sudo apt-get install mysql-server`
+
+2\. During the installation process, it will ask to enter a password for the
+**MySQL**  root user.
+
+3\. Once the installation is complete, the MySQL server should be started
+automatically.  
+You can run the following command from a terminal prompt to check whether the
+MySQL server is running:  
+`sudo netstat -tap | grep mysql`
+
+4\. The above command will display below output result or something similar:  
+`tcp 0 0 localhost:mysql *:* LISTEN 2556/mysqld`  
+where <2556> is the Process-id.
+
+5\. If the server is not running correctly, you can type the following command
+to start it:  
+`sudo service mysql restart`  
+  
+
+### 4.2. Configuration
+
+1\. To configure the basic settings -- log file, port number, etc edit
+/etc/mysql/my.cnf file.
+
+2\. To configure MySQL to listen for connections from network hosts, change
+the bind-address to the server's IP address:  
+`bind-address = 192.168.0.5`  
+Replace <192.168.0.5> with the appropriate address.
+
+3\. After making a change to /etc/mysql/my.cnf the MySQL daemon will need to
+be restarted:  
+`sudo service mysql restart`
+
+4\. If you would like to change the MySQL root password, in a terminal enter:  
+`sudo dpkg-reconfigure mysql-server-5.5`  
+The MySQL daemon will be stopped, and you will be prompted to enter a new
+password.  
+  
+
+### 4.2. DB User List
+
+User-Id| Password| Remarks| Default DB  
+---|---|---|---  
+root| <password>| Admin user| root DB  
+MULE| <password>| Mule-ESB User| MULEDB  
+      
+    
+    MySQL Login Commands
+    
+    mysql -u root -p 
+    mysql -h 10.8.9.57 -u root -p
+    mysql -h 10.8.9.57 -P3306 -u root
+    mysql --host=10.8.9.57 --user=MULE -password=<password> --port=3306 --protocol=tcp
+    
+
+MySQL Admin Commands: To create the Database and DB User:
+
+CREATE DATABASE MULEDB  
+CREATE USER 'MULE' IDENTIFIED BY '<password>';
+
+    
+    
+     **Resources :**  
+    i)   See the MySQL Home Page for more information: <http://www.mysql.com/>  
+    ii)  Ubuntu MySQL Server Guide: <https://help.ubuntu.com/12.04/serverguide/mysql.html>  
+    iii) The MySQL Handbook is also available in the **mysql-doc-5.0** package.   
+         To install the package enter the following in a terminal:   
+               sudo apt-get install mysql-doc-5.0  
+    The documentation is in HTML format, to view them enter   
+    **file:///usr/share/doc/mysql-doc-5.0/refman-5.0-en.html-chapter/index.html** in your browser's address bar.
+
+* * *
+
+  
+  
+
+## 5\. Apache Active-MQ (V5.7) Installatio Setup
+
+  1. Apache Active-MQ (apache-activemq-5.7.0-bin.tar.gz)  
+Run below command to unzip & install theApache ActiveMQ.  
+`tar xvf apache-activemq-5.7.0-bin.tar.gz`  
+in progress...
+
+* * *
+
+  
+  
+
+## 6\. Misc
+
+  
+  
+
+### 6.1. GnuPG Package Instalation setup
+
+  1. Run below command to install the GNU PGP on Ubuntu box:  
+`sudo apt-get install gnupg`
+
+  
+  
+
+### 6.2. MySQL - JDBC Driver for MySQL (Connector/J)
+
+  1. Download the MySQL JDBC Driver using below URL:  
+<http://www.mysql.com/products/connector/>
+
+  2. Select Download link next to the 'JDBC Driver for MySQL (Connector/J)'
+  3. It will take you to a new page with the ZIP / TAR file type download option. Select file type download based on your platform.
+  4. Linux - Download and save the file: "mysql-connector-java-5.1.22.tar.gz" locally.
+  5. Unpack, untar or unzip the downloaded file anywhere where you can access it as a normal user, for example, to your desktop.  
+Run below command to untar he tar.gz file.  
+`tar -zvf mysql-connector-java-5.1.22.tar.gz`
+
+  6. A directory is created at the desired location named mysql-connector-java-x.x.x, where the x.x.x represents the version number of the JDBC connector you have downloaded. Inside this directory, you will find a file called mysql-connector-x.x.x-java-bin.jar.
+  7. Now, copy and place the "mysql-connector-java-5.1.22-bin.jar" file under application LIB folder.
+
+Spring configration for the MySQL JDBC connection:
+
+    
+        <spring:bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource"> 
+       <spring:property name="driverClassName" value="com.mysql.jdbc.Driver" /> 
+       <spring:property name="url" value="jdbc:mysql://localhost:3306/<DB-name>" /> 
+       <spring:property name="username" value="<user-id" /> 
+       <spring:property name="password" value="<password>" />
+    <spring:bean>
+    
+
+  
+
+URLs:  
+<http://www.mysql.com/products/connector/>  
+<http://dev.mysql.com/downloads/connector/j/>  
+<http://www.mulesoft.com/tomcat-mysql>  
+  
+
+### 6.3. Oracle JDBC Thin Driver
+
+  1. Download the Oracle JDBC thin driver using below URL:  
+<http://www.oracle.com/technetwork/database/enterprise-
+edition/jdbc-112010-090769.html>
+
+  2. Select given below file-name to save and download locally.  
+ojdbc6.jar  
+ojdbc6.jar(2,714,189 bytes) - Classes for use with JDK 1.6. It contains the
+JDBC driver classes except classes for NLS support in Oracle Object and
+Collection types.
+
+  3. Copy "ojdbc6.jar" JAR file under the JDK LIB or Mule LIB or related application LIB folder:
+
+Spring configration for the ORACLE JDBC connection:
+
+    
+        <spring:bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource" >
+        <spring:property name="driverClassName" value="oracle.jdbc.OracleDriver" />
+        <spring:property name="url" value="jdbc:oracle:thin:<user-id>/<password>@<server-name>:<port>:<DB-Name>" />
+        <!-- optional, if user-id already mentioned under url tag, above -->
+        <spring:property name="username" value="<userId>" />    
+        <!-- optional, if password already mentioned under url tag, above -->
+        <spring:property name="password" value="<password>" />  
+    <spring:bean>
+    
+
+  
+
+> **Note:**  
+>  The Java Runtime Environment (JRE) version required by the Oracle JDBC
+> driver must not be higher than the JRE version in the runtime environment.  
+> For example, if the JRE version is 1.5 in the runtime environment, then the
+> Oracle JDBC Driver must be "ojdbc14.jar" which supports both Java
+> Development Kit (JDK) 1.4 and JDK 1.5; if the JRE version is 1.6 in the
+> runtime environment, then the Oracle JDBC Driver must be "ojdbc6.jar" which
+> supports JDK version 1.6.
+
+URLs:
+
+<http://www.oracle.com/technetwork/database/enterprise-edition/jdbc-
+faq-090281.html>  
+<http://www.oracle.com/technetwork/database/enterprise-edition/jdbc-
+faq-090281.html#02_01>
+
+Ubuntu-System-wide_environment_variables:  
+<https://help.ubuntu.com/community/EnvironmentVariables#System-
+wide_environment_variables>
+
+* * *
+
+Note: Given below Server banner provides PD-DEV1 Server (Ubuntu box) config
+details.
+
+* * *
+
+Server banner captured during the login process:
+
+    
+    
+    Welcome to Ubuntu 12.04.1 LTS (GNU/Linux 3.2.0-29-generic x86_64)
+    
+    * Documentation:  https://help.ubuntu.com/
+    
+      System information as of Wed Mar  6 13:19:15 PST 2013
+    
+      System load:  0.0                Processes:           73
+      Usage of /:   3.3% of 251.44GB   Users logged in:     2
+      Memory usage: 29%                IP address for eth0: 10.8.9.57
+      Swap usage:   0%
+    
+
+

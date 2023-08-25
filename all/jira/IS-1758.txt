@@ -1,0 +1,213 @@
+title: EQBK - [34838][pvt][in-house] DP - EQBK Daily Letter #25.01 / Processing Error
+description: A special character in the address line causing the contents of paper index file shift 1 character to the right. I have updated the program to replace that character with empty. Please see comment 3 and have an onshore developer to release the updated code.
+
+!https://app.na3.teamsupport.com/dc/1888578/images/f0c731a5-f88e-48b8-bb6c-ef6806652d37.png!
+
+
+author: tohiduli
+comment: parallel ID:20221028075835
+
+There is no print sample available because the special character in the data file exist only for 1 account with "Hold Mail" address which is not available in print sample.
+
+sample pdf:[^eqbkdl015.pdf]
+
+(see page 32 of the pdf)
+
+
+
+index file:dla_20221025_1_20221028_0802_eqbk.txt
+
+
+
+process log attached:
+
+[^EQBKDLA_Process.log]
+
+
+author: tohiduli
+comment: IS Checklist:[^IS-1758_IS_CHECKLIST_10282022.docx]
+
+
+author: igor.khosid
+comment:    Parallel ID: 20221028075835
+   Currently in parallel: Yes
+   User: tohidulI
+   Description: IS-1758 EQBK Daily Letter Processing Error
+   Date Submitted: 2022-10-28 07:59:07
+   Date Last Updated: 2022-10-28 07:59:07
+   Files:
+      1) EQBKDL004.prj
+      2) EQBKDL017.dfa
+      3) EQBKDL004.dfa
+      4) EQBKDL014.prj
+      5) EQBKDL011.dfa
+      6) EQBKDL014.dfa
+      7) EQBKDL001.dfa
+      8) EQBKDL016.dfa
+      9) EQBKDL010.prj
+      10) EQBKDL016.prj
+      11) EQBKDL015.prj
+      12) EQBKDL015.dfa
+      13) EQBKDL011.prj
+      14) EQBKDL001.prj
+      15) EQBKDL017.prj
+      16) EQBKDL010.dfa
+
+
+author: igor.khosid
+comment: [~gthillaivel]
+Please proceed with the final testing
+
+
+author: gthillaivel
+comment: QA in progress
+
+
+author: tohiduli
+comment: Hi [~gthillaivel]
+
+do you need pdf sample for all the letters?
+
+
+author: gthillaivel
+comment: [~tohidulI][~jharvey][~Igor.Khosid]
+Blocker BT-489 .
+
+
+author: tohiduli
+comment: [~gthillaivel]
+
+new index file:dla_20221025_7_20221031_0517_eqbk.txt
+
+check account number:400020995 of letter 001 for an example.
+
+
+
+letter 015 does not have e-statement according to SOW.
+
+
+author: gthillaivel
+comment: [~tohidulI] [~jharvey]
+Posted new index file in stage.QA in progress
+new index file: dla_20221025_7_20221031_0517_eqbk.txt
+
+
+author: gthillaivel
+comment:  [~Igor.Khosid]
+[~jharvey]-Can you confirm this ticket is only for updating EQBKDL015?.Changes looks good for EQBKDL015.
+ !screenshot-1.png|thumbnail! 
+Paper -pass
+Esite-N/A for EQBKDL015
+
+
+author: igor.khosid
+comment: [~jharvey]
+Please confirm ASAP
+
+[~gthillaivel] - FYI
+
+
+author: jharvey
+comment: [~Igor.Khosid]  [~gthillaivel] [~tohidulI]
+
+I asked DSI to confirm on Scrum, we are waiting on a response from them.  I see only one error in letter 015 from the production file. 
+
+
+author: tohiduli
+comment: Hi [~jharvey], [~Igor.Khosid]
+
+the issue happened in the 015 letter but I updated all the letters in case this issue happens in other data files for other letter also. Should I only change the code for letter 015?
+
+
+author: gthillaivel
+comment: [~jharvey]
+[~tohidulI] --I see the code update for EQBK001,is this part of any ticket?
+
+[oper1@rhs ~]$ diff /home/test/isis/docdef/EQBKDL001.dfa /home/isis/docdef/EQBKDL001.dfa
+4a5,6
+>
+>
+228d229
+<     INPUT_REC = CHANGE(INPUT_REC,X'7F', '') ;
+898,899c899,900
+<            INTEREST_RATE = NOSPACE(SUBSTR(VAR[I],65,LENGTH(VAR[I])-64,
+<              '')) ;
+---
+>            INTEREST_RATE = NOSPACE(SUBSTR(VAR[I],65,LENGTH(VAR[I])-64, ''))
+>             ;
+903,904c904,905
+<            MATURITY_TERM = NOSPACE(SUBSTR(VAR[I],65,LENGTH(VAR[I])-64,
+<              '')) ;
+---
+>            MATURITY_TERM = NOSPACE(SUBSTR(VAR[I],65,LENGTH(VAR[I])-64, ''))
+>             ;
+908,909c909,910
+<            NEW_MATURITY = NOSPACE(SUBSTR(VAR[I],70,LENGTH(VAR[I])-69,
+<              '')) ;
+---
+>            NEW_MATURITY = NOSPACE(SUBSTR(VAR[I],70,LENGTH(VAR[I])-69, ''))
+>             ;
+913,914c914,915
+<            NEXT_EARNING = NOSPACE(SUBSTR(VAR[I],70,LENGTH(VAR[I])-69,
+<              '')) ;
+---
+>            NEXT_EARNING = NOSPACE(SUBSTR(VAR[I],70,LENGTH(VAR[I])-69, ''))
+>             ;
+923,924c924,925
+<            EARNINGS_YTD = NOSPACE(SUBSTR(VAR[I],69,LENGTH(VAR[I])-68,
+<              '')) ;
+---
+>            EARNINGS_YTD = NOSPACE(SUBSTR(VAR[I],69,LENGTH(VAR[I])-68, ''))
+>             ;
+
+
+
+author: jharvey
+comment: [~gthillaivel] [~tohidulI]
+
+Please go ahead with the release for all Daily Letters. Thank you!
+
+
+author: gthillaivel
+comment: ]$ diff /home/test/isis/docdef/EQBKDL015.dfa /home/isis/docdef/EQBKDL015.dfa
+104d103
+<     INPUT_REC = CHANGE(INPUT_REC,X'7F', '') ;
+
+
+
+author: gthillaivel
+comment: [~tohidulI] [~jharvey] [~Igor.Khosid]
+
+Verified the diff for the notices. Good to release.
+
+EQBKDL017.dfa
+EQBKDL004.dfa
+EQBKDL011.dfa
+EQBKDL014.dfa
+EQBKDL001.dfa
+EQBKDL016.dfa
+EQBKDL015.dfa
+EQBKDL010.dfa
+ [^QAtestresult1.docx] 
+Attached is the IS checklist
+ [^IS-1758_EQBK_CHECKLIST.pdf] 
+
+
+author: tohiduli
+comment: [~yameelee]
+
+files are in xfer directory. please release the codes. attached transfer form.
+
+[^IS_PROGRAM_TRANSFER_FORM_IS_1758-11012022.docx]
+
+
+author: tohiduli
+comment: [~yameelee]
+
+attached transfer form with only dfa files. removed the prj files since no changes were made in those files.
+
+[^IS_PROGRAM_TRANSFER_FORM_IS_1758-11012022_updated.docx]
+
+
+author: yameelee
+comment: [~tohidulI]& [~jharvey] code released. backup id:20221101105133

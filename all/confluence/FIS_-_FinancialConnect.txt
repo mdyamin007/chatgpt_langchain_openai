@@ -1,0 +1,111 @@
+title: FIS - FinancialConnect
+body:   
+
+## 1\. Overview
+
+  
+  
+
+## 2\. Web-services List
+
+  
+  
+
+### 2.1. Rabobank - Connectware
+
+#| Web-service Keyword| Web-service Title| Web-service Description  
+---|---|---|---  
+1.| DPKywrd| Deposit Keyword Change.| This function is used to do maintenance
+to an individual field for a deposit account. Each field has its own keyword.
+To change a field's contents, enter the field's keyword and the new data. All
+keyword changes are listed on the Account Master Changes Report (R-2030).
+(Refer: \\\dell-2100\ISD\Development\Common\Connectware
+v12\docs\WebServices\html\FinancialConnectWS\FinancialConnectWS_frame.html)  
+  
+The web service call we need to use for updating statement delivery preference
+via Connectware is DPKywrd.  
+These are the fields required:
+
+Element Tag| Business Name  
+---|---  
+E20007| DP Account Number = Deposit Account Number (Only Deposit)  
+E20010| DP Transaction Code = Always '380'  
+E21001| DP Keyword Segment ID = blank (null)  
+E21002| DP Keyword Code = 'ELECTF'  
+E21003| DP Keyword Value = Y (paperless) or N (paper only)  
+  
+ **ToDo:**  We need to discuss/decide how we will code the accounts that are
+paper and electronic. Can you add it to the next meeting agenda?  
+  
+
+### 2.2. Misc. - For future use
+
+Given below table describes key web-services APIs which may be required in
+future implementation.
+
+#| Web-service Keyword| Web-service Title| Web-service Description  
+---|---|---|---  
+2.| CIAcctNmeAddrInq| CIS Account Name/Address Inquiry for Web Services.| This
+function is used to retrieve name/address infomation about a CIS account.  
+3.| CIAcctPrfl| CIS Account Profile for Web Services.| This function is used
+to retrieve the name/address and general demographic information for the
+primary customer related to the specified account. This function also
+retrieves information for accounts related to the specified account. Finally,
+this function retrieves name/address and demographic information for secondary
+customers related to the specified account.  
+4.| CICustPrfl| CIS Customer Profile for Web Services.| This function is used
+to retrieve information for the specified customer's related accounts. Name
+and address information and general demographic information for the customer
+is also returned.  
+On the Deposit System, there may be multiple time deposits under one account
+number, each identified by a time deposit ID. If there are multiple time
+deposits under an account, the account level balance fields will reflect a
+roll-up of the balances in the individual time deposits.  
+On the Loan System, there may be multiple notes (loans) under one account
+number, each identified by a note number. There are no account level balance
+fields that reflect a roll-up of the balances in the individual notes.  
+5.| CICustInq| CIS Customer Inquiry for Web Services.| This function is used
+to retrieve general demographic information for the given customer.  
+  
+  
+  
+
+## 3\. High-level Design Diagram (Internal)
+
+  
+  
+
+## 4\. High-level Design Diagram (External)
+
+  
+  
+
+## 5\. High-level Implementation Steps
+
+  1. The eStatement Application will invoke the FIS Workflow URL with the required input parameters.
+  2. The Mule ESB Workflow service will process the request and form the input request for the FIS web-services (WS) call.
+  3. The Mule ESB Workflow will invoke the FIS WS call using workflow WS Client (CXF WS - SOAP).
+  4. The Mule ESB workflow will parse the response and perform processing like store result into the database (DB) or post to Active-MQ (JMS), if applicable.
+  5. The Mules ESB workflow will return the response to the eStatement calling applicaton with the result output.
+  6. The Mule ESB can also store the transactional data into the ESB database in order to maintain the transaction log.
+
+  
+
+## Test Account numbers for RABO/Connectware
+
+Acct Num Name  
+9416476188 HOUSING AUTHORITY OF COUNTY SB  
+3293857 KERN MACHINERY INC  
+350990 MARKET STREET INVESTORS LLC  
+190000056 RED BLOSSOM FARMS INC  
+41272700 STILLWATER RANCH LLC  
+354023 TOMMY O. TARLTON  
+2211281 WEST COAST TURF  
+3293865 WESTERN POWER PRODUCTS INC  
+9123830661 TODD J MACHADO  
+195301969 GLENN A STANKIS  
+5248886 ALICIA B RODRIGUEZ
+
+### Attachments
+
+

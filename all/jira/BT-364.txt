@@ -1,0 +1,251 @@
+title: PUI Staging - all documents processed marked as bad
+description: index filems1_06302022_09192022_0615_slcu.txt
+
+[09/19/2022 15:30:17] insufficient data on line 1. Currently has 10 elements.
+[09/19/2022 15:30:17] ###########Error Code:101 in line#1
+com.infoimage.processing.common.DataException: Data Related excaption occured and logged
+ at com.infoimage.processing.application.document.ProcessingJob.exec(ProcessingJob.java:355)
+ at com.infoimage.processing.server.Worker.run(Worker.java:171)
+ at java.lang.Thread.run(Thread.java:748)
+
+
+author: JIRAUSER11700
+comment: UPD: ms1_20220228__20220920_0906_slcu.txt did not work in Processing UI Staging
+
+File: /usr/local/processing-ui/station/logs/slcu/doc/09202022_1036038.log
+
+[09/20/2022 10:36:38] need check sum for doc is true
+
+[09/20/2022 10:36:38] [09/20/2022 10:36:38] [09/20/2022 10:36:38] ======================================
+
+[09/20/2022 10:36:38] Exec
+
+[09/20/2022 10:36:38] ======================================
+
+[09/20/2022 10:36:38] Job ID:[197000]
+
+[09/20/2022 10:36:38] Command:[doc mode:test byPassDtJobId:false acctEsup:0 jobNum:test+ms1 orgName:slcu file:%2Fd%2FINPUT-DEV%2FI3%2Fprocess-files%2Fslcu%2Fms1_20220228__20220920_0906_slcu.txt jid:197000 imgEsup:1 action:exec userName:info_qa emailsup:false cycle:202209]
+
+[09/20/2022 10:36:38] need check file name to follow pre-defined rule:
+
+[09/20/2022 10:36:38] Check Path == true Check file CID=true FilePattern = APP_DATE_DATE_NUM_CID.txt
+
+[09/20/2022 10:36:38] File Name == ms1_20220228__20220920_0906_slcu.txt
+
+[09/20/2022 10:36:38] field not match 6 5
+
+[09/20/2022 10:36:38] not num java.lang.NumberFormatException: For input string: ""
+
+[09/20/2022 10:36:38] Error: The data file (/d/INPUT-DEV/I3/process-files/slcu/ms1_20220228__20220920_0906_slcu.txt) doesn't follow name convention (APP_DATE_DATE_NUM_CID.txt)
+
+[09/20/2022 10:36:38] Report status for job Id: [197000]
+
+[09/20/2022 10:36:38] the input file name validation is false
+
+
+author: JIRAUSER10913
+comment: [~avannik]
+
+Hi Alexander,
+
+I posted the file on staging. The errors are message managers, but the statements should be posted. Can you verify on InfoTRAC?
+
+!image-2022-09-20-16-27-19-099.png!
+
+The issue with the file is because there was an extrac _. The file should follow this format:*APP_DATE_DATE_NUM_CID.txt*. The file that you tried to use was:
+
+*ms1_20220228__20220920_0906_slcu.txt*. I removed and process the extra '_' from the file name, so the file is*ms1_20220228_20220920_0906_slcu.txt*
+
+You need to double check the file name.
+
+
+
+Thanks,
+
+Mac
+
+
+author: rony
+comment: Hi [~avannik]
+
+My apology for this. Please use this index file ms1_20220228_*1*_20220920_2052_slcu.txt
+
+The segment portion( bold marked ) was missing from the previous index file naming.
+
+
+
+[~mac]
+
+
+
+Thanks
+
+
+author: JIRAUSER11700
+comment: [~rony] [~mac] it did not run for me today:
+{{}}
+{code:java}
+[09/21/2022 08:55:21] need check sum for doc is true
+[09/21/2022 08:55:21]
+[09/21/2022 08:55:21]
+[09/21/2022 08:55:21] ======================================
+[09/21/2022 08:55:21] Exec
+[09/21/2022 08:55:21] ======================================
+[09/21/2022 08:55:21] Job ID:[197032]
+[09/21/2022 08:55:21] Command:[doc mode:test byPassDtJobId:false acctEsup:0 jobNum:test+ms1 orgName:slcu file:%2Fd%2FINPUT-DEV%2FI3%2Fprocess-files%2Fslcu%2Fms1_20220228_1_20220920_2052_slcu.txt jid:197032 imgEsup:1 action:exec userName:info_qa emailsup:false cycle:202209]
+[09/21/2022 08:55:21] need check file name to follow pre-defined rule:
+[09/21/2022 08:55:21] Check Path == true  Check file CID=true  FilePattern = APP_DATE_DATE_NUM_CID.txt
+[09/21/2022 08:55:21] File Name == ms1_20220228_1_20220920_2052_slcu.txt
+[09/21/2022 08:55:21] field not match 6 5
+[09/21/2022 08:55:21] the input file name validation is true
+[09/21/2022 08:55:21] The checksum infomation has been saved: checkSum = 2123528064 total lines in file =698 file size = 83363
+[09/21/2022 08:55:21] need check dt_job_id....
+[09/21/2022 08:55:21] Accessing http://pui-stage.infoimageinc.com/service/dtJobIdjava.lang.Exception: infoTrac_flag is on but dt_job_id is missing from dataTrac(IS) database at com.infoimage.processing.server.jobTracking.DtJobIdDao.getJobTrackingInfo(DtJobIdDao.java:38) at sun.reflect.GeneratedMethodAccessor28.invoke(Unknown Source) at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) at java.lang.reflect.Method.invoke(Method.java:498) at com.caucho.burlap.server.BurlapSkeleton.invoke(BurlapSkeleton.java:173) at com.caucho.burlap.server.BurlapSkeleton.invoke(BurlapSkeleton.java:102) at com.caucho.burlap.server.BurlapServlet.service(BurlapServlet.java:194) at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:303) at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:208) at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:52) at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:241) at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:208) at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:220) at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:122) at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:503) at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:170) at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:103) at org.apache.catalina.valves.AccessLogValve.invoke(AccessLogValve.java:950) at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:116) at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:421) at org.apache.coyote.http11.AbstractHttp11Processor.process(AbstractHttp11Processor.java:1070) at org.apache.coyote.AbstractProtocol$AbstractConnectionHandler.process(AbstractProtocol.java:611) at org.apache.tomcat.util.net.JIoEndpoint$SocketProcessor.run(JIoEndpoint.java:314) at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149) at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624) at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61) at java.lang.Thread.run(Thread.java:748)
+[09/21/2022 08:55:21] Report status for job Id: [197032]{code}
+
+{{}}
+
+
+author: kericapote
+comment: [~avannik] eStatement tracking is not enabled in production so it does not have to be included with the QA testing.
+
+Thanks
+
+
+author: rony
+comment: Hi [~mac]
+
+Would you please advise why this indexms1_20220228_*1*_20220920_2052_slcu.txt failed? Is it the same for dt job id?
+
+
+
+[~avannik]
+
+
+
+Thanks
+
+
+author: rony
+comment: Hi [~mac]
+
+Sorry to bother you again and again. Would it be possible to post this index file to the stage?
+
+ms1_20220228_1_20220924_1049_slcu.txt
+
+
+
+Thanks
+
+
+author: JIRAUSER10913
+comment: [~rony]
+
+Hi Rony,
+
+I postedms1_20220228_1_20220924_1049_slcu.txt and it seems to be fine, postingms1_20220228_*1*_20220920_2052_slcu.txt didn't work as it appears to have the same dt job id asms1_20220228_1_20220924_1049_slcu.txt.
+
+
+author: rony
+comment: Hi [~mac]
+
+Thanks, ifms1_20220228_1_20220924_1049_slcu.txt is fine then we should go with it. This is the latest one I provided.
+
+[~avannik] please check.
+
+
+
+Thanks
+
+
+author: JIRAUSER11700
+comment: [~rony] [~mac]
+
+I undo previously runms1_20220228_1_20220924_1049_slcu.txt, I run it again and it gives me the same error:
+{code:java}
+File: /usr/local/processing-ui/station/logs/slcu/doc/10032022_0910027.log
+[10/03/2022 09:10:27] need check sum for doc is true[10/03/2022 09:10:27] [10/03/2022 09:10:27] [10/03/2022 09:10:27] ======================================[10/03/2022 09:10:27] Exec[10/03/2022 09:10:27] ======================================[10/03/2022 09:10:27] Job ID:[197414][10/03/2022 09:10:27] Command:[doc mode:test byPassDtJobId:false acctEsup:0 jobNum:test+ms1 orgName:slcu file:%2Fd%2FINPUT-DEV%2FI3%2Fprocess-files%2Fslcu%2Fms1_20220228_1_20220924_1049_slcu.txt jid:197414 imgEsup:1 action:exec userName:info_qa emailsup:false cycle:202210][10/03/2022 09:10:27] need check file name to follow pre-defined rule:[10/03/2022 09:10:27] Check Path == true   Check file CID=true   FilePattern = APP_DATE_DATE_NUM_CID.txt[10/03/2022 09:10:27] File Name == ms1_20220228_1_20220924_1049_slcu.txt[10/03/2022 09:10:27] field not match 6 5[10/03/2022 09:10:27] the input file name validation is true[10/03/2022 09:10:27] The checksum infomation has been saved: checkSum = 2123528064 total lines in file =698 file size = 83363[10/03/2022 09:10:27] need check dt_job_id....[10/03/2022 09:10:27] Accessing http://pui-stage.infoimageinc.com/service/dtJobIdjava.lang.Exception: infoTrac_flag is on but dt_job_id is missing from dataTrac(IS) database  at com.infoimage.processing.server.jobTracking.DtJobIdDao.getJobTrackingInfo(DtJobIdDao.java:38)  at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)  at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)  at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)  at java.lang.reflect.Method.invoke(Method.java:498)  at com.caucho.burlap.server.BurlapSkeleton.invoke(BurlapSkeleton.java:173)  at com.caucho.burlap.server.BurlapSkeleton.invoke(BurlapSkeleton.java:102)  at com.caucho.burlap.server.BurlapServlet.service(BurlapServlet.java:194)  at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:303)  at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:208)  at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:52)  at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:241)  at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:208)  at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:220)  at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:122)  at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:503)  at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:170)  at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:103)  at org.apache.catalina.valves.AccessLogValve.invoke(AccessLogValve.java:950)  at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:116)  at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:421)  at org.apache.coyote.http11.AbstractHttp11Processor.process(AbstractHttp11Processor.java:1070)  at org.apache.coyote.AbstractProtocol$AbstractConnectionHandler.process(AbstractProtocol.java:611)  at org.apache.tomcat.util.net.JIoEndpoint$SocketProcessor.run(JIoEndpoint.java:314)  at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)  at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)  at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)  at java.lang.Thread.run(Thread.java:748)[10/03/2022 09:10:27] Report status for job Id: [197414]
+{code}
+
+
+author: JIRAUSER10913
+comment: [~rony]
+
+Hi Rony, can you look into that issue that [~avannik]posted above. Thanks.
+
+
+author: rony
+comment: Hi [~avannik]
+
+I have totally no idea what is happening. I just reprocessed. ms1_20220228_1_20221003_2301_slcu.txt would you please try with this one in stage?
+
+
+
+[~mac]
+
+Thanks
+
+
+author: JIRAUSER11700
+comment: [~rony] [~mac]
+
+ms1_20220228_1_20221003_2301_slcu.txt was processed without the abovementioned error in stage, I attach the log:[^ms1_20220228_1_20221003_2301_slcu.zip]
+
+The following error message is shown for the majority of the statements:
+{code:java}
+Register messages: 175508,175509
+[10/04/2022 09:21:24] Message ID: 175508 does not exist in message manager.
+[10/04/2022 09:21:24] Message ID: 175509 does not exist in message manager.
+{code}
+As a result, 1394 statements out of 2091 are marked as 'bad'.
+ They show in InfoTRAC however, and I see no defects in them.
+
+
+author: rony
+comment: Hi [~mac]
+
+Sorry to bother you again. We are displaying the marketing message from our end, Those are text messages ( we call it imp) , not image.
+
+This is a snapshot of e-statement afpslcums1_20220228_16021_697.afp from our end :
+
+!image-2022-10-05-08-13-53-856.png!
+
+
+
+
+
+So do you know why the error is happening about "Id not exists in message manager" per the previous message from [~avannik]
+
+
+
+[~Peter.Dang] [~terrencet]sorry to bring your attention here. It is just to inform you that, we are having lots of back and forth just to post the isd index file correctly in stage. Most of the time it's failing due to dt job id not exist error.
+
+
+
+Thanks
+
+
+
+
+author: JIRAUSER10913
+comment: [~rony] [~avannik]
+{code:java}
+Register messages: 175508,175509
+[10/04/2022 09:21:24] Message ID: 175508 does not exist in message manager.
+[10/04/2022 09:21:24] Message ID: 175509 does not exist in message manager.
+{code}
+The errors regarding those can be disregarded as the message id is different between different environments and if its not there it won't be found. Those error is actually important if we were testing Message Manager specifically, but in this case we can ignore it.
+
+
+author: rony
+comment: Hi [~avannik]
+
+So can we ignore the error and pass it?
+
+
+
+Thanks
+
+
+author: JIRAUSER11700
+comment: [~rony]if you guys say this message can be disregarded, then yes.On the clients side everything seemed to be ok.

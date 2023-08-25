@@ -1,0 +1,70 @@
+title: MSBK [20629] [pvt] Loan job higher then normal processing time [in house]
+description: IS Assessment:
+
+Issue: The program is not purging /d/daily/msbklna/msbklna-indiv/*.afp files each time it runs, hence move_afp script is copying an accumulation of 2+ years of afp files daily. Need to update the script to purge the local individual afp files before creating the individual afp.  
+
+6/21 start
+
+6/21 finish
+
+6/21 QA
+
+6/21 live date
+
+No parallel required
+
+
+author: rodriguez
+comment: QA
+
+DPVS ATTACHED
+
+INDIV DIRECTORY NOW GETS CLEARED EVERY NEW PROCESS
+
+Parallel ID: 20210621150839
+ Currently in parallel: Yes
+ User: leoR
+ Description: JIRA IS 134 Add code to clean out indiv afp directory
+ Date Submitted: 2021-06-21 15:09:11
+ Date Last Updated: 2021-06-21 15:15:43
+ Files:
+ 1) msbk_ln_process.sh
+
+
+author: igor.khosid
+comment: [~jharvey] [~rodriguez]
+
+QA test result: Pass and Status changed from QA In Progress to Request for Parallel
+1. Parallel report
+Parallel ID: 20210621150839
+Currently in parallel: Yes
+User: leoR
+Description: JIRA IS 134 Add code to clean out indiv afp directory
+Date Submitted: 2021-06-21 15:09:11
+Date Last Updated: 2021-06-21 15:15:43
+Files:
+1) msbk_ln_process.sh
+2. Difference msbk_ln_process.sh prod vs test
+<
+ # maillist=`grep ^maillist1 ${home_env/${keep_dir}/maillist/${cid}_mail.lis | cut -d "=" -f2`
+>
+ maillist=`grep ^maillist1 ${home_env}/${keep_dir}/maillist/${cid}_mail.lis | cut -d "=" -f2`
+<
+ rm -f ${d_dir}/daily/msbklna/msbklna-indiv/*.afp
+>
+ find ${d_dir}/daily/msbklna/msbklna-indiv -type f -maxdepth 1 | xargs -i% rm %
+ if [ $? -ne 0 ];
+ then
+ echo -n "ERROR: CLEANING ${d_dir}/daily/msbklna/msbklna-indiv/"
+ echo -n "ERROR: CLEANING ${d_dir}/daily/msbklna/msbklna-indiv/" >> ${targetDir}/today.log
+ echo -n "ERROR: CLEANING ${d_dir}/daily/msbklna/msbklna-indiv/" >> ${targetBase}/${daily_log}
+ subject="ERROR: CLEANING ${d_dir}/daily/msbklna/msbklna-indiv/"
+ message="ERROR: CLEANING ${d_dir}/daily/msbklna/msbklna-indiv/"
+ perl ${codebase}/daily_mail2.pl 2 "$subject" "$message" "$maillist"
+ exit 1
+ fi
+3. ATtached dpvs / account ## - validated
+
+
+author: rodriguez
+comment: Code has been released

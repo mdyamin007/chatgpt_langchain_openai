@@ -1,0 +1,151 @@
+title: Log File Locations - Needs update for brisbane servers
+body: ## Tomcat Prism
+
+ **Production:** **ca-prism-pr-01/02  **
+
+  * Tomcat: /usr/local/tomcat/tomcat-[schema]/logs/catalina-YYYY-MM-DD.out
+    * E.g. /usr/local/tomcat/tomcat-default/logs/catalina-2020-08-25.out
+  * Restart
+    * Shutdown: sudo systemctl stop prism-[schema] (replace schema with cu/bank/default)
+      * E.g. sudo systemctl stop prism-bank
+    * Startup: sudo systemctl start prism-[schema] (replace schema with cu/bank/default)
+      * E.g. sudo systemctl start prism-bank
+
+  * Access: /usr/local/tomcat/tomcat-[schema]/logs/cid-prod.infoimageinc.com_access_log.YYYY-MM-DD.txt
+    * E.g. /usr/local/tomcat/tomcat-default/logs/ewbb-prod.infoimageinc.com_access_log.2020-08-25.txt
+
+  
+
+ **Stage: ca-prism-st-01**
+
+ **Pilot: ca-prism-pi-01/02  **
+
+ **Dev: ca-prism-dv-01**
+
+## Hypercube
+
+ **Production: ca-hypercube-pr-01/02/03**
+
+  * Hypercube: /var/log/meteor/hypercube/hypercube1.log (Note: There are a few different filenames depending on the timeframe, use ls -ltr to see which one fits the desired search)
+  * Meteor: /var/log/meteor/hypercube/meteor.out
+
+## API
+
+ **Infoservice Production: ca-hypercube-pr-01/02/03**
+
+  * Path: /usr/local/tomcat/infoservice/logs
+    * sudo vim localhost_access_log.2020-08-24.txt
+    * catalina-YYYY-MM-DD.out
+
+ **Api Jaas: ca-apipui-pr-01/02  **
+
+  * Path: /usr/local/tomcat/infoservice-jass/logs
+    * prodapi_access_log.YYYY-MM-DD.txt -> stores requests from client
+    * catalina-YYYY-MM-DD.out-> info on the request
+
+## InfoTRAC
+
+ **Production: ca-infotrac-pr-01/02**
+
+  * Infotrac: /usr/local/tomcat/tomcat-infotrac/logs/catalina-YYYY-MM-DD.out
+    * E.g. /usr/local/tomcat/tomcat-infotrac/logs/catalina-2020-08-25.out
+  * Reboot InfoTrac on pilot:
+    * Navigate to: pd-pilot3:/usr/local/tomcat/tomcat-infotrac
+    * pd-pilot03  = 10.8.9.180
+    * sudo -u tomcat bin/shutdown.sh
+    * sudo -u tomcat bin/startup.sh
+
+  
+
+##  **Proxy servers**  (When users are getting TPV/504 errors)
+
+Nginx/Apache logs show if clients are hitting our server(s)
+
+Look for something like this in the access logs: POST /ssoExchange HTTP/2.0"
+lb_to: 10.8.9.148:8080
+
+  
+
+ **Production:**
+
+  *  **Hypercube: ca-proxy-pr-17/18 and ca-proxy-pr-09/10**
+    *  **/var/log/nginx**
+      * Access logs: (cid).access
+        * Counting number of total connections: 
+          * sudo grep -c '10.8.9.148' *access.1
+          * sudo grep -c '10.8.9.149' *access.1
+          * sudo grep -c '10.8.9.153' *access.1
+      * Error logs: (cid).error
+        * Counting worker connection errors: 
+          * sudo grep -c 'worker_connection' *error.1
+  *  **Prism: ca-proxy-pr-03/04 and ca-proxy-pr-07/08**
+    * /var/log/apache2 (NOTE: can't cd into apache2 directly, use sudo ls to view the log files and then sudo vim apache2/filename from there).
+      * Access logs: (cid).access
+      * Error logs: (cid).error
+
+  
+
+ **Stage** :
+
+  *  **Hypercube: ca-intproxy-st-02**
+  *  **Prism: ca-intproxy-st-01**
+
+  
+
+ **Pilot:  **
+
+  *  **Hypercube: ca-extproxy-pi-03/04**
+    * /var/log/nginx
+      * Access logs: (cid).access
+      * Error logs: (cid).error
+  *  **Prism:  ca-intproxy-pi-01**
+
+## Wrapper Service --
+
+  
+
+## Scanner
+
+ **Scanner: ca-ftpbu-pr-01**
+
+  * /scanner/root.log - general scanner logs showing file movement and ftp emails sending out
+  * /ftpbu/month_DD_YYYY_ALL.dp - file movement, i.e. from backup to download
+  * /ftpbu/client_pickup_log/client_pickup_MMDDYYYY.log
+
+  
+
+## Check Images
+
+ **Pilot: pd-dev03/05 (needs update)**
+
+  * /var/log/apache2 (NOTE: can't cd into apache2 directly, use sudo ls to view the log files and then sudo vim apache2/filename from there).
+    * Access logs: access.log
+    * Error logs: error.log
+
+  
+
+## Other
+
+Command 'top': shows the CPU load percentages
+
+  
+
+## Delete Old Log Files
+
+  * cd to **/usr/local/tomcat/tomcat-{cu/bank/default}/logs**
+  *  **sudo find /usr/local/tomcat/tomcat-{schema}/logs -mindepth 1 -mtime +44 ! -name cid ! -name cid -delete**
+    * This command will delete files older than 45 days from present
+    * ! -name cid will exclude this file/folder from being targeted
+    * you can confirm the targeted files by omitting _**-delete**_
+
+  
+
+  
+
+  
+
+  
+
+  
+
+

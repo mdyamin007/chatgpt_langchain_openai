@@ -1,0 +1,115 @@
+title: MSBK MEF Secure PDF Email Solution
+body:   
+
+  
+
+Target release|  
+  
+---|---  
+Epic|  
+  
+Document status|
+
+DRAFT  
+  
+Document owner|  
+  
+Designer|  
+  
+Developers|  
+  
+QA| Lead tester  
+  
+  
+
+## Goals
+
+  * Create a new CID to handle msbk's secure PDF email. 
+  * Setup AUTH file processing to ingest emails, account numbers, and secure PDF passwords. Switch accounts to E delivery.
+  * Setup Email handler to trigger secure PDF emails for any accounts that contain an email address and are on E delivery.
+  * Pull email content from MSBK for MEF statement type
+  * Pull statement index file and AFP files from MSBK's input/indiv_afp folder
+  * Include email counts into MSBK's accounting report.
+
+## Background and strategic fit
+
+A temporary workaround for MSBK's MEF application. They are requesting to have
+secure PDF emails and to not have them be displayed on both AI and Customer
+sites. The temporary solution is to setup the application under a separate CID
+to minimize potential risks when turning on secure PDF emails. A permanent
+reusable solution will need to be discussed between IS and ISD in the future.
+
+## Assumptions
+
+  * ISD will be responsible for converting AFPs to PDFs and password encrypting the file to be attached in the email
+  * Converted PDFs over 20 MB will not be attached and no emails will be sent
+  * Each account will only have 1 email address
+  * Any accounts in the cycle with an email address will have a secure PDF email sent to them
+  * No bounceback report needed
+  * No eStatement Job Tracking
+
+## Requirements
+
+#| Title| Importance| Notes  
+---|---|---|---  
+1| CID| Must have|
+
+  * MSBK.MEF as the CID
+
+  
+2|  CIF Setup| Must have |
+
+  * Follow RcbkAuthHandler.java & RcbkAuthRegistrar.java
+  * Format: ACCTNUM|NAME|EMAIL|PASSWORD
+  * Insert emails and passwords into NOTIFICATION_PREFERENCE
+
+  
+3| Document Process Setup| Must Have|
+
+  * Cycle will be provided in the standard document file specs
+  * Input and AFP files will be in the MSBK 
+  * Statement type: MEF
+
+  
+4| PUI Setup| Must Have|
+
+  * Setup MSBK.MEF CID, it should pull from MSBK's folder for the file locations
+
+  
+5| Accounting Report| Must Have|
+
+  * Update MSBK's account report to pull the cycle and email counts from MSBK.MEF
+
+  
+6| Email Setup| Must Have|
+
+  * Follow RcbkEstmtEmailHandler.java
+  * Email content will be pulled from MSBK as "MEF" statement type
+  * All emails should be secure PDFs emails
+  * Email addresses and passwords will be pulled from the NOTIFICATION_PREFERENCE table.
+  * Email process will be responsible for converting and password protecting the PDF before attaching to be sent. Converted PDFs exceeding the global email attachment threshold will cause that record to be flagged as failed.
+
+  
+7| MSBK AI Site| Must Have|
+
+  * Add MSBK MEF as an option in the Email Proofing dropdown to allow for client to enter in the email content.
+
+  
+  
+  
+
+## Questions
+
+Below is a list of questions to be addressed as a result of this requirements
+document:
+
+Question| Outcome  
+---|---  
+(e.g. How we make users more aware of this feature?)| Communicate the decision
+reached  
+  
+## Not Doing
+
+  * Permanent solution to have a process handle ingesting email/passwords as well as formatting and triggering cycles through notifyservice API
+
+

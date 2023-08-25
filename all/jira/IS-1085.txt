@@ -1,0 +1,1227 @@
+title: UFCU - [28066][pvt] Return Mail Report
+description: Create invalid address report with same format as UFCU provided. 4 hours per each application: Daily Notices, Escrow Analysis, Mortgage Billing Statement, and Monthly Statement
+
+
+
+assessment:
+
+Development Hour: 16H ( 4 per application)
+
+Turnover date: 05/02/22
+
+sample date: 05/09/22
+
+approval date: 05/13/22
+
+Live date: 05/17/22
+
+applications: Daily Notices(dla), Escrow Analysis(ea1), Mortgage Billing Statements(ml1), Monthly Stmt(ms1)
+
+No parallel needed.
+
+
+author: rony
+comment: Hi [~Bryanl]
+
+I am extremely sorry to say that there is a complication to implementing the format client wants, that I didn't realize before.
+
+!image-2022-05-10-06-19-09-908.png!
+
+
+
+A customer address can be invalid due to complete address ismissing , or city state zip is missing meaning we cannot tell what is present in invalid address and what is missing so it is very very tough to determine customer name , alternate address or city state zip from address lines.
+
+Existing invalid address is comma separated as we normally do for most of client app where we just display the address section whatever is available in data file without deciding which one is customer name which one is city or state or zip.
+
+But since in new format clients wants each address in fixed column with fixed with we need to know which one of the address block is name which one is alternate address line or city or state or zip etc etc. It's actually very tough to determine specially for invalid address.
+
+*We normally treated the first address line as customer name and last address line as city state zip. But what if customer name is missing or city state zip is missing. If city state zip is missing from customer address section and we treate the last line as city state zip the value of city state zip will not be correct.*
+
+This issue we caught while doing the coding . I am really sorry that I didn't realize this
+
+*What we can do at this point we can keep the format of existing invalid address report meaning comma separated but we can add the masked account number in first column. Please check with client if this will do.*
+
+
+
+[~Hamimul.Chowdhuri]
+
+Thanks
+
+
+
+
+
+
+
+
+
+
+author: rony
+comment: Hi [~Bryanl]
+
+Any update on my previous message? Feeling really sorry that I didn't bring this up while assessing this task.
+
+
+
+[~Hamimul.Chowdhuri]
+
+
+
+Thanks
+
+
+
+
+author: bryanl
+comment: [~rony] [~Hamimul.Chowdhuri]
+
+Client just responded with:
+
+The data will need to be in the format listed in the original documentation provided (Import App - File Layout.doc). We cannot have all of that info added into one line. It will need to be separated out by name, address, city, state, zip. In the case of someone not having an address, city, state or zip that should not be possible since we do not allow that to occur on the system.
+
+
+
+Please advise, thank you!
+
+
+author: rony
+comment: Hi [~Bryanl]
+
+So by the last line client is saying nothing will be missed from the address section. So the invalid report that we have been providing so far all those customers have full addresses there?
+
+
+
+I am giving you an example. Check this data snapshot for ufcu monthly:
+
+!image-2022-05-24-15-03-15-400.png!
+
+As you are seeing here only name ar present no address or city state zip is present for this customer. This is fromUFCU_stmt_043022_1.zip.pgp and customer name as you are seeing in snapshot*ROY M MCMAHAN*
+
+
+
+Thanks
+
+
+
+
+
+
+
+
+
+Thanks
+
+Rony
+
+
+
+
+author: bryanl
+comment: [~rony] [~Hamimul.Chowdhuri]
+
+Please see client's response below:
+
+The example provided is a unique scenario, the PRM member was deceased and the JT member who was added as the Mail Care Of role had an incomplete profile (missing address). We have corrected this in our system and it shouldn't be an issue going forward. If these scenarios occur, can InfoImage just provide an exception report for us to manually review along with the return mail report in the output as requested below?
+
+
+author: rony
+comment: Hi [~Bryanl]
+
+
+
+It is tough to do what client is expecting. I can't say what is missing from the address section so I can't make any exception report.
+
+Would you please arrange a meeting with Peter? I need a discussion with an experienced person about this situation.
+
+
+
+Thanks
+
+Rony
+
+
+
+
+author: bryanl
+comment: [~rony] [~Peter.Dang]
+
+Hi Rony, would you like the meeting to be internal or include the client as well? I will be OOO from Wednesday 6/8- 6/10 so I may need another AC to arrange this. Please let me know, if it's just internal I think Peter's pretty busy for tomorrow 6/7 in the morning already.
+
+
+author: rony
+comment: Hi [~Bryanl]this will be internal.
+
+Thanks
+
+
+author: rony
+comment: Hi [~Bryanl]
+
+From feedback on 23rd May, per client :
+
+_In the case of someone not having an address, city, state, or zip that should not be possible since we do not allow that to occur on the system._
+
+So the client is saying nothing will be missed from the address section right? I mean full address will be present and full address means:
+ # member name
+ # alternate address line
+ # address line
+ # city state zip
+
+
+
+So all client addresses will be of 4 lines?
+
+
+
+And also can the client give us some data cycle for daily, and monthly where I can verify that nothing will be missed from the address section. If the client's address always contains 4 lines then the invalid address is easy to build in the format client wanted. But if there are more or less in the data file then it will be problematic.
+
+
+
+So if the client can guarantee it will be always 4 lines we will include those 4 lines of invalid address in the invalid address report but if it is more or less we will include those in the exception report that the client wanted in the last comment.
+
+
+
+Would you please discuss this with the client?
+
+
+
+Thanks
+
+Rony
+
+
+
+
+author: bryanl
+comment: [~rony]
+
+Per client:
+
+As you can see in the attached report, most have 4 lines of addresses but we do on occasion have an address with 5 lines (see row 22 of the attachment). If an address has more than 4 lines, what will happen? Would this exception out from the report? If so, that's not an issue as we could review those scenarios manually.
+
+Per my System Reliability team, we have numerous cycles setup for varying products. With the LN_BLXTR job, an account could cycle on any day of the year. The statement cycles could be:
+
+EOM,EOM1,EOM2,EOM3,EOM4,EOM5,EOM6,EOQ1,EOQ2,EOQ3,EOQ4,EOQ5,EOQ6
+
+
+
+Client attached[Return Mail 2022-06-09.xlsx|https://app.na3.teamsupport.com/dc/1/attachments/14834784]for you to review
+
+
+
+
+
+
+author: rony
+comment: Hi [~Bryanl]
+
+Need some answer from the client of below examples:
+
+What will be the value of the alternate address line and address line value for each of these examples:
+
+!image-2022-06-14-10-52-38-603.png!
+
+
+
+!image-2022-06-14-10-52-08-135.png!
+
+
+
+!image-2022-06-14-10-53-40-529.png!
+
+
+
+!image-2022-06-14-10-55-37-011.png!
+
+
+
+!image-2022-06-14-10-57-56-673.png!
+
+
+
+And need confirmation about city state zip address line:
+
+The last address line will always be city state zip, right? And it will not be missed? And it will be
+
+<city><space><2 digit state><space><zip code 5 digit or 9 digit> format and city, state, zip all will be present always?
+
+
+
+Thanks
+
+Rony
+
+
+
+
+
+
+author: billr
+comment: [~rony]
+
+Client responded:
+
+The text/image is still not visible for our viewing.
+
+Please advise so we can get this moving forward.
+
+
+author: rony
+comment: Hi [~billr]
+
+Would it be possible to update the live date?
+
+
+
+Thanks
+
+
+author: JIRAUSER10911
+comment: [~rony]
+
+Please see below client response:
+
+
+
+_Please see responsesbelow._
+
+_Anstiss: Address Line = 1797 Siemon rd_
+
+_Julian: Address Line = 14566 N Red Bud Trl Alternat Address Line = Lot 92_
+
+_Hammer: : Address Line = 14566 111 Holston View Dr Alternat Address Line = Apt 308_
+
+_Robinson: Address Line = 605 N Redbud Trail Apt 8_
+
+___<city><space><2 digit state><space><zip code 5 digit or 9 digit> and city, state, zip all will be present always?__Yes, unless there is a spelling error or it is an international address. Can you please address if these will exception out on a different report that we can work manually?_
+
+
+author: bryanl
+comment: [~rony] [~Hamimul.Chowdhuri]
+
+
+
+Just checking on an update for this, thank you!
+
+
+author: JIRAUSER11105
+comment: Hi [~Bryanl],
+
+
+
+Let's assume there can be 3,4,5 input address fields:
+
+We can assume that CITY, ST, ZIp must be present otherwise we can put in a different report
+
+For every case:
+
+  - first filed be the name and last filed the CITY, ST, Zip for each case
+
+!image-2022-06-14-10-57-56-673.png!
+
+For 3 non-empty fields:
+
+  - first filed be the name and last filed the CITY, ST, Zip for each case
+
+  - middle field be address line
+
+!image-2022-06-14-10-55-37-011.png!
+
+for 5 non-empty fields:
+
+  - first filed be the name and last filed the CITY, ST, Zip for each case
+
+  - 3rd field be address line
+
+  - 4thfield be an alternate address line
+
+for 4 non-empty fields:
+
+ - first filed be the name and last filed the CITY, ST, Zip for each case
+
+  - 3rd and 4rth can be either Name+address_line
+
+!image-2022-06-14-10-52-08-135.png!
+
+
+
+Or
+
+!image-2022-06-14-10-53-40-529.png!
+
+address_line+alternate_address_line,
+
+
+
+**How can we distinguish Name with address for this case?*
+
+_-Can it be distinguished with the presence of a numeric digit ? as the name doesn't contain numeric character but the address contain numeric characters._
+
+{color:#FF0000}*Less than 3 non-empty fields can be put on a different report*{color}
+
+
+
+Thanks, Hamimul
+
+
+
+
+author: bryanl
+comment: Hi [~Hamimul.Chowdhuri]
+
+Per client:Are we able to get a sample of the file output so we can run it in our TEST environment?
+
+
+
+Thanks!
+
+
+author: bryanl
+comment: Hi [~Hamimul.Chowdhuri]
+
+Per client:
+
+Thanks Bryan! I had my Enterprise Solutions team review the last response from your print team with the pictures provided for reference and they agree that the logic seems accurate. In regards to the question below, this assumption seems accurate on our end.
+
+For this last case, how can we distinguish name and address from the other option?Can it be distinguished with the presence of a numeric digit? As the name doesn't contain numeric character but the address contain numeric characters.
+
+
+author: bryanl
+comment: [~Hamimul.Chowdhuri]
+
+Just asking again for an update:
+
+Per client:Are we able to get a sample of the file output so we can run it in our TEST environment?
+
+
+
+
+author: bryanl
+comment: Hi [~Hamimul.Chowdhuri][~rony]
+
+Per client:
+
+The app that we purchased with Fiserv to support this process based on the reporting we have requested from your team is less than 30 days away from the app refund period expiring. Can you please provide me with an ETA on when we can expect a report? We are getting a bit anxious over here.
+
+
+author: JIRAUSER11105
+comment: Hi [~Bryanl],
+
+
+
+We can provide a sample before Thursday this week.
+
+
+
+Hamimul
+
+
+
+
+author: bryanl
+comment: [~rony] [~Hamimul.Chowdhuri]
+
+Client is asking if we have sample ready today, thank you!
+
+
+author: JIRAUSER11105
+comment: Hi [~Bryanl],
+
+
+
+Here is a sample report for formatted invalid addresses
+
+[^report.csv]
+
+
+
+
+author: JIRAUSER11105
+comment: HI [~Bryanl],
+
+
+
+here is the formatted sample with fixed width according to Input File Layout
+
+[^ufcu_stmt_invalid_mail_address_sample.csv]
+
+
+
+^Thanks^
+
+
+author: bryanl
+comment: Hi [~Hamimul.Chowdhuri]
+
+Per client:
+
+Can you please properly format these sample reports as a .txt file and re-send?We tried on our end, but its not properly formatted as requested in the app documentation.
+
+
+author: JIRAUSER11105
+comment: Hi [~Bryanl],
+
+
+
+this file is formatted now in .txt file as the given layout
+
+[^ufcu_stmt_invalid_mail_address_sample.txt]
+
+
+
+^Thanks^
+
+
+author: bryanl
+comment: Hi [~Hamimul.Chowdhuri]
+
+Per client:
+
+So, this format is perfect - thank you! However, there is an issue with the data. We asked for the member number to be provided not the account number (please reference earlier comments in the tickets where we discussed/clarified and provided the file layout from our IT team. Can you please revise to include the member number verses the account number per the layout documentation we provided?
+
+
+author: JIRAUSER11105
+comment: Hi [~Bryanl],
+
+
+
+The report was generated using data[^Return Mail 2022-06-09.xlsx], but after downloading many invalid addresses reports from production. most of the addresses in the files have no city state zip, this data line could not be processed according to the given file layout.
+
+
+
+Thanks
+
+
+author: bryanl
+comment: Hi [~Hamimul.Chowdhuri]
+
+Client replied with:
+
+Im not sure I followwe requested that the member number be added to the invalid address report as an enhancement at the very beginning of this process. Without the member number added to this report, its not even a possibility to run this in our core. Does your team need something from our end to ensure the member number is included and used in place of the account number on the output you are providing us? Are we on the same page?
+
+Do I need to setup a call for this? Please let me know so I can ask Rony/Tun, thanks!
+
+
+author: JIRAUSER11105
+comment: HI [~Bryanl],
+
+
+
+Yes, We've ensured that the member number should be included in the address report in place of the account number. the output was provided from the file given by you, in that file all the addresses have city, state, zip, to ensure we download some invalid address report from the production
+
+!ufcu_invalid _add.JPG|thumbnail!
+
+except for 1 or 2 addresses city,state, zip is missing, so for the other addresses, it can not be processed in the desired format. so most of the address line will be another report that cannot be processed.
+
+NB: We will include member number not account in the report
+
+
+author: bryanl
+comment: Hi [~Hamimul.Chowdhuri]
+
+Per client:
+
+I just pulled the Return Mail report from 8/15-8/18 and out of 371 items listed on the report, I dont see any addresses that are missing the city, state and zip (small sampling below in screenshot). I also attached the full report for reference. As previously discussed, if any of those address components are missing then we would like to see those listed on an exception report that we can work manually. We were attempting to upload the file you provided in our test environment to ensure it worked as expected, however it kept kicking out because its the last 3 of the account number on the report vs. the member number. Happy to jump on a quick call, Ive provided some availability below if you want to get something on the calendar so we can get this finalized.
+
+
+
+!image-2022-08-23-09-40-08-750.png!
+
+will schedule a call with her since client seemed to be getting concerned regarding the back and forth of this
+
+
+
+
+author: rony
+comment: Hi [~Bryanl]
+
+The example we provided is for monthly. Check the attached invalid address report from production from date range 013122-073122 inside this zip file[^ufcu_stmt_invalid_mail_address.zip]
+
+All invalid report from monthly has maximum entry where city state zip is missing. And we are not expressing any concern here, just letting you know that if city state zip is missing then we cannot include this to the new invalid address report, we will include those entries to another report say unformatted_invalid_address.csv so that client will know that those are the invalid address that we couldn't format correctly due to some issue.
+
+
+
+[~Hamimul.Chowdhuri]
+
+Thanks
+
+
+
+
+author: bryanl
+comment: [~rony] [~Hamimul.Chowdhuri]
+
+Please let me know if either of you can attend a meeting with client and Peter on Friday 8/26 at 9 AM PST? Also please see below per client:
+
+Thanks Bryan. I fully understand that any addresses missing the city, state and/or zip will be included in a separate report that we will review manually, this is the desired solution.
+
+At this point, is your team able to provide a sample report with a small sampling of accounts in the new invalid address report in the .txt file with the last 3 of the membership number verses the account number so we can get this loaded in our test environment with success and provide final sign off?
+
+
+
+
+
+
+author: JIRAUSER11105
+comment: Hi, [~Bryanl],
+
+
+
+[^ufcu_stmt_return_mail_report_073122_1.txt]
+
+here is the invalid mail report generated from production dataUFCU_stmt_073122_1.zip.PGP, as layout, putting member number.
+
+and
+
+[^member_number_vs_account_number.txt]
+
+here are the last 3 digits of the member number versus the account number of that file.
+
+
+
+Thanks, Hamimul
+
+
+
+
+
+
+author: bryanl
+comment: [~Hamimul.Chowdhuri]
+
+Per client:
+
+Is there a file missing? The stmt return mail report provided below still has the last 3 of the account number verses the last 3 of the membership number? That is the report I am looking for to test the upload into our environment.
+
+
+author: JIRAUSER11105
+comment: Hi [~Bryanl]
+
+one file has only the account number vs member number for invalid addresses, other is return mail report using the member number. about which file the client is talking about missing?
+
+
+
+Thanks
+
+
+
+
+author: JIRAUSER11105
+comment: Hi, [~Bryanl]
+
+
+
+Can you give the mapping of Member Number for Daily Notices (DLA) , Escrow Analysis (ea1),
+
+
+
+Thanks
+
+
+author: bryanl
+comment: Hi [~Hamimul.Chowdhuri]
+
+Can you specify which code that is for Member Number for DL? I attached the following two mapping documents from Sharepoint below:
+
+[^017-Revised Indirect General Member Letter_w_coupon.pdf]
+
+[^017-Revised Indirect General Member Letter_w_coupon.pdf][^escrow_analysis_mapping.pdf]
+
+
+author: bryanl
+comment: Hi [~Hamimul.Chowdhuri]
+
+Per client:
+
+The Return Mail report provided still has the last 3 of the account number listed, not the member number.
+
+Please see screenshot they attached "ufcumember.png"
+
+
+
+
+author: JIRAUSER11105
+comment: HI [~Bryanl],
+
+here is the report with the last 3 digits of the member number:
+
+/z/ufcu/ufcu_stmt_invalid_mail_address_return_mail_report_073122_1.txt
+
+[^ufcu_stmt_invalid_mail_address_return_mail_report_073122_1.txt]
+
+
+
+Thanks
+
+
+
+
+author: bryanl
+comment: Hi [~Hamimul.Chowdhuri]
+
+Client let me know the following questions:
+ # Once we give final sign off, what are next steps from your end?
+ # Will the return mail report start being generated in the txt file for download immediately and will we be able to pull this down from InfoTrac under the Return Mail tab similar to what our process is today? If so, the report currently exports into an Excel file so it seems there would need to be an additional export option added to include txt.
+ # If we have member(s) on the report that get kicked out due to some of the exceptions we have addressed throughout this process, how would we obtain that "exception" report to work manually?
+
+
+author: JIRAUSER11105
+comment: Hi [~Bryanl],
+
+
+
+The Return mail report and exception reports both will be copied to client pickup like an invalid address report.
+
+The format will be in .csv like an invalid address report generated now
+
+
+
+Thanks
+
+
+author: bryanl
+comment: [~Hamimul.Chowdhuri]
+
+Can you please confirm client's statement here below:
+
+The initial SOW was quoted for 4 hours per each application: Daily Notices, Escrow Analysis, Mortgage Billing and Monthly Statements. Due the to the last 3 of the member number being required, my understanding is that the only applications we will be able to use this for will be Daily Notices and Monthly Statements.
+
+
+author: JIRAUSER11105
+comment: Hi [~Bryanl],
+
+
+
+Would you please ask client to provide the member no mapping for daily letter, since looks client wants invalid address report for daily. Per my research , Escrow analysis has member number, we can build invalid address for escrow analysisas per client's format. But I am not sure for daily.
+
+
+
+Thanks
+
+
+author: bryanl
+comment: Hi [~Hamimul.Chowdhuri]
+
+Client is still pending update from their side for Escrow analysis and DL invalid address report. Also please see their question:
+
+On another note - when we go into the Return Mail tab within Infotrac, we are not coming up with any return mail data for the month of September 9/1 - 9/14. This is very unusual, is there something going on or a delay on your end that would explain this? Or is it down because you are working on making the new Return Mail .txt available for us to download? Please advise.
+
+
+author: rony
+comment: Hi [~Bryanl]
+
+I am not quite experienced with this Return Mail tab within InfoTrac that client mentioned. But no, it's not our update that is responsible for this. Would you please see if [~Peter.Dang]can comment here?
+
+
+
+Thanks
+
+
+
+
+author: bryanl
+comment: Hi [~Peter.Dang]
+
+Can you help advise Rony here? Thank you!
+
+
+author: bryanl
+comment: Hi [~Peter.Dang] [~rony]
+
+Client updated me with following:
+
+Thanks Bryan, we are now able to download the Return Mail report for the month of September. Can you advise when the revised return mail report in the .txt format will be available for us to download?
+
+I am still waiting to hear back from my IT/System Reliability team on the other member letters in questions but don't want that to hold up the progress we have made so far.
+
+
+author: JIRAUSER11105
+comment: Hi [~Bryanl]
+
+
+
+Yes, therevised return mail report in the .txt format will be available for us to download.
+
+
+
+
+author: bryanl
+comment: Hi [~Hamimul.Chowdhuri]
+
+Per client:
+
+I have a question about the processing of UFCU files with/without Member Numbers. I have reviewed several of the output files for our daily notice and I am not finding where the member number is housed in these files.
+
+My understanding was we provided a XREF file with our files and the InfoImage processing uses the XREF file to apply the member number against the acct number. The files are then returned with the PDFs and index file with the member number (if one was found in the XREF file, if a member number is not included in the XREF file, then "NOMEMBERNBR" is placed in the placeholder for the member number in the index file for archival). Could you advise if this is the process?
+
+
+author: bryanl
+comment: Hi [~Hamimul.Chowdhuri]
+
+Client is requesting an update, thank you!
+
+
+author: JIRAUSER11105
+comment: Hi [~Bryanl]
+
+
+
+I checked the daily letter application. Yes, there are XREF files for applications where the data file does not have the member number and account number, XREF is used to get the Member Number or Account Number matching with the available account number or member number from the data file. we can get member numbers from those XREF files to generate invalid address reports with member numbers.
+
+
+
+Thanks
+
+
+author: bryanl
+comment: Hi [~Hamimul.Chowdhuri]
+
+Per client:
+
+Yes, we would like to move forward with the Return Mail Report for all applicable applications.
+
+Quick question  is it at all possible to go live with the Return Mail Report for the monthly statements while the others are being worked on?
+
+
+author: JIRAUSER11105
+comment: Hi [~Bryanl]
+
+
+
+Yes, for monthly statements we can go live for a Return Mail report while the other is being worked on. just a question to confirm the report will be in .txt format which will be available to download according to the layout, do you need the "member number vs account number file" also to be available along with the Return Mail Report?
+
+
+
+Thanks
+
+
+author: billr
+comment: [~Hamimul.Chowdhuri] [~Bryanl]
+
+Hamimul, client responded:
+
+We dont need the member number vs account number file. We just need the Return Mail report in the .txt format with the last 3 of the member number.
+
+
+author: JIRAUSER11105
+comment: Hi [~Igor.Khosid],
+
+
+
+For Montly statement the project is on qa folder /d/iss/qa/UFCU/UFCUMS11/zip
+
+Parallel ID:20221006023913
+
+Invalid report generated[^ufcu_stmt_invalid_mail_address_return_mail_report_073122_1.txt]
+
+
+
+Thanks
+
+
+
+
+author: igor.khosid
+comment:    Parallel ID: 20221006023913
+   Currently in parallel: Yes
+   User: hamimulU
+   Description: UFCU return mail rport for monthly statement [IS- 1085]
+   Date Submitted: 2022-10-06 02:39:58
+   Date Last Updated: 2022-10-06 02:46:27
+   Files:
+      1) UFCUMS11.dfa
+      2) ufcums1_process.sh
+      3) ufcu_invalid_address_report_format.py
+
+
+author: igor.khosid
+comment: [~avannik] - please proceed with the final testing
+
+[~Bryanl] - Please update the due date!
+
+
+author: JIRAUSER11700
+comment: [~Hamimul.Chowdhuri]
+{quote}For Montly statement the project is on qa folder /d/iss/qa/UFCU/UFCUMS11/zip
+
+Parallel ID:20221006023913
+
+Invalid report generated[^ufcu_stmt_invalid_mail_address_return_mail_report_073122_1.txt]
+{quote}
+I imported the project from QA folder and I see just one statement addressed to some Roy E Lolmaugh (who is even not in the report).
+ Could you please provide the data from which your sample report was actually generated? It doesn't have to be in the project, I just need address lines.
+
+Besides, ten records is not exactly a representative sample. Could you please make the report for more - like a hundred or two, - and attach it along with the data used for its generation? Just random people from the client's recipients.
+
+Thank you.
+
+
+
+P.S. From the communication d.d. Aug 24-25 I understand that
+{quote}...if city state zip is missing then we cannot include this to the new invalid address report, we will include those entries to another report say unformatted_invalid_address.csv ...
+
+...any addresses missing the city, state and/or zip will be included in a separate report that we will review manually,this is the desired solution.
+{quote}
+I don't see unformatted invalid address file in the script. Is it generated?
+
+
+
+P.S.S. The solution is presented only for monthly statements. There are 4 applications,and it is mentioned that at leastEscrow Analysis and Mortgage Billing need different processing. What am I testing here?
+
+
+author: JIRAUSER11105
+comment: Hi [~avannik],
+
+
+
+the sample is generated from 073122 production data,
+
+
+
+[^UFCUMS1.dat]the data for only the customer with an invalid address,
+
+
+
+which can be found also in/z/download/ufcu/UFCU_stmt_073122_1.zip.pgp
+
+
+and the report generated from this data is/z/ufcu/ufcu_stmt_invalid_mail_address_return_mail_report_073122_1.txt
+
+for escrow and a monthly statement is going on in the meantime
+
+
+
+Thanks
+
+
+author: JIRAUSER11700
+comment: [~Hamimul.Chowdhuri]
+{quote}for escrow and a monthly statement is going on in the meantime
+{quote}
+So the task is not finished. Why is it given to QA?
+And this part
+{quote}...if city state zip is missing then we cannot include this to the new invalid address report, we will include those entries to another report say unformatted_invalid_address.csv ...
+
+...any addresses missing the city, state and/or zip will be included in a separate report that we will review manually,this is the desired solution.
+{quote}
+is also not implemented?
+
+
+author: bryanl
+comment: Hi [~Hamimul.Chowdhuri] [~rony] [~avannik]
+
+Can I please get an update for this, client is asking. Thank you!
+
+Also please let me know regarding a new due date
+
+
+author: rony
+comment: Hi [~Bryanl]
+
+This is assigned to [~tohidulI]now.
+
+
+
+Thanks
+
+
+author: tohiduli
+comment: Hi [~Bryanl]
+
+I will provide sample tomorrow.
+
+
+author: bryanl
+comment: Hi [~rony] [~tohidulI]
+
+Did we need a new sample for this? I believe client has approved samples and is requesting a live date.
+
+Please if [~avannik] still needs answer for QA, please provide update to this questions on 10/10/22 9:36 AM PST, thank you!
+
+
+author: tohiduli
+comment: Hi [~avannik]
+
+
+
+
+
+
+||Prefix||Invalid Report||Account Number in Data File||Note||
+|UFCUEA1|[^ufcu_ea_invalid_mail_address_return_mail_report_100421_1.txt]|1000018516||
+|UFCUML1|[^ufcu_mtg_invalid_mail_address_return_mail_report_092522_2.txt]|267337100||
+|UFCUDLA|[^ufcu_dn_invalid_mail_address_return_mail_report_080522_4.txt]!/jira/images/icons/link_attachment_7.gif|width=7,height=7,align=absmiddle!|1000009355|The account in the report is for UFCUDL003 letter|
+|UFCUMS1|[^ufcu_stmt_invalid_mail_address_return_mail_report_073122_1.txt]|70867730100||
+|||||
+
+
+
+Projects are exported to QA folder.
+
+UFCUMS1 - UFCUMS11.zip
+
+UFCUML1 - UFCUML11.zip
+
+UFCUEA1 - UFCUEA11.zip
+
+UFCUDLA - UFCUDL001.zip,UFCUDL002.zip, UFCUDL003.zip,UFCUDL004.zip,UFCUDL007.zip,UFCUDL008.zip,UFCUDL009.zip,UFCUDL010.zip,UFCUDL011.zip,UFCUDL012.zip,UFCUDL013.zip,UFCUDL015.zip,UFCUDL016.zip,UFCUDL017.zip,UFCUDL018.zip,UFCUDL019.zip,UFCUDL020.zip
+
+
+
+
+
+
+
+
+author: bryanl
+comment: Hi [~avannik]
+
+Please see response from [~tohidulI], client is requesting live date please advise thanks!
+
+
+author: JIRAUSER11700
+comment: [~Bryanl] move ticket to request QA please.
+
+
+author: bryanl
+comment: Hi [~avannik]
+
+I have changed status thank you!
+
+
+author: JIRAUSER11700
+comment: [~tohidulI] [~rony]
+
+Guys, I happen to have the same questions as before. Please update me if anything has changed.
+
+1. Can you please take some more or less representative selection of the client's test data, say, a hundred documents, and create reports out of them? I open [^ufcu_ea_invalid_mail_address_return_mail_report_100421_1.txt]and I see two addresses. It's not much of a test.
+
+2. From the communication d.d. Aug 24-25 I understood that the client wanted addresses that are missing vital parts like city, zip, state, etc. to be put in a *separate* report, so that they can process them *manually*. I don't see it. I see incomplete records in the main report.
+
+
+
+
+author: JIRAUSER11700
+comment: [~Bryanl], I need your help, because it's easy to get lost in the story.
+
+1. The required format, is it still this picture?
+!image-2022-05-10-06-19-09-908.png|thumbnail!
+2. Does the requirement about putting aside incomplete addresses (see #2 in the comment above) still stand?
+
+Thank you
+
+
+author: tohiduli
+comment: [~avannik]
+
+UFCUMS1 (Ran with real data file)
+
+return mail report:[^ufcu_stmt_invalid_mail_address_return_mail_report_093022_1.txt]
+
+invalid address report:[^ufcu_stmt_invalid_mail_address_093022_1.csv]
+
+I could not find any invalid address in real data for other projects
+
+following invalid addresses are generated by artificially creating data with invalid address
+
+UFCUML1
+
+invalid address report:[^ufcu_mtg_invalid_mail_address_09252022_2.csv]
+
+return mail report:[^ufcu_mtg_invalid_mail_address_return_mail_report_092522_2.txt]
+
+UFCUDLA
+
+invalid address report:[^ufcu_dn_invalid_mail_address_08052022_4.csv]
+
+return mail report:[^ufcu_dn_invalid_mail_address_return_mail_report_080522_4.txt]
+
+
+author: bryanl
+comment: Hi [~tohidulI]
+
+Can you help advise on [~avannik]two questions regarding format and requirements? I am not sure what additional changes client has asked for in the back and forth discussion, thanks!
+
+
+author: JIRAUSER11700
+comment: [~tohidulI]thank you for the files.
+
+
+
+The txt files represent data for the report, right?
+
+This is how I understand the task:
+ 1. The input data has to contain address lines from documents that could not be delivered (btw I need to see that input data too)
+ 2. The report file has to contain fields that the client requested: customer #, customer name, address line, alternate address, etc. as per the picture  parsed from address lines.
+ 3. If city, state or zip are missing then the address data goes to the separate report to be processed manually (see Aug 23, per client). This must be that csv file.
+
+In the report files you provided I don't see a single record that contains city, state and zip. So they must not be there.
+
+I understand we don't have much returned mail data. Could you please just take a bunch of addresses of the customer's clients (because we need member #), like the one he shows on Aug 23 and run report on them, for testing purposes? It would be nice to edit some of them and remove city, state or zip, or all of them. I just want to see if parsing will work correctly, that's all.
+
+
+author: JIRAUSER11700
+comment: [~tohidulI]I understand you guys don't have much time.
+
+maybe I could run the script or whatever forms that report myself, if you describe how
+
+
+author: bryanl
+comment: Hi [~tohidulI] [~avannik]
+
+Can you please advise? Per client:
+
+Can you please review and advise the status of making the Return Mail Report available in InfoTrac for the statement application as well as the status of the other applications?
+
+
+author: tohiduli
+comment: Hi [~Bryanl]
+
+can you discuss about the "Return Mail Report" available in the infoTrac with [~Peter.Dang]?
+
+
+author: bryanl
+comment: Hi [~tohidulI]
+
+I sent you a zoom message regarding this, can you please help QA with updating the description of the changes being made? Client has asked for various changes so I also want to make sure I know all the changes DSI are planning to make, thanks!
+
+
+author: bryanl
+comment: Hi [~avannik],
+
+Per [~tohidulI] currently there are two reports for invalid mail address one is the old generalized csv format and another in the new format related to this ticket. If there is no city state or zip for the accounts, the new format format cannot format these accounts and these accounts will be kept on the old format report.
+
+Client wants to proceed with the report for Monthly Statement for now, and later on for Escrow Analysis and Daily Letter if possible.
+
+
+author: JIRAUSER11700
+comment: [~Bryanl]thank you. So the client confirms that the requirement aboutcity, state and zip stands.
+
+[~tohidulI]could you please generate a new pair of reports for Monthly Statement, and include input data as well?
+Also, If we don't have enough returned mail addresses, could you please add a bunch of addresses from delivered mail to make the data representative?
+And if there is a possibility for me to run this report in test environment, that would be great, too.
+
+
+
+
+author: tohiduli
+comment: Hi [~Bryanl]
+
+according to the previous comments we should identify the address lines without numeric values as names. But some daily letters has numeric values as names.
+
+!image-2022-11-12-02-31-43-029.png!
+
+!image-2022-11-12-02-29-39-282.png!
+
+
+
+[~avannik]
+
+
+author: tohiduli
+comment: [~avannik]
+
+monthly sample for invalid address report.
+
+datafile:[^07_MM_STMXT_093022.zip]
+
+[^ufcu_stmt_invalid_mail_address_093022_4.csv]
+
+[^ufcu_stmt_invalid_mail_address_return_mail_report_093022_4.txt]
+
+
+author: JIRAUSER11700
+comment: [~tohidulI]thank you, I think I understand the logic.
+
+[~Bryanl]it looks good to me , I'm not sure how we proceed though.
+ Do we present something for the client's approval?
+I'll set the status to Waiting for Approval, let me know if it's QA finished.
+
+
+author: bryanl
+comment: Hi [~tohidulI]
+
+Client already approved all that is needed right? Can we proceed with releasing this and when are we expected to go live so I can update client? I see no parallel was required before, is that still correct? Thank you!
+
+
+author: tohiduli
+comment: [~avannik]
+
+rest of the samples are given below.
+||App||Invalid Report||Invalid Return Mail Report||
+|UFCUML1(Mortgage)|[^ufcu_mtg_invalid_mail_address_10172022_4_updated.csv]|[^ufcu_mtg_invalid_mail_address_return_mail_report_101722_4_updated.txt]|
+|UFCUEA1(Escrow)|[^ufcu_ea_invalid_mail_address_093022_1_updated.csv]|[^ufcu_ea_invalid_mail_address_return_mail_report_093022_1_updated.txt]|
+|UFCUDLA(Daily)|[^ufcu_dn_invalid_mail_address_08062022_6_updated.csv]|[^ufcu_dn_invalid_mail_address_return_mail_report_080622_6_updated.txt]|
+
+[~Bryanl]
+
+
+
+
+
+
+author: bryanl
+comment: Hi [~tohidulI] [~avannik]
+
+Client wants to move forward with just the Monthly Statement report first, we don't need to provide anymore samples for that right?
+
+
+
+As for the other samples for 3 other applications, I will provide to client once QA has reviewed and we have gone live with Monthly Statement report, thanks!
+
+
+author: tohiduli
+comment: [~avannik] [~Bryanl]
+
+are the monthly reports alright? Should I request for the release?
+
+Attached is checklist
+
+[^IS-1085_IS_CHECKLIST_11152022_ufcums1.docx]
+
+
+author: bryanl
+comment: Hi [~avannik]
+
+Is the Monthly Statement report okay to release? I believe [~tohidulI]has provided samples for it and client has approved, and we will work on other applications afterwards, thanks!
+
+
+author: JIRAUSER11700
+comment: [~Bryanl] If the client approved, it's good to go. Moving to 'QA completed'.
+
+
+author: tohiduli
+comment: [~TunA]
+
+please release the files mentioned in the transfer form.
+
+[^IS_PROGRAM_TRANSFER_FORM_IS_1085_11182022.doc]
+
+
+
+[~Bryanl]
+
+
+author: tuna
+comment: Hi [~tohidulI],
+
+Following codes have been released.
+
+Thanks,
+
+Tun
+
+
+
+20221118083701 11/18/2022 tohidulI IS-1085 UFCU - [28066][pvt] Return Mail Report
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/tohidulI/
+total 704
+-rwxrwxrwx 1 tohidulI DSI 8622 Nov 17 22:29 ufcu_invalid_address_report.py
+-rwxrwxrwx 1 tohidulI DSI 211724 Nov 17 22:29 UFCUMS11.dfa
+-rwxrwxrwx 1 tohidulI DSI 792 Nov 17 22:29 UFCUMS11.prj
+-rwxrwxrwx 1 tohidulI DSI 20533 Nov 17 22:29 ufcums1_process.sh
+
+
+
+[~Bryanl]

@@ -1,0 +1,82 @@
+title: SACU Change to Use Data File Date 
+description: SACU Change to Use Data File Date 
+
+
+author: JIRAUSER11005
+comment: Hi [~Igor.Khosid]
+
+Please find below the required information for the QA process.
+
+*Parallel ID:* 20221107110919
+
+*Changes:* Data file date usage instead of System date + Comparison operator and Shebang bug fix.
+
+Thanks.
+ Salman.
+
+
+author: igor.khosid
+comment:    Parallel ID: 20221107110919
+   Currently in parallel: Yes
+   User: salmanA
+   Description: IS1790 - SACU Change to Use Data File Date
+   Date Submitted: 2022-11-07 11:09:38
+   Date Last Updated: 2022-11-08 01:07:37
+   Files:
+      1) sacudla_process.sh
+
+
+author: igor.khosid
+comment: Updated
+
+<             if [ $base_filename -ne "*" ]
+---
+>             if [ $base_filename != "*" ]
+
+< mmddyyyy=`date "+%m%d%Y"`
+< echo -e "mmddyyyy: ${mmddyyyy}"
+---
+> yy=$(grep -i '^proc_date:' $home_ins/insert/${cid}${jid}.ins | cut -d: -f2 | xargs | cut -c 5-6)
+> mmddyy=$(echo "${main_data_file##*/}" | cut -d_ -f3)
+> mmddyyyy=$(echo "$mmddyy" |  sed "s/..$/$yy&/")
+
+
+
+author: igor.khosid
+comment: QA - completed
+
+
+author: JIRAUSER11005
+comment: Hi [~TunA].
+
+
+
+Please find below the required information for the release process.
+
+
+|Release Files Path|/d/is/cvs/xfer/salmanA/|
+|Transfer Form|[^IS-1790_Transfer-Form_r11012022.docx]|
+
+
+Thanks,
+ Salman
+
+
+author: tuna
+comment: Hi Salman,
+
+Following code has been released.
+
+Thanks,
+
+Tun
+
+
+
+20221108114718 11/08/2022 salmanA IS-1790 SACU Change to Use Data File Date
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/salmanA/
+total 72
+-rwxrwxrwx 1 salmanA DSI 12978 Nov 8 11:20 sacudla_process.sh
+
+

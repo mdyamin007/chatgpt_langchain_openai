@@ -1,0 +1,1130 @@
+title: PathWays Instant Enrollment for SSCU Service - Technical Design Document
+body: # 1\. Introduction
+
+  
+
+## 1.1. Purpose/Objective Summary
+
+    
+    
+    << Required: Fill in brief description of what this project/feature/enhancement is about >>
+
+InfoImage is in a process of implementing the SSCU Custom Request for
+eStatements profile update as a part of the instant enrollment feature by
+taking to next-level of service delivery. The service will be developed &
+built using Mule ESB by using PathWays Framework SDK in order to make profile
+updates/changes to target Fiserv Core-DB Spectrum system.
+
+SSCU has identified 3 potential service entry-points to kick-off the instant
+enrollment process. In turn, enrollment process will update the Fiserv
+Spectrum Core-DB to update the custom flag (Flag 69) for Member-level control
+flag. The eStatement application will use Flag-69 for eStatement delivery
+purpose.
+
+SSCU has identified & created a custom flag (Flag 69) that they call their
+**Member-level control flag**  to store the user preferences.
+
+  * "1" = Member enrolled into eStatements (i.e. paperless statement delivery)
+  * "0" = Member not enrolled into eStatements
+
+SSCU would like us to turn on/off Flag 69 for the following scenarios:
+
+  1. Member enrolls into eStatements on the Member Site for the first time
+  2. Member changes their paperless status through the Member Site profile page ('paper -> e' or 'e -> paper')
+  3. AI user changes a member's paperless status through the AI Site Account Information page ('paper -> e' or 'e -> paper')
+  4. Nightly batch process to update the flag for anyone who changes their status while Fiserv's core goes down for nightly maintenance at 7:30 PM-8:45 PM, or end-of-month maintenance, or anytime the core is down in general.
+    * We will add all member enrollment updates to a queue when the core is not available. We will attempt to reach the core at regular intervals until the set expiration period has passed (use expiration period of 5 hours). If the core is not back up after the set expiration period, an email should be sent internally (include SSCU's Account Coordinator), which should list out the member account numbers whose enrollment information was dropped from the queue so that SSCU can be notified and they will make the appropriate updates to the core so that all enrollment status is in sync.
+  5. Other vendors (Andrea - member self-service and NAOP - CU teller-level) enrolls members into eStatements.
+  6. Also, when a member enrolls through the Member Site, SSCU would like the mail field to be pre-populated with the email address stored in Fiserv's core.
+
+  
+
+## 1.2. Scope
+
+    
+    
+    << Required: List out the itemized features of what's inside/outside of the scope of current project/phase >>
+
+There is a requirement to build the Mule-ESB Service for the SSCU Instant
+Enrollment (using PathWays SDK) for the eStatement web-application. The web-
+application will make a call to the Mule-ESB REST API in order to consume the
+service. Also, there are two external clients/vendors (Andera - member self-
+service and NAOP - CU teller-level) may also use this service to enroll the
+clients into eStatements.
+
+Mule-ESB Service for SSCU Instant Enrollment:
+
+  * To register/enroll the client for the eStatement delivery option. This setting will be stored into the custom flag (Flag 69) and eStatement DB.
+  * To retrieve the Email-id for the client in order to display into the web-application during the enrollment/registration process.
+  * Web services to retrieve enrollment information from Andera and NAOP
+    * SSCU does not want all three vendors (Andera, NAOP and InfoIMAGE) to update Flag 69, so we would like to build web services to capture enrollment information from Andera and NAOP, which we will use to enroll these members into eStatements and update the core using our normal workflow.
+
+  
+
+Given below section describes in-scope and out-of-scope requirements for the
+Mule-ESB - SSCU Instant Enrollment service implementation.  
+  
+
+  
+
+### 1.2.1. In-Scope
+
+  *  **Feature-1:**  To register/enroll the member for the paperless statement delivery by storing the status to custom flag (Flag 69) and Fiserv Spectrum DB. This will be used by the Member, when:
+    * Member enrolls into eStatements on the Member Site for the first time
+    * Member changes their paperless status through the Member Site profile page (paper -> e or e -> paper).
+  *  **Feature-2:**  To retrieve the Email-id for the client/member, when:
+    * Member enrolls or changes their paperless delivery option, it will show the email-id to send the email confirmation.
+
+  
+  
+
+### 1.2.2. Out-of-Scope
+
+  *  **Feature-1:**  Mule-ESB will not store user-id/password credentials for the eStatement web-application.
+  *  **Feature-2:**  Mule-ESB will not perform member authentication (i.e. using user-id/password) for the eStatement application.
+    * Mule ESB will not use any 3rd party connector to connect to the Fiserv Spectrum server. It will use PathWays SDK in order to make use of existing web-services for the Fiserv Spectrum services.
+    * The eStatement web-application development is beyond the scope of this document. The eStatement web-application team will be responsible for web-application level GUI and related changes in order to consume the Mule-ESB REST service.
+    * The Mule-ESB service will be published for the internal/external client in order to consume & use the service.
+  *  **Feature-3:**  LDAP integration for AI users
+    * The LDAP integration with eStatement AI web-site and NAOP LDAP Server is beyond the scope of Mule-ESB implementation.
+
+* * *
+
+  
+  
+
+## 1.3. Assumptions
+
+    
+    
+    << (If Applicable)* List out assumptions made during this design.    
+         IMPORTANT: All assumptions need to be confirmed with corresponding stake-holder during design review.    
+         Assumptions would likely become Dependencies upon confirmation/design-review >>
+
+Given below section describes key assumptions for the Mule-ESB SSCU Instant
+Enrollment implementation.
+
+  1.  **Assumption-1:**  It is assumed that eStatement web-application will make a call to the Mule-ESB service to retrieve the user's email-id for display purpose.
+  2.  **Assumption-2:**  eStatement web-application will make the REST/JSON call to Mule-ESB - to update the member/customer profile status for the eStatement delivery.
+  3.  **Assumption-3:**  eStatement web-application will manage web-sessions for the logged-in user along with authentication & authorization process.
+  4.  **Assumption-4:**  eStatement web-application will send the request along with client/token name to the Mule-ESB Service. In case of incomplete request information, MuleESB service will return error with message "Incomplete Request"/"Invalid Request" message. Web-app may correct and resend the request for processing.
+    * As a part of the REST web-service call, Mule-ESB service will return the response with status-code, which can be used by the web-application for success/failure message display purpose.
+    * Mule-ESB application will not store the user-profile details like user-id, name, SSN, address, email-id into the local MuleESB DB.
+    * Mule-ESB application may store transactional data for certain period of time (30-days) and keep taking backup or purge historical data as per the Backup & Archival data policy.
+
+  
+  
+
+## 1.4. Dependencies
+
+    
+    
+    << (If Applicable) List out all dependency component/service/library needed for this design >>
+
+Given below section describes dependencies related to the SSCU Instant
+Enrollment service implementation.
+
+  1.  **Dependency-1:**  Profile update to the Fiserv Spectrum DB: Third party web-services APIs (Pathways SDK) will be used to build & implement the SSCU Instant Enrollment service.
+  2.  **Dependency-2:**  External vendors/partners will be available during the testing window in order to complete the end-to-end integration testing in a timely fashion. In case of an delay by external or internal team to complete the testing during testing phase may impact the project schedule.
+
+* * *
+
+  
+  
+
+# 2\. Requirements
+
+  
+  
+
+## 2.1. Business Requirements & Use Cases
+
+    
+    
+    << (Required) List out all needs/requirement from business/end-user perspective.    
+          Assign an ID for each requirement/use-case item for easier reference in future >>
+
+ID| Title| Details| ScreenMock| Importance  
+---|---|---|---|---  
+BRQ-01| To enroll/register the member client by updating the custom-flag-69|  
+ **Requirement:**  To enroll the member customer for the eStatement
+(paperless) delivery option against a user-id and update the same info into
+the Fiserv DB using PathWays API.  
+eStatement web-application (Andera, NAOP) will submit a request to Mule-ESB,
+which will make a call to Pathways WS to update the Fiserv Spectrum DB.  
+ **Use Case:**  User login to eStatement web-application by using user-
+id/password successfully and goes to the profile change page to make the
+statement delivery as 'eStatement' (paper --> e or e --> paper). In this
+scenarios, it will invoke the MuleESB REST service to make change to the
+Fiserv Specturm DB.| <attach file>| P0:Show Stopper  
+BRQ-02| To retrieve the email-id of member client|  
+ **Requirement:**  To retrieve the email-id of the member client in order to
+display into the web-page.  
+eStatement web-application will make a request to Mule-ESB EST service, which
+will make PathWays API call to retrieve the necessary details. MuleESB will
+return response to web-application, which will perform next step like display
+or email sending.  
+ **Use Case:**  User login to eStatement web-application or member-site by
+using user-id/password successfully. The web-application profile change page
+will display the current settings for the eStatement (paperless) delivery
+along with email-id.  
+When a member enrolls through the Member Site, SSCU would like the mail field
+to be pre-populated with the email address stored in Fiserv's core.  
+In turn, web-application will make a call to the Mule-ESB REST/JSON service to
+retrieve the email-id. In case of target system (Fiserv Spectrum is down or
+not-reachable e.g. downtime after 8:00pm), Mule service will return empty/null
+value along with status code.| <attach file>| P0:Show Stopper  
+  
+|  
+|  
+|  
+|  
+  
+  
+| Note (4/24): As per latest discussion with Alice, the second requirement
+(BRQ-02) is no longer required for current (6/10) release. It may be required
+for future release.  
+  
+  
+  
+
+#### a) Integration Landscape
+
+Given below diagram describes integration touch-points for the SSCU (Pathways)
+Instant Enrollment.
+
+Figure-1: SSCU (Pathways) Instant Enrollment - Integration Points between
+various systems.
+
+NOTE:
+
+  * Integration points - 1, 2, 3 and 4 are clients/consumer to use & invoke the Mule-ESB Instant Enrollment service. These clients may need some development changes in order to consume & use the REST web-services APIs.
+  * Integration point - 5 : between LDAP Server and eStatement Application is not in the scope of the Mule implementation. This integration request will be handled by the IS Team.
+  * Mule-ESB will use PathWays SDK to build the web-services client in order to invoke the Fiserv-DB Spectrum Service (TBD: waiting for more details from SSCU/Pathways in order to add API specific details).
+
+* * *
+
+  
+  
+
+## 2.2. Functional Requirements & Use Cases
+
+    
+    
+    << Required: List out all needs/requirement from engineering/functional perspective.   
+         Associate them with an ID for easier reference >>
+
+ID| Title| Details| Bus. Req. Ref.| Importance  
+---|---|---|---|---  
+FRQ-01| To enroll/register the member client by updating the custom-flag-69|
+Same as described in above table (Section 2.1).| <attach file>| P0:Show
+Stopper  
+FRQ-02| To retrieve the email-id of member client| Same as described in above
+table (Section 2.1). Note (4/24): Not applicable for current release.| <attach
+file>| P0:Show Stopper  
+  
+  
+  
+
+## 2.3. Performance & Scalability Requirements (SLA)
+
+    
+    
+    << Required: List out all needs/requirement from Performance perspective. Associate them with an ID for easier reference >>
+
+ID| Title| Details| Importance  
+---|---|---|---  
+PRQ-01| To enroll/register the member client by updating the custom flag (Flag
+69)|  
+ **Requirement:**  To enroll the member customer for the eStatement option
+against a user-id and update the same info into the Fiserv core-DB using
+PathWays API. The service should return a response within xxxms.  
+ **Use Case:**  As described in above table (Section 2.1)| P0:Show Stopper  
+PRQ-02| To retrieve the email-id of member client|  
+ **Requirement:**  when a member enrolls through the Member Site, SSCU would
+like the mail field to be pre-populated with the email address stored in
+Fiserv's core. The service should return a response within xxxms.  
+ **Use Case:**  As described in above table (Section 2.1) Note (4/24): Not
+applicable for current release.| P1:High  
+PRQ-03| TBD : SLA Matrix - Need to discuss & finalized with IS web-application
+team.| TBD ...| TBD ...  
+  
+  * TBD - To be discussed
+
+  
+  
+
+## 2.4. QA/Test Requirements
+
+    
+    
+    << Required: List out all needs/requirement from QA/Testing perspective. Associate them with an ID for easier reference >>
+
+ID| Title| Details| Importance  
+---|---|---|---  
+TRQ-01| To enroll/register the member client by updating the custom flag (Flag
+69)|  
+ **Requirement:**  To enroll the member customer for the eStatement
+(paperless) delivery option against a user-id and update the same info into
+the Fiserv DB using PathWays API. eStatement web-application (Andera, NAOP)
+will submit a request to Mule-ESB, which will make a call to Pathways WS to
+update the Fiserv Spectrum DB.  
+ **Use Case:**  User login to eStatement web-application by using user-
+id/password successfully and goes to the profile change page to make the
+statement delivery as 'eStatement' (paper -> e or e -> paper). In this
+scenarios, Client application will make a call to the Mule-ESB REST/JSON
+service, which will in turn invoke Fiserv Specturm service.| P0:Show Stopper  
+TRQ-02| To retrieve the email-id of member client|  
+ **Requirement:**  To retrieve the  **email-id**  of the member client in
+order to display into the web-page.  
+eStatement web-application will make a request to Mule-ESB EST service, which
+will make PathWays API call to retrieve the necessary details. MuleESB will
+return response to web-application, which will perform next step like display
+or email sending.  
+ **Use Case:**  User login to eStatement web-application or member-site by
+using user-id/password successfully. The web-application profile change page
+will display the current settings for the eStatement (paperless) delivery
+along with email-id.  
+When a member enrolls through the Member Site, SSCU would like the mail field
+to be pre-populated with the email address stored in Fiserv's core.  
+In turn, web-application will make a call to the Mule-ESB REST/JSON service to
+retrieve the email-id. In case of target system (Fiserv Spectrum is down or
+not-reachable e.g. downtime after 8:00pm), Mule service will return empty/null
+value along with status code.  
+Note (4/24): Not applicable for current release.| P0:Show Stopper  
+  
+|  
+| Negative Testing|  
+  
+TRQ-03| To enroll the member client by updating the custom flag during FiServ
+maintenance window (after 8:00pm to midnight).| Mule service will return
+transactionId along with status code as '200' and statusMessage='Request
+submitted for processing!' .| P0:Show Stopper  
+TRQ-04| To retrieve the email-id of member client during FiServ maintenance
+window (after 8:00pm to midnight)| eStatement web-application will make a call
+to the Mule-ESB REST/JSON service to retrieve the email-id. Mule service will
+return empty/null value to email-id along with status code as '200' and
+statusMessage='Server not reachable!' . Note (4/24): Not applicable for
+current release.| P0:Show Stopper  
+TRQ-05| To retrieve the email-id of member client during regular hours with
+client-id which does not exists| eStatement web-application will make a call
+to the Mule-ESB REST/JSON service to retrieve the email-id. Mule service will
+return empty/null value to email-id along with status code as '200' and
+statusMessage='User-Id not Found!' . Also, response will include return result
+from FiServ WS call. Note (4/24): Not applicable for current release.| P4:Nice
+To Have  
+  
+* * *
+
+# 3\. Design
+
+  
+
+## 3.1. Architecture & Workflow Diagram
+
+    
+    
+    (Required for medium/large feature)* Draft a diagram to show how various functional component work with each other,   
+     also how data flow from one component to another.
+
+SSCU (Pathways) Instant Enrollment Service - High-level Implementation Details
+
+Figure-2: SSCU (Pathways) Instant Enrollment - High-level Design Diagram  
+  
+
+  
+
+#### a) Web-Application Login Page
+
+  
+  
+
+## 3.2. Data Model changes (ER diagram & ddl.sql)
+
+    
+    
+    (Required if involve LARGE schema change)* Draft a ER diagram of the existing AND new data-model design.    
+      Highlight the entity/relationship that is added/changed.
+
+This is a new development work, therefore, it will not bring any changes to
+the existing application code or database table schema. This new service will
+require a DB transaction table to store the SSCU Instant Enrollment
+transaction data for a defined period of time. This DB table will be archived
+and truncated as per the data backup & archival policy. This table will help
+us to see the transactional status error/success code received from the
+PathWays API calls.
+
+    
+    
+    (Required if involve schema change)* Include a ddl.sql file that could be executed against old schema in   
+     order to create/change table/columns, as well as handling the corresponding data-migration if applicable.
+
+  
+  
+
+#### 3.2.1 DB Table: instant_enrollment_dbscript.sql
+
+    
+    
+    --
+    -- Table structure for table `instantenrollment_transaction`
+    --
+    CREATE TABLE IF NOT EXISTS `instantenrollment_transaction` (
+     `id` bigint(30) NOT NULL AUTO_INCREMENT,                -- Auto generate unique id number
+     `transaction_id` varchar(30) not null  unique,          -- Transaction-id, unique id to identify each transaction record
+                                                                Trans-id 1st-char= client-id, like A:Andera, N:NAOP, I:Internal.
+                                                                For async request it will be used to retrieve the result.
+     `transaction_status` varchar(20),                       -- Pathways API processing result code.
+     `client_id` varchar(50) NOT NULL,                       -- Client-id, source of consumer/client
+                                                                To identify requester's id (internal/external?)
+     `account_number' varchar(10) not null,                  -- Account number (10-char) 
+     `enrollment` varchar(1) DEFAULT NULL,                   -- P/E: Paper/Electronic. Similar to field FlagSetOrClear
+     `Suffix`  varchar(2)                                    -- Suffix (2-char)
+     `surname`    varchar(2) not null                        -- Surname (2-char)
+     `FlagSetOrClear` varchar(1) NOT NULL,                   -- One char value to update the custom-flag (flag-69) in the DB
+                                                                It could be corresponding to 'paper --> e' or 'e --> paper'
+     `FlagLevel1`  varchar(1),                               -- Flag Level-1
+     `FlagType1`   varchar(1),                               -- Flag Type-1
+     `FlagNum1`    varchar(2),                               -- Flag Number-1
+     `ReasonNum1`  varchar(2),                               -- Flag-1 Set or clear - reason code.
+     `member_client_emailid`    varchar(255),                -- optional, Email-id applicable for Andera, NAOP clients.
+     `is_processed` tinyint(1) DEFAULT '0' COMMENT '1: True, processed. 0: False, not processed',
+     `status_code` varchar(7) DEFAULT NULL,                        -- To store return status code from PathWays API call
+     `CREATED_ON`  timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,   -- date-timestamp value (Server assigned value) 
+                                                                      Mandatory field, one-value assigned for record lifetime,
+                                                                      will be assigned during create time for transaction record
+     `UPDATED_ON` timestamp on update CURRENT_TIMESTAMP,           -- date-timestamp value (Server timestamp)- optional field
+                                                                      It will be assigned during record update time. 
+                                                                      Every update will have new timestamp value
+      PRIMARY KEY (`id`),
+      UNIQUE KEY `transaction_id_uniq_key` (`transaction_id`)
+    )
+    
+
+  
+  
+
+#### 3.2.2 DB Table: instant_client_authlist_dbscript.sql
+
+    
+    
+    --
+    -- Table structure for table `instant_client_authlist`
+    --
+    CREATE TABLE IF NOT EXISTS `instant_client_authlist` (
+     `id` bigint(10) NOT NULL AUTO_INCREMENT,           -- Auto generate unique id number
+     `username` varchar(50) NOT NULL,                   -- User-name
+     `password` varchar(50) DEFAULT NULL,               -- Password
+     `client_id` varchar(50) NOT NULL unique,           -- Client-id, source of consumer/client
+     `client_name` varchar(50) DEFAULT NULL,            -- Client-name. Description for Client-id
+     `client_secret` varchar(50) DEFAULT NULL,          -- Client-Secret token, Client-id+secret to identify the client
+     `access_status` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Client Active or not, Enable/disable: 1/0',
+     `CREATED_ON` timestamp NOT NULL                    -- date-timestamp value (Server assigned value) 
+                     DEFAULT '0000-00-00 00:00:00',        Mandatory field, one-value assigned for record lifetime,
+                                                           will be assigned during create time for transaction record
+     `UPDATED_ON` timestamp NOT NULL                    -- date-timestamp value (Server timestamp)- optional field
+                   DEFAULT '0000-00-00 00:00:00'           It will be assigned during record update time. 
+                   ON UPDATE CURRENT_TIMESTAMP             Every update will have new timestamp value
+      PRIMARY KEY (`id`),
+      UNIQUE KEY `client_id_uniq_key` (`client_id`),
+      UNIQUE KEY `user_id_uniq_key` (`username`)
+    )
+    
+
+  
+  
+
+## 3.3. Application component functional details
+
+    
+    
+    Required if involve big architectural change)* List out the key class/method created/changed for this project.    
+    Highlight the changed portion (e.g. additional param for a method)
+    
+    
+    Provide an overview of what changes if not already illustrated in the Architecture diagram above
+
+  
+  
+
+### 3.3.1. Overview:
+
+As described in the integration landscape diagram, it will require a REST
+Interface API - to update the member status control flag.
+
+  * There is a corresponding server-side PathWays APIs to make the WS call to target Fiserv Spectrum DB using PathWays SDK.
+  * As s design guiding principle, Mule ESB will use REST/JSON (JAX-RS & Jersey standards) in order to fulfill business requirements for various clients.
+  * Mule ESB - REST/JSON APIs will use Secure Token method (similar to OAuth2) in order to identify the client for SSCU instant enrollment service.
+  * Since, this is a new development work, it will not require any changes to the existing application.
+  * eStatement web-application (and external applications - Andera, NAOP) may need some changes at their end in order to plug-in and make call to the MuleESB REST Service for member profile update functionality for the SSCU client in order to update the profile with flag-69 field value.
+  * The Interface API - signature (input/output parameters) are described in next section.
+
+  
+
+Component| Class| Method| Params| Comments  
+---|---|---|---|---  
+REST Web-service API| REST+JSON| updateMemberEnrollment()| JSON String|
+Request to update member client's Instant enrollment request, eStatement type
+- paper or paperless (flagIndicator= Set/Clear:S or C)  
+CFX Web-service client| WS+SOAP| updateMemberEnrollmentWS()| SOAP/XML String|
+Request to update member client's Instant enrollment request, eStatement type
+- paper or paperless (flagIndicator= Set/Clear: S or C). This web-service will
+be invoke indirectly by the REST web-service (see row-1)  
+  
+  
+  
+
+### 3.3.2. PathWays SDK
+
+PathWays is a secured web host, or "middleware" server that provides a variety
+of web services for interaction with Spectrum and its related products. The
+PathWays SDK contains developer guides and other resources to facilitate
+development of PathWays client applications.
+
+Client applications communicate with PathWays via its published web services,
+which provide a standard API of properties and methods. PathWays, in turn,
+communicates with a Spectrum host via a controller. The controller manages the
+Spectrum transaction, and returns results to the web service, which interprets
+and sends the results back to the client application.
+
+ **PathWays Web Services**
+
+PathWays provides WS-I compliant web services and a standardized method of
+executing Spectrum commands via XML. PathWays encourages client to use the new
+**CmdSpectrum**  WS-I web service and XML Command method for new development.
+
+Given below diagram describes connectivity with PathWays and Spectrum Server.
+
+PathWays hosts a number of Spectrum web services to fulfill the core
+transaction processing needs. Given below table describes key PathWays web
+services, which will be used for the project.
+
+CmdSpectrum web-services running on Spectrum HP-UX 11.5 Platform
+
+Sl No.| XML Command Name| Command Description| Schema  
+---|---|---|---  
+1.| FLAG| Set/Clear Flags. Use the FLAG command to set or clear control and
+restrictive flags.| FLAG.xsd  
+  
+  
+  
+
+#### FLAG Spectrum Command
+
+Input Request: FLAG Command Message Format.
+
+#| XML Tag Name| Attributes| Description  
+---|---|---|---  
+1.| <Account> string10_Type </Account>| [1]|  **Account number.**  Enter the
+member's base account number. (To be supplied by client application)  
+2.| <Suffix> string2_Type </Suffix>| [0..1]| Suffix. To set/clear flags at the
+Member Level, enter any valid suffix. (To be supplied by client application or
+it can be set by Mule ESB)  
+3.| <Surname> string2_Type </Surname>| [1]|  **Surname.**  Enter first two
+characters of member's surname. (To be supplied by client application)  
+4.| <FlagSetOrClear1> string1_Type </FlagSetOrClear1>| [1]|  **Set/Clear
+Indicator.**  Required field for each action. Enter S to set the flag or C to
+clear the flag. (To be supplied by client application 'S'/'C')  
+5.| <FlagLevel1> string1_Type </FlagLevel1>| [0..1]| Flag Level. Required
+field for each action. Enter the Level of the flag you are setting or
+clearing: M/S/L. (To be supplied by Mule ESB as value='M')  
+6.| <FlagType1> string1_Type </FlagType1>| [0..1]| Flag Type. Required field
+for each action. Enter the Type of the flag you are setting or clearing: C =
+Control R = Restrictive. (To be supplied by Mule ESB as value='C')  
+7.| <FlagNum1> string2_Type </FlagNum1>| [0..1]| Flag Number. Required field
+for each action. Enter the number of the flag you are setting or clearing. For
+control flags, use numbers 1 to 90. For restrictive flags, use numbers 1 to
+20. (To be supplied by Mule ESB as value '69')  
+8.| <ReasonNum1> string2_Type </ReasonNum1>| [0..1]| Reason Number. Required
+field for each action on restricted flags. (To be supplied by client
+application or it can be set by Mule ESB) Refer below table having Reason-Ids.  
+9.| <FlagSetOrClear2> string1_Type </FlagSetOrClear2>| [0..1]| Set/Clear
+Indicator. Required field for each action. (Not applicable)  
+10| <FlagLevel2> string1_Type </FlagLevel2>| [0..1]| Flag Level. Required
+field for each action.  
+11| <FlagType2> string1_Type </FlagType2>| [0..1]| Flag Type. Required field
+for each action.  
+12| <FlagNum2> string2_Type </FlagNum2>| [0..1]| Flag Number. Required field
+for each action.  
+13| <ReasonNum2> string2_Type </ReasonNum2>| [0..1]| Reason Number. Required
+field for each action on restricted flags.  
+14| <FlagSetOrClear3> string1_Type </FlagSetOrClear3>| [0..1]| Set/Clear
+Indicator. Required field for each action. (Not applicable.)  
+15| <FlagLevel3> string1_Type </FlagLevel3>| [0..1]| Flag Level. Required
+field for each action.  
+16| <FlagType3> string1_Type </FlagType3>| [0..1]| Flag Type. Required field
+for each action.  
+17| <FlagNum3> string2_Type </FlagNum3>| [0..1]| Flag Number. Required field
+for each action.  
+18| <ReasonNum3> string2_Type </ReasonNum3>| [0..1]| Reason Number.  
+19| <FlagSetOrClear4> string1_Type </FlagSetOrClear4>| [0..1]| Set/Clear
+Indicator. Not applicable  
+20| <FlagLevel4> string1_Type </FlagLevel4>| [0..1]| Flag Level. Required
+field for each action.  
+21| <FlagType4> string1_Type </FlagType4>| [0..1]| Flag Type. Required field
+for each action.  
+22| <FlagNum4> string2_Type </FlagNum4>| [0..1]| Flag Number. Required field
+for each action.  
+23| <ReasonNum4> string2_Type </ReasonNum4>| [0..1]| Reason Number. Required
+field for each action on restricted flags.  
+24| <FlagSetOrClear5> string1_Type </FlagSetOrClear5>| [0..1]| Set/Clear
+Indicator. Required field for each action. (Not applicable.)  
+25| <FlagLevel5> string1_Type </FlagLevel5>| [0..1]| Flag Level. Required
+field for each action.  
+26| <FlagType5> string1_Type </FlagType5>| [0..1]| Flag Type. Required field
+for each action.  
+27| <FlagNum5> string2_Type </FlagNum5>| [0..1]| Flag Number. Required field
+for each action.  
+28| <ReasonNum5> string2_Type </ReasonNum5>| [0..1]| Reason Number.  
+29| <ClosedDt> string6_Type </ClosedDt>| [0..1]| Closed Date. Optional field.
+If you are setting Restrictive Flag 11 or 12 to Reason 80, use this field to
+set a closed date in the appropriate data set. If you do not enter a date in
+this field, it defaults to the credit union open date. Not applicable  
+  
+ **Comments**
+
+Use the FDIN command to inquire about the flags that are set on a member's
+account or subaccounts.
+
+ **Narrative**
+
+Your credit union defines and maintains the reason codes for restrictive flags
+using the MEMBRS database Modifile screen titled Restrictive Flag Reason File
+Maintenance. Contact your data processing department or, if you are on On-Line
+Client, Client support, for more information about the reason codes your
+credit union has defined.
+
+ **PAPERLESS_REASON_LIST**
+
+#.| Reason-Id| Reason Description  
+---|---|---  
+1.| 1| I prefer paper statements  
+2.| 2| I do not have reliable access to a computer or internet connection  
+3.| 3| I am unable to print/save my eStatements from my computer  
+4.| 80| Stop file processing  
+5.| 90| None  
+6.| 99| None  
+7.| 81| Bounce Back Email  
+8.| 82| 90 days revert to paper  
+9.| 84| Admin Edit  
+10.| 83| Closed Account  
+11.| 85| Revert Back to Paper  
+12.| 86| Electronic and Paper  
+13.| 87| Remove Disclosure Accept Date  
+14.| 88| No Viewable Account  
+15.| 50| Consolidate status to default  
+  
+  
+  
+
+#### XML Input Request for PathWays API
+
+    
+    
+    <?xml version="1.0" encoding="utf-8" ?>
+    <Summit xmlns="http://summit.fiserv.com" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+            xsi:schemaLocation="http://summit.fiserv.com/cfg/CommandSchema/sisCommands.xsd">
+       <Spectrum>
+          <CommandRq>
+            <RequestHeader>
+               <Teller>
+              <ID>TellerID</ID>
+               </Teller>
+               <Override>0</Override>
+            </RequestHeader>
+                <!-- FLAG_Command_Request: will be formed using the above mentioned input params -->
+                <FLAGRq>
+                    <Account>string10_Type </Account>
+                    <Suffix> string2_Type </Suffix>
+                    <Surname> string2_Type </Surname>
+                    <FlagSetOrClear1> string1_Type </FlagSetOrClear1>
+                    <FlagLevel1> string1_Type </FlagLevel1>
+                    <FlagType1> string1_Type </FlagType1>
+                    <FlagNum1> string2_Type </FlagNum1>
+                    <ReasonNum1> string2_Type </ReasonNum1>
+                </FLAGRq>
+          </CommandRq>
+       </Spectrum>
+    </Summit>
+    
+    
+
+XML Output Response from PathWays API
+
+    
+    
+    <?xml version="1.0"?>
+    <Summit xmlns="http://summit.fiserv.com" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+            xsi:schemaLocation="http://summit.fiserv.com/cfg/CommandSchema/sisCommands.xsd">
+       <Spectrum>
+          <CommandRs>
+           <ResponseHeader>
+              <Status>
+                <StatusCode>Code</StatusCode>
+                <StatusDesc>Description</StatusDesc>
+              </Status>
+              <MessageStatus>
+             <Date>date</Date>
+             <Time>time</Time>
+             <SequenceNum>sequence-numer</SequenceNum>
+              </MessageStatus>
+          </ResponseHeader>
+            FLAG_Command_Response
+          </CommandRs>
+       </Spectrum>
+    </Summit>
+    
+
+  
+  
+
+### 3.3.3 Mule ESB Server URL for REST APIs
+
+The REST API will be invoked with GET or POST method. GET is used to retrieve
+the Customer Profile and POST for retrieve and create operation. PUT and
+DELETE are not used & supported by the Customer Profile. The URIs used are:
+
+Sl No.| Resource URI| HTTP Method| Operation  
+---|---|---|---  
+1.| <https://localhost:8090/oauth2/token>| POST| Request to get the session
+token value to invoke the member service REST API. This REST API call will be
+mapped to the OAuth2 module client token/authorize call.  
+2.| <https://localhost:8090/api/v1/enrollment>| POST| Request to update
+customer profile (custom flag 69) with the supplied status flag value. This
+REST URL call will be mapped with the updateMemberEnrollment() method. It will
+post the request data in JSON string format: {"key-1" : "value-1", "key-2" :
+"value-2" ...}  
+  
+ **Note:**  localhost will be replaced by the fully-qualified domain name
+(FQDN) of the Server.
+
+    
+    
+    Server Name/URL will be like {host}:{port}
+    where 
+     {host}: host name or IP address of the repository and port is the port number of the shared HTTP server
+     {port}: port number that the MULE ESB Server is running on. For example Port: 80 or 8080.
+     {api}: context of the application. Typically this is the name of the WAR file.
+     {v1}: A fixed value in the URL for REST API version 1.0. For next enhancement release, it may become v2, v3 etc.
+     {enrollment }: Context name mapped to the REST resource, a fixed value in the URL.
+    
+    and input strings to the GET URL in the format of key/value pairs: {key1}/{value1}/key2}/{value2}/ and so on.
+    
+
+The response content type for the Customer Profile API are application/json.  
+See below examples for a description of the request parameters.
+
+    
+    
+    HTTP POST 
+    <pre><code>
+    POST https://localhost:8090/api/v1/
+    enrollment HTTP/1.1
+    Host: localhost:8090
+    Content-Type: application/json
+    Authorization: Bearer X2ZEU0doR2RmVVVwdjlxSWR4ODNIV2JZR25jaHVGQ25ybk9KTUh3Tk94aUZTc3ItTEtnZVJNRi1NYkszek5kWU03eHBDUXJtZjVWU3IxUGxhTXhBSVFIbXJiODRDOEE
+    
+    { "accountNumber" : "12813", 
+      "clientId" : "InfoIMAGE", 
+      "customAttribs" :{ 
+            "emailId" : "",
+            "flagInd1" : "C", 
+            "flagLevel1" : "M", 
+            "flagNum1" : "69",  
+            "flagType1" : "C", 
+            "reasonNum1" : "",  
+            "suffix" : "", 
+            "surname" : "CH"  
+         }, 
+      "enrollment" : "P" 
+    }
+    </code>
+
+  
+
+ **Response:**
+
+The enrollment object wraps various member-client information items like
+accountNumber, surname etc.
+
+    
+    
+    HTTP/1.1 200 OK
+    X-Powered-By: Servlet/2.5
+    Server: localhost:8090
+    Content-Type: application/json
+    Content-Length: 1234
+    Date: Thu, 04 Jun 2009 02:51:59 GMT
+    
+    {
+      "message": "SUCCESSFUL",
+      "data": "{\"StatusCode\": \"00\", \"StatusDesc\": \"SUCCESSFUL\", \"transactionId\" : \"1C342C103F01F3EDE2E3F0C0\" }",
+      "httpStatus": 200
+    }
+    
+
+Response codes and exceptions:
+
+HTTP response codes are used to indicate:
+
+Code| Description  
+---|---  
+200| OK  
+400| Bad request; check the error message and correct the request syntax.  
+401| Authentication failure, check your client_id, client_secret in order to
+meet authentication requirements.  
+403| Forbidden; please provide authentication credentials like client_id,
+client_secret.  
+404| Not found: mistake in the host or path of the service URI.  
+405| Method not supported: in eSatement Customer Profile only GET, POST is
+supported.  
+503| Server busy and service unavailable. Please retry the request.  
+  
+* * *
+
+  
+  
+
+### 3.3.4. Sequence Diagrams
+
+Figure-3: Sequence Diagram for updateMemberEnrollment() - To enroll/update
+member profile for Instant Enrollment
+
+* * *
+
+  
+  
+
+### 3.3.5. REST/JSON APIs
+
+a) API#1 - updateMemberEnrollment() - To enroll/update member profile for
+Instant Enrollment
+
+Request input to be supplied by eStatement web-application (or Andera/NAOP) to
+the Mule-ESB Service (REST/JSON API):  
+  
+
+  
+
+####  **i) Request Data**
+
+Name| Data Type| Data Length| Business Description| Required  
+---|---|---|---|---  
+Account Number| Alphanumeric| 10| Member User's Account (unique identifier),
+which will be used for the identification & update purpose.| Y  
+Suffix| char| 2| To set/clear flags at the Member Level| Y  
+Surname| char| 2| User's Surname (2-char)| Y  
+FlagSetOrClear| char| 1| User's preference - FlagSetOrClear : Enter S to set
+the flag or C to clear the flag. It's corresponding to paper or paperless,
+'1'= enrolled into eSatement, '0' = no enrolled.| Y  
+ReasonNum| char| 2| Reason Number for each action on restricted flags
+(2-char)| Y  
+  
+ **Sample Request**
+
+    
+    
+    JSON Payload by the web-client
+    ----------------------------------------
+    METHOD= POST
+    Content-Type=application/json
+    ----------------------------------------
+    { 
+      "accountNumber" : "10966",
+      "clientId" : "InfoIMAGE",
+      "customAttribs" : { "emailId" : "Niraj.Tripathi@infoimageinc.com",
+          "flagInd1" : "C",
+          "flagLevel1" : "M",
+          "flagNum1" : "69",
+          "flagType1" : "C",
+          "reasonNum1" : "",
+          "suffix" : "",
+          "surname" : "VI" 
+        },
+      "enrollment" : "P" 
+    }
+    ----------------------------------------
+    
+
+  
+Where:  
+accountNumber: AccountNumber to identify the Member-Client  
+flagInd1: flagSetOrClear - Member client's preference to receive eStatement,
+Value: S/C.  
+suffix. To set/clear flags at the Member Level, enter any valid suffix.
+(Optional)  
+surname. Enter first two characters of member's surname.  
+reasonNum1: Reason Number for each action on restricted flags (Optional).
+
+ **Processing Steps**
+
+  * The request will generate the 20-digit transaction-id and return the response back to the web-application.
+  * The request will ask for  _" client_id"_ and  _" client_secret"_ (similar to OAuth2) in order to validate the access for authorized client.
+  * Mule-ESB will perform the update operation by calling the PathWays APIs and store API response into the Mule DB Transaction table along with Transaction-id, which will be used for later reference & validation purpose. Finally, response will be returned to the calling client/application.
+  * Mule-ESB API call returns response back to the web-application along with the Transaction-id (web-application may ignore the trans-id or store it for future reference, if any required)
+
+  
+  
+
+####  **ii) Response Data**
+
+Name| Data Type| Data Length| Business Description| Required  
+---|---|---|---|---  
+Status Code| Numeric| 3| Status code for the request accepted & processed.
+Refer next row for status description.| Y  
+Status Message| Alphanumeric| 20| Status message having detailed status. For
+example, 'Process successfully'. 'Status down', 'System not-reachable' etc. It
+will return error description, in case of error response or no response by the
+Spectrum WS request.| N  
+  
+Sample Response: Output from Mule-ESB REST/JSON API call:
+
+    
+    
+    {
+      "message": "SUCCESSFUL",
+      "data": "{\"StatusCode\": \"00\", \"StatusDesc\": \"SUCCESSFUL\", \"transactionId\" : \"1C342C103F01F3EDE2E3F0C0\" }",
+      "httpStatus": 200
+    }
+    
+
+tip. Examples:
+
+  * Unique-transaction-Id=  _aac46d12bb74a3f7f3_
+  * client_id=  _AqIEbLHT8_
+  * client-secret=  _FBGRNJru1FQd44AzqT3Zg_
+
+b) API#2 - Getting the Access Token - To retrieve the OAuth2 access_token
+
+Request input by web-application to the Mule-ESB (REST/JSON API call):  
+  
+
+  
+
+####  **iii) Request Data**
+
+Name| Data Type| Data Length| Business Description| Required  
+---|---|---|---|---  
+User Id| Alphanumeric| 50| Member User's login-id, unique identifier which
+will be used for the identification & update purpose.| Y  
+  
+To get the access_token, you'll need to make a POST request to
+https://&lt;server&gt;:&lt;port&gt;/oauth2/token with the following
+parameters:
+
+ **Sample Request**
+
+    
+    
+    $ curl -k -X POST https://localhost:8090/oauth2/token \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -d username=johndoe     \
+        -d password=A3ddj3w     \
+        -d client_id=s6BhdRkqt3 \
+        -d grant_type=password  \
+        -d scope=READ_PROFILE%20WRITE_PROFILE
+    
+
+To create & retrieve a token, you must POST to
+<https://localhost:8090/oauth2/token> with grant_type and scopes values in the
+data hash.
+
+Below POST request is also supported. Alternatively, GET HTTP request can be
+used.
+
+    
+    
+    $ curl -k -X POST https://localhost:8090/oauth2/token \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -d "username=johndoe&password=A3ddj3w&client_id=s6BhdRkqt3&grant_type=password&scope=READ_PROFILE%20WRITE_PROFILE" 
+    
+
+  
+
+If everything goes right and the request is successful, you'll receive a 200
+response containing a JSON body like this
+
+    
+    
+    {"scope":"READ_PROFILE WRITE_PROFILE","expires_in":120000,"token_type":"bearer","access_token":"rpGFxEfUuw4R4de8nIgLQbgyokYHhjWzxZy63xnafutsvz7v3oNLtmfPktz7E2dx6QLqbCbJ7YpA-KUgEKzHXA"}
+    
+
+**Processing Steps**
+
+  * The request will submit username/password and client_id and scope, which will act like unique identifier to login and create OAuth2 session token.
+  * Mule-ESB will use OAuth2 module to register a client and retrieve the session token with defined expiry-period.
+
+Response: Output Response from Mule-ESB REST/JSON API call:  
+  
+
+  
+
+####  **iv) Response Data**
+
+Name| Data Type| Data Length| Business Description| Required  
+---|---|---|---|---  
+Email Id| Alphanumeric| 200| Email-id for the requested member client.| Y  
+Status Code| numeric| 3| Status code for the request accepted & processed.
+Refer next row for status description.| Y  
+Status Message| Alphanumeric| 20| Status message having detailed status. For
+example, 'Process successfully'. 'Status down', 'System not-reachable' etc. It
+will return error description, in case of error response or no response by the
+Spectrum WS request.| N  
+  
+ **Sample Response**
+
+    
+    
+    {"scope":"READ_PROFILE WRITE_PROFILE",
+      "expires_in":120000,
+      "token_type":"bearer",
+      "access_token":"rpGFxEfUuw4R4de8nIgLQbgyokYHhjWzxZy63xnafutsvz7v3oNLtmfPktz7E2dx6QLqbCbJ7YpA-KUgEKzHXA" 
+    }
+    
+
+If everything goes right and the request is successful, you'll receive a 200
+response containing a JSON body like this
+
+    
+    
+    { 
+      "scope":"READ_PROFILE WRITE_PROFILE",
+      "expires_in":120000,
+      "token_type":"bearer",
+      "access_token":"rpGFxEfUuw4R4de8nIgLQbgyokYHhjWzxZy63xnafutsvz7v3oNLtmfPktz7E2dx6QLqbCbJ7YpA-KUgEKzHXA" 
+    }
+    
+
+However, if the response is not successful, you'll receive an error response,
+such as this:
+
+    
+    
+    {
+        "error": "invalid_grant",
+        "error_description": "Invalid user credentials" 
+    }
+    
+
+Using Your Access Token with API:  
+Once you have a valid access_token, you can use it to make requests to API V2.
+All you need to do is set it in the Authorization header like this:
+
+Authorization: Bearer {a valid access token}
+
+    
+    
+    To use the token, pass it in a header named "Authorization" 
+    $ curl -k -X POST https://localhost:8090/api/v1/enrollment \
+         -H "Authorization: Bearer X2ZEU0doR2RmVVVwdjlxSWR4ODNIV2JZR25jaHVGQ25ybk9KTUh3Tk94aUZTc3ItTEtnZVJNRi1NYkszek5kWU03eHBDUXJtZjVWU3IxUGxhTXhBSVFIbXJiODRDOEE=" \
+         -H "Content-Type: application/json" \
+         -d '{ "accountNumber" : "12813", "clientId" : "InfoIMAGE", "customAttribs" : { "emailId" : "","flagInd1" : "C", "flagLevel1" : "M", "flagNum1" : "69",  "flagType1" : "C", "reasonNum1" : "",  "suffix" : "", "surname" : "CH"  }, "enrollment" : "P"}'
+    
+
+  
+  
+
+## 3.4. Integration Points & Interface
+
+    
+    
+    << (If Applicable) List out Integration Points and corresponding interface >>
+
+From Component| To Component| Details| Error Handling  
+---|---|---|---  
+eStatement web-application| Mule-ESB| eStatement web-application makes a call
+to the Mule-ESB REST/JSON API in order to make  **enrollment**  (update
+request) to the target server in order to store the eStatement preference
+settings.| If user-id for account profile update found null/empty, MuleESB
+service will return the error status to the web-application.  
+eStatement web-application| Mule-ESB| eStatement web-application makes a call
+to the Mule-ESB REST/JSON API to  **retrieve**  (fetch) the email-id for the
+client/member user.| If user-id for member user found null or empty, MuleESB
+service will return the error status to the web-application.  
+  
+Given below diagram describes integration touch-points for the SSCU (Pathways)
+Instant Enrollment.
+
+  
+Figure-5: SSCU (Pathways) Instant Enrollment - Integration Points
+
+* * *
+
+  
+  
+
+# 4\. Summarized Change Log
+
+Date| Version| Author| Reviewer| Changes to Design Doc  
+---|---|---|---|---  
+04/23/2013| 1.0| Niraj T| Ben C., David T. and William K.| Initial Draft
+Version  
+  
+|  
+|  
+|  
+|  
+  
+  
+* * *
+
+  
+  
+
+# 5\. Sign-Off
+
+Department/Team| Date (mm/dd/yyyy)| Sign-off By| Remarks  
+---|---|---|---  
+Product Manager (Business)| 04/26/2013|  
+|  
+  
+Account Service (AS)| 04/26/2013|  
+|  
+  
+Dev./Impl. Manager (Technical)| 04/26/2013|  
+|  
+  
+Production Control (PC)| \--|  
+|  
+  
+Data Processing (DP)| \--|  
+|  
+  
+Accounting/Invoicing| \--|  
+|  
+  
+  
+* * *
+
+  
+  
+
+# 6\. Appendix
+
+  
+  
+
+## 6.1. Resources
+
+    
+    
+    << Any external/internal resource or references... >>
+
+1\. PathWays Instant Enrollment SDK Site
+
+URL: <https://portal.spectrum.fiserv.com/pwsdk>  
+Note: Login credential required to access the above web-site.
+
+* * *
+
+  
+
+### Attachments
+
+  
+
+250
+
+

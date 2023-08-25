@@ -1,0 +1,162 @@
+title: GCBK - [25528][pvt] LN EAS File From Past
+description: Description: Update logic to not display the word "cancelled". for "Escrow Projections" and "Escrow History".
+
+
+
+Hour(s): 1
+
+IS turnover 1/21/22
+
+QA sample 1/24/22
+
+client sample 1/25/22
+
+client approval 1/26/22
+
+LIVE 1/31/22
+
+
+
+Note: Per attached email, Trisha OK'ed having GCBK approve via email until Lora sends back a signed work order.
+
+
+author: dyuen
+comment: Any updates on samples? Please advise.
+
+
+author: JIRAUSER11100
+comment: [~dyuen] Attached the dpvs and the sample. This is the only account that had 'Cancelled' in the Escrow History. The data file doesn't have any account with 'Cancelled' in the 'Escrow Projections'
+
+Thanks!
+
+
+author: JIRAUSER11100
+comment: [~Igor.Khosid] 
+
+Parallel ID: 20220125123746
+Esmt index file name is: ea1_20211227_1_20220125_1440_gcbk.txt
+
+[~dyuen] Print range is 15-32 from .sam file
+
+Thanks!
+
+
+author: igor.khosid
+comment: 
+   Parallel ID: 20220125123746
+   Currently in parallel: Yes
+   User: rukmani
+   Description: Update logic to remove 'cancelled' from Escrow History and Escrow Projection
+   Date Submitted: 2022-01-25 12:39:06
+   Date Last Updated: 2022-01-25 12:39:06
+   Files:
+      1) GCBKEA31.dfa
+
+
+author: igor.khosid
+comment: The first sample is ready for the client review
+Script - updated
+
+1. Parallel report
+Parallel ID: 20220125123746
+Currently in parallel: Yes
+User: rukmani
+Description: Update logic to remove 'cancelled' from Escrow History and Escrow Projection
+Date Submitted: 2022-01-25 12:39:06
+Date Last Updated: 2022-01-25 12:39:06
+Files:
+1) GCBKEA31.dfa
+
+2. Difference prod vs test
+<
+(NOSPACE(PROJ_BAL[P])) ;
+        TEXT
+          POSITION (LEFT+4.15)  SAME 
+          WIDTH 2 
+          (NOSPACE(PROJ_DESC[P])) ;
+>
+          (NOSPACE(PROJ_BAL[P])) ;
+        IF NOSPACE(UPPER(PROJ_DESC[P]))=='CANCELLED' ;
+        THEN ;
+          TEXT
+           POSITION (LEFT+4.15)  SAME 
+           WIDTH 2 
+            '' ;
+        ELSE ;
+          TEXT
+           POSITION (LEFT+4.15)  SAME 
+           WIDTH 2 
+           (NOSPACE(PROJ_DESC[P])) ;
+        ENDIF ;
+<
+ TEXT
+          POSITION (LEFT+COLUMN_5+0.04)  SAME 
+          WIDTH 1.85 
+          (FROM_ESCROW_DESC[H]) ;
+>
+        IF NOSPACE(UPPER(FROM_ESCROW_DESC[H]))=='CANCELLED' ;
+        THEN ;
+          TEXT
+           POSITION (LEFT+COLUMN_5+0.04)  SAME 
+           WIDTH 1.85 
+            '' ;
+        ELSE ;
+          TEXT
+           POSITION (LEFT+COLUMN_5+0.04)  SAME 
+           WIDTH 1.85 
+           (FROM_ESCROW_DESC[H]) ;
+        ENDIF ;
+<
+>
+
+
+
+
+
+author: dyuen
+comment: Samples submitted to GCBK for review. Pending response.
+
+
+author: dyuen
+comment: [~rukmaniR], client approved.
+
+Per client: "I looked at this sample for *5404. Looks great."
+
+Please advise if we can release before end of month.
+
+Thanks
+
+
+author: JIRAUSER11100
+comment: Thanks [~dyuen]!
+ We still have QA and parallel. 
+
+
+author: igor.khosid
+comment: QA completed
+Index file processed and content - validated
+[~rukmaniR]
+Please attach IS checklist
+
+
+author: JIRAUSER11100
+comment: Thanks [~Igor.Khosid]! Attached the IS checklist.
+
+
+author: igor.khosid
+comment: IS checklist - attached >>>  [^IS_758_GCBK_IS Checklist.pdf] 
+
+
+author: dyuen
+comment: [~rukmaniR] [~Igor.Khosid], per [~Jessica], it's OK to bypass parallel for this update.
+
+Thanks
+
+
+author: JIRAUSER11100
+comment: [~dyuen]
+
+Code released to production.
+Backup id: 20220127152148
+
+Thanks!

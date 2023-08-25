@@ -1,0 +1,147 @@
+title: Server Requirement for ELK Setup
+body: ## Technical Requirements (per node) with  
+  
+
+**Environment**
+
+|
+
+ **CPU**
+
+|
+
+ **RAM**
+
+|
+
+ **Swap**
+
+|
+
+ **Storage**  
+  
+---|---|---|---|---  
+  
+Production
+
+|
+
+8 cores
+
+|
+
+32 GB
+
+|
+
+64 GB
+
+|
+
+Ideal Amount: 1.8 TB
+
+Min Amount: 500 GB  
+  
+Pilot
+
+|
+
+4 cores
+
+|
+
+16 GB
+
+|
+
+32 GB
+
+|
+
+200 GB  
+  
+## Outcome
+
+ **Environment**
+
+|
+
+ **Outcome**  
+  
+---|---  
+  
+Production
+
+|
+
+  * 60 days of proxy logs
+
+  * < 30 days of APM logs
+
+  * < 30 days of Metricbeat logs
+
+  
+  
+Pilot
+
+|
+
+  * 60 days of proxy logs
+
+  * < 15 days of APM logs
+
+  * < 15 days of Metricbeat logs
+
+  
+  
+## Explanation for Storage Requirements:
+
+  * The proposed storage requirements take the following factors into consideration:
+
+    * Historical log ingestion for proxy servers
+
+      * Production,
+
+        * For 8 internal proxies, the approximate log size for 60 days is ~ 5 GB.
+
+        * For 28 external proxies, the approximate log size for 60 days is ~20 GB.
+
+      * Pilot,
+
+        * For 2 internal proxies, the approximate log size for 60 days is ~ 2 GB.
+
+        * For 10 external proxies, the approximate log size for 60 days is ~ 10 GB.
+
+    * Anticipated log ingestion size for APM (>100GB)
+
+    * Anticipated log ingestion size for Metricbeat (>100GB)
+
+    * Potential overhead/variations _that will occur_ in log ingestion size for all three forms of ingestions (Proxy Servers, APM, and Metricbeat.)
+
+      * APM ingestion can greatly vary to due load of application
+
+      * New servers can be added
+
+      * New applications could be developed
+
+    * Additional storage to prevent excessive maintenance on the cluster (continuously asking to expand storage due to any of the factors above)
+
+## Additional Explanations
+
+  * Ideally we want 2.4 TB of storage per node but we recognize that 1.8 TB of storage per VM is the maximum as it is not crossing the maximum requirement of VMware, but we can tolerate a minimum of 500GB (PROD), and 200GB (PILOT).
+
+  * The 500 GB (PROD) / 200 GB (PILOT) minimum comes from the aggregate of 60-day proxy logs, and the rest of the storages for other overheads like ELK installation overhead, Indexing overhead, Metricbeat logs, APM logs, etc.
+
+  * According to our plan, we'll move to phase 2 after phase 1. Before going to production phase 2, we need to set up APM in some of the applications and Metricbeat in some of the pilot servers and ship the logs to Elasticsearch. The reason behind the minimum requirement of 500 GB (PROD) / 200 GB (PILOT) is to use the leftover storage for at least a few days of Metricbeat and APM logs. Extra storage is asked in advance so that we don't need to back and forth for asking the additional storage as it may kill some time.
+
+## Approach
+
+  * In phase 1, we can start with a VM with less storage for storing 60 days of logs. We will create LVM using that storage.
+
+  * After we get the larger storage, we can add the storage with the existing storage using LVM.
+
+## Special Requirement
+
+  * During OS setup, separate partitions are needed for OS and Elasticsearch, so after getting the VM we can create LVM before installing Elasticsearch pointing to that LVM.
+
+

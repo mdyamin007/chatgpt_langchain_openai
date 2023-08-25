@@ -1,0 +1,97 @@
+title: Corelation / KeyBridge Design
+body: # Test Info
+
+Here are the test info provided by Corelation:
+
+  * BURKS,MAR Account 0000002321
+  * Byeeee,Barney Account 0000005291
+  * Bohannon,Rudolph 0000001841
+
+It seems like they are able to help us set up specific accounts with specific
+settings if needed.
+
+  
+
+  * Port: **52148**
+
+  * userName: **infoimage**
+
+  * deviceName: **infoimage**
+
+  * password: image52148
+
+  * URL: <http://184.191.169.146:52148/>
+
+From the vendor:
+
+The recommendation is to read the first 20 pages of the **Query Language XML
+Interface** document in detail.
+
+  
+
+Some relevant points are:
+
+You should not send a <logon> container (with your vendor userName,
+deviceName, and password) at the beginning of each query and a <logoff/> at
+the end of each query.  This is inefficient, as it has to look up your vendor
+User record each time, authenticate the password, update the last login
+timestamp in your User record (which also records file maintenance history
+about that update), and issue a new 32-character sessionId.  Instead, even if
+your product is multi-threaded, you are better off attempting to have a static
+external variable to store your current sessionId and make sure it is
+protected by a MUTEX lock.  Have all the threads include a sessionId attribute
+in your <query> tag instead of providing a <logon> container.  This sessionId
+replaces the need to keep sending us your userName, password, and deviceName.
+If you do not have a sessionId, or if a query gets a response with exception
+reason "SNF" (session not found), you should then send a <logon> and get back
+a new, valid sessionId (by default, these sessions expire if there has been a
+half hour of inactivity), and then lock the global variable, update it to the
+new sessionId, and unlock it.  If a query excepted out due to "SNF", resubmit
+the query, this time with the new, valid sessionId.  You will probably never
+send a <logoff/>, unless you have a menu for bringing down your product and
+you want to send us a <logoff/> as a courtesy on the way down.
+
+  
+
+*  In order to take advantage of the backwards capability of XML, Corelation needs to attempt to not make any "breaking" changes to the specification, but should feel free to add new elements and/or containers to the KeyBridge specification over time.  This only works if vendors ignore new elements/containers when parsing the messages instead of failing or throwing exceptions when they encounter unknown tags.
+
+  
+
+*    Also, three things to note that may affect how you parse the KeyBridge XML responses:
+
+  1. We do not usually send a value back in the response if the value is the default value.  When you encounter the beginning of an XML container that you recognize, you should typically instantiate an object that represents that container and initialize a series of variables (or in some cases other objects) to default values, and then only override those default values if you actually encounter the tag in the response.  When you see the close for the container, you know that you have a 100% valid object.  This is trivial for fields that are data type Count, Money, Rate, and Text, but requires a little research for fields that are data type "Option" (enumerated values that are dictated by Corelation, not the credit union).  Some of the more useful fields of this time are listed in the formal specification document (like transaction Source and Category values), while others are not.  Feel free to contact Corelation if you need to know the enumerated values, their English translations, and the default value for any field of data type option, or you could run for research purposes a query like this to get back information about every field in every table of our database:
+
+  
+
+<sequence>
+
+  <transaction>
+
+   <step>
+
+    <tableList>
+
+     <includeTableMetadata option="Y"/>
+
+     <includeColumnMetadata option="Y"/>
+
+     <includeAllColumns option="Y"/>
+
+    </tableList>
+
+   </step>
+
+  </transaction>
+
+</sequence>
+
+  
+
+  1. If you are using a tool to automate building some of your code based on a Schema xsd file for KeyBridge, it may not like the fact that we sometimes have repeatable containers that aren't immediately surrounded by some kind of *List container.  For example, our <postingStatus> response might contain one or more <account> containers, but those <account> containers aren't themselves contained in a container named <accountList> or something similar that an automatic object-building tool could turn into a ListArray or similar structure.
+
+  
+---  
+  
+  
+
+

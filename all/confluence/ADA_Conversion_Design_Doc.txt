@@ -1,0 +1,437 @@
+title: ADA Conversion Design Doc
+body: # **ADA Conversion**
+
+  
+
+# Introduction
+
+  
+
+## Purpose/Objective Summary
+
+Convert AFP files to ADA compliant PDF and the infrastructure changes needed  
+  
+
+## Scope
+
+  
+
+### In-Scope
+
+  1. Identify ADA statements in document file process
+  2. Convert AFP to ADA complaint PDF
+  3. Track # of ADA complaint PDF for accounting purposes
+
+  
+
+### Out-of-Scope
+
+  1. ADA AFP Conversions for Enotice and ETax processing
+  2. Embedded Check Links
+  3. Buffer input to Buffer output conversions
+  4. External API Conversions for ADA statements
+
+  
+
+## Assumptions
+
+  1. Able to identify which documents are ADA
+  2. File input to File output conversions
+
+  
+
+## Dependencies
+
+  1. Afp2WebServer Version: 1.5.14 [Built for Linux 64-bit on Jun 25 2018 at 11:19:52]
+  2. Afp2Web Version 5.x
+
+  
+
+# Requirements
+
+  
+
+## Business Requirements & Use Cases
+
+ID| Title| Details| ScreenMock| Importance  
+---|---|---|---|---  
+BRQ-01| Screen Reader Support|  **Requirement:**  Insert necessary ADA tags so
+external screen readers are able to properly read PDF contents  
+ **Use Case:**  Vision Impaired user opens PDF statement. Screen reader is
+able to read the information present in the PDF in a easy to understand flow|
+...| P0-Show Stopper  
+BRQ-02| Tracking # of ADA Statements|  **Requirement:**  Track number of
+statements are flagged for ADA  
+ **Use Case:**  Distinction allows for proper tracking and billing| ...|
+P0-Show Stopper  
+  
+  
+
+## Functional Requirements & Use Cases
+
+ID| Title| Details| Bus. Req. Ref.| Importance  
+---|---|---|---|---  
+FRQ-01| AFP Conversion| Use Afp2WebServer to convert AFPs to ADA complaint
+PDFs on Hypercube, InfoTrac, and Prism| BRQ-01| P0-Show Stopper  
+FRQ-02| Identify individual ADA documents| Identify ADA documents through
+document processing index file| BRQ-01| P0-Show Stopper  
+FRQ-03| Afp2Pdf Wrapper support| Pass in required parameters to Afp2Pdf
+Wrapper service for proper conversions| BRQ-01| P0-Show Stopper  
+FRQ-04| Processing UI Accounting Report Update| Read # of ADA statement from
+database and display on Processing UI Accounting Report| BRQ-02| P0-Show
+Stopper  
+  
+  
+
+## Performance & Scalability Requirements (SLA)
+
+ID| Title| Details| Importance  
+---|---|---|---  
+PRQ-01| Fast AFP conversion times| All ADA AFP conversions results within
+10s.| P2-Normal  
+  
+  
+
+## QA/Test Requirements
+
+ID| Title| Details| Importance  
+---|---|---|---  
+TRQ-01| Screen Reader Support| Screen reader is able to properly read the
+contents of the PDF in an easy to understand flow| P0-Show Stopper  
+TRQ-02| Document Process Validation| Document process is able to pull the ADA
+field and store the value in ESTMT_DOC. Process should| P0-Show Stopper  
+  
+# Design
+
+  
+
+## Architecture & Workflow Diagram
+
+
+
+## Data Model changes
+
+1.  **ESTMT_DOC (Alter table)**
+
+Column Name| Data Type| Nullable| Comments  
+---|---|---|---  
+HAS_ADA| NUMBER| YES| Values will be either 1, 0 or NULL. 1 means it is an ADA
+document, 0 or NULL or regular document  
+  
+  
+  
+
+#### Alter Query
+
+    
+    
+      
+    
+
+alter table ESTMT_DOC add HAS_ADA number
+
+    
+    
+    
+
+2.  **Document Process Index File**
+
+Column Name| Data Type| Nullable| Comments  
+---|---|---|---  
+ADA| NUMBER| YES| Values will be either 1, 0 or NULL. 1 means it is an ADA
+document, 0 or NULL or regular document  
+  
+#### Sample
+
+    
+    
+    JobType|PresentmentType|DocumentCode|FileName|ZipFileName|DocumentBeginDate|DocumentEndDate|ImageCount|AccountNumber|AccountType|AccountSuffix|AccountName|SSN|MessageID|InsertID|RegionCode|CrippleFlag|PostcardFlag|Afp2webPM|Afp2webIni|ADA|
+    DDA Statement|PDF|001|demoms1_300818_877365_1.afp|demoms1_30_1_20180930_1513_0.zip|20180830|20180929|3|877365|DD||JOHN DOE||||||||1|
+    
+
+  
+
+## Code Changes
+
+1.  **Afp2Pdf Wrapper Service**
+
+  * Config.xml Updates
+
+Location| Property Name| Property Value| Comments  
+---|---|---|---  
+/home/isd/a2w-[ENV]/afp2pdf| a2wserver.ada.transform| /services/transform|
+Specifies global ADA API URL  
+/home/isd/a2w-[ENV]/afp2pdf| a2wserver.ada.outputFormat| pdfua| Specifies
+global ADA output format  
+/home/isd/a2w-[ENV]/afp2pdf| a2wserver.ada.codePage| T1V10037| Specifies
+global ADA code page  
+/home/isd/a2w-[ENV]/afp2pdf| a2wserver.ada.scriptProcedure|
+/var/lib/apache2/fcgid/a2wserver/[ada.pm](http://ada.pm)| Specifies ADA script
+procedure  
+  
+  
+
+  * Updated Classes
+
+Package| Class Name| Comments  
+---|---|---  
+com.infoimage.afp2pdf| RequestHandler.java| Add "ADA" parameter  
+com.infoimage.afp2pdf| RequestHandler.java| Read "ADA" value from command  
+com.infoimage.afp2pdf| RequestHandler.java| Update method afp2pdf() and pass
+in required parameters if ADA statement (reference section "Application
+component functional details")  
+  
+  
+
+2.  **I3 Core Code**
+
+Changes| Comments  
+---|---  
+Add data value: "ADA" to Estatement Doc POJO| ...  
+  
+  * Updated Classes
+
+Package| Class Name| Comments  
+---|---|---  
+com.infoimage.infoimage.financial.estmtdoc| EstatementDoc.java| Add variable
+"hasADA" along with Getter and Setter  
+com.infoimage.infoimage.financial.estmtdoc| EStmtServlet.java| Add variable
+"ADA"  
+com.infoimage.infoimage.financial.estmtdoc| EStmtServlet.java| Add ADA
+variable to command to be sent to Afp2Pdf  
+  
+  
+
+3.  **Processing UI Core Code**
+
+Changes| Comments  
+---|---  
+Add data value: "ADA" to document process| Values will be either 1, 0 or NULL.
+1 means it is an ADA document, 0 or NULL or regular document  
+  
+  * Updated Classes
+
+Package| Class Name| Comments  
+---|---|---  
+com.infoimage.processing.application.document.handler| DataHandler.java| New
+index file column "ADA" to be stored in GenericData.java  
+com.infoimage.processing.application.document| GenericData.java| Create new
+Protected int "ADA" along with Getter and Setter  
+com.infoimage.processing.application.document.Registrars| AfpRegistrar.java|
+Pass in ADA value to EstatementDocDBAccess  
+com.infoimage.financial.estmtdoc| EStatementDocDBAccess.java| Add additional
+optional parameter "ADA in method "createNewDoc()" to insert new ADA value (or
+null)  
+com.infoimage.financial.estmtdoc| EStatementDocDBAccess.java| Update
+"INSERT_ESTMT_DOC" query to insert ADA value (or null)  
+  
+  
+
+3.  **Prism Site - MSM & Root**
+
+Changes| Comments  
+---|---  
+Add "ADA" and pass it into the EstmtServlet| Values will be either 1, 0 or
+NULL. 1 means it is an ADA document, 0 or NULL or regular document  
+  
+  * Updated Files
+
+Location| File Name| Comments  
+---|---|---  
+/msm/src/main/webapp/statements/| list_inc.jspf| Grab ADA from EstatementDoc
+POJO and pass into EstmtServlet for conversion  
+/ROOT/src/main/webapp/statements/| list_inc.jspf| Grab ADA from EstatementDoc
+POJO and pass into EstmtServlet for conversion  
+  
+  
+
+4.  **API - Covers hypercube, infotrac acctMgmt only**
+
+ADA changes at api have been completed and deployed on dev and pilot. Changes
+have been made to /search/all and /pdf end points - please find below samples
+
+http: //[pd-pilot1.infoimageinc.com](http://pd-
+pilot1.infoimageinc.com):8580/infoservice/api/v1/document/mtro/search/all/?includeInserts=Y&searchCriteria=%5B%7B%22key%22%3A%2B%22startDate%22%2C%2B%22operator%22%3A%2B%22%3D%22%2C%22operand%22%3A%2B%222017-10-09%22%2B%7D%2C%7B%22key%22%3A%2B%22endDate%22%2C%22operator%22%3A%2B%22%3D%22%2C%22operand%22%3A%2B%222018-11-09%22%2B%7D%5D&vendor=infoimage&acctType=NA&acctNum=72123&includeClosed=true
+
+{  
+    "data": {  
+        "docs": [  
+            {  
+                "hasAda": null,  
+                "orgName": "Metro Credit Union",  
+                "filename": "mtroms1_20180131_72123_8283.afp",  
+                "acctNum": "72123",  
+                "docId": 139232994,  
+                "stmtTypes": [  
+                    {  
+                        "docDesc": "Monthly Statements",  
+                        "stmtType": "default"  
+                    }  
+                ],  
+                "viewed": "N",  
+                "stmtDate": "2018-01-31",  
+                "type": "statement",  
+                "inserts": [],  
+                "orgId": "mtro"  
+            },  
+            {  
+                "hasAda": null,  
+                "orgName": "Metro Credit Union",  
+                "filename": "mtroms1_10312017_72123_8356.afp",  
+                "acctNum": "72123",  
+                "docId": 136551384,  
+                "stmtTypes": [  
+                    {  
+                        "docDesc": "Monthly Statements",  
+                        "stmtType": "default"  
+                    }  
+                ],  
+                "viewed": "N",  
+                "stmtDate": "2017-10-31",  
+                "type": "statement",  
+                "inserts": [],  
+                "orgId": "mtro"  
+            }  
+        ],  
+        "acctNum": [  
+            "72123"  
+        ]  
+    },  
+    "message": "successful"  
+}
+
+The /search/all api returns an additional parameter called hasADA, if this
+parameter value is 1, then while making call to the GET /pdf api, you have to
+pass isAdaDoc parameter as true - please check below sample
+
+[https://pd-
+pilot1.infoimageinc.com:9580/infoservice/api/v1/document/mtro/pdf?documentId=139232994&stmtType=statement&isAdaDoc=true](https://pd-
+pilot1.infoimageinc.com:9580/infoservice/api/v1/document/mtro/pdf?documentId=139232994&stmtType=statement&isAdaDoc=true)
+
+  
+
+Changes| Comments  
+---|---  
+Add "ADA" parameter and pass it into infoservice document API| Values will be
+either 1, 0 or NULL. 1 means it is an ADA document, 0 or NULL or regular
+document  
+  
+  * Updated Files
+
+Location| File Name| Comments  
+---|---|---  
+/routes| mainRoutes.js| Grab ADA from parameter and pass it along  
+/server| methods.js| Grab ADA mainRoutes.js and pass it to API for conversion  
+  
+  
+
+5.  **Job Status**
+
+<Need to test if necessary to update>
+
+## Application component functional details
+
+1.  **Afp2WebServer Post Method URL**
+
+http: //<server ip>[:<service port>]/services/asyncTransform
+
+    
+    
+      
+    
+
+  
+
+2.  **Afp2WebServer Required Parameter for ADA conversions**
+
+Key| Value| Description  
+---|---|---  
+ **OutputFormat**|  pdfua| Expected output file format. Optional parameter and
+Default is PDF.  
+ **OutputMode**|  File| File (default) means transformed output document(s)
+will be written to output file path (specified by parameter "OutputFilePath").
+This path must be accessible/writable from AFP2web Server.  
+ **ScriptProcedure**|
+/var/lib/apache2/fcgid/a2wserver/[ada.pm](http://ada.pm)| The file name of the
+scripting routine to use. If not specified, AFP2web Scripting Facility will
+load "[afp2web.pm](http://afp2web.pm)" by default.  
+ **OutputFilePath**| ...| Absolute path for output. Expected path where
+transformed output document(s) should be written. This path must be writable
+from AFP2web Server  
+ **CodePage**|  T1V10037| Required for ADA. Default code page to use when
+translating strings and indexes of the AFP spool file to ASCII  
+ **InputURLs**| ...| Comma separated list of absolute input file names or
+URLs, One or more input file name(s) or URL to be transformed  
+ **JobID**| ...| Unique job identifier used to distinguish multiple
+asynchronous transformation calls and to get status of particular asynchronous
+transformation later.  
+  
+  
+
+3.  **Sample POST Request**
+
+  
+[http://10.8.9.9/services/asyncTransform?OutputFormat=pdfua&OutputMode=File&ScriptProcedure=/var/lib/apache2/fcgid/a2wserver/ada.pm&OutputFilePath=/d/temp/pdf/test&CodePage=T1V10037&InputURLs=/d/temp/afp/102518/sfcems1_12312017_106862_2.afp&JobID=999](http://10.8.9.9/services/asyncTransform?OutputFormat=pdfua&OutputMode=File&ScriptProcedure=/var/lib/apache2/fcgid/a2wserver/ada.pm&OutputFilePath=/d/temp/pdf/test&CodePage=T1V10037&InputURLs=/d/temp/afp/102518/sfcems1_12312017_106862_2.afp&JobID=999)  
+  
+
+## Integration Points & Interface
+
+From Component| To Component| Details| Error Handling  
+---|---|---|---  
+EstmtServlet| Afp2Pdf| EstmtServlet grabs AFP information from application and
+constructs a socket call to Afp2Pdf| check application logs  
+Afp2Pdf| Afp2WebServer| Afp2Pdf pulls the AFP and constructs API call to
+Afp2webServer| /var/log/apache2/error.log,
+/home/isd/a2w-[ENV]/afp2pdf/logs/out.log  
+Afp2WebServer| Af2Web| Afp2webServer calls AfpWeb engine to handle conversion|
+/var/lib/apache2/fcgid/a2wserver/log/a2wserver.log  
+  
+  
+  
+
+# Summarized Change Log
+
+Date| Who| Changes to Design Doc  
+---|---|---  
+10/26/2018| Joe Chen| Creation  
+  
+  
+  
+
+# Feedback / Question / Answers
+
+  
+  
+
+# Sign-Off
+
+Group| Date| Who| Comment  
+---|---|---|---  
+Product Manager (Business)|  
+|  
+|  
+  
+Account Service (AS)|  
+|  
+|  
+  
+Dev./Impl. Manager (Technical)|  
+|  
+|  
+  
+Production Control (PC)|  
+|  
+|  
+  
+Data Processing (DP)|  
+|  
+|  
+  
+Accounting/Invoicing|  
+|  
+|  
+  
+  
+  
+
+

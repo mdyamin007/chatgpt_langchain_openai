@@ -1,0 +1,280 @@
+title: HTBK - Stmt - DDA & SAVPDFi Conversion to AFP2PDF Python [InHse]
+description: Update existing processing script to no longer use PDFi tool to create pdf.
+ Instead use afp2pdf.py program with index_build_multicore option for ALL statement related apps.
+ The smaller daily notice jobs can use the current index_build options.
+
+All the zip file, pgp encryption, index file contents, and PDF file naming convention must remain exactly the same original specifications.
+
+Please ensure the standard SOP on the directory structure must be followed: 
+ ${d_dir}/$cid/$cid$jid/pdf, ${d_dir}/$cid/$cid$jid/zip, ${d_dir}/$cid/$cid$jid/work is followed.
+ Also, clear the folder directory folder before each processing. We do NOT want to accumulate previous runs.
+
+The current program should support checking total PDF counts verification to make sure the expected pdf matches the total number for pdfs generated; If not, incorporate this standard verification logic
+
+DT_JOB_ID:
+ 133587-C30.01-V21537
+
+Processing Scripts to modify:
+ htbk_dda_process_2.sh
+
+Data Files to use:
+ "HERITAGEFINCORP.52898.RGE.HERI.06012022.zip.pgp, HERITAGEFINCORP.52897.EOM.HERI.06012022.zip.pgp, HERITAGEFINCORP.52920.1ST.HERI.06022022.zip.pgp"
+
+
+
+*CUSTOM:*
+
+Modify script htbk_dda_process_2.sh
+
+and change the following linefrom:
+
+ssh -o BatchMode=yes ${LOGNAME}@preprocessing02 "export d_dir=${d_dir}; perl ${home_env}/afp2web/scripts/COMMERCIAL_CD.pl ${cid}${jid}_${mmdd}${yyyy}_PDF_INX.lis ${cid}_${mmdd}${yyyy}_IMG.lis $comm_cd_test_flag"
+
+
+
+to:
+
+ssh -o BatchMode=yes ${LOGNAME}@preprocessing02 "export testmode=$testmode;. ${home_master}/master/env_init.sh; perl ${home_master}/master/COMMERCIAL_CD.pl ${cid}${jid}_${mmdd}${yyyy}_PDF_INX.lis ${cid}_${mmdd}${yyyy}_IMG.lis $comm_cd_test_flag"
+
+
+
+Basically, we are moving the /home/afp2pweb/script/COMMERCIAL_CD.pl to /home/master/COMMERCIAL_CD.pl and need to ensure testmode and env_init.sh is passed.
+
+
+
+*NOTE*: This job runs on RH2. Since we are migrating from RHS to RH2, we should test all options so that we can do afpcompare and also ensure there is no errors in the processing logs.
+
+
+author: william.kong
+comment: [~anwarh]: Can you see if you can get this project expedited and also completed by Monday for QA? There is one minor adjustment to the processing script that I need you to add which I explained in the Description Box under the "CUSTOM" section.
+
+
+author: anwarh
+comment: Hi [~William.Kong], [~Igor.Khosid].
+Please find the required information for the QA process.
+|Parallel ID|20220906085217|
+|Data File|HERITAGEFINCORP.53806.1ST.HERI.09022022.zip.pgp|
+|PDFi Output|/z/dsi_pdfi_testing/htbkds2_new/old/pdf|
+|AFP2PDF Output|/z/dsi_pdfi_testing/htbkds2_new/new/pdf|
+
+Thanks.
+Salman.
+  
+
+
+author: william.kong
+comment: [~anwarh]/Salman: I checked the /z/pdf_afp/htbk/htbkds2/zip/ folder to make sure you did indeed run in parallel. However, the zip files created are empty. I also checked/z/dsi_pdfi_testing/htbkds2_new/new/pdf and the folder is empty.
+
+
+
+Please re-test and use cycle 9/6 to re-test. This cycle seems to have a lot more accounts.
+
+
+
+[williamK@rhs2 zip]$ /home/util/get_processed_filename.pl prod htbk 2421811
+cid: htbk
+jid: ds2
+proc_id 2421811
+file_name: HERITAGEFINCORP.53824.FWKL.HERI.09062022.zip.pgp
+md5 4f343ce0499a798430391303f104c4ff
+
+cid: htbk
+jid: ds2
+proc_id 2421811
+file_name: HERITAGEFINCORP.53838.3RD.HERI.09062022.zip.pgp
+md5 3e57eb4bd1618898307e0c58449f66b6
+
+cid: htbk
+jid: ds2
+proc_id 2421811
+file_name: HERITAGEFINCORP.53839.5TH.HERI.09062022.zip.pgp
+md5 62b259c8c8fc98f518b7f137f5af0d21
+
+cid: htbk
+jid: ds2
+proc_id 2421811
+file_name: HERITAGEFINCORP.53840.28CO.HERI.09062022.zip.pgp
+md5 34ba2bd35096ffcf7eaa30981a8de35f
+
+
+
+
+
+I've assisted and helped copy the data files to the ftp parallel scanner and it should be scanned shortly:/z/infoftp_int/osiw/htbk/dda/
+
+As for the production zip files, it still present in the production folder for cycle 9/6 and we can copy it over to QA to review after you are done re-testing.
+
+
+
+After you re-tested and confirmed PDF are present, please change status to "QA Request'
+
+
+author: anwarh
+comment: Hi William Kong,
+
+Parallel ID: 20220906085217
+production cycle: 09/06
+
+Data files:
+/z/dsi_pdfi_testing/htbkds2/will_data/HERITAGEFINCORP.53824.FWKL.HERI.09062022.zip.pgp
+/z/dsi_pdfi_testing/htbkds2/will_data/HERITAGEFINCORP.53838.3RD.HERI.09062022.zip.pgp
+/z/dsi_pdfi_testing/htbkds2/will_data/HERITAGEFINCORP.53839.5TH.HERI.09062022.zip.pgp
+/z/dsi_pdfi_testing/htbkds2/will_data/HERITAGEFINCORP.53840.28CO.HERI.09062022.zip.pgp
+
+old zips: 
+new zips: /z/dsi_pdfi_testing/htbkds2/new/
+
+Note: Although I updated the message manager, it has selective criteria. Let me know if it's working or not.
+
+Thanks,
+Anwar
+
+
+author: william.kong
+comment: [~anwarh]: I was spot checking but noticed the index file looks different:
+
+
+
+1021001530_DDA_09032022_5.pdf|1021001530|08042022|09032022|4|JACK L STANFORD | 1021001530_DDA_09032022_6.pdf|1021001530|08042022|09032022|*{color:#de350b}3{color}*|JACK L STANFORD
+
+
+
+Is the red 3 column mean page count? If so, the page count is not correct. If it means something else, then why is the column number different.
+
+{{[williamK@ca-isis-pr-04 htbkds2_prod]$ pdfinfo ../htbkds2_parallel/1021001530_DDA_09032022_6.pdf}}
+{{Title: AFP2web SDK v5.0.65 [Built for Linux 64-bit on Jul 14 2021 at 09:50:38]}}
+{{Subject: AFP and TIFF Conversions (afp2web.com)}}
+{{Keywords: AFP LPD PDF TIFF}}
+{{Author: Maas Holding GmbH}}
+{{Creator: AFP2web SDK v5.0.65 [Built for Linux 64-bit on Jul 14 2021 at 09:50:38]}}
+{{Producer: Maas PDF Library V4.0}}
+{{CreationDate: Mon Sep 19 14:01:01 2022}}
+{{Tagged: no}}
+{{UserProperties: no}}
+{{Suspects: no}}
+{{Form: none}}
+{{JavaScript: no}}
+{{{color:#de350b}Pages: *4*{color}}}
+{{Encrypted: no}}
+{{Page size: 612 x 792 pts (letter)}}
+{{Page rot: 0}}
+{{File size: 129802 bytes}}
+{{Optimized: no}}
+{{PDF version: 1.6}}
+
+
+
+
+author: anwarh
+comment: [~William.Kong], that was bug, fixed it. Also regenerated archival. Please check. Thanks
+
+
+author: william.kong
+comment: Thanks [~anwarh]for the prompt fix!
+
+
+
+[~Igor.Khosid]/[~Andrey.Kutsenko]: Please proceed with the normal QA process. Files are in:
+
+ca-isis-pr-04:
+
+/d/pdf_compare/htbkds2_parallel/
+
+/d/pdf_compare/htbkds2_prod/
+
+
+
+
+
+
+
+
+author: JIRAUSER11104
+comment: Thank you [~William.Kong]
+ I ran the script with the parameter "-exclusions htbkds2.json":
+{code:sh}
+[andreyK@ca-isis-pr-04 pdf_compare]$ perl pdf_compare.pl htbkds2_prod htbkds2_parallel result_htbkds2 -pixels 12 -threads 32 -maxfiles 4 -regex='[0-9]+_DDA_[0-9]+_<SEQ>.pdf' -exclusion htbkds2.json{code}
+But I got results with Differences. Please take a look:
+{quote}Total PDF Files with Differences: 4
+ Please review the directory in /d/pdf_compare/result_htbkds2 directory & /d/pdf_compare/result_htbkds2/pdf_compare_rpt.txt report to see all the PDF differences
+ WARNING: We did not compare ALL the pdfs!
+ pdf_compare.pl will only process the first 4 pdf files out of the total 9003 pdfs
+ Start Time: Wed Sep 21 11:08:26 PDT 2022
+ Finish Time: Wed Sep 21 11:09:07 PDT 2022
+{quote}
+
+
+author: william.kong
+comment: [~Andrey.Kutsenko]: I'm glad you know how to use the exclusion configuration! However, there is one area that I do not want to ignore b/c for some reason the logo size is different between production and parallel. Yellow color is the area the pdf compare ignores as issues. But I do see green visible differences.
+
+
+
+!image-2022-09-21-11-25-29-589.png!
+
+
+
+[~anwarh]: Can you review the DFA and see why the Page 1 upper left corner logo size is different? Seems like the parallel version logo file size is a bit smaller. Page 2 and onwards seems fine. I will mark status QA Failed for now.
+
+!image-2022-09-21-11-27-52-136.png!
+
+
+
+
+
+
+
+
+
+
+author: anwarh
+comment: Hi [~William.Kong], 
+
+There is no change in resources and also the position of the logo is unchanged.
+It's an Overlay. 
+If possible please ignore it. 
+
+Thanks
+
+
+
+author: william.kong
+comment: [~anwarh]: I will agree to this since their eStatement logo is also smaller and same size matching the PDF archival version.
+
+
+
+[~Andrey.Kutsenko]: This can pass w/ notes that logo is tiny bit smaller; Since we also create eStatement, the logo size matches, i will agree that this is ok. If you agree, please mark status to "QA Pass" so that we can schedule code release next week.
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+note: the logo on PDF files (Parallel) is slightly smaller.
+
+
+author: william.kong
+comment: [~anwarh]: Can you prep the File Transfer form and ask Yamee or Leo to assist with the code release. Thanks!
+
+
+author: anwarh
+comment: Hi [~yameelee]/[~rodriguez],
+
+Transfer form:  [^IS-1219 HTBK Transfer Form.doc] 
+
+Code is in:
+*/d/is/cvs/xfer/anwarH_backup/is-1219*
+
+Can you please move them into /d/is/cvs/xfer/anwarH/ and then release?
+
+Thanks,
+Anwar
+
+[~William.Kong]
+
+
+author: jira_naru
+comment: [~William.Kong]and [~anwarh]:
+
+Was able to copy files*/d/is/cvs/xfer/anwarH_backup/is-1219/ to/d/is/cvs/xfer/anwarH*
+
+Code release completed.
+
+

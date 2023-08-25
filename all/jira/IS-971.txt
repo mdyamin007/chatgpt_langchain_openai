@@ -1,0 +1,588 @@
+title: RWCU - [27402][pvt] Update rwcuballoonMMDD.txt and rwcurtchgMMDD.csv to Pass Account Number for Archival
+description: Add archival for Balloon Payment Notice and Secured with Decrease Rate
+ No changes to letter itself
+ Mask account number in display
+ Use full account number for archival and XML file
+
+6 Hrs
+
+Sample Date - 4/13/22
+
+Sample Approval - 4/14/22
+
+Live Date - 4/21/22
+
+
+author: rony
+comment: Hi [~dyuen]
+
+Attached is an archival sample for balloon file only.
+
+[^RWCU_NOTICES_DLA_Archival_03282022_1.zip.001]
+
+please send this to the customer for approval.
+
+
+
+For the other file wcurtchgMMDD there are some changes I see in data file which I think might be issue:
+ # No header - previously there was header{color:#4c9aff}Letter Name,Last 4 of Card Number,Primary Cardholder Name,Address ,Address ,City,State,Postal Code,Current Rate,New Rate,Same Rate,Credit Line{color}
+ # {color:#172b4d}2nd column is empty{color}
+ # {color:#172b4d}PreviouslyCurrent Rate,New Rate,Same Rate had -(minus) and %(percent) sign, but new data doesn't have it.{color}
+ # {color:#172b4d}PreviouslyCredit Line column had $(dollar) sign , but new data doesn't have it.{color}
+ # {color:#172b4d}I am assuming the last column is now the full account no, why don't client use the same 2nd column for account number instead of last.{color}
+
+
+
+I am attaching the new data here( that client attached in ts) if you want to review too.[^rwcudlR.dat]
+
+Let the client know about those issues.
+
+
+
+
+author: dyuen
+comment: [~rony], please see following response from RWCU:
+
+This is from my programmer after we compared the test file that was sent over and the most recent that we had sent on 3/23:
+
+Comparing the two files:
+ * Neither file has a header.
+ * Neither file includes negative signs !https://jira.redwoodcu.org/images/icons/emoticons/forbidden.png|width=16,height=16! or percents (%) on the rates.
+ * Neither file includes dollar signs ($) on the Credit Lines
+ * The 2nd column (last 4 of card number) is blank in both. This is probably a bug. We stopped recording the card number to the loan record in 2017, and didn't update the programming. I can fix it.
+
+When InfoImage is saying the file has changed, are they also actually looking at the files, or are they looking at their documentation/programming?
+----
+Please confirm.
+
+
+author: rony
+comment: Hi [~dyuen]
+
+Please check these data forwcurtchgMMDD
+
+[^rwcurtchg1114.csv] - old version
+
+[^rwcudlR.dat] - new one provided in ts
+
+Please ignore the file naming (csv vs dat) for now. Just look into the content. You will see the points I mentioned above.
+
+Thanks
+
+
+author: dyuen
+comment: [~rony], per your request, the test file has been placed in the test folder.
+|*File Name*|*Size*|*MD5*|
+|test/rwcurtchg0323.csv.asc|2.98 kb|04131a08ec777dc2244770b33571cf1a|
+
+Thanks
+
+
+author: rony
+comment: Hi [~TunA]
+
+sorry to bother you here. But wanted to share some information about rwcurtchg(R2) file .
+
+I loaded the RWCUDLR2.zip from /d/iss/qa/RWCU/ and when I open the data file it looks like the file has header, percent sign, dollar sign
+
+[^RWCUDLR2.DAT]
+
+
+
+!image-2022-04-02-02-11-58-297.png!
+
+
+
+And I check out the production dfa from production and there is code that actually ignores the header part .
+
+!image-2022-04-02-02-13-21-099.png!
+
+
+
+But now when they are providing new data it looks like this no header, 2nd column is empty where previously account no appeared:
+
+!image-2022-04-02-02-15-03-073.png!
+
+[^rwcurtchg0323.csv]
+
+But when I bring this issue with data file change in comment 1 client's response looks like there were never header before or any dollar or percent sign in this data file. But the current production code will skip 1st record for current data file client is sending.
+
+
+
+Would you please provide your comments here.
+
+
+
+[~dyuen]
+
+
+
+Thanks
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+author: tuna
+comment: Hi [~rony],
+
+Since the client does not remember header line, can you please add these line? So we can handle both condition.
+
+Please let me know if you have concern.
+
+Thanks,
+
+Tun
+
+
+
+!image-2022-04-01-17-01-06-500.png!
+
+
+
+[~dyuen]
+
+
+author: rony
+comment: Hi [~dyuen]
+
+Looks like the progress of this task got slow. Would you please ask the client, that data filerwcurtchg will always have the 2nd column empty and the last column is full account no?
+
+
+author: rony
+comment: Hi [~dyuen]
+
+Any update?
+
+Would you please arrange a meeting with you Tun and me. I will shortly discuss the data file issue I am seeing in currentrwcurtchgfile.
+
+
+author: william.kong
+comment: [~dyuen]: Live date will need to be revised. Please reach out to Rony after next Thursday for the meeting since DSi will be out starting tonight
+
+
+author: rony
+comment: Hi [~dyuen]
+
+Is this on hold at this point?
+
+
+
+Thanks
+
+
+author: dyuen
+comment: [~rony], correct. RWCU has a meeting next Monday (6/6), I should more information by then.
+
+Thanks
+
+
+author: dyuen
+comment: Hi [~rony], just an FYI from RWCU:
+
+"We will need to update the programming on our end but the business unit would like to see what the letters look like with the data in the second column empty."
+
+Still pending an update on how to proceed.
+
+Thanks
+
+
+author: rony
+comment: Hi [~dyuen]
+
+Below is the pdf sample for old data and new data the client sent for this update, generated from the same production code. I also attached the data file so that client can compare data vs output.
+
+[^rwcudlr_new.pdf]data file[^rwcudlR_new.dat]( with no header and 2nd column empty )
+
+[^rwcudlr_old.pdf]data file[^rwcurtchg1114_old.csv]
+
+
+
+Thanks
+
+Rony
+
+
+author: dyuen
+comment: Thanks [~rony], this has been forwarded to RWCU for review.
+
+
+author: rony
+comment: Hi [~dyuen]
+
+Need to change the live date of this project.
+
+
+author: dyuen
+comment: Hi [~rony], we're still waiting on an updated test file for the wcurtchgMMDD.csv file. RWCU in the meantime reviewed the balloon archive sample, please see their feedback as follows:
+
+These came through all wrong.
+
+The <Cabinet> should be NOTICES
+
+The <DocName> and <Type> should be BALLOON PAYMENT NOTICE
+
+
+
+Please correct and provide a new sample.
+
+Thanks
+
+
+author: rony
+comment: Hi [~dyuen]
+
+Sample for ballon is in/d/ac-secure-share/ac/daphne/is-971/ folder.
+
+
+
+Thanks
+
+
+
+
+
+
+author: dyuen
+comment: Balloon sample sent to RWCU.
+
+Pending updated test file on the wcurtchg file.
+
+
+author: dyuen
+comment: Hi [~rony], the balloon sample has been approved. Can we proceed with that update while we wait for an updated test file for the wcurtchg file?
+
+Thanks
+
+
+author: rony
+comment: Hi [~TunA]
+
+Need help to release
+
+rwcudl_process.pl
+ rwcudl_process.sh
+
+
+
+Those have update only for ballon.
+
+
+
+[~dyuen]
+
+Thanks
+
+
+
+
+author: tuna
+comment: Hi [~rony],, [~dyuen]: Following codes are released.
+
+Hi [~zhuoxinT]: I notice that you are working on following programs too, and holding in parallel environment. Please make sure you do diff and sync codes before releasing your updates.
+
+
+
+20220623084122 06/23/2022 ronyD IS-971 RWCU - [27402][pvt] Update rwcuballoonMMDD.txt and wcurtchgMMDD.csv to Pass Account Number for Archival
+
+[oper1@rhs ~]$ ls -ltr /d/is/cvs/xfer/ronyD/
+total 192
+-rwxrwxrwx 1 ronyD DSI 34758 Jun 22 22:47 rwcudl_process.pl
+-rwxrwxrwx 1 ronyD DSI 1539 Jun 22 22:47 rwcudl_process.sh
+
+
+
+
+
+[~William.Kong],[~Peter.Dang]
+
+
+
+
+author: dyuen
+comment: Note: Only the balloon update was released to code, the wcurtchg piece is still pending an updated test file from RWCU.
+
+
+author: dyuen
+comment: [~rony], I finally got an updated file for wcurtchg. Please provide a sample if the file looks OK.
+|*File Name*|*Size*|*MD5*|
+|test/rwcurtchg0627.csv.asc|3.29 kb|70e9758b14ef72321bcf74864164b943|
+
+
+author: rony
+comment: Hi [~dyuen]
+
+Before doing any archival-related update I want to provide a sample with production code without any change to the code.
+
+[^rwcudlr.pdf]
+
+
+
+My findings of the new data:
+
+
+
+The header is missing from the data file
+
+_Letter Name,Last 4 of Card Number,Primary Cardholder Name,Address ,Address ,City,State,Postal Code,Current Rate,New Rate,Same Rate,Credit Line_
+
+
+
+
+
+The *Current Rate, New Rate, and Same Rate* values were with % sign in data file before, but missing in new data.
+
+
+
+Anyway please provide the sample to the client for feedback. After that, I will change for archival.
+
+
+
+Thanks
+
+Rony
+
+
+
+
+
+
+author: dyuen
+comment: Hi [~rony], sorry I missed this a few days ago. I added the above to the ticket for RWCU to review.
+
+Thanks
+
+
+author: dyuen
+comment: [~rony], please see the following question from rwcu;
+
+"I was just looking at the current file that we send for rwcurtchgMMDD.csv (the last one was rwcurtchg0629.csv) and there were no headers present in that file either nor the two before that.
+
+Do we need to provide headers in the update to this file? The only difference is we are adding the Full Account member account number as the last field."
+
+
+author: rony
+comment: Hi [~dyuen]
+
+Yes, per existing production code data should contain header. But I can modify the code to adjust that so that client doesn't need to add header.
+
+Other than that any feedback about the sample I provided from production code on my previous message?
+
+
+
+Thanks
+
+
+author: dyuen
+comment: Hi [~rony], no response yet on that. I followed up.
+
+Thanks
+
+
+author: dyuen
+comment: Hi [~rony], per RWCU: "The samples were good. Let's go ahead and adjust for no headers."
+
+Please confirm once adjusted and if new samples will be provided.
+
+Thanks
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+/d/ac-secure-share/ac/daphne/is-971/RWCU_NOTICES_DLA_Archival_07122022_1.zip.001 is archival sample forrwcurtchg(RWCUDLR).
+
+
+
+[~dyuen]
+
+Thanks
+
+Rony
+
+
+
+
+
+
+author: igor.khosid
+comment: QA - completed 
+
+
+author: dyuen
+comment: Sample forwarded to RWCU. Pending response/feedback.
+
+
+author: dyuen
+comment: [~rony], please see feedback from RWCU:
+
+"Can we change the XML on this file?
+
+Can we set <DocName> and <Type> toVISA COURTESY CHANGE NOTICE
+
+instead of using the verbiage in the data file for all the differing letters? I.E. Do not use SECURED WITH DECREASED RATE, etc."
+
+Please follow up with [~billr], while I'm OOO between 7/13 - 7/15.
+
+Thanks
+
+
+author: rony
+comment: Hi [~billr]
+
+/d/ac-secure-share/ac/daphne/is-971/RWCU_NOTICES_DLA_Archival_07142022_1.zip.001 is the updated sample.
+
+
+
+Thanks
+
+Rony
+
+
+author: billr
+comment: [~rony]  [~dyuen]
+
+
+
+Thanks, asking DP to move it to client pick up.
+
+
+author: rony
+comment: Hi [~billr]
+
+Any feedback?
+
+
+
+Thanks
+
+
+author: dyuen
+comment: [~rony], RWCU has finally approved the sample. Can you prepare this for code release but do not release yet? RWCU will confirm when to release.
+
+"These have been imported successfully.
+
+We can move to release. Let me find out from team when the new file will go into effect."
+
+Thanks
+
+
+author: rony
+comment: Hi [~dyuen]
+
+Ok let me know when to release.
+
+
+
+Thanks
+
+
+author: dyuen
+comment: Hi [~rony], RWCU is OK with code release any time before 8/12. Let me know when a good day/time is to release.
+
+"We have code release on our end scheduled for 8/12. This is the next time we will be sending over the file rwcucurtchgMMDD.csv.
+
+You can release on your end at anytime before 8/12."
+
+Thanks
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+Would it be possible to quickly do QA here? I am so sorry I should provide you with this earlier.
+
+You already tested and the client already approved the sample.
+
+[^IS_Checklist.docx]
+
+RWCUDLR2.zip is in qa folder.
+
+parallel id:20220712025856
+
+
+
+[~dyuen]
+
+Thanks
+
+
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220712025856
+   Currently in parallel: Yes
+   User: ronyD
+   Description: IS-971 rwcurtchg archival
+   Date Submitted: 2022-07-12 02:59:05
+   Date Last Updated: 2022-08-12 11:59:59
+   Files:
+      1) RWCUDLR2.dfa
+      2) RWCUDLR2.prj
+      3) rwcudl_process.pl
+      4) rwcudl_process.sh
+
+
+author: igor.khosid
+comment: QA  - completed
+
+IS checklist - attached
+
+
+author: rony
+comment: Hi [~TunA]
+
+[^IS_PROGRAM_TRANSFER_FORM.doc]
+
+need to release.
+
+[~dyuen]
+
+
+
+Thanks
+
+
+author: tuna
+comment: Hi [~rony],
+
+Following codes have been released.
+
+Thanks
+
+Tun
+
+
+
+20220812140631 08/12/2022 ronyD IS-971 RWCU - [27402][pvt] Update rwcuballoonMMDD.txt and rwcurtchgMMDD.csv to Pass Account Number for Archival
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/ronyD/
+total 288
+-rwxrwxrwx 1 ronyD DSI 34774 Aug 12 14:01 rwcudl_process.pl
+-rwxrwxrwx 1 ronyD DSI 1567 Aug 12 14:01 rwcudl_process.sh
+-rwxrwxrwx 1 ronyD DSI 21012 Aug 12 14:01 RWCUDLR2.dfa
+
+
+
+
+
+[~dyuen]

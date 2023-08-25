@@ -1,0 +1,224 @@
+title: BKPL EOM Statement - Duplicate Issue - Core side
+description: BKPL EOM Statement - Duplicate Issue - Core side
+
+
+
+One time request to process attached file and remove the estatements listed in it. This applies to the August EOM cycle only.
+
+Suppress ALL accounts on list given.
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+This is to suppress some account + name combination from account list.
+
+The list is /z/download/bkpl/FBT_Authorized_signers.csv which is sent from the client. You can check in ts 33913 comments 29.
+
+So now our task if we can find the match between data file and this account list with account+name combination we have to suppress those account from estatement.
+
+The cycle in question is20220901 for which this update is needed. But this is a huge xml file AIP706INFSTM20220901064534.XML.PGP.
+
+So I converted it to a bar delimited file first as we normally do in the script.
+
+Then from there, I made a short data fileAIP706INFSTM20220901064534.XML.test.out that has 12 accounts.
+
+Among those499162 account appears 7 times in data file:
+
+
+
+[ronyD@dsi is-1640 Wed Sep 28 10:03]$ grep -i "^100.*499162" AIP706INFSTM20220901064534.XML.test.out
+ 100~`499162~`BANKRUPTCY CASE NO 20-10846~`216143.87~`252116.85~`1~`12~`N~`31~`D
+ 100~`499162~`JOHN CORB~`216143.87~`252116.85~`1~`12~`N~`31~`D
+ 100~`499162~`DEBTOR IN POSSESSION~`216143.87~`252116.85~`1~`12~`N~`31~`D
+ 100~`499162~`NICHOLAS NASH MARCHESE~`216143.87~`252116.85~`1~`12~`N~`31~`D
+ 100~`499162~`STEPHEN CHRISTOPHER RYAN~`216143.87~`252116.85~`1~`12~`N~`31~`D
+ 100~`499162~`FR JOHN SDB~`216143.87~`252116.85~`1~`12~`N~`31~`D
+ 100~`499162~`ARCHBISHOP SHAW HIGH SCHOOL~`216143.87~`252116.85~`1~`12~`N~`31~`D
+
+
+
+And this account + name combination is found in the account list file:
+
+!image-2022-09-28-23-07-48-535.png!
+
+so in the E-statement index, there should not be an entry for these 4 account name combinations.
+
+BKPLMS21.zip is in QA folder.
+
+You can check /t/bkpl/bkplms2225.c1bmcok file which is paper txt file where there 12 account .Not sure if know about this file, if not that's ok. it's just to show you that 12 accounts were in the data file we processed and you will see 7 entries with account499162.
+
+And now look at the estatement index file :
+
+/t/isd_input/I3/process-files/bkpl/ms2_20220831_2_20220928_1036_bkpl.txt
+
+You will see 8 entries and among these 3 entries are for account499162. So it rests 4 got suppressed.
+
+You can also look at/t/bkpl/bkplms2225.print whre it says 4 accounts are in nonEstmt section.
+
+/z/download/bkpl/is-1640 has data files if you want to look at these.
+
+4.0K -rwxr-xr-x. 1 ronyD DSI 982 Sep 27 12:58 AIP706INFIDX20220830232823.ZIP.PGP
+ 88K -rwxr-xr-x. 1 ronyD DSI 85K Sep 27 12:58 AIP706INFIMG20220830232821.ZIP.PGP
+ 945M -rwxrwxrwx. 1 543 300 945M Sep 27 16:06 AIP706INFSTM20220901064534.XML.PGP
+ 12G -rw-rw-rw-. 1 ronyD DSI 12G Sep 27 17:29 AIP706INFSTM20220901064534.XML
+ 5.7G -rw-rw-rw-. 1 ronyD DSI 5.7G Sep 28 02:53 AIP706INFSTM20220901064534.XML.dat
+ 168K -rw-r--r--. 1 ronyD DSI 168K Sep 28 08:20 AIP706INFSTM20220901064534.XML.test.out
+
+
+
+AIP706INFSTM20220901064534.XML is the decrypted data file forAIP706INFSTM20220901064534.XML.PGP. For this file this update will be run in production ultimately.
+
+AIP706INFSTM20220901064534.XML.dat is bar delimited file for the xml file.
+
+AIP706INFSTM20220901064534.XML.test.out is a short file made fromAIP706INFSTM20220901064534.XML.dat file that I mentioned which has 12 accounts and among them, 7 accounts are499162 with which I processed the updated dfa.
+
+
+
+Development Id:20220928081517 (not parallel id parallel has another update going on)
+
+
+
+There is also check image applicable but there is no update related to the check image and I didn't also parse the check images related to the data file which would take much time.
+
+
+
+Let me know if you need anything else.
+
+
+
+[~stephen.yee@infoimageinc.com]
+
+Thanks
+
+
+
+
+
+
+
+
+author: igor.khosid
+comment: QA - completed
+Please see attached - test file >>>  [^IS-1640 BKPL - test.txt] 
+
+
+author: igor.khosid
+comment: [~rony]
+Please attach IS checklist
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+[^IS_Checklist.docx]
+
+
+
+Thanks
+
+
+author: rony
+comment: Hi [~TunA]
+
+Need to release this.
+
+[^IS_PROGRAM_TRANSFER_FORM.doc]
+
+
+
+Note: this is a one-time update. After running the 20220901 files this update needs to be rollback.
+
+[~stephen.yee@infoimageinc.com]would you please remind me after dp completes the process?
+
+Thanks
+
+
+author: tuna
+comment: Hi [~rony],: if we need to rollback the code, please provide rollback date in transfer form. So I can set the rollback date to alert on rollback date
+
+Also, I believe your transfer form is not latest one that[~Peter.Dang]emailed recently. Because I don't see rollback date on transfer form.Can you please please fill up new one and let me know?
+
+Hi [~stephen.yee@infoimageinc.com], You need to give the roll back to Rony. So he can put in transfer form.
+
+Thanks,
+
+Tun
+
+
+
+
+
+
+author: igor.khosid
+comment: IS checklist  - attached >>>  [^IS-1640_BKPL_IS_Checklist.pdf] 
+
+
+author: stephen.yee@infoimageinc.com
+comment: [~rony] [~TunA]- roll back date will be 10/3/22 when we process their Sept EOM data files.
+
+
+author: tuna
+comment: Thanks, [~stephen.yee@infoimageinc.com] !
+
+Hi [~rony]: Since you are not available. I am not waiting for new transfer form with rollback date. I just released with roll back date set to 10/03/2022. We should get email alert on that day. [~Peter.Dang]mentioned this morning that he will add DSI email to roll back alert too. But please set email reminder for yourself on that day too.
+
+Thanks,
+
+Tun
+
+
+
+20220929141455 09/29/2022 ronyD IS-1640 BKPL EOM Statement - Duplicate Issue - Core side
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/ronyD/
+total 384
+-rwxrwxrwx 1 ronyD DSI 121417 Sep 29 11:16 BKPLMS21.dfa
+
+
+author: rony
+comment: Hi [~TunA]
+
+Requesting to roll back the code BKPLMS21.dfa.
+
+
+
+[^IS_PROGRAM_TRANSFER_FORM_Rev 07132016.doc]
+
+[~stephen.yee@infoimageinc.com]
+
+
+
+Thanks
+
+
+author: tuna
+comment: Hi [~rony],
+
+Following code has been rolled back.
+
+Thanks,
+
+Tun
+
+
+
+BKPLMS21.dfa.2022093013515109/30/2022 ronyD Rollback for 20220929141455 09/29/2022 ronyD IS-1640 BKPL EOM Statement - Duplicate Issue - Core side
+
+[main@rhs ~]$ ll /d/is/cvs/xfer/ronyD/
+total 384
+-rwxrwxrwx 1 ronyD DSI 119962 Sep 30 13:35 BKPLMS21.dfa
+
+
+
+[~stephen.yee@infoimageinc.com]
+
+
+author: rony
+comment: Hi [~stephen.yee@infoimageinc.com]
+
+As I already mentioned about a bug last week about disclosure missing last line. Please let me know when to release correct one and reprocess.
+
+
+
+Thanks

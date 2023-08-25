@@ -1,0 +1,70 @@
+Some customer needs their statement to their email address instead of printing paper. So, We need to prepare the job like this. Generally we make individual afp file for each customer and a index file. Index file contain each customer afp name, account number, total pages and other information that, we can further process the afp by using this data and send pdf statement to their email address.
+Index File for job type f look like this:
+Follow these steps:
+Need to set ZIPFILE( or any name)
+Formatgroup: (ZIPFILE configuration)
+ZIPFILE set this as Environment Variable and gives a value( This value will be the output file for f option)
+BEFOREFIRSTDOC:
+  IF $SYSTEM=='Windows' ;
+  THEN ;
+    &PATH_SLASH = '\' ;
+    &INDIV_PATH = 'c:\isis\afpds\' ;
+  ELSE ;
+    &PATH_SLASH = '/' ;
+    &INDIV_PATH = '/'!&D_DIR!'/'!&CID!'/'!&PREFIX!'-indiv/' ;
+  ENDIF ;
+  &ZIPFILE = ENVIRONMENT('ZIPFILE') ;
+  IF &JOB_TYPE=='f' ;
+  THEN ;
+    USE
+      FORMAT ESTMT_IDX_INIT_FIRST EXTERNAL ;
+  ENDIF ;
+PRINT_DOC:Need to implement the below code before printing anything. Also need to assign appropriate values to variables that are used in this dfa ESTMT_IDX_INIT_FIRST.DFA as per project.
+  /************Steps for New E Index***********/
+  IF &JOB_TYPE=='f' ;
+  THEN ;
+    :ASSIGNING_VARIABLES ;
+    /*should not contain any sign inside date*/
+    &DOCBEGINDATE = CHANGE(CHANGE(STMT_BEG_DATE,'-', ''),'/', '') ;
+    &DOCBEGINDATE = SUBSTR(&DOCBEGINDATE,5,4, '')!
+     SUBSTR(&DOCBEGINDATE,1,2, '')!SUBSTR(&DOCBEGINDATE,3,2, '') ;
+    &DOCENDDATE = CHANGE(CHANGE(STMT_END_DATE,'-', ''),'/', '') ;
+    &DOCENDDATE = SUBSTR(&DOCENDDATE,5,4, '')!SUBSTR(&DOCENDDATE,1,2,
+      '')!SUBSTR(&DOCENDDATE,3,2, '') ;
+    ACCT_NUM = NUMPICTURE(ACCOUNT_NUMBER,'#0') ;
+    /*if sow says nothing about it then  keep it &ACCT_TYPE  empty otherwise it may DD or else ask client */
+    &ACCT_TYPE =  ;
+    ACCT_NAME = NOSPACE(ADDR_LINE[1]) ;
+    /*&JOBDESC may need to change per project  i.e. estatement*/
+    &JOBDESC = &JOBDESC ;
+    INDIV_AFP = &PREFIX!'_'!&DOCENDDATE!'_'!ACCT_NUM!'_'!&SEQ_NUM!'.a'
+    'fp' ;
+    OUTTEMP1 = &INDIV_PATH!INDIV_AFP ;
+    DUMMY = CHANGEENV('OUTFILENAME',OUTTEMP1) ;
+    SELECTOUTPUT OUTFILENAME;
+  ENDIF ;
+AFTERDOC:
+  /* Close individual afp and set message id and call estmt_idx_write_after external dfa */
+  IF &JOB_TYPE=='f' ;
+  THEN ;
+    CLOSE OUTFILENAME;
+    &FILENAME = INDIV_AFP ;
+    MSG_ID_STR =  '' ;
+    FOR MC
+      REPEAT MAXINDEX(MSG_ID) ;
+      IF MC>1 ;
+      THEN ;
+        MSG_ID_STR = MSG_ID_STR!','!MSG_ID[MC] ;
+      ELSE ;
+        MSG_ID_STR = MSG_ID[MC] ;
+      ENDIF ;
+    ENDFOR ;
+    &MESSAGEID = MSG_ID_STR ;
+    IF E_SUPRESS<>'z' ;
+    THEN ;
+      USE
+        FORMAT ESTMT_IDX_WRITE_AFTER EXTERNAL ;
+    ENDIF ;
+  ENDIF ;
+Also seeESTMT_IDX_INIT_FIRST.dfa
+and ESTMT_IDX_WRITE_AFTER.dfa

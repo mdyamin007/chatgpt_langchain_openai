@@ -1,0 +1,157 @@
+title: Infoservice JAAS API set up guide for new clients (For Developers)
+body:   1. For any new client, check if the client is using existing vendor to integrate with us or if this is a new vendor. If they are using existing vendor then assign the same vendor id to the new client. To check the vendor id, query usr table to see if the vendor exist. If the vendor exist, then assign the same vendor id
+
+          
+
+  
+
+        If the vendor doesn't exist, then create a usr with the vendor name in all the schemas and across all the environments. (This user_id will be used for logging purposes and also to track information on which vendor has modified the Delivery Preference/Notification Preference) (modified_by in paperless2 and notificaiton_preference tables)
+
+2\. To give permission to the vendor to access our API's update below
+configuration
+
+a. In the infoservice jaas config file, add secret, salt, IV, cipher constant
+and add this client to the ciphercbcmode.enabled.client property.
+
+    e.g  For gdcu, add below properties in the infoservice-jaas config file  
+
+gdcu.1.salt=iY7oW8aX2vD4pZ7  
+gdcu.1.iv=yX6qK7sD3dD4oC5b  
+gdcu.1.cipherConst=1501  
+gdcu.1.tokenTtl=600
+
+ciphercbcmode.enabled.client = star,gcbk,gdcu,wtcu,vwcu,kfcu
+
+  
+
+b. Create a user and role with the client name in tomcat-users.xml file - add
+below entries (this is for gdcu)
+
+` <role rolename="gdcu"/>`
+
+` <user username="gdcu" password="password" roles="gdcu" />`
+
+`c. Create security constrains for the role in web.xml file`
+
+`                     `
+
+<security-constraint>  
+<web-resource-collection>  
+<web-resource-name>Users</web-resource-name>  
+<url-pattern>/api/v2/authcheck/*</url-pattern>  
+<url-pattern>/api/v2/document/gdcu/*</url-pattern>  
+</web-resource-collection>  
+<auth-constraint>  
+<role-name>gdcu</role-name>  
+</auth-constraint>  
+</security-constraint>
+
+  
+<security-role>  
+<role-name>gdcu</role-name>  
+</security-role>
+
+3\. Check mongo PN_ClientProperties database and add statement archival
+configuration for the client under properties collection.
+
+E.g.
+
+  
+
+{  
+"_id" : "gdcu",  
+"cid" : "gdcu",  
+"archivalPeriodPriority" : [  
+"appType"  
+],  
+"archivalPeriod" : {  
+"default" : 18,  
+"enotice" : 4  
+},  
+"statements" : {  
+"default" : {  
+"name" : "eStatement"  
+},  
+"loan" : {  
+"name" : "Loan"  
+},  
+"mortgage" : {  
+"name" : "Mortgage"  
+},  
+"analysis" : {  
+"name" : "Analysis"  
+},  
+"enotice" : {  
+"name" : "eNotice"  
+}  
+},  
+"alkami" : {  
+"primaryUserFlag" : "ignore"  
+}
+
+Some clients have restriction on the way they create primary user in our
+system, by default use "primaryUserFlag" : "ignore" in the above
+configuration. PrimaryUserFlag values can be ignore/require/create
+
+If the archival period for other statement types is not specified, then the
+archival period for statement type 'default' is used.
+
+4\. Add this new client to the script that is used to get the API count for
+monthly report generation for billing team
+
+Script location to generate monthly count : ca-apipui-
+pr-01:/root/jaas_monthly_report.sh
+
+Script location to generate weekly count :  ca-apipui-
+pr-01:/root/jaas_weeklylog_report.sh
+
+Report is generated in this directory location :
+/root/infoservice_jaas_log_report/monthly_report/$REPORT_NAME
+
+  
+
+5\. For the Alkami clients, we need to enable CBC cipher mode in production,
+and to do that below updates are needed. Once the configurations are added, we
+need to redeploy the updates using Jenkins
+
+       a.  In the infoservice-jaas config file add the client to below property
+
+ ciphercbcmode.enabled.client = star, kfcu
+
+  
+
+b. Add initialization vector in the infoservice-jaas config file
+
+            kfcu.1.iv=sdPa10xDsCrmFNVT
+
+  
+
+Some useful links to generate secret key and initialization vector :
+<https://privacycanada.net/strong-password-generator/> (Please note that when
+generating secrect key and initialization vector DO NOT use special characters
+in the random string)
+
+For testing to get the current millisecond timestamp use :
+<https://currentmillis.com/>
+
+  
+
+6\. To encrypt/decrypt using CBC mode, use below end point :
+
+  
+
+7\. To encrypt/decrypt without CBC mode use below end points :
+
+  
+
+8\. Pilot base url : <https://sandboxapi.infoimageinc.com/infoservice>
+
+9\. Prod base url : <https://prodapi.infoimageinc.com/infoservice>
+
+10\. When the new client comes, IP whitelisting is needed when they go live to
+production (whitelisting is NOT needed on pilot) - work with Network team and
+have them whitelist the IP's that the client give before go live.
+
+  
+
+

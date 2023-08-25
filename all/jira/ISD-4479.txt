@@ -1,0 +1,115 @@
+title: 14010 / 48389 - WECU - Enable Popup Alert
+description: Enotice and undeliverable pop up:
+
+InfoTRAC:
+- Enable pop up alerts tab in Client Management
+- Set up pop up alerts by going to the pop up alert tab and selecting everything that should have pop ups (types of enotices and undeliverable).
+
+Hypercube code:
+- Add "popupAlert": true in properties.json
+- Edit popupAlert.html
+
+Enotice:
+ * Post enotice index file
+ * Change enotice stamp to before today and change viewed to N
+ * Login and pop up should show
+ ** Used cif: 12345, acct400837467 / type NA, acct0810095114 / DD --change sesslastlogin to 1/1/19 and pop up should appear for estmt, enotice, and etax.
+
+Undeliverable:
+ * Make updates to code and conf file before proceeding:
+ ** Addbounceback flags to invalidate email address to status B
+ ** Code update to upload2/bouncebackReport/ReportGenerator in processing-ui core code. (see pilot)
+ * Post an ms1 index file with at least 11 entries
+ * Change an email for one acct to the bad email address, and the rest to my own
+ * Trigger emails, 10 should be successful and 1 should get bounced
+ * Trigger bounceback report, should update the email valid status to B
+ * Login with the bad email address and undeliverable should show
+ ** cif876694 should have both undeliverable and stmt pop up (if sesslastlogin is changed to something like 8/1/20)
+
+Update: Client requested verbiage changes to the pop-ups, located in client/views/popupAlert/popupAlert.html
+ * Enotice popup
+ ** -Change to Unviewed Document(s)-
+ ** -You have *the* following unviewed document(s)-
+ ** -Remove 'Click on Dismiss button below to go to view your document'-
+
+* Undeliverable popup
+** Add a line of white space before Unviewed Document(s)
+** Change entire verbiage to: "We haven't been able to send you notification emails, which may be because we have an outdated email address. The email address we have on file is: [insert email]. To update it, close this window and click on Statement Options."
+
+To do: 
+Find out why emails are not working on stage.
+Test if bad email is flagged as bounced, and if so run bounceback report to check that the bad email gets invalidated properly.
+
+
+
+
+
+author: shun.kuwashima
+comment: Application pop up works on pilot. Testing bounced email sending and added bounceback invalidate flags to edit the np record valid status, currently pending email job to finish before running bounceback report.
+
+
+author: shun.kuwashima
+comment: Bounceback report now properly updates email valid status to B for any bounced emails recognized during the email job.
+
+
+author: shun.kuwashima
+comment: Client confirmed pop ups work on pilot. They are requesting some slight verbiage changes as well as color updates.
+
+
+author: shun.kuwashima
+comment: Still pending approval, client aiming to test near EOM June
+
+
+author: shun.kuwashima
+comment: client wants verbiage of popup updated, will have to reset everything again
+
+
+author: shun.kuwashima
+comment: Pilot logins are reset on pilot, pending instruction on verbiage changes
+
+
+author: shun.kuwashima
+comment: Pop up verbiage updates on pilot
+
+
+author: shun.kuwashima
+comment: Pending new due dates
+
+
+author: shun.kuwashima
+comment: Due dates updated to 7/23. Client approved initial popup functionality, but they still need to check the verbiage updates. They used the wrong email address so the undeliverable popup did not show on pilot, having them try again.
+
+
+author: shun.kuwashima
+comment: Client requesting more changes:
+- There is a space between the email address and the period.
+- Add the word 'the' before 'Statement Options'.
+- Add a line of white space between the Unviewed Documents and the previous verbiage.
+
+
+author: shun.kuwashima
+comment: Updated verbiage based on the changes in red provided by the client, deployed onto pilot and waiting for client to check.
+
+
+author: shun.kuwashima
+comment: Client approved on pilot, will work on moving to stage
+
+
+author: shun.kuwashima
+comment: Works on stage, prep work for QA
+
+
+author: shun.kuwashima
+comment: Prepared everything for QA on stage, pending feedback.
+
+
+author: shun.kuwashima
+comment: Released tag 8.0.13.1 with verbiage changes, pui code, restarted prod pui server, and updated pop-up alert tab options on infotrac prod. 
+
+
+author: shun.kuwashima
+comment: For some reason, none of the popups are enabled under the PopUp Alert tab on InfoTRAC. Pending response from Kris on which apps it should be enabled for.
+
+
+author: shun.kuwashima
+comment: Re-enabled popups for all of WECU's applications on the Popup tab.

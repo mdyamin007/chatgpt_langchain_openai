@@ -1,0 +1,91 @@
+title: Selective Archival Period
+body: # SelectiveArchivalPeriod
+
+This selective Archival period configuration will be used by both front end
+and API.  
+  
+
+## API
+
+While search document/statements with a archival period(date range) API will
+filter based on this configuration so that API does return only the statements
+that has a closing date on the range of Archival Period of that specific
+statement type.  
+Currently API does the filtering based on the configuration in Mongo DB. The
+name of the collection in Mongo  
+for dev environment is :  **DV_clientProperties**  
+for pilot:  **PT_ClientProperties**  
+for stage :  **ST_ ClientProperties**
+
+Need to pass vendorId parameter in the request for searchAll api to search for
+documents.  
+vendorId for infotrac : 900  
+vendorId for hypercube : 901  
+searchCriteria format :
+[{"key":+"startDate",+"operator":+"=","operand":+"2009-05-01"+},{"key":+"endDate","operator":+"=","operand":+"2010-06-01"+}]  
+  
+
+## Front End (Hypercube and Infotrac )
+
+From front end the code is done such a way so that old clients configuration
+don't get effected.  
+we are still using following config:  **statementArchivalPeriod**  for old
+clients.  
+For new Clients or clients with selective paperless feature we can use the
+updated selective archival period configuration.
+
+Sample Json Property for a client that have same selective archival for both
+Infotrac and Hypercube (Property on inside parent property)
+
+{  
+    "_id": "demo",  
+    "cid": "demo",  
+    "archivalPeriodPriority": [  
+        "appType"  
+    ],  
+    "archivalPeriod": {  
+        "default": 5,  
+        "visa": 6,  
+        "mortgage": 13,  
+        "enotice": 5,  
+        "etax": 17,  
+        "closedAccount": 6,  
+        "unenrolledArchival": 8  
+    }  
+}
+
+  
+Sample Json Property for a client that have different archival for Infotrac
+and Hypercube (Property on inside child /application property)
+
+{  
+    "_id": "demo",  
+    "cid": "demo",  
+    "archivalPeriodPriority": [  
+        "appType"  
+    ],  
+    "infotrac": {  
+        "archivalPeriod": {  
+            "default": 5,  
+            "visa": 6,  
+            "mortgage": 13,  
+            "enotice": 5,  
+            "etax": 17,  
+            "closedAccount": 6,  
+            "unenrolledArchival": 8  
+        }  
+    },  
+    "hypercube": {  
+        "archivalPeriod": {  
+            "default": 5,  
+            "visa": 6,  
+            "mortgage": 13,  
+            "enotice": 5,  
+            "etax": 17,  
+            "closedAccount": 6,  
+            "unenrolledArchival": 8  
+        }  
+    }  
+}
+
+

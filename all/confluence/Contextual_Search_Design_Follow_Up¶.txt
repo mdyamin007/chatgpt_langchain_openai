@@ -1,0 +1,103 @@
+title: Contextual Search Design Follow Up
+body: Amjad,  
+After our design session yesterday, here are the key points that we have come
+up with. We need to discuss any concerns from on this topic this week. Ernest
+will be providing the pieces in step 1 for you by Wednesday.
+
+Indexing  
+For this part to work, the print process will generate individual txt file per
+statement from the AFP side, place those in a drive/mount path and trigger the
+indexing process by invoking the API with an index file (that has additional
+data for each txt file) and job id. This will be very similar to the API that
+is triggered from the print process for job tracking in IntoTRAC. In this
+case, the Indexing API behind the scene will input the right entry in database
+associating the indexing job with the statement processing job so that can be
+monitored via PUI.  
+Searching  
+Highlighting  
+For this, the Infoservice API can add a method to retrieve pdf by AFP name,
+which internally looks up the document id from the afp name - this information
+is also in the index file to be provided in triggering the indexing in step 1  
+Re-Indexing (nothing needed)  
+Re-processing/Processing on-hold (API taking job id as parameter)  
+Statement Pull (API taking document id as parameter to pull)  
+Statements Posted, Indexing Not Complete (Will need to update a data base
+entry so the UI shows proper message in case the statements are posted, but
+search indexing is not complete
+
+Best,  
+Kim
+
+There is a Contextual Search.DOCX file in the attachment containing request
+param of API call and index file content.
+
+    
+    
+    Contextual Search:
+    1. Parameters for the API triggering:
+     hostname
+     user
+     dt_job_id
+     cid
+     jid
+     txt_file_path
+     txt_index_file_path
+    
+    2. Fields available in the txt_index file:
+     JobType
+     PresentmentType
+     DocumentCode
+     FileName
+     ZipFileName
+     DocumentBeginDate
+     DocumentEndDate
+     ImageCount
+     AccountNumber
+     AccountType
+     AccountSuffix
+     AccountName
+     SSN
+     MessageID
+     InsertID
+     RegionCode
+     CrippleFlag
+     PostcardFlag
+     Afp2webPM
+     Afp2webIni
+    e.g.
+    
+    
+
+  
+
+    
+    
+    MortgageStatements|TXT|001|exbkme1_20170912_67886_1.afp.txt|exbkme1_13_1_20170913_1458_0.zip|20170811
+    |20170912|2|67886|DD||ROBERT L SALISBURY||||||||
+    
+    MortgageStatements|TXT|001|exbkme1_20170912_74789_2.afp.txt|exbkme1_13_1_20170913_1458_0.zip|20170811
+    |20170912|2|74789|DD||DAVID E GENEREUX||||||||
+    
+    MortgageStatements|TXT|001|exbkme1_20170912_65639_3.afp.txt|exbkme1_13_1_20170913_1458_0.zip|20170811
+    |20170912|2|65639|DD||GARY SUMNER||||||||
+    
+    MortgageStatements|TXT|001|exbkme1_20170912_47646_4.afp.txt|exbkme1_13_1_20170913_1458_0.zip|20170811
+    |20170912|2|47646|DD||MICHAEL TEAGUE||||||||
+    
+    
+    
+    3. Servlet:
+     When the servlet is triggered, it will validate all parameters are present and valid
+     Insert a record into the (ISD) P_job table and PUI will display the record for DP to monitor
+     After the job has finished processing, the servlet will update the 'ACTION' and 'STATUS' fields in the
+    inserted record in P_job table (ISD will work with DSI on what values to populate)
+    
+    Note:
+     In order for an application to have Contextual Search feature, Estatement Trac has to be enabled so that the link
+    between print and estmt has been established by DT_job_id
+     After the txt files and index file has been created from the estatement afp files at the paper side, the contextual
+    search job will be posted
+     If the contextual search files need to be reposted, estatement has to be reprocessed as well to ensure that the
+    dt_job_id is correct
+
+

@@ -1,0 +1,238 @@
+title: RWCU - [33005][pvt][in-house] RWCU_NOTICES_DLA_Archival_MMDDYYYY_1.zip.001 Not Received for 08172022
+description: For rwcudla this issue is happening again and again. Client is not seeing correct doc_date in index file. But when we run in parallel it seems ok. It happened multiple times that I asked Dp to manually in parallel and provide the archival file to client pickup.
+
+
+
+Since this is daily each day archival zip file got replaced in /d/pdf_afp/rwcu/rwcudla/zip folder. And we provide pgp file in client pickup which I can't decrypt to check the index file content.
+
+
+
+I changed in below scripts:
+
+rwcu_notice_archival.sh
+ rwcudl_process.pl
+ rwcudla.control
+
+
+
+Changes are:
+
+1. add rwcudla.ran file. Previously ran file has not been generated. This is in rwcudl_process.pl.
+
+2. used copytoclientpickup in rwcu_notice_archival.sh
+
+3. added ftpserver to rwcudla.control file.
+
+
+
+Additionally for now I added another thing in rwcu_notice_archival.sh to backup the zip file ( decrypted file ) in /d/download/rwcu/archvial/ folder. So that if client report issue in index file or pdfs I can't investigate the zip file. But after sometime I will remove this code, since this will occupy huge amount of space.
+
+
+
+Would you please release those script.
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+Parallel id:20221026093222
+
+previously for rwcudla there was no ran file. I added this feature so that we can know which file got run. You can check/home/test/keep/rwcudla.ran .
+
+previously for archival, it didn't usecopyToClientPickup.pl script to copy files in client pickup. I added this. This script keeps a log of the files copied to client pickup. you can check
+
+the /z/ftpbu/client_pickup_log/client_pickup_10262022.log file in the folder and search forRWCU_NOTICES_DLA_Archival.
+
+
+
+And the client is seeing issues in the archival index file on a regular basis, but I can't actually investigate because we provide them with encrypted archival files which I can't decrypt. So for now I added code so that it will keep a backup of the archival zip file that I can unzip and investigate if the client sees the issue.
+
+
+
+This is the code for backing up the archival file inrwcu_notice_archival.sh :
+
+mkdir -m 777 -p $d_dir/download/$cid/archival/
+for pf in $e_opt_zip_dir/*; do
+ cp -v $pf $d_dir/download/$cid/archival/
+done
+
+
+
+Those are the updates I did myself to better monitor if any issue arises, the client didn't ask for it. My apology to increase work load for you.
+
+[^IS_Checklist.docx]
+
+Thanks
+
+
+
+
+author: igor.khosid
+comment:    Parallel ID: 20221026093222
+   Currently in parallel: Yes
+   User: ronyD
+   Description: https://jira.infoimageinc.com/browse/IS-1751
+   Date Submitted: 2022-10-26 09:32:27
+   Date Last Updated: 2022-10-26 09:32:27
+   Files:
+      1) rwcu_notice_archival.sh
+      2) rwcudl_process.pl
+      3) rwcudla.control
+
+
+author: igor.khosid
+comment: QA - completed
+Scripts - updated and the result - checked with in:
+home/test/kep/rwcudla.ran
+z/download/rwcu/archival and checked
+copytoclient.pl
+
+
+
+
+author: igor.khosid
+comment: IS checklist - attached >>>   [^IS-1751_RWCU_IS_Checklist.pdf] 
+
+
+author: rony
+comment: Hi [~TunA]
+
+Would you please release this.
+
+[^IS_PROGRAM_TRANSFER_FORM_Rev 07132016-1.doc]
+
+
+
+[~dyuen]
+
+Thanks
+
+
+author: tuna
+comment: Hi [~rony],
+
+Following codes have been released.
+
+Thanks,
+
+Tun
+
+
+
+
+
+20221027084408 10/27/2022 ronyD IS-1751 RWCU - [33005][pvt][in-house] RWCU_NOTICES_DLA_Archival_MMDDYYYY_1.zip.001 Not Received for 08172022
+
+[main@rhs ronyD]$ ll /d/is/cvs/xfer/ronyD/
+total 240
+-rwxrwxrwx 1 ronyD DSI 1170 Oct 26 02:35 rwcudla.control
+-rwxrwxrwx 1 ronyD DSI 35131 Oct 26 02:35 rwcudl_process.pl
+-rwxrwxrwx 1 ronyD DSI 3995 Oct 26 02:35 rwcu_notice_archival.sh
+
+
+
+
+
+[~dyuen]
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+Sorry to bother you here again. There is a production issue that happened in [https://app.na3.teamsupport.com/?TicketNumber=35419]where archvial files are being correctly copied to client pick up, you can look into comment 1 in that ts.
+
+
+
+The problem was the update I made inrwcu_notice_archival.sh ( in the previous comment, Tun released this resource ) . This script is actually used by dla dlb dlc dld ml1 lc1 scripts.
+
+And for that I also needed to add*ftpserver_path*in the control file which I did only for dla control file and dld control file was already added. So for dlb dlc ml1 lc1 control files were missing this flag. I just added this flag to all of those control files and ran in parallel and it is successfully copying the files in client pickup.
+
+
+
+parallel id: 20221027125657
+
+
+
+Below are the snapshots from the processing run :
+
+ml1
+
+!image-2022-10-28-02-06-59-803.png!
+
+
+
+
+
+lc1
+
+!image-2022-10-28-02-05-53-476.png!
+
+dlb
+
+!image-2022-10-28-02-06-24-331.png!
+
+
+
+dlc:
+
+!image-2022-10-28-02-07-33-105.png!
+
+
+
+which indicates the files got copy pasted to client pickup.
+
+
+
+Thanks
+
+
+
+
+author: igor.khosid
+comment: QA - completed
+
+
+author: rony
+comment: Hi [~TunA]
+
+Need your help to release this.[^IS_PROGRAM_TRANSFER_FORM_Rev 07132016-2.doc]
+
+rwcudlb.control rwcudlc.control rwculc1.control rwcuml1.control
+
+I forgot to add ftpserver_path to those control files initially for which archival files are not being copied to client pickup.
+
+Hi [~dyuen]
+ After this release, the issue in [https://app.na3.teamsupport.com/?TicketNumber=35419]will not happen.
+
+
+
+Thanks
+
+
+
+
+author: tuna
+comment: Hi [~rony],
+
+Thanks for all detail explanation! Honestly, I don't know some of these requirements. 
+
+Following codes have been released.
+
+Thanks
+
+Tun
+
+
+
+20221028090829 10/28/2022 ronyD IS-1751 RWCU - [33005][pvt][in-house] RWCU_NOTICES_DLA_Archival_MMDDYYYY_1.zip.001 Not Received for 08172022
+
+[main@rhs ~]$ ll /d/is/cvs/xfer/ronyD/
+total 192
+-rwxrwxrwx 1 ronyD DSI 1554 Oct 27 21:14 rwcudlb.control
+-rwxrwxrwx 1 ronyD DSI 1691 Oct 27 21:14 rwcudlc.control
+-rwxrwxrwx 1 ronyD DSI 1097 Oct 27 21:14 rwculc1.control
+-rwxrwxrwx 1 ronyD DSI 1426 Oct 27 21:14 rwcuml1.control
+
+
+
+[~dyuen], [~Igor.Khosid]

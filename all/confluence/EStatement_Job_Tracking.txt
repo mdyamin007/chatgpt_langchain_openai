@@ -1,0 +1,117 @@
+title: EStatement Job Tracking
+body: 250
+
+## Enhancement on Job Tracking to provide account-level
+details[](https://i3dev.easyredmine.com/projects/infotrac/wiki/EStmtJobTracking#Enhancement-
+on-Job-Tracking-to-provide-account-level-details)
+
+  1. data file record layout spec: see [txt_file_record_layout.doc](https://i3dev.easyredmine.com/attachments/1389/txt_file_record_layout.doc?t=1392237802 "Download file")
+  2. sample data files from Peter with account level details (see attachment of fcsbds1064.*)
+  3. USPS tracking data folder: /d/ftpbu/USPS ConfirmBU/test
+
+  
+
+## First Release of Job
+Tracking[](https://i3dev.easyredmine.com/projects/infotrac/wiki/EStmtJobTracking#First-
+Release-of-Job-Tracking)
+
+  1. [eStmt Job Tracking meeting on 1/11 -- initial meeting](https://i3dev.easyredmine.com/projects/infotrac/wiki/0111_estmtTracking_meeting)-
+
+on 1/11/2013, We had the initial meeting. Please check the attachment for
+first version of the design and what has been discussed during the meeting and
+the to do list before next meeting.
+
+    1. 250 250
+  2. [eStmt Job Tracking meeting on 1/15 -- Review with paper group](https://i3dev.easyredmine.com/projects/infotrac/wiki/0115_estmtTracking_meeting) 
+
+How to get Information for eStmt tracking purpose
+
+    1. What we discussed:
+      1. Briefly discuss dt_job_id and afp index file information will be saved in IS database. During estmt processing, we can carry the dt_job_id information to eStmt side.
+      1. However, for clients with eStmt only, there is no record in process_main table, some information we may not able to get, for example file arrive information, # of files and etc information.
+      1. Peter proposed to record eStmt processing information in process_main also, add a "type" column to indicate "paper" or "estmt" processing.
+      1. Paper side need evaluate how many program needs to be touched to add "type" as a filter
+      2. eStmt processing need capture the information.
+      1. Terrence proposed to create a new table for eStmt only and record whatever information eStmt job tracking needs to display.
+        1. Only eStmt processing logic will be touched.
+        2. InfoTrac need query both tables and "union" them by dt_job_id (with good status)
+
+For either of the above 2 proposed approaches, paper side currently has no
+resource to work on this project.
+
+To do:
+
+      1. After discuss with Ben and Lin, based on next week's design meeting, depends on the requirement forinfoTrac interface, we will come back and revisit the above logic.
+  3. [eStmt Job Tracking discussion on 1/16 -- Design scope](https://i3dev.easyredmine.com/projects/infotrac/wiki/0116_estmtTracking_meeting)
+
+Design Scope Update
+
+    1. After discussed with Peter and Lin, currently eStmt job tracking had the following blocks:
+
+      1. dt_job_id works for those manual jobs such as Monthly statements, however for other automation jobs, on paper side, dt_job_id was auto-generated, which may out-synced with PC database. Although DP may manually scan to fix the dt_job_id on paper side for paper statement, the link between paper and eStmt will stay broken.
+      1. Although eStmt index file and etc were generated from paper side system, currently paper side doesn't have any entry regarding this process. For example, file arrival dates, # of files processed and etc.
+      1. Current job tracking are based on dt_job_id to link paper and PC (production) database.
+
+Based on the above blocks, which may take at least 2 months for paper side to
+add the logic to link/record paper and eStmt processing, we will narrow down
+the scope of the project as the following for phase 1 development:
+
+      1. Support manual job processing (which need DP to manually put dt_job_id in the ins file)
+      2. Support job types that have both paper and eStmt processing:
+        1. eStmt processing can refer paper processing to get file arrival dates, # of files processed and etc. information. For the clients which have different logic such as MWCU (partial eStmt), we will phase to future phase after paper side start tracking eStmt processing.
+  4. [eStmt Job Tracking discussion on 1/18 -- Review with eStmt group](https://i3dev.easyredmine.com/projects/infotrac/wiki/0118_estmtTracking_meeting)
+    1. Discussion with eStmt group[](https://i3dev.easyredmine.com/projects/infotrac/wiki/0118_estmtTracking_meeting#Discussion-with-eStmt-group)
+    2. We discussed with Will and David regarding information can be provided from eStmt processing:
+
+      1. we currently have the following information available:
+        1. Total image counts(posted) (Total failed image counts was not recorded currently)
+        2. Total document posted, Total failed
+        3. Schedule drop date
+        4. Stmt post completion date (Note: different client may request different implementation)
+        5. Total good emails, bad emails, malformed emails
+        6. non-eSup
+      1. Number of insert posted (unique copy of the PDF vs total # of links to PDF)
+      1. Total number of check posted
+
+According the meeting, the number of check posted will not be in the first
+phase design scope, and # of inserts we will keep both # of unique PDF and
+total # of links for selective insert project.
+
+    3.   5. [eStmt Job Tracking Detail Design](https://i3dev.easyredmine.com/projects/infotrac/wiki/Detail_Design)
+    1. 250
+    2. 250
+  6. [eStmt Job Tracking Production Team Training](https://i3dev.easyredmine.com/projects/infotrac/wiki/06182013_training)
+    1. Production Team Training
+
+Demo URL: <https://10.8.11.208:8091/login.do>  
+login/password: your pilot login and
+password[](https://i3dev.easyredmine.com/projects/infotrac/wiki/06182013_training#Demo-
+URL-https108112088091logindo-loginpassword-your-pilot-login-and-password)
+
+See attachment for training document
+
+code locations:
+
+      1. Processing: processing-ui (core code) project.
+
+      2. InfoTrac: infoTrac project
+
+      3. Scanner: under hosts\processing @\\\10.8.8.221\d\hosts\processing\ROOT\WEB-INF\classes\com\infoimage\processing\tracking
+
+  
+
+Setup: please refer to training documentation.
+
+  
+
+more documentation @\\\dell-2100\isd\Development\Projects\eStatement Job
+Tracking\lisa
+
+    2. 250
+    3. 250
+  7. [eStmt Job Tracking unit test](https://i3dev.easyredmine.com/projects/infotrac/wiki/06202013_testing)
+    1. 250
+    2. 250
+    3. 250
+
+

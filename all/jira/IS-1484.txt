@@ -1,0 +1,345 @@
+title: MVCU - [31395][pvt] Description update
+description: It appears we have some logic for our transaction history for ACH NSF fee to add the total amount after the transaction description. We are wanting to see if we could take that across all of our NSF and Courtesy Pay fee descriptions to match the ACH NSF item. Attached is a small snip of XML data and screenshot of NSF ACH Fee vs Courtesy Pay Fee. Let me know if there is more details, examples etc that you may need and I can get that for you. Thank you Shawn
+
+
+
+--------------------Per Rony---------------------------
+
+Dev Hour: 4
+
+Turnover Date: 08/31/22
+
+Sample Date: 09/05/22
+
+Approval Date: 09/07/22
+
+Due Date: 09/09/22
+
+
+
+Parallel required: no
+
+Programmer : Rony
+
+
+
+
+
+Details:
+
+--------------
+
+
+
+dfa:MVCUMS31.dfa
+
+test file: Test/mvcu_stmt_073122_1.zip.pgp
+
+
+
+Put amount if current transaction source option is fee.
+
+Current dfa is actually putting the amount for fee and it also checks if the achcompany tag is not empty
+
+so regardless of achcompany is empty or not we need to put the amount for fee besides the description
+
+Change will be here:
+
+
+
+
+
+Search with 'FEE' in the dfa and put amount besides the transaction description in else statement, like below:
+
+
+
+
+author: JIRAUSER11800
+comment: Hi [~Igor.Khosid],
+
+Parallel ID: 20220902021149
+
+PDF sample:[^mvcums3131.msgmgr.pdf]
+
+
+
+[~Kbittmann]
+
+
+
+Thanks
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220902021149
+   Currently in parallel: Yes
+   User: misbahU
+   Description: IS-1484 MVCU Description Update.
+   Date Submitted: 2022-09-02 02:12:09
+   Date Last Updated: 2022-09-02 02:12:09
+   Files:
+      1) MVCUMS31.dfa
+
+
+author: igor.khosid
+comment: [~avannik] - please review and confirm if it is ready for the client review
+
+[~Kbittmann] - please update the due date - {color:red}	09/Aug/22{color}
+
+
+author: JIRAUSER11700
+comment: [~misbah.uddin@dsinnovators.com]
+
+Kindly export the project to QA folder. Thank you.
+
+
+author: JIRAUSER11800
+comment: [~avannik]
+
+Project MVCUMS31.zip is in the QA folder. Thanks.
+
+
+author: JIRAUSER11700
+comment: [~Kbittmann]
+
+In the PDF sample, I can see a line with ATM fee displaying the fee amount of 0.00, while the ATM actually charged $1.50:
+
+!fee amount is 0.00 but it isn't.png!
+
+It's not how it is supposed to look, or is it?
+
+
+author: JIRAUSER11700
+comment: [~misbah.uddin@dsinnovators.com]
+
+May I ask for the data file used to produce PDF samples? The one exported with the project is different Thanks.
+
+
+author: JIRAUSER11800
+comment: Hi [~avannik],
+
+The data file path I used to produce pdf samples is "/z/download/mvcu/mvcu_stmt_073122_1.zip.pgp"
+
+Thanks
+
+
+author: JIRAUSER11700
+comment: [~misbah.uddin@dsinnovators.com], xml files are nice, but I cannot use them in Papyrus. I need a flat file.
+
+
+author: JIRAUSER11800
+comment: [~avannik]the flat file path is "/z/mvcu/ms3/combine_073122.pipe"
+
+
+author: JIRAUSER11700
+comment: [~misbah.uddin@dsinnovators.com], I created a bug, please have a look. It doesn't look to me that the update code is working.
+
+[~rony]
+
+
+author: JIRAUSER10911
+comment: [~avannik] [~misbah.uddin@dsinnovators.com]
+
+I am confirming logic with the client. They have also requested ifit's possible to pull some specific samples for example acct# 31249060.
+
+
+author: JIRAUSER11700
+comment: [~Kbittmann], here you are:[^samples starting from acc 31249060.pdf]
+
+The data used:[^combine_073122_1.pipe.part.txt]
+
+These were generated from the project provided to QA. I have doubts if the resulting documents are correct. Please consult with [~misbah.uddin@dsinnovators.com]and [~rony]if we should show them.
+
+
+author: JIRAUSER10911
+comment: [~misbah.uddin@dsinnovators.com] [~avannik]
+
+Per the client:
+
+That logic looks good. The $26.00 Fee line item was a fee that came from a $550.00 Venmo attempt so that does look accurate. Any questions please let me know.
+
+
+author: JIRAUSER11700
+comment: I closed the bug - the new version Misbah shared has the required amounts (though the client's logic in calculating them still eludes me). Let's move on.
+
+
+author: JIRAUSER10911
+comment: [~misbah.uddin@dsinnovators.com] [~avannik]
+
+Per MVCU:
+
+Our team is going to be getting me a couple more accounts to request samples for and hoping to have that today/tomorrow. They did catch one item on the Thomas Waterman statement (the one I requested previously) On the transaction from 07/11 that is a fee there is no Amount for that line item. Looks like there should be an Amount 55.37 for that transaction as well. If you need anything please let me know. I will let you know as soon as I have the other account numbers to request specific samples.
+
+
+author: JIRAUSER11700
+comment: [~Kbittmann]as far as I understand, I generated that statement for you using an older version of the project: the latest one wasn't in qa folder.
+
+[~misbah.uddin@dsinnovators.com]could you please generate now the statement for acc#31249060 (Thomas Waterman) for Kris? I can see in my computer it has the Fee Amount on 07/11, but it's not 55.37...
+
+
+author: JIRAUSER11800
+comment: [~avannik] [~Kbittmann]
+
+Sample for theacc#31249060 (Thomas Waterman):[^mvcums3.pdf]
+
+!image-2022-09-14-12-59-56-396.png!
+
+Per the test file, I see the fee amount for the transaction from 07/11 is 750.00. Is that correct? Please advise.
+
+Thanks
+
+
+author: JIRAUSER10911
+comment: [~misbah.uddin@dsinnovators.com] [~avannik]
+
+I am confirming your question about the transaction with the client. In the meantime the client has requested additional samples. Please see account list below.
+|AccountNumber|
+|0000001697|
+|0000001832|
+|0000002017|
+|0000004554|
+|0000004556|
+|0000183800|
+|0000197900|
+|0000333800|
+|0000422400|
+|0000424900|
+|0000543300|
+|0000580165|
+|0000636300|
+|0000816500|
+|0000849200|
+|0000947900|
+|0000955700|
+|0000973200|
+|0001045600|
+|0001051300|
+
+
+author: JIRAUSER10911
+comment: [~misbah.uddin@dsinnovators.com] [~avannik]
+
+Per the client:
+
+Sorry the $750 is the correct amount and the updated Sample looks good.
+
+
+author: JIRAUSER11800
+comment: [~Kbittmann] [~avannik]
+
+Sample for requested account numbers:[^mvcums3-1.pdf]
+
+Thanks
+
+
+author: JIRAUSER10911
+comment: [~misbah.uddin@dsinnovators.com] [~avannik]
+
+Per the client:
+
+The review are samples has been complete and the original change we requested looks good. However, we have some additional request for change to come in.
+
+1. Is it possible to add Transaction in front of the Amount? So instead of something like      
+ # ACH: Courtesy Pay Ach Fee, Amount $53.00 it would be ACH: Courtesy Pay Ach Fee, Transaction Amount $53.00
+ # The other request is to for when the fee is a Share Draft to add the draft number. ex Share Draft: Courtesy Pay Share Draft Fee, Draft #6586, Transaction Amount $100
+
+
+author: JIRAUSER11800
+comment: [~Kbittmann] [~avannik]
+
+Additional updates:
+ # 'Transaction' in front of the 'Amount' is added. (ex-ACH: Courtesy Pay Ach Fee, Transaction Amount $53.00)
+ # If the fee is a Share Draft then the draft number is added. (ex-Courtesy Pay Share Draft Fee, Draft #6586, Transaction Amount $100)
+
+*Sample:*[^mvcums3-2.pdf]
+
+
+
+Thanks
+
+
+author: JIRAUSER10911
+comment: [~misbah.uddin@dsinnovators.com] [~avannik]
+
+Samples approved. Please confirm new live date.
+
+
+author: JIRAUSER10911
+comment: [~misbah.uddin@dsinnovators.com] [~rony]
+
+Any update on new live date? Can we release before EOM?
+
+
+author: JIRAUSER11800
+comment: Hi [~avannik],
+
+Parallel ID: 20220902021149
+
+DPVS:[^mvcums3125.print]from 4.2o1 print page 1-6.
+
+ProjectMVCUMS31_misbah.zip is the QA folder.
+
+Checklist:[^IS-1484_Checklist.docx]
+
+
+
+[~Kbittmann]We can release as soon as possible as QA is completed and obviously before EOM.
+
+
+
+Thanks
+
+
+author: igor.khosid
+comment:    Parallel ID: 20220902021149
+   Currently in parallel: Yes
+   User: misbahU
+   Description: IS-1484 MVCU Description Update.
+   Date Submitted: 2022-09-02 02:12:09
+   Date Last Updated: 2022-09-22 19:48:27
+   Files:
+      1) MVCUMS31.dfa
+
+
+author: igor.khosid
+comment: [~avannik] - please proceed with the final testing
+
+
+author: JIRAUSER11700
+comment: I see no issues.
+
+
+author: JIRAUSER11800
+comment: Hi [~TunA],
+
+Need help to release.
+
+[^IS_PROGRAM_TRANSFER_FORM-2.doc]
+
+
+
+[~Kbittmann]
+
+
+
+Thanks
+
+
+author: tuna
+comment: HI [~misbah.uddin@dsinnovators.com],
+
+Following code has been released.
+
+Thanks,
+
+Tun
+
+
+
+20220927090317 09/27/2022 misbahU IS-1484 MVCU - [31395][pvt] Description update
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/misbahU/
+total 664
+-rwxrwxrwx 1 misbahU DSI 390747 Sep 27 01:28 MVCUMS31.dfa
+
+

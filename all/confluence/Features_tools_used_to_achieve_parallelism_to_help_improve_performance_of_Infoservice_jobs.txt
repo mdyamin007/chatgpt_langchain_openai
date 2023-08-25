@@ -1,0 +1,111 @@
+title: Features/tools used to achieve parallelism to help improve performance of Infoservice jobs
+body: One of the approaches was to use Java 8's parallel streaming api and Scala's
+parallel collection to parallelize the tasks instead of sequential submission
+of an unit of job.
+
+ _A quick primer on Streaming API:_
+
+As part of its 1.8 release, Java introduced Streaming API that enables a
+sequence of elements to be 1. Filtered, 2. Transformed before executing a 3.
+Terminal Operation to obtain a result. Simple example is shown below.
+
+Set<String> zoneIds = ZoneId.getAvailableZoneIds();  
+long count = zoneIds.  
+        stream(). // stream is a 'default' method in the Stream Interface. ; a sequential stream  
+        filter(s -> s.contains("Europe")). // Filter step that takes a predicate written as a lambda expression  
+        count(); // Terminal Operation; reduction step; reduces the stream to a value.
+    
+    
+      
+    
+
+  
+
+List<String> europeanZones = zoneIds.  
+        stream().  
+        filter(s -> s.contains("Europe")). // Filter step  
+        map(s -> s.substring(7)). // Transform step  
+        sorted(). // Transform step  
+        collect(Collectors.toList()); // Terminal Operation; reducer step that reduces the stream to a list.
+    
+    
+    
+
+Two terms to be emphasized here are  _'pipeline'_  and  _'stream'_. Per Oracle
+docs,  
+"A pipeline is a sequence of aggregrate operations. A stream is a sequence of
+elements. Unlike a collection, it is not a data structure that stores
+elements. Instead, a stream carries values from a source through a pipeline."
+
+From the above examples, pipeline can be understood to be able to stitch
+several operations (filter, transform and terminal operations) together to get
+a final result.  
+If we have enough data and processor cores, Java 8 introduced 'parallelism' as
+part of Streaming API leveraging feature introduced in Java 7 called
+'fork/join'. Java 7 introduced 'fork/join' framework which is an
+implementation of ExecutorService interface that helps take advantage of
+multiple processors. The goal is to use all the 'available' processing power
+to enhance the performance of the application. Simple example shown below.
+
+long evens = arrayList. // arrayList containing a large dataset  
+        parallelStream(). // parallelize the task using parallel stream  
+        filter(each -> each % 2 == 0). // Filter operation  
+        count(); // Terminal Operation
+    
+    
+      
+    
+
+Scala has Parallel Collections feature for quite a while since version 2.9.x
+release. A Scala version of the above code looks like below.
+
+  
+
+    
+    
+    val evens = arrayBuffer.par.count(_ % 2 == 0)
+    
+
+  
+
+We are evaluating these feature to parallel'ize bulk tasks, such as upload
+images to Swift and insert records to the MongoDB shards.  
+[More on MongoDB shard
+configuration](https://i3dev.easyredmine.com/projects/hypercube_meteor-multi-
+tenant/wiki/Sharding)
+
+Code snippet to insert records into MongoDB setup
+
+List<Integer> myList = Collections.synchronizedList(new ArrayList<>());  
+for(int i=200000000; i<(200000000 + numberOfRecords); i++)  
+    myList.add(i);  
+myList.parallelStream().forEach(e -> insert(e));
+
+    
+    
+      
+    
+
+Scala Code snippet to upload image into swift setup
+
+var map = new HashMap[String, Set[String  
+    ]  
+]  
+// populate map object with key being the zip folder name and value being a
+set of all files belonging to the zip folder.
+
+    
+    
+      
+      
+    map.foreach {  
+        case (key, value) => upload(key, value)  
+    }  
+      
+    def upload(dir: String, fileSet: Set[String  
+    ]){  
+        fileSet.par.foreach {  
+            case(file) => container.getObject(file).uploadObject(new File(PARENT_FOLDER+dir+"/"+file));  
+        }
+
+

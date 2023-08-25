@@ -1,0 +1,226 @@
+title: New Eclipse Setup
+body: ### Stored Installs \\\dell-2100\share\Isd\ISD software\
+
+  * eclipse-jee-mars-2-win32-x86_64.zip
+  * jdk-6u27-windows-x64.exe
+  * jdk-7u79-windows-x64.exe
+
+# Java JDK Installs
+
+Install both jdk 6 & 7\. (Note Install Path)  
+  
+
+# Eclipse Setup
+
+Unzip eclipse-jee-mars-2-win32-x86_64.zip to desired local directory. In this
+instance the eclipse directory will be 'C:\Program Files\Eclipse\'.  
+  
+
+## Set Default JDK to 1.7
+
+MENU: Window > Preferences > Java > Installed JREs.  
+Check jdk1.7.0_79 to set as default.
+
+Double check 'tools.jar' is part of the JRE System Libraries  
+Select jdk1.7.0_79 > Edit
+
+  * If 'tools.jar' is not part of the library list. Select 'Add External JARs'. Navigate to your installed java directory 'jdk1.7.0_79\lib\'. Select 'tools.jar'
+
+(001.jpg)  
+  
+
+## Setting up Eclipse SVN Tools
+
+### Install Eclipse SVN Teams Plugins.
+
+MENU: Help > Install New Software
+
+Work with: Mars - <http://download.eclipse.org/releases/mars>
+
+### Open the 'Collaboration' Tab & Select
+
+  * Subversive SVN Team Provider
+  * Subversive SVN Team Provider Services
+
+(002.jpg)  
+  
+
+### Selecting a SVN Connector
+
+MENU: Window > Preferences > Team > SVN
+
+Choose the 'SVN Connector' Tab. Select 'SVNKit 1.8.14 (SVN 1.9.0 compatible,
+all platforms)' as the SVN Connector.  
+  
+
+## Eclipse Workspace
+
+To create a new Workspace  
+MENU: File > Switch Workspace > Other...
+
+### Create a workspace for each environment
+
+  * Development
+  * Pilot
+  * Staging
+  * Production
+
+The following SVN Repository Setup will need to be repeated for each
+workspace.  
+ **Note: Be careful you are in the correct workspace before checking out code
+from the repository.**  
+  
+
+## Eclipse SVN Perspective and Loading Repository
+
+###  
+  
+
+### Connect to Repositories
+
+MENU: Window > Perspective > Open Perspective > Other... > Select 'SVN
+Repository Exploring'
+
+On the left hand toolbar 'SVN Repositories', right click and Select 'New >
+Repository Location'
+
+### Repeat the following steps for these two repositories
+
+  * svn+ssh:[//username@pd-tools.infoimage.com](mailto://username@pd-tools.infoimage.com)/srv/is_svn
+  * svn+ssh:[//username@pd-tools.infoimage.com](mailto://username@pd-tools.infoimage.com)/srv/svn
+
+URL: Use the above to set the protocol and location to connect to the
+repository  
+Authenticate with given username and password  
+Check to 'Save authentication'  
+Check to 'Validate Repository Location on finish'
+
+Select 'Finish'. Re-Enter password if prompted.  
+  
+
+### Checkout Code from Repositories
+
+To checkout code from the repository. Locate the item you want to pull > Right
+Click > Select 'Checkout'  
+  
+
+#### Development Environment
+
+The development environment pulls and pushes to the 'trunk'.
+
+### Checkout from the 'is_svn' (004.jpg)
+
+  * afp2pdf
+  * dp
+  * i3-core
+  * infoimage-commons
+  * processing-ui
+  * resin-pro  _(always pull from trunk)_
+
+### Checkout from the 'svn' (005.jpg)
+
+  * app-depend-libs > estmt2-depend-libs
+  * estmt2 > common
+
+###  
+  
+
+#### Pilot / Staging/ Production
+
+Each of the pilot, staging, and production environment are in separate
+branches (all lowercase).  
+Files pulled from the 'svn' repository will remain the same.  
+Files pulled from the 'is_snv' repository will need to be selected from the
+respective 'branch' environment name (lowercase).  
+ _resin-pro is always pulled from is_svn trunk_
+
+ **Note: Be sure when checking out code that you are in the correct workspace
+before pulling files from the repository.**  
+006.jpg  
+  
+
+## Fixing Project Explorer
+
+###  
+  
+
+### Hierarchical View
+
+Select the options drop-down in the 'Project Explorer'  
+> Package Presentation > Hierarchical
+
+This will collapse the external libraries so instead of seeing 40+
+'com.infoimage.processing.application' packages we can get a drop-down of each
+step.
+
+007.jpg  
+  
+
+### Working Sets
+
+We can group projects into a Resource called 'Working Sets'.
+
+Select the options drop-down in the 'Project Explorer' (008.jpg)  
+DROP-DOWN > Select Working Set...  
+New > Resource  
+The 'Edit' option will bring you to the same window as New, only with an
+editable Set already created.
+
+Name/Rename the Resource and add/remove the contents of the set.
+
+In this case we'll create two Sets :
+
+### Core Code
+
+  * afp2pdf
+  * dp
+  * i3-core
+  * processing-ui
+
+### Dependencies
+
+  * common
+  * estmt2-depend-libs
+  * infoimage-commons
+  * resin-pro
+
+The last step is to set the 'Project Explorer' to view the working sets.  
+Select the drop-down options 'Top Level Elements > Working Sets'
+
+010.jpg  
+  
+
+# Building the Code
+
+## Ant
+
+Apache Ant is a build tool used to create artifacts in an automated fashion.
+
+To build a project find the 'build.xml' in the project root directory. Right
+click on the file and select 'Run As -> Ant build'.  
+  
+
+### Build Order
+
+### Due to dependencies we must build the projects in the following order
+
+  1. afp2pdf
+  2. i3-core
+  3. processing-ui
+  4. dp
+
+Artifacts are produced and store in your workspace directory
+'\workspace\<development | pilot | staging |
+production>\\_jar_files_${environment}\'
+
+Where environment is 'dev', 'pilot', 'staging', or 'prod' based on build.xml.
+(Which is another reason to be sure you checkout environments from the correct
+branch.)
+
+### Build.xml
+
+### Attachments
+
+  
+
+

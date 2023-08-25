@@ -1,0 +1,212 @@
+title: RHS2 - Parallel:  apcums2 statement process log error
+description: oper1@rhs2 ~> /home/test/master/apcums2_process.sh 1 bypass
+
+Below is the error I see on the screen. The error message can also be found in/z/apcu/apcums2131.log on10.4.20.40
+
+!image-2020-09-02-15-36-08-211.png!
+
+
+author: william.kong
+comment: [~ernestw]: Can you help me review this error on ca-isis-pr-03 (rhs2) 10.4.20.40?
+
+Is the error because you own this file on /d/temp/:
+
+
+
+!image-2020-09-02-16-46-40-334.png!
+
+
+author: ernestw
+comment: I have added write permission for all for that file. Please try again. If it still does not work, just delete that file.
+
+
+author: william.kong
+comment: [~ernestw]: Thanks Ernest. Going to update assignee to Le so that he is aware.
+
+
+
+[~lemoy28]: Please retry tomorrow. Thanks!
+
+
+author: lemoy28
+comment: After paper is completed, it fails while formatting e-statements.
+
+3 attempts and same result.
+
+{color:#172b4d}oper1@rhs2 ~> /home/test/master/apcums2_process.sh 1 bypass{color}
+
+{color:#172b4d}!image-2020-09-04-15-42-20-144.png!{color}
+
+
+
+
+author: william.kong
+comment: [~lemoy28]: Do you know where in the code is breaking? so that I can research further?
+
+I noticed eStatement zip files were created: /z/isd_input/indiv_afp/apcu/afp-archive/apcums2-20200831/:
+
+!image-2020-09-08-12-21-43-024.png!
+
+
+author: lemoy28
+comment: Sorry , this issue occur during archival processing.
+
+!image-2020-09-08-18-47-25-815.png!
+
+I also found the following message in /z/apcu/apcums21318.log
+
+2020-09-08/12:05:35.216 000001/000002 PPCS0026F Unhandled signal 10/'HANGUP' will be ignored.    [pcsdll/pcssig.cpp,102]
+
+
+author: william.kong
+comment: [~ernestw]: Per my spark message, can you review the "HANGUP" error to see if indeed it is a real issue?
+
+
+
+[~lemoy28]: Can you confirm if the archival completed or not completed even with this error message?
+
+
+
+For now, I will keep this ticket assigned to me.
+
+
+
+
+author: lemoy28
+comment: Hi Will,
+
+The process was incomplete. No pdfs were created.
+
+
+author: ernestw
+comment: According to the log, the processing did finish normally and the full afp was generated. Not sure why it has "Read from remote host 10.4.20.40: connection reset by peer. Connection to 10.4.20.40 closed" when 10.4.20.40 is the ip for rhs2. The connection message was not from Papyrus.
+
+
+author: lemoy28
+comment: Per Ernest, he cannot find the error code in the Papyrus error code reference for "PPCS0026F Unhandled signal 10/'HANGUP' will be ignored." that appears in /z/apcu/apcums21318.log on 10.4.20.40
+
+
+author: william.kong
+comment: [~lemoy28]: i got further per our spark.. i didn't change anything other than delete the cksum record in /home/test/keep/cksum_log/ . 
+
+The new error is missing/z/Iswk/afp2web_v2.1b10/apcums2. So I created the folder in both Menlo Park and Brisbane rhs2 server. 
+
+Looks like it is running pdf conversion now..
+
+
+
+
+
+
+author: lemoy28
+comment: Will,
+
+After process is completed, the file will move to /z/download/apcu/STA.5A.083120.zip.pgp
+
+
+author: william.kong
+comment: [~lemoy28]: The program ran past through archival and error out on missing client_pickup directory. I created it just now, but I think the program is runnable and did not disconnect with connection issue. Please QA the results for me:
+
+!image-2020-09-10-08-54-01-368.png!
+
+
+author: william.kong
+comment: [~lemoy28]: Can you please re-test this in rhs2{color:#de350b}*parallel environment*{color} and complete before EOD Friday?
+
+
+author: lemoy28
+comment: Will,
+
+I received the following error, and it prompt me for a password for each print file.
+
+
+
+!image-2020-10-15-13-52-23-738.png!
+
+
+author: ernestw
+comment: [~lemoy28] Le, try again.
+
+
+author: lemoy28
+comment: Ernest, there's bash syntax error
+
+
+
+!image-2020-10-15-15-03-20-231.png!
+
+
+author: ernestw
+comment: Please try again
+
+
+author: william.kong
+comment: [~lemoy28]: Please keep us posted with your results.
+
+
+author: lemoy28
+comment: Will,
+
+I received this error while running 'f' option
+
+
+
+!image-2020-10-15-20-00-01-419.png!
+
+
+author: william.kong
+comment: [~lemoy28]: I've been processing since last night at about 9:50pm and this morning I checked that it is still running.
+
+
+
+
+author: william.kong
+comment: [~lemoy28]: It finished. Can you check the results?
+
+Also, can you run this in Menlo Parallel on RHS2 as well.
+
+#1. Run:
+
+
+
+echo 'start time' >> /d/iss/apcu_ms2_benchmark.txt; echo `date` >> /d/iss/apcu_ms2_benchmark.txt; /home/test/master/apcums2_process.sh 1 bypass;echo 'finish time' >> /d/iss/apcu_ms2_benchmark.txt; echo `date` >> /d/iss/apcu_ms2_benchmark.txt;
+
+Please share the results.
+
+
+
+Here's the benchmarking time from last nights re-run:
+
+Start time: Fri Oct 15 10:00AM
+
+Finish Time:
+
+Fri Oct 16 09:21:02 PDT 2020
+
+
+
+
+
+#2 Review the results from what I finished this morning on Brisbane RHS2
+
+
+
+
+
+#3. Run AFPcompare between Menlo & Brisbane again.
+
+
+
+
+
+
+
+
+author: lemoy28
+comment: Hello Will,
+
+Where do we createmessage campaignfor Brisbane staging?
+
+
+
+!image-2020-10-16-14-55-49-766.png!

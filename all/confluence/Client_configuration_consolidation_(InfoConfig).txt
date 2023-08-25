@@ -1,0 +1,406 @@
+title: Client configuration consolidation (InfoConfig)
+body: The following  **Microsoft** **Excel  **file contains consolidated properties.
+
+250
+
+#  **Why consolidate client configuration?**
+
+Under **EStatement** we have **Hypercube, InfoTrac, InfoService & InfoService-
+Jaas** applications which share same features but maintain the
+**configuration** in different **configuration  file**. When a new feature is
+added, we have to add client configuration entry for each application's
+**configuration file**. It is causing redundancy and inconsistency of
+**configuration flags** through out all these applications.
+
+This is why we need to **consolidate** these applications configuration so
+that we can manage the **client configuration** without causing any redundancy
+and inconsistency.
+
+#  **Why InfoConfig?**
+
+Even though we have **consolidated** the configurations, some of the problems
+still remains unsolved. Managing the large configuration file is one of them.
+Another one is how to **serve** them from a common place.
+
+These problems raise the needs of  **InfoConfig.**
+
+#  **InfoConfig:**
+
+The purpose of this **InfoConfig** application is to manage and serve client
+configuration properties for different applications. This will be a highly
+available standalone application.
+
+##  **Components:**
+
+### Login/User & Role Management/Audit Log:
+
+These components are same as our existing applications.
+
+###  **Schema Design:**
+
+If we want to add any new feature's property on **client configuration** we
+have to add that property description on it's corresponding schema first.
+Based on the schema **configuration UI** will be generated. This will prevent
+inconsistency and help maintain standard.
+
+### Manage Client Configuration:
+
+This component will be used to define values for client configuration
+properties based on schema.
+
+### API (Serve client configuration properties):
+
+Applications will make a **GET** request with **  CID **& **APPID** and **API
+**will return client configuration **JSON.**
+
+##  **Actors:**
+
+###  **Admin:**
+
+Admin users will manage **USERS** & **ROLES**. He/she will decide for which
+client configuration which users will manage **schema** and which users will
+manage **configuration properties**.
+
+### Maintainer:
+
+Maintainer will design client configuration property schema.
+
+### Developer:
+
+Developer will configure client property based on schema.
+
+##  **Workflow:**
+
+ ****
+
+###  **InfoConfig workflow:**
+
+  * For any newly added feature we have to first add the property description.
+  * Based on **schema** configuration  **UI  **will be generated.
+  * For any change in **configuration** all the applications will be notified through **message queue (ActiveMQ Artemis).**
+  *  **InfoConfig** will push a message with  **CID** and name of **applications (APPIDS)** which is going to affected for this changes.
+
+### Application workflow:
+
+  * At startup **applications** will fetch the **configurations** for all the cid's.
+  *  **Configurations** will be cached on there corresponding Database's.
+  * If for some reason  **InfoConfig** is down or apps having issue while communicating with **InfoConfig,** applications will be able to operate without  **InfoConfig** with the cached configuration. 
+  * When **InfoConfig** will send a push notification all the **applications** will get the message from the **ActiveMQ Artemis.**
+  * Applications will check that if it's **appId** is included or not on the message.
+  * If so application will make a get request to fetch the **updated configuration** and the configuration will be cached again.
+
+##  **Consolidated  configuration:**
+
+Features| Infotrac| Hypercube| Infoservice API| Consolidated| Changes| Comment  
+---|---|---|---|---|---|---  
+ **Application Type**|
+
+  
+
+jsMidnight
+
+  
+
+|
+
+  
+
+jsFadeToGrey
+
+  
+
+|
+
+  
+
+jsRDark
+
+  
+
+|
+
+  
+
+jsEmacs
+
+  
+
+|
+
+ **Infotrac & Infoservice**:
+
+Previously " **statements** " was an **OBJECT/MAP** **.** Keys were "
+**documentType** ". But now it is a LIST of **OBJECTs/MAP**. And "
+**documentType** " is a property of those OBJECTs/MAP
+
+ **Hypercube:**
+
+Hypercube mantain two properties for statements. They are " **statements** " &
+" **statementType** ". The " **statementType** " is used to show document
+corrosponding text on menu. But **Infotrac** use " **name** " property to do
+this. So " **statementType** " is removed and " **name** " property will be
+use to show on menu.
+
+|  
+  
+ **Check Image**|
+
+  
+
+jsMidnight
+
+  
+
+|
+
+  
+
+jsFadeToGrey
+
+  
+
+|
+
+  
+
+jsRDark
+
+  
+
+|
+
+  
+
+jsEmacs
+
+  
+
+|
+
+ **checkImage = > checkImage.viewTab**  
+ **viewMultipleChecks = > checkImage.viewMultipleChecks**  
+ **checkimage_path = > checkImage.path**  
+ **checkURL = > checkImage.checkURL**
+
+ **sana_catalyst_cuid = > checkImage.catalyst.cuid**  
+ **sana_catalyst_rqstrid = > checkImage.catalyst.rqstrid**  
+ **sana_catalyst_mackey = > checkImage.catalyst.mackey**
+
+  
+
+|  
+  
+ **Batch Download**|
+
+  
+
+jsMidnight
+
+  
+
+|
+
+  
+
+jsFadeToGrey
+
+  
+
+|
+
+  
+
+jsRDark
+
+  
+
+|
+
+  
+
+jsEmacs
+
+  
+
+|
+
+It is exactly same as Infotrac. We only need to change on Hypercube. Following
+are the renamed properties
+
+ **batchDownload/batchDownload.enable - > REMOVED (if the "batchDownload"
+object present then this feature is enabled)**
+
+ **batchTTL = > batchDownload.ttl**  
+ **enableCombineIntoSinglePdf = > batchDownload.enableCombineIntoSinglePdf **  
+**enableCompressToZip = > batchDownload.enableCompressToZip**
+
+ **passphrase = > batchDownload.passphrase**
+
+|  
+  
+ **Delivery Preference**|
+
+  
+
+jsMidnight
+
+  
+
+|
+
+  
+
+jsFadeToGrey
+
+  
+
+|
+
+  
+
+  
+
+|
+
+  
+
+jsEmacs
+
+  
+
+|
+
+###  **Infotrac:**
+
+  
+ **disablePaperlessToPaper = > deliveryPreference.disablePaperlessToPaper**
+
+ **disableElectronicForUnenrollUser = >
+deliveryPreference.disableElectronicForUnenrollUser**
+
+ **bothAsDeliveryPreferenceForUnenroll =>
+deliveryPreference.bothAsDeliveryPreferenceForUnenroll**
+
+###  **Hypercube:**
+
+  
+ **bothAsDeliveryPreference = > deliveryPreference.bothAsDeliveryPreference**
+
+ **unenrollOnDeliveryPreferenceChange = >
+deliveryPreference.unenrollOnDeliveryPreferenceChange**
+
+ **requireTermsAgreementOnPaperlessEnrollment = >
+deliveryPreference.requireTermsAgreementOnPaperlessEnrollment**
+
+|  
+  
+ **Paperless**|
+
+  
+
+jsMidnight
+
+  
+
+|
+
+  
+
+jsFadeToGrey
+
+  
+
+|  
+|
+
+###  **Common:**
+
+  
+ **paperlessConfiguration = > deliveryPreference.paperlessConfiguration //
+"bySelective" is fixed**
+
+ **Infotrac:**  
+ **restrictPaperlessEnrollment = >
+deliveryPreference.paperless.restrictEnrollment**  
+ **disableEditOnSSO = > deliveryPreference.paperless.disableEditOnSSO**  
+ **disableDPPaper2E4SSO = >
+deliveryPreference.paperless.disableDPPaper2E4SSO**  
+ **disableEditOnDSO = > deliveryPreference.paperless.disableEditOnDSO**  
+ **disableDPPaper2E4DSO = >
+deliveryPreference.paperless.disableDPPaper2E4DSO**
+
+ **disableDP4UnknownSSODSO = >
+deliveryPreference.paperless.disableDP4UnknownSSODSO**
+
+|  
+  
+ **Notification Preference**|
+
+  
+
+jsMidnight
+
+  
+
+|
+
+  
+
+jsFadeToGrey
+
+  
+
+|  
+|
+
+  
+
+jsEmacs
+
+  
+
+|
+
+ **Common:**  
+ **npLinkType = > notificationPreference.npLinkType**  
+ **profilePrimaryEmail = > notificationPreference.profilePrimaryEmail**  
+ **editProfilePrimaryEmail = >
+notificationPreference.editProfilePrimaryEmail**  
+ **editProfilePhone = > notificationPreference.editProfilePhone**  
+ **smsNotification = > notificationPreference.smsNotification**  
+ **emailAndSmsNotification = >
+notificationPreference.emailAndSmsNotification**  
+ **smsConfirmation = > notificationPreference.smsConfirmation**  
+ **emailConfirmation = > notificationPreference.emailConfirmation**  
+ **emailConfirmationWorkFlow = >
+notificationPreference.emailConfirmationWorkFlow**  
+ **smsConfirmationWorkFlow = >
+notificationPreference.smsConfirmationWorkFlow**  
+ **enableSendWelcomeNotification = >
+notificationPreference.enableSendWelcomeNotification**  
+ **enableNotifPrefChangeNotification = >
+notificationPreference.enableNotifPrefChangeNotification**  
+ **disablePhoneEditMessage = >
+notificationPreference.disablePhoneEditMessage**  
+ **disableEmailEditMessage = >
+notificationPreference.disableEmailEditMessage**
+
+ **SMSNotificationText= > notificationPreference.SMSNotificationText**
+
+ **attachedStatement = > REMOVED (if the
+"notificationPreference.attachedStatement" object present then this feature is
+ENABLED)**  
+ **ignoreAttachmentPassword = >
+notificationPreference.attachedStatement.ignorePassword**
+
+ **disablePassword= >
+notificationPreference.attachedStatement.disablePassword**
+
+|  
+  
+  
+  
+
+  
+
+

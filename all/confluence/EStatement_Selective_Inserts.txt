@@ -1,0 +1,608 @@
+title: EStatement Selective Inserts
+body: 250250250
+
+# Flow
+
+250250
+
+2 InfoTrac roles are involved
+
+  * PC (Production Control)
+  * Client (the bank, the credit union, etc.)
+
+5 databases are involved
+
+  *  **MailShop**  where the paper inserts, bin, inventory ids and piece code for these  _physical_  inserts are maintained
+  *  **DataTrac**  which is a paper-side data base used by PC and IS depts. Not a very normalized database.
+  *  **InfoTrac**  where Selective Inserts information is created. InfoTrac actually uses  _copied_  information from MailShop and DataTrac
+  *  **IS (Papyrus) database**  where paper processing scripts run. Selective Inserts information is propagated all the way to PUI which populates Oracle tables for eStatements
+  *  **eStatements**  where customer logs in to see the targeted or selective eInsert
+
+Important manual steps to compensate automation disconnect
+
+  * Turning on the ESELECTIVEINSERTING flag on DataTrac
+  * Entering piece codes for Binx columns in DATATRAC.TBLRTWO_IPL to match the InfoTrac activity log
+  * DP entering DT_JOB_ID and inserts criteria into the .ins file before triggering isis.sh - the paper-processing script.!!
+
+  
+
+# Glossary (for eStatement Selective Inserts Feature only)
+
+Activity Log Form  
+Every time we process statements for an application for a customer, we create
+a job (an "Activity Log Form") in DataTrac and InfoTrac. An activity form is
+identified by its application type, version, and the production cycle dates.
+
+Applications and Versions  
+Daily Letters, Monthly Statements - an activity that is processed for a
+customer. May be a cyclical activity or one-time.
+
+Custom Program Insert  
+These inserts are also selective. But, they are inserted through special
+requests from clients and have been customized in the Papyrus script (paper)
+processing for a client. There might be an overlap on the inserts ultimately
+shown on the eStatements website because of this logic. To avoid confusion and
+to test only the eStatements Selective Inserts feature, custom programming
+will be turned off during the first round of testing.
+
+DP **  
+**Data Processing Dept. (Contact: Neil)
+
+  * Process the jobs created by PC.
+  * First, runs the "paper" processing to create a "big" AFP file for the laser dept. Then runs the "eStatement" part of a job to create individual AFPs. These individual AFPs are converted to PDFs "on the fly" when customers click links on the eStatement website.
+  * Will be using the inserts information provided to them by PC. An .ins file will be  _manually_  created by DP for that job. It is the DP's job to ensure that PC's inserts information from DataTrac is accurately reflected in the .ins file.
+
+DT_JOB_ID  
+A parameter set in the .ins file. DP manually inserts value for this variable
+to connect (match) the DATATRAC.TBLRTWO_IPL table's bin information for a
+specific job. Looks something like 85088-C01.01-V20006.
+
+eInsert  
+An electronic copy of a physical, paper insert. Right now, we accept PDFs
+(<1.5MB) as the only format for eInserts. An eInsert is expected to be a
+replica of its paper counterpart.
+
+EMIS_SEL_INS  
+A non-nullable "flag" column name that has been added to InfoTrac's EMIS table
+especially for this project. When turned on, this reflects a selective-
+inserts-enabled application on InfoTrac.
+
+ESELECTIVEINSERTING flag  
+A column in DATATRAC.TBLAL. An application is "eligible" for selective inserts
+if it has this flag turned on. The flag is copied to InfoTrac (EMIS table,
+E_SEL_INS column).  
+The ESELECTIVEINSERTING setting might get reset every night - the production
+DataTrac contents are synchronized with PC's DataTrac (which we use) at that
+time. If this flag is not set, even an activity that is eligible for selective
+inserts might not inherit that capability.
+
+Five-Byte Bin String  
+Represents bin information for an individual account. Comprised on 1s and 0s.
+Helps carry the Selective Inserts information through the IS database and the
+paper + eStatement processing that happens before the Oracle tables are
+populated using PUI.  
+
+Insert File  
+The bridge between InfoTrac and the IS processing. A crucial "make or break"
+step in this project is the accurate update / creation of the index file's
+criteria to map to DataTrac's TBLRTWO_IPL where the piece code information is
+stored in Binx columns.
+
+  
+
+Inventory ID  
+An ID assigned to paper inserts. Originates from the MailShop database.
+
+IS Processing  
+Information Systems Department, which takes care of  
+\- processing customer data files that get dropped via FTP into "big AFP"
+print spool statements for the Laser Dept.  
+\- converting the "big AFP" into individual AFPs which get converted "on the
+fly" to PDF when an individual account holder clicks on a link.
+
+Link icon on InfoTrac  
+Feature created specifically for this project. Reflects that the corresponding
+job is Selective Inserts enabled. Note: Will appear only if
+ESELECTIVEINSERTING flag was set on at the time of creation or edit of the
+job.
+
+MailShop database  
+Mailing Department's database (contact: Calvin). This database contains and
+maintains the inventory ids and piece codes for paper inserts.
+
+Paper Inserts **  
+Paper inserts are   _physical  _inserts that accompany paper statements. E.g.
+Disclosure Notice, envelopes for bill payments, etc. Some clients**
+
+  * mail the inserts to us
+  * ask us to print the inserts
+  * ask us to use the inserts left over from earlier cycles  
+The eStatement Selective Inserts feature concerns only those paper inserts
+that will be shown on the eStatement website. For e.g., even though envelopes
+for bill payments are paper inserts, this feature doesn't consider them for
+eStatements.
+
+PC **  
+Production Control Dept. (Contact: Celeste Wong).**
+
+  * Create dockets for jobs.
+  * Responsible to creating an activity log form for a job on InfoTrac.
+  * Cannot approve an activity log but unapproved one.
+  * Can edit an activity log and revise inserts information.
+  * Can update activity log with cycle dates, etc.
+  * Can remove a non-approved activity log.
+  * Responsible for passing accurate inserts information to DP for processing.
+
+PDF Linking  
+The process by which an eInsert (represented by a .pdf file) is related to the
+physical paper insert (represented by Inventory ID/Piece Code) on InfoTrac.
+The client can choose an already-linked PDF or upload an unlinked PDF which
+can be linked by PC later. Linking has to definitely be completed before the
+production cycle begins.  
+Should an unlinked PDF go all the way through to production, error will be
+thrown when eStatement processing begins on the IS server, after Papyrus
+processing. While cumbersome to rectify, there will be no loss of material.  
+ _ **Note**_ : Linking happens only between the piece code and the PDF. There
+is no relationship between the job and the PDF  _or_  the job and the piece
+code. This means that the link persists even if all the jobs that used the
+piece code are deleted!
+
+PDF replacement **  
+**The process by which an existing PDF is replaced. Might be triggered because
+client wants a newer version of an existing PDF or has uploaded a faulty PDF.
+Only PC can replace an existing PDF. When done, all jobs that refer to this
+PDF will be affected.  
+The assumption is that PDF replacement will not affect an ongoing production
+cycle since there are adequate manual checks to ensure that the client and PC
+agree on the job. While not foolproof, an approval by client
+
+  * triggers an email notification to all stakeholders of that activity
+  * attaches all PDFs uploaded to email notification for client's reference
+
+ _Impact on eStatements_  
+The current implementation will not reflect PDF replacements. Currently, once
+PUI is complete, the PDF file itself is copied as a BLOB on to the eStatements
+database. The piece code - PDF relationship is established on the eStatements
+side. There is no mechanism implemented yet for synchronizing the PDF BLOB on
+the eStatements database with the replaced PDF on the InfoTrac database (which
+would be the same piece code).  
+A manual update can be done or, better, the PC can create a new piece code for
+the new PDF and InfoTrac can be suitably updated. This would ensure PUI picks
+up the correct PDF for the new piece code.
+
+Permanent Insert **  
+**An insert that applies to all jobs of a specific application for a client
+i.e. a client-level, cycle-independent, application-level insert. Represented
+by a 4-digit piece code. For a permanent insert to be reflected on eStatements
+website, it needs to be associated with a .pdf. Hence, no. of inserts for a
+job = atleast the total no. of permanent inserts. However, as of now, the
+total no. of inserts for any job cannot exceed 5.  
+On InfoTrac UI, permanent inserts
+
+  * will be marked with an asterisk (*)
+  * will be pre-selected and marked as "By Contract"
+  * will definitely need to be associated with a PDF. If no PDF has been associated, file upload provision will be provided for the same.
+  *  _only a permanent insert that corresponds to a piece code beginning with the digit '6' will be shown on the eStatements UI._
+
+Piece Code  
+Consider it as a "Material ID", assigned to a physical box of paper inserts.
+The piece code carried over from MailShop database and is represented by the
+_Binx_  columns in DataTrac tables. PC updates piece codes when a docket is
+created for a job. For the eStatement Selective Inserts feature, every piece
+code must have a corresponding .pdf (which is the eInsert).  
+Currently there are 6  _Binx_  columns representing piece codes but only 5 are
+used (~ max. 5 inserts)  
+The relationships between Inventory ID and Piece Code in the MailShop database
+(TBLINVENTORYITEMS table), is "pretty much" 1-1. It appears that a new piece
+code replaces the old one should a new box of the inventory ID arrive. An
+eInsert applies as much to the Piece Code as it does to the Inventory ID.  
+Many applications can use the same piece code. When an application has many
+inserts, it is possible that many piece codes are tied to an application. This
+suggests a many-many relationship.
+
+PUI  
+Processing UI - an interface which allows the index file (output of isis.sh
+'f' processing step) generated at the end of IS processing to map to columns
+of Oracle tables in the eStatement database. Also responsible for inserting
+link to an insert's .PDF for every account affected.
+
+PUI Processing Report  
+This report decides how the client will be billed for this feature. The
+billing happens in 2 ways:
+
+  1. Total Unique Inserts Selected - Let us assume that the client has uploaded 5 inserts and specified selection criteria. After processing, only 3 of them are actually linked for any client and 2 of them never show up for any account. Then, Total Unique Inserts Selected is 3.
+  2. Total Links Posted for all accounts - regardless of whether the account holder clicks it or not when viewing statements on the eStatements website.  
+  
+
+Regular Inserts  
+See  _Selective Inserts_
+
+Roles in InfoTrac
+
+  * PC
+  * Client. Clients refer to organizations and not individual account holders.
+
+Selection Criteria  
+Selection Criteria (INSERTS.INS_SELECTIVE on InfoTrac) decide whether an
+insert is shown or not when a customer logs in on the eStatement website. They
+are specified by the client on InfoTrac and can apply to
+
+  * all accounts
+  * a specific account list that can be
+    * uploaded as a file (INSERTS.FILE_ID and related fields)
+    * sent via email
+    * ftp-ed
+  * zip code (INSERTS.INS_INSTRUCTION)
+  * program - a customized program that has been requested by client (Ignore this option for testing).  
+If the selection criteria is a list of accounts in a file, it is manually
+emailed to DP, at present. The ranges for zip are manually entered as well, by
+DP, in the .ins file
+
+ _Comparison of Message Manager selective criteria with Selective Inserts
+criteria_
+
+  * Unlike Message Manager selective criteria, Selective Inserts criteria do not have priority or defaults associated with them.
+  * In this project, inserts are assigned to all criteria they match. Hence, an account may receive multiple inserts; one because it matches one criteria and another because it matches a second.
+
+Selective Inserts  
+Also called  _Regular Inserts_ , at least for this project. Inserts which are
+targeted to a specific set of accounts. For e.g. a group of account holders in
+a bank who live within a specific zip code can be targeted for a mortgage rate
+promo. Currently, our clients have this feature available only for paper
+statement applications that they subscribe with us. This project intends to
+mirror Selective Inserts on the eStatements website too.  
+All Selective Inserts are expected to be processed by programming logic of
+this feature, as the selection criteria may specify.  
+On the eStatements website, inserts are not embedded in the statement but
+rather shown as links that can be clicked, if interested.
+
+TBLRTWO_IPL  
+DataTrac table that stores the relationship between Bins and Job. The bins
+contain the piece codes and the job corresponds to the DT_JOB_ID which
+propagates selective inserts information through the paper processing all the
+way to the eStatements website.  
+A null value in a bin means that there is no insert in that bin for the job.
+This reflects the information from the docket that is created for every job by
+PC.
+
+Versions  
+Applications may have versions. Consider the version as a sub-job.
+
+WebService **  
+**For the Selective Inserts feature, a WebService on InfoTrac serves requests
+for PDFs corresponding to a piece code, as related in INVENTORY_PDFS table.
+The HTTPRequest to the WebService sends the piece code and gets, in return,
+the corresponding PDF file name, file size, the content (as a BLOB), etc.
+embedded in an object. This object is updated in the INVENTORY_PDFS table of
+the eStatement database.
+
+  * The WebService is called only if the piece code doesn't exist in the eStatements INVENTORY_PDFS when PUI populates the Oracle tables.
+  * Any replacement of PDF content on InfoTrac will  _not_  reflect in the eStatements INVENTORY_PDFS table.
+
+ ****
+
+# Accounts for Testing, Test Setup and Test Verification Information
+
+ **(Currently this feature is applicable only to   _Monthly Statements Visa
+Classic_  application for "DEMO" client. DO NOT TEST IT FOR ANY OTHER
+APPLICATION.)**
+
+## System A - First round of end-to-end Integration Testing
+
+ **InfoTrac (Oracle DB on 10.8.8.215:1521**
+
+ _Test only logic related to eStatement Selective Inserts. "Old" logic has not
+been touched._
+
+Database user: infotrak/inf0trac1  
+URL: <http://10.8.8.221:8091/login.do>  
+PC Role : pc_admin/pc_admin  
+Client Role: demo_lisa/demo_lisa
+
+ **DataTrac (SQL Server DB on 10.8.8.28:1433)**  
+Database user: dev/m@ker3to
+
+ **IS's RHT Linux server (10.8.9.68)**  
+Putty to it.  
+oper1/oper1321
+
+ **PUI**  
+URL: <http://10.8.8.221:9090/login.jsp>
+
+ **eStatements**  
+ _Member Site_  
+URL: <https://10.8.8.221:9389/login.jsp>  
+Use any account from the test data file with password "demo"  
+May have to register the account if not already registered  
+ _AI Site_  
+URL: <https://10.8.8.221:9389/msm/login.jsp>  
+superuser/superuser
+
+ **Data File (specifically created for testing - 30 accounts)**
+
+ _Resides as /d/ftpbu/demobu/test/demo.dat on the Linux server (IS's RHT)_
+
+ **Zip**|  **Account No.**|  **Name on Account**|  
+|  73020| 8840| DONALD W HARVEY  
+---|---|---|---|---|---|---  
+73020-6112| 8374| ERNEST L WARE & PATRICIA A  
+73044-7351| 12124| ARVOLENE R MCCURDY TRUST  
+73045-6340| 13592| RICHARD W SILLS  
+73045-6450| 3476| GRACIE ESTHER FITZGERALD  
+73049-7420| 12632| VELTA M MCKINNEY TRUST  
+73071-1430| 6732| WILLIAM T HENDERSON  
+73105-1232| 10870| WARREN H HARDIMON  
+73105-7020| 6088| PEARL L WASHINGTON  
+73107-5047| 11222| HARRY A PAINE  
+73110-1220| 9409| SAMUEL A BEARD JR  
+73110-3932| 10469| EAGAN LIVING TRUST  
+73110-4568| 6790| DON A SCHOTT  
+73110-4649| 8251| LORENE A MCMAHAN REVOCABLE  
+73111-1708| 14559| ARON J COCHRAN  
+73114-4608| 13550| ROBERT L BASS  
+73115-2657| 12742| HUBERT J OBERSTE JR  
+73115-4621| 2480| MARY A WARD  
+73120-1788| 14766| LORENZA C TOLBERT  
+73121-2246| 2163| R G NUNNELLY  
+73122-2305| 3544| DOROTHY BLANKENSHIP  
+73131-1856| 1041| DOROTHY REE COOPER  
+73139-1509| 15079| CLETA V CONNELLY  
+73139-8816| 14627| ALICE E ROWLS  
+73155-0613| 15396| WINFRED T KNIGHT JR  
+73170-2461| 13372| BILLY J BROCK  
+73170-4413| 13217| HAROLD G TODD  
+73170-6003| 10809| WANDA JO ROGERS & EUGENE E  
+73170-6047| 12551| JOHN W MARTIN  
+74865-0174| 12166| WILLIE L CRUZE  
+  
+  
+
+# Test Steps
+
+Step 1: Check Application settings on DataTrac
+
+  1. Login to DataTRAC_dev as dev
+  2. Check TBLAL.ESELECTIVEINSERTING flag  
+select APPNO,VID,CID,ESELECTIVEINSERTING from DATATRAC_DEV.DBO.TBLAL where
+CID='DEMO' and ACTIVE=1;??
+
+  3. If ESELECTIVEINSERTING flag is false for VID='20548' (Version ID for Monthly Statement - Visa Classic) for DEMO client,  
+update TBLAL set ESELECTIVEINSERTING=1 where CID='DEMO' and ACTIVE=1 and
+VID='20548';
+
+  4. Check the  _only_  permanent inserts allowed for the application using  
+select CID,APPNO,VID,APPID,BIN1,BIN2,BIN3,BIN4,BIN5,BIN6 from TBLAL where
+CID='DEMO' and ACTIVE=1 order by CID,APPNO,VID;
+
+Step 2: Set up Inserts information in InfoTrac
+
+  1. Login as PC
+  2. Create an Activity Log form for a production cycle job.
+  3. Login as client
+  4. Edit form, upload inserts, approve form
+  5. Login as PC
+  6. Ensure that every insert's PDF is linked to a piece code.
+
+Note: InfoTrac jobs do not control further test case execution. Neither does
+the fact that an insert is permanent or regular. What matters is the PDFs and
+piece code be linked. To check that, verify  
+select INVENTORY_ID, PIECECODE,TITLE,FILE_NAME,FILE_TYPE from INVENTORY_PDFS;  
+This table is queried by PUI later through the WebService.
+
+Step 3: Set up Job and Bin information in DataTrac
+
+  1. Check the job that is to be run for the IS side of this project.  
+E.g. select * from TBLRTWO_IPL where JOBID='85088-C01.06-V20006;
+
+  2. Decide the insert (valid piece codes) each bin will hold  
+update TBLRTWO_IPL set BIN1=null, BIN2=6998, BIN3=6999 where
+JOBID='85088-C01.06-V20006';  
+Note: For valid piece codes, query InfoTrac's INVENTORY_PDFS as mentioned in
+Step 2. At this point, there is no need to synchronize an activity log form on
+InfoTrac with the Bin column values. Any valid piece code will be just fine.
+
+Step 4: Set up IS processing files.
+
+  1. Verify that all the above steps are complete
+  2. Data file is demo.dat. A backup of this file exists at /d/ftpbu/demobu/test. DO NOT use this.
+    * cp /d/ftpbu/demobu/test/demo.dat /d/ftpbu/demobu
+  3. Remove checksum.
+    * vi /home/keep/cksum_log/demomv1_cksum.log
+    * Delete all lines (Ctrl-dd)
+  4. Update insert information and enter selection criteria
+    * /home/insert/demomv1.ins
+    * DT_JOB_ID to match DATATRAC_DEV.DBO.TBLRTWO_IPL
+    * INSERTx's criteria in the insert file will correspond to the piece code in Binx in DataTrac's TBLRTWO_IPL.
+    * If a Bin in DataTrac's TBLRTWO_IPL is  _null_ , then the corresponding criteria in the insert file should be left  _empty_.
+    * Criteria must match InfoTrac (technically speaking). But, since this part of the feature can be tested quite independently, criteria can be manipulated based on the data file
+      * Zip Code; e.g. 73120-73140
+      * Account List; will be done in the next round
+      * All Accounts; use 00000-99999 (any zip code ~ any account)
+      * Acct List: will be specified, one account per line, in /d/custdata/demomv1.lis.  
+ _Note:_  Doesn't make sense to specify zip and acct. list for the same bin
+(piece code) since both are mutually exclusive options in InfoTrac.
+
+      * Custom Program; will be done in the next round.
+  5. Return to home directory. Temp files generated during processing are better saved here than in other directories.
+    * cd
+  6. Execute Paper Processing Script - /home/master/isis.sh
+    * Choose in the interactive menu:
+      * 's' - for Statements
+      * 169 - ID for 'DEMO' client
+      * 1 - for 'Visa' application
+      * Path for data file - /d/ftpbu/demobu/demo.dat
+    * Check: /d/demo/demomv1.txt. The 5-byte string for each account must have been computed by now. Backup this file as a ref. for the developer to check the 5-byte string.
+      * cp /d/demo/demomv1.txt /d/share/Bhavani/<..wherever..>
+      * cp /home/insert/demomv1.ins /d/share/Bhavani/<..wherever..> \- better to copy the corresponding .ins file to save state
+      * cp /d/custdata/demomv1.lis /d/share/Bhavani/<..wherever..> \- better again to copy the corresponding acct. list file, if used, to save state
+  7. demo.dat would have moved out of /d/ftpbu/demobu. So, copy it again from /d/ftpbu/demobu/test
+    * cp /d/ftpbu/demobu/test/demo.dat /d/ftpbu/demobu
+  8. Execute eStatements Processing Script - /home/master/isis.sh
+    * Choose in the interactive menu:
+      * 'f' - for AFP to PDF
+      * rest are the same as for 's' option above
+
+  
+
+Step 5: PUI
+
+  1. Login to PUI (System A: <http://10.8.8.221:9090/login.jsp>)
+  2. Every PUI processing will add one more eStatement to the accounts since the data file is the same. This can be confusing on the UI; so always UNDO earlier PUI first.
+  3. Choose 'New Job', Client - 'Demo'
+  4. AFP Processing - Browse and input the latest index file. The index file (looks like mv1....demo.txt)generated at the end of IS Processing would be dropped in 10.8.8.216/input - the PUI input directory
+  5. Ignore the rest of the steps ("Skip") and start PUI.
+  6. Check for no. of "Good" entries; must match the no. of records in the data file.
+  7. Log Check
+    * When a piece code that is "new" to the INVENTORY_PDFS table of eStatements is encountered, the WebService on InfoTrac will be called using a HTTPRequest. This should show up on the PUI log as " Accessing <http://10.8.8.221:9090/service/eStmtSelInsert/eStmtSelInsertDao>"
+
+Step 6: eStatements Member Site - Selective Insert Visibility
+
+  1. Clear Browser Cache Since the same data file will be PUI-ed over and over again during testing, the browser cache might mash up the expected inserts on the eStatement website.
+  2. Open eStatements - <https://10.8.8.221:9389/login.jsp>
+  3. Login
+    * Use account number as required for test case with password 'demo'
+    * If account number is not registered for eStatments, do so - register with email id of self.
+    * Click on Visa Classic - Selective Inserts have been enabled for  _only_  this application of 'DEMO' client.
+    * Verify
+      * Regular inserts : do they match the selective criteria for the bin they lie in?
+      * Permanent inserts starting with '6' only - do they match the selective criteria for the bin they lie in?
+      * No other inserts are shown
+  4. Logout
+    * click on 'Exit'
+
+Step 7: AI Site - Selective Insert Visibility
+
+  1. Clear Browser Cache Since the same data file will be PUI-ed over and over again during testing, the browser cache might mash up the expected inserts on the eStatement website.
+  2. Open eStatements Admin Site - <https://10.8.8.221:9389/msm/login.jsp>
+  3. Login
+    * If "Account Management" tab is not open, click on it.
+    * Type in a positive test case's account number.
+    * Choose "Visa Classic" on the sidebar
+    * Ensure that, under "Monthly Inserts", only the inserts that must be shown are shown
+    * Click on each insert to verify it opens.
+    * Repeat this step for all accounts to be verified. Need not logout between test accounts.
+  4. Logout
+    * click on 'Exit'
+
+Step 8: PUI Billing Report
+
+  1. Open PUI and login
+  2. Pick the PUI processing job (the latest)
+  3. Choose Processing Report -> Client 'DEMO'  
+If care has been taken care to UNDO the previous PUI every time, the
+processing report should reflect only one job and will be easier to test.
+
+  4. Check AFP Processing section and verify these values
+    * Ins Cnt
+    * Unique eStmt Selective Insert(s) Total: n (PieceCodes250: <list>)250250250250250
+
+# Useful SQL Queries for testing the eStatements Selective Inserts feature
+
+  
+
+###  **InfoTrac**
+
+ **Objective**|  **SQL**|  **Notes**|  
+|  Inventory ID - Piece Code - PDF connection| select
+INVENTORY_ID,PIECECODE,FILE_NAME,FILE_TYPE,TITLE,IN_USE from INVENTORY_PDFS
+where PIECECODE is not null and INVENTORY_ID is not null and IN_USE='Y' order
+by piececode;| The relationship between INVENTORY_ID, PIECECODE, and the PDF
+is independent of form id /job id created on the InfoTrac UI.  
+---|---|---|---|---|---|---  
+  
+  
+  
+
+###  **DataTrac**
+
+ **Objective**|  **SQL**|  **Notes**|  
+|  Check if ESELECTIBEINSERTING flag is turned on| select APPNO, VID, CID,
+ACTIVE, ESELECTIVEINSERTING from DATATRAC_DEV.DBO.TBLAL where CID ='DEMO' and
+ACTIVE =1;| CID=Client id, ACTIVE=1 for an current, not retired, application
+for the client referred by CID. Query returns all applications that are active
+for the CID. A 'false' in the ESELECTIVEINSERTING column signifies flag is
+off. For Selective Inserts feature to be used, update this column for "true"
+_before_  creating or editing an activity log on InfoTrac  
+---|---|---|---|---|---|---  
+Turn on the ESELECTIVEINSERTING flag| update TBLAL set ESELECTIVEINSERTING =1
+where CID ='DEMO' and ACTIVE =1 and (VID = '20548');| VID refers to the
+version id of the application for which the selective inserts feature has to
+be turned on.20548 is the version id for DEMO client's Monthly Statements
+application that testing will happen on.  
+Bin information in TBLAL| select APPNO, APPID,
+APPTYPE,VID,VERSIONNAME,MULTICYCLE,BIN1,BIN2,BIN3,BIN4,BIN5,BIN6 from TBLAL
+where CID='demo' and VID=20548;| While this table is not required for
+Selective Inserts processing, it shows what are the only allowed permanent
+inserts for a specific client's application. Any value in BIN1 through BIN6 in
+this table is considered a permanent insert.  
+Bin information for a job| select * from TBLRTWO_IPL where
+JOBID='85088-C01.01-V20006';|  **This job ID must match DT_JOB_ID in the .ins
+file /home/insert/demomv1.ins**  
+Update bins (piece codes) for a job| update TBLRTWO_IPL set BIN1=24296,
+BIN2=6998, BIN3=6999 where JOBID='85088-C01.01-V20006';| Piece codes starting
+with '6' are permanent inserts. The rest must match InfoTrac's regular inserts
+in INVENTORY_PDFS table. Not related to a job id / form id on InfoTrac  
+  
+  
+  
+
+###  **eStatements**
+
+ **Objective**|  **SQL**|  **Notes**|  
+|  Piece Codes and PDFs in the eStatments (Oracle) database| select * from
+INVENTORY_PDFS order by piece_code;| Use this before and after WebService call
+and verify if a new piece code has been added  
+---|---|---|---|---|---|---  
+  
+  
+
+# 06182013 eSelective training-Production Team Training
+
+  
+
+## Demo:
+
+  
+
+### InfoTrac
+
+  * URL: [https://10.8.11.208:8091](https://10.8.11.208:8091/)
+  * PC role
+    * login: pc_admin/pc_admin
+  * Client role
+    * demo: demo_lisa/demo_lisa
+
+  
+
+### DataTrac_IS application (connected to DataTRAC_IS DB)
+
+  1. \\\Share\del-2100\Install DT_IS and run the excuteable: AccessRuntime2010.exe
+  2. To install DataTRAC, copy the shortcut DataTRAC DEV to your desktop, and double-click to run the UI
+  3. Username: ISUser
+  4. Password: isuser
+
+  
+
+### eStmt AI:
+
+  * URL: <https://10.8.11.208:9389/msm/login.jsp>
+  * login: superuser/superuser
+
+  
+
+### eStmt Member:
+
+  * URL: <https://10.8.11.208:9389/login.jsp>
+  * login <AcctNumber>/demo
+
+250250250
+
+### Attachments
+
+  
+
+ **400 250 **
+
+  * 250250
+
+

@@ -1,0 +1,34 @@
+title: Proxy issue for notifyservice
+description: Looks like there was an issue with notifyservice this morning, the proxy was responding with a 504 error - notice the sH in the request - we get this when the backend service does not respond in timely manner. I have checked backend api logs and I don't see any exceptions/errors during these times when the request was made.
+
+Can you please check - below are the logs from proxy server ?
+
+ca-intproxy-pr-05:/usr/local/docker/haproxy/logs/backend-templateservice-pui_infoimageinc_com.log
+
+(flag)
+Nov 30 23:45:53 6e4be28e6ac0 haproxy[12]: backend-notifyservice-pui_infoimageinc_com 10.4.16.66:59174 [30/Nov/2020:23:44:53.711] http ca-apipui-pr-03 - - sH-- 1/1/0/0/0 0/0 172.18.0.2 80 "GET /api/v1/notification/bkfn/notification/count?
+fromDate=2020-11-01&appId=marketing&toDate=2020-11-30 HTTP/1.1" "?fromDate=2020-11-01&appId=marketing&toDate=2020-11-30"
+
+
+author: afikur.khan
+comment: The problem appears to be with the web server. Check the logs, there, and you should find long-running requests.
+
+
+
+Note{{sH--}}in your logs
+{quote}*s*: the server-side timeout expired while waiting for the server to send or receive data.
+{quote}
+...so,{{timeout server}}fired, while...
+{quote}*H*: the proxy was waiting for complete, valid response HEADERS from the server (HTTP only).
+{quote}
+The server had not finished (perhaps not even started) returning all the response headers to the proxy, but the connection was established and the request had been sent.
+
+HAProxy returns{{504 Gateway Timeout}}, indicating that the backend did not respond in a timely fashion.
+
+
+author: afikur.khan
+comment: I made similar request and look like it takes a long period of time, for my case it took 37.61 seconds. But at the busy time it could exceeds 1 minute which is configured for *server timeout* in HAProxy. So, if we want to allow the request even if it exceeds 1 minute then we need to increase{{*timeout server*at HAProxy configuration.}}
+
+{{}}
+
+!response-time.PNG|width=328,height=313!!timeout server.JPG|width=427,height=311!

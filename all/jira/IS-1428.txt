@@ -1,0 +1,163 @@
+title: OSCU - [31370][pvt][in-house] OSCU - Stmt House-holding Insert Corrections 
+description: Description for JIRA: in oscums2_combine_acct.pl currently it is not grouping the inserts. please add grouping for insert too.
+* Development hour: 3 (InHouse)
+* Application: Stmt
+
+*Timeline:*
+* Turnover Date: 08/15/2022
+* QA Date: 08/16/2022
+* Live Date: 08/23/2022
+* Parallel: Yes
+
+
+author: barnetts
+comment: Hi [~rony], 
+
+I am following up on this ticket.
+FYI: [~Jessica] [~terrencet]
+
+Thanks, Barnett
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+There is an issue in grouping the insert. Previously for household accounts ( multiple accounts in one envelope) insert was not grouped correctly and for that reason, not a single household account got the insert.
+
+Take a look at the production paper txt file for hvy:
+
+!image-2022-08-19-14-01-46-132.png|width=1087,height=236!
+
+see those first household accounts from line 1-6, only the first line has 11 which mentions bin3, and bin4 but for the rest of the lines from 2-6, the field is empty. Since those accounts are grouped that 11 should pass through each account, meaning since lines 1-6 are household the insert value should be the same for all these lines. But since this is not happening in production not a single household customers are getting insert.
+
+
+
+We updated the code to resolve this. Here is a snapshot from hvy paper txt file:
+
+!image-2022-08-19-14-08-44-045.png!
+
+now the insert no is same 11 for all household lines.
+
+
+
+I am attaching both hvy paper file from production and parallel if you want to take a look.
+
+
+
+The best way to test this is to print the dpvs to check if insert gets pulled for household accounts.
+
+
+
+dpvs:[^oscums2131.print]from hvy print page 17-29, 253-271 and please check if insert 3,4 get pulled for first range and insert 3 gets pulled for the last range.
+
+Parallel id:20220817033443 
+
+
+
+[~barnetts] [~terrencet] [~Jessica]
+
+Thanks
+
+Rony
+
+
+
+
+author: JIRAUSER11104
+comment: Hi [~barnetts] please request print sample.
+dpvs:  [^oscums2131.print]  from hvy print page 17-29, 253-271 and please check if insert 3,4 get pulled for first range and insert 3 gets pulled for the last range.
+
+
+author: barnetts
+comment: Hi [~Andrey.Kutsenko] / [~rony],
+
+Print samples have been requested from OPS.
+
+Thanks, Barnett
+
+
+author: barnetts
+comment: Hi [~Andrey.Kutsenko] / [~rony]
+
+Samples are in the IS Box.
+
+Thanks, Barnett 
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+ Thank you, [~barnetts] [~rony]
+
+Test result (grouping the inserts) - *PASSED*.
+ Checked - line2-7; line93-104 in file:
+{code:java}
+[oper1@rhs2 ~]$ ls -ltr /z/afp/oscu/oscums21315.hvy
+-rw-rw-rw- 1 oper1 opers 45308 Aug 19 00:33 /z/afp/oscu/oscums21315.hvy{code}
+Print samples ( [^IS-1428_OSCU_PrntSmpls_08232022.pdf] ) look good.
+
+[~rony] please attach IS checklist if needed.
+
+
+author: rony
+comment: [^IS_Checklist.docx]
+
+[~Andrey.Kutsenko]
+
+
+author: JIRAUSER11104
+comment: Thanks, [~rony]
+IS checklist >>>  [^IS-1428_OSCU_IS_Checklist.pdf] 
+
+
+author: rony
+comment: Hi [~TunA]
+
+Need help to release.
+
+
+
+[^IS_PROGRAM_TRANSFER_FORM.doc]
+
+
+
+[~terrencet] [~barnetts]
+
+Thanks
+
+
+author: barnetts
+comment: Hi [~TunA] / [~terrencet],
+
+Please help [~rony] to release.
+
+Thanks, Barnett 
+
+
+author: tuna
+comment: Hi [~rony]/ [~barnetts],
+
+Following code has been released.
+
+Thanks,
+
+Tun
+
+
+
+20220826125930 08/26/2022 ronyD IS-1428 OSCU - [31370][pvt][in-house] OSCU - Stmt House-holding Insert Corrections
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/ronyD/
+ total 48
+ -rwxrwxrwx 1 ronyD DSI 6167 Aug 24 21:54 oscums2_combine_acct.pl
+
+
+
+
+
+[~terrencet]
+
+
+author: barnetts
+comment: Thank you [~TunA] / [~rony],
+
+Thanks, Barnett 

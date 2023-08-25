@@ -1,0 +1,90 @@
+title: ca-rcs-pr-01:  Testing CVS check in/out
+description: I've synced the files from RCS(10.8.9.40) to ca-rcs-pr-01
+
+To test, please export CVSROOT=rcs.infoimageinc.com:/extra/is_cvs
+
+
+
+*Objective*:
+ * Test if you can check-in / check-out of this system; Need to make sure users can read/write to this system.
+
+
+author: peter.dang
+comment: create a separate cvs_rm.sh program to delete file from cvs.
+
+program also remove file from production folder.
+
+prompt user if the file was recreated from dead file.
+
+program execution permit only by authorized user (manager).
+
+
+
+cvs remove -f filename
+
+cvs ci "comment"
+
+
+author: peter.dang
+comment: cvs_rm.pl comment [optional: file list]
+Interface similar to cvs_co.pl. Prompt user for file to be deleted if a list is not provided at run time.
+Ensure on main user can run this script.
+Output log to $home_keep/keep/cvs_remove_files.log
+Output to /home/keep/cvs_remove_files_tb.txt
+foreach removed file
+ get file path
+ run cvs co filePath/file
+ cd filePath
+ cvs remove -f removed_file
+ cvs commit -m "comments"
+ write to log
+ #remove from production folder.
+ rm -f filePath/file
+ 
+ 
+ 
+ #verify result check Attic file
+ #ssh 10.8.9.40
+ #cd /extra/is_cvs
+
+
+author: william.kong
+comment: [~yameelee]: Please note the server name has changed from bb-rcs.infoimageinc.com to ca-rcs-pr-01.infoimageinc.com
+
+
+author: william.kong
+comment: [~Peter.Dang]: This ticket is to test RCS and not adding the "Delete" feature for the CVS Check In/Out. 
+
+See BRIS-9: 
+
+https://jira.infoimageinc.com/browse/BRIS-9
+
+
+
+*FEEDBACK*: Specifications should be documented in "Description" field instead of comments field. I would like to us to document all specifications Description field for Jira system moving forward.
+
+
+
+
+author: yameelee
+comment: I didn't see the comment I posted yesterday.
+
+Peter and I tested for the standard file extensions (ex. .sh, .dfa, .control).
+
+However, I need to update script for those not standard extensions (ex. isisdisk.sh.log) as the extentions cannot be found with the get_file_path_cvs function.
+
+Will pass in the full path for non standard file extensions. check if full path, will not get path through get_file_path_cvs function.
+
+Have some tasks due mid march so changing due date for this to 3/31/2020.
+
+
+author: yameelee
+comment: Peter and I tested today for
+
+-non standard and standard file ext
+
+-passing in file lists and also not passing in to prompt for file
+
+-tested passing in file path and not pass in file path for standard file ext
+
+We concluded the code is ready to be release and released code today.

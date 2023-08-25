@@ -1,0 +1,300 @@
+title: UFCU - Update to Archival for Mo Stmts
+description: *Parallel Requirement: No*
+
+
+
+
+
+From Diego:
+ The use of the xfer file is new only to monthly statements. For other applications you will simply need to pull the last fields(along with the other items we already pull from xfer) which are new in the xfer file Field 21 == email address and 22 = SalesforceID
+
+This changes the index we output from:
+
+DocCode,MemberNum,MemberName,StatementDate, path/filename,statement name,delivery preference,YES
+
+TO:
+
+DocCode,MemberNum,MemberName,StatementDate, path/filename,statement name,delivery preference,YES,email,SalesforceID
+
+For monthly statement we will need to read in the file and match up the account number to field1 of the xfer and pull those 2 fields above.
+
+Just confirming now the actual order of the 2 new fields on index but i believe the order on their end can be set to what we provide. just wanted to add some information now.
+
+
+author: mahbubs
+comment: Hi All,
+
+Ran the cycle 1027 with all latest archival related update using the new xref file.
+
+Samples are at/z/infoftps4/ufcu/client_pickup/
+
+Please check.
+
+Thanks
+
+
+author: william.kong
+comment: [~diegof]: Can you review the results of this testing? Sorry! I never got around to reviewing the results while you were OOO the first week of November. Since this is an EOM job, i'm going to update the live date to 11/30/2021.
+
+
+
+[~andreav]: Please advise if you agree with the live date of 11/30/2021. If so, please update your Epic as well.
+
+
+author: andreav
+comment: I agree with the live date. However, we had lots of internal correspondence today and confusion about if Sakib needs to roll out the update he did on the zip method or not. I need answers to below ASAP.
+
+My questions:
+# Do we still need to update the zip method or leave as it currently is in production?
+# Did the last archival sample with the 2 new fields use the old or new zip method? 
+# Depending on the answers above, we may need to send the client a corrected archival sample to approve.
+
+
+author: mahbubs
+comment: Hi [~William.Kong],
+
+I hope the questions that Andrea asked in her last mail is to you.
+
+Please make some comments on those.
+
+Thanks
+
+
+author: mahbubs
+comment: Hi Andrea,
+
+The last archival sample with the 2 new fields use the new zip method.
+
+As William stated in TS 23924 that client has not unzipped the old archival samples properly, so i think we are good with old archival zipping method.
+
+Need a reply from William.
+
+[~William.Kong], please correct me if i am wrong.
+
+Thanks
+
+
+author: william.kong
+comment: [~mahbubS]: Please keep original zipping method prior to going live on 11/4 2021. We can discuss a little during/after our scrum meeting today.
+
+
+author: andreav
+comment: We also need to provide the client with a new archival sample using the old zip method ASAP. They are currently testing the last archival sample using the wrong zip method.
+
+
+author: mahbubs
+comment: Hi [~andreav] [~diegof],
+
+Ran the process with all the updates (IS-549 and IS-592 updates) using cycle 1031 data file.
+
+Archival zipping method is now similar to production (7za).
+
+I copied sample to /z/infoftps4/ufcu/client_pickup/ufcums12314.2o5.pdf
+
+Archival sample is at: /z/infoftps4/ufcu/client_pickup/
+
+!image-2021-11-26-12-14-18-169.png!
+
+I forgot to run using segment 1. That's why the archival sample have the segment 2 in the snap.
+
+The archival run takes too much time. So i didn't run it again using segment 1.
+
+The latest xref file isufcu_xfer_11242021.txt.pgp from client. And this xref don't has the salesForceID in it. Only has the email id at the end of each line. So the archival index file has empty value in place of salesForceID.
+
+Let me know if there is any other issue.
+
+Thanks
+
+
+author: mahbubs
+comment: Hi [~diegof],
+
+Ran the archival using segment 1 today.
+
+Samples are in/z/infoftps4/ufcu/client_pickup/
+
+!image-2021-11-26-23-39-12-752.png!
+
+Please check.
+
+Thanks
+
+
+author: william.kong
+comment: [~diegof]: Please review on Monday when you are back in the office.
+
+
+author: mahbubs
+comment: Hi [~diegof],
+
+Did client approve the archival sample?
+
+Thanks
+
+
+author: diegof
+comment: i believe it was approved on the ticket in TS.
+
+
+author: mahbubs
+comment: Hi [~Igor.Khosid],
+
+Please Start QA on this.
+
+Parallel id:20211122042807
+
+Updated project is in QA folder:/d/iss/qa/UFCU/UFCUMS11.zip
+
+This is an archival related task, so no DPVS and print range needed.
+
+Need to check the archival index for new extra 2 fields (instructions in the description of this jira).
+
+You may need the CIF file (required for archival). The pgp and decrypted txt cif both files are in/z/download/pfcu/xref/ dir.
+
+And the latest xref file for this task can be found at/home/test/keep/ufcu/
+
+Note: We used a preprocessing scriptufcums1_xref_handling.py, which appends info in data file when account number matches in cif file (preprocessing script is used in processing script). The appended data can be found in/z/ufcu/ms1/data_files/ufcums1_103121_merged_final.dat.xrefed
+
+Let me know if anything more you need.
+
+Thanks
+
+
+author: mahbubs
+comment: Hi [~andreav],
+
+Please ready the TS ticket for submitting parallel form.
+
+Thanks
+
+
+
+
+author: igor.khosid
+comment: Parallel ID: 20211122042807
+ Currently in parallel: Yes
+ User: mahbubS
+ Description: IS-549 and IS-592 merged (archival xref and Deposit at a Glance)
+ Date Submitted: 2021-11-22 04:28:43
+ Date Last Updated: 2021-11-25 05:17:00
+ Files:
+ 1) UFCUMS11.dfa
+ 2) ufcums1_pdf.control
+ 3) ufcums1_xref_handling.py
+ 4) ufcums1_process.sh
+
+
+author: igor.khosid
+comment: Updated as per descriptions
+ # Parallel report
+
+Parallel ID: 20211122042807
+Currently in parallel: Yes
+User: mahbubS
+Description:IS-549andIS-592merged (archival xref and Deposit at a Glance)
+Date Submitted: 2021-11-22 04:28:43
+Date Last Updated: 2021-11-25 05:17:00
+Files:
+1) UFCUMS11.dfa
+2) ufcums1_pdf.control
+3) ufcums1_xref_handling.py
+4) ufcums1_process.sh
+
+2. DifferenceUFCUMS11.dfa prod vs test - validated and attached >>>[^Diff_UFCUMS11_dfa.txt]
+
+
+author: igor.khosid
+comment: [~mahbubS]
+
+Please attached - *IS checklist*
+
+
+author: william.kong
+comment: [~andreav]: I Just updated description of work in the ticket. Parallel is not required for this update.
+
+
+
+[~mahbubS]: Please attache IS checklist when you see this tonight.
+
+
+author: mahbubs
+comment: Hi [~Igor.Khosid],
+
+Attached is the IS checklist.[^IS Checklist#IS-549.docx]
+
+Thanks
+
+
+author: andreav
+comment: Sakib, once QA passes, DO NOT release the code until I have confirmed a release date with the client. 
+
+
+author: mahbubs
+comment: Hi [~andreav],
+
+I can see the Status of this Jira "QA Completed".
+
+Should we proceed for release?
+
+Thanks
+
+
+author: andreav
+comment: No, we should release together with IS-592 right? I think Will had stated to aim for a 12/8 release? Once parallel for IS-592 passes, I will inform the client so we can coordinate the code release and so he can start sending the new xref files.
+
+
+author: andreav
+comment: I am checking if a code release date of 12/7 will work for the client. In the meantime, please provide the information needed for IS managers to roll out the code when needed.
+
+
+author: mahbubs
+comment: Hi [~andreav] [~Peter.Dang],
+
+Attached is the transfer form[^IS_PROGRAM_TRANSFER_FORM-2.doc]
+
+I did the cvs checkin of parallel ID20211122042807
+
+[~Peter.Dang]please release code to production when Andrea provides green signal.
+
+Thanks
+
+
+author: andreav
+comment: Client will start to send the new xref file tomorrow. Please roll out the code for tomorrow's processing.
+
+
+author: mahbubs
+comment: Hi [~Peter.Dang] [~TunA],
+
+Please release code to production.
+
+I already provided transfer form in this Jira yesterday and did cvs checkin.
+
+The resources have the updates of Jira IS-592 as well.
+
+Thanks
+
+
+author: tuna
+comment: Hi [~mahbubS],
+
+Following codes have been released.
+
+Thanks,
+
+Tun
+
+
+
+total 4 files
+
+20211207081802 12/07/2021 mahbubS IS-549 UFCU - Update to Archival for Mo Stmts, IS-592 UFCU - Deposits at a Glance - Monthly Statements
+
+[oper1@rhs ~]$ ll /d/is/cvs/xfer/mahbubS
+total 672
+-rwxrwxrwx 1 mahbubS DSI 200872 Dec 6 04:18 UFCUMS11.dfa
+-rwxrwxrwx 1 mahbubS DSI 509 Dec 6 04:18 ufcums1_pdf.control
+-rwxrwxrwx 1 mahbubS DSI 19087 Dec 6 04:18 ufcums1_process.sh
+-rwxrwxrwx 1 mahbubS DSI 3555 Dec 6 04:18 ufcums1_xref_handling.py
+
+

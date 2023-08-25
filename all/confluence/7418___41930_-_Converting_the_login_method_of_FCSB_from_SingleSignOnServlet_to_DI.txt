@@ -1,0 +1,109 @@
+title: 7418 / 41930 - Converting the login method of FCSB from SingleSignOnServlet to DI
+body: ## **Objective**
+
+To change the login method of FCSB clients(FHNB and FNBT) from
+SingleSignOnServlet to DI without changing the business logic.
+
+##  **Assumption**
+
+After conversion from SingleSignOnServlet to DI,  login flow will not be
+affected. User will be able to login as before.
+
+##  **Development**
+
+We have servlet for DI in i3-core but it doesn't support the consistency that
+we require. In SingleSignOnServlet, we must login with a valid cif number. But
+in i3-core code for DI, it creates a new user for each cif number if it
+doesn't exist. As we aren't changing the default business of FCSB, we've used
+these jsp pages.
+
+Two jsp pages that have been added in root folder are:
+
+  * IFSBBhblogin.jsp
+  * IFSBBssoexchange.jsp
+
+  
+
+In case of DI login, required fields in sso file are:
+
+  * user_fi_number (CIF_NUMER)
+  * selected_acct (the account number which will be selected in the account drop down list)
+  * selected_acct_type
+  * pswd (password)
+  * comp_email (email)
+  * gmt ( **a string, should not be empty or null** )
+  * comp_timeout ( **numeric string which will be converted into seconds to set as session max inactive interval time** )
+
+Mandatory fields are: user_fi_number, pswd, comp_email, gmt
+
+  
+
+ **Change in files:**
+
+ROOT/src/main/webapp/enroll/optoutAll.jsp
+
+ROOT/src/main/webapp/enroll/ssoOptoutAll.jsp
+
+ROOT/src/main/webapp/enroll/ssoRegister.jsp
+
+ROOT/src/main/webapp/include/security.jspf
+
+ROOT/src/main/webapp/pending/optoutAll.jsp
+
+ROOT/src/main/webapp/pending/ssoOptoutAll.jsp
+
+ROOT/src/main/webapp/pending/ssoRegister.jsp
+
+ROOT/src/main/webapp/profile/token_recovery_action.jsp
+
+ROOT/src/main/webapp/profile/token_recovery.jsp
+
+ROOT/src/main/webapp/selectAcct.jsp
+
+ROOT/src/main/webapp/WEB-INF/web-dev.xml
+
+ROOT/src/main/webapp/signon.jsp
+
+ROOT/src/main/webapp/profile/forget_pw_reset.jsp
+
+  
+
+ **Notes:**
+
+  * Previously, in case of SingleSignOfServlet, sessionCtx was achieved like this:    
+
+sessionCtx =
+com.infoimage.http.jsp.JspServletBridge.getWebSessionContext(pageContext);
+
+  
+But for DI, In the above jsp pages, sessionCtx is achieved by the following
+code:
+
+                        String loginId = (String)session.getAttribute("loginId");  
+                        Organization organization=SecurityFactory.getOrgFromUniqueName(pageContext.getServletContext().getInitParameter(com.infoimage.http.servlet.Constants.KEY_UNIQ_NAME));  
+                        WebAuthContext auth=(WebAuthContext)AuthFactory.getInstance().getAuthContext((organization==null)?"system":organization.getName());  
+                        sessionCtx=auth.ssoLogin(loginId, com.infoimage.http.jsp.JspServletBridge.getWebContext(pageContext));
+
+  
+
+  * In web-dev.xml, the sso servlet is removed as we're not giving support of SSO anymore. 
+  * In web-dev.xml, param-value of com.infoimage.security.ssignonpw for both fhnb and fnbt has been set.   
+for FHNB:  F)*($JGrls  
+for FNBT:   j@FJf+05sQ
+
+  * In database, AUTH_CLASSNAME column of AUTHENTICATOR table must be: com.infoimage.util.security.auth.DefaultAuthContext
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+

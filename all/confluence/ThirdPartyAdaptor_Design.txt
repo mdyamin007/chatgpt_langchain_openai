@@ -1,0 +1,369 @@
+title: ThirdPartyAdaptor Design
+body: # Race Condition
+
+Even though the design was meant to address race conditions, some still remain
+or new ones were introduced.
+
+### Glossary
+
+  * Insert: The insertion of the event into database
+  * Check (answer): The checking for event with same key with greater time. The answer is either No or Yes.
+  * Processing: The processing that will happen
+  * Update: The update that will occur 
+
+ **Race Condition 1**
+
+During step 2, there is a check-then-act logic that may fail depending on
+timing.
+
+    
+    
+    Process A (10:00 am) -> Insert -> Check (No) -> Processing                                -> Update  
+    Process B (10:01 am)                       -> Insert -> Check (No) -> Processing -> Update  
+  
+---  
+  
+We have to enforce synchronization on access to the same data. At the database
+level, it can be achieved with data locking.
+
+We need some sort of  **history** record that is defined by the key and time.
+
+This is the proposed new logic:
+
+  1. Request data lock on history object.
+    1. If history object does not exist, create one and obtain the lock.
+    2. If two or more processes try to create the history object, the database should be able to handle the race condition, accepting only one insertion and rejecting the rest. All the processes that failed to insert will just need to try to request the lock again.
+  2. Check event time. 
+    1. If history event time is older than current event time, process the event.
+      1. Otherwise, insert the event with some sort of "REJECTED" status and send acknowledgement back to MQ.
+  3. Release the data lock on history object.
+
+What the "key" should be is dependent on how we want to design the database.
+We can have one collection per event per core, e.g. Corelation DP Update would
+be one collection. In this case, the key need to be a combination of CID and
+Account. Note that it's Account, and not NP_ID. Multiple NP_ID might correlate
+to an update for the same Account.
+
+For certain cores, updating NP and DP might be tightly coupled, so doing one
+operation should block all closely related operations.
+
+* * *
+
+# System & Network Specifications
+
+Some of the objects illustrated below were tentative design only. Reference
+for object definition.
+
+  
+
+  
+
+  
+
+  
+
+Specification| Name| Description  
+---|---|---  
+SNN-001| Time Sync| All related applications must have their server clocks
+synced. This ensures accurate logging of event time, which is crucial to
+determining which event get processed and which get rejected whenever there's
+a race.  
+SNN-002| POST/PUT/DELETE will be event-driven.| All methods that change data
+will use the event-driven architecture.  
+SNN-003| GET APIs will be directly exposed.| Relevant applications can call
+the GET APIs on the ThirdPartyAdaptor directly to get the necessary
+information.  
+SNN-004| Infoservice Events data will be stored in MongoDB.|  
+  
+SNN-005| ThirdPartyAdaptor Event data will be stored in MongoDB.| This is a
+different database than SNN-004.  
+  
+* * *
+
+# Database Specifications
+
+TBD
+
+Maybe each CID will have their own database with their own set of collections.
+
+* * *
+
+# messageobject
+
+# Message Objects
+
+## toThirdPartyAdaptor
+
+jsMidnight
+
+fromThirdPartyAdaptor
+
+jsMidnight
+
+  
+
+jsDJangoevent Messagetrue
+
+  
+
+jsDJangoSingle NP data objecttrue
+
+  
+
+jsDJangoSingle DP data objecttrue
+
+## Event Status
+
+### Infoservice
+
+Status| Description  
+---|---  
+CREATED/RECEIVED|
+
+Event is newly created.
+
+ **Is this necessary?**  
+  
+QUEUED| Event is sent to MQ.  
+REJECTED| Event won't be processed due to the reason detailed in the message.  
+FAILED| Event was being processed, but failed due to the reason detailed in
+the message.  
+SUCCESS| Event was processed successfully.  
+  
+### ThirdPartyAdaptor
+
+Status| Description  
+---|---  
+RECEIVED|
+
+Event is received from MQ.  
+  
+PROCESSING| Event is being processed.  
+REJECTED| Event won't be processed due to the reason detailed in the message.  
+FAILED| Event was being processed, but failed due to the reason detailed in
+the message.  
+SUCCESS| Event was processed successfully.  
+  
+* * *
+
+# Endpoints
+
+Endpoint| Method| Description  
+---|---|---  
+/api/v1/healthcheck| GET| healthcheck API  
+/api/v1/version| GET| version API for InfoConfig  
+  
+* * *
+
+# Configurations
+
+## InfoConfig
+
+Config| Object Type| Description  
+---|---|---  
+{{eStatementObject}}.thirdPartySync| boolean| A flag to let Infoservice know
+whether to send an event to ThirdPartyAdaptor. This is defined per object, to
+provide granular control. Some setup, we might only need to sync certain data
+and not all data.  
+cores| String[]|
+
+List of cores to update. ThirdPartyAdaptor will loop through the list and call
+the StrategyFactory for the core-appropriate strategy.  
+  
+{{coreName}}| Object| Configurations specific to the core to determine custom
+syncing logic if exists. One application could be determining which sub-
+strategy to use, as we could even have different strategies within the same
+core.  
+  
+* * *
+
+# Application Design
+
+## CoreFactory
+
+This is a concrete Factory that will generate the factory of factories for a
+specific core.
+
+javaMidnightCore Factorytrue
+
+## ConfigProviderMap
+
+This will be a ThreadSafe bean that will offer the ConfigProvider by CID. The
+encapsulated collection should be a ConcurrentHashmap, which must never be
+published. When a CID configuration should be updated, the entire
+ConfigProvider will be replaced with a new one, instead of mutating any
+particular fields (all of them should be final anyway).
+
+Functions to implement:
+
+  * get(String key)
+  * put(String key, ConfigProvider value)
+  * createConfigVersion(): build the ConfigVersion object that will be sent to InfoConfig for version validation. This function is put here so that we won't have to publish the encapsulate ConcurrentMap. We can have a function that return an unmodifiable wrapper, but there isn't enough reason to do so. It is a lot simpler to manage and think about thread-safety if all access are done via a single point.
+
+ConfigProvider
+
+This is a way to provide different strategies with different configurations.
+All configurations will be stored in core-specific objects. Since the
+UpdateStrategy is determined at runtime, it is unknown which configuration
+should be provided. The Visitor pattern is used, so that the strategy method
+will decide the correct config to obtain. Alternative is to store all
+configurations in a Map, which should be encapsulated, so that no class can
+alter the map.
+
+javaMidnightConfigProvidertrue
+
+  
+
+UpdateStrategyFactory
+
+This is an Abstract Factory that will provide the appropriate UpdateStrategy
+for a given event.
+
+javaMidnightUpdateStrategyFactorytrue
+
+  
+
+Application| Sub tasks| Estimation|  
+  
+---|---|---|---  
+Infoservice  
+  
+  
+  
+|
+
+user update API
+
+    
+    
+    '/api/v1/user/{cid}'
+
+| 2 day|  
+  
+  
+enrollemt API
+
+    
+    
+    /api/v1/user/{cid}/account/enrollment/
+
+| 2 day|  
+  
+create new end point to produce event | 3 days|  
+  
+event from infoservice produce| 3 days|  
+  
+event ack from syncService consumer| 3 days|  
+  
+infoConfig| adding syncService Configuration| 3 days|  
+  
+syncService  
+  
+  
+  
+  
+  
+| event from infoservice consumer | 3 days|  
+  
+event ack from syncService  producer| 3 days|  
+  
+core business service class| 12 days|  
+  
+create service for eventType NP | 5 days|  
+  
+create service for eventType DP| 5 days|  
+  
+create service class to link with 3rd Party API| 5 days|  
+  
+integrating infoConfig in syncService| 3 days|  
+  
+QA| Manual Testing| 15 days|  
+  
+Unit/Integration Testing| 25 days|  
+  
+  
+ **Timeline**
+
+Target| Date  
+---|---  
+Analysis Start Date|
+
+  
+  
+Analysis End Date|
+
+  
+  
+Development Start Date|
+
+  
+  
+Development End Date|
+
+  
+  
+Unit/Integration Testing Start Date|
+
+  
+  
+Manual QA Start Date|
+
+  
+  
+Manual QA End Date |
+
+  
+  
+Unit/Integration Testing End Date|
+
+  
+  
+Pilot Date |
+
+  
+  
+Beta Testing (20 days)|
+
+  
+  
+Live Date (approximate)|
+
+  
+  
+#### Estimate:  
+
+Total Hours:  848 hours
+
+  * Analysis: 80 hours
+  * Development and Unit Test: 616 
+  * QA: 120 hours
+  * Documentation: 32
+
+Server Needed:  6 new VM
+
+  
+
+# Questions
+
+  
+| Question| Answer  
+---|---|---  
+1| What should happen when an event is QUEUED, but somehow Infoservice never
+get an answer?|  
+  
+2| Should the core-related configuration just be in their own schema, so that
+we won't have to clutter up the eStatement schema?|  
+  
+3| Which database to use for  **history** table? Can MongoDB handle an
+insertion race, so that we can guarantee only one record get inserted?|  
+  
+4| What cleanup strategy should we use for the  **history  **table? Remove
+records older than one month (records that don't change often should not stay
+in the table to save space)?|  
+  
+  
+  
+
+  
+
+

@@ -1,0 +1,50 @@
+title: Steps to resolve SSL Certificate Issue
+body: **Exception:**  
+com.sun.jersey.api.client.ClientHandlerException:
+[javax.net](http://javax.net).ssl.SSLHandshakeException:
+sun.security.validator.ValidatorException:  
+PKIX path building failed:
+sun.security.provider.certpath.SunCertPathBuilderException:
+
+E.g, URL: [https://pd-dev2.infoimageinc.com:9880](https://pd-
+dev2.infoimageinc.com:9880/)
+
+Please follow following steps:
+
+ **Step 1: Export existing Certificate from Browser**
+
+  1. Open URL in Google Chrome. If it says warning message, Click on Proceed Anyways.
+  2. Now you will find one Lock button just before [https://pd-dev2.infoimageinc.com](https://pd-dev2.infoimageinc.com/). Click on that button.
+  3. One pop-up will appear, and you will see two tabs. 1. Permisssion 2. Connection.
+  4. Click on Connection tab.
+  5. Now find hyperlink named "Certificate Information", and click on that.
+  6. As soon as you will click, Certificate window will appear which have three tabs: 1. General 2. Details 3. Certification Path
+  7. Click on Details tab,and then click on "Copy to File" button.
+  8. So It will take you to Export Certificate Wizard.
+  9. Inside that Wizard, first Click on Next button.
+  10. In next screen, It will ask you for to select format of your certificate. We will keep default one, and click on Next button.
+  11. In next screen, it will ask you to select location in file system, where certificate will get exported.
+  12. Let's say, we want to store certificate in c:\infoimage\ssl. If you do not have that directory, feel free to create new one or use other one.
+  13. You also need to give certificate name. Let's give name [pd-dev2.infoimageinc.com](http://pd-dev2.infoimageinc.com) which out server domain name.
+  14. Click on Save button.
+
+Once you follow above steps, you will be able to export certificate
+successfully in c:\infoimage\ssl.
+
+Now, we need to import this certificate in java key store of your machine.
+Before we do that, you need to have java, and JAVA_HOME being configured.
+
+ **Step2: Import certificate to Java Keystore**
+
+  1. Open command prompt in Administrator mode.
+  2. Type cd c:\infoimage\ssl.
+  3. Now type following command:  
+
+    
+        keytool -import -trustcacerts -alias pd-dev2.infoimageinc.com -file pd-dev2.infoinmageinc.com.cer -keystore "%JAVA_HOME%\jre\lib\security\cacerts" -storepass changeit
+
+  4. It will prompt for Do you want to add this certificate? Type Yes, and press Enter.
+  5. You will get Certificate has been added successfully message if everything will go fine.
+  6. Restart your system, and then try again.
+
+

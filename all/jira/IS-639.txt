@@ -1,0 +1,114 @@
+title: TKCU:  Daily Notices:  PDF Archival Add Cleanup Logic (In-house)
+description: Parallel Required: Yes (Run Paper, eStmt & PDF) to make sure all service perform without issues.
+
+
+
+Please review the /home/master/tkcu_dl_process.sh shell script. There is a bug where the program does not clear the /d/pdf_afp/tkcu/tkcudla folder+before+ beginning the PDF archival program.
+
+
+
+
+
+
+author: william.kong
+comment: [~amirR]: Any updates to this project. I was hoping this in-house project to go live today. Please advise.
+
+
+author: amirr
+comment: [~William.Kong], can you please update the deadline for tomorrow. Had some issue while running these.
+
+
+author: william.kong
+comment: [~amirR]: I will extend it to next Monday since you have a holiday on Thursday. But I will need this completed on time this time around.
+
+
+author: amirr
+comment: [~William.Kong],
+
+
+
+First I want to mention that These tkcu statement and daily notice scripts are very confusing specially the archival part.
+
+I could not create pdf using pdfi option. I tried the following command:
+
+
+_${home_master}/master/isisdisk.sh tkcudla pdfi /z/daily/tkcu/tkcudl038.dat format_
+
+
+This give the following output:
+
+_processing formatting step for straight pdfi generation..._
+_/z/daily/tkcu/tkcudl038.dat_
+_cleaning up /z/pdf_afp/tkcu/tkcudla/pdf/..._
+_jid: dla, prefix: tkcudla_
+_2021-12-17/04:37:09.348 001/001 --------- Application /isis/pdel3620/pdel3 started (with PCSDLL cleanup enabled, PCSDLL date: '2008-03-04 (build:6.20.0.08100)'). [pcs.cpp,218]_
+_2021-12-17/04:37:09.350 001/001 --------- Commandline parameters: /profile=/home/test/isis/userisis/pdec.prf /output=/z/daily/tkcu/tkcudla_pdfi.afp /input=/z/daily/tkcu/tkcudl038.dat /docdef= /c $BADACCTS=/z/daily/tkcu/tkcudla_pdfi.bad $UPSLIST=/z/daily/tkcu/tkcudla_pdfi.upslist $JOB_SEL=pdfi $PREFIX=tkcudla $JID=dla $TIFFDIR= $LOOKUPFILE= $LOOKUPFILE2= $SDATE= $PDF_PATH=/z/pdf_afp/tkcu/tkcudla/pdf/ $PDF_CYCLE= $TYPE= $XMLFILE=/dev/null $FONTSUB= $ZIPFILE=/z/daily/tkcu/tkcudla_pdfi.txt $PDFCOUNTFILE=/z/daily/tkcu/tkcudla_pdfi_count.txt $CPMCTTL=/z/daily/tkcu/tkcudla.ttl $MSGFLG= $COLOR_FLAG= $SEG_NUM=format $INFOFILE=/z/daily/tkcu/tkcudla_pdfi.info $IMAGEFILE=/z/daily/tkcu/tkcudla_pdfi.image_count [pcs.cpp,230]_
+_2021-12-17/04:37:09.353 001/001 PPCS0000I PCSDATA /isiscomm/l3/ISIS_PCS_20070425_ShMem_PCSDATA on address 0x80000000 used. [pcs.cpp,324]_
+_2021-12-17/04:37:09.381 001/003 PKEY0004I Authorized by PO key 0.0.54bcf.af000039. PRODUCT-FD0228743305292715714 [omslic.cpp,787]_
+_2021-12-17/04:37:09.459 001/001 --------- Application end. [pcs.cpp,450]_
+
+_---------------------_
+_[12/17/2021 04:37:09] - tkcudla pdfi /z/daily/tkcu/tkcudla /z/daily/tkcu/tkcudl038.dat_
+_PREFIX: tkcudla not config for validate table at 12/17/2021 04:37:09_
+_generating individual pdf files into /z/pdf_afp/tkcu/tkcudla/pdf/_
+
+_----------------------------_
+
+
+
+This does not give any error but does not create any pdf either. It creates _/z/daily/tkcu/tkcudla_pdfi.afp_but I am not sure how it suppose to create the pdf and why it doesn't. I tried it in RHS, RHS2 and RH2 environment.
+
+I need help to find out why PDFI option is not creating any pdf.
+
+
+
+Thanks,
+
+Rahat
+
+
+
+
+author: amirr
+comment: [~William.Kong], Is there any suggestion for this?
+
+
+author: william.kong
+comment: [~amirR]: I haven't found time to review with my team on this one processing question. Please continue with the other projects in the mean time as I would like to get this rolled out before we run out of disk space in our servers during tax season.
+
+
+
+Thanks!
+
+
+
+-- Will
+
+
+author: william.kong
+comment: [~amirR]: I am able to reproduce this issue as well. I'm going to see if [~jira_naru]can spare some time to see why it does not work in parallel under rh2.
+
+
+
+[~jira_naru]: This the test file I used. Just need to see why PDFi does not create files under parallel.
+
+
+
+*Test File Used:*
+
+[oper1@rhs2 tkcu]$ md5sum /z/download/tkcu/TKCU_DN_12272021.zip.pgp
+b5cba94ac83ee171e65137cf3e5c154f /z/download/tkcu/TKCU_DN_12272021.zip.pgp
+
+*Program Command Line:*
+
+/home/test/master/tkcu_dl_process.sh 1 bypass
+
+
+
+
+
+
+
+
+
+

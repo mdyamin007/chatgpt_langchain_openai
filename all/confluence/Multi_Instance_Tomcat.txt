@@ -1,0 +1,131 @@
+title: Multi Instance Tomcat
+body: ## CATALINA_HOME:
+
+mholden@[gitlab-01:/opt/tomcat$](http://gitlab-01/opt/tomcat$) ls -ltr  
+total 12  
+lrwxrwxrwx 1 root root 33 Jun 3 22:55 latest -> /opt/tomcat/apache-
+tomcat-9.0.20/  
+-rw-r--r-- 1 root root 3070 Jun 4 01:12 tomcat.jks  
+drwxrwxr-- 5 tomcat tomcat 4096 Jun 7 17:17 apache-tomcat-9.0.20  
+drwxr-xr-x 2 tomcat tomcat 4096 Jun 12 21:47 certs
+
+mholden@[gitlab-01:/opt/tomcat/latest$](http://gitlab-01/opt/tomcat/latest$)
+ls -l  
+total 12  
+drwxrwxr-- 2 tomcat tomcat 4096 Jun 7 23:56 bin  
+drwxrwxr-- 2 tomcat tomcat 4096 Jun 3 22:55 lib  
+drwxrwxr-x 7 tomcat tomcat 4096 Jun 3 17:55 webapps
+
+Global libraries are stored in the CATALINA_HOME/lib folder. Startup and
+Shutdown scripts are in the bin folder. Only setenv.sh should be pushed to the
+CATALINA_BASE directory of the same name.
+
+## CATALINA_BASE:
+
+These are instances of tomcat which have their own configuration and
+environment. Using CATALINA_HOME to use the same core code but using
+CATALINA_BASE as a separate instance/schema.
+
+mholden@[gitlab-01:/usr/local/tomcat$](http://gitlab-01/usr/local/tomcat$) ls
+-l  
+total 12  
+drwxrwxr-x 9 tomcat tomcat 4096 Jul 11 22:37 bank  
+drwxrwxr-x 8 tomcat tomcat 4096 Jun 3 23:38 creditunion  
+drwxrwxr-x 9 tomcat tomcat 4096 Jun 7 21:27 default  
+mholden@[gitlab-01:/usr/local/tomcat$](http://gitlab-01/usr/local/tomcat$)
+
+Each Instance (/usr/local/tomcat/<instance>) will contain their own
+configuration settings via conf/*.xml & environment setup via bin/setenv.sh
+
+mholden@[gitlab-01:/usr/local/tomcat/default$](http://gitlab-01/usr/local/tomcat/default$)
+ls -l bin/  
+total 52  
+-rwxrwxr-x 1 tomcat tomcat 823 Jun 6 22:42 setenv.sh  
+\---x--x--x 1 tomcat tomcat 47880 Jun 3 23:31 tomcat-juli.jar  
+mholden@[gitlab-01:/usr/local/tomcat/default$](http://gitlab-01/usr/local/tomcat/default$)
+ls -l conf/  
+total 236  
+drwxrwxr-x 4 tomcat tomcat 4096 Jun 6 22:56 Catalina  
+-rwxrwxr-x 1 tomcat tomcat 12873 Jun 3 17:55 catalina.policy  
+-rwxrwxr-x 1 tomcat tomcat 7241 Jun 6 23:02 catalina.properties  
+-rwxrwxr-x 1 tomcat tomcat 654 Jun 6 22:27 context.xml  
+-rwxrwxr-x 1 tomcat tomcat 1149 Jun 3 17:55 jaspic-providers.xml  
+-rwxrwxr-x 1 tomcat tomcat 2313 Jun 3 17:55 jaspic-providers.xsd  
+-rw------- 1 tomcat tomcat 20 Jun 3 23:19 jmxremote.access  
+-rw------- 1 tomcat tomcat 18 Jun 3 23:18 jmxremote.password  
+-rwxrwxr-x 1 tomcat tomcat 4199 Jun 6 22:32 logging.properties  
+-rwxrwxr-x 1 tomcat tomcat 1788 Jun 12 22:50 server.xml  
+-rwxrwxr-x 1 tomcat tomcat 547 Jun 3 19:38 tomcat-users.xml  
+-rwxrwxr-x 1 tomcat tomcat 2633 Jun 3 17:55 tomcat-users.xsd  
+-rwxrwxr-x 1 tomcat tomcat 171309 Jun 6 23:05 web.xml
+
+## Run As A Service
+
+This should hopefully make starting & stoping instances of tomcat a bit easier
+as you shouldn't need to remember to use the tomcat username (ie network
+restarting after maintenance)
+
+mholden@[gitlab-01:/etc/systemd/system$](http://gitlab-01/etc/systemd/system$)
+ls -l  
+-rwxr-xr-x 1 root root 637 Jul 11 22:37 tomcat-bank.service  
+-rwxr-xr-x 1 root root 658 Jul 12 00:06 tomcat-creditunion.service  
+-rwxr-xr-x 1 root root 646 Jun 4 01:27 tomcat-default.service
+
+bashService Instructions
+
+  
+
+  
+
+  * sudo systemctl start tomcat-default.service
+  * sudo systemctl stop tomcat-default.service
+
+** Only issue is I haven't been able to get it to start w/out using sudo?
+
+mholden@[gitlab-01:/opt/tomcat/latest$](http://gitlab-01/opt/tomcat/latest$)
+systemctl start tomcat-default.service  
+==== AUTHENTICATING FOR org.freedesktop.systemd1.manage-units ===  
+Authentication is required to start 'tomcat-default.service'.  
+Multiple identities can be used for authentication:  
+1\. netadmin  
+2\. ,,, (joec)  
+3\. ,,, (mholden)  
+4\. ,,, (davidt)  
+5\. ,,, (nnaim)  
+6\. Anwar Hossain,,, (anwar)  
+Choose identity to authenticate as (1-6): 3  
+Password:  
+==== AUTHENTICATION COMPLETE ===  
+mholden@[gitlab-01:/opt/tomcat/latest$](http://gitlab-01/opt/tomcat/latest$)
+
+  
+
+mholden@[gitlab-01:/opt/tomcat/latest$](http://gitlab-01/opt/tomcat/latest$)
+ps -ef | grep tomcat/  
+tomcat 22510 1 15 00:16 ? 00:00:11 /usr/lib/jvm/java-8-openjdk-
+amd64/jre/bin/java
+-Djava.util.logging.config.file=/usr/local/tomcat/default/conf/logging.properties
+-Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager
+-Djava.security.egd=file:///dev/urandom -Djava.awt.headless=true
+-Djdk.tls.ephemeralDHKeySize=2048
+-Djava.protocol.handler.pkgs=org.apache.catalina.webresources
+-Dorg.apache.catalina.security.SecurityListener.UMASK=0027 -Xms2048M -Xmx2048M
+-server -XX:+UseParallelGC -Djava.rmi.server.hostname=10.8.9.193
+-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=7503
+-Dcom.sun.management.jmxremote.rmi.port=7503
+-Dcom.sun.management.jmxremote.local.only=false
+-Dcom.sun.management.jmxremote.ssl=false
+-Dcom.sun.management.jmxremote.authenticate=true
+-Dcom.sun.management.jmxremote.access.file=/usr/local/tomcat/default/conf/jmxremote.access
+-Dcom.sun.management.jmxremote.password.file=/usr/local/tomcat/default/conf/jmxremote.password
+-Dignore.endorsed.dirs= -classpath
+/opt/tomcat/latest/bin/bootstrap.[jar:/opt/tomcat/latest/bin/tomcat-
+juli.jar](http://jar/opt/tomcat/latest/bin/tomcat-juli.jar)
+-Dcatalina.base=/usr/local/tomcat/default -Dcatalina.home=/opt/tomcat latest
+-[Djava.io](http://Djava.io).tmpdir=/usr/local/tomcat/default/temp
+org.apache.catalina.startup.Bootstrap start  
+mholden 23931 1574 0 00:17 pts/0 00:00:00 grep --color=auto tomcat/
+
+  
+
+

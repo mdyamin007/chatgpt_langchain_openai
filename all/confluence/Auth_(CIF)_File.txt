@@ -1,0 +1,143 @@
+title: Auth (CIF) File
+body: InfoIMAGE is a commercial printer company that provides financial institutions
+with the service of composing and printing financial documents. In addition,
+InfoIMAGE also provides electronic forms of the statements in either PDF or
+HTML format. The eStatement department is responsible for all services and
+applications that revolve around the storing and delivery of the electronic
+statements.
+
+In order to deliver an electronic statements to the end user, two core pieces
+of information must be known.
+
+  1. Which account, unique by number and type, does the statement belong to?
+  2. Which user, identified by a Unique User Identifier, has access to the account that holds the statement?
+
+The first piece of information is in the statement data itself. The statement
+data provides the account number and account type, or information adjacent
+that the Print team can use to determine the account number and account type.
+By the time that the index file is processed, the statements' assignment to
+accounts are already defined, and the Processing UI only needs to parse and
+store the data.
+
+It is the eStatement team's responsibility to work with the client to
+determine how InfoIMAGE will get the second core information. There are three
+methods:
+
+  1. User entitlement to accounts is determined during the SSO handshake where the OLB platform will provide the list of the accounts that the user should have access to. InfoIMAGE will accept the list and create/update/delete the user-account relationships accordingly.
+  2. User entitlement to accounts is determined by ingesting a data file, often called the Auth file or CIF file, provided by the client that will contain the user-account relationships.
+  3. A combination of (1) and (2).
+
+The purpose of this document is to provide an understanding of the Auth File,
+and how it can be configured.
+
+ **Table of Contents**
+
+2truenone
+
+* * *
+
+# Record Specifications
+
+## Input to Data Mapping
+
+  
+| Field(s)| Database Table| Database Column  
+---|---|---|---  
+1| Each valid line in the file will create| usr_fin_account|  
+  
+2| UNIQUE USER IDENTIFIER (UUID)| usr_mapping| cif_num  
+3| USER TYPE| usr| type  
+4| USER NAME| usr| usr_firstname  
+5| ACCOUNT NUMBER| fin_account| acct_number  
+6| ACCOUNT TYPE| fin_account| type  
+7| ACCOUNT NAME| fin_account| acct_owner_name  
+8| MAINTENANCE CODE| N/A| N/A  
+9| SUBUSER UNIQUE IDENTIFIER (SUID)| usr_mapping| cif_num (concatenated with
+UUID as UUID|SUID)  
+10| SSN| usr| usr_ssn  
+11| DOB| usr| usr_birthdate  
+12| DELIVERY PREREFENCE| paperless/paperless2| p_new_status/p_latest_status  
+13| NOTIFICATION PREFERENCE| notification_preference| email_status,
+email_attachment_status, sms_status  
+14| EMAIL ADDRESS| notification_preference| email_address  
+15| SMS_NUMBER| notification_preference| sms_number  
+16| EMAIL_ATTACHMENT_PASSWORD| notification_preference|
+email_attachment_password  
+  
+  
+
+* * *
+
+# General Processing Logic
+
+This is not a comprehensive detailing of the Auth File logic, but it will
+describe the key steps.
+
+  1. Parse through the entire file to determine the amount of bad data records. If the percentage of bad records compared to the total record count is higher than a defined threshold, the entire file will be rejected.
+  2.  **PreProcess** **:** Logic performed before processing each line in the file.
+  3. Process each record line by line in the order provided in the file.
+  4.  **PostProcess** : Logic performed after the entire file is processed.
+
+* * *
+
+# Data Completeness
+
+The data processing, the client may send a full file of the true states of all
+user-account relationships, or an incremental file that only contains the
+delta since the last file. Data completeness is mutually exclusive by setup.
+The client cannot send a full file one day and an incremental the next. It
+must be always full file or always incremental files.
+
+## Full File
+
+For a full file processing, InfoIMAGE will assume that all the user-account
+relationships defined inside the file are the only user-account relationships
+that should exist.
+
+### Pre-Process
+
+The entire list of existing usr_mapping and usr_fin_account will be queried to
+save the state of the user-account relationships. Two sets are saved: a cifSet
+that stores all the cif_num, and a ufaSet that stores all the ufa_id.
+
+There are configurations that can exclude certain sets of CIFs or UFAs. This
+is important for the mixed implementation where entitlements are determined
+both by the Auth file and during SSO.
+
+### During Processing
+
+While processing, cif_num is removed from the cifSet whenever the CIF value is
+encountered. Each line inside the data file can be considered to represent the
+UFA, and as such, each line will remove one ufa_id from the ufaSet.
+
+### Post-Process
+
+  1. Any CIF and UFA remaining inside the cifSet or ufaSet will be purged. 
+    1. For ufa purging, if the ufa belongs to a primary user, then all subusers' link to the same account will also be removed. This is applicable for setups where it is a requirement that the primary user must have access to an account for the subusers to access the account.
+  2. Any users that are no longer linked to at least one account will be deactivated.
+    1. If the user deactivated is a primary user, all subusers will also be deactivated.
+  3. For any accounts that are unlinked from a user due to the ufa purge, a check is made to see if the account is still linked to at least one other enrolled user. If the answer is no, then the account's paperless status will be changed to Paper.
+
+## Incremental File
+
+For an incremental file processing, an additional column needs to be included
+for the Maintenance Code to define the operation to be done. There are two
+operations currently supported.
+
+  1.  **A** (dd): Add or update the user-account relationship. The users and accounts are automatically created if they do not exist already.
+  2.  **D** (elete): Delete the user-account relationship. 
+
+### Pre-Process
+
+Nothing is done.
+
+### During Processing
+
+  1. Whenever a ufa is deleted, the account is checked to see if it is still linked with at least one other enrolled user. If not, the account's paperless status will be changed to Paper if the status is not already Paper.
+  2. All  
+
+### Post-Process
+
+  1. For all primary users 
+
+

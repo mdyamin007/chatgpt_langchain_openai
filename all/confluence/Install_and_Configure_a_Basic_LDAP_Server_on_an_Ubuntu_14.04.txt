@@ -1,0 +1,132 @@
+title: Install and Configure a Basic LDAP Server on an Ubuntu 14.04
+body: ## Install and Configure a Basic LDAP Server on an Ubuntu 1404  
+\---  
+The OpenLDAP server is in Ubuntu's default repositories under the package
+"slapd"
+
+To get ubuntu update run the following command.
+
+    
+    
+    sudo apt-get update
+    
+
+We can install LDAP and some additional utilities easily with apt-get:
+
+    
+    
+    sudo apt-get install slapd ldap-utils
+    
+
+When the installation is complete, we actually need to reconfigure the LDAP
+package.
+
+    
+    
+    sudo dpkg-reconfigure slapd
+    
+
+In the reconfiguration process you will be asked a series of questions about
+how you'd like to configure the software.
+
+. Omit OpenLDAP server configuration?  **No**  
+. DNS domain name? we can use actual domain name, in my case it is
+**[test.com](http://test.com)**  
+. Organization name? in my case it is  **example**  
+. Administrator password? choose another one.  
+. Database backend to use?  **HDB**  
+. Remove the database when slapd is purged?  **No**  
+. Move old database?  **Yes**  
+. Allow LDAPv2 protocol?  **No**  
+  
+
+  
+
+## We will be administering LDAP through a web interface called PHPldapadmin.
+
+Install PHPldapadmin with this command:
+
+    
+    
+    sudo apt-get install phpldapadmin
+    
+
+  
+
+We need to configure some values within the web interface configuration files  
+Open the configuration file with root privileges
+
+    
+    
+    sudo nano /etc/phpldapadmin/config.php
+    
+
+  
+Change the value to the way you will be referencing your server.
+
+    
+    
+    $servers->setValue('server','host','domain_nam_or_IP_address');
+    
+
+  
+
+You will need to reflect the same value you gave when asked for the DNS domain
+name when we reconfigured "slapd".  
+Domain components are anything that is separated by a dot.These components are
+then given as values to the "dc" attribute in LDAP.  
+For instance, if your DNS domain name entry was
+"[dsi.test.com](http://dsi.test.com)", LDAP would need to see
+"dc=dsi,dc=test,dc=com".
+
+    
+    
+    $servers->setValue('server','base',array('dc=test,dc=com'));
+    
+
+The next value to modify will use the same domain components that you just set
+up in the last entry. Add these after the "cn=admin" in the entry below:
+
+    
+    
+    $servers->setValue('login','bind_id','cn=admin,dc=test,dc=com');
+    
+
+  
+Save and close the file.
+
+  
+
+## Log Into the Web Interface  
+You can access by following address in your web browser:
+
+    
+    
+    domain_name_or_IP_address/phpldapadmin
+    
+
+##  
+Click on the "login" link on the left-hand side.  
+You will receive a login prompt. The correct Login DN (distinguished name)
+should be pre-populated if you configured PHPldapadmin correctly. In our case,
+this would be "cn=admin,dc=test,dc=com".
+
+Enter the password you selected during our slapd configuration.  
+You will be presented with a rather sparse interface initially.  
+
+If you click on the "plus" next to the domain components (dc=test,dc=com), you
+will see the admin login we are using.  
+
+  
+
+### Attachments
+
+  
+
+
+
+  
+
+  
+
+

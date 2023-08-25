@@ -1,0 +1,9 @@
+title: GECU Mortgage gets Redirected to monthly on iOS app
+description: None
+
+
+author: rifat.mahmud
+comment: NCR's response:
+The root cause of the issue has been determined to be that the iOS app is not sending the necessary cookies required by the eStatements vendor (Infoimage) when this error message is seen. When the user selects the new "Mortgage 8821" account, the Infoimage server sends a 302 redirect response with a new cookie in the Set-Cookie header to use for subsequent requests. Unfortunately, there is an issue within Apple's WKWebView where the Set-Cookie header is not always respected for 302 redirect responses from the server. Thus, the correct cookie may not always be sent after the user selects a different account from the dropdown.
+ The CMA iOS app has implemented a work-around for this issue for the initial request made to the server when loading the web view. However, all requests made after that are handled by the WKWebView API and cannot be modified to include the proper cookies, as of the current API version. This means the app is unable to handle redirects that happen after initial load of the web page with 100% accuracy.
+ There are no known available workarounds from the iOS side, but we are constantly evaluating our SSO/TPV web view solution to make improvements.

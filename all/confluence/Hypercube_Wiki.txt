@@ -1,0 +1,322 @@
+title: Hypercube Wiki
+body: ## Application Testing:
+
+Please use the below URL to test
+
+<http://pd-dev6/sso.html>
+
+this file is placed in the below location:  
+/usr/share/nginx/html/sso.html  
+  
+
+## URLs:
+
+  1. Prod setup
+    1. KeyGen  
+[https://estmt.rabobank.com/ssoKeyGen/rabo?accNo=12345&method=digitalInsight&password=22222](https://estmt.rabobank.com/ssoKeyGen/rabo?accNo=12345&method=digitalInsight&password=22222)
+
+    2. SSOExchange  
+POST: <https://estmt.rabobank.com/ssoExchange> // pass the token string as
+POST param
+
+  1. Local setup: Please pass the cid
+    1. KeyGen  
+[http://localhost/ssoKeyGen/rabo?accNo=12345&method=digitalInsight&password=22222](http://localhost/ssoKeyGen/rabo?accNo=12345&method=digitalInsight&password=22222)
+
+    2. SSOExchange  
+[http://localhost/ssoExchange?cid=rabo&token=[token](http://localhost/ssoExchange?cid=rabo&token=\[token)]
+// send the keyForURL token
+
+Please use the below link for client submissions. Countesy:QA  
+<https://develop.infoimageinc.com/attachments/download/2700/WABC_SSO.html>
+
+Please check the [README.md](http://README.md) file for more info.  
+  
+
+## Server Startup/Shutdown:
+
+  1. checkout the svn repository for Hypercube  
+
+    
+        sudo -iu builder
+    svn co svn+ssh://pd-tools.infoimage.com/srv/svn/hypercube/trunk hypercube  
+    
+    
+
+  2. cd to hypercube folder
+  3. to  **Start** : run the below command as a background process (pls create a folder for logs to be written, logs folder just one folder before the checkout repository)  
+
+    
+        Linux:
+    export MONGO_URL=mongodb://10.8.9.137:8555/hypercube
+    nohup meteor --settings=settings.json --port=8080 > ./logs/meteor.out < /dev/null &
+    
+    Windows:
+    meteor --settings=settings.json --port=80
+    
+
+  4. to monitor the logs please use the below command  
+
+    
+        tail -f ./logs/meteor.out  [Linux]
+    
+
+  5. to Shutdown on Linux machines; identify the pid of the meteor application and kill the same. [ As of this writing, we dont know of an efficient way to bring down the server ]  
+
+    
+        builder@pd-dev6:~/hypercube$ ps -eaf | grep meteor
+    builder   9651  8977 99 14:36 pts/0    00:00:09 /home/builder/.meteor/packages/meteor-tool/.1.0.45.7isska++os.linux.x86_64+web.browser+web.cordova/mt-os.linux.x86_64/dev_bundle/bin/node /home/builder/.meteor/packages/meteor-tool/.1.0.45.7isska++os.linux.x86_64+web.browser+web.cordova/mt-os.linux.x86_64/tools/main.js --settings=settings.json --port=8080
+    builder   9685  9651  0 14:36 pts/0    00:00:00 /home/builder/.meteor/packages/meteor-tool/.1.0.45.7isska++os.linux.x86_64+web.browser+web.cordova/mt-os.linux.x86_64/dev_bundle/bin/node /home/builder/hypercube/.meteor/local/build/main.js
+    
+
+> > login as builder user
+    
+    
+    kill 9651
+    
+
+note: The dev server is deployed on pd-dev6 machine. The Meteor application is
+being run as 'builder' user. Please refer to the CI section for more
+information.  
+  
+
+## Environment variables : settings.json
+
+This file would have all the environment variables that the client and server
+could access selectively. All those under 'public' section can be accessed by
+both Client and Server code, rest would be accessed only by the Server code.
+Please update the Wiki doc as you update settings.json.
+
+Note: This would be the only file that the developer would modify to customize
+their local setup.
+
+{  
+    "infoserviceURI": "<http://pd-dev2.infoimage.com:8880>",  
+    "ignoreAuth": false,  
+    "rabo.authCipher": "Washington",  
+    "rabo.authConst": "600",  
+    "public": {  
+        "environment": "development",  
+        "useMockData": false  
+    }  
+}
+
+    
+    
+      
+    
+
+## CI setup
+
+Jenkins build has been setup; below is the URL to trigger builds for dev.  
+<http://pd-tools:8080/jenkins/view/InfoSERV%20APIs/job/hypercube/>
+
+CI for qa  
+<http://pd-tools:8080/jenkins/view/InfoSERV%20APIs/job/hypercube-qa/>
+
+server logs can be monitored using the below command on pd-dev6 machine.  
+tail -f /home/builder/logs/meteor.out  
+  
+
+## MongoDB setup:
+
+MongoDB is setup on pd-dev6 listening at port 8555, which provides Mock api
+data and cid specific information (in progress). Please follow the below steps
+if you wish to access the server setup. Optionally, you can use your local
+Mongo setup if you wish to use you local data.
+
+MongoDB configuration:
+
+    
+    
+    /etc/mongod.conf
+    
+
+  
+MongoDB logs:
+
+    
+    
+    tail -f /var/log/mongodb/mongod.log
+    
+
+  
+
+to connect to mongo terminal on pd-dev6 (10.8.9.137)
+
+    
+    
+    mongo --host 10.8.9.137 --port 8555
+    
+
+  
+  
+
+## Webserver configuration
+
+Nginx is the webserver that redirects requests to the Meteor app. Following
+are the Server blocks (Virtual hosts) configured (the bold ones have data, the
+rest are in progress). You might want to update your hosts file for testing.
+
+ **[https://estmt.rabobank.com](https://estmt.rabobank.com/)  
+[https://estmt.alliancebankofarizona.com](https://estmt.alliancebankofarizona.com/)  
+[https://estmt.sscu.com](https://estmt.sscu.com/)  
+[https://estmt.firstindependentnv.com](https://estmt.firstindependentnv.com/)  
+[https://estmt.bankofnevada.com](https://estmt.bankofnevada.com/)  
+[https://estmt.torreypinesbank.com](https://estmt.torreypinesbank.com/)  
+[https://estmt.allianceassociationbank.com](https://estmt.allianceassociationbank.com/)**  
+  
+
+## Webserver logs:
+
+    
+    
+    sudo tail -f /var/log/nginx/error.log /var/log/nginx/access.log
+    
+
+## New client setup:
+
+Creating a new client is creating a new Nginx Server block (Virtual host)  
+assuming new cid is  **newcid**
+
+    
+    
+    cd /etc/nginx/sites-available
+    cp rabo newcid
+    ln -s /etc/nginx/sites-available/newcid /etc/nginx/sites-enabled/newcid
+    
+
+  
+
+change the  **server_name**  and  **proxy_set_header**  keys with the
+appropriate settings  
+make the above modifications for the new cid and reload the webserver( virtual
+host name in particular )
+
+    
+    
+    nginx -s reload
+    
+
+  
+
+## installing Nginx
+
+    
+    
+    sudo apt-get install nginx
+    sudo service nginx start
+    update-rc.d nginx defaults
+    
+
+Root location for Nginx
+
+    
+    
+    /usr/share/nginx/html
+    
+
+  
+
+The certs are placed in the below location.
+
+    
+    
+    /etc/nginx/ssl
+    
+
+  
+
+## Dev cheatsheet:
+
+  1. to get the cid properties on the client side  
+
+    
+        CidProperties.findOne()
+    
+
+> On the server side
+    
+    
+    CidProperties.findOne({cid: 'rabo'})
+    
+
+# get the route name
+
+    
+    
+    Router.current().route.getName())
+    
+
+# A client side Cookie called appSession is used to store all the key, value
+pairs that client needs. As of this writing, the appSession Cookie is as below
+
+appSession = {  
+    cid: '',  
+    acctNo: '',  
+    userId: '',  
+    loginType: '',  
+    orgType: '',  
+    token: ''  
+};
+
+    
+    
+      
+    
+
+# to get the value of a key stored in appSession
+
+    
+    
+    Meteor.App.getSessionProp('cid')
+    
+
+# create a new route
+
+    
+    
+    code snippet here
+    
+
+# creating a simple Meteor Method
+
+    
+    
+    code snippet here
+    
+
+# calling an API from Meteor application
+
+    
+    
+    code snippet here
+    
+
+  
+
+## References:
+
+  1. Meteor Style Guide: <https://github.com/meteor/meteor/wiki/Meteor-Style-Guide>
+  2. Meteor 101: <https://www.meteor.com/try>
+  3. Internationalization: <https://github.com/TAPevents/tap-i18n-ui>
+  4. Meteor Docs: <http://docs.meteor.com/#/full/>
+  5. Meteor for Windows: <https://github.com/meteor/meteor/wiki/Preview-of-Meteor-on-Windows>
+  6. Meteor REST API package for Hypercube: <http://meteorpedia.com/read/REST_API>
+  7. Meteor MongoDB Explorer package: <https://github.com/gterrono/houston>
+  8. Meteor Iron Router <https://github.com/iron-meteor/iron-router>
+  9. CRUD operations on Cookie <https://github.com/chuangbo/meteor-cookie>
+  10. Application Structure, please refer [README.md](http://README.md)
+  11. Nginx
+    1. <http://nginx.org/en/docs/beginners_guide.html>
+    2. <https://www.digitalocean.com/community/tutorials/how-to-install-linux-nginx-mysql-php-lemp-stack-on-ubuntu-12-04>
+
+  
+
+### Attachments
+
+250250250
+
+  
+
+

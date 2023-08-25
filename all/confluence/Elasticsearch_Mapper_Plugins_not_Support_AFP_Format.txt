@@ -1,0 +1,189 @@
+title: Elasticsearch Mapper Plugins not Support AFP Format
+body: **Amjad** : Hi Alok,
+
+Here are the findings on elastic search mapper plugins
+
+The elasticsearch mapper plugin(  
+[[<https://www.elastic.co/guide/en/elasticsearch/plugins/2.3/mapper-
+attachments.html]]>) use apache text extraction library TIKA which is a
+content analysis toolkit, detects and extracts metadata and text from
+different file types. But apache TIKA not support AFP formats document.
+[[<https://tika.apache.org/1.4/formats.html>]]
+
+To have a demo with apache TIKA we can use the following link  
+[[<https://www.elastic.co/guide/en/elasticsearch/plugins/2.3/mapper-
+attachments.html>]]. After downloading the files, run jar file using the
+command java -jar tika-app-1.2.jar and drag and drop different formats file,
+then the window will show both metadata and plain context of file.
+
+Thanks
+
+ **Ben** : Amjad,
+
+Let's assume we have a way to extract the textual content out from the AFP
+files.  
+So that when the documents are provided for the search engine, it will always
+comes in pairs (one AFP & one TXT/XML).  
+The TXT/XML file will contain all the textual content of the AFP file. We are
+expecting the Elastic Search to crawl the TXT/XML file, yet maintaining the
+association to the corresponding AFP file.  
+So that when any keyword search result will allow us to know which AFP file
+contain such keyword.
+
+We've got the similar POC done on the Solr side and able to see it working.
+However, one trouble we have on Solr side being the Access-Control part.
+Fundamentally, we cannot allow Ben to search and seeing Amjad's statement as
+part of the search result. With that said, we cannot allow the indexing to be
+built on top of the entire document set across account. This is the key
+challenge that we want to solve with Elastic Search. Please help research on
+this.
+
+Thanks.
+
+ **Amjad** : Hi Ben,
+
+So far i know each afp file belongs to one account.
+
+In elasticsearch we can define multiple fields as properties of index, see
+properties.json in attachment.
+
+So during indexing there are two fields value we have to keep at least  
+1\. base64 encoded string of the file as attachment (elasticsearch use base
+64).  
+2\. AcctNo that the file belongs to.  
+sample index.json file in attachment.
+
+And searching query on all docs of the index would be the following, {  
+"query": {  
+"bool" : {  
+"must" : {  
+"query_string" : {  
+"query" : "properties"  
+}  
+},  
+"filter" : {  
+"term" : { "acctNo" : "222222" }  
+}  
+}  
+}  
+}  
+There is one plugin for authentication and access control but i did study more
+about that
+
+Whats your opinion?
+
+Thanks
+
+ **Ben** : So the 'filter' is absolute and doesn't involve any fuzziness,
+right?
+
+The authentication I meant was referring to ensure we do the 'filter'
+correctly. Not really doing user/password authentication.
+
+In addition to Account Number, each document should be associated to a CID,
+Account-number, Account-type composite key
+
+If the filter can ensure userA search query won't mistakenly return statement
+of userB, this model seems to be the right direction.  
+
+
+Thanks.
+
+ **Amjad** : Ben,
+
+I have tested by indexing few docs, and seen search filters are working fine
+as expected, Do you have any suggestion to make sure that filters will not
+break, and will work absolutely as we expect.
+
+Could you please tell me what is the next item i can start with elasticsearch
+?
+
+ **Ben** : We need to run through a bigger scale of the POC with documents
+from across at least:
+
+3 CIDs  
+10,000 accounts each CID  
+average 30+ document per account.
+
+Then test this through some automated fashion with ~1000 sample search to
+prove such setup is accurate and secure.
+
+Please think through how we can achieve the above and provide a design
+proposal. I'd assume the design will be pretty close to how we plan to setup
+the document & indexing structure when we go production. The sample search &
+validation will be reuseable for QA in future. After this is proven good, we
+will then proceed with next step of designing the API spec for runtime usage
+and integration with HyperCube.
+
+Alok,
+
+While Amjad is working on the design pieces, please coordinate with David and
+Ernest to see how we can get these kind of test data/environment prepared. We
+may able want to utilize the dev environment for this purpose. David can
+suggest CID candidates. Ernest will need some work to produce the AFP2TXT
+portion for Elastic Search crawling.
+
+ **Amjad** : Hi Ben,
+
+Our plan is to keep 4 fields value during indexing each doc, those are Account
+No, CID, Account type and TXT file. Meaning the index for each file would have
+four fields value,
+
+Now the question is during indexing a file how we will get CID, Account No and
+Account Type, the file associated to?
+
+Please see sample indexing.json file in attachment.
+
+Thanks
+
+ **Ben** : Hi. Amjad,
+
+I need elaboration on each of the json attributes in your sample. The
+attribute name itself is not very self-intuitive.
+
+You will probably get the CID from the folder name. Maybe Account Type also.  
+Account Number will most likely on the filename itself.
+
+Let say, if we have such a folder/file structure below, how would the json
+look like?
+
+/tkcu/dda/123456_20160502.txt  
+/tkcu/dda/123456_20160402.txt  
+/tkcu/dda/123456_20160302.txt  
+/tkcu/dda/123456_20160202.txt  
+/tkcu/dda/234567_20160502.txt  
+/tkcu/dda/234567_20160402.txt  
+/tkcu/dda/234567_20160302.txt  
+/tkcu/dda/234567_20160202.txt  
+/tkcu/ln/234567_20160502.txt  
+/tkcu/ln/234567_20160402.txt  
+/tkcu/ln/234567_20160302.txt  
+/tkcu/ln/234567_20160202.txt
+
+(then repeat the above with another CID like MTRO, also assume each TXT file
+is accompanied a corresponding PDF file)
+
+Ernest/David, comments? thoughts?
+
+ **Amjad** : Hi Ben,
+
+There is a Contextual Search.csv file in attachment.
+
+I wrote a program using java api of elasticsearch to index all the TXT files
+from certain directory assuming folder/file structure as same as you
+mentioned.
+
+Now am thinking the program will have an upload option to test with huge
+sample text, we can upload a csv file with text, after that searching result
+will be appended in csv at "foundfilelist" column.
+
+Thanks
+
+ **Ben** : I don't think your test cases are representative enough.  
+We need to have common keyword that shows in documents across CID & accounts,
+yet the search result is returning only the authorized CID & Account. e.g. the
+keyword 'atm' may be present in all statements across all 4 accounts in your
+excel, but if I'm searching from the account owner of tkcu-123456, I should
+get the statement from tkcu-123456 only, mtro-123455 should NOT be returned.
+
+

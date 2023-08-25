@@ -1,0 +1,150 @@
+title: Elasticsearch Cluster Setup Requirement
+body: Some key points about Elasticsearch:
+
+  * A running Elasticsearch process is called a node.
+  * Nodes host shards, which are instances of Lucene.
+  * Primary Shards are updated first when data is written.
+  * Replica shards mirror primaries, are always stored on a different node,and are written to after the primary.
+  * Datasets are stored in an index, which is formed of one or more shards. Basically, a group of shards where each shard is holding part of the same dataset is an index.
+  * Main purpose of shard is to allow the index to horizontally scale. Like if we have a index called "nginx-access-logs" and it contains 120 thousands data, we can distribute them into multiple shards. If we scale it into three shards into three different nodes, each primary shard of each node will store 20 thousands.
+  * Nodes running on separate servers can be configured to create a cluster. Shards can be distributed across nodes in the cluster to provide fault tolerance.
+
+  
+
+##  **Standalone   Node:**
+
+By default, when we start Elasticsearch, it starts with a single node with one
+primary shard. If we have only one node, there will be no replica for the
+primary shard. As replica shards can never live on the same node as their
+primary.
+
+  
+
+  
+
+######  _Fig: Single Elastic search node_
+
+  
+
+  
+
+As we can see from the figure, shards are actually instance of Apache Lucene.
+There would be some segments inside apache lucene index. Segments are made of
+a data structure called inverted index where data is actually reside.
+
+ **Issue with single node:**
+
+  * Single node is not fault tolerant as if node goes down, data becomes unavailable.
+  * There will be no replica shards. So there is a chance to lose data.
+
+  
+
+##  **Two Node Cluster:**
+
+To solve these, we must introduce additional nodes and create a cluster.
+
+  
+
+######  _Fig: Elasticsearch cluster with two nodes_
+
+  
+
+Above figure, we have two nodes in the cluster. Node 1 have one primary shard
+P1 and Node 2 have one primary shard P2. Replica of P1, R1 is reside on node 2
+and replica of P2,R2 is reside on node 1. As a rule of thumb, replica can
+never liver on same node.
+
+  
+
+As soon as  **node2  **goes down, **  P2**'s replica,  **R2,**  on  **node1
+**will get promoted to a primary and become the new  **P2.  **
+
+  
+
+ ****
+
+######  _Fig: Elasticsearch cluster when one node goes down._
+
+  
+
+In the above figure, after node 2 goes down and replica of P2 promoted itself
+as master, there is no more replica for any shard as there is no more
+additional node. It is recommended to create two replica shards for each
+primary shard. So that, if any nodes goes down. it won't affect the cluster.
+
+  
+
+ **Issue with two node cluster:**
+
+  *  ** **Split Brain:  ****
+
+At any time, there will only be one single master node in the cluster. If node
+2 leaves or crashes, node 1 becomes the master. When node 2 gets back up, it
+will simply join the cluster as a new master-eligible node and will wait until
+the node 2 crashes in order to become the new master.
+
+The split brain situation can occur if the network between node 1 and node 2
+breaks for a short moment. When that occurs, node 1 and node 2 are perfectly
+alive and think they are alone in the cluster, so since node 1 doesn't see
+node 2 anymore, node 1 will elect itself as the master. At that point, you
+have two masters in your cluster, that's the split brain situation.
+
+  
+
+In order to prevent split brain situation, you should have an odd number of
+master-eligible nodes and make sure that `minimum_master_nodes` is set to 2
+(number of master-eligible nodes / 2 + 1). When that's the case, it will only
+be possible to elect a new master if at least two master-eligible nodes are
+present and can communicate to each other in order to reach a quorum.
+
+  
+
+##  **3 node cluster:**
+
+So, we will have three nodes with one primary shard and two shards  on  each
+node. We will tweak some configurations to avoid split brain situation:
+
+  * set **discovery.zen.minimum_master_nodes**  to 2 (3/2 + 1 =2)
+  *  **discovery.zen.ping.timeout.  **It's default value is 3 seconds and it determines how much time a node will wait for a response from other nodes in the cluster. Slightly increasing the default value is definitely a good idea in the case of a slower network.
+
+######  _Fig: Elasticsearch cluster with three nodes_
+
+In the above cluster, we have three nodes - node 1, node 2 and node 3. We have
+a index called nginx-access-logs which is distributed in three primary shards
+- P1, P2 and P3. Each primary shards have two replicas live on other nodes.
+
+  
+
+##  **System Requirement:**
+
+ **Expected Source Data:  **
+
+  * Proxy Logs - 60-70 GB  ~ 100 GB (4 months)
+  * Metric Logs - 350-400 GB ( 1 month metric log for approx 90 machines)
+  * APM Logs - Aprrox 400 GB
+
+ **CPU Core:   **4 Core ** **
+
+ **RAM:**   16 GB  
+
+ **Storage:** 1 TB ** **
+
+ **JVM Heap Size:** JVM heap size to no more than 50%(32 gb max) of the
+physical memory of the backing node. With 16GB node memory, you can set the
+JVM heap size to 8GB (== max 160 shards per node, 480 shards total)
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+

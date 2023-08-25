@@ -1,0 +1,293 @@
+title: FCBT - [30662][pvt] FCBT - PLBA: Separate processing segments for 'Simple Bill' and 'Simple Bill Statement' files
+description: TITLE: FCBT - PLBA: Separate processing segments for 'Simple Bill' and 'Simple Bill Statement' files
+
+Application: LIQ Simple Bills
+
+
+
+
+
+
+
+Description:
+
+Permanent update to separate processing of files for 'LIQ Simple Bills'.
+
+Currently, we process two file names together (if received):
+
+
+
+SIMPLE BILL: <CID>_liq_simpbill_<exportID>_<MMDDYYYY>.txt.pgp
+
+SIMPLE BILL STATEMENT: <CID>_liq_simpbillstmt_<exportID>_<MMDDYYYY>.txt.pgp
+
+
+
+Recommendation to process as different segments if possible:
+
+Simple Bill as Segment 01 - 10.
+
+Simple Bill Stmt as Segment 11 - 20.
+
+
+
+IS ASSESSMENT:
+
+2hr - Update Script fcbt_lq1_process_wrapper.sh
+
+2hr - Update Script fcbt_lq1_process.sh
+
+5hr - Testing all 15 associations
+
+Total = 9hrs - IS hours  + Zero ISD hours
+
+
+
+NOTES FOR DEVELOPER:
+
+Please update scripts: fcbt_lq1_process_wrapper.sh & fcbt_lq1_process.sh. Add coding logic that will make sure each datafile is ran with the correct segment, for example:
+
+If datafile =<CID>_liq_simpbill_<exportID>_<MMDDYYYY>.txt.pgp(Simple Bill), then make sure the segment is 1 - 10.
+
+If datafile =<CID>_liq_simpbillstmt_<exportID>_<MMDDYYYY>.txt.pgp (Simple Bill Statement), then make sure the segment is 11 - 20.
+
+
+
+Set and test crontab with 2 entries. One to to be set as segment 1 for Simple Bill and the other set as segment 11 for the Simple Bill Statement.
+
+
+
+NOTE: Client only sends 1 segment per day, in the event any extra segments are sent, they will need to be processed manually.
+
+
+
+Timeline:
+
+Programmer: SamV
+
+Turnover = 8/12
+
+QA Sample = 8/22 by 1pm
+
+Client Sample = 8/23
+
+Final QA = 8/26
+
+Parallel = 9/6 (AFTER EOM)
+
+Live Date = 9/13
+
+
+author: JIRAUSER10906
+comment: QA
+
+This update to process 'Simple Bills' and 'Simple Bill Statements' separately as different segments has been completed. Please review.
+ * Attached DPVS from segment 1[^plbalq1109_dpvs_segment1.pdf]and segment 11[^plbalq11109_dpvs_segment11.pdf]automatic processing via cron scheduler
+ * Attached PLBA samples produced from segment 1[^plbalq1109_sample_segment1.pdf]and segment 11[^plbalq11109_sample_segment11.pdf]
+ * In addition to plba, the additional following data files were processed:
+ ** plba_liq_simpbill_62_06092022.txt.pgp
+ ** plba_liq_simpbillstmt_256_06092022.txt.pgp
+ ** milb_liq_shsimpbillstmt_256_06092022.txt.pgp
+ ** milb_liq_simpbillstmt_999256_06092022.txt.pgp
+ ** agtx_liq_simpbillstmt_256_06092022.txt.pgp
+ ** alfc_liq_simpbill_62_06092022.txt.pgp
+ ** cafc_liq_simpbill_62_06092022.txt.pgp
+
+****************************************************
+ Parallel ID: 20220819145040
+ Currently in parallel: Yes
+ User: samV
+ Description: IS-1440 FCBT Separate Segments
+ Date Submitted: 2022-08-19 14:51:44
+ Date Last Updated: 2022-08-19 15:51:22
+ Files:
+ 1) fcbt_lq1_process.sh
+ 2) fcbt_lq1_process_wrapper.sh
+ 3) fcbtlq1.procs
+****************************************************
+
+
+author: berezinez
+comment: [~SamV2021] [~phoebe.george]
+
+QA pass, ready for client approval.
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+Hi Phoebe, any updates on this?
+
+Thanks,
+Sam
+
+
+author: phoebe.george
+comment: Hi Sam, it looks like the DPVS counts are reversed.
+
+Segment 11 notes that the file name: CID>_liq_simpbill_<exportID>_<MMDDYYYY>.txt.pgp.
+
+Segment 1 notes the file name: plba_liq_simpbillstmt_242_05112022.txt.pgp
+
+I believe it should be reversed, but it could have also been how you named the PDF itself. Can you confirm? The counts seem to reflect the correct file name though.
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+Hi Phoebe, it looks to me that each of the two segments processed the correct file (e.g. segment 1 processed simpbill, and segment 11 processed simpbillstmt) according to the counts like you mentioned, but the transmission filename listed on the DPVS is wrong.
+
+I'll have to look into this further.
+
+Thanks,
+Sam
+
+
+author: phoebe.george
+comment: [~SamV2021] Thank you!
+
+The customer also requested the following for one more set of counts/samples:
+
+_One last item before we approve: could you also check with your team and provide the number for 7/30 bill drop date? any 2 or 3 associations will work._
+
+
+
+Here are additional files that can be used:
+
+!image-2022-09-01-10-34-47-012.png!
+
+!image-2022-09-01-10-35-48-576.png!
+
+Thank you,
+
+Phoebe
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+As requested, I have produced additional samples/DPVS for the files you showed above. The issue where the DPVS shows the wrong transmission file name has also been fixed (before this fix, the previously processed file was shown instead of the file currently being processed).
+
+Simple Bill (segment 1):
+ * PLBA
+ ** DPVS:[^plbalq1111_dpvs_segment1.pdf]
+ ** Sample:[^plbalq1111_sample_segment1.pdf]
+ * CAFC
+ ** DPVS:[^cafclq1130_dpvs_segment1.pdf]
+ ** Sample:[^cafclq1130_sample_segment1.pdf]
+
+Simple Bill Statement (segment 11):
+ * PLBA
+ ** DPVS:[^plbalq11111_dpvs_segment11.pdf]
+ ** Sample:[^plbalq11111_sample_segment11.pdf]
+ * CAFC
+ ** DPVS:[^cafclq11130_dpvs_segment11.pdf]
+ ** Sample:[^cafclq11130_sample_segment11.pdf]
+
+
+author: phoebe.george
+comment: Sorry for the delay on this, getting verification of counts from customer. Thanks
+
+
+author: phoebe.george
+comment: [~SamV2021] This has been approved by the customer. Please confirm next steps need to prepare by IS. Thank you!
+
+
+author: JIRAUSER10906
+comment: [~berezinez]
+
+Hi Alis, please proceed with final QA review. Please let me know if there's anything you need from my end.
+
+Attached IS checklist:[^fcbtlq1_is-1440_check_list.pdf]
+
+Thanks,
+Sam
+
+
+author: berezinez
+comment: [~SamV2021] [~phoebe.george]
+
+QA is completed, IS checklist is attached.
+
+[^IS_1440_FCBT_IS_checklist.pdf]
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+Hi Phoebe, please create a MPT for parallel testing.
+
+Thanks,
+Sam
+
+
+author: phoebe.george
+comment: [~SamV2021] Sorry I missed creating this! I will setup now :)
+
+
+author: phoebe.george
+comment: MPT #34055 created for IS to fill out. Thanks [~SamV2021]
+
+
+author: phoebe.george
+comment: [~SamV2021] I was providing some screenshots to FCBT on what the different 'segments' look like on Job Status, so I had pulled from InfoTrac Staging.
+
+We noticed that the Segment 01 and Segment 11 were tied to 'LIQ Simple Statements'
+
+!image-2022-09-29-10-46-51-618.png!
+
+Currently for LIQ Simple Bills application (LQ1, it shows up on InfoTrac as circled below:
+
+!image-2022-09-29-10-47-36-611.png!
+
+
+
+In checking the DPVS's and assessment from the samples/test, it is showing the lq1 application, so just wanted to make sure. LIQ Simple Statements uses prefix LS1.
+
+
+
+Thanks,
+
+Phoebe
+
+
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+Hi Phoebe, 'Stmt - LIQ Simple' in the 'Application ID' column is tied to the version# used in the DT_JOB_ID. For my own testing in staging, I went with the previously used version# (which was whatever was in the insert files  V22403 which in PC's database is linked to 'Stmt - Liq Simple'). As long as the correct version number is used, 'Invoice - LIQ Simple Bills' should be what is displayed.
+
+Once DP is done processing in parallel, we can double-check to ensure that 'Invoice - LIQ Simple Bills' is what is shown.
+
+Thanks,
+ Sam
+
+
+author: phoebe.george
+comment: [~SamV2021] I rec'd confirmation from the bank that we can move forward with code release. Can we plan for Fri, 10/6?
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+Yes, we will release by end of day tomorrow (10/7).
+
+Thanks,
+Sam
+
+
+author: JIRAUSER10906
+comment: [~phoebe.george]
+
+Postponing release. Will have a call with Phoebe and Cesar on Monday (10/10) to discuss crontab entries in production.
+
+
+author: JIRAUSER10906
+comment: Attached IS PTR form:[^IS_1440_PTR_FCBTLQ1_samV.pdf]
+
+
+author: JIRAUSER10906
+comment: Code has been released to production.
+
+Backup ID:20221014113523

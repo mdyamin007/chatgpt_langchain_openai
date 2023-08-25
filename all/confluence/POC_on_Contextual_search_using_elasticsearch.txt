@@ -1,0 +1,277 @@
+title: POC on Contextual search using elasticsearch
+body: # Elasticsearch  
+Installation: (Linux environment)
+
+  
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+
+# Requirements
+
+  
+  
+
+## Business Requirements & Use Cases
+
+ **TODO:**   **(Required)**  List out all needs/requirement from business/end-
+user perspective. Assign an ID for each requirement/use-case item for easier
+reference in future
+
+ID| Title| Details| ScreenMock| Importance  
+---|---|---|---|---  
+BRQ-01| Indexing pdf stmts in elasticsearch|  **Requirement:**  Allow admin to
+do indexing all pdf statements of CIDs as bulk process.  
+ **Use Case 1:**  To do indexing all pdf stmts for cids.| <attach file>| one
+of following: P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+BRQ-02| Searching into indexed stmts|  **Requirement:**  Allow user to do
+searching into pdf stmts.  
+ **Use Case 1:**  Searching into stmts by cid, acctType, acctNo, dateRange and
+search Key.|  
+|  
+  
+BRQ-03| Highlighting stmts|  **Requirement:**  Search result pdf as
+highlighted.  
+ **Use Case 1:**  User to see the pdf of search result as highlighted.|  
+|  
+  
+  
+## QA/Test Requirements
+
+ **TODO:**   **(Required)**  List out all needs/requirement from QA/Testing
+perspective. Associate them with an ID for easier reference
+
+ID| Title| Details| Importance  
+---|---|---|---  
+TRQ-01| Selectable Search Box element| (example)  
+ **Requirement:**  The search textbox AND the 'Search' button need to tagged
+with 'id' value so that Selenium could select it for entering value and
+subsequent submit  
+ **Use Case:**  Rely on Selenium to submit random search terms and capture
+response time as well as validation search results| one of following:  
+P0-Show Stopper  
+P1-High  
+P2-Normal  
+P3-Low  
+P4-Nice To Have  
+TRQ-02| ...| ...| ...  
+  
+  
+  
+
+# Design
+
+  
+  
+
+## Architecture & Workflow Diagram
+
+ **Input param expected for bulk Indexing** : The txt file is associated to
+cid, acctType and acctNo, So during indexing txt files its important to
+maintain the folder/file structure as CID->AcctType->AcctNo->fileName, some
+examples are giving below  
+`  
+/tkcu/dda/123456_20160502.txt  
+/tkcu/dda/123456_20160402.txt  
+/tkcu/dda/123456_20160302.txt  
+/tkcu/dda/123456_20160202.txt  
+/tkcu/dda/234567_20160502.txt  
+/tkcu/dda/234567_20160402.txt  
+/tkcu/dda/234567_20160302.txt  
+/tkcu/dda/234567_20160202.txt  
+/tkcu/ln/234567_20160502.txt  
+/tkcu/ln/234567_20160402.txt  
+/tkcu/ln/234567_20160302.txt  
+/tkcu/ln/234567_20160202.txt  
+`
+
+ **Searching** : During searching a full txt among all docs we have to make
+sure the docs are filtered correctly by cid, acctType and acctNo also,  
+  
+
+  
+
+## Rest endpoints.
+
+URI| Param name| Type| Param Type| Description| Required| Sample  
+---|---|---|---|---|---|---  
+ **POST /v1/index/{index}/mapping**|  
+index  
+type  
+body|  
+String  
+String  
+JSON|  
+Path  
+Path  
+Body|  
+Index name  
+Type(CID) name  
+mapping body|  
+Yes  
+Yes  
+Yes|  
+
+    
+    
+    {
+        "mappings": {
+            "ms1": {
+                "properties": {
+                    "stmt": {
+                        "type": "attachment" 
+                    },
+                    "extAcctNum": {
+                        "type": "text" 
+                    },
+                    "acctType": {
+                        "type": "text" 
+                    },
+                    "acctId": {
+                        "type": "text" 
+                    },
+                    "stmtName": {
+                        "type": "text" 
+                    }
+                }
+            }
+        }
+    }
+      
+  
+  
+
+**POST /v1/index/{index}/type/{cid}/doc**  
+(Onle for indexing a single file)|  
+index  
+cid  
+acctNo  
+acctType  
+file|  
+String  
+String  
+String  
+String  
+File|  
+Path  
+Path  
+Query  
+Query  
+Body|  
+Index Name  
+Type Name  
+Acct No  
+Acct Type  
+File(Multipart data)|  
+Yes  
+Yes  
+Yes  
+Yes  
+Yes  
+---|---|---|---|---|---  
+  
+  
+
+ **POST /v1/index/{index}/bulk**  
+(For bulk indexing from specific dir)|  
+index|  
+String|  
+Path|  
+Index Name|  
+Yes  
+---|---|---|---|---|---  
+ **GET /v1/index/{index}/type/{cid}/search**|  
+index  
+cid  
+acctType  
+acctNo  
+text|  
+String  
+String  
+String  
+String  
+String|  
+Path  
+Path  
+Query  
+Query  
+Query|  
+Index Name  
+CID  
+Account Type  
+Account No  
+Text|  
+Yes  
+Yes  
+Yes  
+Yes  
+Yes|  
+
+    
+    
+    [
+      {
+        "stmtName": "mtroms1_07312016_408_1.afp.txt",
+        "acctNum": "408",
+        "acctType": "ms1",
+        "index": "estmt",
+        "id": "AV4pUrc9CpMbsqzBTW7H",
+        "type": "mtro",
+        "stmtPath": "http://10.0.0.235:8080/elasticsearch/api/v1/index/doc/highlight?text=BEGINNING&filePath=mtroms1_07312016_408_1.afp.pdf" 
+      },
+      {
+        "stmtName": "mtroms1_07312016_408_1.afp.txt",
+        "acctNum": "408",
+        "acctType": "ms1",
+        "index": "estmt",
+        "id": "AV4pAgGmCpMbsqzBTPNG",
+        "type": "mtro",
+        "stmtPath": "http://10.0.0.235:8080/elasticsearch/api/v1/index/doc/highlight?text=BEGINNING&filePath=mtroms1_07312016_408_1.afp.pdf" 
+      }
+    ]
+      
+  
+**GET /v1/index/doc/highlight**  
+(Highlight and open a pdf as search result)|  
+text  
+filePath|  
+String  
+String|  
+Query  
+Query|  
+Search text  
+Pdf path to highlight|  
+Yes  
+Yes|  
+
+    
+    
+    http://10.0.0.235:8080/elasticsearch/api/v1/index/doc/highlight?text=BEGINNING&filePath=mtroms1_07312016_408_1.afp.pdf
+      
+  
+  
+  
+
+## Data flow
+
+  
+  
+
+  
+
+## Sequence diagram
+
+### Attachments
+
+

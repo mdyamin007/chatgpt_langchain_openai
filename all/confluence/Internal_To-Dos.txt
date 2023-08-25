@@ -1,0 +1,686 @@
+title: Internal To-Dos
+body: Priorities: BlueLOW GreenMEDIUM YellowHIGH RedCRITICAL
+
+Types:  trueBlueQOL BlueRESEARCH GreenFEATURE RedBUG
+
+Current Status: GreenDONE BlueON GOING YellowQUEUED RedCANCEL
+
+# API
+
+  
+| Description| Type| Priority| Discovered/Requested By| Assigned To| Current
+Status| Comments  
+---|---|---|---|---|---|---|---  
+1| Setup Microservice for Batch Download|
+
+GreenFeature
+
+|
+
+GreenMEDIUM
+
+|
+
+|  
+|
+
+GreenDone
+
+| Separate out the Batch Download component from API and set it up as its own
+microservice. Since Batch Download takes a longer time to process than other
+calls, we do not want these calls to take up the request count and  prevent
+Infoservice from servicing other requests. Furthermore, we should set up a
+message queue, since there ought to be a maximum number of requests the batch
+download microservice can handle. Given an arbitrary value of 20, we do not
+want the 21st request to simply fail/timeout, and be queued instead to wait
+for when a request slot is available for processing.  
+  
+# Hypercube
+
+  
+| Description| Type| Priority| Discovered/Requested By| Assigned To| Current
+Status| Comments  
+---|---|---|---|---|---|---|---  
+1| Hypercube Config Object Documentation|
+
+GreyQOL
+
+|
+
+YellowHIGH
+
+|
+
+|  |
+
+GreenDONE
+
+|
+
+Need to update  with the InfoConfig flags.
+
+This is the new documentation -  
+  
+2| Inspect Elements feature on browsers can remove "disabled" html element.|
+
+RedBUG
+
+|
+
+YellowHIGH
+
+|
+
+|  
+|  **HOLD**|  This change will require some API changes as well. Currently
+marking it as hold.  
+3| Meteor System Resource Usage|
+
+BlueResearch
+
+|
+
+GreenMEDIUM
+
+|
+
+|  
+|  
+|
+
+Meteor is using a lot of CPU. It can occasionally jump to 60%+ CPU usage on a
+normal day. During month's end, due to high traffic, the server gets
+overloaded and stop responding in a timely manner. We are adding more servers
+to handle this, but there are questions.
+
+  1. Is it purely traffic that is causing the load issue? 
+  2. Are there any operations that are purely expensive? That mean maybe each server just need more CPU over all.
+  3. Are there any operations that are inefficient? We need to optimize the code to use CPU more efficiently.
+  4. Another thing is that we are not using a lot of memory. Are there tradeoffs we can make by storing more data instead of computing every time?
+
+Additionally, can we analyze the extra cost of hosting an additional CID? Is
+there a limit on how many concurrent requests meteor can handle, or is it just
+all dependent on CPU availability? This will help us knowing when we need an
+additional server before issues occur.  
+  
+ **This should go to System Team**.  
+  
+4| Update hypercube log to generate client wise log  file |
+
+GreyQOL
+
+|
+
+BlueLOW
+
+|
+
+
+
+|
+
+|
+
+RedCancel
+
+| Like prism generates date wise log we can add client wise log file  
+5| downTime API/ bannerSpaceAPI|
+
+GreyQOL
+
+|
+
+GreenMEDIUM
+
+|
+
+|  
+|  
+|
+
+downTime API, bannerSpaceAPI etc. are printing out Error logs on successful
+searches (no downtime or bannerspace). We need to figure out how to have this
+not happen, because searching for "error" inside the logs is almost impossible
+with so much false positive.
+
+  
+
+This is also true for a specific refreshToken log where it prints out "error =
+undefined". This should also not happen.  
+  
+6| Fix editProfilePhone flag inconsistent logic|
+
+RedBUG
+
+|
+
+GreenMEDIUM
+
+| |  
+|
+
+RedCancel
+
+|
+
+There is an existing inconsistency on SSO enrollment between byUsr and byUfa
+sms input option. For byUsr, If smsNotification flag is true and
+editPrimarySMS flag is false but there in no sms in np table then during
+enrolling if user choose sms option then they can not input sms number since
+edit flag is false. But in same case, byUfa user can input sms number during
+enrolling since this is user's first time input.  
+  
+ **Why is this cancelled? Seems like a bug that should be fixed.**  
+  
+7| Support check from search API for the closed account|
+
+GreenFeature
+
+|
+
+GreenMEDIUM
+
+| |
+
+|
+
+BlueOn going
+
+| Currently, the check search API does not return any data for the closed
+account. But we have to support it for "showClosedAcctStatement"  flag true
+feature  
+8| There is no functionality of showing statement **is viewed** status.|
+
+GreenFeature
+
+|
+
+GreenMEDIUM
+
+| |  
+|
+
+YellowQUEUED
+
+| We do not show any " **Is Viewed** "  column on the statement page for the
+hypercube.  
+9| The exit confirmation page is not available.|
+
+GreenFeature
+
+|
+
+GreenMEDIUM
+
+| |  
+|
+
+YellowQUEUED
+
+| We should show an exit confirmation pop-up for the hypercube.  
+10| "This account does not have any E-mail address" verbiage show when SMS is
+selected on profile page|
+
+RedBUG
+
+|
+
+GreenMEDIUM
+
+| |
+
+|
+
+GreenDONE
+
+| On the profile page, If any account does not have an email address but "SMS"
+is selected in the radio button, the verbiage is shown saying that the account
+doesn't have an email address. But, as, SMS is selected, this email-related
+verbiage should not be displayed.  
+11| Map auth method name to hypercube /ssoKeyGen route|
+
+GreenFeature
+
+|
+
+GreenMEDIUM
+
+| |
+
+|
+
+GreenDONE
+
+| There should be this feature to map multiple auth routes to the same
+hypercube auth route.  
+12| MFA is not required if the device is trusted|
+
+GreenFeature
+
+|
+
+GreenMEDIUM
+
+|  |  
+|
+
+YellowQUEUED
+
+| If the user already has done MFA from a device then that device will be
+remembered as a trusted device. So that the next time MFA will not be
+applicable if the user uses the same device to log in.  
+13| Passing SSO method in the form body|
+
+trueVerify
+
+|
+
+BlueLOW
+
+|  |
+
+
+
+|
+
+YellowQUEUED
+
+| There's a code block to get SSO method name form the SSO request body, we
+need to verify if that feature is actually used by any vendor.  
+14| Documentation for Standard Way to set up SSO with OLB Vendor|
+
+BlueResearch
+
+|
+
+GreenMEDIUM
+
+|
+
+
+
+|  |  
+| Setting up SSO with certain vendors are very straightforward, for example,
+with NCR, it's digitalInsightV1(or V2), and for business users, it's the BB
+connection. NCR usually also involved account type mapping. This sort of
+information should be documented, so that they can be easily referenced.  
+15| Remove hardcoded Account Type mapping from NCR SSO| GreyQOL|
+
+BlueLOW
+
+|
+
+
+
+|  
+|  
+| NCR SSO hardcodes mapping of CH to CK. This is unnecessary. We can use the
+ext_type_mapping table to let Infoservice perform this mapping. It is not 100%
+certain that all clients will require this mapping. Therefore, it is poor
+design that we hardcode it this way.  
+  
+If there are other hardcoded mapping or custom configuration, they should be
+removed too. ext_type_mapping table should satisfy any need to map an external
+type to an internal InfoIMAGE type.  
+  
+# Prism
+
+  
+| Description| Type| Priority| Discovered/Requested By| Assigned To| Current
+Status| Comments  
+---|---|---|---|---|---|---|---  
+1| Update system.prop to remove unnecessary configs|
+
+GreyQOL
+
+|
+
+BlueLOW
+
+| |  
+|  
+| Sean has provided an updated system.prop config file that is deployed on
+Dev. We need to do some testing to confirm that no clients are affected. Then,
+once testing is done, deploy the system.prop to the higher environment.  
+  
+  
+
+# PUI
+
+  
+| Description| Type| Priority| Discovered/Requested By| Assigned To| Current
+Status| Comments  
+---|---|---|---|---|---|---|---  
+1| External Mapping Processing|
+
+GreenFeature
+
+|
+
+YellowHIGH
+
+|  |
+
+
+
+|
+
+BlueOn going
+
+| Update processing logic to only update/insert/delete records that are new or
+no longer exist in the data file.  We currently purge the entire job and
+insert new records for each processing.  This cause the ext_id_mapping value
+to increase significantly.  
+2| Document/Etax/Enotice Error/Warning Refactor|
+
+GreenFeature
+
+|
+
+YellowHIGH
+
+|
+
+
+
+|  
+|  
+|
+
+Review all the statement processing, and refactor the way warnings and errors
+are counted.
+
+  
+
+Warnings that do not result in statement posting failing can stay as warnings.  
+Warnings that result in statement posting failing should be shifted to be
+errors instead.
+
+(Unlikely) If there are any errors that don't actually fail the posting, it
+should be changed to warnings.  
+  
+
+Ultimate, the rule should be:  
+Warnings: Statement Posting still succeed  
+Errors: Statement Posting fails  
+  
+3| Dedicated Usr Entry for PUI Process|
+
+GreenFeature
+
+|
+
+YellowHIGH
+
+|
+
+
+
+|  
+|  
+|
+
+For PUI Processes (focus on the main ones), that make changes to other tables
+and get recorded into modified_by, they usually get recorded as usr_id 1 or
+usr_id 0. There are a lot of different processes that make such changes
+nowadays, so it is better if each process has a unique usr_id.
+
+Requirements:
+
+  1. Reserve usr_id 800 to 899 for processes.
+  2. USR_FIRSTNAME will be descriptive such as "Auth (InfoIMAGE)". Clear that it is InfoIMAGE, and that it's the Auth file, which client should be aware of.
+
+Task:
+
+  1. Analyze all areas that need to be changed
+  2. Analyze reports that get the modified_by field to see how those would be affected and what changes may be needed.
+  3. Determine what changes can be deferred to later, so that we do not have to make a lot of changes at once.
+  4. Not all processes need their own unique usr_id at once either. We can start with the common ones like Auth and Paperless. The rest can still remain as usr_id 1 and 0, and get updated project by project.
+
+  
+4| PUI enhancements 1|
+
+GreenFeature
+
+|
+
+GreenMEDIUM
+
+|
+
+|
+
+|
+
+GreenDONE
+
+|
+
+  * manipulative queue system for PUI
+    * able to move jobs up and down
+    * pause jobs
+  * Parallel processing for things that don't conflict
+    * Reports jobs since they are read-only to run parallel with write jobs (doc, etc)
+  * Error acknowledgment for failed postings so they don't get missed
+
+  
+5| Consolidate Accounting Report to DefaultReport|
+
+GreyQOL
+
+|
+
+GreenMEDIUM
+
+|
+
+|   |
+
+BlueOn going
+
+| Clean up accounting reports  
+6| PUI jobDetails: to display whether there is an email job registered|
+
+GreyQOL
+
+|
+
+BlueLOW
+
+|
+
+|
+
+|
+
+BlueOn going
+
+| Background: The disable email warning only shows when p_job_email exists and
+is either disabled or sent. When p_job_email DNE, the disable email button is
+still available without any context.  
+7| AFP Processing: Searching for Message ID Improvement (Message Manager)|
+
+GreyQOL
+
+|
+
+BlueLOW
+
+|
+
+|  
+|  
+| When searching for Message ID, the PUI is making call to an API every single
+time. Instead, we should keep a set of the messages that have already been
+searched and failed, so that the PUI will skip searching. This is implemented
+in Document Processing, but not for the rest of the individual AFP handlers
+for AFP.  
+8| Encrypted PDF to accept PDFs|
+
+GreenFeature
+
+|
+
+GreenMEDIUM
+
+|
+
+|  
+|  
+| For encrypted PDF emails, the encryption code only accepts AFP, since it
+always go through a conversion from AFP to PDF first. However, we should be
+able to detect this, skip the conversion step, and just encrypted the
+available PDF.  
+9| PUI Front-End Log Download Option|
+
+GreyQOL
+
+|
+
+GreenMEDIUM
+
+|
+
+|  
+|  
+| Add a download log button for jobs on the PUI so that the user can donwload
+the logs instead of having to open it up on the browser. This helps when the
+log file is big.  
+10| AFP and Doc Processing Set Unapproved on Estmt_Doc and Approve If Job is
+successful|  
+|  
+|  
+|  
+|  
+|  
+  
+11| If checksum calculation fails such as when there is no diskspace for temp
+file created for checksum calculation, the posting should also fails.|
+
+GreyQOL
+
+|
+
+BlueLOW
+
+|  |  
+|  
+| Checksum is used as a check against duplicate postings.  If there is an
+error/issue in checksum calculation, we lost this protection mechanism.  See
+UCCU p_job: 3429219 as an example where checksum calculation failed due to out
+of diskspace but the index file was posted.  
+  
+# Jira/Confluence
+
+  
+| Description| Type| Priority| Discovered/Requested By| Assigned To| Current
+Status| Comments  
+---|---|---|---|---|---|---|---  
+1| Jira/Confluence Backup Strategy|
+
+GreenFeature
+
+|
+
+GreenMEDIUM
+
+|
+
+
+
+|  
+|  
+|
+
+Automated backup on Confluence/Jira is not optimized. It will consume a lot of
+memory, CPU, and disk space. Atlassian recommend "manual" backups. Will need
+to research Atlassian's recommendation, and come up with a backup strategy.
+
+As we get  more and more data, the automated backup will become untenable as
+it will consume more and more resources.  
+  
+# Multi-App/Other
+
+  
+| Description| Type| Priority| Discovered/Requested By| Assigned To| Current
+Status| Comments  
+---|---|---|---|---|---|---|---  
+1| By-User Emails|
+
+GreenFeature
+
+|
+
+YellowHIGH
+
+|
+
+
+
+|  
+|  
+| Enhance/Fix PUI/Infoservice/InfoTRAC/Hypercube as necessary to support By-
+User emails. This is the typical expectation for most clients that email
+should be by-user. However, certain areas do not work completely with this
+logic. Will need to do research on all the related areas that need to be
+changed, and potentially filter out those that can be "enhanced later as
+needed".  
+2| Mobile App SSO Test page|  
+|  
+|
+
+|  
+|  
+| to allow for SSO login through mobile phones for testing  
+3| Production Release Documentation|  
+|  
+|
+
+|  
+|
+
+GreenDONE
+
+|  
+  
+4| Dockerizing tomcat/hypercube applications for local testing|  
+|  
+|
+
+|
+
+|  
+| Hypercube done. Need to do for Tomcat.  
+5| Gitlab procedures GIT training|  
+|  
+|
+
+|  
+|  
+| continuing GITLAB integration  
+6| Confluence Organization|  
+|  
+|
+
+|  
+|  
+| Organizing confluence pages/spaces  
+7| Infoimage Internal Dashboard|  
+|  
+|
+
+|  
+|  
+| Internal Dashboard with SSO/Login/ misc tools to assist client facing teams  
+8| Non transparency setting for statements|  
+|  
+|
+
+|  
+|  
+| Ernest said there may be a way to generate the statement that have
+transparent resources to use the non-transparent ini settings, Need to test  
+  
+  
+
+

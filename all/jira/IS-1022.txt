@@ -1,0 +1,617 @@
+title: SUCU: PDF Retreival Setup for Nautilus
+description: Set-up PDF Retrieval for SUCU applications: DAILY NOTICES
+
+
+
+Individual PDF's and corresponding index files to be zipped and copied to FTP client pickup folder.
+
+Specifications will be copied on each of the IS Stories accordingly per application type (and updated on the SOWs).
+
+InfoIMAGE will provide PDF files with index, via ftp client_pickup folder (detailed specifications below)
+
+Specifications based on loading PDF archival into Nautilus system:
+
+Create one index file PER ZIPPED FILE with corresponding individual PDFs for each notice type per cycle (5000 PDF's per zipped file):
+
+
+
+*Index File:*
+
+Generate index file in pipe delimited text file prefix_YYYYMMDD_SEGID_YYYYMMDD_HHMM_sucu.txt; include one index per batched zipped file with corresponding PDFs.
+
+e.g.:
+
+ms3_20200415_1_20200416_0640_sucu.txt
+
+
+
+prefix: InfoIMAGEs jobid. (e.g: ms3)
+
+YYYYMMDD: Cycle Date
+
+SEGID: InfoIMAGE segement number
+
+YYYYMMDD_HHMM: Processing Timestamp
+
+
+
+
+|*Field Number*|*Field Name*|*Description*|*Required*|
+|1|PDF File|Individual pdf file for one statement|Yes|
+|2|Begin Date|Statement Begin date (YYYYMMDD)|Yes|
+|3|Closing Date|Statement Closing date (YYYYMMDD)|Yes|
+|4|Image Count|Total images for this document|Yes|
+|5|Member Number|The member number|Yes|
+|6|Account Type|Major Code: CK, SAV, CML, CNS, MTG, RTMT, TD; (empty if not found)|No|
+|7|Doc Type|Reference notice name per Doc Type:
+ * Overdraft Notice
+ * Returned Deposit Check Notice
+ * Loan Payoff Notice
+ * Loan Rate & Payment Change Notice
+ * W8-BEN Foreign Certification Notice
+ * Loan Payment Notice
+ * Unclaimed Property Notice
+ * B Notice
+ * Address Change Notice
+ * Closed Account Notice
+ * Annual CUNA Letter
+ * Frequent Overdraft Notice
+ * Sigma Letter
+ * Student Letter
+ * Time Deposit Maturity Notice|Yes|
+|8|Account Owner|The account holders full name (Default to Member) if data is missing|Yes|
+|9|Letter|InfoIMAGE Letter Code|Yes|
+|10|Statement Account|Account Number  Primary Account|Yes|
+
+
+
+PDF File|Begin Date|Closing Date|Image Count|Member Number|Doc Type|Account Owner|Info Letter Code|Statement Account
+
+*e.g.:*
+
+*cidms3_20200229_9999_1.pdf|20200229|20200229|1|9999|CK|Overdraft Notice|BARRY SMITH|001|1234*
+
+
+
+*PDF Files:*
+ # Generate individual PDFs in zipped batches of 5,000 PDF's per zipped file.
+ # Individual PDF file names to be used: sucuprefix_YYYYMMDD_MEMBERNUM_SEQUENCE.pdf
+
+ * YYYYMMDD = Closing date
+ * Sequence # (InfoIMAGE generated)
+ * Letter Code # (InfoIMAGE assigned code; reference letter matrix)
+
+ # PDF files along with corresponding index file to be zipped and named: cid_jid_archival_YYYYMMDD_SEGID_Sequence.zip
+
+e.g.
+
+cid_ms3_archival_2020031_1_1.zip
+
+cid_ms3_archival_2020031_1_2.zip
+
+
+ # Send automatic email to CU when files are ready for pickup each cycle.
+
+**
+
+*Email Content:* From: [data_center@infoimageinc.com|mailto:data_center@infoimageinc.com] [[data_center@infoimageinc.com|mailto:data_center@infoimageinc.com]]
+
+Sent: Monday, November 10, 2014 10:06 AM
+
+To: [[client|mailto:fm.us.rna.RetailSupportProcessing@rabobank.com] email address]
+
+Subject: SUCU Daily Notice Archival File Ready for Retrieval
+
+
+
+Dear Valued Customer,
+
+
+
+The below file is now available for retrieval from your FTP Client Pick Up folder.
+
+Note: This file will automatically be purged from the directory after 5 days.
+
+
+
+SUCU_daily notice_archival_<mmddyy>_<seg#>.zip.<seq#>.pgp
+
+
+
+
+
+Thank you,
+
+
+
+Data Center
+
+InfoIMAGE Inc.
+
+650.473.6388
+
+[Data_Center@infoimageinc.com|mailto:Data_Center@infoimageinc.com]
+
+
+author: JIRAUSER10907
+comment: Hi [~phoebe.george],
+
+The below specs will be applicable for daily also? Please confirm.
+ # I'll update the specs, the first is the cycle date (not the processing date). This should match the customer file name date stamp. The second date is the Processing Timestamp (the date that the PDF archival file is processed/generated. I'll update the description accordingly.
+ # It should be batches of 5,000. I'll eliminate the second option based on file sizes.
+
+
+
+Thanks
+
+Najoa
+
+
+author: phoebe.george
+comment: [~Najoa] Sorry about that, the DN specs do match what we discussed for the mo stmts. I'll update the description now. Thank you!
+
+
+author: JIRAUSER10907
+comment: Hi [~phoebe.george],
+
+We have a few queries regarding daily notices which I am listing down below. But still, if you have any issues regarding these let us know. Tomorrow we can have a quick call   
+ # We need data files for the following letters: *004, 005, 009, 010, 012, 013, and 016.* We searched it in many production data files but could not find any.
+ # Letters *016 and 021* are *not present* in the *procs file,* so will this be *discarded*?
+
+!image-2022-05-11-17-06-20-275.png|width=465,height=229!
+
+3. For some account numbers we do not have member numbers in the Xref file. In that case for estatement we suppressed those accounts which do not have member no. For archival also should we do the same?
+
+4. Letter 008,017 and 019 do not have account numbers in datafiles, hence no member number. So it will not have any archival right?
+
+5. For the *beginning and the closing date* we are choosing the *notice date*. But there are *letters* that *don't have a notice date*. In that case, should we use the *processing date* or the *date given in the data file*? Let us know.
+
+6. Do we need to work on 014? Actually, it was crossed out in the word file you provided.
+
+!image-2022-05-11-17-59-18-604.png!
+
+7. While analyzing found an issue in datafile for letter 023
+
+Datafile Name: SUCU_NOTICES_04052022_2.zip
+
+Column 7 should always be zipcode but instead, it's showing state and in place of account no it's showing zip code.
+
+!image-2022-05-11-19-01-33-097.png!
+
+
+
+
+
+
+author: phoebe.george
+comment: [~Najoa] Please see updates below.
+ # I will need to request files from the CU; these notices are note produced every day, and so it may be difficult to locate prod files. I'll provide an update once requested.
+ # Letter 016 should be a current notice, but it is annual; Letter 021 can be removed. I will try to locate more information on the Letter 016 from the AC, and will provide an update.
+ # For notices with no member number, please still include in the archival file, but keep the member number field empty.
+ # I will check with the customer on how to handle accounts with no account numbers for these 3 notices.
+ # For notices with no Notice Date, please use Processing Date.
+ # Ltr 014 is a current/active notice that should be included with the setup; I will update the word file. We will eventually be removing this notice, but not for awhile, it was crossed out pre-maturely because of this.
+ # Is this an issue with the data or our program? If a data issue, I'll inform the CU.
+
+Thank you!
+Phoebe
+
+
+author: phoebe.george
+comment: [~Najoa] Please see updates below.
+ # I will need to request files from the CU; these notices are note produced every day, and so it may be difficult to locate prod files. I'll provide an update once requested.
+ # Letter 016 should be a current notice, but it is annual; Letter 021 can be removed. I will try to locate more information on the Letter 016 from the AC, and will provide an update.
+ # For notices with no member number, please still include in the archival file, but keep the member number field empty.
+ # I will check with the customer on how to handle accounts with no account numbers for these 3 notices.
+ # For notices with no Notice Date, please use Processing Date.
+ # Ltr 014 is a current/active notice that should be included with the setup; I will update the word file. We will eventually be removing this notice, but not for awhile, it was crossed out pre-maturely because of this.
+ # Is this an issue with the data or our program? If a data issue, I'll inform the CU.
+
+Thank you!
+Phoebe
+
+
+author: JIRAUSER10907
+comment: !image-2022-05-12-20-16-06-354.png|width=1190,height=329!
+
+Hi [~phoebe.george], yes it's a datafile issue. Headers have 10 columns but the first customer has 11 col
+
+
+author: JIRAUSER10907
+comment: Hi [~phoebe.george] the missing data files were not included in the test files.
+
+Also, let us know the problem mentioned above regarding letter 023 datafile
+
+!image-2022-05-19-22-15-08-237.png|width=1013,height=296!
+
+
+
+
+author: phoebe.george
+comment: [~Najoa] I'll try to locate the addition test files from the DSI programmer that worked on the eNotices and/or from QA.
+
+In the meantime, SUCU confirmed that we will REMOVE Letters 008, 017 and 019 from the setup since they will not contain account numbers.
+
+Is it possible to provide a small sample set up front to confirm if the indexes, etc are good before applying to the rest of the notices as I locate the additional test files? I don't want the programmer to have to make edits for all notices once the full sample set is provided in case there are changes needed.
+
+Thanks,
+
+Phoebe
+
+
+author: JIRAUSER10907
+comment: hi [~phoebe.george],
+
+Tomorrow we will provide the sample for monthly statements.
+
+For daily, we need a few more days.
+
+Along with the missing data files please provide us its corresponding day Xref file.
+
+
+
+
+
+Thanks
+
+Najoa
+
+
+author: JIRAUSER10907
+comment: Hi [~phoebe.george],
+
+Please update the live date for daily and for monthly also.
+
+
+author: phoebe.george
+comment: [~Najoa] Can you confirm if still possible to provide some of the notice PDF archival samples that you have data for? Due to the # of notice types, just want to make sure this is good before you update for all.
+
+Thanks!
+
+
+author: JIRAUSER10907
+comment: [~phoebe.george]ok we will try to provide some of the letters soon before the sample date.
+
+
+author: tanmay
+comment: [~phoebe.george]archival sample from cycle05092022 for letter 001,002 has been placed at/d/ac-secure-share/dsi_print/mahbuburT/sucu/daily
+Please check
+
+
+author: JIRAUSER10907
+comment: Hi [~phoebe.george],
+
+Any feedback from the client? Should we proceed with the other letters for archival?
+
+Also please provide us with the data file that were missing:*004, 005, 009, 010, 012, 013, and 016*
+
+For letter 023 there was a data file, any update about it?
+
+Please update the SOW
+
+Thanks
+
+Najoa
+
+
+
+
+author: peter.dang
+comment: PHoebe, please provide a new project live date and timeline.
+
+
+author: JIRAUSER10907
+comment: HI [~phoebe.george]
+
+Any feedback from the client? Should we proceed with other letters?
+
+Any update on missing data files?
+
+
+
+
+author: peter.dang
+comment: [~phoebe.george]Please provide new timeline.
+
+
+author: phoebe.george
+comment: [~tanmay] [~Najoa] I received approvals on the two daily notice sets that you provided. Let me know if you can generate for the other notices that you have test files available. I will continue to try and locate the other notices in the meantime. Can you let me know what date you may be able to provide the remaining test samples for the files that you have and I can determine a new target live date specific to the notices (since the statements are approved, the live date for notices may be different). 
+
+Thanks,
+
+Phoebe
+
+
+author: william.kong
+comment: [~tanmay]: [~phoebe.george]is trying to find the missing notices so that we can create additional daily letter test files for the 2nd round of final samples. It would be nice to get this live by July 1, however, if you need more time in light of the other SEFC Mortgage project, then please propose new live date and final approval date based on your workload.
+
+For now, I've changed the live date from 5/31 to 7/1.
+
+
+
+
+
+
+
+
+
+
+
+
+author: tanmay
+comment: /[~William.Kong]i have already talked to [~phoebe.george]to change the live date. please make new live date 7/5
+
+
+author: william.kong
+comment: [~tanmay]: July 5 live date has been updated on Jira and pilot IS Print Resource Management smartsheet
+
+
+author: tanmay
+comment: [~phoebe.george] archival sample has been placed at /d/ac-secure-share/dsi_print/mahbuburT/sucu/daily/sample/06302022
+please check.
+ [^SUCU_DN_Letter_Code_PDF_Matrix_063022.docx]  please check these file for letters status for which data file available or not
+
+
+author: JIRAUSER10907
+comment: Hi [~phoebe.george],
+
+Any update regarding the samples? Also can you please let us know the new live date
+
+
+author: phoebe.george
+comment: [~Najoa] [~tanmay] I'm SO sorry i have not been able to focus on this project! SUCU had some delays and have a working session tomorrow. Is it possible to generate a PDF test batch based on this latest production file? Let me know if you need the location, but it was sent today, 7/6 called: SUCU_NOTICES_07052022_2.zip.pgp
+
+If possible, can you create the PDF Archival samples based on this as we work to create the missing files still?
+
+Thanks!
+
+
+author: JIRAUSER10907
+comment: Hi [~phoebe.george], provided the sample using datafileSUCU_NOTICES_07052022_2.zip.pgp and xref file sucu_xref_07062022.txt.pgp
+
+Sample kept in this path/d/ac-secure-share/dsi_print/najoaS/sucu
+
+filename:sucu_dla_archival_20220705_1_1.zip
+
+Thanks
+
+Najoa
+
+
+author: tanmay
+comment: [~phoebe.george] any updates on these
+
+
+author: phoebe.george
+comment: [~tanmay] SUCU reported that the names in the latest DN sample did not match what was provided in the table for index field #7. 
+
+For example, 'Frequent Overdraft Notice' was showing as 'Freq Overdraft' in the index file. Can these names be updated? Once updated, please re-create the 7/5 cycle please. The notice names are listed in the description, but here is the list:
+||Reference notice name per Doc Type:
+ * Overdraft Notice
+ * Returned Deposit Check Notice
+ * Loan Payoff Notice
+ * Loan Rate & Payment Change Notice
+ * W8-BEN Foreign Certification Notice
+ * Loan Payment Notice
+ * Unclaimed Property Notice
+ * B Notice
+ * Address Change Notice
+ * Closed Account Notice
+ * Annual CUNA Letter
+ * Frequent Overdraft Notice
+ * Sigma Letter
+ * Student Letter
+ * Time Deposit Maturity Notice|
+
+
+author: JIRAUSER10907
+comment: hi [~phoebe.george],
+
+Actually we were using the datafile name from the word file. We will make the changes soon
+
+!image-2022-07-12-19-43-26-104.png|width=715,height=527!
+
+Thanks
+
+Najoa
+
+
+author: JIRAUSER10907
+comment: Hi [~phoebe.george],
+
+Can you please confirm which letter name is this one-
+ * Time Deposit Maturity Notice
+
+Is it letter 010?
+
+
+author: phoebe.george
+comment: [~Najoa] Yes, you are correct, Time Deposit Maturity Notice is letter 10 (TD_NOTE file).
+
+Thank you!
+
+
+author: JIRAUSER10907
+comment: [~phoebe.george], provided the updated sample using datafileSUCU_NOTICES_07052022_2.zip.pgp and xref file sucu_xref_07062022.txt.pgp
+
+Sample kept in this path/d/ac-secure-share/dsi_print/najoaS/sucu
+
+filename:sucu_dla_archival_20220705_1_1.zip
+
+Thanks
+
+Najoa
+
+
+author: JIRAUSER10907
+comment: HI [~phoebe.george],
+
+Any update?
+
+
+author: phoebe.george
+comment: [~Najoa] Still pending final approval of the latest updates for the DN Archival. I have call with SUCU on 7/20, will followup.
+
+
+author: JIRAUSER10907
+comment: 
+[~phoebe.george], provided the updated sample using datafile SUCU_NOTICES_07172022_2.zip.pgp and xref filesucu_xref_07172022.txt.pgp
+
+Sample kept in this path/d/ac-secure-share/dsi_print/najoaS/sucu
+
+filename: sucu_dla_archival_20220717_1_1.zip
+
+Thanks
+
+Najoa
+
+
+author: JIRAUSER10907
+comment: Hi [~phoebe.george],
+
+Any update?
+
+
+author: phoebe.george
+comment: [~Najoa] I talked with SUCU yesterday. They confirmed that the W8 notice (013) is approved. I'm pending their confirmation on the 4 remaining test files for the annual notices that are still pending. I will provide the test file as soon as confirmed. Sorry I have not yet been able to schedule a new live date. As soon as I get the remaining files (as I need the last production cycle date from the CU since they are annual), I will be able to work with you on the target new live date. Thanks for your patience!
+
+
+author: JIRAUSER10907
+comment: Hi [~phoebe.george],
+
+Any update?
+
+
+author: JIRAUSER10907
+comment: Hi[~phoebe.george],
+
+Let us know if all the samples are approved or not. Also please update the live date
+
+
+author: phoebe.george
+comment: [~Najoa] I have received final approval on the Daily Notice PDF archival samples.
+
+Note that there are 4 annual files that the CU has not yet provided data files for, so these will NOT be included with the setup. If the CU chooses to add these later on, they will be submitted as a programming request once they have data files available:
+ * Loan YTD Balance Notice  Annual
+ * Unclaimed Property Notice  Annual
+ * B Notice  Annual
+ * Annual CUNA Letter  Annual
+
+Please prepare for next steps for QA. I will work on updating the SOW accordingly.
+
+Can we target a 9/23/22 live date?
+
+[~Igor.Khosid] FYI for now. This is the final PDF archival setup for SUCU for their notices.
+
+
+
+
+
+
+author: phoebe.george
+comment: [~Najoa] Please confirm what is needed to move this to QA and we will target a new live date. Thanks!
+
+
+author: JIRAUSER10907
+comment: Hi [~phoebe.george], we will move it to QA on 30th Sept 2022
+
+
+
+
+author: tanmay
+comment: [~Igor.Khosid] [~phoebe.george]
+ # Parallel id : 20220531033907
+ # Project has been placed at/d/iss/qa/SUCU/
+ # Archival Sample has been placed at/d/ac-secure-share/dsi_print/mahbuburT/sucu/sample/09302022
+ # Latter Matrix is here[^SUCU_DN_Letter_Code_PDF_ArchivalIndex_v2_09302022.docx]
+
+
+author: igor.khosid
+comment:  Parallel ID: 20220531033907
+   Currently in parallel: Yes
+   User: mahbuburT
+   Description: SUCU daily archival added
+   Date Submitted: 2022-05-31 03:39:23
+   Date Last Updated: 2022-08-01 00:38:51
+   Files:
+      1) SUCUDL003.dfa
+      2) SUCUDL002.dfa
+      3) SUCUDL002.prj
+      4) SUCUDL001.dfa
+      5) SUCUDL003.prj
+      6) SUCUDL001.prj
+      7) sucudla_pdf_template.control
+      8) sucudla_pdf.control
+      9) sucudla_archival_modify.py
+      10) sucudla.control
+      11) SUCUDL022.prj
+      12) SUCUDL011.dfa
+      13) SUCUDL007.dfa
+      14) SUCUDL024.prj
+      15) SUCUDL020.dfa
+      16) SUCUDL011.prj
+      17) SUCUDL006.dfa
+      18) SUCUDL024.dfa
+      19) SUCUDL015.dfa
+      20) SUCUDL018.prj
+      21) SUCUDL020.prj
+      22) SUCUDL022.dfa
+      23) SUCUDL007.prj
+      24) SUCUDL006.prj
+      25) SUCUDL015.prj
+      26) SUCUDL018.dfa
+      27) SUCUDLA_GROUP_INDEX.prj
+      28) SUCUDLA_GROUP_INDEX.dfa
+      29) SUCUDL014.dfa
+      30) SUCUDL014.prj
+      31) SUCUDL023.dfa
+      32) sucudla_process.sh
+      33) SUCUDL023.prj
+      34) SUCUDL013.dfa
+      35) sucudla_process.pl
+      36) SUCUDL013.prj
+
+
+author: igor.khosid
+comment: [~berezinez]
+Due to the EOM load work, please start on this next monday (10.03)
+
+[~phoebe.george] - Please update the due date
+
+
+author: berezinez
+comment: [~tanmay] [~phoebe.george]
+
+QA is completed, please attach IS checklist if needed.
+
+
+author: tanmay
+comment: [~berezinez]dont need parallel testing . we are preparing for code release
+
+
+author: tanmay
+comment: [~TunA] [~phoebe.george]
+
+Transfer form([^IS_PROGRAM_TRANSFER_FORM_IS-1022.doc]) has been attached and files has been placed at/d/is/cvs/xfer/mahbuburT/ . please proceed to production
+
+
+author: tanmay
+comment: [~phoebe.george]yet to release the code . please proceed
+
+
+author: phoebe.george
+comment: [~tanmay] [~Najoa] Do you have a location of where the test data files you used for this project are stored? AC actually is looking for data files, and was going to forward them the location of what you used for the PDF archival setup for notices.
+
+
+author: tanmay
+comment: I guess this the file name/z/ftpbu/sucubu/NOTICES/SUCU_NOTICES_06302022_2.zip.pgp
+
+
+author: anwarh
+comment: Hi [~phoebe.george],
+
+can you please let us know the status of this project? 
+Seems Tanmay tried to release it but it didn't. 
+Please check. 
+
+Thanks,

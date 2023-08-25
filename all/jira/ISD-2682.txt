@@ -1,0 +1,121 @@
+title: 44652 / 11827 - ASFC DSO Enhancement Request - ECL for DSO
+description: None
+
+
+author: abdullah.baki
+comment: Hi [~tai.trinh],
+
+I have added the release note to this ticket.
+
+about the code, I've committed the DSO and profile page changes in the svn trunk. ECL processing_ui code changes are already committed for*this*
+
+Based on our testing we have a few feedback:
+ # On enrollment step 4, there are "All fields are required." at the top but now SMS is not required as if the user may not have SMS processed from ECL
+ # while we submit the form without any required field(except SMS) it will show an error message "All fields are required. Please complete all fields before submitting." this is also conflicting as SMS is not required technically
+
+Thanks,
+
+Abdullah
+
+
+
+
+
+
+author: tai.trinh
+comment: Hi [~abdullah.baki],
+
+A few things that need to be included in this update:
+ # When a user tries to sign up with an account that does not have an NP record, or if the record somehow does not have an email address, they should be denied the ability to sign up.
+ ** I tried with account982447 on Pilot and was able to proceed with sign up. I wouldn't be able to do anything anyway, because there's no NP record and as such no email address to validate against.
+ ** Have a separate error for this. I'll confirm with the client what the verbiage should be.
+ # On enroll Step 5, the SMS field should no longer be editable. It takes from the NP record only. And if there's no SMS, then the option should not be visible.
+ # The Email and SMS validation should be moved to enroll Step 3. Step 4 will only be Account Creation with loginID and password.
+ ** On Enroll Step 5, we no longer need to check the values against the values provided in Step 4. Everything should be checked against NP record.
+
+Please let me know if these updates can be done by tomorrow or Monday.
+
+As a sign note on the ECL process, when comparing Strings, if we know that one value != null, we do not have to check if the other value != null. stringA.equals(null) is a valid comparison iff stringA is not null.
+
+Thanks,
+ Tai
+
+
+author: abdullah.baki
+comment: hi [~tai.trinh],
+
+I have committed the latest code with the above changes on trunk and updated the Release note accordingly.
+
+about that String comparison check, I will keep that in mind
+
+Thanks,
+
+Abdullah
+
+
+author: tai.trinh
+comment: [~abdullah.baki],
+
+On Step 3,
+
+When I enter a login name that already exists, I get INVALID_SESSION error instead of being told that the login name exists.
+
+Thanks,
+
+Tai
+
+
+author: tai.trinh
+comment: Also, on Step 5, we store sms with the 1 in front. When it is loaded onto the SMS field, the 1 is not being removed.
+
+
+
+So for 1483201875, I see +1[(140)832-0187] instead of the correct +1[(408)320-1875]. I do not think the sms is being sent to the correct number either.
+
+
+author: abdullah.baki
+comment: [~tai.trinh]
+
+I was able to reproduce the existing login name issue, I fixed the code it will be tested tomorrow.
+
+But for the SMS I think it's working fine. we use this(*16502604844 )* number on our end to test SMS, I have attached a Screenshot in this comment which I just took now.
+
+
+
+!image-2020-10-08-02-01-26-984.png|width=654,height=256!
+
+Thanks,
+
+Abdullah
+
+
+
+
+author: abdullah.baki
+comment: Hi [~tai.trinh],
+
+I have committed both fix to the trunk. If you deploy the lastest trunk you will get all the updates there.
+
+Thanks,
+
+Abdullah
+
+
+
+author: tai.trinh
+comment: Hi [~abdullah.baki],
+
+Due to the SVN server failure on 10/08, the Brisbane SVN may not have some of the commits. Please review the history to see if there are any commits that are missing and re-commit those changes.
+
+Thanks,
+Tai
+
+
+author: abdullah.baki
+comment: hi [~tai.trinh],
+
+I have recommitted the code.
+
+Thanks,
+
+Abdullah

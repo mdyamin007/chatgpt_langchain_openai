@@ -1,0 +1,74 @@
+title: Swift Backup and Restore
+body: To take the back of current prod swift server, below script is running every
+Wednesday 4 am
+
+ **Script location details :**
+
+              **  Server IP** : 10.8.14.41
+
+                **Script location** : /root/ swiftbackupscript.sh
+
+  
+
+ **Script :  **
+
+  
+
+SWIFT_HOST=10.8.14.40  
+SWIFT_PORT=8580  
+SWIFT_PWD=9ezoN5KM3Y4U2Hy  
+SWIFT_URL=http://$SWIFT_HOST:$SWIFT_PORT/auth/v1.0  
+TIMESTAMP=`date +%F-%H%M`  
+APP_NAME=SwiftProdBkup  
+SERVER_NAME=objstore-prod01  
+BACKUP_NAME=$APP_NAME-$TIMESTAMP  
+BACKUPS_DIR=/swift-backup/prod/$SERVER_NAME/$BACKUP_NAME/  
+mkdir -p $BACKUPS_DIR
+
+cd $BACKUPS_DIR
+
+swift -U system:swift -K $SWIFT_PWD -A $SWIFT_URL download -a;
+
+  
+echo Swift Backup taken Successfully
+
+  
+
+ **Command To Import Container:**
+
+      Here PN_batchjob_ewbb is the container name.
+
+  1. Go to the backup container directory
+
+                      root@objstore-prod02:# cd /swift-backup/prod/objstore-prod01/SwiftProdBkup-2019-08-21-1339/PN_batchjob_ewbb
+
+      2\. Run below command
+
+                   root@[objstore-prod02:/swift-backup/prod/objstore-prod01/SwiftProdBkup-2019-08-21-1339/PN_batchjob_ewbb#](http://objstore-prod02/swift-backup/prod/objstore-prod01/SwiftProdBkup-2019-08-21-1339/PN_batchjob_ewbb) swift -U system:swift -K 7ZTB672gxK3p88u -A <http://10.8.14.41:8580/auth/v1.0> upload -c PN_batchjob_ewbb .
+
+  
+
+  1. On Brisbane, current swift nodes are on ca-swift-pr-01/02 where ca-swift-pr-01 is the primary node and ca-swift-pr-02 is secondary node. If ca-swift-pr-01 fails then we need to make ca-swift-pr-02 as primary node by pointing all applications to use this node.
+
+2.  To take backup and restore backup we have scripts on ca-swift-pr-02 machine.
+
+  
+
+Backup script location : /root/swiftbackupscript_prod.sh  
+Restore script location : /root/swiftrestorescript_prod.sh
+
+  
+
+Logs location : /var/log/syslog, /var/log/rsync/rsyncd.log
+
+Below is the installation document
+
+250
+
+  
+
+  
+
+  
+
+

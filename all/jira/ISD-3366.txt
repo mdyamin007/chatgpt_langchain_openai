@@ -1,0 +1,42 @@
+title: Hypercube - Display Nicknames without Reading from SSO Request
+description: Currently, how nicknames work:
+ * Account Description is being passed via SSO, and we use that value to update the usr_acct_type_mapping table via API.
+ * Then, the userAccountsAPI will return the account description which Hypercube will read to display the Nicknames.
+
+We need a new flag:
+ * This should not be used in conjunction with the Account Description from SSO.
+ * We will have a new ProcessingJob (not part of this ticket) that will insert into the usr_acct_type_mapping. This will allow the userAccountsAPI to return the nickname in the Account Description field.
+ * When this flag is enabled, then the nickname will be populated with the values returned from the API.
+ * This nickname should be displayed also during Enrollment and on the Profile page (Maybe the current Nickname already work that way?)
+
+
+author: sadman anik
+comment: [~tai.trinh]
+
+I have added three screenshots where the nickname shows in the hypercube. Do you need a flag that will show or hide this nickname from these three places? As there was already a flag in the hypercube "showAcctDescription" which shows or hide the nickname from the profile and dropdown list. I have added that flag in the enrollment step. Is this what you want?
+
+
+author: tai.trinh
+comment: Hi [~sadman anik],
+
+Okay, I see. Yes, let's also add it to the Enrollment steps.
+
+Just to clarify, if we use this flag showAcctDescription, and not use captureAcctDesc from SSO, then we will load whatever account description we have from the usr_acct_type_mapping table. And then if we do not a nickname value, we will use the account general description that we define in the properties, e.g. if DD account, display Deposite, etc.
+
+Thanks,
+Tai
+
+
+author: sadman anik
+comment: [~tai.trinh],
+
+Yes if we do not usecaptureAcctDesc and setshowAcctDescription as true then it will show thewhatever account description we have from the usr_acct_type_mapping table. But if there is no row inserted in theusr_acct_type_mapping table then the API will not send any nickname and in that case hypercube shows only acct number, no acct desc.
+
+
+author: tai.trinh
+comment: [~sadman anik]
+
+Thank you for doing the research. We do not need to do any development for this then. You can close out the ticket.
+
+Thanks,
+Tai

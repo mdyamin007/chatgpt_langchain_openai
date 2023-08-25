@@ -1,0 +1,255 @@
+title: TFCU - [31477][pvt][in-house] Issue with Statement Messages
+description: Effected apps are "Personal Statement" (tfcums1) and "Business Statement" (tfcums2)
+
+
+
+Update:Update TFCUMS11.dfa & TFCUMS21.dfa to fix ordering of first page watermark image.
+
+Hour: 2h
+Turnover: 08/22
+QA: 08/24
+Parallel: 08/26
+Live: 08/29
+IS Developer: Anwar
+
+
+author: rony
+comment: Hi [~dawnl]
+
+I need help from Dp. Would it be possible to ask Dp to run tfcums1 in parallel with any production file for archival?
+
+
+
+Thanks
+
+
+author: rony
+comment: Hi [~dawnl] [~Peter.Dang]
+
+I need help from Dp . I can't generate the issue . Would it be possible to run tfcums1_process.sh in parallel server with any production data ? We didn't change anything , so instruction is same.
+
+
+
+I am running this parallel and I see messages.
+
+[^member_07312022_101237_1-1.pdf] [^member_07312022_53820_2.pdf]
+
+[^member_07312022_101237_1.pdf]
+
+
+
+Thanks
+
+
+author: dawnl
+comment: [~rony],
+
+
+
+Per your request, DPran the Personal Statement (tfcums1) in parallel with production file for archival. But they got error. See below comment from DP in TS#31477.
+
+"Dsi,
+
+Please check this failed processing and advise.
+
+ERROR !!!!!!!
+File: , Total PDF & XML: 200, Total Files Zippeg: 0
+ERROR !!!!!!!
+File: , Total PDF & XML: 200, Total Files Zippeg: 0
+ERROR !!!!!!!
+File: , Total PDF & XML: 200, Total Files Zippeg: 0
+ERROR !!!!!!!
+File: , Total PDF & XML: 200, Total Files Zippeg: 0
+ERROR !!!!!!!
+File: , Total PDF & XML: 85, Total Files Zippeg: 0
+Copying ZIP file to client pickup...
+cp: cannot stat '/z/afp2web_iswk/tfcums1/tfcu_regstmtseom_20220831_1.zip': No such file or directory
+Error: Unable to copy /z/afp2web_iswk/tfcums1/tfcu_regstmtseom_20220831_1.zip to client pickup
+You have new mail in /var/spool/mail/oper1
+oper1@rhs ~> /home/test/master/tfcums1_process.sh b
+
+
+
+Thanks!
+
+
+author: rony
+comment: Hi [~dawnl]
+
+Please provide me the data file that dp ran with.
+
+I wonder if we didn't change anything, we are asking just to run in parallel. If a parallel run fails, not sure how it runs successfully in production.
+
+Anyway please provide me the data file dp ran with.
+
+
+
+Thanks
+
+Rony
+
+
+author: dawnl
+comment: Hi [~rony],
+
+
+
+It's in /z/custdata/
+
+-rwxrwxrwx 1 oper1 opers 337952267 Aug 30 14:55 tfcu_regstmtseom_063022
+-rwxrwxrwx 1 oper1 opers 58840294 Aug 30 14:55 tfcu_stmts_063022.ZIP
+-rwxrwxrwx 1 oper1 opers  5579033 Aug 30 14:56 tfcu_analysis_063022
+-rw-rw-rw- 1 oper1 opers 331494003 Aug 31 07:07 tfcu_regstmtseom_063022.con
+
+Thanks.
+
+
+
+
+author: dawnl
+comment: Hi [~rony]- any update?
+
+
+author: rony
+comment: Hi [~Peter.Dang]
+
+I am running this in parallel rhs2 and this is a sample archival pdf (archival is still running) and I see a msg mgr message.
+
+
+
+[^member_06302022_324448_8370.pdf]
+
+[~dawnl]
+
+
+
+Thanks
+
+
+author: dawnl
+comment: [~rony]- please request QA. thanks.
+
+
+author: rony
+comment: Hi [~dawnl]
+
+I need to talk with Peter first. I want to change a core file that normally we don't change to solve this issue. I will talk to Peter today after that I will provide it to qa.
+
+
+
+Thanks
+
+
+
+
+author: rony
+comment: Hi [~Igor.Khosid]
+
+The issue was archival pdfs were not getting message manager image. This is due to some internal settings from core scripts where the message manager images locations got changed but tfcu were using old configuration files where it doesn't search the images in updated location. I just updated so that tfcu will use new configuration file.
+
+updated inf file path:
+
+!image-2022-09-16-19-42-59-556.png|width=1339,height=235!
+
+old ini file path:
+
+!image-2022-09-16-19-45-45-475.png!
+
+
+
+the screenshot is for tfcu_index.pl in /(d or z)/afp2web_iswk
+
+as you see the only change is inIniFilePath . After the change I ran in parallel and both archival pdf from tfcums1 and tfcums2 have msg mgr messages.
+
+
+
+[^business_06302022_774931_173.pdf][^business_06302022_774931_173.pdf]
+
+
+
+The script is not in a conventional location so I couldn't check in. The script is: /z/afp2web_iswk/pfcu_index.pl
+
+
+
+Thanks
+
+
+
+
+
+
+
+
+author: JIRAUSER11104
+comment: QA is completed.
+ Test result - PASSED.
+ * The script is updated:
+{code:sh}
+[oper1@rhs ~]$ ls -ltr /z/afp2web_iswk/tfcu_index.pl
+-rwxrwxrwx  1 ronyD DSI 16318 Sep 16 06:28 /z/afp2web_iswk/tfcu_index.pl{code}
+
+ * The script was run in a test environment:
+{code:sh}
+# to enter the test environment.
+oper1@rhs ~]$ /home/master/pr_test.sh
+#run script with application number - 2 (Business (tfcums28) :
+2. oper1@rhs ~> perl /z/afp2web_iswk/tfcu_index.pl 2
+{code}
+
+ * Snippet from Processing Log (checked >>> 'IniFilePath': '/home/test/afp2web/')
+{code:sh}
+AFP2WEB Request URL: http://10.5.20.23/services/asyncTransform
+AFP2WEB Request Data:
+{'Colorspace': 'YCbCr',
+ 'FileCreationMode': 'DOC_INDEX',
+ 'IniFilePath': '/home/test/afp2web/',
+ 'IniFilename': 'afp2web.ini',
+ 'InputFilename': '/home/a2w_workspace/test/tfcums28.afp',
+ 'InputURLs': '/z/afp2web_iswk/tfcums2/tfcums28.afp',
+ 'JobID': '44050022361242215377',
+ 'OutputFilePath': '/z/afp2web_iswk/tfcums2/indiv_pdf/',
+ 'OutputFormat': 'pdf',
+ 'OutputMode': 'File',
+ 'ResponseFormat': 'json',
+ 'UserAction': 'A2WTransform',
+ 'cross_mount_input_filename': '/z/afp2web_iswk/tfcums2/tfcums28.afp',
+ 'document_count': 0,
+ 'image_count': 0,
+ 'sup_doc_count': 0,
+ 'sup_img_count': 0,
+ 'testmode': 'y',
+ 'transform_logging': 'on',
+ 'web_server_name': 'ca-preproc-sg-01.infoimageinc.com'}
+AFP2WEB Response Code: 200
+}{code}
+
+ * The marketing message is showing up - Verified. Checked ZIP files:
+{code:sh}
+[oper1@rhs ~]$ ls -ltr /z/afp2web_iswk/tfcums2/ | grep 220916
+-rw-r--r--  1 oper1 opers 27677165 Sep 16 11:26 tfcu_busstmtseom_20220916_1.zip
+-rw-r--r--  1 oper1 opers 27719813 Sep 16 11:28 tfcu_busstmtseom_20220916_2.zip
+-rw-r--r--  1 oper1 opers 27843046 Sep 16 11:29 tfcu_busstmtseom_20220916_3.zip
+-rw-r--r--  1 oper1 opers 27725372 Sep 16 11:30 tfcu_busstmtseom_20220916_4.zip
+-rw-r--r--  1 oper1 opers 27664346 Sep 16 11:31 tfcu_busstmtseom_20220916_5.zip
+-rw-r--r--  1 oper1 opers 27638152 Sep 16 11:32 tfcu_busstmtseom_20220916_6.zip
+-rw-r--r--  1 oper1 opers 27706713 Sep 16 11:33 tfcu_busstmtseom_20220916_7.zip
+-rw-r--r--  1 oper1 opers 27786179 Sep 16 11:34 tfcu_busstmtseom_20220916_8.zip
+-rw-r--r--  1 oper1 opers 27607510 Sep 16 11:36 tfcu_busstmtseom_20220916_9.zip
+-rw-r--r--  1 oper1 opers 27655003 Sep 16 11:37 tfcu_busstmtseom_20220916_10.zip
+-rw-r--r--  1 oper1 opers 27781002 Sep 16 11:38 tfcu_busstmtseom_20220916_11.zip
+-rw-r--r--  1 oper1 opers 27631770 Sep 16 11:39 tfcu_busstmtseom_20220916_12.zip
+-rw-r--r--  1 oper1 opers 11856849 Sep 16 11:40 tfcu_busstmtseom_20220916_13.zip{code}
+
+
+author: jessica
+comment: [~rony] Please release code and confirm once complete. Thanks.
+
+
+author: rony
+comment: Hi [~Jessica]
+
+This is released.
+
+
+
+Thanks

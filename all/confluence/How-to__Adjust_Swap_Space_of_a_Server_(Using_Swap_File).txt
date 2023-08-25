@@ -1,0 +1,69 @@
+title: How-to: Adjust Swap Space of a Server (Using Swap File)
+body: The following script can be used  in order to set the swap space of a server
+to a recommended amount.  
+  
+Please note that the process of increasing the swap space puts a lot of stress
+on the CPU.
+
+  
+
+    
+    
+    #!/bin/sh
+    #
+    # Script: Swapper v0.2.0: Sets appropriate swap file space for a system
+    #
+    # Usage: The script can be pasted in any POSIX compliant shell that uses a UNIX 
+    #        based operating system.
+    #
+    # Author: Salman Abedin  
+    #
+    
+    
+    
+      
+    # defines appropriate swap space for the system  
+    ram_kb=$(grep MemTotal /proc/meminfo | sed 's/[^0-9]//g')  
+    ram_gb=$(( ram_kb / 1000000 ))
+    
+    
+      
+    
+
+if [ $ram_gb -lt 3 ]; then  
+    swap_space_gb=$(( ram_gb * 2 ))  
+elif [ $ram_gb -lt 9 ]; then  
+    swap_space_gb=$ram_gb  
+else  
+    swap_space_gb=$(( ram_gb / 2 ))  
+fi
+
+    
+    
+      
+    # Checks for existing swap file  
+    swap_file=$(cat /proc/swaps | tail -1 | cut -d' ' -f1)
+    [ -f $swap_file ] || swap_file=/swapfile
+    
+    # Executes the following commands as root  
+    sudo -s -- << eof
+    
+    # gracefully disable the current swap file
+    swapoff $swap_file && rm $swap_file
+    
+    # creates the new swapfile
+    dd if=/dev/zero of=$swap_file bs=1G count=$swap_space_gb status=progress
+    
+    # assigns appropriate permissions
+    chmod 600 $swap_file
+    
+    # formats the new swapfile
+    mkswap $swap_file
+    
+    # enables the new swapfile
+    swapon $swap_file
+    
+    eof
+    
+
+

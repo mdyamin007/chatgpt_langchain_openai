@@ -1,0 +1,106 @@
+title: Analysis of accepting a stmt type param in the SSO request to set statement tab
+description: None
+
+
+author: sadman anik
+comment: Hi [~tai.trinh],
+ I have done some R&D regarding this topic and got these below findings,
+
+We can implement this in two ways,
+
+*Solution#1:*For global updates, there will be code changes for each hypercube auth method. It will accept the statement type param in *ssoKeyGen* form request. As for only RWCU, q2sso will have some code changes.
+
+*Solution#2:*We can only change in /*sso**Exchange*route and this will accept statement type param in *ssoExchange* form request.
+
+
+
+These will be the behaviour of this optional param,
+ * User has to sent statement key name while doing sso. For RWCU, the "First Mortgage" statement user has to send "mortgage_2".
+
+ * If a user sends any statement type that doesn't exist for that client or does not send any statement type then the user will see the default statement as usual.
+
+ * If the user sends any statement type that has no statement pdf/html then it will also show statements for the default statement
+
+Overall with testing, it will be required *1 day for each auth method* if we implement solution#1. And for solution#2, it will be required 5*days.*
+
+
+author: tai.trinh
+comment: Hi [~sadman anik],
+
+For this, even if there are no statements, it should still default to the chosen statement type, because it is a deliberate override afterall. The intention is always to land on the chosen statement type if the parameter is provided.
+
+I prefer*Solution 1*. By precedence, we have only ever accepted a "key" parameter for ssoExchange, so let's keep it that way unless there's a real good reason to change it. That said, can you look into something for me, also. RWCU is actually not connected to Q2. We just use that endpoint for them since we provided the same SSO specs. I do not think it would be that difficult to switch them to using singleSignOn7, also. I think we should do that, and then enhance singleSignOn7 with the statement type parameter.
+
+The reasoning behind switching to sso7 and enhancing that instead, is because sso7 is technically the InfoIMAGE SSO endpoint. This is the specs that we will want to use for all new set ups that are not existing vendors. Even when setting up with a new third-party vendor, we would be using this endpoint, e.g. Alkami. We are doing this, because as the SSO vendor, we should provide the specs that third-party have to match. So in essence, sso7 is the only one we have to maintain. The other endpoints can be viewed as legacy for existing clients that we will enhance when we have to do so.
+
+-----
+
+As for the technical aspect of this, I would say we should define the config inside the SSO property, so...
+{code:java}
+singleSignOn7: {
+...,
+"overrideStmtTypeLanding":true
+}{code}
+I'm pretty sure the JSON can define boolean, so we should use that. Not sure why we had been using "y" and "n". It introduces an unnecessary String comparison step, and the code is less clean that way also.
+
+How are you planning to pass this parameter from ssoKeyGen to the landing page?
+
+Thanks,
+
+Tai
+
+
+author: sadman anik
+comment: Hi [~tai.trinh],
+
+Since there is no difference between q2sso and sso7, so I don't think there is any conflict. I am changing sso method as following for RWCU,
+{code:java}
+"singleSignOn7": {
+      "password": "!kEophWns!",
+      "hashMethod": "MD5",
+      "usrAutoCreate": "y",
+      "acctAutoCreate": "y",
+      "checkPrimaryUser": "n",
+      "removeUFA": "y",
+      "updateEmail": "n",
+      "clientCode": "00002246",
+      "acctTypeRequired":"n",
+      "prefix0s" : "Y",
+      "cifLength": "10",
+      "overrideStmtTypeLanding":true
+}
+{code}
+It will take "*stmt_type*" param value from *ssoKeygen* form value and add it in the pramJSON. So it will be encrypted in token and we will decrypt this value while doing *ssoExchnage*. Then this value will be stored in the *appSession* for further use e.g. reload e-stmt page.
+
+
+
+Thanks,
+
+Sadman Anik
+
+
+author: tai.trinh
+comment: Hi [~sadman anik],
+
+Okay, this sounds good. I hope you haven't started coding already. I am only asking this for assessment to provide to Tyler. We will wait on him to determine whether we want to support this and go forward with the enhancement.
+
+Thanks,
+Tai
+
+
+author: sadman anik
+comment: [~tai.trinh],
+
+Let me know when you get the decision.
+
+Thanks,
+sadman
+
+
+author: tai.trinh
+comment: Hi [~sadman anik],
+
+Now that we have completed the analysis. Let's close out this ticket. I'll open a Story when I have the go-ahead.
+
+Thanks,
+Tai

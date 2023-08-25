@@ -1,0 +1,187 @@
+title: ca-input-pr-01:/d/input NFS Permission Issue
+description: [root@rhs ~]# mount -vvv -t nfs ca-input-pr-01:/d/input /mnt/nfs/isd_input
+mount: trying 10.4.20.20 prog 100003 vers 3 prot tcp port 2049
+mount: trying 10.4.20.20 prog 100005 vers 3 prot udp port 45136
+mount: ca-input-pr-01:/d/input failed, reason given by server: Permission denied
+
+
+
+
+
+Can you check the ca-input-pr-01:/etc/export to confirm that the following servers have (rw) access:
+
+
+
+ca-isis-pr-01
+
+ca-isis-pr-02
+
+ca-isis-pr-03
+
+ca-preproc-pr-02
+
+ca-preproc-pr-03
+
+!image-2020-09-14-12-52-43-203.png!
+
+
+
+I did confirm the ports are opened
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+author: william.kong
+comment: [~davidt] and [~anil.dasa]: Can you guys please research this so that we can mount into production system?
+
+
+author: trang809
+comment: William,
+
+Please use /estmt as mount point instead, Here is the list of server that were exported.
+
+
+
+/estmt ca-isis-dv-01(rw,sync,no_subtree_check,all_squash)
+/estmt ca-isis-pr-01(rw,sync,no_subtree_check,all_squash)
+/estmt ca-isis-pr-02(rw,sync,no_subtree_check,all_squash)
+/estmt ca-isis-pr-03(rw,sync,no_subtree_check,all_squash)
+/estmt ca-preproc-pr-02(rw,sync,no_subtree_check,all_squash)
+/estmt ca-preproc-pr-03(rw,sync,no_subtree_check,all_squash)
+/estmt ca-rhstore-pr-01(rw,sync,no_subtree_check,all_squash)
+
+
+
+Thanks
+
+David
+
+
+author: anil.dasa
+comment: [~William.Kong]
+
+Below is the screenshot of exports list on ca-input-pr-01 machine.
+
+!image-2020-09-14-15-08-55-282.png!
+
+
+author: william.kong
+comment: [~davidt] and [~anil.dasa]: Had to change it to /estmt/input to be more specific. It is now working. Thanks!
+
+
+author: trang809
+comment: Hey William,
+
+Not sure why it didn't work for you. Sean and Anil was able to mount it from our side.
+
+I updated it to /estmt/input for your server but leave our alone.
+
+
+
+Thanks
+
+David
+
+
+author: william.kong
+comment: [~davidt]: It's working. But now Kent and Prem needs to change the IP address for the ca-input-pr-01 server to be in a different subnet now. So I need to retest again.
+
+
+
+[~kent.chan] AND [~premraj.patil]: Per our email dialog just now. Please let us know the new IP address and I will remount. Please update the Brisbane server list once you have the new IP address assigned:
+
+
+
+[https://app.smartsheet.com/sheets/V9xwHXJPFF9m375vQ6QcH4H953WMRvh7RJ3R6J31]
+
+
+
+
+
+
+author: anil.dasa
+comment: [~William.Kong]
+
+I have tried to create a message manager campaign and I see issue from ca-isis-pr-01 machine. Below are logs for same. Not sure if this is mount issue or script issue.
+
+
+
++*Logs:*+
+
+2020-09-15 10:17:47 INFO ZipFileGeneratorVer3:284 - Message entry: 2|0|165823|ms1_Default_20.tif|ada6936968a2022c7973f45dae681f3e|null|null|0.0|0.0|||Default
+
+2020-09-15 10:17:47 INFO AbstractZipFileGenerator:51 - adding demo_ms1_09102020_09102020.txt to zip file, checksum=5bbe406c564e2b4facd2689d04835aaa
+2020-09-15 10:17:47 INFO CommandGenerator:96 - Send command to IS: /home/master/approve_sample_msgid.sh demo ms1 "1|demo_ms1_09102020_09102020.zip" 09102020 09102020 Monthly 2
+2020-09-15 10:17:47 INFO AbstractViewStmtController:87 - {color:#de350b}Send IS command /home/master/approve_sample_msgid.sh demo ms1 "1|demo_ms1_09102020_09102020.zip" 09102020 09102020 Monthly 2 to ca-isis-pr-01:3490{color}
+{color:#de350b}2020-09-15 10:17:47 INFO AbstractViewStmtController:104 - Reply from IS: [2|no zip file ]{color}
+{color:#de350b}2020-09-15 10:17:47 INFO AbstractViewStmtController:116 - Please contact IS team to solve the IS server issue.{color}
+{color:#de350b}2020-09-15 10:17:47 ERROR PreviewStmtController_30:238 - no zip file{color}
+java.lang.Exception: no zip file
+ at com.infoimage.infotrac.msgMgr.web.AbstractViewStmtController.sendCommand(AbstractViewStmtController.java:120)
+ at com.infoimage.infotrac.msgMgr.web.PreviewStmtController_30.handleRe
+
+
+author: william.kong
+comment: [~anil.dasa]: Per our troubleshooting session just now, it looks indeed that the zip file 'demo_ms1_09102020_09102020.zip' is not in:
+
+/d/isd_input_dev/I3/MsgSample/demo/txt/ folder
+
+
+author: anil.dasa
+comment: [~William.Kong]
+
+There was mount issue earlier and files were created at a wrong location. After updating mount location, I see Pseg conversion error now.
+
+
+
+!image-2020-09-15-18-25-05-039.png!
+
+
+
++*Infotrac Logs:*+
+
+2020-09-15 16:23:16 INFO AbstractZipFileGenerator:51 - adding demo_ms1_09162020_09162020.txt to zip file, checksum=1c865ee83a8e3dd2d4ef76bfd796e0b8
+2020-09-15 16:23:16 INFO CommandGenerator:96 - Send command to IS: /home/master/approve_sample_msgid.sh demo ms1 "1|demo_ms1_09162020_09162020.zip" 09162020 09162020 Monthly 2
+2020-09-15 16:23:16 INFO AbstractViewStmtController:87 - {color:#de350b}Send IS command /home/master/approve_sample_msgid.sh demo ms1 "1|demo_ms1_09162020_09162020.zip" 09162020 09162020 Monthly 2 to ca-isis-pr-01:3490{color}
+{color:#de350b}2020-09-15 16:23:16 INFO AbstractViewStmtController:104 - Reply from IS: [6|Pseg Conversion Error ]{color}
+{color:#de350b}2020-09-15 16:23:16 INFO AbstractViewStmtController:116 - Please contact IS team to solve the IS server issue.{color}
+{color:#de350b}2020-09-15 16:23:16 ERROR PreviewStmtController_30:238 - Pseg Conversion Error{color}
+{color:#de350b}java.lang.Exception: Pseg Conversion Error{color}
+ at com.infoimage.infotrac.msgMgr.web.AbstractViewStmtController.sendCommand(AbstractViewStmtController.java:120)
+ at com.infoimage.infotrac.msgMgr.web.PreviewStmtController_30.handleRequestInternal(PreviewStmtController_30.java:203)
+
+
+
+
+
+
+author: william.kong
+comment: [~anil.dasa]: Can you retry again? I may have screwed up the rhs:/home/ directory earlier when I was troubleshooting a different issue. I retested and it works:
+
+
+
+!image-2020-09-15-16-36-40-931.png!
+
+
+author: anil.dasa
+comment: [~William.Kong] : I am able to approve message now.
+
+!image-2020-09-15-18-43-20-484.png!
+
+
+author: william.kong
+comment: [~anil.dasa]: I'm going to consider this completed. Changing status to "Done"
+
+
+author: anil.dasa
+comment: Sure

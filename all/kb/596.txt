@@ -1,0 +1,218 @@
+At the beginning we need to make sure of the resources like cid , jid, dfa, scanned data file, processing scripts and specially DT_JOB_ID( key for scanned data file ) for dev and parallel. For each cid jid generally there is a procs file in /home/dsi/procs/${cid}${jid}.procs or /home/test/procs/${cid}${jid}.procs which contains those information about resources and some other rules. If those doesn't help directly ask project coordinator of onshore team. Next we need to download/check out necessary resources from production like dfa, script, control file. In a nutshell except insert file and data file all necessary files should be downloaded from production. To know download or check out process click here. You have to work on processing script, control file, dfa and insert file.
+Processing script:
+You will need to try to include segment and bypass as argument of the processing script like : sh -x ${home_master}/master/ofcums1_process.sh 1 bypass s There might be other arguments these two is high priority. If you see in the script it manually declares segment or extract segment the you can avoid it to set as parameter. This is same for bypass also. So if you have segment and bypass First step:
+# infotrac
+. ${home_master}/master/proc_arg_verify.sh $1 $2
+. /home/control/daily.control
+. ${home_master}/master/func_set1.sh  #chk_exit_status, chk_sum,get_segment,log_file etc
+. ${home_master}/master/func_set2.sh  #input_file_in,secondary_file_in,decrypt2_file, unzip_file,move_to_backup,move_to_pickup 
+. ${home_master}/master/func_set3.sh
+. ${home_master}/master/func_set4.sh
+. ${home_master}/master/func_set5.sh  #( this is specially for daily where isisdisk_daily.sh is used you don't need to include it if not daily or isisdisk.sh is used )
+proc_arg_verify.sh checks if the process is corn job or not and populate g_segment and g_bypass variable according to this condition. /home/control/daily.control it exports some configuration variables that will be needed throughout the whole process Second step:
+#infotrac
+get_segment $cid $jid     #clears the <cid><jid>.datatrack.tmp, So if the codes manually delete the file you don't need get_segment call
+export g_segment=$g_segment 
+export seg_num=$g_segment #this seg_num will be used in downstream processing script specially when creating index file for f option this seg_num is must
+export bypass=$g_bypass #it will help to rerun a process for infotrack if bypass argument value is bypass
+get_segment $cid $jid clears the <cid><jid>.datatrack.tmp file in /home/dsi/keep/ or /home/test/keep/ which contains the md5 value of data file. So if the codes manually delete the file you don't need get_segment call export seg_num=$g_segment this seg_num will be used in downstream processing script specially when creating index file for f option this seg_num is must export bypass=$g_bypass it will help to rerun a process for infotrack if bypass argument value is bypass Third Step:
+# Infotrac logging
+${home_master}/master/get_md5_value.sh $infile $cid $app
+chk_exit_status $? get_md5_sum.sh
+It should be called with original file the file we get in ftpbu directory ( most of the case pgp or gpg , but in some cases original file may be in only zip ) it writes the md5 value for the new data file in <cid><jid>.datatrack.tmp file Note: use the variable name correctly according to your processing script code Forth Step:
+#adding segment in isisdisk call as fourth argument
+${home_master}/master/isisdisk.sh $cid$app ${job_sel} $const_file2 $seg_num
+chk_exit_status $? "isisdisk.sh ${job_sel}"
+For adding segment you supposed to get all the output like afp ,txt etc as . ( cycle is the day of the file date )
+Control File
+infotrac="m"
+estmt_trac="y"
+track_by_rec="y"
+fullimb_trk="y"
+#needed  to call trigger
+mail_full_serv="ASE3"
+#needed if it has e selective insert
+eStmtSelInsFlag="TRUE"
+#needed if it has e selective insert 
+new_estmt_idx="y"
+cycleno=${1}grep PROC_DATE: ${home_ins}/insert/${prefix}.ins | cut -d " " -f2 | cut -c3-4
+fn=${dir}${prefix}${cycleno}
+supprefix="$prefix$cycleno"
+export dir fn supprefix estmt_trac track_by_rec infotrac
+if mail_full_serv is not set to ASE3 or ASE4 afp will not be copied over to isd folder
+cycleno=${1}grep PROC_DATE: ${home_ins}/insert/${prefix}.ins | cut -d " " -f2 | cut -c3-4 
+here ${1} is segment value that we pass in isisdisk call
+DFA
+remove leading zeros from account number in all writerecord ( both for s and f ). ( Just multiply the account number with 1 should work )
+right justified  Account Number in paper writerecord
+remove suffix from account number
+Insert File
+Set DT_JOB_ID: correctly
+JOB_CYC number should match with DT_JOB_ID first value( seperated by - )
+An example of insert file:cobzms1.ins
+DT_JOB_ID: 138011-C01.01-V21788
+JOB_CYC: 138011 03-04
+ENV_PAP: .220 .123
+ENV_HVY: .555
+INSERT1: 0
+INSERT2: 0
+INSERT3: 0
+INSERT4: 0
+INSERT5: 0
+QA_BY_ACCT: /d/share/Diego/cobz_dda_sample_acct_list.txt
+PROC_DATE: 03042017
+Check In
+Next you need to check in the dfa prf control file processing script and any other related script in server. To know the check in process click here.
+Run
+Next run the process. A sample way to run
+ssh rht "sh -x /t/test_ronyD.sh" 2>&1|tee /t/rony/log/msbkea1_s_dev_120217.log
+in test_ronyD.sh
+cp /t/download/msbk/LN6660P_120217_01.dat.pgp /t/ftpbu/msbkbu/Escrow/ #to put the data file in ftpbu directory where the processing script will search for
+rm /home/dsi/keep/cksum_log/msbkea1_cksum.log #clear the check sum log otherwise it will fail if we run with same data file
+sh -x ${home_master}/master/msbk_escrow_process.sh 1 bypass s
+Note: if you rerun a project with infotrac flags on than the execution of script will get tucked at certain point. You might see perl /home/dsi/master/chk_job_id.pl this program running or hanging in output screen or log file. In this case entering Y and then press Enter and then entering 11 and press Enter will work. The might see Rerun Infotrac to see the reason for this.
+next check the log file
+Search by the word trigger and if you see below like message
+trigger_tracking_by_rec.pl URL: http://pd-dev7.infoimage.com:8580/indexFileProcess/trigger?host=10.8.9.60&username=pdev1&pwd=infoimage&path=/z/isd_share/msbk/print_fileid/&filename=msbkea120171207041043.txt
+trigger_tracking_by_rec.pl Successful sending ...
+then it is a highly indication that your infotrac process went successful  If you don't see the expected output in pilot like not enough icons you expected:
+then you might be some features are not on for that client or cid in pilot site. See here how to set features in pilot site.
+For Statement:
+DFA:
+remove leading zeros from account number
+right justified  Account Number in paper writerecord
+remove suffix from account number
+Processing script:
+Include funcset 1 , 2 and may be 3( in case n option needed see cscums1_process.sh )
+. ${home_master}/master/func_set1.sh
+. ${home_master}/master/func_set2.sh
+. ${home_master}/master/func_set3.sh
+Must export seg_num and bypass # Get & Export Segment & bypass
+get_segment $cid $jid
+export seg_num=$seg_num
+export bypass=1 ( to allow rerun )
+Infotrac logging Call get_md5 on original file, Call get_segment before get_md5, # Infotrac logging
+${home_master}/master/get_md5_value.sh $pgp_data_file $cid $app
+chk_exit_status $? get_md5_sum.sh
+all check sum on decrypted file if there are multiple data file the check sum all
+For n option:
+if [ $first_chk_value == "n" ];
+then
+     ## Run n-option
+     run_n_opt "$cid$app" "${work_dir}firstMortgage.pdf" "$n_opt_mail" "$g_segment"
+     echo "run_n_opt "$cid$app" ${work_dir}firstMortgage.pdf $n_opt_mail $g_segment"
+else
+     echo_tee "Error: Invalid option. Usage: $0 \$segment \$bypass (optional: n,s,f)" $my_log_file
+     exit 1
+fi
+for normal options:
+echo "Running checksum on $decryptFile" chk_sum2 $decryptFile $job_sel
+Call log_file for all individual decrypted data file
+log_file $decrypted_file
+Call isisdisk with with $seg_num
+${home_master}/master/isisdisk.sh "$cid$app" "s" ${const_file1} $seg_num
+chk_exit_status $? 'Error: isisdisk paper'
+Control File:
+afp_split_count=20000 ( should already exists but if not include those this need for f option )
+new_e_index=1
+infotrac="m"
+new_e_index=1
+estmt_trac="y"
+track_by_rec="y"
+fullimb_trk="y" ( not sure please ask onshore)
+mail_full_serv="ASE3" ( otherwise afp will not copied over to isd )
+cycleno=${1}<code>grep PROC_DATE: ${home_ins}/insert/${prefix}.ins | cut -d " " -f2 | cut -c3-4</code>
+fn=${dir}${prefix}${cycleno}
+supprefix="$prefix$cycleno"
+export dir fn supprefix estmt_trac track_by_rec infotrac
+Insert File:
+Add dt_job_id (ask client for dt job id) The job cycle value should match the first part of dt_job_id . For below example it is 132314.
+DT_JOB_ID: 132314-C01.01-V22437
+JOB_CYC: 132314 04-27
+ENV_PAP: .220 .123 .123
+ENV_HVY: .555
+INSERT1: 0
+INSERT2: 0
+INSERT3: 0
+INSERT4: 0
+INSERT5: 0
+PRINT_FORMAT: CS6900 
+PROC_DATE: 04272020
+For Daily:
+DFA:
+remove leading zeros from account number
+right justified  Account Number in paper writerecord
+remove suffix from account number
+Insert letter code and afp code in writerecord txt file ( 312-314, 315-317) like 001,002 etc based on letter number
+Process.sh:
+Run argument checking ( program should accept segment and by pass in arguments)
+# Checking arguments for crontab or manual run
+. ${home_master}/master/proc_arg_verify.sh $1 $2
+Export segment and bypass ( segment must be exported as seg_num)
+bypass=$g_bypass #allow program to update DT_JOB_ID
+seg_num=$g_segment
+g_segment=$g_segment
+#$g_bypass, $g_segment come from proc_arg_verify.sh
+Delete *.datatrack.tmp file ( where MD5 value of original data file is written )
+# Call get_sement, it will do it
+get_segment $cid $jid
+call get_md5_value for original data file
+${home_master}/master/get_md5_value.sh $pgp_data_file $cid $app
+chk_exit_status $? get_md5_sum.s
+process.pl:
+add segment value to combined .txt file
+system ("cat ${input_fn}.txt \>\>
+${path2}cscudla$ENV{seg_num}${a_time}.c1bmcok");
+add $seg_num as last argument
+system ("$ENV{home_master}/master/isisdisk_daily.sh ${cid}dla s ${path2}${cid}dla$ENV{seg_num}${a_time}. c1bmcok $ENV{seg_num}");
+copy .c1bmcok file to .txt and call isisdisk_daily w/ f option
+system ("cp $ENV{dir}${cid}d$ENV{g_segment}$a_time.c1bmcok $ENV{dir}${cid}d$ENV{g_segment}$a_time.txt");
+system ("$ENV{home_master}/master/isisdisk_daily.sh ${cid}dla f
+$ENV{d_dir}/daily/${cid}/${cid}d$ENV{g_segment}$a_time.txt $ENV{g_segment}");
+control.pl:
+e_automate="e4" #this is necessary with numeric notice types and 2DSDDAILY7.dfa
+new_e_index=1#must
+track_by_rec="y" #must
+estmt_trac="y" #must
+esup_ignore="G"
+new_envelope_structure="y"
+afp_split_count=20000
+newDlStructure="y1"#this is used for enotices when using 2DSDDAILY7.dfa
+mail_full_serv="ASE3" #must
+procdate=<code>grep PROC_DATE: ${home_ins}/insert/cscudla.ins | cut -d " " -f2</code>
+( add segment as ${2} )
+#must
+if [ $1 -a $1 != "format" ]; then
+if [ $2 ]; then
+cycleno=${jid}${2}<code>grep PROC_DATE: ${home_ins}/insert/${cid}${jid}.ins | cut -d " " -f2 | cut -c3-4</code>
+else
+cycleno=${jid}<code>grep PROC_DATE: ${home_ins}/insert/${cid}${jid}.ins | cut -d " " -f2 | cut -c3-4</code>
+fi
+#must
+fn="$dir$cid$cycleno"#must
+prefix="$cid$cycleno"#must
+sam_jid="dl"#must
+supprefix="$cid$cycleno"#must
+export dir procdate fn sam_jid supprefix e_automate esup_ignore fullimb_trk infotrac estmt_trac track_by_rec#must
+Insert File:
+Add dt_job_id (ask client for dt job id) The job cycle value should match the first part of dt_job_id . For below example it is 132314.
+DT_JOB_ID: 132314-C01.01-V22437
+JOB_CYC: 132314 04-27
+ENV_PAP: .220 .123 .123
+ENV_HVY: .555
+INSERT1: 0
+INSERT2: 0
+INSERT3: 0
+INSERT4: 0
+INSERT5: 0
+PRINT_FORMAT: CS6900 
+PROC_DATE: 04272020
+ Other Steps:
+ Verify infotrac job.  Search for trigger_track_by_rec.pl in the formatting job log i.e perl /home/dsi/master/trigger_tracking_by_rec.pl /z/isd_share/tfcu/print_fileid/tfcume220160623091319.txt
+Copy the highlighted TXT file Go to Pilot URL: http://pd-dev2.infoimage.com:8880/indexFileProcess/
+Or Staging URL: http://webapp-stage01:8580/indexFileProcess/ Click on View Process History.
+ Enter the TXT file name in the search box and check the status.
+ To re-trigger the job  Remove the job by click on Remove link Click on home page Enter folder path: /z/isd_share/tfcu/print_fileid Header file name: tfcume220160623091319.txt Note: These file path and name are specified from the parameter input of Note: These file path and name are specified from the parameter input of /home/dsi/master/trigger_tracking_by_rec.pl in the log file
+URLS:
+https://infotrac-pilot.infoimageinc.com/login.do https://devapi.infoimageinc.com/indexFileProcess/ 10.8.9.58 pd-dev2.infoimage.com 12.189.22.166 devapi.infoimageinc.com
+Tagged:infotracpilotscriptscripting

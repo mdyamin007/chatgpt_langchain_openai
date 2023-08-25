@@ -1,0 +1,143 @@
+title: InfoConfig Release Plan
+body: ## Servers:
+
+### Development:
+
+#### InfoConfig URL:
+
+  * ca-infotrac-dv-01.infoimageinc.com:8680
+  * ca-infotrac-dv-02.infoimageinc.com:8680
+
+#### ActiveMQ Artemis:
+
+URL: ca-mongoreg-dv-02.infoimageinc.com
+
+Username: infoImage
+
+Password: infoImageAdmin
+
+Queue: INFOCONFIG.DEVELOPMENT
+
+### Pilot:
+
+  * ca-infotrac-pi-01.infoimageinc.com:8680
+  * ca-infotrac-pi-02.infoimageinc.com:8680
+
+#### ActiveMQ Artemis:
+
+URL: ca-mongoreg-dv-02.infoimageinc.com
+
+Username: infoImage
+
+Password: infoImageAdmin
+
+Queue: INFOCONFIG.PILOT
+
+### Test plan:
+
+  *  **InfoConfig** APIs will be tested through **Apache JMeter**.
+  *  **InfoConfig** UI will be tested through **Keyword driven** application.
+
+### Flow:
+
+  *  **Features & schema** related changes will be deployed on the **DEVELOPMENT** environment first.
+  * For any feature update we have to run **Keyword driven** & **JMeter** script to test the functionality.
+  * If there are any changes on **schema** or **configuration** then all the dependent applications must have to test on the **DEVELOPMENT** environment.
+  * If **passed** the **schema** or **configuration** will be copied on the **PILOT** environment and also all the applications have to test on **PILOT**.
+  * The same flow will be repeated for **STAGE** & **PRODUCTION** as well.
+
+## Database
+
+### Backup command:
+
+mongodump --archive="DV_InfoConfig" \--uri="mongodb://root:Password@ca-
+mongoreg-dv-01.infoimageinc.com:27017,ca-mongoreg-
+dv-02.infoimageinc.com:27017,ca-mysql-
+dv-01.infoimageinc.com:27018/DV_InfoConfig?authMechanism=SCRAM-SHA-1"
+\--db=DV_InfoConfig
+
+### PILOT:
+
+#### Restore command:
+
+mongorestore --archive="DV_InfoConfig" \--uri="mongodb://root:Password@ca-
+mongoreg-dv-01.infoimageinc.com:27017,ca-mongoreg-
+dv-02.infoimageinc.com:27017,ca-mysql-
+dv-01.infoimageinc.com:27018/?authMechanism=SCRAM-SHA-1"
+\--nsFrom='DV_InfoConfig.*' --nsTo='PT_InfoConfig.*'
+
+#### Query:
+
+1\. db.getCollection('configuration').deleteMany({environment:'DEVELOPMENT'})  
+2\. db.getCollection('configuration').dropIndexes()  
+3\.
+db.getCollection('configurationHistory').deleteMany({environment:'DEVELOPMENT'})  
+4\. db.getCollection('configurationHistory').dropIndexes()  
+5\. db.getCollection('schema').deleteMany({environment:'DEVELOPMENT'})  
+6\. db.getCollection('schema').dropIndexes()  
+7\. db.getCollection('schemaHistory').deleteMany({environment:'DEVELOPMENT'})  
+8\. db.getCollection('schemaHistory').dropIndexes()
+
+### DEVELOPMENT:
+
+#### Restore command:
+
+mongorestore --archive="DV_InfoConfig" \--uri="mongodb://root:Password@ca-
+mongoreg-dv-01.infoimageinc.com:27017,ca-mongoreg-
+dv-02.infoimageinc.com:27017,ca-mysql-
+dv-01.infoimageinc.com:27018/?authMechanism=SCRAM-SHA-1"
+\--nsFrom='DV_InfoConfig.*' --nsTo='DV_InfoConfig2.*'
+
+#### Query:
+
+1\. db.getCollection('configuration').deleteMany({environment:'PILOT'})  
+2\. db.getCollection('configuration').dropIndexes()  
+3\. db.getCollection('configurationHistory').deleteMany({environment:'PILOT'})  
+4\. db.getCollection('configurationHistory').dropIndexes()  
+5\. db.getCollection('schema').deleteMany({environment:'PILOT'})  
+6\. db.getCollection('schema').dropIndexes()  
+7\. db.getCollection('schemaHistory').deleteMany({environment:'PILOT'})  
+8\. db.getCollection('schemaHistory').dropIndexes()
+
+# InfoTRAC Release plan for InfoConfig
+
+### Test plan
+
+  *  **InfoTRAC** UI will be tested through **Keyword driven** application.
+  * We need **1 week** to prepare the **Keyword driven** script.
+
+### Flow:
+
+  * We'll prepare the Keyword driven Test Script without using the info config.
+  * We'll deploy one instance without integrating infoconfig with infotrac on PILOT
+  * Test InfoTRAC with the keyword driven application.
+  * Prepare the keyword driven using the info config.
+  * Stop the first instance and run another instance with Infoconfig integrated with InfoTRAC
+  * Run the test script one more time with infoconfig.
+  * Match the two results if it returns the same output then our integration is successful.
+  * The same flow will be repeated for **STAGE** & **PRODUCTION** as well
+
+#  
+
+# Duration
+
+  
+
+START DATE| END DATE| DESCRIPTION| Working Days  
+---|---|---|---  
+11/30/21| 12/8/21| InfoTRAC Test Script + running the script| 7  
+11/30/21| 12/3/21| Infotrac Property update on Infoconfig| 3  
+11/30/21| 12/3/21| Infoservice Test Script| 3  
+11/30/21| 12/3/21| Infoconfig API test| 3  
+12/6/21| 12/24/21| Infoconfig UI Test| 15  
+11/30/21| 12/10/21| Hypercube Test Script + running the script| 9  
+ 11/30/21| 12/01/21| Hypercube Code Merge - current trunk( **Till Revision
+no** \- **26116** ) with infoconfig tag| 2  
+12/02/21| 12/02/21| Check newly inserted/updated configs in trunk, add them in
+infoconfig UI| 1  
+12/02/21| 12/03/21| Double checking all the properties from trunk for all
+clients with infoconfig UI| 2  
+  
+  
+
+

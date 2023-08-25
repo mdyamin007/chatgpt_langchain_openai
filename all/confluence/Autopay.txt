@@ -1,0 +1,34 @@
+title: Autopay
+body:   * for a 3100 disposition seed account and they sign up for auto pay  
+\- Min due is coming from balance sheet- min due of seed account).
+
+  * for non 3100 seed user and they sign up for auto payment  
+\- the min due is calculated from threshold  
+\- total balance used in threshold calculation
+
+  * if autopayment is in pending state (queued to be picked by prescheduler)> account summary section will have Pending Auto-pay: $180.00 on 08/01/2012. Where the $180 is a link.
+
+  * if autopayment is in processed state(already sent to [authorize.net](http://authorize.net)) or there is no bill for this autopay yet > account summary section will not have above but the text "Next Auto-pay: Estimated $180.00 on 07/12/2012(will be applied to next bill)".  
+Next autopay date is calculated on the fly based on the date the user is
+logged into the system.
+
+  * If there is no bill you can still set up auto pay -UI it would say "estimated". No entry would be created in payments table. Entry to payments table get created only when a bill comes and autopayment runs and user has setup autopay  
+\- since autopay jobs applies to recent bill jobs which have been processed,
+
+  * Eff date is calculated based on what day the user chose to set up autopay + biz day calculation  
+1) If todays date > eff date ( now in month)  
+- the next estimated pay date would be the next month irrespective of if a bill has been processed or not  
+2) If todays date < eff date (still coming up this month)  
+\- next estimated would be this month if nothing is processed  
+\- if a bill is processed the next estimated date would be next month  
+3) If today's date = eff date  
+\- next estimated date would be today's date if no bill has been processed and
+if it is still todays date when user logs in  
+\- when user logs in and todays date has passed it would be next month if no
+bill has been processed  
+\- if a bill has been processed then it would be next month
+
+  * Table  
+acct_primary_funds <\- this table is populated only when autopay is set up.
+
+

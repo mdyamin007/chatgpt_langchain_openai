@@ -1,0 +1,101 @@
+title: Hypercube Enhancement - Custom Ini
+body:   
+
+  
+
+Target release| Release name or number  
+---|---  
+Epic| Link to related Jira epic or feature  
+Document status|
+
+DRAFT  
+  
+Document owner|  
+  
+Designer|  
+Developers| Lead developer  
+QA| Lead tester  
+  
+  
+
+## Goals
+
+  * Enhance Hypercube to be able to pass the custom ini parameter iniFile to the API in order to override the default ini in the wrapper service.
+
+## Background and strategic fit
+
+Certain clients from Prism has the ability to set ini by statement type
+(estmt, etax, enotice). When migrated to Hypercube, we need to be able to
+maintain this logic.
+
+## Assumptions
+
+  * ini can only be custom by exactly three primary statement types: estmt, etax, enotice. This means that all stmt types under estmt, e.g. default, loan, mortgage, etc. must share the same ini. 
+  * If all three primary statement types share the same ini, the ini can be defined at the wrapper service level instead.
+  * The iniFile should be passed iff we are using a custom ini. It should not be passed if we can use the default ini.
+
+## Requirements
+
+  
+| Title| User Story| Importance| Notes|  **Pilot**|  Production  
+---|---|---|---|---|---|---  
+1| Pass custom ini dependent on statement type to the /statement route.|
+Describe the user and what they are trying to achieve|  _Must Have_|
+
+Examples:
+
+"customIni": {
+
+   "estmt": "afp2web_transparent.ini"
+
+}
+
+  
+
+"customIni": {
+
+   "enotice": "afp2web_transparent.ini",
+
+   "etax": "afp2web_transparent.ini"
+
+}
+
+  
+
+If customIni is not defined or if it's not defined for a specific statement
+type, pass null.
+
+|  1 incomplete Assignee |  2 incomplete Assignee  
+2| Pass the custom ini from the /statement route to the server functions that
+directly calls the API.|  
+|  
+| Pass along the iniFile parameter|  
+|  
+  
+3| The server functions that directly calls the API should pass the custom ini
+to the API if it is not null.|  
+|  
+| If the custom ini is null, don't pass the iniFile parameter.|  
+|  
+  
+  
+## User interaction and design
+
+Include any mockups, diagrams or visual designs relating to these
+requirements.
+
+## Questions
+
+Below is a list of questions to be addressed as a result of this requirements
+document:
+
+Question| Outcome  
+---|---  
+(e.g. How we make users more aware of this feature?)| Communicate the decision
+reached  
+  
+## Not Doing
+
+  * List the features discussed which are out of scope or might be revisited in a later release.
+
+

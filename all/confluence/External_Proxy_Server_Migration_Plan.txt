@@ -1,0 +1,206 @@
+title: External Proxy Server Migration Plan
+body:   
+
+## Phase 1: Proxy Migration
+
+  1. Create two brand new VM with the latest LTS release of the ubuntu server (22.04 LTS)
+    1.  **PILOT  **
+      1. ca-extproxy-pi-xx 
+      2. ca-extproxy-pi-xx 
+        1. 2 core CPU
+        2. 4GB Memory
+        3. 40GB storage
+    2.  **PRODUCTION**
+      1. ca-proxy-pr-xx
+      2. ca-proxy-pr-xx
+        1. 2 core CPU
+        2. 4GB Memory
+        3. 40GB storage
+  2. Setup Nginx 1.21.6 in that server (with ModSecurity?)
+  3. Standardize the best practices like (log format, ciphers, headers, file permissions, etc)
+  4. Route few clients in that newly created Nginx cluster.
+  5. Once everything is ready, route more clients to the new cluster, and once we're confident enough route all clients and remove the old ones.  A canary deployment technique. (A canary deployment is a deployment strategy that releases an application or service incrementally to a subset of users. All infrastructure in a target environment is updated in small phases (e.g: 10%, 25%, 75%, 100%)
+  6. Repeat this process until every server is migrated
+
+  
+
+An example of Canary Deployment from v1.1 to v1.2
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+## Phase 2: Observability with ELK
+
+  1. Create 2 brand new VM with the latest LTS release of the ubuntu server (22.04 LTS)
+    1.  **PILOT  **
+      1. ca-elk-pi-xx 
+      2. ca-elk-pi-xx 
+      3. ca-elk-pi-xx  
+
+        1. 4 core CPU
+        2. 8 GB Memory
+        3. 500 GB storage
+    2.  **PRODUCTION**
+      1. ca-elk-pr-xx 
+      2. ca-elk-pr-xx
+      3. ca-elk-pr-xx   
+
+        1. 4 core CPU
+        2. 8 GB Memory
+        3. 1000 GB storage
+  2. Setup Elastic Search, Kibana, Logstash in the above servers and Filebeat (in every Proxy server)
+  3. Configure log shipping scripts, logstash parsing script
+  4. Configure Kibana Dashboard
+  5. Configure Kibana authentication and authorization (user, roles)
+  6. Sync, and cleanup scripts for elasticsearch
+
+  
+
+  
+
+###  **PILOT**
+
+Software| Proxy Server| Installed Version| Migrate To| Migrate To New OS  
+---|---|---|---|---  
+  
+Apache2
+
+| ca-extproxy-pi-01/02| 2.2.22|
+
+  
+
+  
+
+Nginx 1.21.6
+
+|
+
+  
+
+  
+
+Ubuntu 22.04 LTS  
+  
+ca-extproxy-pi-03/04| 2.4.7  
+  
+|  
+|  
+  
+  
+Nginx
+
+| ca-extproxy-pi-05/06| 1.19.1  
+ca-extproxy-pi-07/08| 1.19.1  
+  
+###  **Production**
+
+Software| Proxy Server| Installed Version| Migrate To| OS| Migrate to New OS  
+---|---|---|---|---|---  
+  
+Apache2
+
+| ca-proxy-pr-01/02| 2.2.22|
+
+  
+
+  
+
+  
+
+  
+
+Nginx 1.21.6
+
+| Ubuntu 12.04.5 LTS|
+
+  
+
+  
+
+  
+
+  
+
+  
+
+Ubuntu 22.04 LTS  
+  
+ca-proxy-pr-03/04| 2.4.7| Ubuntu 14.04.2 LTS  
+ca-proxy-pr-05/06| 2.4.7| Ubuntu 14.04.3 LTS  
+ca-proxy-pr-07/08| 2.4.29| Ubuntu 18.04.3 LTS  
+ca-proxy-pr-11/12| 2.4.7| Ubuntu 14.04.4 LTS  
+ca-proxy-pr-13/14| 2.4.7| Ubuntu 14.04.4 LTS  
+ca-proxy-pr-15/16| 2.4.29| Ubuntu 18.04.1 LTS  
+  
+|  
+|  
+|  
+|  
+  
+  
+Nginx
+
+| ca-proxy-pr-09/10| 1.4.6| 1.21.6| Ubuntu 18.04.2 LTS  
+ca-proxy-pr-17/18| 1.14.0| 1.21.6| Ubuntu 18.04.2 LTS  
+  
+  
+
+  
+
+## Estimated Hours
+
+  
+
+ **PILOT**
+
+  
+
+Tasks| Hours  
+---|---  
+Nginx Upgrade  \- install nginx from the source with different modules and
+test| 40  
+Filebeat configuration| 16  
+Logstash, Elasticsearch, Kibana cluster setup| 32  
+Logstash parsing logic and Elastic index creation for every nginx server's log
+| 40  
+Kibana Data visualization with different types of Graphs| 40  
+Data backup and cleanup script| 16  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+

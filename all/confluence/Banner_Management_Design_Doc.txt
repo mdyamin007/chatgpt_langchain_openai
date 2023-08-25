@@ -1,0 +1,305 @@
+title: Banner Management Design Doc
+body:   
+
+## Banner Entity :
+
+> {
+>
+
+>> "ID" : (Integer),  
+> "ORG_ID" : (Integer),  
+> "TITLE" : (String),  
+> "URL" : (String),  
+> "CONTENT" : (Byte Stream),  
+> "CONTENT_LENGTH" : (Integer),  
+> "CONTENT_TYPE" : (String),  
+> "BEGIN_DATE" : (Date),  
+> "END_DATE" : (Date),  
+> "COUNTER" : (Integer),  
+> "CREATED_DATE" : (Date),  
+> "LAST_MODIFIED_DATE" : (Date),  
+> "WIDTH" : (Date),  
+> "HEIGHT" : (Date),  
+>  **" STATUS" : (String), Possible status - DRAFT,DELETE,ACTIVE,INACTIVE**  
+>  **" S3_URL" : (String)**
+>
+> }
+
+  
+  
+
+## infoservice changes :
+
+> 1\. Create a new resource named  **bannermgnt**  
+>  2\. Create a sub-resources named  **banners**  including
+> GET/PUT/POST/DELETE method.  
+> 3\. Create a sub-resource under  **bannermgnt**  to get activated click-able
+> banner data, named  **/banners/trackable**
+
+>  
+>
+>
+> ### APIs:
+
+>  **1\. GET /bannermgnt/${cid}/banners**
+
+> >  
+>
+>>
+
+>> ### Parameters:
+
+> > > 1\. cid - String - Required  
+> 2\. bannerId - String - Not Required  
+> 3\. fromDate - String - Not Required  
+> 4\. toDate - String - Not Required  
+> 5\. status - String - Not Required  
+> 6\. count - String - Not Required - Default = 10  
+> 7\. offset - String - Not Required - Default = 0
+
+> >  
+>
+>>
+
+>> ### Response Data Transfer Object:
+
+> > > [{
+>>>
+
+>>>> id:BANNER_ID,  
+> title:BANNER_TITLE,  
+> url:S3_URL,  
+> begin_date:BEGIN_DATE,  
+> end_date:END_DATE,  
+> counter:COUNTER,  
+> created_date:BANNER_CREATED_DATE,  
+> last_modified_date:BANNER_LAST_MODIFIED_DATE,  
+> width:BANNER_WIDTH,  
+> height:BANNER_HEIGHT,  
+> status:STATUS
+>>>
+
+>>> }]
+
+> >  
+>
+>>
+
+>> ### Work-flow:
+
+> > > 1\. Query the  **estatement.banner**  table and return banner list based
+> on filter.
+
+> >  
+>
+>>
+
+>> ### Flowchart:
+
+> > > > >  
+>
+>>
+
+>> ### Thought:
+
+> > > 1.  **We can use mongo in place of oracle. Then we need to replace the
+> ORG_ID in banner entity with CID.**
+
+>  **2\. POST /bannermgnt/${cid}/banners**
+
+> >  
+>
+>>
+
+>> ### Parameters:
+
+> > > 1\. cid - String - Required  
+> 2\. bannerId - String - Required  
+> 3\. fromDate - String - Required  
+> 4\. toDate - String - Required  
+> 5\. status - String - Required  
+> 6\. url - String - Not Required  
+> 7\. title - String - Required  
+> 8\. width - String - Required  
+> 9\. height - String - Required  
+> 10\. image - File - Required  
+> 11\. type - String - Required
+
+> >  
+>
+>>
+
+>> ### Work-flow
+
+> > > 1\. Validate the Dates.  
+> 2\. Take the image object then validate the width and height and type.  
+> 3.  **Upload the image to s3 with public access and take the s3 URL**  
+>  4.  **Save the banner entity along with the s3 URL.**
+
+> >  
+>
+>>
+
+>> ### Flowchart:
+
+> > > > >  
+>
+>>
+
+>> ### Question:
+
+> > > 1.  **Do we need to resize or convert the provided image.**
+
+>  **3\. PUT /bannermgnt/${cid}/banners**
+
+> >  
+>
+>>
+
+>> ### Parameters:
+
+> > > 1\. cid - String - Required  
+> 2\. bannerId - String - Required
+
+> >  
+>
+>>
+
+>> ### Request Data Transfer Object:
+
+> > > {
+>>>
+
+>>>> title:BANNER_TITLE,  
+> url:URL,  
+> begin_date:BEGIN_DATE,  
+> end_date:END_DATE,  
+> status:STATUS
+>>>
+
+>>> }
+
+> >  
+>
+>>
+
+>> ### Work-flow:
+
+> > > 1\. Update banner information with  **client Id, banner ID and given
+> payload**.  
+> 2\. Once banner become  **activated**  it can not be modified.
+
+>  **4\. DELETE /bannermgnt/${cid}/banners**
+
+> >  
+>
+>>
+
+>> ### Parameters:
+
+> > > 1\. cid - String - Required  
+> 2\. bannerId - String - Required
+
+> >  
+>
+>>
+
+>> ### Work-flow:
+
+> > > 1\. Once banner become activated it can not be deleted. On can
+> inactivate, any activated banner.  
+> 2\. Banner can be deleted from draft state.
+
+>  **5\. GET /bannermgnt/${cid}/banners/${userId}/trackable**
+
+> >  
+>
+>>
+
+>> ### Parameters:
+
+> > > 1\. cid - String - Required  
+> 2\. userId - String - Required  
+> 3\. bannerId - String - Not Required  
+> 4\. count - String - Not Required - Default = 10
+
+> >  
+>
+>>
+
+>> ### Response Data Transfer Object:
+
+> > > [{
+>>>
+
+>>>> bannerId:BANNER_ID,  
+> bannerUrl:BANNER_URL,  
+> redirectUrl:REDIRECT_URL
+>>>
+
+>>> }]
+
+> >  
+>
+>>
+
+>> ### Work-flow:
+
+> > > 1\. Fetch  **activated**  banner for the client for that  **CID**  based
+> on  **date (range in fromDate and toDate)**  and  **count**.  
+> 2\. Create  **track-able**  URL with banner image  **s3_url**  and  **banner
+> URL**  with clicktrack.
+
+> >
+> [\](https://i3dev.easyredmine.com/projects/55/wiki/Banner_Management_Design_Doc/edit?section=22)
+>>
+
+>> ### Flowchart:
+
+> > > ClickTrack changes :
+
+1\. Support appId :  **banner**  
+2\. Introduce new parameter named  **bannerId**  
+3\. actionType can be  **viewed**  and  **clicked**.  
+4.  **bannerId** ,  **userId**  and  **actionType**  is mandatory to generate a trackable URL
+
+Example API call :
+
+ **POST**  /getclickTrackURL
+
+Payload :
+
+{
+
+> "header": {
+>
+
+>> "cid": CID,  
+> "redirectURL": REDIR_URL
+>
+> },  
+> "metadata": {
+>
+
+>> "appId": "banner",  
+> "bannerId":BANNER_ID,  
+>  **" userId": USER_ID,**  
+> "actionType": actionType
+>
+> }
+
+}
+
+Return :
+
+{
+
+> "URL": "<http://cd-dev.infoimageinc.com/aa>"
+
+}
+
+### Attachments
+
+
+
+

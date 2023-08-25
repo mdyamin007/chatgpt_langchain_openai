@@ -1,0 +1,1414 @@
+title: BKFN Hypercube Migration Analysis [In Progress]
+body:   
+
+Document Status|
+
+YellowDRAFT  
+  
+---|---  
+Document Owner|
+
+  
+  
+  
+
+# Bank Financial
+
+32circle
+
+#  **Frontend:**
+
+##  **ROOT**
+
+  
+|  
+  
+---|---  
+ **Client Name**|  Bank Financial  
+ **Schema**|  Bank  
+ **Login Method**|
+
+  * DI (IFSIB)
+    * IFSIBhblogin.jsp
+    * IFSIBssoexchange.jsp
+  * DI (IFSBB)
+    * IFSBBhblogin.jsp
+    * IFSBBssoexchange.jsp
+  * DI (IFSBFS)
+    * IFSBFShblogin.jsp
+    * IFSBFSssoexchange.jsp
+
+  
+ **Enrollment Step**|
+
+Based on SSO Date
+
+  * 3 Steps
+
+  
+ **Welcome Email**|  Yes  
+ **Menu**|
+
+  * eStatements
+  * Account Reconciliation
+  * HELOC Reconciliation
+  * CD Maturity Disclosure
+  * Profile
+  * Exit
+
+  
+ **Account Types**|
+
+  * 00
+  * 02
+  * 10
+  * 20
+  * 30
+  * 45
+  * 46
+  * 50
+  * 51
+  * 52
+  * 53
+  * 94
+  * 95
+
+  
+ **Statement Types**|
+
+  * default (eStatements/Commercial Loan Statements
+  * etax (eTax)
+  * escrow(Escrow Analysis)
+  * loan
+  * eNotice
+
+  
+ **Archival Period**|
+
+  * Default: 60
+  * loan: 60
+  * Etax: 60
+
+  
+ **Paperless Configuration**|  noSelective  
+ **Delivery Preference**|
+
+  * Online (E)
+  * Paper (B)
+
+  
+ **Notification Preference**|  Email-only  
+ **NP Link Type**|  byUFA  
+ **Batch Download  **| Yes(only for admin side)  
+ **DSO login**|  yes  
+ **User-Account Relation**|  Many to Many  
+  
+###  **Database Migration**
+
+ **USR_SESSION** : !usr_id used as sess_login_id. So no need to migrate.
+
+ **USR_MAPPING** : Inserted data for a new user. So no need to migrate.
+
+ **NOTIFICATION_PREFERENCE** : Inserted data into NP table for new user. So no
+need to migrate.
+
+###  **SSO (signlesignon7)**
+
+####  **DI (IFSIB):**
+
+  *  **IFSIBhblogin.jsp**
+    * Fields: **CIF** , email, **pswd** , **gmt, timeout.**
+    * Remove all leading zeroes of the CIF number.
+    * Check whether cifNum exists in usr_mapping:
+      * Find the UserDetails from the USR_MAPPING table by cif_num and org_id. If UserDetails is null throw an error message.
+    * Check whether USR has profile in the USR_SESSION:
+      * Find UserProfile by cif_num and org_id from USR, USR_SESSION, USR_FIN_ACCOUNT, FIN_ACCOUNT, USR_MAPPING.
+        * If UserProfile is not found create a new user with **_loginName=!usr_id_** , org_id, org_name, password, details, dso=null, and Insert into the DB.
+      * If login status is 'invalid' or login has dso date then throw an error message.
+    * Generate a   **key** by loginId, email, and timeStamp.
+
+  *  **IFSIBssoexchange.jsp**  
+
+    * Get ssoKey from the request and check ssoKey validation.
+    * Check if the key is Expired (timeToExpire being 60 seconds)
+    * Check if the user has any UFA
+      * Find UFAS by usr_id, If not found throw an errorMessage 'MISSING_UFA'.
+    * Set session attribute: ssoLogin=true, email.
+    * If SSO date is not null redirect to  **/home.jsp**  page otherwise redirect to  **/enroll/test.jsp**  page.
+
+###  **Enrollment (SSO)**
+
+  * The user goes through the enrollment based on the following condition:
+    1. If the user never login via SSO, So the SSO date is null and then goes through the 3 steps of enrollment.
+  *  **Enrollment Step 1:**  Pdf View.
+
+  *  **Enrollment Step 2:  **
+
+    * E-Sign Disclosure and Consent.
+    * Adding the primary email.
+    * By clicking the "ACCEPT" button, signifying the acceptance of eStatement Disclosure.
+
+  
+
+  *  **Enrollment Step 3:  **
+    * Shows: Account number, Account holder name, Application.
+    * The user can choose the delivery preference  ** _Online Only_**  or  ** _Paper Only_**.
+    * Email Address updatable.
+    * If DP select Online(E) then Primary email and Secondary email(if provide) insert in the NP table.
+    * If DP select Paper(B) then Secondary email insert in the NP table if the secondary email didn't provide then no data insert in the NP table.
+    * Provided email address in enrollment 2, If the primary email exists in the NP table then doesn't show the provided email in enrollment 3 as the email address.
+    * Secondary email doesn't show though exists in the NP table.
+    * Secondary email insert into the DB as a new row in the NP table.
+    * For all accounts, The delivery preference can update by clicking the submit button.
+
+###  **Menu Tabs (SSO)**
+
+  *  **eStatements:**
+    * for **default  **type statements
+    * When ACCT_TYPE is '53' then show the _Commercial Loan Statements_ , Otherwise, show the _eStatements_.
+    * Account Number: Here shows the **[account number] - [account type name]** in the dropdown menu.
+    * Shows statements: Date, Status, News, and Notices.
+    * When clicking on _Statement Date_ open a statement details pdf in the new tab.
+    * If the paperless status is 'B' then redirect to optout page to change the paperless status 'E'.
+
+  *  **Commercial Loan Statements:**
+    * for **default  **type statements
+    * When ACCT_TYPE is '53' then show the _Commercial Loan Statements_ , Otherwise, show the _eStatements_.
+    * Account Number: Here shows the **[account number] - [account type name]** in the dropdown menu.
+    * Shows statements: Date, Status, News, and Notices.
+    * When clicking on _Statement Date_ open a statement details pdf in the new tab.
+    * If the paperless status is 'B' then redirect to optout page to change the paperless status 'E'.
+
+  *  **Escrow Analysis:**
+    * for **loan** type statements
+    * It's showing for the acct_type=45/50/53.
+
+  *  **eNotice:**
+    * Currently don't support eNotice statements.
+
+  *  **eTax:**
+    * Account Number: Here shows the **[account number] - [account type name]** in the dropdown menu.
+    * Shows statements: Year and Form Name.
+    * When clicking on _Form Name_ open a statement details pdf in the new tab.
+    * If the paperless status is 'B' then redirect to optout page to change the paperless status 'E'.
+
+  *  **Account Reconciliation:**
+    * When clicking on the Account Reconciliation button open a **/disclosure.pdf** in the new tab.
+
+  *  **HELOC Reconciliation:**
+    * When clicking on the HELOC Reconciliation button open a **/LOC disclosure.pdf** in the new tab.
+
+  *  **CD Maturity Disclosure:**
+    * When clicking on the HCD Maturity Disclosure button open a **/CD Maturity Disclosure.pdf** in the new tab.
+
+  *  **Profile (SSO)**
+    * User Information:
+      * Showing _Username_ and _Registration Date_.
+    * Delivery Preference:
+      * Showing Account Number, Account Holder Name, Application, and DP status.
+      * Email addresses are updatable.
+      * Secondary email insert into the DB as a new row in the NP table.
+      * The user can update the delivery preference.
+
+  *  **Exit:**
+    * When clicking on the Exit menu close the browser.
+
+###  **DSO**
+
+DSO has the following features:
+
+  * Login
+  * Return to Home Page
+  * Forget your password?
+  * Enrollment or Register Now
+  * Menu Tabs
+
+####  **Login (DSO)**
+
+  * During login required fields are:
+    * Username
+    * password 
+  * For first-time login, It redirects to a page called  _ **token_recovery**_. There are two options there: 
+    1. I'm on a public computer. Please log me in without creating any token.
+    2. Please log me in and create a token on my computer.
+      * If the second option is selected then it creates and stores the token into the  **USR_TOKEN**  table for that computer. And it doesn't redirect to the  ** _token_recovery_**  page in future login from that computer.
+
+####  **Return to Home Page (DSO)**
+
+  * If you've already registered through personal or business online banking to receive eStatements you need to access your eStatements within Online Banking instead of this page. Click [here](https://www.bankfinancial.com/) to return to our Home Page.
+
+####  **Forget your password? (DSO)**
+
+  * First, Need to verify the Username, Account Number, and Application.
+  * And then Security checks by entering the correct security question's answer.
+  * After that enter the New Password and Confirm New Password.
+
+ **Enrollment or Register Now (DSO)**
+
+  * The user goes through the enrollment based on the following condition:
+    1. Based on the DSO date the user goes through the 4 steps of enrollment.
+  *  **Enrollment Step 1:**
+    * PDF View
+
+  *  **Enrollment Step 2:**
+    * E-Sign Disclosure and Consent.
+    * By clicking the "ACCEPT" button, signifying the acceptance of eStatement Disclosure.
+
+  
+
+  *  **Enrollment Step 3:** Entering some valid information.
+    * Login Information:
+      * Login ID
+      * Password
+      * Confirm Password
+      * Password Hint Phrase
+      * Hint Phrase Answer
+    * Contact Information:
+      * E-mail Address
+      * Confirm E-mail Address
+    * Account Verification:
+      * Application
+      * Account Number
+      * TIN (CIF)
+
+  *  **Enrollment Step 4:**
+    * The user can choose the delivery preference  ** _Online Only_**  or  ** _Paper Only_**.
+    * Email Address updatable.
+
+ **Menu Tabs (DSO)**
+
+  *  **eStatements:**
+    * for **default  **type statements
+    * When ACCT_TYPE is '53' then show the _Commercial Loan Statements_ , Otherwise, show the _eStatements_.
+    * Account Number: Here shows the **[account number] - [account type name]** in the dropdown menu.
+    * Shows statements: Date, Status, News, and Notices.
+    * When clicking on _Statement Date_ open a statement details pdf in the new tab.
+    * If the paperless status is 'B' then redirect to optout page to change the paperless status 'E'.
+    * Authorized Viewers:
+      * Use the "Create Viewer" button to setup a new individual to view statements. Upon initial setup you can assign/authorize the viewer specific account statements to view.
+      * Use the "Assign Viewers" button to assign existing authorized viewers (individuals already set up to view statements) specific account statements to view.
+      * To manage the authorized viewers, please go to "Profile."
+
+  *  **Commercial Loan Statements:**
+    * for **default  **type statements
+    * When ACCT_TYPE is '53' then show the _Commercial Loan Statements_ , Otherwise, show the _eStatements_.
+    * Account Number: Here shows the **[account number] - [account type name]** in the dropdown menu.
+    * Shows statements: Date, Status, News, and Notices.
+    * When clicking on _Statement Date_ open a statement details pdf in the new tab.
+    * If the paperless status is 'B' then redirect to optout page to change the paperless status 'E'.
+    * Authorized Viewers:
+      * Use the "Create Viewer" button to setup a new individual to view statements. Upon initial setup you can assign/authorize the viewer specific account statements to view.
+      * Use the "Assign Viewers" button to assign existing authorized viewers (individuals already set up to view statements) specific account statements to view.
+      * To manage the authorized viewers, please go to "Profile."
+
+  *  **Escrow Analysis:**
+    * for **laon** type statements
+    * It's showing for the acct_type=45/50/53.
+
+  *  **eNotice:**
+    * Currently don't support eNotice statements.
+
+  *  **eTax:**
+    * Account Number: Here shows the **[account number] - [account type name]** in the dropdown menu.
+    * Shows statements: Year and Form Name.
+    * When clicking on _Form Name_ open a statement details pdf in the new tab.
+    * If the paperless status is 'B' then redirect to optout page to change the paperless status 'E'.
+    * Authorized Viewers:
+      * Use the "Create Viewer" button to setup a new individual to view statements. Upon initial setup you can assign/authorize the viewer specific account statements to view.
+      * Use the "Assign Viewers" button to assign existing authorized viewers (individuals already set up to view statements) specific account statements to view.
+      * To manage the authorized viewers, please go to .
+
+  *  **Account Reconciliation:**
+    * When clicking on the Account Reconciliation button open a **/disclosure.pdf** in the new tab.
+
+  *  **HELOC Reconciliation:**
+    * When clicking on the HELOC Reconciliation button open a **/LOC disclosure.pdf** in the new tab.
+
+  *  **CD Maturity Disclosure:**
+    * When clicking on the HCD Maturity Disclosure button open a **/CD Maturity Disclosure.pdf** in the new tab.
+
+  *  **Profile (DSO)**
+    * User Information:
+      * Showing _Username,_   _Registration Date, Login ID, Password, Security Phrase to Recover Forgotten Password, Security Hint to Recover Forgotten Password_.
+      * User can update the Password.
+      * User can update the Password hints Question nad Answer.
+    * Delivery Preference:
+      * Showing Account Number, Account Holder Name, Application, and DP status.
+      * Email addresses are updatable.
+      * Secondary email insert into the DB as a new row in the NP table.
+      * The user can update the delivery preference.
+    * Authorized Viewers:
+      * Who are authorized to view the accounts.
+      * User can Create up to 10 authorized viewers.
+      * User can Edit viewers' profiles.
+      * User can Remove viewers.
+      * The viewer's users id Insert in the USR_TREE table as child id.
+
+  *  **Exit:**
+    * When clicking on the Exit menu redirect the signoff.jsp page and successfully logged out.
+
+  
+
+* * *
+
+##  **MSM**
+
+MSM has the following features:
+
+  * Account Management
+
+  * Email Proofing
+
+  * Insert Management
+
+  * Reports
+
+  * Profile
+
+  * Administration
+
+  * Account Creation
+
+  * Exit
+
+### Account Management
+
+  * Search account information and statements by account number.
+  * Shows all account numbers by searching the email address.
+  * Shows the Account Information: Customer CIF, Customer Name, Assisted Employee ID, Account Number, Account Holder Name, Account Application, Account Status, Account Open Date, Customer Register Status, Customer Last Login Time, Customer Last Statement View Time.
+  * Shows the Delivery Preference: Status, Email Address, 2nd Email Address.
+  * Admin can update the email address.
+  * Admin can update the delivery preference.
+  * Admin can Unenroll SSO.
+  * combine statement (batch download)
+
+### Email Proofing
+
+  * Statement types:
+    * eStatements  
+
+      *  **Keywords** : _sdv_txt_userName_  (To display the customer's name).
+    * Commercial Loan Statements  
+
+      *  **Keywords** : _sdv_txt_userName_  (To display the customer's name).
+    * Commercial Loan Statements  
+
+      *  **Keywords** :  _sdv_txt_eNoticeList_ (To display the list of eNotices), _sdv_txt_userName_ (To display the customer's name).
+    * Tax documents  
+
+      *  **Keywords** :  _sdv_txt_eTaxList_ (Within the email content, it will be replaced by the tax form name when the notifications are sent out), _sdv_txt_userName_ (To display the customer's name).
+    * Welcome  
+
+      *  **Keyword** : _sdv_txt_userName_ (To display the customer's name).
+
+### Insert Management
+
+  * Inserts available for: 
+    * eStatements
+    * Commercial Loan Statements
+  * Can choose one method from the available two methods:
+    * Display this insert on the closing date. (Shows the Closing Date)
+    * Display this insert within the day range. (Shows the Begin Date, End Date)
+
+### Reports
+
+  * Reports:
+    1. Latest Stats
+    2. User Login Activity
+    3. AI Login Activity
+    4. Email Address Collection
+      *  **Report Data: **CIF Number | Account Number | Account Type | Account Holder Name | E-mail Address.
+      *  **DB Used:** USR_MAPPING, FIN_ACCOUNT, NOTIFICATION_PREFERENCE.
+    5. Enrollment Assistant Report
+      *  **Report Data: **CIF Number | Registration Date | Employee ID.
+      *  **DB Used:** USR_MAPPING, USR_SESSION, USR.
+    6. Paperless
+      *  **Report Data** : Date | Opt-in | Opt-out | Acc. Opt-out.
+      *  **DB Used** : PAPERLESS, FIN_ACCOUNT.
+    7. Registered Users
+      *  **Report Data: **Month | # of Reg. Users | Acc. # of Reg. Users
+      *  **DB Used:** USR_SESSION
+    8. Marketing Insert Report
+      *  **Report Data: **Month | Title | Total Viewed
+      *  **DB Used:**  
+    9. Members Who Have Accepted The Disclosure
+      *  **Report Data: **CIF Number | Customer Name | New Disclosure Accepted
+      *  **DB Used:** USR_MAPPING, USR, USR_SESSION.
+    10. DSO Report
+      *  **Report Data:  **Account Name | Account Number | Account Type | CIF Number
+      *  **DB Used:** USR, FIN_ACCOUNT, USR_MAPPING.
+    11. Undelivered Report
+  * Can download the reports as  **.txt**  file or  **.xlsx**  file.
+
+### Profile
+
+  * Admin can update Firstname and Lastname.
+  * Admin can update the Password.
+
+### Administration
+
+  * Can create/view/modify/remove other users that have lower privileges.
+
+
+
+### Account creation
+
+  * Admin can create a new Account with TIN(CIF), Firstname,  Lastname, and Application type.
+
+### Exit
+
+  * By clicking on the Exit menu redirect the logout.jsp page and showing the confirmation option for logout or not.
+
+  
+
+* * *
+
+##  **Processing UI**
+
+### BACKEND PROCESSES
+
+BKFN has 5 processes,
+
+  1. AFP
+  2. AUTH
+  3. INSERT
+  4. ENOTICE4
+  5. ETAX
+
+### Settings
+
+  * global.multipleStmtType=true
+  * global.multipleDocType=false
+  * global.autoRegister=false
+  * global.ssoKey=!bkfn2012
+  * global.enableAccountType=true
+
+### Statement Types and Index file prefix
+
+  *  **global.ds1** =default
+  *  **global.cl1** =loan
+  *  **global.tax** =etax
+
+### AFP Process
+
+Flags:
+
+  * afp.compression=false
+  * afp.isZipped=true
+  * afp.copyZipBuffer=65536
+  * afp.storage.path=a
+  * afp.convert=true
+  * afp.convert.cutoff=200
+  * afp.isSharingAfps=true
+  * afp.default.estmtselinsert=true
+  * afp.default.automatedEmailNotification=true
+  * afp.loan.automatedEmailNotification=true
+  * afp.loan.estmtselinsert=true
+
+#### Handler: AfpStatementData9
+
+  * Each line in the process file must contain 12/13/14/15 fields. 
+  * FIelds:  ** _fileName_** _  | _ ** _acctNum_** _  | _ _beginDate_ _  | _ _closingDate_ _  | _ _numOfPages_ _  | _ ** _acctName_** _  | SSN | appType | messageIds | hasCheckStr | insertId | regionCode | crippleFlag | zipFileName_ .
+  * If  _crippleFlag_  is present must have a value of either "C" or "R". 
+
+**  **Bold**  indicates all are mandatory fields.
+
+#### Registrar: BkfnEStmtRegistrar
+
+  * Find the account from the **FIN_ACCOUNT** table by org_id, acct_num, and acct_type.
+  * If account not found create a new account with org_id, acct_num, acct_name, acct_type, status="A", last_modified.
+  * Insert data into **ESTMT_DOC** table with acctId, beginDate, closingDate, parentPath, fileName, pageCount, docType, stmtType, seqNum, hasCheck, esdInsertId.
+  * As _global.default.imageMessage=true_ , Save stmtMessage in the **ESTMT_MSG** table.
+  * Insert data into the **P_JOB_ESTMT** table.
+  *  _As afp.default.estmtselinsert=true_ , Insert data into the **ESTMT_SEL_INSERT** table.
+
+Database Changes: FIN_ACCOUNT, ESTMT_DOC, ESTMT_MSG, P_JOB_ESTMT,
+ESTMT_SEL_INSERT.
+
+### AUTH Process
+
+Flags:
+
+  * auth.classPath=com.infoimage.processing.application.auth.handler.BkfnAuthHandler
+  * auth.eofRequired=true
+
+ **Handler** : **BkfnAuthHandler**
+
+  * Fields: _**cif** | appType | acctNum | firstName | middleName | lastName | openDate_
+  * If firstName, middleName, and lastName don't provide acctName will be ''New Customer" and firstName will be "New Customer".
+
+ **  **Bold**  indicates all are mandatory fields.
+
+#### Registrar:  **BkfnAuthRegistrar**
+
+  * Find the user from the USR_MAPPING table by cif_num and org_id.
+    * If the user is not found Insert data into the **USR_MAPPING** table, Otherwise update the user data. 
+  * Find the account from the FIN_ACCOUNT table by acct_num, org_id, and type.
+    * If the account is not found create a new account and Insert data, Otherwise update data into the **FIN_ACCOUNT** table.
+  * Find paperless from the PAPERLESS2 table by acct_id and stmtType.
+    * If not found create new paperless and Insert data into the **PAPERLESS2** table with acctId, modifiedBy='1', modifiedDate, newStatus="B", oldStatus="N", stmtType="default".
+  * If acctNum has already existed in the UFA then remove the previous one and Insert new data into the **USR_FIN_ACCOUNT** table.
+
+Database Changes: USR_MAPPING, FIN_ACCOUNT, PAPERLESS2, USR_FIN_ACCOUNT.
+
+### INSERT Process
+
+Flags:
+
+  * insert.classPath=com.infoimage.processing.application.insert.handler.DefaultInsertHandler
+
+ **Handler** :  **DefaultInsertHandler**
+
+  * Fields:  _ **fileName |**   **title |** fileType='application/pdf' | closingDate | stmtType._
+  * Insert into  **EMAIL_ATTACH**  table with email_id, ea_file_type, ea_file_name, ea_size.
+  * Update EMAIL_ATTACH table with ea_content by ea_id.
+  * Insert into  **INSERT_FILE**  table with ea_id, org_id, stmt_type, closing_date, title, begin_date.
+  * Insert into the  **P_JOB_INSERT**  table with insert_id.
+
+ **  **Bold**  indicates all are mandatory fields.
+
+Database Changes: EMAIL_ATTACH, INSERT_FILE, P_JOB_INSERT.
+
+### ENOTICE4 Process
+
+Flags:
+
+  * enotice4.compression=false
+  * enotice4.acctTypeRequired=true
+  * enotice4.isZipped=true
+  * enotice4.copyZipBuffer=32768
+  * enotice4.createAccount=false
+  * enotice4.acctTypeRequired=true
+  * enotice4.automatedEmailNotification=true
+  * email.enotice.needApproval=false
+
+#### Handler: ENoticeData7
+
+  * Each line in the process file must contain 11 or 12 fields. 
+  * The first (Record Type) and last(Record Terminator) fields must be "L". 
+  * Fields:  ** _L_** _  | acctNum | **acctType** | acctName | afpFileName | type | closingDate | imageCount | postCardFlag | _ ** _zipFileName | L_**  
+  * If the account name is not present in the index file, the account number will be set as the account name after masking the first 2 or 4 characters. 
+  *  postCardFlag value has to be 0 or 1 or null. 
+
+ **  **Bold**  indicates all are mandatory fields.
+
+#### Registrar: DefaultENotice4Registrar
+
+  * createAccount=false,nullDsoTimeStamp=false.
+  * Fin account from the FIN_ACCOUNT table, If the account is found:
+    * Check the  ** _acctName_**  provided by the index file. If it does not match with the account name in the database, update it in the  **FIN_ACCOUNT**  table. 
+    * Do not update the account name if the name is either "MEMBER" or "CUSTOMER" or "USER". 
+  * If paperless is not found, Insert data into the  **PAPERLESS**  table with stmtType="enotice". 
+  * Inserts enotice data in  **ENOTICE**  and  **ARCH_FILE**.
+  * Inserts data into the  **P_JOB_ENOTICE**  table. 
+  * Inserts data into the  **P_ENOTICE_COUNT**  table. 
+
+Database changes: FIN_ACCOUNT, PAPERLESS, ENOTICE, ARCH_FILE, P_JOB_ENOTICE,
+P_ENOTICE_COUNT.
+
+### ETAX Process
+
+Flags:
+
+  * etax.compression=false
+  * etax.createAccount=false
+  * etax.isZipped=true
+  * etax.copyZipBuffer=32768
+  * etax.isSharingAfps=true
+  * etax.automatedEmailNotification=true
+
+#### Handler: EtaxData3
+
+  * Fields: _acctName | **acctNum** | **type** | **afpFileName |** date | suffix | appType | SSN | zipFileName._
+
+ **  **Bold**  indicates all are mandatory fields.
+
+#### Registrar: ETaxRegistrar3
+
+  * Find account from  **FIN_ACCOUNT**  by org_id and acct_number and type.
+  * As etax.createAccount=false, No account will be created if not found.
+  * Insert into the  **PAPERLESS  **with acctId, modifiedBy='1', modifiedDate, newStatus='B', oldStatus='N', stmtType='default'.
+  * Insert into **ETAX** with type, acctId, archiveId, timeStamp ssn, isCorrection.
+  * Insert data into the **P_JOB_EMAIL** table.
+
+Database changes: PAPERLESS, ETAX, P_JOB_EMAIL.
+
+### Email Notification Process
+
+Flags:
+
+  * email.default.needApproval=false
+  * email.loan.needApproval=false
+  * email.etax.needApproval=false
+  * email.hiddenMessage=np_id
+
+#### Handler: NotifyPrefEmailHandler
+
+  * isSelectiveTemplate=false, isSelectiveMailServer=false, isSendEmailViaAPI=false, attachmentFeature=false, isSendViaAPI=false.
+  * If notifyPref not found update notifyPref with notificationStatus="N", emailStatus="N", emailAttachmentStatus="N", smsStatus="N".
+  * Fetch  _emailAddr, acctId, acctNum, name, ciId, esdId,  _If email not null.
+
+### BACKEND REPORTS
+
+The backend process has 2 reports,
+
+  1. Bounceback Report
+  2. Paperless Report
+
+###  **Bounceback Report**
+
+  * Flags
+    * bounceBackReport.classPath=com.infoimage.processing.application.file.upload.handler.BankBounceBackReport
+    * bounceBackReport.method=DB
+    * bounceBackReport.mailersvr.host=ha_zimbra
+    * bounceBackReport.emailServer.cluster=true
+    * bounceBackReport.mailersvr.user=bkfn
+    * bounceBackReport.mailersvr.password=creditunion
+    * bounceBackReport.senderEmailAddress=bkfn@mailerserver.com
+    * bounceBackReport.delimiter=|
+    * bounceBackReport.email.templatePath=/com/infoimage/processing/application/file/upload/email/client_pickup4.txt
+    * bounceBackReport.email.subject=BankFinancial: Your e-mail Bounceback Report is Available for Download
+    * bounceBackReport.pickup_time=5
+    * bounceBackReport.email_status.update=true
+    * bounceBackReport.email.server=zimbra
+    * bounceBackReport.insertToDB=true
+
+  *  **Handler: BankBounceBackReport**
+    * Get the data (cif_num, acct_number, type, acct_owner_name, email_address, em_err_email_time) from the USR_MAPPING, FIN_ACCOUNT, USR, NOTIFICATION_PREFERENCE and EMAIL_ERR.
+
+Database Uses: USR_MAPPING, FIN_ACCOUNT, USR, NOTIFICATION_PREFERENCE,
+EMAIL_ERR.
+
+###  **Paperless Report**
+
+  * Flags
+    * paperlessReport.stmtType1=default,ds1
+    * paperlessReport.stmtType2=default,cl1
+    * paperlessReport.stmtType3=default,enotice
+
+  *  **Handler: DefaultPaperlessReportBank**
+    * Get records from the FIN_ACCOUNT and PAPERLESS2 table by org_id, acct_id, and stmt_type.
+  *  **Renderer: DefaultPaperlessReportRenderBank**
+    * Displays acctNum | paperlessStatus | acctType.
+
+Database Uses: FIN_ACCOUNT, PAPERLESS2.
+
+
+
+* * *
+
+## Analysis Summary (ROOT)
+
+Scope| Feature| BKFN Business| Hypercube| Note  
+---|---|---|---|---  
+ **Enrollment(SSO)**
+
+  
+
+|  Login|  
+|  
+|  
+  
+User enrollment|
+
+  * The user goes through the enrollment based on the following condition:
+    1. If the user never login via SSO, So the SSO date is null and then goes through the 3 steps of enrollment.
+
+|  23557 complete  Supported  23558 incomplete Not Supported 23559 incomplete
+Supported alternatively |  
+  
+Enrollment Step 1| Pdf View.|  23560 complete Supported  23561 incomplete Not
+Supported 23562 incomplete Supported alternatively |  
+  
+Enrollment Step 2|
+
+  * E-Sign Disclosure and Consent.
+  * Adding the primary email.
+  * By clicking the "ACCEPT" button, signifying the acceptance of eStatement Disclosure.
+
+|  23563 complete Supported  23564 incomplete Not Supported 23565 incomplete
+Supported alternatively |  
+  
+Enrollment Step 3|
+
+  * Shows: Account number, Account holder name, Application.
+  * The user can choose the delivery preference  ** _Online Only_**  or  ** _Paper Only_**.
+  * Email Address updatable.
+
+|  23566 complete Supported  23567 incomplete Not Supported 23568 incomplete
+Supported alternatively |  
+  
+**Enrollment(DSO)**|  User enrollment|
+
+  * The user goes through the enrollment based on the following condition:
+    1. Based on the DSO date the user goes through the 4 steps of enrollment.
+
+|  23572 complete Supported  23573 incomplete Not Supported 23574 incomplete
+Supported alternatively |  
+  
+Enrollment Step 1|
+
+  * PDF View
+
+|  23575 complete Supported  23576 incomplete Not Supported 23577 incomplete
+Supported alternatively |  
+  
+Enrollment Step 2|
+
+  * E-Sign Disclosure and Consent.
+  * By clicking the "ACCEPT" button, signifying the acceptance of eStatement Disclosure.
+
+|  23578 complete Supported  23579 incomplete Not Supported 23580 incomplete
+Supported alternatively |  
+  
+Enrollment Step 3|
+
+  * Login Information:
+    * Login ID
+    * Password
+    * Confirm Password
+    * Password Hint Phrase
+    * Hint Phrase Answer
+  * Contact Information:
+    * E-mail Address
+    * Confirm E-mail Address
+  * Account Verification:
+    * Application
+    * Account Number
+    * TIN (CIF)
+
+|  23581 complete Supported  23582 incomplete Not Supported 23583 incomplete
+Supported alternatively |  
+  
+Enrollment Step 4|
+
+  * The user can choose the delivery preference  ** _Online Only_**  or  ** _Paper Only_**.
+  * Email Address updatable.
+
+|  23584 complete Supported  23585 incomplete Not Supported 23586 incomplete
+Supported alternatively |  
+  
+**Login(DSO)**|  
+|
+
+  * During login required fields are:
+    * Username
+    * password 
+
+|  23593 complete Supported  23594 incomplete Not Supported 23595 incomplete
+Supported alternatively |  
+  
+Token Recovery|
+
+  * For first-time login, It redirects to a page called _**token_recovery**_. There are two options there: 
+    1. I'm on a public computer. Please log me in without creating any token.
+    2. Please log me in and create a token on my computer.
+      * If the second option is selected then it creates and stores the token into the **USR_TOKEN** table for that computer. And it doesn't redirect to the **_token_recovery_** page in future login from that computer.
+
+|  23596 incomplete Supported  23597 incomplete Not Supported 23598 complete
+Supported alternatively | This is supported by MFA (Multi-factor
+Authentication) in the hypercube.  
+  
+  *  **Forget your password? (DSO)**
+
+|  
+|
+
+  * First, Need to verify the Username, Account Number, and Application.
+  * And then Security checks by entering the correct security question's answer.
+  * After that enter the New Password and Confirm New Password.
+
+|  23599 complete Supported  23600 incomplete Not Supported 23601 incomplete
+Supported alternatively |  
+  
+**Statements**|
+
+  * eStatements
+  * Commercial Loan Statements
+  * eTax
+
+|
+
+  * Account Number: Here shows the **[account number] - [account type name]** in the dropdown menu.
+  * Shows statements: Date, Status, News, and Notices.
+  * If the paperless status is 'B' then redirect to optout page to change the paperless status 'E'.
+
+Note: For eTax
+
+  * Shows statements: Year and Form Name.
+
+|  23602 complete Supported  23603 incomplete Not Supported 23604 incomplete
+Supported alternatively |  
+  
+  
+Additional for **DSO** :
+
+  * Authorized Viewers:
+    * Use the "Create Viewer" button to setup a new individual to view statements. Upon initial setup you can assign/authorize the viewer specific account statements to view.
+    * Use the "Assign Viewers" button to assign existing authorized viewers (individuals already set up to view statements) specific account statements to view.
+
+|  25324 incomplete Supported  25325 incomplete Not Supported 25326 incomplete
+Supported alternatively |  
+  
+  
+  * Escrow Analysis
+  * eNotice
+
+|
+
+Currently don't support both statements.
+
+|  23605 incomplete  Supported  23606 incomplete Not Supported 23607
+incomplete Supported alternatively |
+
+  
+  
+  
+  * Account Reconciliation
+  * HELOC Reconciliation
+  * CD Maturity Disclosure
+
+|
+
+  * Here shows the [ **account description]-[account number]** in the dropdown menu. The account description gets from the  **USR_ACCT_TYPE_MAPPING**  table.
+
+|  23611 complete  Supported  23612 incomplete Not Supported 23613 incomplete
+Supported alternatively |  
+  
+**Profile(SSO)**|  Delivery Preference|
+
+  * The user can update the delivery preference.
+
+|  23617 complete  Supported  23618 incomplete Not Supported 23619 incomplete
+Supported alternatively |  
+  
+Email Address|
+
+  * The email address is Updatable.
+
+|  23623 complete  Supported  23624 incomplete Not Supported 23625 incomplete
+Supported alternatively |  
+  
+**Profile(DSO)**|
+
+Password
+
+|
+
+  * The user can update the Password.
+
+|  23626 complete  Supported  23627 incomplete Not Supported 23628 incomplete
+Supported alternatively |  
+  
+  
+  * The user can update the _Password_ and _Password Hint Question._
+
+|  25327 complete Supported  25328 incomplete Not Supported 25329 incomplete
+Supported alternatively |  
+  
+Delivery Preference|
+
+  * The user can update the delivery preference.
+
+|  23629 complete  Supported  23630 incomplete Not Supported 23631 incomplete
+Supported alternatively |  
+  
+Email Address|
+
+  * The email address is Updatable.
+
+|  23632 complete  Supported  23633 incomplete Not Supported 23634 incomplete
+Supported alternatively |  
+  
+Authorized Viewers|
+
+  * User can Create authorized viewers.
+  * User can Edit viewers' profiles.
+  * User can Remove viewers.
+
+|  23635 incomplete  Supported  23636 incomplete Not Supported 23637
+incomplete Supported alternatively |  
+  
+**Exit**|  
+|
+
+When clicking on the Exit menu close the browser.
+
+|  23641 complete  Supported  23642 incomplete Not Supported 23643 incomplete
+Supported alternatively |  
+  
+  
+  
+
+## Analysis Summary (MSM)
+
+Scope| Feature| BKFN Business| InfoTRAC| Note  
+---|---|---|---|---  
+Account Management|
+
+Account Management
+
+|
+
+  * Search by Account Number
+  * Search by E-mail Address
+
+|  2715 complete  Supported  2716 incomplete Not Supported 2717 incomplete
+Supported alternatively |  
+  
+  
+  * Account Information
+    * Customer CIF
+    * Customer Name
+    * Assisted Employee ID
+    * Account Number
+    * Account Holder Name
+    * Account Application
+    * Account Status
+    * Account Open Date
+    * Customer Register Status
+    * Customer Last Login Time
+    * Customer Last Statement View Time
+
+|  2718 complete  Supported  2719 incomplete Not Supported 2720 incomplete
+Supported alternatively |  
+  
+  
+  * Admin can update the email address.
+
+|  2721 complete  Supported  2722 incomplete Not Supported 2723 incomplete
+Supported alternatively |  
+  
+  
+  * Admin can update the delivery preference.
+
+|  2724 complete  Supported  2725 incomplete Not Supported 2726 incomplete
+Supported alternatively |  
+  
+  
+  * Admin can Unenroll SSO.
+
+|  25270 incomplete  Supported  25271 complete Not Supported 25272 incomplete
+Supported alternatively |
+
+  * set SSO to null
+  * if an account is not linked with any other enrolled user then change the delivery pref to paper
+
+  
+  
+  * Admin can convert DSO user to sso 
+
+|  25342 incomplete Supported  25343 complete Not Supported 25344 incomplete
+Supported alternatively |
+
+  * set SSO to the current date
+  * set DSO to null
+  * set sess_login_id to !userID
+
+  
+  
+  * Combine Statements
+
+|  25345 complete Supported  25346 incomplete Not Supported 25347 incomplete
+Supported alternatively | will be renamed as 'Batchdownlad'  
+  
+Account Statements:
+
+  * Statement Date
+  * News and Notices
+
+|  25273 complete  Supported  25274 incomplete Not Supported 25275 incomplete
+Supported alternatively |  
+  
+  
+Email Proofing
+
+|  
+|
+
+  * Email Notifications Templates:
+    * eStatements
+    * Commercial Loan Statements
+    * Tax documents
+    * Welcome
+  * Keywords:
+    *  **sdv_txt_userName**
+    *  **sdv_txt_eNoticeList**
+    *  **sdv_txt_eTaxList**
+
+|  2730 complete  Supported  2731 incomplete Not Supported 2732 incomplete
+Supported alternatively |  
+  
+  
+Insert Management
+
+|  
+|
+
+  * Inserts available for: 
+    * eStatements
+    * Commercial Loan Statements
+  * Can choose one method from the available two methods:
+    * Display this insert on the closing date. (Shows the Closing Date)
+    * Display this insert within the day range. (Shows the Begin Date, End Date)
+
+|  25330 complete  Supported  25331 incomplete Not Supported 25332 incomplete
+Supported alternatively |  
+  
+Reports|  
+|
+
+  * Latest Stats
+
+|  25282 complete  Supported  25283 incomplete Not Supported 25284 incomplete
+Supported alternatively |  
+  
+  
+  * User Login Activity
+
+|  25285 complete  Supported  25286 incomplete Not Supported 25287 incomplete
+Supported alternatively |  
+  
+  
+  * AI Login Activity
+
+|  25288 complete  Supported  25289 incomplete Not Supported 25290 incomplete
+Supported alternatively |  
+  
+  
+  * Email Address Collection
+    *  **Report Data: **CIF Number | Account Number | Account Type | Account Holder Name | E-mail Address.
+    *  **DB Used:** USR_MAPPING, FIN_ACCOUNT, NOTIFICATION_PREFERENCE.
+
+|  25291 complete  Supported  25292 incomplete Not Supported 25293 incomplete
+Supported alternatively |  
+  
+  
+  * Enrollment Assistant Report
+    *  **Report Data: **CIF Number | Registration Date | Employee ID.
+    *  **DB Used:** USR_MAPPING, USR_SESSION, USR.
+
+|  25294 complete  Supported  25295 incomplete Not Supported 25296 incomplete
+Supported alternatively |  
+  
+  
+  * Paperless
+    *  **Report Data** : Date | Opt-in | Opt-out | Acc. Opt-out.
+    *  **DB Used** : PAPERLESS, FIN_ACCOUNT.
+
+|  25297 complete  Supported  25298 incomplete Not Supported 25299 incomplete
+Supported alternatively |  
+  
+  
+  * Registered Users
+    *  **Report Data: **Month | # of Reg. Users | Acc. # of Reg. Users
+    *  **DB Used:** USR_SESSION
+
+|  25300 complete  Supported  25301 incomplete Not Supported 25302 incomplete
+Supported alternatively |  
+  
+  
+  * Marketing Insert Report
+    *  **Report Data: **Month | Title | Total Viewed
+
+|  25303 complete  Supported  25304 incomplete Not Supported 25305 incomplete
+Supported alternatively |  
+  
+  
+  * Members Who Have Accepted The Disclosure
+    *  **Report Data: **CIF Number | Customer Name | New Disclosure Accepted
+    *  **DB Used:** USR_MAPPING, USR, USR_SESSION.
+
+|  25306 complete  Supported  25307 incomplete Not Supported 25308 incomplete
+Supported alternatively |  
+  
+  
+  * DSO Report
+    *  **Report Data:  **Account Name | Account Number | Account Type | CIF Number
+    *  **DB Used:** USR, FIN_ACCOUNT, USR_MAPPING.
+
+|  25309 complete  Supported  25310 incomplete Not Supported 25311 incomplete
+Supported alternatively |  
+  
+  
+  * Undelivered Report
+
+|  25312 complete  Supported  25313 incomplete Not Supported 25314 incomplete
+Supported alternatively | The undeliverable report will move to the Bounceback
+report.  
+  
+Profile
+
+|  
+|
+
+  * Admin can update Firstname and Lastname.
+  * Admin can update the Password.
+
+|  25315 complete  Supported  25316 incomplete Not Supported 25317 incomplete
+Supported alternatively |  
+  
+  
+Administration
+
+|  
+|
+
+  * Can create/view/modify/remove other users that have lower privileges.
+
+|  2733 complete  Supported  2734 incomplete Not Supported 2735 incomplete
+Supported alternatively |  
+  
+  
+Account Creation
+
+|  
+|
+
+  * Admin can create a new Account with TIN(CIF), Firstname,  Lastname, and Application type.
+
+|  2739 incomplete  Supported  2740 incomplete Not Supported 2741 incomplete
+Supported alternatively |  
+  
+Exit|  
+|
+
+  * By clicking on the Exit menu redirect the logout.jsp page and showing the confirmation option for logout or not.
+
+|  2742 complete  Supported  2743 incomplete Not Supported 2744 incomplete
+Supported alternatively |  
+  
+  
+  
+
+## Analysis Summary (PUI)
+
+Process and Reports| Prefix| Backend Business| Mismatch with Hypercube
+Business| Changes Needed| Note  
+---|---|---|---|---|---  
+AFP|
+
+  *  **ds1** =default
+  *  **cl1** =loan
+
+|
+
+#### Handler: AfpStatementData9
+
+  * Each line in the process file must contain 12/13/14/15 fields. 
+  * FIelds:  ** _fileName_** _  | _ ** _acctNum_** _  | _ _beginDate_ _  | _ _closingDate_ _  | _ _numOfPages_ _  | _ ** _acctName_** _  | SSN | appType | messageIds | hasCheckStr | insertId | regionCode | crippleFlag | zipFileName_ .
+  * If  _crippleFlag_  is present must have a value of either "C" or "R". 
+
+**  **Bold**  indicates all are mandatory fields.
+
+#### Registrar: BkfnEStmtRegistrar
+
+  * Find the account from the **FIN_ACCOUNT** table by org_id, acct_num, and acct_type.
+  * If account not found create a new account with org_id, acct_num, acct_name, acct_type, status="A", last_modified.
+  * Insert data into **ESTMT_DOC** table with acctId, beginDate, closingDate, parentPath, fileName, pageCount, docType, stmtType, seqNum, hasCheck, esdInsertId.
+  * As _global.default.imageMessage=true_ , Save stmtMessage in the **ESTMT_MSG** table.
+  * Insert data into the **P_JOB_ESTMT** table.
+  *  _As afp.default.estmtselinsert=true_ , Insert data into the **ESTMT_SEL_INSERT** table.
+
+Database Changes: FIN_ACCOUNT, ESTMT_DOC, ESTMT_MSG, P_JOB_ESTMT,
+ESTMT_SEL_INSERT.
+
+|
+
+  * No user creation logic so no changes are required
+
+|
+
+  
+
+|  
+  
+AUTH|  
+|
+
+ **Handler** : **BkfnAuthHandler**
+
+  * Fields: _**cif** | appType | acctNum | firstName | middleName | lastName | openDate_
+  * If firstName, middleName, and lastName don't provide acctName will be ''New Customer" and firstName will be "New Customer".
+
+ **  **Bold**  indicates all are mandatory fields.
+
+#### Registrar:  **BkfnAuthRegistrar**
+
+  * Find the user from the USR_MAPPING table by cif_num and org_id.
+    * If the user is not found Insert data into the **USR_MAPPING** table, Otherwise update the user data. 
+  * Find the account from the FIN_ACCOUNT table by acct_num, org_id, and type.
+    * If the account is not found create a new account and Insert data, Otherwise update data into the **FIN_ACCOUNT** table.
+  * Find paperless from the PAPERLESS2 table by acct_id and stmtType.
+    * If not found create new paperless and Insert data into the **PAPERLESS2** table with acctId, modifiedBy='1', modifiedDate, newStatus="B", oldStatus="N", stmtType="default".
+  * If acctNum has already existed in the UFA then remove the previous one and Insert new data into the **USR_FIN_ACCOUNT** table.
+
+Database Changes: USR_MAPPING, FIN_ACCOUNT, PAPERLESS2, USR_FIN_ACCOUNT.
+
+|
+
+  
+
+|
+
+  
+
+|  
+  
+  
+INSERT
+
+|  
+|
+
+ **Handler** :  **DefaultInsertHandler**
+
+  * Fields:  _ **fileName |**   **title |** fileType='application/pdf' | closingDate | stmtType._
+  * Insert into  **EMAIL_ATTACH**  table with email_id, ea_file_type, ea_file_name, ea_size.
+  * Update EMAIL_ATTACH table with ea_content by ea_id.
+  * Insert into  **INSERT_FILE**  table with ea_id, org_id, stmt_type, closing_date, title, begin_date.
+  * Insert into the  **P_JOB_INSERT**  table with insert_id.
+
+ **  **Bold**  indicates all are mandatory fields.
+
+Database Changes: EMAIL_ATTACH, INSERT_FILE, P_JOB_INSERT.
+
+|
+
+  
+
+|  
+|
+
+  * this will be removed from backend process
+
+  
+ENOTICE4|
+
+  
+
+|
+
+#### Handler: ENoticeData7
+
+  * Each line in the process file must contain 11 or 12 fields. 
+  * The first (Record Type) and last(Record Terminator) fields must be "L". 
+  * Fields:  ** _L_** _  | acctNum | **acctType** | acctName | afpFileName | type | closingDate | imageCount | postCardFlag | _ ** _zipFileName | L_**  
+  * If the account name is not present in the index file, the account number will be set as the account name after masking the first 2 or 4 characters. 
+  *  postCardFlag value has to be 0 or 1 or null. 
+
+ **  **Bold**  indicates all are mandatory fields.
+
+#### Registrar: DefaultENotice4Registrar
+
+  * createAccount=false,nullDsoTimeStamp=false.
+  * Fin account from the FIN_ACCOUNT table, If the account is found:
+    * Check the  ** _acctName_**  provided by the index file. If it does not match with the account name in the database, update it in the  **FIN_ACCOUNT**  table. 
+    * Do not update the account name if the name is either "MEMBER" or "CUSTOMER" or "USER". 
+  * If paperless is not found, Insert data into the  **PAPERLESS**  table with stmtType="enotice". 
+  * Inserts enotice data in  **ENOTICE**  and  **ARCH_FILE**.
+  * Inserts data into the  **P_JOB_ENOTICE**  table. 
+  * Inserts data into the  **P_ENOTICE_COUNT**  table. 
+
+Database changes: FIN_ACCOUNT, PAPERLESS, ENOTICE, ARCH_FILE, P_JOB_ENOTICE,
+P_ENOTICE_COUNT.
+
+|  
+|  
+|  
+  
+  
+ETAX
+
+|
+
+  *  **tax** =etax
+
+|
+
+#### Handler: EtaxData3
+
+  * Fields: _acctName | **acctNum** | **type** | **afpFileName |** date | suffix | appType | SSN | zipFileName._
+
+ **  **Bold**  indicates all are mandatory fields.
+
+#### Registrar: ETaxRegistrar3
+
+  * Find account from  **FIN_ACCOUNT**  by org_id and acct_number and type.
+  * As etax.createAccount=false, No account will be created if not found.
+  * Insert into the  **PAPERLESS  **with acctId, modifiedBy='1', modifiedDate, newStatus='B', oldStatus='N', stmtType='default'.
+  * Insert into **ETAX** with type, acctId, archiveId, timeStamp ssn, isCorrection.
+  * Insert data into the **P_JOB_EMAIL** table.
+
+Database changes: PAPERLESS, ETAX, P_JOB_EMAIL.
+
+|  
+|  
+|  
+  
+EMAIL NOTIFICATION|
+
+  * email.default.needApproval=false
+  * email.loan.needApproval=false
+  * email.etax.needApproval=false
+  * email.hiddenMessage=np_id
+
+|
+
+#### Handler: NotifyPrefEmailHandler
+
+  * isSelectiveTemplate=false, isSelectiveMailServer=false, isSendEmailViaAPI=false, attachmentFeature=false, isSendViaAPI=false.
+  * If notifyPref not found update notifyPref with notificationStatus="N", emailStatus="N", emailAttachmentStatus="N", smsStatus="N".
+  * Fetch  _emailAddr, acctId, acctNum, name, ciId, esdId,  _If the email is not null.
+
+|  
+|
+
+  * isSendEmailViaApi=true
+
+|  
+  
+Backend Reports|
+
+  
+
+|
+
+Bounceback Report
+
+  *  **Handler: BankBounceBackReport**
+    * Get the data (cif_num, acct_number, type, acct_owner_name, email_address, em_err_email_time) from the USR_MAPPING, FIN_ACCOUNT, USR, NOTIFICATION_PREFERENCE and EMAIL_ERR.
+
+Database Uses: USR_MAPPING, FIN_ACCOUNT, USR, NOTIFICATION_PREFERENCE,
+EMAIL_ERR.
+
+|  
+|  
+|  
+  
+  
+  * paperlessReport.stmtType1=default,ds1
+  * paperlessReport.stmtType2=default,cl1
+  * paperlessReport.stmtType3=default,enotice
+
+|
+
+Paperless Report
+
+  *  **Handler: DefaultPaperlessReportBank**
+    * Get records from the FIN_ACCOUNT and PAPERLESS2 table by org_id, acct_id, and stmt_type.
+  *  **Renderer: DefaultPaperlessReportRenderBank**
+    * Displays acctNum | paperlessStatus | acctType.
+
+Database Uses: FIN_ACCOUNT, PAPERLESS2.
+
+|  
+|  
+|  
+  
+  
+  
+
+  
+
+

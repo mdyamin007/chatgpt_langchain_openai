@@ -1,0 +1,148 @@
+title: GCBK - [33908][pvt] LN EA Pay- Suppression and Errors
+description: # Update logic to check if the last amount value (when it's not empty) on the Actual Escrow Balance column is 0.00 or not. If the
+ amount is 0.00, then logic will use the existing amount above the column (anywhere from 1 - 4 above, if it's not empty) to
+ verify if it is a negative amount of not.
+ Keep the mail code logic (SECOND_LAST_HIST_ACTUAL_ESCROW_BAL), yellow top right box and "payoff receipt".
+ # Add new logic to exclude specified mail_code criteria 'A' to 'z' so that eSuppression will not overwrite them.
+
+Programmer: YaMee
+
+
+
+Timeline
+
+Turnover to IS 10/13
+
+sample QA 10/20
+
+sample to client 10/24
+
+sample approval 10/26
+
+parallel 10/27
+
+LIVE 11/1
+
+
+
+Usually their cycles come around the 25-30. Not sure if they want to hold until after code release or not.
+
+
+author: mattl
+comment: Hi [~yameelee]Will samples be ready for QA today?
+
+
+author: yameelee
+comment: [~Igor.Khosid]& [~MattL]
+
+PR_ID:20221020173158
+
+index files:
+
+*ea2_20220718_1_20221021_1035_gcbk.txt* (*item #1*GCBKCEA1.dfa update) - acct# 138758542
+
+ *NOTE:* *current logic* is if the last transaction does not have verbiages "escrow closeout" or "payoff" disburstment then find the second to last amount to see if it is negative then put verbiage in top yellow box and add "payoff receipt") on last transaction line. If amount is not negative then do not print verbiage in yellow box and set to mail_code "A" to suppress from print and generate nonmatch report and suppress from estmt.
+
+ *current issue*, the program assumed last transaction line has amount and uses amount above it as second to last amount to check if it's negative or not - this is how it was when first tested. Found out the last line of transaction doesn't always have an amount (*see johnson_prod.jpg*) so it uses the last amount as second to last amount instead of last amount. Because this account uses the 0.00 as the second to last amount, it is not negative therefore account is suppressed from print with mail_code "A" and estmt.
+
+ *update*logic to get the last actual amount (whether last line or not) to use as last amount and get the amount above it as second to last amount (*see johnson_test.jpg*). This account should not have mail_code "A" for nonmatch report and should not be suppressed from print and estmt. (DPVS attached for print sample - print all).
+
+---------------------------------------------------------------------------
+
+*ea2_20220830_1_20221020_2257_gcbk.txt* (*item #2* add ESupGCBKEA2.pm & run_estmtsup_bin.pl) - acct# 2472140
+
+this account was set to have mail_code A in DFA and to generate in nonmatch report. However, the paperless file mail_code "e" overwrites the mail_code "A" (standard logic). Had to create the packetESupGCBKEA2.pm to not overwrite the mail_code "A" so it will go to nonmatch report (*gcbk_ea2stmt_nonmatch_08302022_1.csv*) As it is nonmatch it will be suppressed from print (mail_code "A") and estmt.
+
+
+author: yameelee
+comment: [~MattL] & [~Igor.Khosid] Sorry I was trying to explain what current logic and issue is so it took much longer to get everything out to QA. I know there is alot of explaining on it so call me if any questions.
+
+
+author: igor.khosid
+comment:    Parallel ID: 20221020173158
+   Currently in parallel: Yes
+   User: yamee
+   Description: update esup logic
+   Date Submitted: 2022-10-20 17:32:26
+   Date Last Updated: 2022-10-20 17:32:26
+   Files:
+      1) run_estmtsup_bin.pl
+      2) ESupGCBKEA2.pm
+      3) GCBKCEA1.dfa
+
+
+author: igor.khosid
+comment: [~avannik]
+Please review and reach to [~yameelee] for any questions
+
+
+
+author: JIRAUSER11700
+comment: I checked the project file and modified balance data - the yellow box and "payoff receipt" behave as expected.
+The client Johnson is in the nonmatch report.
+
+QA finished.
+
+
+author: jharvey
+comment: [~yameelee]  [~avannik]
+
+What samples am I providing to client?
+
+
+author: yameelee
+comment: [~jharvey]
+
+item #1. please provide pdf sample ([^gcbk_eapay_sample.pdf]), affected account is on page 12 for Alexander. Currently, the program is getting last amount on last line of transactions. In this case last line of transaction is empty or considered 0. So it uses the 0.00 as the second to last amount to check if it is negative, which it is not. This account is suppressed from print and posting without the verbiage in yellow box.
+
+Updated program to capture actual last amount as last amount and the amount above it as second to last amount to check if negative. This account should be printed and posted.
+
+item #2. please provide the nonmatch report ([^gcbk_ea2stmt_nonmatch_08302022_1.csv]- GCBK call it error and suppression report on their end - to show that after updating program, the nonmatch account is in the report and the paperless (estmt suppression list) is no longer overwriting these accounts.
+
+
+author: dyuen
+comment: [~yameelee], please see following from GCBK and advise. Thanks
+
+I have reviewed the samples and Alexander Johnson's statement example looks to be fixed.
+
+As far as logic for the 8/30/22-Jillian Hobbs statement, it would have been on the error report because there was a payoff receipt, but not a negative balance the month prior. Should the logic be updated so this doesn't end up on the error report?
+
+I am thinking that if there is no payoff disbursement or escrow closeout disbursement and the previous month's balance is positive, compare the last payment to escrow to the 2nd to last payment to escrow and if it is greater than, use the "The payoff refunds brought the escrow balance to $0".
+
+
+
+
+author: dyuen
+comment: [~yameelee], this is finally approved!
+
+Per GCBK:
+
+"Please proceed with the update to the logic for the ending balances.
+
+Thanks!"
+
+----------------------------------
+
+Please provide test dpvs, etc for print samples and parallel.
+
+Thanks
+
+
+author: yameelee
+comment: [~dyuen] , the DPVS was attached on Oct 21. Please print all as there are only 3 accounts. Only affected account in this file is for Alexander Johnson who was suppressed in production and is not now.
+
+
+author: JIRAUSER11104
+comment: Print samples >>>[^IS-1704_GCBK_PrntSmpls_11142022.pdf]
+
+
+author: yameelee
+comment: [~dyuen]& [~Andrey.Kutsenko]: check list attached for parallel.[^IS1704-QA Checklist.doc]
+
+
+author: dyuen
+comment: Thanks [~yameelee] [~Andrey.Kutsenko]MPT #36015 created
+
+
+author: rodriguez
+comment: Code released, backup ID =20221121131939

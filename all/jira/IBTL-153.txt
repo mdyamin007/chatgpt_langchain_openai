@@ -1,0 +1,87 @@
+title: RHS2 - Production- BANB Escrow Analysis on-demand
+description: [~William.Kong], Can someone please look into the error below and advise?
+
+Thanks!
+
+/d/banb/banbes1118.log
+apy call is curl -X POST http://is-apps-prod.infoimage.com/infosync/v1/infotrac/online_proofing/extended_mail_tracking/proc_id/2268807/cid/banb/user_id/oper1 -H accept: application/json -H Content-Type: application/json -d \{ state: submitted, type: full, message: Request to insert, full_txt_name: banbes120201026143410.txt}
+perl /home/master/trigger_tracking_by_rec.pl /d/isd_share/banb/print_fileid/banbes120201026143410.txt
+Error: /home/master/trigger_tracking_by_rec.pl /d/isd_share/banb/print_fileid/banbes120201026143410.txt
+apy call is curl -X PUT http://is-apps-prod.infoimage.com/infosync/v1/infotrac/online_proofing/extended_mail_tracking/proc_id/2268807/cid/banb/user_id/oper1 -H accept: application/json -H Content-Type: application/json -d \{ state: warning, message: Communication error between print process & IndexFileProcessor, warning_code: 102, warning_desc: Unable to submit the job to indexfileprocessor}
+2020-10-26/14:30:00.809 000002/000006 PPCS8006I Commandline parameters: /profile=/home/isis/userisis/pdec.prf /input=/d/banb/es1_processing/AUTOMAILF.LN6660P051820.txt.out /output=/d/banb/banbes1118.afp /docdef=BANBES11 /c $BADACCTS=/d/banb/banbes1118.bad $BADACCTS2=/d/banb/banbes1118_b32.bad $UPSLIST=/d/banb/banbes1118.upslist $PREFIX=banbes1 $JOB_SEL=s $TTLFILE=/d/banb/banbes1118.ttl $TIFFDIR= $LOOKUPFILE= $PROCDATE=05182020 $COLOR_FLAG= $SDATE= $INSERT_TYPE= $PRT_DISCLOSURE= $XMLFILE=/d/banb/banbes1118e.xml $EOM_FLAG= $MAIL_CONF_JOB_SEQ= $MAIL_CONF_SERV_TYPE= $LAST_CHECK_NUM=1025329 $TOTAL_CHECK_CNT=1160 $TOTAL_CHECK_AMT=896962.78 $ZIPFILE=/d/banb/banbes1118.txt [pcsdll/pcs.cpp,499]
+
+ERROR: Generator returns a non-zero value
+
+
+author: william.kong
+comment: [~shailendrar]: Can you please help me review this issue quickly?
+
+
+author: shailendrar
+comment: [~anil.dasa] - Can you please check why Bris prod IndexFileProcessor did not respond to this request:
+
+
+
+txt filename: banbes120201026143410.txt
+
+proc id: 2268807
+
+
+
+
+
+
+author: anil.dasa
+comment: [~shailendrar] While processing jobs, we connect to ca-proc-pr-02 machine for reading txt file contents. We except file structure to be as*/d/isd_share/banb/print_fileid.*When i verify folders on server, isd_share folder is present inside isd_share folder. So posting has failed. Below is the screen shot for same.
+
+
+
+!image-2020-10-26-17-39-42-831.png!
+
+
+author: shailendrar
+comment: [~William.Kong] - Please refer to Anil's comment.
+
+
+author: william.kong
+comment: [~anil.dasa]: I fixed the directory issue.j
+
+
+
+[~alexw]: Can you retry and see if error occurs again into the log?
+
+
+
+
+
+
+author: alexw
+comment: [~anil.dasa]/[~shailendrar] I got this error below right away. Can you check?
+
+[oper1@rhs2 ~]$ /home/master/banbes1_chk_stmt_process.sh 1 bypass
+Error in chk_stmt_process2.pl, sending email
+[oper1@rhs2 ~]$
+
+
+author: william.kong
+comment: [~alexw]: You ran the on the wrong server. It is supposed to be ran on rh2.
+
+
+author: william.kong
+comment: [~alexw]: I'm re-running now. Had to delete cksum_log log record.
+
+
+
+echo "Started:" >> /d/iss/dp/banbes1_runtime.log; echo `date` >> /d/iss/dp/banbes1_runtime.log; /home/master/banbes1_chk_stmt_process.sh 1 bypass; echo 'Finished' >> /d/iss/dp/banbes1_runtime.log; echo `date` >> /d/iss/dp/banbes1_runtime.log;
+
+
+author: william.kong
+comment: [~alexw]: Can you verify if my re-processing was done properly?
+
+
+author: alexw
+comment: [~William.Kong] it has been reprocessed without error. Thanks!
+
+
+author: william.kong
+comment: [~alexw]: Thanks! I will close this ticket out.
